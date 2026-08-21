@@ -23,9 +23,6 @@ importers:
       eslint-config-prettier:
         specifier: ^10
         version: 10.1.8(eslint@10.8.1)
-      eslint-plugin-only-warn:
-        specifier: ^1
-        version: 1.2.1
       prettier:
         specifier: ^3
         version: 3.9.6
@@ -387,9 +384,6 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
-
-  eslint-plugin-only-warn@1.2.1:
-    resolution: {integrity: sha512-j37hwfaQDEOfkZ1Dpvu/HnWLavlzQxQxfbrU/9Jb4R9qzrE1eTYuRJyrxq7LzLRI8miG5FOV6veoUVhx7AI84w==}
 
   eslint-scope@9.1.2:
     resolution: {integrity: sha512-xS90H51cKw0jltxmvmHy2Iai1LIqrfbw57b79w/J7MfvDfkIkFZ+kj6zC3BjtUwh150HsSSdxXZcsuv72miDFQ==}
@@ -906,8 +900,6 @@ snapshots:
   eslint-config-prettier@10.1.8(eslint@10.8.1):
     dependencies:
       eslint: 10.8.1
-
-  eslint-plugin-only-warn@1.2.1: {}
 
   eslint-scope@9.1.2:
     dependencies:
