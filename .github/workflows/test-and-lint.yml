@@ -79,6 +79,10 @@ jobs:
               .replace(/\u001b\[[0-9;]*m/g, "")
               .replaceAll("```", "ˋˋˋ")
               .trim()
+            const hasFindings =
+              /\b\d+ problems? \(\d+ errors?, \d+ warnings?\)/.test(
+                cleanOutput,
+              )
             const displayedOutput = cleanOutput.length > 58_000
               ? `…\n${cleanOutput.slice(-58_000)}`
               : cleanOutput
@@ -90,13 +94,14 @@ jobs:
 
             if (!Number.isInteger(exitCode) || exitCode !== 0) {
               status = "❌ **ESLint could not run.**"
-            } else if (displayedOutput) {
+            } else if (hasFindings) {
               status = "⚠️ **ESLint completed with advisory findings.**"
             } else {
               status = "✅ **Zero warnings.**"
             }
 
-            const outputBlock = displayedOutput
+            const outputBlock =
+              displayedOutput && (exitCode !== 0 || hasFindings)
               ? `\n\n\`\`\`text\n${displayedOutput}\n\`\`\``
               : ""
             const body = `${marker}\n${header}\n\n${status}${outputBlock}`
