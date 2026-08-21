@@ -1,0 +1,54 @@
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+
+# Build and framework output
+.next/
+out/
+build/
+dist/
+.expo/
+.turbo/
+.vercel/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# TypeScript-generated files
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs and local environment
+*.log
+.env*.local
+
+# Editor and operating-system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local product authority and working records
+constitution.txt
+gdd.*
+reference/
+git_files_list.txt
+
+# Decrypted and proprietary source assets
+vendor/
+asset/
+
+# Repository-packaging output
+repomix-output.*
+repomix-temp.*
+
+# Signing credentials
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+*.mobileprovision
