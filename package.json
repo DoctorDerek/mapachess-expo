@@ -12,11 +12,15 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@eslint/js": "^10",
     "@ianvs/prettier-plugin-sort-imports": "^4",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10",
     "eslint-config-flat-gitignore": "^2",
     "eslint-config-prettier": "^10",
@@ -24,6 +28,7 @@
     "prettier": "^3",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "turbo": "^2",
-    "typescript": "^7"
+    "typescript": "^7",
+    "vitest": "^4.1.11"
   }
 }
