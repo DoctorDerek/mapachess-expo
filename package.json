@@ -11,10 +11,16 @@
     "dev": "turbo run dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@eslint/js": "^10",
     "@ianvs/prettier-plugin-sort-imports": "^4",
+    "eslint": "^10",
+    "eslint-config-flat-gitignore": "^2",
+    "eslint-config-prettier": "^10",
+    "eslint-plugin-only-warn": "^1",
     "prettier": "^3",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "turbo": "^2",
