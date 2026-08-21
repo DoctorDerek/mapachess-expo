@@ -65,8 +65,10 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - Use the Conventional Commit format `<type>(<scope>): <subject>` with a mandatory scope and present-tense subject.
 - `feat` is player-facing new behavior; `fix` corrects player-facing behavior; `refactor` changes production structure without behavior change; `test` changes tests; `docs` changes documentation; `style` changes formatting only; `chore` changes tooling, dependencies, or configuration.
 - Before presenting or executing each commit, give Mapachito one brief ACT/logotherapy/learned-optimism encouragement and one clearly fictional ghost-genius-mapache quote. Never put this motivation inside the commit message.
-- Mapachote may create local branches and approved local atomic commits. Mapachito reviews and pushes/pulls through GitHub Desktop, reviews and merges PRs on GitHub, and reports when the merged result is back on local `main`.
-- Never push, pull, merge, deploy, publish, or rewrite Git history without separate explicit authorization. Never use destructive Git commands.
+- Within an approved PR task, Mapachote may create the local branch, make the approved atomic commits, push that completed PR branch after 5RUN, and open or update its ready-for-review PR.
+- Mapachito reviews each PR normally and then supplies feedback or merges it and replies `Merged!`; Mapachote addresses review feedback on the same PR through additional atomic commits unless Mapachito directs otherwise.
+- Mapachote never merges a PR for Mapachito and never begins the next PR while the current PR review gate remains open.
+- Never push unrelated refs, force-push, pull, deploy, publish artifacts or releases, or rewrite Git history without separate explicit authorization. Never use destructive Git commands.
 - Stage only the exact approved paths. Never use `git add .`, `git add -A`, or broad staging shortcuts.
 - Never commit GDD artifacts, Constitution files, scratch/control records, generated junk, player saves, secrets, decrypted commercial assets, or unrelated worktree changes.
 
