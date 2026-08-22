@@ -1,0 +1,22 @@
+{
+  "name": "@mapachess/calibration",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./calibration-plan": {
+      "types": "./dist/calibrationPlan.d.ts",
+      "default": "./dist/calibrationPlan.js"
+    },
+    "./opponent-policy": {
+      "types": "./dist/opponentPolicy.d.ts",
+      "default": "./dist/opponentPolicy.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}
