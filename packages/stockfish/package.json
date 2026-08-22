@@ -11,6 +11,10 @@
     "./provision": {
       "types": "./src/provision.ts",
       "default": "./dist/provision.js"
+    },
+    "./uci-process-adapter": {
+      "types": "./src/uciProcessAdapter.ts",
+      "default": "./dist/uciProcessAdapter.js"
     }
   },
   "scripts": {
