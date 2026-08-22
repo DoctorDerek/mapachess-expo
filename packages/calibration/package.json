@@ -8,9 +8,17 @@
       "types": "./dist/calibrationPlan.d.ts",
       "default": "./dist/calibrationPlan.js"
     },
+    "./game-executor": {
+      "types": "./dist/calibrationGameExecutor.d.ts",
+      "default": "./dist/calibrationGameExecutor.js"
+    },
     "./opponent-policy": {
       "types": "./dist/opponentPolicy.d.ts",
       "default": "./dist/opponentPolicy.js"
+    },
+    "./serialized-opponent-policy": {
+      "types": "./dist/serializedOpponentPolicy.d.ts",
+      "default": "./dist/serializedOpponentPolicy.js"
     }
   },
   "scripts": {
@@ -20,6 +28,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@mapachess/stockfish": "workspace:*"
+    "@mapachess/stockfish": "workspace:*",
+    "chess.js": "^1"
   }
 }

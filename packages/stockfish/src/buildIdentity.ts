@@ -38,6 +38,8 @@ export type StockfishReleaseArtifact = Readonly<{
   target: StockfishRuntimeTarget
 }>
 
+type UnknownRecord = Record<string, unknown>
+
 export function parseSha256Hex(value: string, label = "SHA-256"): Sha256Hex {
   if (!SHA256_HEX_PATTERN.test(value)) {
     throw new TypeError(
@@ -57,6 +59,50 @@ function assertStableText(value: string, label: string): void {
     throw new TypeError(
       `${label} must be nonempty, trimmed, and free of control characters.`,
     )
+  }
+}
+
+function parseRecord(
+  value: unknown,
+  label: string,
+  expectedKeys: readonly string[],
+): UnknownRecord {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new TypeError(`${label} must be an object.`)
+  }
+
+  const record = value as UnknownRecord
+  const actualKeys = Object.keys(record).sort()
+  const sortedExpectedKeys = [...expectedKeys].sort()
+
+  if (JSON.stringify(actualKeys) !== JSON.stringify(sortedExpectedKeys)) {
+    throw new TypeError(
+      `${label} must contain exactly: ${sortedExpectedKeys.join(", ")}.`,
+    )
+  }
+
+  return record
+}
+
+function parseString(value: unknown, label: string): string {
+  if (typeof value !== "string") {
+    throw new TypeError(`${label} must be a string.`)
+  }
+
+  return value
+}
+
+function parseNetworkIdentity(
+  value: unknown,
+  label: string,
+): StockfishNetworkIdentity {
+  const record = parseRecord(value, label, ["fileName", "sha256"])
+  return {
+    fileName: parseString(record.fileName, `${label}.fileName`),
+    sha256: parseSha256Hex(
+      parseString(record.sha256, `${label}.sha256`),
+      `${label}.sha256`,
+    ),
   }
 }
 
@@ -97,6 +143,48 @@ export function validateStockfishBuildIdentity(
   if (identity.networks.big.sha256 === identity.networks.small.sha256) {
     throw new TypeError("The big and small NNUE networks must be distinct.")
   }
+}
+
+export function parseStockfishBuildIdentity(
+  value: unknown,
+): StockfishBuildIdentity {
+  const record = parseRecord(value, "Stockfish build identity", [
+    "archiveSha256",
+    "executableSha256",
+    "name",
+    "networks",
+    "releaseTag",
+    "sourceRevision",
+    "version",
+  ])
+  const networks = parseRecord(record.networks, "networks", ["big", "small"])
+  const name = parseString(record.name, "name")
+
+  if (name !== "stockfish") {
+    throw new TypeError('name must be "stockfish".')
+  }
+
+  const identity: StockfishBuildIdentity = {
+    name,
+    version: parseString(record.version, "version"),
+    releaseTag: parseString(record.releaseTag, "releaseTag"),
+    sourceRevision: parseString(record.sourceRevision, "sourceRevision"),
+    archiveSha256: parseSha256Hex(
+      parseString(record.archiveSha256, "archiveSha256"),
+      "archiveSha256",
+    ),
+    executableSha256: parseSha256Hex(
+      parseString(record.executableSha256, "executableSha256"),
+      "executableSha256",
+    ),
+    networks: {
+      big: parseNetworkIdentity(networks.big, "networks.big"),
+      small: parseNetworkIdentity(networks.small, "networks.small"),
+    },
+  }
+
+  validateStockfishBuildIdentity(identity)
+  return identity
 }
 
 const STOCKFISH_18_COMMON = {

@@ -9,6 +9,12 @@ import type { StockfishStrength } from "@mapachess/stockfish/uci-process-adapter
 
 export const OPPONENT_POLICY_SCHEMA_VERSION = 2 as const
 export const RANDOM_MOVE_PROBABILITY_SCALE = 10_000 as const
+export const CALIBRATION_COMMAND_PROTOCOL_VERSION =
+  "mapachess-uci-nodes/v1" as const
+export const CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION =
+  "best-or-uniform-random-legal/v1" as const
+export const CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION =
+  "chess.js@1.4.0/uci-lexicographic/v1" as const
 
 const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/

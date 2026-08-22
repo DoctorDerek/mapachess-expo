@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   createStockfish18BuildIdentity,
   parseSha256Hex,
+  parseStockfishBuildIdentity,
   STOCKFISH_18_ARTIFACTS,
   stockfishRuntimeTargetForHost,
   validateStockfishBuildIdentity,
@@ -65,5 +66,19 @@ describe("Stockfish 18 build identity", () => {
     expect(() => parseSha256Hex("ABC", "artifact digest")).toThrow(
       "artifact digest must be exactly 64 lowercase hexadecimal characters.",
     )
+  })
+
+  it("strictly parses an exact build identity", () => {
+    const identity = createStockfish18BuildIdentity("linux-x64")
+
+    expect(parseStockfishBuildIdentity(structuredClone(identity))).toEqual(
+      identity,
+    )
+    expect(() =>
+      parseStockfishBuildIdentity({ ...identity, unexpected: true }),
+    ).toThrow("must contain exactly")
+    expect(() =>
+      parseStockfishBuildIdentity({ ...identity, releaseTag: 18 }),
+    ).toThrow("releaseTag must be a string")
   })
 })
