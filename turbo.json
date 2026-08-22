@@ -17,6 +17,11 @@
       "dependsOn": ["^build", "^test:coverage"],
       "outputs": ["coverage/**"]
     },
+    "test:integration:stockfish": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []

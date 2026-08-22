@@ -15,6 +15,7 @@
     "stockfish:provision": "pnpm --filter @mapachess/stockfish provision",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
+    "test:integration:stockfish": "turbo run test:integration:stockfish",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {

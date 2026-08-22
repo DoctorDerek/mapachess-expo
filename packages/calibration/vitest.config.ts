@@ -5,6 +5,7 @@ export default defineConfig({
     name: "calibration",
     environment: "node",
     include: ["src/**/*.test.ts"],
+    exclude: ["src/**/*.integration.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
