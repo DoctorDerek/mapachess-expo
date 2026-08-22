@@ -136,7 +136,7 @@ jobs:
       - name: Run Blocking TypeScript Typecheck
         run: pnpm typecheck
 
-      - name: Run Blocking Tests and Coverage
+      - name: Run Blocking Tests and Measure Coverage
         run: pnpm test:coverage
 
       - name: Enforce ESLint Runner Health
