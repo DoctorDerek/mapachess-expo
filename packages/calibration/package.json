@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./calibration-plan": {
+      "types": "./dist/calibrationPlan.d.ts",
+      "default": "./dist/calibrationPlan.js"
+    },
     "./opponent-policy": {
       "types": "./dist/opponentPolicy.d.ts",
       "default": "./dist/opponentPolicy.js"
