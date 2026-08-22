@@ -9,16 +9,22 @@ import fingerprintOpponentPolicy, {
 const HASH_A = parseSha256Hex("a".repeat(64))
 const HASH_B = parseSha256Hex("b".repeat(64))
 const HASH_C = parseSha256Hex("c".repeat(64))
+const HASH_D = parseSha256Hex("d".repeat(64))
 
 const BASE_POLICY: OpponentPolicy = {
   schemaVersion: OPPONENT_POLICY_SCHEMA_VERSION,
   variant: "standard",
   engine: {
     name: "stockfish",
-    version: "Stockfish 17",
-    sourceRevision: "stockfish-17-source",
-    binarySha256: HASH_A,
-    networkSha256: HASH_B,
+    version: "18",
+    releaseTag: "sf_18",
+    sourceRevision: "1".repeat(40),
+    archiveSha256: HASH_A,
+    executableSha256: HASH_B,
+    networks: {
+      big: { fileName: "nn-cccccccccccc.nnue", sha256: HASH_C },
+      small: { fileName: "nn-dddddddddddd.nnue", sha256: HASH_D },
+    },
   },
   search: {
     strength: { kind: "uci-elo", elo: 1320 },
@@ -82,9 +88,20 @@ describe("opponent policy fingerprint", () => {
         strength: { elo: 1320, kind: "uci-elo" },
       },
       engine: {
-        networkSha256: BASE_POLICY.engine.networkSha256,
-        binarySha256: BASE_POLICY.engine.binarySha256,
+        networks: {
+          small: {
+            sha256: BASE_POLICY.engine.networks.small.sha256,
+            fileName: BASE_POLICY.engine.networks.small.fileName,
+          },
+          big: {
+            sha256: BASE_POLICY.engine.networks.big.sha256,
+            fileName: BASE_POLICY.engine.networks.big.fileName,
+          },
+        },
+        executableSha256: BASE_POLICY.engine.executableSha256,
+        archiveSha256: BASE_POLICY.engine.archiveSha256,
         sourceRevision: BASE_POLICY.engine.sourceRevision,
+        releaseTag: BASE_POLICY.engine.releaseTag,
         version: BASE_POLICY.engine.version,
         name: "stockfish",
       },
@@ -99,7 +116,7 @@ describe("opponent policy fingerprint", () => {
       fingerprintOpponentPolicy(BASE_POLICY),
     )
     expect(fingerprintOpponentPolicy(BASE_POLICY)).toBe(
-      "sha256:a299a03cb8515dd2c52d5eea30f6d4383e9fc75cd9cbb11451967e493e571b51",
+      "sha256:5e8247be73ed409fe66b6e3e52caabd5164a0107f832a647a21632a62d444adb",
     )
   })
 
@@ -116,20 +133,50 @@ describe("opponent policy fingerprint", () => {
       policyWith({
         engine: {
           ...BASE_POLICY.engine,
-          sourceRevision: "stockfish-17-source-2",
+          sourceRevision: "2".repeat(40),
         },
       }),
     ],
     [
-      "engine binary",
+      "engine release tag",
       policyWith({
-        engine: { ...BASE_POLICY.engine, binarySha256: HASH_C },
+        engine: { ...BASE_POLICY.engine, releaseTag: "sf_18.1" },
+      }),
+    ],
+    [
+      "engine archive",
+      policyWith({
+        engine: { ...BASE_POLICY.engine, archiveSha256: HASH_B },
+      }),
+    ],
+    [
+      "engine executable",
+      policyWith({
+        engine: { ...BASE_POLICY.engine, executableSha256: HASH_A },
       }),
     ],
     [
       "NNUE network",
       policyWith({
-        engine: { ...BASE_POLICY.engine, networkSha256: HASH_C },
+        engine: {
+          ...BASE_POLICY.engine,
+          networks: {
+            ...BASE_POLICY.engine.networks,
+            big: { fileName: "nn-aaaaaaaaaaaa.nnue", sha256: HASH_A },
+          },
+        },
+      }),
+    ],
+    [
+      "small NNUE network",
+      policyWith({
+        engine: {
+          ...BASE_POLICY.engine,
+          networks: {
+            ...BASE_POLICY.engine.networks,
+            small: { fileName: "nn-aaaaaaaaaaaa.nnue", sha256: HASH_A },
+          },
+        },
       }),
     ],
     [
@@ -237,7 +284,7 @@ describe("opponent policy fingerprint", () => {
   })
 
   it.each([
-    ["schema version", policyWith({ schemaVersion: 2 })],
+    ["schema version", policyWith({ schemaVersion: 1 })],
     ["variant", policyWith({ variant: "antichess" })],
     [
       "engine name",
@@ -260,15 +307,27 @@ describe("opponent policy fingerprint", () => {
       }),
     ],
     [
-      "binary hash",
+      "archive hash",
       policyWith({
-        engine: { ...BASE_POLICY.engine, binarySha256: "A".repeat(64) },
+        engine: { ...BASE_POLICY.engine, archiveSha256: "A".repeat(64) },
       }),
     ],
     [
-      "network hash",
+      "executable hash",
       policyWith({
-        engine: { ...BASE_POLICY.engine, networkSha256: "abc" },
+        engine: { ...BASE_POLICY.engine, executableSha256: "abc" },
+      }),
+    ],
+    [
+      "network filename",
+      policyWith({
+        engine: {
+          ...BASE_POLICY.engine,
+          networks: {
+            ...BASE_POLICY.engine.networks,
+            big: { ...BASE_POLICY.engine.networks.big, fileName: "wrong" },
+          },
+        },
       }),
     ],
     [

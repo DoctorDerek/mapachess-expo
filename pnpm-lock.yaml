@@ -48,7 +48,13 @@ importers:
         specifier: ^4
         version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0))
 
-  packages/calibration: {}
+  packages/calibration:
+    dependencies:
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+
+  packages/stockfish: {}
 
 packages:
 

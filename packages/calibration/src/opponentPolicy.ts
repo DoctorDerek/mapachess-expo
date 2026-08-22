@@ -1,20 +1,25 @@
 import { createHash } from "node:crypto"
+import {
+  parseSha256Hex,
+  validateStockfishBuildIdentity,
+  type Sha256Hex,
+  type StockfishBuildIdentity,
+} from "@mapachess/stockfish/build-identity"
 
-export const OPPONENT_POLICY_SCHEMA_VERSION = 1 as const
+export const OPPONENT_POLICY_SCHEMA_VERSION = 2 as const
 export const RANDOM_MOVE_PROBABILITY_SCALE = 10_000 as const
 
-const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v1"
-const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/
+const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const opponentPolicyFingerprintBrand: unique symbol
-declare const sha256HexBrand: unique symbol
 
 export type CalibrationVariant = "standard" | "chess960"
 export type OpponentPolicyFingerprint = `sha256:${string}` & {
   readonly [opponentPolicyFingerprintBrand]: true
 }
-export type Sha256Hex = string & { readonly [sha256HexBrand]: true }
+export { parseSha256Hex }
+export type { Sha256Hex }
 
 export type UciStrength =
   | Readonly<{ kind: "full-strength" }>
@@ -27,13 +32,7 @@ export type OpeningBookPolicy = Readonly<{ kind: "disabled" }>
 export type OpponentPolicy = Readonly<{
   schemaVersion: typeof OPPONENT_POLICY_SCHEMA_VERSION
   variant: CalibrationVariant
-  engine: Readonly<{
-    binarySha256: Sha256Hex
-    name: "stockfish"
-    networkSha256: Sha256Hex
-    sourceRevision: string
-    version: string
-  }>
+  engine: StockfishBuildIdentity
   moveSelection: Readonly<{
     algorithmVersion: string
     kind: "best-or-uniform-random-legal"
@@ -60,16 +59,6 @@ export type OpponentPolicy = Readonly<{
     threads: number
   }>
 }>
-
-export function parseSha256Hex(value: string, label = "SHA-256"): Sha256Hex {
-  if (!SHA256_HEX_PATTERN.test(value)) {
-    throw new TypeError(
-      `${label} must be exactly 64 lowercase hexadecimal characters.`,
-    )
-  }
-
-  return value as Sha256Hex
-}
 
 function assertStableText(value: string, label: string): void {
   if (
@@ -118,14 +107,7 @@ export function validateOpponentPolicy(policy: OpponentPolicy): void {
     throw new TypeError('variant must be "standard" or "chess960".')
   }
 
-  if (policy.engine.name !== "stockfish") {
-    throw new TypeError('engine.name must be "stockfish".')
-  }
-
-  assertStableText(policy.engine.version, "engine.version")
-  assertStableText(policy.engine.sourceRevision, "engine.sourceRevision")
-  parseSha256Hex(policy.engine.binarySha256, "engine.binarySha256")
-  parseSha256Hex(policy.engine.networkSha256, "engine.networkSha256")
+  validateStockfishBuildIdentity(policy.engine)
 
   if (policy.search.strength.kind === "uci-elo") {
     assertPositiveSafeInteger(policy.search.strength.elo, "search.strength.elo")
@@ -200,9 +182,20 @@ export function serializeOpponentPolicy(policy: OpponentPolicy): string {
     engine: {
       name: policy.engine.name,
       version: policy.engine.version,
+      releaseTag: policy.engine.releaseTag,
       sourceRevision: policy.engine.sourceRevision,
-      binarySha256: policy.engine.binarySha256,
-      networkSha256: policy.engine.networkSha256,
+      archiveSha256: policy.engine.archiveSha256,
+      executableSha256: policy.engine.executableSha256,
+      networks: {
+        big: {
+          fileName: policy.engine.networks.big.fileName,
+          sha256: policy.engine.networks.big.sha256,
+        },
+        small: {
+          fileName: policy.engine.networks.small.fileName,
+          sha256: policy.engine.networks.small.sha256,
+        },
+      },
     },
     search: {
       strength,
