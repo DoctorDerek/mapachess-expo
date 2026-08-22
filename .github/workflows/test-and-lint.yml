@@ -1,4 +1,4 @@
-name: ESLint and TypeScript Pipeline
+name: Pull Request Quality Pipeline
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   static-quality:
-    name: Lint and Typecheck
+    name: Lint, Typecheck, and Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -135,6 +135,9 @@ jobs:
 
       - name: Run Blocking TypeScript Typecheck
         run: pnpm typecheck
+
+      - name: Run Blocking Tests and Coverage
+        run: pnpm test:coverage
 
       - name: Enforce ESLint Runner Health
         if: always()
