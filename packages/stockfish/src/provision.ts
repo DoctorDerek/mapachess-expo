@@ -14,9 +14,11 @@ import {
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { promisify } from "node:util"
 import {
-  createStockfish18BuildIdentity,
-  STOCKFISH_18_ARTIFACTS,
-  stockfishRuntimeTargetForHost,
+  STOCKFISH_18_ARTIFACT,
+  STOCKFISH_18_BUILD_IDENTITY,
+  STOCKFISH_18_RUNTIME_TARGET,
+  validateStockfish18Host,
+  validateStockfishBuildIdentity,
   type Sha256Hex,
   type StockfishBuildIdentity,
   type StockfishReleaseArtifact,
@@ -130,15 +132,17 @@ export function validateArchiveEntryPaths(
 
 export function resolveStockfishInstallPaths(
   workspaceRoot: string,
-  target: StockfishRuntimeTarget,
 ): StockfishInstallPaths {
   const resolvedWorkspaceRoot = resolve(workspaceRoot)
   const storageDirectory = resolve(resolvedWorkspaceRoot, ".stockfish")
-  const installDirectory = resolve(storageDirectory, "sf_18", target)
-  const artifact = STOCKFISH_18_ARTIFACTS[target]
+  const installDirectory = resolve(
+    storageDirectory,
+    "sf_18",
+    STOCKFISH_18_RUNTIME_TARGET,
+  )
   const executablePath = resolve(
     installDirectory,
-    artifact.executableRelativePath,
+    STOCKFISH_18_ARTIFACT.executableRelativePath,
   )
   const markerPath = resolve(installDirectory, PROVISIONING_MARKER_FILE_NAME)
 
@@ -280,11 +284,12 @@ async function extractArchive(
 
 export default async function provisionStockfish18(
   workspaceRoot: string,
-  target: StockfishRuntimeTarget = stockfishRuntimeTargetForHost(),
 ): Promise<ProvisionedStockfish> {
-  const artifact = STOCKFISH_18_ARTIFACTS[target]
-  const identity = createStockfish18BuildIdentity(target)
-  const paths = resolveStockfishInstallPaths(workspaceRoot, target)
+  validateStockfish18Host()
+  validateStockfishBuildIdentity(STOCKFISH_18_BUILD_IDENTITY)
+  const artifact = STOCKFISH_18_ARTIFACT
+  const identity = STOCKFISH_18_BUILD_IDENTITY
+  const paths = resolveStockfishInstallPaths(workspaceRoot)
 
   if (await pathExists(paths.installDirectory)) {
     return validateInstalledTree(paths, artifact, identity)

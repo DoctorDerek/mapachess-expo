@@ -22,7 +22,7 @@ afterEach(async () => {
 describe("Stockfish provisioning boundaries", () => {
   it("resolves every generated path beneath the ignored workspace store", () => {
     const workspaceRoot = join(tmpdir(), "mapachess-workspace")
-    const paths = resolveStockfishInstallPaths(workspaceRoot, "windows-x64")
+    const paths = resolveStockfishInstallPaths(workspaceRoot)
 
     expect(paths.storageDirectory.endsWith(".stockfish")).toBe(true)
     expect(

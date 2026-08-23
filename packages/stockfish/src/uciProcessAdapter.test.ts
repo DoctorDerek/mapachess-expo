@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
-import { createStockfish18BuildIdentity, parseSha256Hex } from "./buildIdentity"
+import { parseSha256Hex, STOCKFISH_18_BUILD_IDENTITY } from "./buildIdentity"
 import createStockfishProcessAdapter, {
   StockfishOperationAbortedError,
   type StockfishProcessExit,
@@ -152,7 +152,7 @@ async function createFixture(
   const executable = Buffer.from("fake executable", "utf8")
   await writeFile(executablePath, executable)
   const identity = {
-    ...createStockfish18BuildIdentity("windows-x64"),
+    ...STOCKFISH_18_BUILD_IDENTITY,
     executableSha256: parseSha256Hex(
       createHash("sha256").update(executable).digest("hex"),
     ),
@@ -296,7 +296,7 @@ describe("Stockfish process adapter", () => {
 
     const wrongAdapter = createStockfishProcessAdapter({
       executablePath,
-      expectedIdentity: createStockfish18BuildIdentity("windows-x64"),
+      expectedIdentity: STOCKFISH_18_BUILD_IDENTITY,
       configuration: {
         variant: "standard",
         strength: { kind: "full-strength" },

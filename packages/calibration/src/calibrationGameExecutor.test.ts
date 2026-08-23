@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { createStockfish18BuildIdentity } from "@mapachess/stockfish/build-identity"
+import { STOCKFISH_18_BUILD_IDENTITY } from "@mapachess/stockfish/build-identity"
 import {
   STOCKFISH_PROCESS_ADAPTER_VERSION,
   type StockfishProcessAdapter,
@@ -41,7 +41,7 @@ function createPolicy(
   return {
     schemaVersion: OPPONENT_POLICY_SCHEMA_VERSION,
     variant,
-    engine: createStockfish18BuildIdentity("windows-x64"),
+    engine: STOCKFISH_18_BUILD_IDENTITY,
     search: {
       strength,
       nodeLimit: 1_000,
