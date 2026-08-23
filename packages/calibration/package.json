@@ -8,6 +8,10 @@
       "types": "./dist/calibrationPlan.d.ts",
       "default": "./dist/calibrationPlan.js"
     },
+    "./game-executor": {
+      "types": "./dist/calibrationGameExecutor.d.ts",
+      "default": "./dist/calibrationGameExecutor.js"
+    },
     "./opponent-policy": {
       "types": "./dist/opponentPolicy.d.ts",
       "default": "./dist/opponentPolicy.js"
@@ -17,6 +21,11 @@
     "build": "tsc --project tsconfig.build.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:integration:stockfish": "vitest run --config vitest.integration.config.ts",
     "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/stockfish": "workspace:*",
+    "chess.js": "^1"
   }
 }

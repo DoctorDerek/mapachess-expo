@@ -10,6 +10,7 @@ dist/
 .expo/
 .turbo/
 .vercel/
+.stockfish/
 
 # Test output
 coverage/

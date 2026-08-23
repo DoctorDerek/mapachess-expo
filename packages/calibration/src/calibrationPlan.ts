@@ -55,7 +55,7 @@ export type CalibrationPlanInput = Readonly<{
 
 export type CalibrationPolicyRecord = Readonly<{
   fingerprint: OpponentPolicyFingerprint
-  serializedPolicy: string
+  policy: OpponentPolicy
 }>
 
 export type CalibrationSeat = Readonly<{
@@ -86,6 +86,7 @@ export type CalibrationPlan = Readonly<{
 
 type NormalizedPolicy = Readonly<{
   fingerprint: OpponentPolicyFingerprint
+  policy: OpponentPolicy
   serializedPolicy: string
 }>
 
@@ -143,6 +144,7 @@ function sha256Id(namespace: string, payload: string): `sha256:${string}` {
 function normalizePolicy(policy: OpponentPolicy): NormalizedPolicy {
   return {
     fingerprint: fingerprintOpponentPolicy(policy),
+    policy,
     serializedPolicy: serializeOpponentPolicy(policy),
   }
 }
@@ -372,24 +374,18 @@ export default function createCalibrationPlan(
     serializeNormalizedInput(normalizedInput),
   ) as CalibrationPlanId
   const pairBlocks = createPairBlocks(normalizedInput, planId)
-  const policyRecords = new Map<OpponentPolicyFingerprint, string>()
+  const policyRecords = new Map<OpponentPolicyFingerprint, OpponentPolicy>()
 
   for (const edge of normalizedInput.edges) {
-    policyRecords.set(
-      edge.firstPolicy.fingerprint,
-      edge.firstPolicy.serializedPolicy,
-    )
-    policyRecords.set(
-      edge.secondPolicy.fingerprint,
-      edge.secondPolicy.serializedPolicy,
-    )
+    policyRecords.set(edge.firstPolicy.fingerprint, edge.firstPolicy.policy)
+    policyRecords.set(edge.secondPolicy.fingerprint, edge.secondPolicy.policy)
   }
 
   const policies = [...policyRecords.entries()]
     .sort(([left], [right]) => compareText(left, right))
-    .map(([fingerprint, serializedPolicy]) => ({
+    .map(([fingerprint, policy]) => ({
       fingerprint,
-      serializedPolicy,
+      policy,
     }))
 
   return {

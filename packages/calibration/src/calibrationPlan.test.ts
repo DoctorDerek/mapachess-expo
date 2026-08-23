@@ -30,10 +30,15 @@ function createPolicy(
     variant,
     engine: {
       name: "stockfish",
-      version: "Stockfish 17",
-      sourceRevision: "stockfish-17-source",
-      binarySha256: HASH_A,
-      networkSha256: HASH_B,
+      version: "18",
+      releaseTag: "sf_18",
+      sourceRevision: "1".repeat(40),
+      archiveSha256: HASH_A,
+      executableSha256: HASH_B,
+      networks: {
+        big: { fileName: "nn-cccccccccccc.nnue", sha256: HASH_C },
+        small: { fileName: "nn-dddddddddddd.nnue", sha256: HASH_D },
+      },
     },
     search: {
       strength: { kind: "uci-elo", elo: 1320 },
@@ -175,8 +180,7 @@ describe("calibration plan", () => {
       ...createPolicy(7_500),
       engine: {
         ...POLICY_A.engine,
-        binarySha256: HASH_C,
-        networkSha256: HASH_D,
+        executableSha256: HASH_C,
       },
     }
     const plan = createCalibrationPlan(
