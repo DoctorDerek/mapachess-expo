@@ -59,19 +59,19 @@ export type UnterminatedCalibrationGameResult = Readonly<{
 export type CalibrationGameResult =
   CompletedCalibrationGameResult | UnterminatedCalibrationGameResult
 
-export type CalibrationEngineFactoryInput = Readonly<{
+export type OpenCalibrationEngineInput = Readonly<{
   color: CalibrationColor
   configuration: StockfishUciConfiguration
   game: CalibrationGame
   policy: OpponentPolicy
 }>
 
-export type CalibrationEngineFactory = (
-  input: CalibrationEngineFactoryInput,
+export type OpenCalibrationEngine = (
+  input: OpenCalibrationEngineInput,
 ) => StockfishProcessAdapter | Promise<StockfishProcessAdapter>
 
 export type CalibrationGameExecutionInput = Readonly<{
-  createEngine: CalibrationEngineFactory
+  openEngine: OpenCalibrationEngine
   game: CalibrationGame
   maxPlies: number
   policies: readonly CalibrationPolicyRecord[]
@@ -79,7 +79,7 @@ export type CalibrationGameExecutionInput = Readonly<{
 }>
 
 export type CalibrationPairExecutionInput = Readonly<{
-  createEngine: CalibrationEngineFactory
+  openEngine: OpenCalibrationEngine
   games: readonly CalibrationGame[]
   maxPlies: number
   policies: readonly CalibrationPolicyRecord[]

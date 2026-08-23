@@ -15,7 +15,6 @@ import fingerprintOpponentPolicy, {
   type OpponentPolicy,
   type OpponentPolicyFingerprint,
 } from "./opponentPolicy.js"
-import parseSerializedOpponentPolicy from "./serializedOpponentPolicy.js"
 
 export type CalibrationPolicyMap = ReadonlyMap<
   OpponentPolicyFingerprint,
@@ -76,18 +75,18 @@ function validateExecutablePolicy(policy: OpponentPolicy): void {
   }
 }
 
-export function parseCalibrationPolicies(
+export function indexCalibrationPolicies(
   records: readonly CalibrationPolicyRecord[],
 ): CalibrationPolicyMap {
   const policies = new Map<OpponentPolicyFingerprint, OpponentPolicy>()
 
   for (const record of records) {
-    const policy = parseSerializedOpponentPolicy(record.serializedPolicy)
+    const policy = record.policy
     const fingerprint = fingerprintOpponentPolicy(policy)
 
     if (fingerprint !== record.fingerprint) {
       throw new TypeError(
-        `Calibration policy record ${record.fingerprint} does not match its serialized policy.`,
+        `Calibration policy record ${record.fingerprint} does not match its policy.`,
       )
     }
 

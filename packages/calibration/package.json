@@ -15,10 +15,6 @@
     "./opponent-policy": {
       "types": "./dist/opponentPolicy.d.ts",
       "default": "./dist/opponentPolicy.js"
-    },
-    "./serialized-opponent-policy": {
-      "types": "./dist/serializedOpponentPolicy.d.ts",
-      "default": "./dist/serializedOpponentPolicy.js"
     }
   },
   "scripts": {

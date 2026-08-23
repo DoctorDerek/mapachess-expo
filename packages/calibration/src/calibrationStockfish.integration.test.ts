@@ -118,7 +118,7 @@ describe("pinned Stockfish calibration integration", () => {
       games: plan.games,
       policies: plan.policies,
       maxPlies: 2,
-      createEngine: ({ configuration, policy }) => {
+      openEngine: ({ configuration, policy }) => {
         expect(policy.engine).toEqual(provisioned.identity)
         expect(policy.runtime.target).toBe(provisioned.target)
         return createProvisionedStockfishProcessAdapter(

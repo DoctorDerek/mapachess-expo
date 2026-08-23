@@ -17,7 +17,7 @@ import {
 } from "./calibrationGameTypes.js"
 import type { CalibrationGame } from "./calibrationPlan.js"
 import {
-  parseCalibrationPolicies,
+  indexCalibrationPolicies,
   requireCalibrationPolicy,
   stockfishConfigurationFromPolicy,
   type CalibrationPolicyMap,
@@ -29,8 +29,6 @@ export { CalibrationExecutionAbortedError }
 export type {
   CalibrationColor,
   CalibrationCompletedTermination,
-  CalibrationEngineFactory,
-  CalibrationEngineFactoryInput,
   CalibrationGameExecutionInput,
   CalibrationGameResult,
   CalibrationMoveRecord,
@@ -38,6 +36,8 @@ export type {
   CalibrationPairExecutionInput,
   CalibrationPairResult,
   CompletedCalibrationGameResult,
+  OpenCalibrationEngine,
+  OpenCalibrationEngineInput,
   UnterminatedCalibrationGameResult,
 } from "./calibrationGameTypes.js"
 
@@ -248,14 +248,14 @@ async function playGame(
   let result: CalibrationGameResult | undefined
 
   try {
-    const whiteEngine = await input.createEngine({
+    const whiteEngine = await input.openEngine({
       color: "white",
       configuration: stockfishConfigurationFromPolicy(whitePolicy),
       game: input.game,
       policy: whitePolicy,
     })
     engines.push(whiteEngine)
-    const blackEngine = await input.createEngine({
+    const blackEngine = await input.openEngine({
       color: "black",
       configuration: stockfishConfigurationFromPolicy(blackPolicy),
       game: input.game,
@@ -330,7 +330,7 @@ export default async function executeCalibrationGame(
   }
 
   throwIfAborted(input.signal)
-  const policies = parseCalibrationPolicies(input.policies)
+  const policies = indexCalibrationPolicies(input.policies)
   const chess = new Chess(input.game.fen)
   const initialTermination = classifyTermination(chess)
 
@@ -383,7 +383,7 @@ export async function executeCalibrationPair(
 ): Promise<CalibrationPairResult> {
   const [first, second] = orderedPair(input.games)
   const common = {
-    createEngine: input.createEngine,
+    openEngine: input.openEngine,
     maxPlies: input.maxPlies,
     policies: input.policies,
     ...(input.signal === undefined ? {} : { signal: input.signal }),

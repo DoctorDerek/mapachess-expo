@@ -10,7 +10,7 @@ import {
 } from "@mapachess/stockfish/uci-process-adapter"
 import executeCalibrationGame, {
   executeCalibrationPair,
-  type CalibrationEngineFactory,
+  type OpenCalibrationEngine,
 } from "./calibrationGameExecutor"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
@@ -130,10 +130,10 @@ class FakeEngine implements StockfishProcessAdapter {
   }
 }
 
-function fakeEngineFactory(
+function openFakeEngine(
   bestMove: string | null,
   engines: FakeEngine[],
-): CalibrationEngineFactory {
+): OpenCalibrationEngine {
   return () => {
     const engine = new FakeEngine(bestMove)
     engines.push(engine)
@@ -149,7 +149,7 @@ describe("Standard calibration game execution", () => {
       games: plan.games,
       policies: plan.policies,
       maxPlies: 10,
-      createEngine: fakeEngineFactory("g6g7", engines),
+      openEngine: openFakeEngine("g6g7", engines),
     })
 
     expect(pair.games).toHaveLength(2)
@@ -185,13 +185,13 @@ describe("Standard calibration game execution", () => {
       game,
       policies: plan.policies,
       maxPlies: 1,
-      createEngine: fakeEngineFactory(null, firstEngines),
+      openEngine: openFakeEngine(null, firstEngines),
     })
     const second = await executeCalibrationGame({
       game,
       policies: plan.policies,
       maxPlies: 1,
-      createEngine: fakeEngineFactory(null, secondEngines),
+      openEngine: openFakeEngine(null, secondEngines),
     })
 
     expect(first).toEqual(second)
@@ -216,7 +216,7 @@ describe("Standard calibration game execution", () => {
         game,
         policies: plan.policies,
         maxPlies: 10,
-        createEngine: fakeEngineFactory("a1a8", engines),
+        openEngine: openFakeEngine("a1a8", engines),
       }),
     ).rejects.toThrow("Stockfish returned an illegal move")
     expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
@@ -225,7 +225,7 @@ describe("Standard calibration game execution", () => {
   it("classifies an initially terminal Standard position without engines", async () => {
     const plan = createPlan("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
     const game = plan.games[0]
-    let factoryCalls = 0
+    let openEngineCalls = 0
     expect(game).toBeDefined()
     if (game === undefined) return
 
@@ -233,8 +233,8 @@ describe("Standard calibration game execution", () => {
       game,
       policies: plan.policies,
       maxPlies: 10,
-      createEngine: () => {
-        factoryCalls += 1
+      openEngine: () => {
+        openEngineCalls += 1
         return new FakeEngine(null)
       },
     })
@@ -244,7 +244,7 @@ describe("Standard calibration game execution", () => {
       termination: { kind: "stalemate" },
       moves: [],
     })
-    expect(factoryCalls).toBe(0)
+    expect(openEngineCalls).toBe(0)
   })
 
   it("rejects Chess960 before creating an engine", async () => {
@@ -254,7 +254,7 @@ describe("Standard calibration game execution", () => {
       "chess960",
     )
     const game = plan.games[0]
-    let factoryCalls = 0
+    let openEngineCalls = 0
     expect(game).toBeDefined()
     if (game === undefined) return
 
@@ -263,20 +263,20 @@ describe("Standard calibration game execution", () => {
         game,
         policies: plan.policies,
         maxPlies: 10,
-        createEngine: () => {
-          factoryCalls += 1
+        openEngine: () => {
+          openEngineCalls += 1
           return new FakeEngine(null)
         },
       }),
     ).rejects.toThrow("Chess960 calibration execution is unavailable")
-    expect(factoryCalls).toBe(0)
+    expect(openEngineCalls).toBe(0)
   })
 
   it("rejects a tampered policy record before creating an engine", async () => {
     const plan = createPlan(MATE_IN_ONE_FEN)
     const game = plan.games[0]
     const firstPolicy = plan.policies[0]
-    let factoryCalls = 0
+    let openEngineCalls = 0
     expect(game).toBeDefined()
     expect(firstPolicy).toBeDefined()
     if (game === undefined || firstPolicy === undefined) return
@@ -284,10 +284,13 @@ describe("Standard calibration game execution", () => {
     const policies = [
       {
         ...firstPolicy,
-        serializedPolicy: firstPolicy.serializedPolicy.replace(
-          '"nodeLimit":1000',
-          '"nodeLimit":1001',
-        ),
+        policy: {
+          ...firstPolicy.policy,
+          search: {
+            ...firstPolicy.policy.search,
+            nodeLimit: firstPolicy.policy.search.nodeLimit + 1,
+          },
+        },
       },
       ...plan.policies.slice(1),
     ]
@@ -297,19 +300,19 @@ describe("Standard calibration game execution", () => {
         game,
         policies,
         maxPlies: 10,
-        createEngine: () => {
-          factoryCalls += 1
+        openEngine: () => {
+          openEngineCalls += 1
           return new FakeEngine(null)
         },
       }),
-    ).rejects.toThrow("does not match its serialized policy")
-    expect(factoryCalls).toBe(0)
+    ).rejects.toThrow("does not match its policy")
+    expect(openEngineCalls).toBe(0)
   })
 
   it("rejects a pair that does not reverse policy seats", async () => {
     const plan = createPlan(MATE_IN_ONE_FEN)
     const firstGame = plan.games[0]
-    let factoryCalls = 0
+    let openEngineCalls = 0
     expect(firstGame).toBeDefined()
     if (firstGame === undefined) return
 
@@ -318,14 +321,14 @@ describe("Standard calibration game execution", () => {
         games: [firstGame, firstGame],
         policies: plan.policies,
         maxPlies: 10,
-        createEngine: () => {
-          factoryCalls += 1
+        openEngine: () => {
+          openEngineCalls += 1
           return new FakeEngine(null)
         },
       }),
     ).rejects.toThrow(
       "must preserve the same start and reverse both policy seats",
     )
-    expect(factoryCalls).toBe(0)
+    expect(openEngineCalls).toBe(0)
   })
 })
