@@ -49,7 +49,6 @@ export type {
   StockfishUciConfiguration,
   StockfishUciIdentity,
   StockfishUciTransport,
-  StockfishUciTransportFactory,
 } from "./uciTypes.js"
 
 export default function createStockfishProcessAdapter(
@@ -170,9 +169,8 @@ export default function createStockfishProcessAdapter(
         )
       }
 
-      transport = (input.transportFactory ?? createNodeUciTransport)(
-        input.executablePath,
-      )
+      transport =
+        input.transport ?? createNodeUciTransport(input.executablePath)
       lineIterator = transport.lines[Symbol.asyncIterator]()
       await writeLine("uci")
       const handshake = await readHandshake(signal)

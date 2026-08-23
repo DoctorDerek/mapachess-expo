@@ -77,15 +77,11 @@ export type StockfishUciTransport = Readonly<{
   writeLine: (line: string) => Promise<void>
 }>
 
-export type StockfishUciTransportFactory = (
-  executablePath: string,
-) => StockfishUciTransport
-
 export type StockfishProcessAdapterInput = Readonly<{
   configuration: StockfishUciConfiguration
   executablePath: string
   expectedIdentity: StockfishBuildIdentity
-  transportFactory?: StockfishUciTransportFactory
+  transport?: StockfishUciTransport
 }>
 
 export type StockfishProcessAdapter = Readonly<{

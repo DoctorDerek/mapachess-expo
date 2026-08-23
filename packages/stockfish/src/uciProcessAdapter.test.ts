@@ -169,7 +169,7 @@ async function createFixture(
       multiPv: 1,
       ponder: false,
     },
-    transportFactory: () => transport,
+    transport,
   })
 }
 
@@ -305,7 +305,7 @@ describe("Stockfish process adapter", () => {
         multiPv: 1,
         ponder: false,
       },
-      transportFactory: () => transport,
+      transport,
     })
 
     await expect(wrongAdapter.boot()).rejects.toThrow(
