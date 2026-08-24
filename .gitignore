@@ -11,6 +11,7 @@ dist/
 .turbo/
 .vercel/
 .stockfish/
+.calibration/
 
 # Test output
 coverage/
