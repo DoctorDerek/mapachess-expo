@@ -157,7 +157,7 @@ export function serializeCalibrationGameEvidence(
   return `${JSON.stringify(evidence, null, 2)}\n`
 }
 
-function completedResultTag(
+export function completedCalibrationResultTag(
   result: CompletedCalibrationGameResult,
 ): "0-1" | "1-0" | "1/2-1/2" {
   if (result.termination.kind !== "checkmate") return "1/2-1/2"
@@ -174,7 +174,7 @@ export function serializeCalibrationGamePgn(
   }
 
   const result = evidence.result
-  const resultTag = completedResultTag(result)
+  const resultTag = completedCalibrationResultTag(result)
   const chess = new Chess(evidence.game.fen)
   chess.setHeader("Event", `Mapachess calibration: ${evidence.game.edgeId}`)
   chess.setHeader("Site", "Local")
