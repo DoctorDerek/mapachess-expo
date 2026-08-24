@@ -116,8 +116,9 @@ async function validateInstalledBayesElo(
 export default async function provisionBayesElo(
   workspaceRoot: string,
   downloadExecutable: DownloadBayesEloExecutable = downloadBayesEloExecutable,
+  platform: NodeJS.Platform = process.platform,
 ): Promise<ProvisionedBayesElo> {
-  validateBayesEloHost()
+  validateBayesEloHost(platform)
   const paths = resolveBayesEloInstallPaths(workspaceRoot)
 
   if (await pathExists(paths.executablePath)) {

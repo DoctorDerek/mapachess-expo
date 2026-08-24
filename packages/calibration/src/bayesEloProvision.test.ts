@@ -69,10 +69,14 @@ describe("BayesElo provisioning", () => {
     const bytes = Buffer.from("altered BayesElo", "utf8")
 
     await expect(
-      provisionBayesElo(workspaceRoot, async (url) => {
-        expect(url).toBe(BAYES_ELO_EXECUTABLE_IDENTITY.downloadUrl)
-        return bytes
-      }),
+      provisionBayesElo(
+        workspaceRoot,
+        async (url) => {
+          expect(url).toBe(BAYES_ELO_EXECUTABLE_IDENTITY.downloadUrl)
+          return bytes
+        },
+        "win32",
+      ),
     ).rejects.toThrow("BayesElo executable SHA-256 mismatch")
 
     const paths = resolveBayesEloInstallPaths(workspaceRoot)
