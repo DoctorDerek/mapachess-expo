@@ -3,7 +3,9 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 import { standardPlanFixture } from "../test/calibrationFixtures"
-import createBayesEloInput from "./bayesEloInput"
+import createBayesEloInput, {
+  type BayesEloPolicyAliasRecord,
+} from "./bayesEloInput"
 import parseBayesEloRatingEvidence, {
   type BayesEloBridgeOffset,
 } from "./bayesEloRatingEvidence"
@@ -60,6 +62,36 @@ ResultSet-EloRating>ResultSet>`
 
 function observedStderr(ignoredGames = 0): string {
   return `2 game(s) loaded, ${ignoredGames} game(s) with unknown result ignored.\r\n`
+}
+
+function chickenPolicyAliases(): readonly BayesEloPolicyAliasRecord[] {
+  return STANDARD_CHICKEN_POLICY_CATALOG.toSorted((left, right) =>
+    left.policyFingerprint.localeCompare(right.policyFingerprint),
+  ).map(({ policyFingerprint }, index) => ({
+    alias: `P${String(index + 1).padStart(3, "0")}`,
+    policyFingerprint,
+  }))
+}
+
+function saturatedLikelihoodOutput(): string {
+  return `version 0056, Copyright (C) 1997-2007 Remi Coulom.
+ResultSet>ResultSet-EloRating>Rank Name   Elo    +    - games score oppo. draws
+   1 P003  1750  168  114    40   94%  1320    3%
+   2 P004  1320   96   97    80   50%  1311    3%
+   3 P002   873   89   86    80   48%   923    6%
+   4 P007   526   81   81    80   51%   509   10%
+   5 P001   145   61   62    80   38%   287   33%
+   6 P006    49   59   58    70   55%     4   44%
+   7 P005  -184   92  109    30   15%    49   30%
+ResultSet-EloRating>      P003 P004 P002 P007 P001 P006 P005
+P003       9999 999910000100001000010000
+P004     0      9999 9999100001000010000
+P002     0    0      9999 9999 999910000
+P007     0    0    0      9999 9999 9999
+P001     0    0    0    0      9877 9999
+P006     0    0    0    0  122      9999
+P005     0    0    0    0    0    0${"     "}
+ResultSet-EloRating>ResultSet>`
 }
 
 describe("BayesElo rating evidence", () => {
@@ -198,5 +230,62 @@ describe("BayesElo rating evidence", () => {
         stderr: observedStderr(),
       }),
     ).toThrow("BayesElo ratings do not cover every policy alias.")
+  })
+
+  it("parses saturated fixed-width likelihood columns", async () => {
+    const input = await completedInput()
+    const policyAliases = chickenPolicyAliases()
+    const anchorPolicy = STANDARD_CHICKEN_POLICY_CATALOG.find(
+      ({ id }) => id === "uci-elo-1320",
+    )
+    const anchorAlias = policyAliases.find(
+      ({ policyFingerprint }) =>
+        policyFingerprint === anchorPolicy?.policyFingerprint,
+    )
+    if (anchorPolicy === undefined || anchorAlias === undefined) {
+      throw new Error("Standard Chicken anchor fixture is missing.")
+    }
+
+    const evidence = parseBayesEloRatingEvidence({
+      input: {
+        ...input,
+        completedGameCount: 230,
+        completedPairCount: 115,
+        excludedPairCount: 5,
+        policyAliases,
+      },
+      bridgeOffset: {
+        anchorElo: 1320,
+        alias: anchorAlias.alias,
+        policyFingerprint: anchorPolicy.policyFingerprint,
+      },
+      stdout: saturatedLikelihoodOutput(),
+      stderr: "230 game(s) loaded, 0 game(s) with unknown result ignored.\r\n",
+    })
+
+    expect(evidence.ratings).toHaveLength(7)
+    expect(evidence.likelihoodOfSuperiority).toHaveLength(42)
+    expect(evidence.likelihoodOfSuperiority).toContainEqual({
+      policyAlias: "P003",
+      policyFingerprint: STANDARD_CHICKEN_POLICY_CATALOG.find(
+        ({ id }) => id === "uci-elo-1600",
+      )?.policyFingerprint,
+      opponentAlias: "P007",
+      opponentPolicyFingerprint: STANDARD_CHICKEN_POLICY_CATALOG.find(
+        ({ id }) => id === "random-06500",
+      )?.policyFingerprint,
+      probabilityBasisPoints: 10_000,
+    })
+    expect(evidence.likelihoodOfSuperiority).toContainEqual({
+      policyAlias: "P006",
+      policyFingerprint: STANDARD_CHICKEN_POLICY_CATALOG.find(
+        ({ id }) => id === "random-09000",
+      )?.policyFingerprint,
+      opponentAlias: "P001",
+      opponentPolicyFingerprint: STANDARD_CHICKEN_POLICY_CATALOG.find(
+        ({ id }) => id === "random-08000",
+      )?.policyFingerprint,
+      probabilityBasisPoints: 122,
+    })
   })
 })

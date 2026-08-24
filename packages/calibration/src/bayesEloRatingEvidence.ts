@@ -100,10 +100,8 @@ function normalizedOutputLines(stdout: string): readonly string[] {
   return stdout
     .replaceAll("\r", "\n")
     .split("\n")
-    .map((line) =>
-      line.replace(/(?:ResultSet-EloRating>|ResultSet>)/g, "").trim(),
-    )
-    .filter((line) => line.length > 0)
+    .map((line) => line.replace(/(?:ResultSet-EloRating>|ResultSet>)/g, ""))
+    .filter((line) => line.trim().length > 0)
 }
 
 function aliasRecordsByAlias(
@@ -113,7 +111,9 @@ function aliasRecordsByAlias(
 }
 
 function parseRatingRows(lines: readonly string[]): readonly ParsedRatingRow[] {
-  const headerIndex = lines.findIndex((line) => line.startsWith("Rank Name"))
+  const headerIndex = lines.findIndex((line) =>
+    line.trimStart().startsWith("Rank Name"),
+  )
   if (headerIndex === -1) {
     throw new TypeError("BayesElo ratings header is missing.")
   }
@@ -182,7 +182,7 @@ function parseLikelihoodMatrix(
 ): readonly BayesEloLikelihoodOfSuperiority[] {
   const ratingAliases = new Set(ratings.map(({ alias }) => alias))
   const headerIndex = lines.findIndex((line) => {
-    const cells = line.split(/\s+/)
+    const cells = line.trim().split(/\s+/)
     return (
       cells.length === ratings.length &&
       cells.every((cell) => ratingAliases.has(cell as BayesEloPolicyAlias))
@@ -192,11 +192,51 @@ function parseLikelihoodMatrix(
     throw new TypeError("BayesElo likelihood header is missing.")
   }
 
-  const columns = lines[headerIndex]
-    ?.split(/\s+/)
+  const header = lines[headerIndex]
+  const columns = header
+    ?.trim()
+    .split(/\s+/)
     .map((alias) => alias as BayesEloPolicyAlias)
-  if (columns === undefined) {
+  if (header === undefined || columns === undefined) {
     throw new TypeError("BayesElo likelihood columns are missing.")
+  }
+  let aliasSearchStart = 0
+  const headerAliasStarts = columns.map((alias) => {
+    const aliasStart = header.indexOf(alias, aliasSearchStart)
+    if (aliasStart === -1) {
+      throw new TypeError("BayesElo likelihood column alignment is invalid.")
+    }
+
+    aliasSearchStart = aliasStart + alias.length
+    return aliasStart
+  })
+  const firstHeaderAliasStart = headerAliasStarts[0]
+  const secondHeaderAliasStart = headerAliasStarts[1]
+  if (
+    firstHeaderAliasStart === undefined ||
+    secondHeaderAliasStart === undefined
+  ) {
+    throw new TypeError("BayesElo likelihood column alignment is invalid.")
+  }
+  const columnWidth = secondHeaderAliasStart - firstHeaderAliasStart
+  if (
+    !Number.isSafeInteger(columnWidth) ||
+    columnWidth <= 0 ||
+    headerAliasStarts
+      .slice(1)
+      .some(
+        (aliasStart, index) =>
+          aliasStart - (headerAliasStarts[index] ?? aliasStart) !== columnWidth,
+      )
+  ) {
+    throw new TypeError("BayesElo likelihood column alignment is invalid.")
+  }
+  const columnStarts = columns.map(
+    (alias, index) =>
+      (headerAliasStarts[index] ?? 0) - (columnWidth - alias.length),
+  )
+  if (columnStarts.some((columnStart) => columnStart < 0)) {
+    throw new TypeError("BayesElo likelihood column alignment is invalid.")
   }
 
   const likelihoods: BayesEloLikelihoodOfSuperiority[] = []
@@ -205,7 +245,7 @@ function parseLikelihoodMatrix(
     headerIndex + 1,
     headerIndex + 1 + columns.length,
   )) {
-    const [rawRowAlias, ...rawValues] = line.split(/\s+/)
+    const rawRowAlias = /^\s*(P\d+)/.exec(line)?.[1]
     if (rawRowAlias === undefined || !POLICY_ALIAS_PATTERN.test(rawRowAlias)) {
       throw new TypeError("BayesElo likelihood row alias is invalid.")
     }
@@ -214,7 +254,14 @@ function parseLikelihoodMatrix(
     if (!ratingAliases.has(rowAlias) || seenRows.has(rowAlias)) {
       throw new TypeError("BayesElo likelihood row identity is invalid.")
     }
-    if (rawValues.length !== columns.length - 1) {
+    const firstColumnStart = columnStarts[0]
+    const lastColumnStart = columnStarts.at(-1)
+    if (
+      firstColumnStart === undefined ||
+      lastColumnStart === undefined ||
+      line.slice(0, firstColumnStart).trim() !== rowAlias ||
+      line.slice(lastColumnStart + columnWidth).trim().length > 0
+    ) {
       throw new TypeError("BayesElo likelihood row width is invalid.")
     }
 
@@ -224,11 +271,21 @@ function parseLikelihoodMatrix(
     }
 
     seenRows.add(rowAlias)
-    let valueIndex = 0
-    for (const opponentAlias of columns) {
-      if (opponentAlias === rowAlias) continue
-      const rawProbability = rawValues[valueIndex]
-      if (rawProbability === undefined) {
+    for (const [columnIndex, opponentAlias] of columns.entries()) {
+      const columnStart = columnStarts[columnIndex]
+      if (columnStart === undefined) {
+        throw new TypeError("BayesElo likelihood column is missing.")
+      }
+      const rawProbability = line
+        .slice(columnStart, columnStart + columnWidth)
+        .trim()
+      if (opponentAlias === rowAlias) {
+        if (rawProbability.length > 0) {
+          throw new TypeError("BayesElo likelihood diagonal must be empty.")
+        }
+        continue
+      }
+      if (rawProbability.length === 0) {
         throw new TypeError("BayesElo likelihood value is missing.")
       }
       const probabilityBasisPoints = parseSafeInteger(
@@ -252,7 +309,6 @@ function parseLikelihoodMatrix(
         opponentPolicyFingerprint: opponent.policyFingerprint,
         probabilityBasisPoints,
       })
-      valueIndex += 1
     }
   }
 
