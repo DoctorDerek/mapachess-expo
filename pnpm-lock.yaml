@@ -32,6 +32,9 @@ importers:
       eslint-plugin-only-warn:
         specifier: ^1
         version: 1.2.1
+      jiti:
+        specifier: ^2
+        version: 2.7.0
       prettier:
         specifier: ^3
         version: 3.9.6
@@ -1482,8 +1485,7 @@ snapshots:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
 
-  jiti@2.7.0:
-    optional: true
+  jiti@2.7.0: {}
 
   js-tokens@10.0.0: {}
 
