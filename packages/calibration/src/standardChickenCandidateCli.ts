@@ -13,6 +13,7 @@ import executeCalibrationSmokeBatch from "./calibrationSmokeBatch.js"
 import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary.js"
 import standardChickenCandidatePlan, {
   STANDARD_CHICKEN_ANCHOR,
+  STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
   STANDARD_CHICKEN_MAX_PLIES,
 } from "./standardChickenCandidatePlan.js"
 import createStandardChickenShortlist from "./standardChickenShortlist.js"
@@ -69,7 +70,7 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
   const workspaceRoot = resolve(values["workspace-root"])
   const evidenceRoot = resolve(
     workspaceRoot,
-    values["evidence-root"] ?? ".calibration/standard-chicken-candidates",
+    values["evidence-root"] ?? STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
   )
   const maximumNewPairs = positiveSafeInteger(
     values["maximum-new-pairs"],

@@ -2,6 +2,7 @@ import { Chess } from "chess.js"
 import { describe, expect, it } from "vitest"
 import standardChickenCandidatePlan, {
   STANDARD_CHICKEN_ANCHOR,
+  STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
   STANDARD_CHICKEN_MAX_PLIES,
   STANDARD_CHICKEN_NODE_LIMIT,
   STANDARD_CHICKEN_OPENINGS,
@@ -13,7 +14,10 @@ import standardChickenCandidatePlan, {
 describe("Standard Chicken candidate plan", () => {
   it("pins the bounded connected sweep approved for first evidence", () => {
     expect(STANDARD_CHICKEN_TARGET_ELO).toBe(100)
-    expect(STANDARD_CHICKEN_MAX_PLIES).toBe(400)
+    expect(STANDARD_CHICKEN_MAX_PLIES).toBe(500)
+    expect(STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT).toBe(
+      ".calibration/standard-chicken-candidates-500-plies",
+    )
     expect(STANDARD_CHICKEN_NODE_LIMIT).toBe(10_000)
     expect(STANDARD_CHICKEN_PAIRS_PER_OPENING).toBe(4)
     expect(STANDARD_CHICKEN_OPENINGS).toHaveLength(5)
