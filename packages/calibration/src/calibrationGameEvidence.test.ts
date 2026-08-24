@@ -1,9 +1,12 @@
+import { Chess } from "chess.js"
 import { describe, expect, it } from "vitest"
 import { STOCKFISH_18_BUILD_IDENTITY } from "@mapachess/stockfish/build-identity"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
 import createCalibrationGameEvidence, {
   CALIBRATION_GAME_EVIDENCE_SCHEMA_VERSION,
   serializeCalibrationGameEvidence,
+  serializeCalibrationGamePgn,
+  type CalibrationGameEvidence,
 } from "./calibrationGameEvidence"
 import type { CalibrationGameResult } from "./calibrationGameTypes"
 import createCalibrationPlan, {
@@ -22,6 +25,7 @@ import {
 } from "./opponentPolicy"
 
 const STALEMATE_FEN = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
+const MATE_IN_ONE_FEN = "7k/8/5KQ1/8/8/8/8/8 w - - 0 1"
 
 function createPolicy(nodeLimit: number): OpponentPolicy {
   return {
@@ -88,6 +92,48 @@ function createFixture(seed = 42): Readonly<{
       termination: { kind: "stalemate" },
     },
   }
+}
+
+function createMateInOneEvidence() {
+  const plan = createCalibrationPlan({
+    schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
+    seed: 42,
+    variant: "standard",
+    openings: [{ id: "mate-in-one", fen: MATE_IN_ONE_FEN }],
+    edges: [
+      {
+        id: "fixture-edge",
+        pairsPerOpening: 1,
+        policyA: createPolicy(1_000),
+        policyB: createPolicy(2_000),
+      },
+    ],
+  })
+  const game = plan.games[0]
+  if (game === undefined) throw new Error("Fixture game is missing.")
+  const chess = new Chess(game.fen)
+  const fenBefore = chess.fen()
+  chess.move({ from: "g6", to: "g7" })
+  const result: CalibrationGameResult = {
+    status: "completed",
+    gameId: game.gameId,
+    pairId: game.pairId,
+    finalFen: chess.fen(),
+    moves: [
+      {
+        ply: 1,
+        color: "white",
+        policyFingerprint: game.white.policyFingerprint,
+        source: "stockfish",
+        uci: "g6g7",
+        fenBefore,
+        fenAfter: chess.fen(),
+      },
+    ],
+    termination: { kind: "checkmate", winner: "white" },
+  }
+
+  return createCalibrationGameEvidence({ plan, maxPlies: 10, result })
 }
 
 describe("calibration game evidence", () => {
@@ -176,5 +222,60 @@ describe("calibration game evidence", () => {
         },
       }),
     ).toThrow("must exhaust its execution bound")
+  })
+
+  it("exports a completed game as strict replayable PGN", () => {
+    const evidence = createMateInOneEvidence()
+    const pgn = serializeCalibrationGamePgn(evidence)
+    const replay = new Chess()
+    replay.loadPgn(pgn, { strict: true })
+
+    expect(replay.fen()).toBe(evidence.result.finalFen)
+    expect(replay.getHeaders()).toMatchObject({
+      Event: "Mapachess calibration: fixture-edge",
+      Site: "Local",
+      Date: "????.??.??",
+      Round: "1",
+      White: evidence.game.white.policyFingerprint,
+      Black: evidence.game.black.policyFingerprint,
+      Result: "1-0",
+      SetUp: "1",
+      FEN: evidence.game.fen,
+      MapachessPlan: evidence.planId,
+      MapachessPair: evidence.game.pairId,
+      MapachessGame: evidence.game.gameId,
+      MapachessOpening: evidence.game.openingId,
+      MapachessTermination: "checkmate",
+    })
+    expect(pgn).toMatch(/1\. Qg7# 1-0\n$/)
+  })
+
+  it("exports a completed draw and rejects an unfinished game", () => {
+    const fixture = createFixture()
+    const drawEvidence = createCalibrationGameEvidence({
+      ...fixture,
+      maxPlies: 200,
+    })
+    expect(serializeCalibrationGamePgn(drawEvidence)).toMatch(
+      /\[Result "1\/2-1\/2"\]/,
+    )
+
+    const completedEvidence = createMateInOneEvidence()
+    const unfinishedEvidence: CalibrationGameEvidence = {
+      ...completedEvidence,
+      maxPlies: 1,
+      result: {
+        gameId: completedEvidence.result.gameId,
+        pairId: completedEvidence.result.pairId,
+        finalFen: completedEvidence.result.finalFen,
+        moves: completedEvidence.result.moves,
+        status: "unterminated",
+        termination: "max-plies",
+        maxPlies: 1,
+      },
+    }
+    expect(() => serializeCalibrationGamePgn(unfinishedEvidence)).toThrow(
+      "Only a completed calibration game can be exported as PGN",
+    )
   })
 })

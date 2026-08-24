@@ -1,4 +1,8 @@
-import type { CalibrationGameResult } from "./calibrationGameTypes.js"
+import { Chess } from "chess.js"
+import type {
+  CalibrationGameResult,
+  CompletedCalibrationGameResult,
+} from "./calibrationGameTypes.js"
 import type {
   CalibrationGame,
   CalibrationPlan,
@@ -6,6 +10,8 @@ import type {
 } from "./calibrationPlan.js"
 
 export const CALIBRATION_GAME_EVIDENCE_SCHEMA_VERSION = 1 as const
+
+const STANDARD_START_FEN = new Chess().fen()
 
 export type CalibrationGameEvidence = Readonly<{
   schemaVersion: typeof CALIBRATION_GAME_EVIDENCE_SCHEMA_VERSION
@@ -149,4 +155,63 @@ export function serializeCalibrationGameEvidence(
   evidence: CalibrationGameEvidence,
 ): string {
   return `${JSON.stringify(evidence, null, 2)}\n`
+}
+
+function completedResultTag(
+  result: CompletedCalibrationGameResult,
+): "0-1" | "1-0" | "1/2-1/2" {
+  if (result.termination.kind !== "checkmate") return "1/2-1/2"
+  return result.termination.winner === "white" ? "1-0" : "0-1"
+}
+
+export function serializeCalibrationGamePgn(
+  evidence: CalibrationGameEvidence,
+): string {
+  if (evidence.result.status !== "completed") {
+    throw new TypeError(
+      "Only a completed calibration game can be exported as PGN.",
+    )
+  }
+
+  const result = evidence.result
+  const resultTag = completedResultTag(result)
+  const chess = new Chess(evidence.game.fen)
+  chess.setHeader("Event", `Mapachess calibration: ${evidence.game.edgeId}`)
+  chess.setHeader("Site", "Local")
+  chess.setHeader("Date", "????.??.??")
+  chess.setHeader("Round", String(evidence.game.gameInPair))
+  chess.setHeader("White", evidence.game.white.policyFingerprint)
+  chess.setHeader("Black", evidence.game.black.policyFingerprint)
+  chess.setHeader("Result", resultTag)
+  chess.setHeader("MapachessPlan", evidence.planId)
+  chess.setHeader("MapachessPair", evidence.game.pairId)
+  chess.setHeader("MapachessGame", evidence.game.gameId)
+  chess.setHeader("MapachessOpening", evidence.game.openingId)
+  chess.setHeader("MapachessWhiteSeed", String(evidence.game.white.randomSeed))
+  chess.setHeader("MapachessBlackSeed", String(evidence.game.black.randomSeed))
+  chess.setHeader("MapachessTermination", result.termination.kind)
+
+  if (evidence.game.fen !== STANDARD_START_FEN) {
+    chess.setHeader("SetUp", "1")
+    chess.setHeader("FEN", evidence.game.fen)
+  }
+
+  for (const move of result.moves) {
+    chess.move(
+      {
+        from: move.uci.slice(0, 2),
+        to: move.uci.slice(2, 4),
+        ...(move.uci.length === 5 ? { promotion: move.uci.slice(4) } : {}),
+      },
+      { strict: true },
+    )
+  }
+
+  if (chess.fen() !== result.finalFen) {
+    throw new TypeError(
+      "Calibration PGN replay does not reach the recorded final FEN.",
+    )
+  }
+
+  return `${chess.pgn({ newline: "\n", maxWidth: 0 })}\n`
 }
