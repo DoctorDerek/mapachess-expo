@@ -17,6 +17,7 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:integration:stockfish": "turbo run test:integration:stockfish",
+    "test:xstate-diff": "vitest run --coverage --config vitest.xstate.config.ts",
     "typecheck": "turbo run typecheck",
     "xstate:diff": "node scripts/runTypeScript.mjs scripts/xstate-diff/xstateDiff.cli.ts"
   },
