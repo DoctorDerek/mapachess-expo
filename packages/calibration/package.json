@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
+    "chicken": "node dist/standardChickenCandidateCli.js",
     "smoke": "node dist/calibrationSmokeCli.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
