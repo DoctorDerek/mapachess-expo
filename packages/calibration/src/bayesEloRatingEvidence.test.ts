@@ -8,6 +8,7 @@ import parseBayesEloRatingEvidence, {
   type BayesEloBridgeOffset,
 } from "./bayesEloRatingEvidence"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch"
+import { STANDARD_CHICKEN_POLICY_CATALOG } from "./standardChickenCandidatePlan"
 
 const temporaryRoots: string[] = []
 
@@ -152,5 +153,50 @@ describe("BayesElo rating evidence", () => {
         stderr: observedStderr(1),
       }),
     ).toThrow("expected 2 loaded and 0 ignored")
+  })
+
+  it("rejects rating output that omits a planned policy alias", async () => {
+    const input = await completedInput()
+    const first = input.policyAliases[0]
+    const second = input.policyAliases[1]
+    const thirdPolicy = STANDARD_CHICKEN_POLICY_CATALOG[2]
+    if (first === undefined || second === undefined) {
+      throw new Error("BayesElo rating fixture aliases are missing.")
+    }
+    const bridgeOffset: BayesEloBridgeOffset = {
+      anchorElo: 1320,
+      alias: first.alias,
+      policyFingerprint: first.policyFingerprint,
+    }
+
+    expect(() =>
+      parseBayesEloRatingEvidence({
+        input: {
+          ...input,
+          policyAliases: [first, { ...second, alias: first.alias }],
+        },
+        bridgeOffset,
+        stdout: observedOutput(first.alias, second.alias),
+        stderr: observedStderr(),
+      }),
+    ).toThrow("BayesElo input contains duplicate policy aliases.")
+
+    expect(() =>
+      parseBayesEloRatingEvidence({
+        input: {
+          ...input,
+          policyAliases: [
+            ...input.policyAliases,
+            {
+              alias: "P003",
+              policyFingerprint: thirdPolicy.policyFingerprint,
+            },
+          ],
+        },
+        bridgeOffset,
+        stdout: observedOutput(first.alias, second.alias),
+        stderr: observedStderr(),
+      }),
+    ).toThrow("BayesElo ratings do not cover every policy alias.")
   })
 })

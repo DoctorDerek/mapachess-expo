@@ -297,6 +297,9 @@ export default function parseBayesEloRatingEvidence(
   }
 
   const aliases = aliasRecordsByAlias(input.input.policyAliases)
+  if (aliases.size !== input.input.policyAliases.length) {
+    throw new TypeError("BayesElo input contains duplicate policy aliases.")
+  }
   const parsedRatings = parseRatingRows(lines)
   const seenAliases = new Set<BayesEloPolicyAlias>()
   const ratings = parsedRatings.map((rating): BayesEloRating => {
@@ -327,6 +330,9 @@ export default function parseBayesEloRatingEvidence(
     (total, rating) => total + rating.games,
     0,
   )
+  if (seenAliases.size !== aliases.size) {
+    throw new TypeError("BayesElo ratings do not cover every policy alias.")
+  }
   if (countedGameSeats !== input.input.completedGameCount * 2) {
     throw new TypeError(
       "BayesElo rating game counts do not match the completed input.",
