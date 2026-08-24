@@ -11,6 +11,7 @@ dist/
 .turbo/
 .vercel/
 .stockfish/
+.bayeselo/
 .calibration/
 
 # Test output
