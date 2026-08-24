@@ -1,4 +1,6 @@
-import { resolve } from "node:path"
+import { mkdtemp, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join, resolve } from "node:path"
 import { Chess } from "chess.js"
 import { beforeAll, describe, expect, it } from "vitest"
 import provisionStockfish18, {
@@ -12,6 +14,8 @@ import { executeCalibrationPair } from "./calibrationGameExecutor"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
 } from "./calibrationPlan"
+import executeCalibrationSmokeBatch from "./calibrationSmokeBatch"
+import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary"
 import {
   CALIBRATION_RANDOM_ALGORITHM_VERSION,
   CALIBRATION_SEED_DERIVATION_VERSION,
@@ -23,6 +27,7 @@ import {
   OPPONENT_POLICY_SCHEMA_VERSION,
   type OpponentPolicy,
 } from "./opponentPolicy"
+import standardCalibrationSmokePlan from "./standardCalibrationSmokePlan"
 
 const WORKSPACE_ROOT = resolve(import.meta.dirname, "../../..")
 const STANDARD_START_FEN =
@@ -144,5 +149,89 @@ describe("pinned Stockfish calibration integration", () => {
       { kind: "checkmate", winner: "white" },
       { kind: "checkmate", winner: "white" },
     ])
+  })
+
+  it("persists, summarizes, and resumes the pinned Standard smoke plan", async () => {
+    const rootDirectory = await mkdtemp(
+      join(tmpdir(), "mapachess-calibration-smoke-"),
+    )
+
+    try {
+      const firstBatch = await executeCalibrationSmokeBatch({
+        rootDirectory,
+        plan: standardCalibrationSmokePlan,
+        maxPlies: 200,
+        maximumNewGames: 2,
+        openEngine: ({ configuration, policy }) => {
+          expect(policy.engine).toEqual(provisioned.identity)
+          expect(policy.runtime.target).toBe(provisioned.target)
+          return createProvisionedStockfishProcessAdapter(
+            provisioned,
+            configuration,
+          )
+        },
+      })
+      const firstSummary = await summarizeCalibrationSmokeEvidence({
+        rootDirectory,
+        plan: standardCalibrationSmokePlan,
+        maxPlies: 200,
+      })
+      const resumedBatch = await executeCalibrationSmokeBatch({
+        rootDirectory,
+        plan: standardCalibrationSmokePlan,
+        maxPlies: 200,
+        maximumNewGames: 2,
+        openEngine: () => {
+          throw new Error("A completed smoke plan must not reopen Stockfish.")
+        },
+      })
+      const resumedSummary = await summarizeCalibrationSmokeEvidence({
+        rootDirectory,
+        plan: standardCalibrationSmokePlan,
+        maxPlies: 200,
+      })
+      const scheduledGameIds = standardCalibrationSmokePlan.games.map(
+        (game) => game.gameId,
+      )
+
+      expect(firstBatch).toEqual({
+        planId: standardCalibrationSmokePlan.planId,
+        previouslyStoredGameIds: [],
+        executedGameIds: scheduledGameIds,
+        remainingGameIds: [],
+      })
+      expect(firstSummary).toMatchObject({
+        planId: standardCalibrationSmokePlan.planId,
+        variant: "standard",
+        maxPlies: 200,
+        scheduledGameCount: 2,
+        storedGameCount: 2,
+        completedGameCount: 2,
+        unterminatedGameCount: 0,
+        scoredPairCount: 1,
+        connectivity: { isConnected: true },
+      })
+      expect(firstSummary.edges).toEqual([
+        {
+          edgeId: "nodes-1000-vs-2000",
+          scheduledGameCount: 2,
+          storedGameCount: 2,
+          completedGameCount: 2,
+          unterminatedGameCount: 0,
+          scoredPairCount: 1,
+          scheduledPairCount: 1,
+          incompletePairCount: 0,
+        },
+      ])
+      expect(resumedBatch).toEqual({
+        planId: standardCalibrationSmokePlan.planId,
+        previouslyStoredGameIds: scheduledGameIds,
+        executedGameIds: [],
+        remainingGameIds: [],
+      })
+      expect(resumedSummary).toEqual(firstSummary)
+    } finally {
+      await rm(rootDirectory, { force: true, recursive: true })
+    }
   })
 })
