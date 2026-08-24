@@ -5,9 +5,9 @@ import {
 import type {
   CalibrationGame,
   CalibrationGameId,
-  CalibrationPairId,
   CalibrationPlan,
 } from "./calibrationPlan.js"
+import listCalibrationPlanPairs from "./calibrationPlanPairs.js"
 import type { OpponentPolicyFingerprint } from "./opponentPolicy.js"
 
 export type SummarizeCalibrationSmokeEvidenceInput = Readonly<{
@@ -135,37 +135,6 @@ function requireEdgeSummary(
   }
 
   return edge
-}
-
-function indexPairs(
-  plan: CalibrationPlan,
-): readonly (readonly [CalibrationGame, CalibrationGame])[] {
-  const pairs = new Map<CalibrationPairId, CalibrationGame[]>()
-
-  for (const game of plan.games) {
-    const pair = pairs.get(game.pairId)
-    if (pair === undefined) pairs.set(game.pairId, [game])
-    else pair.push(game)
-  }
-
-  return [...pairs.values()].map((games) => {
-    const ordered = games.toSorted(
-      (left, right) => left.gameInPair - right.gameInPair,
-    )
-    const first = ordered[0]
-    const second = ordered[1]
-    if (
-      ordered.length !== 2 ||
-      first === undefined ||
-      second === undefined ||
-      first.gameInPair !== 1 ||
-      second.gameInPair !== 2
-    ) {
-      throw new TypeError("A calibration summary requires complete plan pairs.")
-    }
-
-    return [first, second]
-  })
 }
 
 function requirePolicyScore(
@@ -321,7 +290,7 @@ export default async function summarizeCalibrationSmokeEvidence(
     ]),
   )
 
-  for (const [first, second] of indexPairs(input.plan)) {
+  for (const [first, second] of listCalibrationPlanPairs(input.plan)) {
     const firstMarker = storedMarkers.get(first.gameId)
     const secondMarker = storedMarkers.get(second.gameId)
     if (
