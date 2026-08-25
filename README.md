@@ -1,6 +1,8 @@
 # Mapachess
 
-[![Codecov](https://codecov.io/gh/DoctorDerek/mapachess-expo/graph/badge.svg)](https://app.codecov.io/gh/DoctorDerek/mapachess-expo) [![ESLint, Vitest, and XState](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml)
+[![Production](https://img.shields.io/website?url=https%3A%2F%2Fmapachess-expo-web.vercel.app%2F&up_message=live&down_message=offline&label=production&logo=vercel&logoColor=white)](https://mapachess-expo-web.vercel.app/) [![Codecov](https://codecov.io/gh/DoctorDerek/mapachess-expo/graph/badge.svg)](https://app.codecov.io/gh/DoctorDerek/mapachess-expo) [![ESLint, Vitest, and XState](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml) [![Playwright](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml)
+
+[![Mobile Web Lighthouse Performance](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.performance&label=performance&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Accessibility](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.accessibility&label=accessibility&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Best Practices](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.bestPractices&label=best%20practices&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse SEO](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.seo&label=SEO&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/)
 
 Mapachess is a permanently free, accountless, offline-first chess game in
 pre-production. Its defining design combines:
@@ -31,7 +33,8 @@ The implemented foundation currently provides:
 - An evidence-ranked provisional Standard Chicken shortlist without automatic
   policy promotion or a public rating claim.
 - Advisory ESLint, blocking TypeScript and tests, measured coverage reporting,
-  dependency review, and advisory XState topology visualization.
+  dependency review, advisory XState topology visualization, deployed-preview
+  Playwright coverage, and five-run Production Mobile Web Lighthouse reporting.
 
 Stockfish and calibration executables, generated evidence, the private game
 design document, commercial assets, and player data are never committed.
@@ -70,7 +73,9 @@ corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm test:coverage
 corepack pnpm test:xstate-diff
+corepack pnpm test:lighthouse
 corepack pnpm build
+corepack pnpm test:e2e
 ```
 
 Real-engine verification is explicit and local only:
@@ -80,19 +85,19 @@ corepack pnpm stockfish:provision
 corepack pnpm test:integration:stockfish
 ```
 
-## Manual Vercel placeholder deployment
+## Production web deployment
 
-This repository contains deploy-ready web source but does not create or link a
-Vercel project.
+The honest pre-production status page is live at
+[mapachess-expo-web.vercel.app](https://mapachess-expo-web.vercel.app/). Vercel
+creates Preview deployments for pull requests and Production deployments from
+`main`. GitHub Actions runs Playwright against each trusted Preview deployment
+and publishes the median of five Mobile Web Lighthouse runs against the exact
+Production deployment created by each merge.
 
-1. Import `DoctorDerek/mapachess-expo` as a new Vercel project.
-2. Set the Root Directory to `apps/web`.
-3. Keep the detected Next.js framework, pnpm install command, build command,
-   and output-directory defaults.
-4. Deploy the desired Git revision.
-
-The current placeholder requires no environment variables or `vercel.json`.
-Local Vercel project state remains ignored under `.vercel/`.
+The published Lighthouse report and dynamic scores are available through
+[GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The current
+placeholder requires no environment variables or `vercel.json`. Local Vercel
+project state remains ignored under `.vercel/`.
 
 ## Rights and third-party software
 
