@@ -21,7 +21,9 @@ import fingerprintOpponentPolicy, {
 } from "./opponentPolicy.js"
 
 export const STANDARD_CHICKEN_TARGET_ELO = 100 as const
-export const STANDARD_CHICKEN_MAX_PLIES = 400 as const
+export const STANDARD_CHICKEN_MAX_PLIES = 500 as const
+export const STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT =
+  `.calibration/standard-chicken-candidates-${STANDARD_CHICKEN_MAX_PLIES}-plies` as const
 export const STANDARD_CHICKEN_NODE_LIMIT = 10_000 as const
 export const STANDARD_CHICKEN_PAIRS_PER_OPENING = 4 as const
 
