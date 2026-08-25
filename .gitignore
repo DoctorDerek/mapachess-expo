@@ -16,6 +16,8 @@ dist/
 
 # Test output
 coverage/
+lighthouse-pages/
+lighthouse-results/
 playwright-report/
 test-results/
 blob-report/
