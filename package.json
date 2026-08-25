@@ -14,6 +14,8 @@
     "dev": "turbo run dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lighthouse": "node scripts/runTypeScript.mjs scripts/lighthouse/collectLighthouseReports.cli.ts",
+    "lighthouse:prepare": "node scripts/runTypeScript.mjs scripts/lighthouse/prepareLighthouseReports.cli.ts",
     "lint": "eslint .",
     "stockfish:provision": "pnpm --filter @mapachess/stockfish provision",
     "test": "turbo run test",
