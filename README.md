@@ -82,9 +82,17 @@ corepack pnpm test:integration:stockfish
 
 ## Rights and third-party software
 
-Original Mapachess material is copyright © 2026 Dr. Derek Austin. All rights
-reserved. Third-party software and assets retain their respective licenses.
+Original Mapachess application source code is copyright © 2026 Dr. Derek
+Austin and licensed under the GNU General Public License version 3 or later.
+See [LICENSE.txt](LICENSE.txt) for the complete license terms.
+
+That application-code license does not relicense the private game design
+document, commercial artwork, fonts, audio, or other separately licensed
+non-code materials. Third-party software and assets retain their respective
+licenses.
+
 [Stockfish](https://github.com/official-stockfish/Stockfish) is distributed
-under the GNU General Public License version 3 and is not relicensed as
-Mapachess material. Commercial assets are not licensed to repository users.
-See [LICENSE.txt](LICENSE.txt) for the repository rights notice.
+under the GNU General Public License version 3. Any future distributed
+Stockfish-powered Mapachess build must include the applicable notices and make
+the complete corresponding source and build instructions available for the
+exact distributed code. No distributable Mapachess build exists yet.
