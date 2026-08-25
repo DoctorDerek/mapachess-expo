@@ -18,6 +18,8 @@
     "stockfish:provision": "pnpm --filter @mapachess/stockfish provision",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:integration:stockfish": "turbo run test:integration:stockfish",
     "test:xstate-diff": "vitest run --coverage --config vitest.xstate.config.ts",
     "typecheck": "turbo run typecheck",
