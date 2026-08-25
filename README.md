@@ -80,11 +80,33 @@ corepack pnpm stockfish:provision
 corepack pnpm test:integration:stockfish
 ```
 
+## Manual Vercel placeholder deployment
+
+This repository contains deploy-ready web source but does not create or link a
+Vercel project.
+
+1. Import `DoctorDerek/mapachess-expo` as a new Vercel project.
+2. Set the Root Directory to `apps/web`.
+3. Keep the detected Next.js framework, pnpm install command, build command,
+   and output-directory defaults.
+4. Deploy the desired Git revision.
+
+The current placeholder requires no environment variables or `vercel.json`.
+Local Vercel project state remains ignored under `.vercel/`.
+
 ## Rights and third-party software
 
-Original Mapachess material is copyright © 2026 Dr. Derek Austin. All rights
-reserved. Third-party software and assets retain their respective licenses.
+Original Mapachess application source code is copyright © 2026 Dr. Derek
+Austin and licensed under the GNU General Public License version 3 or later.
+See [LICENSE.txt](LICENSE.txt) for the complete license terms.
+
+That application-code license does not relicense the private game design
+document, commercial artwork, fonts, audio, or other separately licensed
+non-code materials. Third-party software and assets retain their respective
+licenses.
+
 [Stockfish](https://github.com/official-stockfish/Stockfish) is distributed
-under the GNU General Public License version 3 and is not relicensed as
-Mapachess material. Commercial assets are not licensed to repository users.
-See [LICENSE.txt](LICENSE.txt) for the repository rights notice.
+under the GNU General Public License version 3. Any future distributed
+Stockfish-powered Mapachess build must include the applicable notices and make
+the complete corresponding source and build instructions available for the
+exact distributed code. No distributable Mapachess build exists yet.
