@@ -145,6 +145,9 @@ jobs:
       - name: Run Blocking XState Analyzer Tests
         run: pnpm test:xstate-diff
 
+      - name: Run Blocking Lighthouse Tooling Tests
+        run: pnpm test:lighthouse
+
       - name: Publish Measured Coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
