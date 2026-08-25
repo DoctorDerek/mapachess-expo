@@ -12,14 +12,14 @@ export default function HomePage() {
 
       <section
         aria-labelledby="mapachess-title"
-        className="w-full max-w-3xl rounded-[clamp(1.5rem,4vw,2.5rem)] border border-white/12 bg-slate-950/72 p-[clamp(2rem,6vw,4.5rem)] shadow-[0_2rem_7rem_rgba(2,6,23,0.55)] backdrop-blur-xl"
+        className="w-full max-w-3xl min-w-0 rounded-[clamp(1.5rem,4vw,2.5rem)] border border-white/12 bg-slate-950/72 p-[clamp(2rem,6vw,4.5rem)] shadow-[0_2rem_7rem_rgba(2,6,23,0.55)] backdrop-blur-xl"
       >
         <p className="mb-6 font-mono text-[clamp(0.7rem,1.6vw,0.82rem)] font-semibold tracking-[0.28em] text-cyan-200 uppercase">
           Pre-production
         </p>
         <h1
           id="mapachess-title"
-          className="text-[clamp(3.5rem,13vw,8.5rem)] leading-[0.82] font-black tracking-[-0.075em] text-balance text-white"
+          className="text-[clamp(2.5rem,13vw,8.5rem)] leading-[0.82] font-black tracking-[-0.075em] text-balance text-white"
         >
           Mapa<span className="text-cyan-300">chess</span>
         </h1>
