@@ -80,6 +80,20 @@ corepack pnpm stockfish:provision
 corepack pnpm test:integration:stockfish
 ```
 
+## Manual Vercel placeholder deployment
+
+This repository contains deploy-ready web source but does not create or link a
+Vercel project.
+
+1. Import `DoctorDerek/mapachess-expo` as a new Vercel project.
+2. Set the Root Directory to `apps/web`.
+3. Keep the detected Next.js framework, pnpm install command, build command,
+   and output-directory defaults.
+4. Deploy the desired Git revision.
+
+The current placeholder requires no environment variables or `vercel.json`.
+Local Vercel project state remains ignored under `.vercel/`.
+
 ## Rights and third-party software
 
 Original Mapachess application source code is copyright © 2026 Dr. Derek
