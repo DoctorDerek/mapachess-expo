@@ -92,8 +92,8 @@ The honest pre-production status page is live at
 creates Preview deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
 and waits for each merged commit's matching Production deployment. It then
-publishes the median of five Mobile Web Lighthouse runs against the public
-Production alias and rejects audits that leave that origin.
+publishes the median of five Mobile Web Lighthouse runs against the canonical
+Production URL and rejects audits that leave that origin.
 
 The published Lighthouse report and dynamic scores are available through
 [GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The current
