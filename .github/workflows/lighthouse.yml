@@ -62,8 +62,20 @@ jobs:
                 const latestStatus = statuses[0]
 
                 if (latestStatus?.state === "success") {
+                  const deploymentUrl = new URL(
+                    latestStatus.environment_url ?? latestStatus.target_url,
+                  )
+
+                  if (
+                    deploymentUrl.protocol !== "https:" ||
+                    !deploymentUrl.hostname.endsWith(".vercel.app")
+                  )
+                    throw new Error(
+                      `Untrusted Vercel Production deployment URL: ${deploymentUrl}.`,
+                    )
+
                   core.info(
-                    `Vercel Production deployment ${matchingDeployment.id} is ready; measuring the public Production alias.`,
+                    `Vercel Production deployment ${matchingDeployment.id} is ready at ${deploymentUrl}; measuring the canonical Production URL.`,
                   )
                   return
                 }
