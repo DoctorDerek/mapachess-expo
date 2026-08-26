@@ -20,7 +20,6 @@ jobs:
       deployments: read
     steps:
       - name: Wait for Matching Vercel Production Deployment
-        id: production-deployment
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           retries: 3
@@ -63,22 +62,9 @@ jobs:
                 const latestStatus = statuses[0]
 
                 if (latestStatus?.state === "success") {
-                  const deploymentUrl = new URL(
-                    latestStatus.environment_url ?? latestStatus.target_url,
-                  )
-
-                  if (
-                    deploymentUrl.protocol !== "https:" ||
-                    !deploymentUrl.hostname.endsWith(".vercel.app")
-                  )
-                    throw new Error(
-                      `Untrusted Vercel Production deployment URL: ${deploymentUrl}.`,
-                    )
-
                   core.info(
-                    `Vercel Production deployment ${matchingDeployment.id} is ready.`,
+                    `Vercel Production deployment ${matchingDeployment.id} is ready; measuring the public Production alias.`,
                   )
-                  core.setOutput("url", deploymentUrl.toString())
                   return
                 }
 
@@ -122,8 +108,6 @@ jobs:
 
       - name: Run Mobile Web Lighthouse Measurements
         run: pnpm lighthouse
-        env:
-          LIGHTHOUSE_TARGET_URL: ${{ steps.production-deployment.outputs.url }}
 
       - name: Prepare Median-Performance Lighthouse Report
         run: pnpm lighthouse:prepare
