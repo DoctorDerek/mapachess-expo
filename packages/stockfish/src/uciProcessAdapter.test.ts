@@ -9,6 +9,7 @@ import createStockfishProcessAdapter, {
   type StockfishProcessExit,
   type StockfishUciTransport,
 } from "./uciProcessAdapter"
+import createStockfishUciSession from "./uciSession"
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
 const UCI_OPTIONS = [
@@ -24,6 +25,23 @@ const UCI_OPTIONS = [
   "option name EvalFile type string default nn-c288c895ea92.nnue",
   "option name EvalFileSmall type string default nn-37f18f62d772.nnue",
 ] as const
+
+const STANDARD_CONFIGURATION = {
+  variant: "standard",
+  strength: { kind: "uci-elo", elo: 1320 },
+  threads: 1,
+  hashMegabytes: 16,
+  multiPv: 1,
+  ponder: false,
+} as const
+
+const STOCKFISH_18_UCI_EXPECTATION = {
+  name: "Stockfish 18",
+  networkDefaults: {
+    big: "nn-c288c895ea92.nnue",
+    small: "nn-37f18f62d772.nnue",
+  },
+} as const
 
 class AsyncLineQueue implements AsyncIterable<string> {
   readonly #lines: string[] = []
@@ -161,17 +179,39 @@ async function createFixture(
   return createStockfishProcessAdapter({
     executablePath,
     expectedIdentity: identity,
-    configuration: {
-      variant: "standard",
-      strength: { kind: "uci-elo", elo: 1320 },
-      threads: 1,
-      hashMegabytes: 16,
-      multiPv: 1,
-      ponder: false,
-    },
+    configuration: STANDARD_CONFIGURATION,
     transport,
   })
 }
+
+describe("Stockfish UCI session", () => {
+  it("owns the complete engine lifecycle without a process dependency", async () => {
+    const transport = new FakeTransport()
+    const session = createStockfishUciSession({
+      configuration: STANDARD_CONFIGURATION,
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+
+    await expect(session.boot()).resolves.toMatchObject({
+      name: "Stockfish 18",
+    })
+    await expect(
+      session.search({
+        requestId: "transport-neutral-search",
+        nodeLimit: 200,
+        position: { fen: STANDARD_FEN, moves: [] },
+      }),
+    ).resolves.toMatchObject({
+      requestId: "transport-neutral-search",
+      bestMove: "e1e2",
+    })
+    await session.close()
+
+    expect(session.state()).toBe("closed")
+    expect(transport.commands.at(-1)).toBe("quit")
+  })
+})
 
 describe("Stockfish process adapter", () => {
   it("boots through explicit readiness barriers and returns owned search evidence", async () => {
@@ -298,12 +338,8 @@ describe("Stockfish process adapter", () => {
       executablePath,
       expectedIdentity: STOCKFISH_18_BUILD_IDENTITY,
       configuration: {
-        variant: "standard",
+        ...STANDARD_CONFIGURATION,
         strength: { kind: "full-strength" },
-        threads: 1,
-        hashMegabytes: 16,
-        multiPv: 1,
-        ponder: false,
       },
       transport,
     })

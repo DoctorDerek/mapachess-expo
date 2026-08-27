@@ -16,6 +16,10 @@
     "./uci-process-adapter": {
       "types": "./src/uciProcessAdapter.ts",
       "default": "./dist/uciProcessAdapter.js"
+    },
+    "./uci-session": {
+      "types": "./src/uciSession.ts",
+      "default": "./dist/uciSession.js"
     }
   },
   "scripts": {

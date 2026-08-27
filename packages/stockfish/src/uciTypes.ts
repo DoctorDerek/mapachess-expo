@@ -1,9 +1,7 @@
-import type { StockfishBuildIdentity } from "./buildIdentity.js"
-
 export const STOCKFISH_PROCESS_ADAPTER_VERSION =
   "stockfish-process-adapter/v1" as const
 
-export type StockfishProcessState =
+export type StockfishUciSessionState =
   | "created"
   | "booting"
   | "ready"
@@ -64,35 +62,46 @@ export type StockfishUciIdentity = Readonly<{
   optionNames: readonly string[]
 }>
 
-export type StockfishProcessExit = Readonly<{
+export type StockfishUciExpectation = Readonly<{
+  name: string
+  networkDefaults: Readonly<{
+    big: string
+    small: string
+  }>
+}>
+
+export type StockfishUciTransportExit = Readonly<{
   code: number | null
-  signal: NodeJS.Signals | null
+  signal: string | null
 }>
 
 export type StockfishUciTransport = Readonly<{
   lines: AsyncIterable<string>
   diagnosticText: () => string
   terminate: () => Promise<void>
-  waitForExit: () => Promise<StockfishProcessExit>
+  waitForExit: () => Promise<StockfishUciTransportExit>
   writeLine: (line: string) => Promise<void>
 }>
 
-export type StockfishProcessAdapterInput = Readonly<{
+export type StockfishUciSessionInput = Readonly<{
   configuration: StockfishUciConfiguration
-  executablePath: string
-  expectedIdentity: StockfishBuildIdentity
-  transport?: StockfishUciTransport
+  expectedIdentity: StockfishUciExpectation
+  transport: StockfishUciTransport
 }>
 
-export type StockfishProcessAdapter = Readonly<{
+export type StockfishUciSession = Readonly<{
   boot: (signal?: AbortSignal) => Promise<StockfishUciIdentity>
   close: () => Promise<void>
   search: (
     request: StockfishSearchRequest,
     signal?: AbortSignal,
   ) => Promise<StockfishSearchResult>
-  state: () => StockfishProcessState
+  state: () => StockfishUciSessionState
 }>
+
+export type StockfishProcessAdapter = StockfishUciSession
+export type StockfishProcessExit = StockfishUciTransportExit
+export type StockfishProcessState = StockfishUciSessionState
 
 export class StockfishOperationAbortedError extends Error {
   public constructor(operation: string) {

@@ -1,4 +1,3 @@
-import type { StockfishBuildIdentity } from "./buildIdentity.js"
 import {
   StockfishOperationAbortedError,
   StockfishProtocolError,
@@ -6,6 +5,7 @@ import {
   type StockfishSearchInformation,
   type StockfishSearchRequest,
   type StockfishUciConfiguration,
+  type StockfishUciExpectation,
 } from "./uciTypes.js"
 
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
@@ -185,13 +185,12 @@ function validateConfiguration(
 
 export function validateHandshake(
   handshake: UciHandshake,
-  expectedIdentity: StockfishBuildIdentity,
+  expectedIdentity: StockfishUciExpectation,
   configuration: StockfishUciConfiguration,
 ): void {
-  const expectedName = `Stockfish ${expectedIdentity.version}`
-  if (handshake.name !== expectedName) {
+  if (handshake.name !== expectedIdentity.name) {
     throw new StockfishProtocolError(
-      `Expected UCI engine name ${expectedName}, received ${handshake.name || "<missing>"}.`,
+      `Expected UCI engine name ${expectedIdentity.name}, received ${handshake.name || "<missing>"}.`,
     )
   }
 
@@ -208,15 +207,15 @@ export function validateHandshake(
     "string",
   )
 
-  if (bigNetwork.defaultValue !== expectedIdentity.networks.big.fileName) {
+  if (bigNetwork.defaultValue !== expectedIdentity.networkDefaults.big) {
     throw new StockfishProtocolError(
-      `Expected EvalFile ${expectedIdentity.networks.big.fileName}, received ${bigNetwork.defaultValue ?? "<missing>"}.`,
+      `Expected EvalFile ${expectedIdentity.networkDefaults.big}, received ${bigNetwork.defaultValue ?? "<missing>"}.`,
     )
   }
 
-  if (smallNetwork.defaultValue !== expectedIdentity.networks.small.fileName) {
+  if (smallNetwork.defaultValue !== expectedIdentity.networkDefaults.small) {
     throw new StockfishProtocolError(
-      `Expected EvalFileSmall ${expectedIdentity.networks.small.fileName}, received ${smallNetwork.defaultValue ?? "<missing>"}.`,
+      `Expected EvalFileSmall ${expectedIdentity.networkDefaults.small}, received ${smallNetwork.defaultValue ?? "<missing>"}.`,
     )
   }
 
