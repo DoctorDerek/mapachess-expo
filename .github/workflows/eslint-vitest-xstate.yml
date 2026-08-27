@@ -153,7 +153,7 @@ jobs:
         with:
           disable_search: true
           fail_ci_if_error: false
-          files: ./coverage/lcov.info,./packages/calibration/coverage/lcov.info,./packages/stockfish/coverage/lcov.info
+          files: ./coverage/lcov.info,./apps/web/coverage/lcov.info,./packages/calibration/coverage/lcov.info,./packages/stockfish/coverage/lcov.info
           flags: vitest
           token: ${{ secrets.CODECOV_TOKEN }}
 
