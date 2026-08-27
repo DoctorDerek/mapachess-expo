@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Mapachess",
+    "owner": "doctordereks-team",
     "slug": "mapachess",
     "version": "0.1.0",
     "scheme": "mapachess",
@@ -15,6 +16,11 @@
     },
     "android": {
       "package": "com.mapachess"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "cde8480b-549d-4015-8e07-b8ebf8c81c51"
+      }
     }
   }
 }
