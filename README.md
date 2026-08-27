@@ -82,8 +82,13 @@ Real-engine verification is explicit and local only:
 
 ```powershell
 corepack pnpm stockfish:provision
+corepack pnpm stockfish:provision:web
 corepack pnpm test:integration:stockfish
 ```
+
+The browser candidate's exact release artifacts, digests, source revisions, and
+local-only provisioning boundary are recorded in
+[packages/stockfish/WEB_RUNTIME.md](packages/stockfish/WEB_RUNTIME.md).
 
 ## Production web deployment
 

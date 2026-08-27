@@ -1,6 +1,9 @@
 import { spawn } from "node:child_process"
 import { createInterface } from "node:readline"
-import type { StockfishProcessExit, StockfishUciTransport } from "./uciTypes.js"
+import type {
+  StockfishUciTransport,
+  StockfishUciTransportExit,
+} from "./uciTypes.js"
 
 const MAX_STDERR_CHARACTERS = 4_096
 
@@ -19,10 +22,12 @@ export default function createNodeUciTransport(
     diagnosticText = `${diagnosticText}${chunk}`.slice(-MAX_STDERR_CHARACTERS)
   })
 
-  const exit = new Promise<StockfishProcessExit>((resolveExit, rejectExit) => {
-    child.once("error", rejectExit)
-    child.once("exit", (code, signal) => resolveExit({ code, signal }))
-  })
+  const exit = new Promise<StockfishUciTransportExit>(
+    (resolveExit, rejectExit) => {
+      child.once("error", rejectExit)
+      child.once("exit", (code, signal) => resolveExit({ code, signal }))
+    },
+  )
 
   return {
     lines,

@@ -2,14 +2,14 @@ import { defineConfig } from "vitest/config"
 
 export default defineConfig({
   test: {
-    name: "stockfish",
+    name: "web",
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["lib/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/*Cli.ts"],
+      include: ["lib/**/*.ts"],
+      exclude: ["lib/**/*.test.ts"],
     },
   },
 })

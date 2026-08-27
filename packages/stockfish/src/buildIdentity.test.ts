@@ -4,6 +4,7 @@ import {
   STOCKFISH_18_ARTIFACT,
   STOCKFISH_18_BUILD_IDENTITY,
   STOCKFISH_18_RUNTIME_TARGET,
+  STOCKFISH_18_SOURCE_REVISION,
   validateStockfish18Host,
   validateStockfishBuildIdentity,
   type StockfishBuildIdentity,
@@ -16,7 +17,7 @@ describe("Stockfish 18 build identity", () => {
       name: "stockfish",
       version: "18",
       releaseTag: "sf_18",
-      sourceRevision: "cb3d4ee9b47d0c5aae855b12379378ea1439675c",
+      sourceRevision: STOCKFISH_18_SOURCE_REVISION,
       archiveSha256: STOCKFISH_18_ARTIFACT.archiveSha256,
       executableSha256: STOCKFISH_18_ARTIFACT.executableSha256,
       networks: {

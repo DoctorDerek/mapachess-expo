@@ -9,6 +9,7 @@ import createStockfishProcessAdapter, {
   type StockfishProcessExit,
   type StockfishUciTransport,
 } from "./uciProcessAdapter"
+import createStockfishUciSession from "./uciSession"
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
 const UCI_OPTIONS = [
@@ -24,6 +25,24 @@ const UCI_OPTIONS = [
   "option name EvalFile type string default nn-c288c895ea92.nnue",
   "option name EvalFileSmall type string default nn-37f18f62d772.nnue",
 ] as const
+
+const STANDARD_CONFIGURATION = {
+  variant: "standard",
+  strength: { kind: "uci-elo", elo: 1320 },
+  threads: 1,
+  hashMegabytes: 16,
+  multiPv: 1,
+  ponder: false,
+} as const
+
+const STOCKFISH_18_UCI_EXPECTATION = {
+  name: "Stockfish 18",
+  networkDefaults: {
+    big: "nn-c288c895ea92.nnue",
+    small: "nn-37f18f62d772.nnue",
+  },
+  requiresSyzygyPath: true,
+} as const
 
 class AsyncLineQueue implements AsyncIterable<string> {
   readonly #lines: string[] = []
@@ -72,6 +91,11 @@ class FakeTransport implements StockfishUciTransport {
   public readonly commands: string[] = []
   public readonly lines = new AsyncLineQueue()
   public terminated = false
+  readonly #commandWaiters: Array<{
+    command: string
+    count: number
+    resolve: () => void
+  }> = []
   readonly #deferBestMove: boolean
   readonly #omitOption: string | undefined
   readonly #exit: Promise<StockfishProcessExit>
@@ -95,6 +119,15 @@ class FakeTransport implements StockfishUciTransport {
 
   public async writeLine(line: string): Promise<void> {
     this.commands.push(line)
+    for (const waiter of [...this.#commandWaiters]) {
+      const count = this.commands.filter(
+        (command) => command === waiter.command,
+      ).length
+      if (count < waiter.count) continue
+
+      this.#commandWaiters.splice(this.#commandWaiters.indexOf(waiter), 1)
+      waiter.resolve()
+    }
 
     if (line === "uci") {
       this.lines.push(
@@ -112,6 +145,17 @@ class FakeTransport implements StockfishUciTransport {
     } else if (line === "quit") {
       this.finish({ code: 0, signal: null })
     }
+  }
+
+  public waitForCommandCount(command: string, count: number): Promise<void> {
+    const currentCount = this.commands.filter(
+      (writtenCommand) => writtenCommand === command,
+    ).length
+    if (currentCount >= count) return Promise.resolve()
+
+    return new Promise((resolve) => {
+      this.#commandWaiters.push({ command, count, resolve })
+    })
   }
 
   public releaseBestMove(): void {
@@ -161,17 +205,39 @@ async function createFixture(
   return createStockfishProcessAdapter({
     executablePath,
     expectedIdentity: identity,
-    configuration: {
-      variant: "standard",
-      strength: { kind: "uci-elo", elo: 1320 },
-      threads: 1,
-      hashMegabytes: 16,
-      multiPv: 1,
-      ponder: false,
-    },
+    configuration: STANDARD_CONFIGURATION,
     transport,
   })
 }
+
+describe("Stockfish UCI session", () => {
+  it("owns the complete engine lifecycle without a process dependency", async () => {
+    const transport = new FakeTransport()
+    const session = createStockfishUciSession({
+      configuration: STANDARD_CONFIGURATION,
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+
+    await expect(session.boot()).resolves.toMatchObject({
+      name: "Stockfish 18",
+    })
+    await expect(
+      session.search({
+        requestId: "transport-neutral-search",
+        nodeLimit: 200,
+        position: { fen: STANDARD_FEN, moves: [] },
+      }),
+    ).resolves.toMatchObject({
+      requestId: "transport-neutral-search",
+      bestMove: "e1e2",
+    })
+    await session.close()
+
+    expect(session.state()).toBe("closed")
+    expect(transport.commands.at(-1)).toBe("quit")
+  })
+})
 
 describe("Stockfish process adapter", () => {
   it("boots through explicit readiness barriers and returns owned search evidence", async () => {
@@ -221,12 +287,12 @@ describe("Stockfish process adapter", () => {
     expect(adapter.state()).toBe("closed")
   })
 
-  it("terminates a process that omits a required option", async () => {
-    const transport = new FakeTransport({ omitOption: "EvalFileSmall" })
+  it("keeps SyzygyPath mandatory for the native runtime", async () => {
+    const transport = new FakeTransport({ omitOption: "SyzygyPath" })
     const adapter = await createFixture(transport)
 
     await expect(adapter.boot()).rejects.toThrow(
-      "did not advertise required UCI option EvalFileSmall",
+      "did not advertise required UCI option SyzygyPath",
     )
     expect(adapter.state()).toBe("failed")
     expect(transport.terminated).toBe(true)
@@ -258,7 +324,7 @@ describe("Stockfish process adapter", () => {
     await adapter.close()
   })
 
-  it("terminates and permanently rejects a cancelled session", async () => {
+  it("drains a cancelled search and reuses the same session", async () => {
     const transport = new FakeTransport({ deferBestMove: true })
     const adapter = await createFixture(transport)
     const abortController = new AbortController()
@@ -274,17 +340,52 @@ describe("Stockfish process adapter", () => {
     )
     abortController.abort()
 
-    await expect(search).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    await transport.waitForCommandCount("stop", 1)
+    expect(adapter.state()).toBe("stopping")
+    expect(transport.terminated).toBe(false)
     transport.releaseBestMove()
-    expect(transport.terminated).toBe(true)
-    expect(adapter.state()).toBe("failed")
+    await expect(search).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    expect(adapter.state()).toBe("ready")
+
+    const nextSearch = adapter.search({
+      requestId: "after-cancel",
+      nodeLimit: 200,
+      position: { fen: STANDARD_FEN, moves: [] },
+    })
+    await transport.waitForCommandCount("go nodes 200", 2)
+    transport.releaseBestMove()
+
+    await expect(nextSearch).resolves.toMatchObject({
+      requestId: "after-cancel",
+      bestMove: "e1e2",
+      informationLineCount: 1,
+    })
+    expect(transport.commands.filter((command) => command === "stop")).toEqual([
+      "stop",
+    ])
+    await adapter.close()
+  })
+
+  it("leaves a ready session untouched by an already-aborted search", async () => {
+    const transport = new FakeTransport()
+    const adapter = await createFixture(transport)
+    const abortController = new AbortController()
+    await adapter.boot()
+    abortController.abort()
+
     await expect(
-      adapter.search({
-        requestId: "after-cancel",
-        nodeLimit: 200,
-        position: { fen: STANDARD_FEN, moves: [] },
-      }),
-    ).rejects.toThrow("cannot search from state failed")
+      adapter.search(
+        {
+          requestId: "already-aborted",
+          nodeLimit: 200,
+          position: { fen: STANDARD_FEN, moves: [] },
+        },
+        abortController.signal,
+      ),
+    ).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    expect(adapter.state()).toBe("ready")
+    expect(transport.commands).not.toContain("stop")
+    await adapter.close()
   })
 
   it("rejects a binary mismatch before creating a process", async () => {
@@ -298,12 +399,8 @@ describe("Stockfish process adapter", () => {
       executablePath,
       expectedIdentity: STOCKFISH_18_BUILD_IDENTITY,
       configuration: {
-        variant: "standard",
+        ...STANDARD_CONFIGURATION,
         strength: { kind: "full-strength" },
-        threads: 1,
-        hashMegabytes: 16,
-        multiPv: 1,
-        ponder: false,
       },
       transport,
     })
