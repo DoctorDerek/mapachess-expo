@@ -11,6 +11,7 @@ dist/
 .turbo/
 .vercel/
 .stockfish/
+apps/web/public/stockfish-runtime/
 .bayeselo/
 .calibration/
 

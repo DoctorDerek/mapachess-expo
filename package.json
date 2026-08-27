@@ -18,6 +18,7 @@
     "lighthouse:prepare": "node scripts/runTypeScript.mjs scripts/lighthouse/prepareLighthouseReports.cli.ts",
     "lint": "eslint .",
     "stockfish:provision": "pnpm --filter @mapachess/stockfish provision",
+    "stockfish:provision:web": "pnpm --filter @mapachess/stockfish provision:web",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:e2e": "playwright test",

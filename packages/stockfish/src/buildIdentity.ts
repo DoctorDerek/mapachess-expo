@@ -6,6 +6,8 @@ declare const sha256HexBrand: unique symbol
 
 export type Sha256Hex = string & { readonly [sha256HexBrand]: true }
 export const STOCKFISH_18_RUNTIME_TARGET = "windows-x64" as const
+export const STOCKFISH_18_SOURCE_REVISION =
+  "cb3d4ee9b47d0c5aae855b12379378ea1439675c" as const
 export type StockfishRuntimeTarget = typeof STOCKFISH_18_RUNTIME_TARGET
 
 export type StockfishNetworkIdentity = Readonly<{
@@ -122,7 +124,7 @@ export const STOCKFISH_18_BUILD_IDENTITY = {
   name: "stockfish",
   version: "18",
   releaseTag: "sf_18",
-  sourceRevision: "cb3d4ee9b47d0c5aae855b12379378ea1439675c",
+  sourceRevision: STOCKFISH_18_SOURCE_REVISION,
   networks: {
     big: {
       fileName: "nn-c288c895ea92.nnue",

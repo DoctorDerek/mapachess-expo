@@ -20,11 +20,20 @@
     "./uci-session": {
       "types": "./src/uciSession.ts",
       "default": "./dist/uciSession.js"
+    },
+    "./web-runtime-identity": {
+      "types": "./src/webRuntimeIdentity.ts",
+      "default": "./dist/webRuntimeIdentity.js"
+    },
+    "./web-runtime-provision": {
+      "types": "./src/webRuntimeProvision.ts",
+      "default": "./dist/webRuntimeProvision.js"
     }
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "provision": "pnpm run build && node dist/provisionCli.js ../..",
+    "provision:web": "pnpm run build && node dist/webRuntimeProvisionCli.js ../..",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --project tsconfig.json"
