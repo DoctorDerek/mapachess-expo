@@ -90,6 +90,11 @@ class FakeTransport implements StockfishUciTransport {
   public readonly commands: string[] = []
   public readonly lines = new AsyncLineQueue()
   public terminated = false
+  readonly #commandWaiters: Array<{
+    command: string
+    count: number
+    resolve: () => void
+  }> = []
   readonly #deferBestMove: boolean
   readonly #omitOption: string | undefined
   readonly #exit: Promise<StockfishProcessExit>
@@ -113,6 +118,15 @@ class FakeTransport implements StockfishUciTransport {
 
   public async writeLine(line: string): Promise<void> {
     this.commands.push(line)
+    for (const waiter of [...this.#commandWaiters]) {
+      const count = this.commands.filter(
+        (command) => command === waiter.command,
+      ).length
+      if (count < waiter.count) continue
+
+      this.#commandWaiters.splice(this.#commandWaiters.indexOf(waiter), 1)
+      waiter.resolve()
+    }
 
     if (line === "uci") {
       this.lines.push(
@@ -130,6 +144,17 @@ class FakeTransport implements StockfishUciTransport {
     } else if (line === "quit") {
       this.finish({ code: 0, signal: null })
     }
+  }
+
+  public waitForCommandCount(command: string, count: number): Promise<void> {
+    const currentCount = this.commands.filter(
+      (writtenCommand) => writtenCommand === command,
+    ).length
+    if (currentCount >= count) return Promise.resolve()
+
+    return new Promise((resolve) => {
+      this.#commandWaiters.push({ command, count, resolve })
+    })
   }
 
   public releaseBestMove(): void {
@@ -298,7 +323,7 @@ describe("Stockfish process adapter", () => {
     await adapter.close()
   })
 
-  it("terminates and permanently rejects a cancelled session", async () => {
+  it("drains a cancelled search and reuses the same session", async () => {
     const transport = new FakeTransport({ deferBestMove: true })
     const adapter = await createFixture(transport)
     const abortController = new AbortController()
@@ -314,17 +339,52 @@ describe("Stockfish process adapter", () => {
     )
     abortController.abort()
 
-    await expect(search).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    await transport.waitForCommandCount("stop", 1)
+    expect(adapter.state()).toBe("stopping")
+    expect(transport.terminated).toBe(false)
     transport.releaseBestMove()
-    expect(transport.terminated).toBe(true)
-    expect(adapter.state()).toBe("failed")
+    await expect(search).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    expect(adapter.state()).toBe("ready")
+
+    const nextSearch = adapter.search({
+      requestId: "after-cancel",
+      nodeLimit: 200,
+      position: { fen: STANDARD_FEN, moves: [] },
+    })
+    await transport.waitForCommandCount("go nodes 200", 2)
+    transport.releaseBestMove()
+
+    await expect(nextSearch).resolves.toMatchObject({
+      requestId: "after-cancel",
+      bestMove: "e1e2",
+      informationLineCount: 1,
+    })
+    expect(transport.commands.filter((command) => command === "stop")).toEqual([
+      "stop",
+    ])
+    await adapter.close()
+  })
+
+  it("leaves a ready session untouched by an already-aborted search", async () => {
+    const transport = new FakeTransport()
+    const adapter = await createFixture(transport)
+    const abortController = new AbortController()
+    await adapter.boot()
+    abortController.abort()
+
     await expect(
-      adapter.search({
-        requestId: "after-cancel",
-        nodeLimit: 200,
-        position: { fen: STANDARD_FEN, moves: [] },
-      }),
-    ).rejects.toThrow("cannot search from state failed")
+      adapter.search(
+        {
+          requestId: "already-aborted",
+          nodeLimit: 200,
+          position: { fen: STANDARD_FEN, moves: [] },
+        },
+        abortController.signal,
+      ),
+    ).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    expect(adapter.state()).toBe("ready")
+    expect(transport.commands).not.toContain("stop")
+    await adapter.close()
   })
 
   it("rejects a binary mismatch before creating a process", async () => {

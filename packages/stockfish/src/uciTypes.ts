@@ -6,6 +6,7 @@ export type StockfishUciSessionState =
   | "booting"
   | "ready"
   | "searching"
+  | "stopping"
   | "closing"
   | "closed"
   | "failed"

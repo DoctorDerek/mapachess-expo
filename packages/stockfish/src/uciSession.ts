@@ -176,6 +176,31 @@ export default function createStockfishUciSession(
     assertNotAborted(signal, `search request ${request.requestId}`)
     sessionState = "searching"
     activeRequestId = request.requestId
+    const operation = `search request ${request.requestId}`
+    let cancellationRequested = false
+    let cancellationCompleted = false
+    let stopWrite: Promise<void> | undefined
+    let rejectStopWriteFailure: ((reason?: unknown) => void) | undefined
+    const stopWriteFailure = new Promise<never>((_resolve, reject) => {
+      rejectStopWriteFailure = reject
+    })
+    void stopWriteFailure.catch(() => undefined)
+
+    const requestCancellation = (): void => {
+      if (cancellationRequested) return
+
+      cancellationRequested = true
+      activeRequestId = undefined
+      sessionState = "stopping"
+      stopWrite = writeLine("stop")
+      void stopWrite.catch((error: unknown) => {
+        rejectStopWriteFailure?.(error)
+      })
+    }
+
+    const onAbort = (): void => {
+      requestCancellation()
+    }
 
     try {
       const moves =
@@ -184,23 +209,31 @@ export default function createStockfishUciSession(
           : ` moves ${request.position.moves.join(" ")}`
       await writeLine(`position fen ${request.position.fen}${moves}`)
       await writeLine(`go nodes ${request.nodeLimit}`)
+      signal?.addEventListener("abort", onAbort, { once: true })
+      if (signal?.aborted === true) requestCancellation()
 
       let informationLineCount = 0
       let latestInformation: StockfishSearchInformation | undefined
 
       while (true) {
-        const line = await readLine(
-          `search request ${request.requestId}`,
-          signal,
-        )
+        const line = await Promise.race([readLine(operation), stopWriteFailure])
 
         if (line.startsWith("info ")) {
-          informationLineCount += 1
-          latestInformation = parseInformation(line)
+          if (!cancellationRequested) {
+            informationLineCount += 1
+            latestInformation = parseInformation(line)
+          }
           continue
         }
 
         if (line.startsWith("bestmove ")) {
+          if (cancellationRequested) {
+            await stopWrite
+            sessionState = "ready"
+            cancellationCompleted = true
+            throw new StockfishOperationAbortedError(operation)
+          }
+
           if (activeRequestId !== request.requestId) {
             throw new StockfishProtocolError(
               `Rejected stale Stockfish result for request ${request.requestId}.`,
@@ -224,8 +257,11 @@ export default function createStockfishUciSession(
       }
     } catch (error) {
       activeRequestId = undefined
+      if (cancellationCompleted) throw error
       await fail()
       throw error
+    } finally {
+      signal?.removeEventListener("abort", onAbort)
     }
   }
 
