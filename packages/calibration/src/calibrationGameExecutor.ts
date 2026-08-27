@@ -1,8 +1,8 @@
 import { Chess, type Move } from "chess.js"
 import type {
-  StockfishProcessAdapter,
-  StockfishSearchResult,
-} from "@mapachess/stockfish/uci-process-adapter"
+  StockfishEngineSearchResult,
+  StockfishEngineSession,
+} from "@mapachess/stockfish/engine-session"
 import {
   CalibrationExecutionAbortedError,
   type CalibrationColor,
@@ -107,7 +107,7 @@ function completedResult(
 }
 
 async function closeEngines(
-  engines: readonly StockfishProcessAdapter[],
+  engines: readonly StockfishEngineSession[],
 ): Promise<Readonly<{ failed: boolean; reason?: unknown }>> {
   const results = await Promise.allSettled(
     engines.map((engine) => engine.close()),
@@ -122,8 +122,8 @@ async function executePlies(
   input: CalibrationGameExecutionInput,
   policies: CalibrationPolicyMap,
   chess: Chess,
-  whiteEngine: StockfishProcessAdapter,
-  blackEngine: StockfishProcessAdapter,
+  whiteEngine: StockfishEngineSession,
+  blackEngine: StockfishEngineSession,
 ): Promise<CalibrationGameResult> {
   const whitePolicy = requireCalibrationPolicy(
     policies,
@@ -161,7 +161,7 @@ async function executePlies(
       policy.moveSelection.randomMoveProbabilityBasisPoints
     let selectedMove: string
     let source: CalibrationMoveSource
-    let search: StockfishSearchResult | undefined
+    let search: StockfishEngineSearchResult | undefined
 
     if (useRandomMove) {
       const randomMove = legalMoves[random.nextIndex(legalMoves.length)]
@@ -242,7 +242,7 @@ async function playGame(
     input.game.black.policyFingerprint,
     "black",
   )
-  const engines: StockfishProcessAdapter[] = []
+  const engines: StockfishEngineSession[] = []
   let executionFailed = false
   let executionError: unknown
   let result: CalibrationGameResult | undefined

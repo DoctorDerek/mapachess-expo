@@ -1,5 +1,5 @@
+import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import createStockfishUciSession, {
-  type StockfishUciConfiguration,
   type StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
 import {
@@ -12,7 +12,7 @@ export const STOCKFISH_WEB_WORKER_URL =
   `/stockfish-runtime/${STOCKFISH_18_WEB_LOADER_ARTIFACT.fileName}` as const
 
 export default function createWebStockfishSession(
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
 ): StockfishUciSession {
   const worker = new Worker(STOCKFISH_WEB_WORKER_URL, {
     name: "mapachess-stockfish-18",

@@ -1,8 +1,8 @@
 import type {
-  StockfishProcessAdapter,
-  StockfishSearchResult,
-  StockfishUciConfiguration,
-} from "@mapachess/stockfish/uci-process-adapter"
+  StockfishEngineConfiguration,
+  StockfishEngineSearchResult,
+  StockfishEngineSession,
+} from "@mapachess/stockfish/engine-session"
 import type {
   CalibrationGame,
   CalibrationPairId,
@@ -32,7 +32,7 @@ export type CalibrationMoveRecord = Readonly<{
   fenBefore: string
   ply: number
   policyFingerprint: OpponentPolicyFingerprint
-  search?: StockfishSearchResult
+  search?: StockfishEngineSearchResult
   source: CalibrationMoveSource
   uci: string
 }>
@@ -61,14 +61,14 @@ export type CalibrationGameResult =
 
 export type OpenCalibrationEngineInput = Readonly<{
   color: CalibrationColor
-  configuration: StockfishUciConfiguration
+  configuration: StockfishEngineConfiguration
   game: CalibrationGame
   policy: OpponentPolicy
 }>
 
 export type OpenCalibrationEngine = (
   input: OpenCalibrationEngineInput,
-) => StockfishProcessAdapter | Promise<StockfishProcessAdapter>
+) => StockfishEngineSession | Promise<StockfishEngineSession>
 
 export type CalibrationGameExecutionInput = Readonly<{
   openEngine: OpenCalibrationEngine

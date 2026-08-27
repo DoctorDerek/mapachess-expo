@@ -4,16 +4,7 @@ import type {
   StockfishEngineSearchInformation,
   StockfishEngineSearchResult,
   StockfishEngineSession,
-  StockfishEngineSessionState,
-  StockfishPosition,
-  StockfishScore,
-  StockfishSearchRequest,
-  StockfishStrength,
 } from "./engineSession.js"
-import { StockfishOperationAbortedError } from "./engineSession.js"
-
-export const STOCKFISH_PROCESS_ADAPTER_VERSION =
-  "stockfish-process-adapter/v1" as const
 
 export type StockfishUciSearchInformation = StockfishEngineSearchInformation &
   Readonly<{
@@ -63,22 +54,6 @@ export type StockfishUciSession = StockfishEngineSession<
   StockfishUciIdentity,
   StockfishUciSearchResult
 >
-
-export type StockfishUciSessionState = StockfishEngineSessionState
-export type StockfishUciConfiguration = StockfishEngineConfiguration
-export type StockfishSearchInformation = StockfishUciSearchInformation
-export type StockfishSearchResult = StockfishUciSearchResult
-export type StockfishProcessAdapter = StockfishUciSession
-export type StockfishProcessExit = StockfishUciTransportExit
-export type StockfishProcessState = StockfishEngineSessionState
-
-export type {
-  StockfishPosition,
-  StockfishScore,
-  StockfishSearchRequest,
-  StockfishStrength,
-}
-export { StockfishOperationAbortedError }
 
 export class StockfishProtocolError extends Error {
   public constructor(message: string) {

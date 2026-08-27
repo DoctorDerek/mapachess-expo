@@ -1,11 +1,13 @@
 import {
   StockfishOperationAbortedError,
-  StockfishProtocolError,
+  type StockfishEngineConfiguration,
   type StockfishScore,
-  type StockfishSearchInformation,
   type StockfishSearchRequest,
-  type StockfishUciConfiguration,
+} from "./engineSession.js"
+import {
+  StockfishProtocolError,
   type StockfishUciExpectation,
+  type StockfishUciSearchInformation,
 } from "./uciTypes.js"
 
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
@@ -145,7 +147,7 @@ function assertSpinValue(option: UciOption, value: number): void {
 }
 
 function validateConfiguration(
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
   options: ReadonlyMap<string, UciOption>,
 ): void {
   assertSpinValue(
@@ -185,7 +187,7 @@ function validateConfiguration(
 export function validateHandshake(
   handshake: UciHandshake,
   expectedIdentity: StockfishUciExpectation,
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
 ): void {
   if (handshake.name !== expectedIdentity.name) {
     throw new StockfishProtocolError(
@@ -238,7 +240,7 @@ export function validateSearchRequest(request: StockfishSearchRequest): void {
   }
 }
 
-export function parseInformation(line: string): StockfishSearchInformation {
+export function parseInformation(line: string): StockfishUciSearchInformation {
   const tokens = line.split(" ")
   const valueAfter = (name: string): number | undefined => {
     const index = tokens.indexOf(name)
@@ -314,7 +316,7 @@ export function parseBestMove(line: string): {
 }
 
 export function createConfigurationCommands(
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
   options: ReadonlyMap<string, UciOption>,
 ): readonly string[] {
   return [

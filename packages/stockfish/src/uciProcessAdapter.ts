@@ -2,6 +2,10 @@ import {
   validateStockfishBuildIdentity,
   type StockfishBuildIdentity,
 } from "./buildIdentity.js"
+import {
+  type StockfishEngineConfiguration,
+  type StockfishEngineSessionState,
+} from "./engineSession.js"
 import createNodeUciTransport from "./nodeUciTransport.js"
 import { sha256File, type ProvisionedStockfish } from "./provision.js"
 import {
@@ -10,41 +14,23 @@ import {
   validateSearchRequest,
 } from "./uciProtocol.js"
 import createStockfishUciSession, {
-  StockfishOperationAbortedError,
   StockfishProtocolError,
 } from "./uciSession.js"
 import {
-  STOCKFISH_PROCESS_ADAPTER_VERSION,
-  type StockfishProcessAdapter,
-  type StockfishProcessState,
-  type StockfishUciConfiguration,
   type StockfishUciExpectation,
+  type StockfishUciSession,
   type StockfishUciTransport,
 } from "./uciTypes.js"
 
-export {
-  createNodeUciTransport,
-  StockfishOperationAbortedError,
-  StockfishProtocolError,
-  STOCKFISH_PROCESS_ADAPTER_VERSION,
-}
-export type {
-  StockfishPosition,
-  StockfishProcessAdapter,
-  StockfishProcessExit,
-  StockfishProcessState,
-  StockfishScore,
-  StockfishSearchInformation,
-  StockfishSearchRequest,
-  StockfishSearchResult,
-  StockfishStrength,
-  StockfishUciConfiguration,
-  StockfishUciIdentity,
-  StockfishUciTransport,
-} from "./uciTypes.js"
+export const STOCKFISH_PROCESS_ADAPTER_VERSION =
+  "stockfish-process-adapter/v1" as const
+
+export { createNodeUciTransport, StockfishProtocolError }
+
+export type StockfishProcessAdapter = StockfishUciSession
 
 export type StockfishProcessAdapterInput = Readonly<{
-  configuration: StockfishUciConfiguration
+  configuration: StockfishEngineConfiguration
   executablePath: string
   expectedIdentity: StockfishBuildIdentity
   transport?: StockfishUciTransport
@@ -69,9 +55,10 @@ export default function createStockfishProcessAdapter(
   validateStockfishBuildIdentity(input.expectedIdentity)
   assertStableText(input.executablePath, "executablePath")
 
-  let processState: StockfishProcessState = "created"
+  let processState: StockfishEngineSessionState = "created"
   let session: StockfishProcessAdapter | undefined
-  const state = (): StockfishProcessState => session?.state() ?? processState
+  const state = (): StockfishEngineSessionState =>
+    session?.state() ?? processState
 
   const boot: StockfishProcessAdapter["boot"] = async (signal) => {
     const currentState = state()
@@ -137,7 +124,7 @@ export default function createStockfishProcessAdapter(
 
 export function createProvisionedStockfishProcessAdapter(
   provisioned: ProvisionedStockfish,
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
 ): StockfishProcessAdapter {
   return createStockfishProcessAdapter({
     configuration,
