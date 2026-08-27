@@ -49,6 +49,7 @@ export const STOCKFISH_18_WEB_UCI_EXPECTATION = {
     big: "nn-9067e33176e8.nnue",
     small: "<empty>",
   },
+  requiresSyzygyPath: false,
 } as const satisfies StockfishUciExpectation
 
 export const STOCKFISH_18_WEB_RUNTIME_IDENTITY = {

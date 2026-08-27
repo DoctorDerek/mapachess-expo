@@ -22,6 +22,7 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:e2e": "playwright test",
+    "test:e2e:stockfish:web": "pnpm stockfish:provision:web && playwright test --config playwright.stockfish.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:integration:stockfish": "turbo run test:integration:stockfish",
     "test:lighthouse": "vitest run --config vitest.lighthouse.config.ts",

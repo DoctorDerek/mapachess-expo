@@ -69,6 +69,7 @@ export type StockfishUciExpectation = Readonly<{
     big: string
     small: string
   }>
+  requiresSyzygyPath: boolean
 }>
 
 export type StockfishUciTransportExit = Readonly<{

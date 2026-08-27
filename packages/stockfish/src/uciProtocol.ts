@@ -37,7 +37,6 @@ const REQUIRED_OPTIONS: Readonly<Record<string, UciOptionType>> = {
   Hash: "spin",
   MultiPV: "spin",
   Ponder: "check",
-  SyzygyPath: "string",
   Threads: "spin",
   UCI_Chess960: "check",
   UCI_Elo: "spin",
@@ -199,6 +198,9 @@ export function validateHandshake(
   for (const [name, type] of Object.entries(REQUIRED_OPTIONS)) {
     requireOption(handshake.options, name, type)
   }
+  if (expectedIdentity.requiresSyzygyPath) {
+    requireOption(handshake.options, "SyzygyPath", "string")
+  }
 
   const bigNetwork = requireOption(handshake.options, "EvalFile", "string")
   const smallNetwork = requireOption(
@@ -313,6 +315,7 @@ export function parseBestMove(line: string): {
 
 export function createConfigurationCommands(
   configuration: StockfishUciConfiguration,
+  options: ReadonlyMap<string, UciOption>,
 ): readonly string[] {
   return [
     `setoption name Threads value ${configuration.threads}`,
@@ -320,7 +323,9 @@ export function createConfigurationCommands(
     `setoption name MultiPV value ${configuration.multiPv}`,
     `setoption name Ponder value ${String(configuration.ponder)}`,
     `setoption name UCI_Chess960 value ${String(configuration.variant === "chess960")}`,
-    "setoption name SyzygyPath value <empty>",
+    ...(options.has("SyzygyPath")
+      ? ["setoption name SyzygyPath value <empty>"]
+      : []),
     `setoption name UCI_LimitStrength value ${String(configuration.strength.kind === "uci-elo")}`,
     ...(configuration.strength.kind === "uci-elo"
       ? [`setoption name UCI_Elo value ${configuration.strength.elo}`]

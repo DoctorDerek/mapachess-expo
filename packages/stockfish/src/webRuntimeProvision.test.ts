@@ -60,6 +60,7 @@ describe("Stockfish web runtime pin", () => {
           big: "nn-9067e33176e8.nnue",
           small: "<empty>",
         },
+        requiresSyzygyPath: false,
       },
     })
   })

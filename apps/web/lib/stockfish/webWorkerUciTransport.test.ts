@@ -20,14 +20,17 @@ const STANDARD_CONFIGURATION = {
 } satisfies StockfishUciConfiguration
 const UCI_OPTIONS = [
   "option name Threads type spin default 1 min 1 max 1",
-  "option name Hash type spin default 16 min 1 max 65536",
+  "option name Hash type spin default 16 min 1 max 33554432",
   "option name Clear Hash type button",
   "option name Ponder type check default false",
   "option name MultiPV type spin default 1 min 1 max 256",
+  "option name Skill Level type spin default 20 min 0 max 20",
+  "option name Move Overhead type spin default 10 min 0 max 5000",
+  "option name nodestime type spin default 0 min 0 max 10000",
   "option name UCI_Chess960 type check default false",
   "option name UCI_LimitStrength type check default false",
   "option name UCI_Elo type spin default 1320 min 1320 max 3190",
-  "option name SyzygyPath type string default <empty>",
+  "option name UCI_ShowWDL type check default false",
   "option name EvalFile type string default nn-9067e33176e8.nnue",
   "option name EvalFileSmall type string default <empty>",
 ] as const
@@ -77,7 +80,7 @@ class FakeStockfishWorker extends EventTarget implements StockfishWebWorker {
 
       this.emitLines(
         "id name Stockfish 18 Lite WASM",
-        "id author the Stockfish developers",
+        "id author the Stockfish developers (see AUTHORS file)",
         ...UCI_OPTIONS,
         "uciok",
       )
@@ -152,6 +155,9 @@ describe("Stockfish web Worker transport", () => {
     expect(constructedUrl).toBe(STOCKFISH_WEB_WORKER_URL)
     expect(constructedOptions).toEqual({ name: "mapachess-stockfish-18" })
     expect(constructedWorker.commands.at(-1)).toBe("quit")
+    expect(constructedWorker.commands).not.toContain(
+      "setoption name SyzygyPath value <empty>",
+    )
     expect(constructedWorker.terminated).toBe(true)
     expect(session.state()).toBe("closed")
     expect(STOCKFISH_WEB_WORKER_URL).toBe(

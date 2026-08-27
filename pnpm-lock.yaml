@@ -93,6 +93,9 @@ importers:
       tailwindcss:
         specifier: ^4
         version: 4.3.3
+      vite:
+        specifier: ^8
+        version: 8.2.2(@types/node@26.2.0)(jiti@2.7.0)
 
   packages/calibration:
     dependencies:

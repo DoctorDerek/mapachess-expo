@@ -59,6 +59,7 @@ function expectedUciIdentity(
       big: buildIdentity.networks.big.fileName,
       small: buildIdentity.networks.small.fileName,
     },
+    requiresSyzygyPath: true,
   }
 }
 

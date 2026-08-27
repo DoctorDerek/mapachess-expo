@@ -144,7 +144,10 @@ export default function createStockfishUciSession(
       const handshake = await readHandshake(signal)
       validateHandshake(handshake, input.expectedIdentity, input.configuration)
 
-      for (const command of createConfigurationCommands(input.configuration)) {
+      for (const command of createConfigurationCommands(
+        input.configuration,
+        handshake.options,
+      )) {
         await writeLine(command)
       }
 

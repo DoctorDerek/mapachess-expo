@@ -41,6 +41,7 @@ const STOCKFISH_18_UCI_EXPECTATION = {
     big: "nn-c288c895ea92.nnue",
     small: "nn-37f18f62d772.nnue",
   },
+  requiresSyzygyPath: true,
 } as const
 
 class AsyncLineQueue implements AsyncIterable<string> {
@@ -286,12 +287,12 @@ describe("Stockfish process adapter", () => {
     expect(adapter.state()).toBe("closed")
   })
 
-  it("terminates a process that omits a required option", async () => {
-    const transport = new FakeTransport({ omitOption: "EvalFileSmall" })
+  it("keeps SyzygyPath mandatory for the native runtime", async () => {
+    const transport = new FakeTransport({ omitOption: "SyzygyPath" })
     const adapter = await createFixture(transport)
 
     await expect(adapter.boot()).rejects.toThrow(
-      "did not advertise required UCI option EvalFileSmall",
+      "did not advertise required UCI option SyzygyPath",
     )
     expect(adapter.state()).toBe("failed")
     expect(transport.terminated).toBe(true)
