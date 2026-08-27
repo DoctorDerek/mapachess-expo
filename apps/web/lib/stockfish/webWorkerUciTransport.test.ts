@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import createStockfishUciSession from "@mapachess/stockfish/uci-session"
-import type { StockfishUciConfiguration } from "@mapachess/stockfish/uci-session"
 import { STOCKFISH_18_WEB_UCI_EXPECTATION } from "@mapachess/stockfish/web-runtime-identity"
 import createWebStockfishSession, {
   STOCKFISH_WEB_WORKER_URL,
@@ -17,7 +17,7 @@ const STANDARD_CONFIGURATION = {
   hashMegabytes: 16,
   multiPv: 1,
   ponder: false,
-} satisfies StockfishUciConfiguration
+} satisfies StockfishEngineConfiguration
 const UCI_OPTIONS = [
   "option name Threads type spin default 1 min 1 max 1",
   "option name Hash type spin default 16 min 1 max 33554432",

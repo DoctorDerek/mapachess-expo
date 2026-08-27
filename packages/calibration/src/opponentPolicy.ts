@@ -5,7 +5,7 @@ import {
   type Sha256Hex,
   type StockfishBuildIdentity,
 } from "@mapachess/stockfish/build-identity"
-import type { StockfishStrength } from "@mapachess/stockfish/uci-process-adapter"
+import type { StockfishStrength } from "@mapachess/stockfish/engine-session"
 
 export const OPPONENT_POLICY_SCHEMA_VERSION = 2 as const
 export const RANDOM_MOVE_PROBABILITY_SCALE = 10_000 as const

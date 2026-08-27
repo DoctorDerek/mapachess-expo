@@ -4,12 +4,12 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 import { parseSha256Hex, STOCKFISH_18_BUILD_IDENTITY } from "./buildIdentity"
-import createStockfishProcessAdapter, {
-  StockfishOperationAbortedError,
-  type StockfishProcessExit,
+import { StockfishOperationAbortedError } from "./engineSession"
+import createStockfishProcessAdapter from "./uciProcessAdapter"
+import createStockfishUciSession, {
   type StockfishUciTransport,
-} from "./uciProcessAdapter"
-import createStockfishUciSession from "./uciSession"
+  type StockfishUciTransportExit,
+} from "./uciSession"
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
 const UCI_OPTIONS = [
@@ -98,8 +98,8 @@ class FakeTransport implements StockfishUciTransport {
   }> = []
   readonly #deferBestMove: boolean
   readonly #omitOption: string | undefined
-  readonly #exit: Promise<StockfishProcessExit>
-  #resolveExit: ((result: StockfishProcessExit) => void) | undefined
+  readonly #exit: Promise<StockfishUciTransportExit>
+  #resolveExit: ((result: StockfishUciTransportExit) => void) | undefined
 
   public constructor(options: FakeTransportOptions = {}) {
     this.#deferBestMove = options.deferBestMove ?? false
@@ -113,7 +113,7 @@ class FakeTransport implements StockfishUciTransport {
     return ""
   }
 
-  public waitForExit(): Promise<StockfishProcessExit> {
+  public waitForExit(): Promise<StockfishUciTransportExit> {
     return this.#exit
   }
 
@@ -170,7 +170,7 @@ class FakeTransport implements StockfishUciTransport {
     this.finish({ code: null, signal: "SIGTERM" })
   }
 
-  private finish(result: StockfishProcessExit): void {
+  private finish(result: StockfishUciTransportExit): void {
     this.lines.close()
     this.#resolveExit?.(result)
     this.#resolveExit = undefined

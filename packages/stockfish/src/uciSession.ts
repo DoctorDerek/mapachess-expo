@@ -1,4 +1,8 @@
 import {
+  StockfishOperationAbortedError,
+  type StockfishEngineSessionState,
+} from "./engineSession.js"
+import {
   assertNotAborted,
   createConfigurationCommands,
   parseBestMove,
@@ -10,29 +14,21 @@ import {
   type UciOption,
 } from "./uciProtocol.js"
 import {
-  StockfishOperationAbortedError,
   StockfishProtocolError,
-  type StockfishSearchInformation,
   type StockfishUciIdentity,
+  type StockfishUciSearchInformation,
   type StockfishUciSession,
   type StockfishUciSessionInput,
-  type StockfishUciSessionState,
 } from "./uciTypes.js"
 
-export { StockfishOperationAbortedError, StockfishProtocolError }
+export { StockfishProtocolError }
 export type {
-  StockfishPosition,
-  StockfishScore,
-  StockfishSearchInformation,
-  StockfishSearchRequest,
-  StockfishSearchResult,
-  StockfishStrength,
-  StockfishUciConfiguration,
   StockfishUciExpectation,
   StockfishUciIdentity,
+  StockfishUciSearchInformation,
+  StockfishUciSearchResult,
   StockfishUciSession,
   StockfishUciSessionInput,
-  StockfishUciSessionState,
   StockfishUciTransport,
   StockfishUciTransportExit,
 } from "./uciTypes.js"
@@ -40,7 +36,7 @@ export type {
 export default function createStockfishUciSession(
   input: StockfishUciSessionInput,
 ): StockfishUciSession {
-  let sessionState: StockfishUciSessionState = "created"
+  let sessionState: StockfishEngineSessionState = "created"
   let lineIterator: AsyncIterator<string> | undefined
   let activeRequestId: string | undefined
 
@@ -216,7 +212,7 @@ export default function createStockfishUciSession(
       if (signal?.aborted === true) requestCancellation()
 
       let informationLineCount = 0
-      let latestInformation: StockfishSearchInformation | undefined
+      let latestInformation: StockfishUciSearchInformation | undefined
 
       while (true) {
         const line = await Promise.race([readLine(operation), stopWriteFailure])

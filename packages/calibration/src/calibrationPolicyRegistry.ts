@@ -1,7 +1,5 @@
-import {
-  STOCKFISH_PROCESS_ADAPTER_VERSION,
-  type StockfishUciConfiguration,
-} from "@mapachess/stockfish/uci-process-adapter"
+import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
+import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
 import type { CalibrationColor } from "./calibrationGameTypes.js"
 import type { CalibrationPolicyRecord } from "./calibrationPlan.js"
 import {
@@ -121,7 +119,7 @@ export function requireCalibrationPolicy(
 
 export function stockfishConfigurationFromPolicy(
   policy: OpponentPolicy,
-): StockfishUciConfiguration {
+): StockfishEngineConfiguration {
   return {
     variant: policy.variant,
     strength: policy.search.strength,

@@ -1,10 +1,12 @@
 import {
   StockfishOperationAbortedError,
-  type StockfishSearchResult,
-  type StockfishUciConfiguration,
-  type StockfishUciIdentity,
-  type StockfishUciSession,
-  type StockfishUciSessionState,
+  type StockfishEngineConfiguration,
+  type StockfishEngineSessionState,
+} from "@mapachess/stockfish/engine-session"
+import type {
+  StockfishUciIdentity,
+  StockfishUciSearchResult,
+  StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
 import createWebStockfishSession from "../lib/stockfish/createWebStockfishSession"
 
@@ -37,16 +39,16 @@ type TimingsMilliseconds = Readonly<{
 
 export type StockfishBrowserProof = Readonly<{
   chess960: Readonly<{
-    finalState: StockfishUciSessionState
+    finalState: StockfishEngineSessionState
     identity: StockfishUciIdentity
-    search: StockfishSearchResult
+    search: StockfishUciSearchResult
   }>
   standard: Readonly<{
     cancellation: CancellationProof
-    finalState: StockfishUciSessionState
+    finalState: StockfishEngineSessionState
     identity: StockfishUciIdentity
-    initialSearch: StockfishSearchResult
-    subsequentSearch: StockfishSearchResult
+    initialSearch: StockfishUciSearchResult
+    subsequentSearch: StockfishUciSearchResult
   }>
   timingsMilliseconds: TimingsMilliseconds
 }>
@@ -57,7 +59,7 @@ type MeasuredResult<Value> = Readonly<{
 }>
 
 type ClosedSessionResult<Value> = Readonly<{
-  finalState: StockfishUciSessionState
+  finalState: StockfishEngineSessionState
   value: Value
 }>
 
@@ -80,7 +82,7 @@ async function measure<Value>(
 }
 
 async function useClosedSession<Value>(
-  configuration: StockfishUciConfiguration,
+  configuration: StockfishEngineConfiguration,
   operation: (session: StockfishUciSession) => Promise<Value>,
 ): Promise<ClosedSessionResult<Value>> {
   const session = createWebStockfishSession(configuration)

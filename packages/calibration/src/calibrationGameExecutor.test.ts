@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 import { STOCKFISH_18_BUILD_IDENTITY } from "@mapachess/stockfish/build-identity"
 import {
-  STOCKFISH_PROCESS_ADAPTER_VERSION,
-  type StockfishProcessAdapter,
-  type StockfishProcessState,
+  type StockfishEngineIdentity,
+  type StockfishEngineSearchResult,
+  type StockfishEngineSession,
+  type StockfishEngineSessionState,
   type StockfishSearchRequest,
-  type StockfishSearchResult,
-  type StockfishUciIdentity,
-} from "@mapachess/stockfish/uci-process-adapter"
+} from "@mapachess/stockfish/engine-session"
+import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
 import executeCalibrationGame, {
   executeCalibrationPair,
   type OpenCalibrationEngine,
@@ -99,15 +99,15 @@ function createPlan(
   })
 }
 
-class FakeEngine implements StockfishProcessAdapter {
+class FakeEngine implements StockfishEngineSession {
   public readonly searches: StockfishSearchRequest[] = []
-  public processState: StockfishProcessState = "created"
+  public processState: StockfishEngineSessionState = "created"
 
   public constructor(private readonly bestMove: string | null) {}
 
-  public async boot(): Promise<StockfishUciIdentity> {
+  public async boot(): Promise<StockfishEngineIdentity> {
     this.processState = "ready"
-    return { name: "Stockfish 18", author: "fixture", optionNames: [] }
+    return { name: "Stockfish 18", author: "fixture" }
   }
 
   public async close(): Promise<void> {
@@ -116,16 +116,15 @@ class FakeEngine implements StockfishProcessAdapter {
 
   public async search(
     request: StockfishSearchRequest,
-  ): Promise<StockfishSearchResult> {
+  ): Promise<StockfishEngineSearchResult> {
     this.searches.push(request)
     return {
       requestId: request.requestId,
       bestMove: this.bestMove,
-      informationLineCount: 0,
     }
   }
 
-  public state(): StockfishProcessState {
+  public state(): StockfishEngineSessionState {
     return this.processState
   }
 }
