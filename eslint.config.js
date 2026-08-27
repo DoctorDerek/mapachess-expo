@@ -15,5 +15,16 @@ export default defineConfig([
       reportUnusedInlineConfigs: "error",
     },
   },
+  {
+    name: "mapachess/mobile-metro",
+    files: ["apps/mobile/metro.config.js"],
+    languageOptions: {
+      globals: {
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+      },
+    },
+  },
   eslintConfigPrettier,
 ])
