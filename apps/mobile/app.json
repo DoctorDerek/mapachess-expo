@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Mapachess",
+    "slug": "mapachess",
+    "version": "0.1.0",
+    "scheme": "mapachess",
+    "platforms": ["ios", "android"],
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.mapachess",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.mapachess"
+    }
+  }
+}

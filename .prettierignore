@@ -8,6 +8,8 @@ build/
 dist/
 .expo/
 .turbo/
+apps/mobile/android/
+apps/mobile/ios/
 coverage/
 playwright-report/
 test-results/
