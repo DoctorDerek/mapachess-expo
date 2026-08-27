@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./engine-session": {
+      "types": "./src/engineSession.ts",
+      "default": "./dist/engineSession.js"
+    },
     "./build-identity": {
       "types": "./src/buildIdentity.ts",
       "default": "./dist/buildIdentity.js"
