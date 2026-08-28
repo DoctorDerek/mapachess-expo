@@ -2,6 +2,9 @@
   "name": "@mapachess/stockfish-native",
   "version": "0.0.0",
   "private": true,
+  "description": "Mapachess native Stockfish engine bridge",
+  "homepage": "https://mapachess.com",
+  "author": "Dr. Derek Austin",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
@@ -12,6 +15,11 @@
     "./provision": {
       "types": "./src/provision.ts",
       "default": "./dist/provision.js"
+    },
+    "./native-module": {
+      "types": "./src/NativeMapachessStockfish.ts",
+      "react-native": "./src/NativeMapachessStockfish.ts",
+      "default": "./src/NativeMapachessStockfish.ts"
     }
   },
   "scripts": {
@@ -21,12 +29,32 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --project tsconfig.json"
   },
+  "codegenConfig": {
+    "name": "MapachessStockfishSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "outputDir": {
+      "android": "android/generated",
+      "ios": "ios/generated"
+    },
+    "android": {
+      "javaPackageName": "com.mapachess.stockfish"
+    },
+    "includesGeneratedCode": true
+  },
   "dependencies": {
     "@mapachess/stockfish": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26",
+    "@types/react": "^19",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
     "typescript": "^6",
     "vitest": "^4"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
   }
 }
