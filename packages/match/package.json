@@ -13,6 +13,14 @@
       "types": "./src/matchPosition.ts",
       "default": "./dist/matchPosition.js"
     },
+    "./match-move": {
+      "types": "./src/matchMove.ts",
+      "default": "./dist/matchMove.js"
+    },
+    "./match-timeline": {
+      "types": "./src/matchTimeline.ts",
+      "default": "./dist/matchTimeline.js"
+    },
     "./match-variant": {
       "types": "./src/matchVariant.ts",
       "default": "./dist/matchVariant.js"
