@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./chess960-position": {
+      "types": "./src/chess960Position.ts",
+      "default": "./dist/chess960Position.js"
+    },
+    "./match-position": {
+      "types": "./src/matchPosition.ts",
+      "default": "./dist/matchPosition.js"
+    },
     "./match-variant": {
       "types": "./src/matchVariant.ts",
       "default": "./dist/matchVariant.js"
