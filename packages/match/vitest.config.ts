@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     name: "match",
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["test/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
