@@ -1,0 +1,12 @@
+{
+  "cli": {
+    "appVersionSource": "local",
+    "version": ">=22.6.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    }
+  }
+}
