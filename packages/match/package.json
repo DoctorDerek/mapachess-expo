@@ -17,6 +17,10 @@
       "types": "./src/matchMove.ts",
       "default": "./dist/matchMove.js"
     },
+    "./match-machine": {
+      "types": "./src/matchMachine.ts",
+      "default": "./dist/matchMachine.js"
+    },
     "./match-timeline": {
       "types": "./src/matchTimeline.ts",
       "default": "./dist/matchTimeline.js"
