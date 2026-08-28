@@ -17,4 +17,7 @@ test-results/
 blob-report/
 vendor/
 asset/
+packages/stockfish-native/third_party/
+packages/stockfish-native/android/generated/
+packages/stockfish-native/ios/generated/
 ghost_assets/*.zip

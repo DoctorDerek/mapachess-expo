@@ -3,13 +3,15 @@ import {
   type StockfishEngineSessionState,
 } from "./engineSession.js"
 import {
-  assertNotAborted,
+  assertStockfishOperationNotAborted,
+  validateStockfishSearchRequest,
+} from "./engineValidation.js"
+import {
   createConfigurationCommands,
   parseBestMove,
   parseInformation,
   parseUciOption,
   validateHandshake,
-  validateSearchRequest,
   type UciHandshake,
   type UciOption,
 } from "./uciProtocol.js"
@@ -57,7 +59,7 @@ export default function createStockfishUciSession(
       throw new StockfishProtocolError("Stockfish transport is not running.")
     }
 
-    assertNotAborted(signal, operation)
+    assertStockfishOperationNotAborted(signal, operation)
 
     let rejectAbort:
       ((error: StockfishOperationAbortedError) => void) | undefined
@@ -134,7 +136,7 @@ export default function createStockfishUciSession(
     sessionState = "booting"
 
     try {
-      assertNotAborted(signal, "boot")
+      assertStockfishOperationNotAborted(signal, "boot")
       lineIterator = input.transport.lines[Symbol.asyncIterator]()
       await writeLine("uci")
       const handshake = await readHandshake(signal)
@@ -164,7 +166,7 @@ export default function createStockfishUciSession(
   }
 
   const search: StockfishUciSession["search"] = async (request, signal) => {
-    validateSearchRequest(request)
+    validateStockfishSearchRequest(request)
 
     if (sessionState !== "ready") {
       throw new StockfishProtocolError(
@@ -172,7 +174,10 @@ export default function createStockfishUciSession(
       )
     }
 
-    assertNotAborted(signal, `search request ${request.requestId}`)
+    assertStockfishOperationNotAborted(
+      signal,
+      `search request ${request.requestId}`,
+    )
     sessionState = "searching"
     activeRequestId = request.requestId
     const operation = `search request ${request.requestId}`

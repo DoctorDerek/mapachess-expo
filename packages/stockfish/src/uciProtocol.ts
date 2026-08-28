@@ -1,16 +1,17 @@
 import {
-  StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
   type StockfishScore,
-  type StockfishSearchRequest,
 } from "./engineSession.js"
+import {
+  assertStableText,
+  validateStockfishEngineConfiguration,
+} from "./engineValidation.js"
 import {
   StockfishProtocolError,
   type StockfishUciExpectation,
   type StockfishUciSearchInformation,
 } from "./uciTypes.js"
 
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 const UCI_MOVE_PATTERN = /^[a-h][1-8][a-h][1-8][qrbn]?$/
 const UCI_OPTION_PATTERN =
   /^option name (.+?) type (button|check|combo|spin|string)(?: (.*))?$/
@@ -45,30 +46,9 @@ const REQUIRED_OPTIONS: Readonly<Record<string, UciOptionType>> = {
   UCI_LimitStrength: "check",
 }
 
-export function assertStableText(value: string, label: string): void {
-  if (
-    value.length === 0 ||
-    value !== value.trim() ||
-    CONTROL_CHARACTER_PATTERN.test(value)
-  ) {
-    throw new TypeError(
-      `${label} must be nonempty, trimmed, and free of control characters.`,
-    )
-  }
-}
-
 function assertPositiveSafeInteger(value: number, label: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new TypeError(`${label} must be a positive safe integer.`)
-  }
-}
-
-export function assertNotAborted(
-  signal: AbortSignal | undefined,
-  operation: string,
-): void {
-  if (signal?.aborted === true) {
-    throw new StockfishOperationAbortedError(operation)
   }
 }
 
@@ -150,6 +130,7 @@ function validateConfiguration(
   configuration: StockfishEngineConfiguration,
   options: ReadonlyMap<string, UciOption>,
 ): void {
+  validateStockfishEngineConfiguration(configuration)
   assertSpinValue(
     requireOption(options, "Threads", "spin"),
     configuration.threads,
@@ -163,24 +144,11 @@ function validateConfiguration(
     configuration.multiPv,
   )
 
-  if (typeof configuration.ponder !== "boolean") {
-    throw new TypeError("ponder must be a boolean.")
-  }
-
-  if (
-    configuration.variant !== "standard" &&
-    configuration.variant !== "chess960"
-  ) {
-    throw new TypeError('variant must be "standard" or "chess960".')
-  }
-
   if (configuration.strength.kind === "uci-elo") {
     assertSpinValue(
       requireOption(options, "UCI_Elo", "spin"),
       configuration.strength.elo,
     )
-  } else if (configuration.strength.kind !== "full-strength") {
-    throw new TypeError('strength.kind must be "full-strength" or "uci-elo".')
   }
 }
 
@@ -224,20 +192,6 @@ export function validateHandshake(
   }
 
   validateConfiguration(configuration, handshake.options)
-}
-
-export function validateSearchRequest(request: StockfishSearchRequest): void {
-  assertStableText(request.requestId, "requestId")
-  assertStableText(request.position.fen, "position.fen")
-  assertPositiveSafeInteger(request.nodeLimit, "nodeLimit")
-
-  for (const [index, move] of request.position.moves.entries()) {
-    if (!UCI_MOVE_PATTERN.test(move)) {
-      throw new TypeError(
-        `position.moves[${index}] must be a lowercase UCI move.`,
-      )
-    }
-  }
 }
 
 export function parseInformation(line: string): StockfishUciSearchInformation {

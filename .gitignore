@@ -11,6 +11,7 @@ dist/
 .turbo/
 .vercel/
 .stockfish/
+packages/stockfish-native/.stockfish-networks/
 apps/mobile/android/
 apps/mobile/ios/
 apps/web/public/stockfish-runtime/

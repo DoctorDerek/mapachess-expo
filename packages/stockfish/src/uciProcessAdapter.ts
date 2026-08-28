@@ -6,13 +6,13 @@ import {
   type StockfishEngineConfiguration,
   type StockfishEngineSessionState,
 } from "./engineSession.js"
+import {
+  assertStableText,
+  assertStockfishOperationNotAborted,
+  validateStockfishSearchRequest,
+} from "./engineValidation.js"
 import createNodeUciTransport from "./nodeUciTransport.js"
 import { sha256File, type ProvisionedStockfish } from "./provision.js"
-import {
-  assertNotAborted,
-  assertStableText,
-  validateSearchRequest,
-} from "./uciProtocol.js"
 import createStockfishUciSession, {
   StockfishProtocolError,
 } from "./uciSession.js"
@@ -71,9 +71,9 @@ export default function createStockfishProcessAdapter(
     processState = "booting"
 
     try {
-      assertNotAborted(signal, "boot")
+      assertStockfishOperationNotAborted(signal, "boot")
       const actualExecutableSha256 = await sha256File(input.executablePath)
-      assertNotAborted(signal, "boot")
+      assertStockfishOperationNotAborted(signal, "boot")
       if (actualExecutableSha256 !== input.expectedIdentity.executableSha256) {
         throw new StockfishProtocolError(
           `Stockfish executable SHA-256 mismatch: expected ${input.expectedIdentity.executableSha256}, received ${actualExecutableSha256}.`,
@@ -96,7 +96,7 @@ export default function createStockfishProcessAdapter(
 
   const search: StockfishProcessAdapter["search"] = async (request, signal) => {
     if (session === undefined) {
-      validateSearchRequest(request)
+      validateStockfishSearchRequest(request)
       throw new StockfishProtocolError(
         `Stockfish cannot search from state ${processState}.`,
       )
