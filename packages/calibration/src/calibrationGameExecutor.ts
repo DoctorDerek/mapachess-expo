@@ -4,6 +4,10 @@ import type {
   StockfishEngineSession,
 } from "@mapachess/stockfish/engine-session"
 import {
+  selectOpponentMoveSource,
+  selectUniformRandomLegalMove,
+} from "@mapachess/stockfish/opponent-move-selection"
+import {
   CalibrationExecutionAbortedError,
   type CalibrationColor,
   type CalibrationCompletedTermination,
@@ -23,7 +27,6 @@ import {
   type CalibrationPolicyMap,
 } from "./calibrationPolicyRegistry.js"
 import createDeterministicRandom from "./deterministicRandom.js"
-import { RANDOM_MOVE_PROBABILITY_SCALE } from "./opponentPolicy.js"
 
 export { CalibrationExecutionAbortedError }
 export type {
@@ -156,20 +159,16 @@ async function executePlies(
     }
 
     const random = randomByColor[color]
-    const useRandomMove =
-      random.nextIndex(RANDOM_MOVE_PROBABILITY_SCALE) <
-      policy.moveSelection.randomMoveProbabilityBasisPoints
+    const moveSource = selectOpponentMoveSource(
+      random,
+      policy.moveSelection.randomMoveProbabilityBasisPoints,
+    )
     let selectedMove: string
     let source: CalibrationMoveSource
     let search: StockfishEngineSearchResult | undefined
 
-    if (useRandomMove) {
-      const randomMove = legalMoves[random.nextIndex(legalMoves.length)]
-      if (randomMove === undefined) {
-        throw new RangeError("Deterministic legal-move selection failed.")
-      }
-
-      selectedMove = randomMove
+    if (moveSource === "uniform-random-legal") {
+      selectedMove = selectUniformRandomLegalMove(random, legalMoves)
       source = "uniform-random-legal"
     } else {
       search = await engineByColor[color].search(
