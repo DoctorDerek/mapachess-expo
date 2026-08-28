@@ -153,6 +153,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../../packages/match
       '@mapachess/stockfish':
         specifier: workspace:*
         version: link:../../packages/stockfish
