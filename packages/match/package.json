@@ -1,0 +1,23 @@
+{
+  "name": "@mapachess/match",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./match-variant": {
+      "types": "./src/matchVariant.ts",
+      "default": "./dist/matchVariant.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "chessops": "^0.15.1",
+    "xstate": "^5"
+  }
+}
