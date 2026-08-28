@@ -73,9 +73,8 @@ namespace JS {
 @end
 @protocol NativeMapachessStockfishSpec <RCTBridgeModule, RCTTurboModule>
 
-- (void)boot;
+- (void)boot:(JS::NativeMapachessStockfish::NativeStockfishConfiguration &)configuration;
 - (void)close;
-- (void)configure:(JS::NativeMapachessStockfish::NativeStockfishConfiguration &)configuration;
 - (void)startSearch:(JS::NativeMapachessStockfish::NativeStockfishSearchRequest &)request;
 - (void)stop:(NSString *)requestId;
 

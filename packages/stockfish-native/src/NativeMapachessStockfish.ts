@@ -46,9 +46,8 @@ export type NativeStockfishFailureEvent = {
 }
 
 export interface Spec extends TurboModule {
-  readonly boot: () => void
+  readonly boot: (configuration: NativeStockfishConfiguration) => void
   readonly close: () => void
-  readonly configure: (configuration: NativeStockfishConfiguration) => void
   readonly onBestMove: CodegenTypes.EventEmitter<NativeStockfishBestMoveEvent>
   readonly onClosed: CodegenTypes.EventEmitter<void>
   readonly onFailure: CodegenTypes.EventEmitter<NativeStockfishFailureEvent>

@@ -387,9 +387,8 @@ public:
 
 protected:
   NativeMapachessStockfishCxxSpec(std::shared_ptr<CallInvoker> jsInvoker) : TurboModule(std::string{NativeMapachessStockfishCxxSpec::kModuleName}, jsInvoker) {
-    methodMap_["boot"] = MethodMetadata {.argCount = 0, .invoker = __boot};
+    methodMap_["boot"] = MethodMetadata {.argCount = 1, .invoker = __boot};
     methodMap_["close"] = MethodMetadata {.argCount = 0, .invoker = __close};
-    methodMap_["configure"] = MethodMetadata {.argCount = 1, .invoker = __configure};
     methodMap_["startSearch"] = MethodMetadata {.argCount = 1, .invoker = __startSearch};
     methodMap_["stop"] = MethodMetadata {.argCount = 1, .invoker = __stop};
     eventEmitterMap_["onBestMove"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
@@ -431,11 +430,12 @@ protected:
     });
   }
 private:
-  static jsi::Value __boot(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* /*args*/, size_t /*count*/) {
+  static jsi::Value __boot(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
     static_assert(
-      bridging::getParameterCount(&T::boot) == 1,
-      "Expected boot(...) to have 1 parameters");
-    bridging::callFromJs<void>(rt, &T::boot,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule));return jsi::Value::undefined();
+      bridging::getParameterCount(&T::boot) == 2,
+      "Expected boot(...) to have 2 parameters");
+    bridging::callFromJs<void>(rt, &T::boot,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
+      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asObject(rt));return jsi::Value::undefined();
   }
 
   static jsi::Value __close(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* /*args*/, size_t /*count*/) {
@@ -443,14 +443,6 @@ private:
       bridging::getParameterCount(&T::close) == 1,
       "Expected close(...) to have 1 parameters");
     bridging::callFromJs<void>(rt, &T::close,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule));return jsi::Value::undefined();
-  }
-
-  static jsi::Value __configure(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
-    static_assert(
-      bridging::getParameterCount(&T::configure) == 2,
-      "Expected configure(...) to have 2 parameters");
-    bridging::callFromJs<void>(rt, &T::configure,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
-      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asObject(rt));return jsi::Value::undefined();
   }
 
   static jsi::Value __startSearch(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {

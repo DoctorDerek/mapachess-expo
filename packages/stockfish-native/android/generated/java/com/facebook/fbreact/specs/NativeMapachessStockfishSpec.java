@@ -54,15 +54,11 @@ public abstract class NativeMapachessStockfishSpec extends ReactContextBaseJavaM
 
   @ReactMethod
   @DoNotStrip
-  public abstract void boot();
+  public abstract void boot(ReadableMap configuration);
 
   @ReactMethod
   @DoNotStrip
   public abstract void close();
-
-  @ReactMethod
-  @DoNotStrip
-  public abstract void configure(ReadableMap configuration);
 
   @ReactMethod
   @DoNotStrip

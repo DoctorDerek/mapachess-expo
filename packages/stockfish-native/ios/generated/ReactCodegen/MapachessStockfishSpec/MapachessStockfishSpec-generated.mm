@@ -57,15 +57,11 @@
 namespace facebook::react {
   
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_boot(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "boot", @selector(boot), args, count);
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "boot", @selector(boot:), args, count);
     }
 
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_close(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
       return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "close", @selector(close), args, count);
-    }
-
-    static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_configure(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "configure", @selector(configure:), args, count);
     }
 
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_startSearch(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
@@ -79,14 +75,11 @@ namespace facebook::react {
   NativeMapachessStockfishSpecJSI::NativeMapachessStockfishSpecJSI(const ObjCTurboModule::InitParams &params)
     : ObjCTurboModule(params) {
       
-        methodMap_["boot"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
-        
+        methodMap_["boot"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
+        setMethodArgConversionSelector(@"boot", 0, @"JS_NativeMapachessStockfish_NativeStockfishConfiguration:");
         
         methodMap_["close"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_close};
         
-        
-        methodMap_["configure"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_configure};
-        setMethodArgConversionSelector(@"configure", 0, @"JS_NativeMapachessStockfish_NativeStockfishConfiguration:");
         
         methodMap_["startSearch"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
         setMethodArgConversionSelector(@"startSearch", 0, @"JS_NativeMapachessStockfish_NativeStockfishSearchRequest:");

@@ -14,17 +14,12 @@ namespace facebook::react {
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_boot(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "boot", "()V", args, count, cachedMethodId);
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "boot", "(Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
 }
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_close(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
   return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "close", "()V", args, count, cachedMethodId);
-}
-
-static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_configure(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-  static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "configure", "(Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
 }
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_startSearch(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
@@ -39,9 +34,8 @@ static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_stop(
 
 NativeMapachessStockfishSpecJSI::NativeMapachessStockfishSpecJSI(const JavaTurboModule::InitParams &params)
   : JavaTurboModule(params) {
-  methodMap_["boot"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
+  methodMap_["boot"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
   methodMap_["close"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_close};
-  methodMap_["configure"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_configure};
   methodMap_["startSearch"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
   methodMap_["stop"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_stop};
   eventEmitterMap_["onBestMove"] = std::make_shared<AsyncEventEmitter<folly::dynamic>>();

@@ -88,10 +88,9 @@ class MapachessStockfishModule final
   explicit MapachessStockfishModule(std::shared_ptr<CallInvoker> jsInvoker);
   ~MapachessStockfishModule() override;
 
-  void boot(jsi::Runtime& runtime);
+  void boot(jsi::Runtime& runtime,
+            MapachessStockfishConfiguration configuration);
   void close(jsi::Runtime& runtime);
-  void configure(jsi::Runtime& runtime,
-                 MapachessStockfishConfiguration configuration);
   void startSearch(jsi::Runtime& runtime,
                    MapachessStockfishSearchRequest request);
   void stop(jsi::Runtime& runtime, std::string requestId);

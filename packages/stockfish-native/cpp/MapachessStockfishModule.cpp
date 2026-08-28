@@ -37,13 +37,11 @@ enum class EngineState {
   Failed,
 };
 
-struct BootCommand {};
-
-struct CloseCommand {};
-
-struct ConfigureCommand {
+struct BootCommand {
   MapachessStockfishConfiguration configuration;
 };
+
+struct CloseCommand {};
 
 struct SearchCommand {
   MapachessStockfishSearchRequest request;
@@ -54,8 +52,7 @@ struct StopCommand {
 };
 
 using EngineCommand =
-    std::variant<BootCommand, CloseCommand, ConfigureCommand, SearchCommand,
-                 StopCommand>;
+    std::variant<BootCommand, CloseCommand, SearchCommand, StopCommand>;
 
 struct ConvertedScore {
   int centipawns;
@@ -197,7 +194,9 @@ class MapachessStockfishModule::Core {
 
   ~Core() { shutdown(); }
 
-  bool boot() { return enqueue(BootCommand{}); }
+  bool boot(MapachessStockfishConfiguration configuration) {
+    return enqueue(BootCommand{.configuration = configuration});
+  }
 
   bool close() {
     {
@@ -210,10 +209,6 @@ class MapachessStockfishModule::Core {
     }
     commandAvailable_.notify_one();
     return true;
-  }
-
-  bool configure(MapachessStockfishConfiguration configuration) {
-    return enqueue(ConfigureCommand{.configuration = configuration});
   }
 
   bool search(MapachessStockfishSearchRequest request) {
@@ -278,7 +273,7 @@ class MapachessStockfishModule::Core {
     return command;
   }
 
-  void handle(BootCommand) {
+  void handle(BootCommand command) {
     if (!transition(EngineState::Created, EngineState::Booting)) {
       emitFailure("invalid-state", "The native engine can only boot once.", "");
       return;
@@ -286,6 +281,7 @@ class MapachessStockfishModule::Core {
 
     engine_ = std::make_unique<Stockfish::Engine>();
     installEngineCallbacks();
+    applyConfiguration(command.configuration);
     engine_->verify_networks();
 
     {
@@ -312,26 +308,6 @@ class MapachessStockfishModule::Core {
     }
 
     completeClose();
-  }
-
-  void handle(ConfigureCommand command) {
-    if (state() != EngineState::Ready || !engine_) {
-      emitFailure("invalid-state",
-                  "The native engine must be ready before configuration.", "");
-      return;
-    }
-
-    validateConfiguration(command.configuration);
-    setIntegerOption("Threads", command.configuration.threads);
-    setIntegerOption("Hash", command.configuration.hashMegabytes);
-    setIntegerOption("MultiPV", command.configuration.multiPv);
-    setBooleanOption("Ponder", command.configuration.ponder);
-    setBooleanOption("UCI_Chess960", command.configuration.isChess960);
-    setBooleanOption("UCI_LimitStrength", command.configuration.limitStrength);
-    if (command.configuration.limitStrength) {
-      setIntegerOption("UCI_Elo", command.configuration.elo);
-    }
-    engine_->search_clear();
   }
 
   void handle(SearchCommand command) {
@@ -438,6 +414,21 @@ class MapachessStockfishModule::Core {
         .scoreKind = std::move(convertedScore.kind),
         .selectiveDepth = selectiveDepth,
     });
+  }
+
+  void applyConfiguration(
+      const MapachessStockfishConfiguration& configuration) {
+    validateConfiguration(configuration);
+    setIntegerOption("Threads", configuration.threads);
+    setIntegerOption("Hash", configuration.hashMegabytes);
+    setIntegerOption("MultiPV", configuration.multiPv);
+    setBooleanOption("Ponder", configuration.ponder);
+    setBooleanOption("UCI_Chess960", configuration.isChess960);
+    setBooleanOption("UCI_LimitStrength", configuration.limitStrength);
+    if (configuration.limitStrength) {
+      setIntegerOption("UCI_Elo", configuration.elo);
+    }
+    engine_->search_clear();
   }
 
   void setBooleanOption(std::string_view name, bool value) {
@@ -550,8 +541,9 @@ MapachessStockfishModule::~MapachessStockfishModule() {
   core_->shutdown();
 }
 
-void MapachessStockfishModule::boot(jsi::Runtime&) {
-  if (!core_->boot()) {
+void MapachessStockfishModule::boot(
+    jsi::Runtime&, MapachessStockfishConfiguration configuration) {
+  if (!core_->boot(configuration)) {
     emitFailure({.code = "closed",
                  .message = "The native engine is closing or closed.",
                  .requestId = ""});
@@ -560,15 +552,6 @@ void MapachessStockfishModule::boot(jsi::Runtime&) {
 
 void MapachessStockfishModule::close(jsi::Runtime&) {
   core_->close();
-}
-
-void MapachessStockfishModule::configure(
-    jsi::Runtime&, MapachessStockfishConfiguration configuration) {
-  if (!core_->configure(configuration)) {
-    emitFailure({.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = ""});
-  }
 }
 
 void MapachessStockfishModule::startSearch(
