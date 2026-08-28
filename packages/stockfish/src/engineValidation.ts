@@ -25,6 +25,12 @@ export function assertStableText(value: string, label: string): void {
   }
 }
 
+export function assertStockfishUciMove(value: string, label: string): void {
+  if (!UCI_MOVE_PATTERN.test(value)) {
+    throw new TypeError(`${label} must be a lowercase UCI move.`)
+  }
+}
+
 export function assertStockfishOperationNotAborted(
   signal: AbortSignal | undefined,
   operation: string,
@@ -67,10 +73,6 @@ export function validateStockfishSearchRequest(
   assertPositiveSafeInteger(request.nodeLimit, "nodeLimit")
 
   for (const [index, move] of request.position.moves.entries()) {
-    if (!UCI_MOVE_PATTERN.test(move)) {
-      throw new TypeError(
-        `position.moves[${index}] must be a lowercase UCI move.`,
-      )
-    }
+    assertStockfishUciMove(move, `position.moves[${index}]`)
   }
 }

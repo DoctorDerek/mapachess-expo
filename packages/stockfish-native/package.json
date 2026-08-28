@@ -20,6 +20,11 @@
       "types": "./src/NativeMapachessStockfish.ts",
       "react-native": "./src/NativeMapachessStockfish.ts",
       "default": "./src/NativeMapachessStockfish.ts"
+    },
+    "./session": {
+      "types": "./src/nativeStockfishSession.ts",
+      "react-native": "./src/nativeStockfishSession.ts",
+      "default": "./dist/nativeStockfishSession.js"
     }
   },
   "scripts": {

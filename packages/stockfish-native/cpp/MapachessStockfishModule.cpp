@@ -340,6 +340,10 @@ class MapachessStockfishModule::Core {
           activeRequestId_ == command.requestId) {
         state_ = EngineState::Stopping;
         shouldStop = true;
+      } else if ((state_ == EngineState::Ready && activeRequestId_.empty()) ||
+                 (state_ == EngineState::Stopping &&
+                  activeRequestId_ == command.requestId)) {
+        return;
       }
     }
 
