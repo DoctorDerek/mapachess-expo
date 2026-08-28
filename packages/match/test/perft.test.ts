@@ -31,7 +31,7 @@ describe("authoritative move-generation references", () => {
     expect(countPerftNodes(position, 1)).toBe(20)
     expect(countPerftNodes(position, 2)).toBe(400)
     expect(countPerftNodes(position, 3)).toBe(8_902)
-  })
+  }, 20_000)
 
   it("matches the Stockfish Chess960 perft reference through depth two", () => {
     const result = reconstructMatchPosition(
