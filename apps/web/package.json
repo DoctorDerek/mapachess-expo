@@ -15,6 +15,7 @@
   "dependencies": {
     "@mapachess/match": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
+    "@xstate/react": "^6",
     "next": "^16",
     "react": "^19",
     "react-dom": "^19"
