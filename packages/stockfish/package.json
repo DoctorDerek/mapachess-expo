@@ -9,6 +9,10 @@
       "types": "./src/engineSession.ts",
       "default": "./dist/engineSession.js"
     },
+    "./engine-validation": {
+      "types": "./src/engineValidation.ts",
+      "default": "./dist/engineValidation.js"
+    },
     "./build-identity": {
       "types": "./src/buildIdentity.ts",
       "default": "./dist/buildIdentity.js"
