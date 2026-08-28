@@ -68,6 +68,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../../packages/stockfish
       '@mapachess/stockfish-native':
         specifier: workspace:*
         version: link:../../packages/stockfish-native
