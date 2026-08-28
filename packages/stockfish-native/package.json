@@ -1,0 +1,32 @@
+{
+  "name": "@mapachess/stockfish-native",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./build-identity": {
+      "types": "./src/nativeBuildIdentity.ts",
+      "default": "./dist/nativeBuildIdentity.js"
+    },
+    "./provision": {
+      "types": "./src/provision.ts",
+      "default": "./dist/provision.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "provision": "pnpm run build && node dist/provisionCli.js",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/stockfish": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26",
+    "typescript": "^6",
+    "vitest": "^4"
+  }
+}

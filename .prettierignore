@@ -17,4 +17,5 @@ test-results/
 blob-report/
 vendor/
 asset/
+packages/stockfish-native/third_party/
 ghost_assets/*.zip

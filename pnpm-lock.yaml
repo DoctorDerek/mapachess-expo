@@ -172,6 +172,22 @@ importers:
 
   packages/stockfish: {}
 
+  packages/stockfish-native:
+    dependencies:
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+    devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.2.0
+      typescript:
+        specifier: ^6
+        version: 6.0.3
+      vitest:
+        specifier: ^4
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)(terser@5.51.0)(yaml@2.9.0))
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
