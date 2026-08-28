@@ -12,6 +12,8 @@
     "eas-build-post-install": "pnpm --filter @mapachess/stockfish-native provision",
     "native:prebuild": "expo prebuild --clean",
     "start": "expo start --dev-client",
+    "test:native": "jest --runInBand",
+    "test:native:coverage": "jest --coverage --runInBand",
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
@@ -33,10 +35,16 @@
     "uniwind": "^1"
   },
   "devDependencies": {
+    "@jest/globals": "^29",
     "@react-native/metro-config": "0.86.3",
+    "@testing-library/react-native": "^14",
+    "@types/jest": "^29",
     "@types/react": "^19",
     "expo-doctor": "^1",
+    "jest": "^29",
+    "jest-expo": "~57.0.5",
     "tailwindcss": "^4",
+    "test-renderer": "^1",
     "typescript": "^6"
   },
   "engines": {
