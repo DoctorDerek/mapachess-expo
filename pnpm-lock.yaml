@@ -153,6 +153,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/hints':
+        specifier: workspace:*
+        version: link:../../packages/hints
       '@mapachess/match':
         specifier: workspace:*
         version: link:../../packages/match

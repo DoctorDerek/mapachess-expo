@@ -10,12 +10,18 @@ import createWebWorkerUciTransport from "./webWorkerUciTransport"
 
 export const STOCKFISH_WEB_WORKER_URL =
   `/stockfish-runtime/${STOCKFISH_18_WEB_LOADER_ARTIFACT.fileName}` as const
+export const STOCKFISH_WEB_WORKER_NAME = "mapachess-stockfish-18" as const
+
+export type CreateWebStockfishSessionOptions = Readonly<{
+  workerName?: string
+}>
 
 export default function createWebStockfishSession(
   configuration: StockfishEngineConfiguration,
+  options: CreateWebStockfishSessionOptions = {},
 ): StockfishUciSession {
   const worker = new Worker(STOCKFISH_WEB_WORKER_URL, {
-    name: "mapachess-stockfish-18",
+    name: options.workerName ?? STOCKFISH_WEB_WORKER_NAME,
   })
 
   return createStockfishUciSession({

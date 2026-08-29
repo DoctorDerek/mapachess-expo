@@ -13,6 +13,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/hints": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@xstate/react": "^6",
