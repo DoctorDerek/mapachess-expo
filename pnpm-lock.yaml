@@ -203,6 +203,18 @@ importers:
         specifier: ^1
         version: 1.4.0
 
+  packages/hints:
+    dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+      chessops:
+        specifier: ^0.15.1
+        version: 0.15.1
+
   packages/match:
     dependencies:
       chessops:
