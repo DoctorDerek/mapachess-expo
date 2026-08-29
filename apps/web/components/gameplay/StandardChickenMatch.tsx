@@ -156,7 +156,9 @@ export default function StandardChickenMatch({
               Move History
             </h2>
             <span className="font-mono text-xs text-slate-400">
-              {String(activeTransitions.length)} plies
+              {activeTransitions.length === 1
+                ? "1 ply"
+                : `${String(activeTransitions.length)} plies`}
             </span>
           </div>
           {activeTransitions.length === 0 ? (
