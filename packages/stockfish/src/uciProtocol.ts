@@ -196,6 +196,8 @@ export function validateHandshake(
 
 export function parseInformation(line: string): StockfishUciSearchInformation {
   const tokens = line.split(" ")
+  if (tokens[1] === "string") return { line }
+
   const valueAfter = (name: string): number | undefined => {
     const index = tokens.indexOf(name)
     return parseInteger(index === -1 ? undefined : tokens[index + 1])
@@ -203,6 +205,30 @@ export function parseInformation(line: string): StockfishUciSearchInformation {
   const depth = valueAfter("depth")
   const selectiveDepth = valueAfter("seldepth")
   const nodes = valueAfter("nodes")
+  const multiPvIndex = tokens.indexOf("multipv")
+  const multiPv =
+    multiPvIndex === -1 ? undefined : parseInteger(tokens[multiPvIndex + 1])
+  if (multiPvIndex !== -1 && (multiPv === undefined || multiPv <= 0)) {
+    throw new StockfishProtocolError(
+      "Stockfish emitted an invalid MultiPV rank.",
+    )
+  }
+
+  const principalVariationIndex = tokens.indexOf("pv")
+  let principalVariation: readonly string[] | undefined
+  if (principalVariationIndex !== -1) {
+    const moves = tokens.slice(principalVariationIndex + 1)
+    if (
+      moves.length === 0 ||
+      moves.some((move) => !UCI_MOVE_PATTERN.test(move))
+    ) {
+      throw new StockfishProtocolError(
+        "Stockfish emitted an invalid principal variation.",
+      )
+    }
+    principalVariation = Object.freeze(moves)
+  }
+
   const scoreIndex = tokens.indexOf("score")
   let score: StockfishScore | undefined
 
@@ -232,6 +258,8 @@ export function parseInformation(line: string): StockfishUciSearchInformation {
     ...(selectiveDepth === undefined ? {} : { selectiveDepth }),
     ...(nodes === undefined ? {} : { nodes }),
     ...(score === undefined ? {} : { score }),
+    ...(multiPv === undefined ? {} : { multiPv }),
+    ...(principalVariation === undefined ? {} : { principalVariation }),
   }
 }
 
