@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./better-hints": {
+      "types": "./src/betterHints.ts",
+      "default": "./dist/betterHints.js"
+    },
     "./chess960-position": {
       "types": "./src/chess960Position.ts",
       "default": "./dist/chess960Position.js"

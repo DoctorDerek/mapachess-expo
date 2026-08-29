@@ -3,6 +3,13 @@ import { makeFen, parseFen } from "chessops/fen"
 import type { NormalMove } from "chessops/types"
 import { kingCastlesTo, makeSquare, makeUci, squareRank } from "chessops/util"
 import {
+  BETTER_HINTS_PER_SIDE,
+  type BetterHint,
+  type BetterHintsAnalyst,
+  type BetterHintsRequest,
+  type BetterHintsResult,
+} from "@mapachess/match/better-hints"
+import {
   listLegalMatchMoves,
   MATCH_PROMOTION_ROLES,
   type LegalMatchMove,
@@ -21,36 +28,8 @@ import type {
 } from "@mapachess/stockfish/engine-session"
 import { assertStockfishOperationNotAborted } from "@mapachess/stockfish/engine-validation"
 
-export const BETTER_HINTS_PER_SIDE = 3 as const
 export const BETTER_HINTS_ENGINE_MULTIPV = 256 as const
 export const BETTER_HINTS_NODE_LIMIT = 50_000 as const
-
-export type BetterHint = Readonly<{
-  color: MatchColor
-  from: MatchSquare
-  to: MatchSquare
-  uci: string
-}>
-
-export type BetterHintsResult = Readonly<{
-  opponent: readonly BetterHint[]
-  player: readonly BetterHint[]
-  positionFen: string
-  requestId: string
-}>
-
-export type BetterHintsRequest = Readonly<{
-  playerColor: MatchColor
-  position: MatchPosition
-  requestId: string
-}>
-
-export type BetterHintsAnalyst = Readonly<{
-  analyze: (
-    request: BetterHintsRequest,
-    signal?: AbortSignal,
-  ) => Promise<BetterHintsResult>
-}>
 
 export type BetterHintsAnalystInput = Readonly<{
   engine: StockfishEngineSession
