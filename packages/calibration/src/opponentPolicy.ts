@@ -6,13 +6,18 @@ import {
   type StockfishBuildIdentity,
 } from "@mapachess/stockfish/build-identity"
 import type { StockfishStrength } from "@mapachess/stockfish/engine-session"
+import {
+  OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION,
+  OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE,
+} from "@mapachess/stockfish/opponent-move-selection"
 
 export const OPPONENT_POLICY_SCHEMA_VERSION = 2 as const
-export const RANDOM_MOVE_PROBABILITY_SCALE = 10_000 as const
+export const RANDOM_MOVE_PROBABILITY_SCALE =
+  OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE
 export const CALIBRATION_COMMAND_PROTOCOL_VERSION =
   "mapachess-uci-nodes/v1" as const
 export const CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION =
-  "best-or-uniform-random-legal/v1" as const
+  OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION
 export const CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION =
   "chess.js@1.4.0/uci-lexicographic/v1" as const
 

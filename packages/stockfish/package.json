@@ -13,6 +13,10 @@
       "types": "./src/engineValidation.ts",
       "default": "./dist/engineValidation.js"
     },
+    "./opponent-move-selection": {
+      "types": "./src/opponentMoveSelection.ts",
+      "default": "./dist/opponentMoveSelection.js"
+    },
     "./build-identity": {
       "types": "./src/buildIdentity.ts",
       "default": "./dist/buildIdentity.js"

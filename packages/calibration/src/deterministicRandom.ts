@@ -1,27 +1,25 @@
 import { createHash } from "node:crypto"
+import {
+  createDeterministicRandom,
+  DETERMINISTIC_RANDOM_ALGORITHM_VERSION,
+  parseDeterministicRandomSeed,
+  type DeterministicRandom,
+  type DeterministicRandomSeed,
+} from "@mapachess/stockfish/opponent-move-selection"
 
 export const CALIBRATION_RANDOM_ALGORITHM_VERSION =
-  "xoshiro128starstar-1.1/v1" as const
+  DETERMINISTIC_RANDOM_ALGORITHM_VERSION
 export const CALIBRATION_SEED_DERIVATION_VERSION =
   "mapachess-sha256-xoshiro128-state/v1" as const
 
-const UINT32_RANGE = 0x1_0000_0000
-const UINT32_MAX = UINT32_RANGE - 1
-const CALIBRATION_SEED_PATTERN = /^[0-9a-f]{32}$/
-const ZERO_CALIBRATION_SEED = "0".repeat(32)
+const UINT32_MAX = 0xffff_ffff
 
 export type CalibrationRootSeed = number & {
   readonly calibrationRootSeed: unique symbol
 }
 
-export type CalibrationSeed = string & {
-  readonly calibrationSeed: unique symbol
-}
-
-export type DeterministicRandom = Readonly<{
-  nextIndex: (upperExclusive: number) => number
-  nextUint32: () => number
-}>
+export type CalibrationSeed = DeterministicRandomSeed
+export type { DeterministicRandom }
 
 export function parseCalibrationRootSeed(
   value: unknown,
@@ -43,17 +41,7 @@ export function parseCalibrationSeed(
   value: unknown,
   label = "calibration seed",
 ): CalibrationSeed {
-  if (
-    typeof value !== "string" ||
-    !CALIBRATION_SEED_PATTERN.test(value) ||
-    value === ZERO_CALIBRATION_SEED
-  ) {
-    throw new TypeError(
-      `${label} must be a lowercase nonzero 128-bit hexadecimal state.`,
-    )
-  }
-
-  return value as CalibrationSeed
+  return parseDeterministicRandomSeed(value, label)
 }
 
 export function deriveCalibrationSeed(
@@ -72,55 +60,7 @@ export function deriveCalibrationSeed(
   return parseCalibrationSeed(digest.slice(0, 32))
 }
 
-function rotateLeft(value: number, shift: number): number {
-  return ((value << shift) | (value >>> (32 - shift))) >>> 0
-}
-
-export default function createDeterministicRandom(
-  initialSeed: CalibrationSeed,
-): DeterministicRandom {
-  let state0 = Number.parseInt(initialSeed.slice(0, 8), 16)
-  let state1 = Number.parseInt(initialSeed.slice(8, 16), 16)
-  let state2 = Number.parseInt(initialSeed.slice(16, 24), 16)
-  let state3 = Number.parseInt(initialSeed.slice(24, 32), 16)
-
-  const nextUint32 = (): number => {
-    const result = Math.imul(rotateLeft(Math.imul(state1, 5), 7), 9) >>> 0
-    const shiftedState1 = (state1 << 9) >>> 0
-
-    state2 = (state2 ^ state0) >>> 0
-    state3 = (state3 ^ state1) >>> 0
-    state1 = (state1 ^ state2) >>> 0
-    state0 = (state0 ^ state3) >>> 0
-    state2 = (state2 ^ shiftedState1) >>> 0
-    state3 = rotateLeft(state3, 11)
-
-    return result
-  }
-
-  const nextIndex = (upperExclusive: number): number => {
-    if (
-      !Number.isSafeInteger(upperExclusive) ||
-      upperExclusive <= 0 ||
-      upperExclusive > UINT32_RANGE
-    ) {
-      throw new TypeError(
-        `upperExclusive must be an integer from 1 through ${UINT32_RANGE}.`,
-      )
-    }
-
-    const acceptanceLimit = UINT32_RANGE - (UINT32_RANGE % upperExclusive)
-    let sample = nextUint32()
-
-    while (sample >= acceptanceLimit) {
-      sample = nextUint32()
-    }
-
-    return sample % upperExclusive
-  }
-
-  return Object.freeze({ nextIndex, nextUint32 })
-}
+export default createDeterministicRandom
 
 export function shuffleDeterministically<T extends object>(
   values: readonly T[],
