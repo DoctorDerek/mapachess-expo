@@ -18,7 +18,8 @@
     "@xstate/react": "^6",
     "next": "^16",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "xstate": "^5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,6 +1,7 @@
 "use client"
 
-import { useActorRef, useSelector } from "@xstate/react"
+import { useSelector } from "@xstate/react"
+import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectCanRedo,
   selectCanUndo,
@@ -12,11 +13,11 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { StandardChickenRuntime } from "../../lib/chicken/openStandardChickenRuntime"
 import CanonicalChessboard from "./CanonicalChessboard"
 
 export type StandardChickenMatchProps = Readonly<{
+  actor: ActorRefFrom<typeof matchMachine>
   runtime: StandardChickenRuntime
 }>
 
@@ -52,19 +53,9 @@ const matchStatusText = (
 }
 
 export default function StandardChickenMatch({
+  actor,
   runtime,
 }: StandardChickenMatchProps) {
-  const actor = useActorRef(matchMachine, {
-    input: {
-      initialPosition: createInitialMatchPosition({
-        chess960PositionId: null,
-        variant: "standard",
-      }),
-      matchId: runtime.matchId,
-      opponent: runtime.opponent,
-      playerColor: runtime.playerColor,
-    },
-  })
   const snapshot = useSelector(actor, (current) => current)
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)

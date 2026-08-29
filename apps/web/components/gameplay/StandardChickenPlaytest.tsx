@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createActor, type ActorRefFrom } from "xstate"
+import matchMachine from "@mapachess/match/match-machine"
+import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import openStandardChickenRuntime, {
   type StandardChickenRuntime,
 } from "../../lib/chicken/openStandardChickenRuntime"
@@ -8,7 +11,11 @@ import StandardChickenMatch from "./StandardChickenMatch"
 
 type PlaytestRuntimeState =
   | Readonly<{ status: "opening" }>
-  | Readonly<{ runtime: StandardChickenRuntime; status: "ready" }>
+  | Readonly<{
+      actor: ActorRefFrom<typeof matchMachine>
+      runtime: StandardChickenRuntime
+      status: "ready"
+    }>
   | Readonly<{ status: "failed" }>
 
 const retryButtonClasses =
@@ -23,6 +30,7 @@ export default function StandardChickenPlaytest() {
   useEffect(() => {
     const controller = new AbortController()
     let disposed = false
+    let matchActor: ActorRefFrom<typeof matchMachine> | null = null
     let openedRuntime: StandardChickenRuntime | null = null
 
     setRuntimeState({ status: "opening" })
@@ -33,16 +41,33 @@ export default function StandardChickenPlaytest() {
           return runtime.close().catch(() => undefined)
         }
 
-        setRuntimeState({ runtime, status: "ready" })
+        matchActor = createActor(matchMachine, {
+          input: {
+            initialPosition: createInitialMatchPosition({
+              chess960PositionId: null,
+              variant: "standard",
+            }),
+            matchId: runtime.matchId,
+            opponent: runtime.opponent,
+            playerColor: runtime.playerColor,
+          },
+        }).start()
+        setRuntimeState({ actor: matchActor, runtime, status: "ready" })
       })
-      .catch(() => {
+      .catch(async () => {
         if (!disposed && !controller.signal.aborted) {
-          setRuntimeState({ status: "failed" })
+          matchActor?.stop()
+          await openedRuntime?.close().catch(() => undefined)
+          openedRuntime = null
+          if (!disposed && !controller.signal.aborted) {
+            setRuntimeState({ status: "failed" })
+          }
         }
       })
 
     return () => {
       disposed = true
+      matchActor?.stop()
       controller.abort()
       if (openedRuntime !== null) {
         void openedRuntime.close().catch(() => undefined)
@@ -78,7 +103,10 @@ export default function StandardChickenPlaytest() {
 
       <div className="mx-auto w-full max-w-[96rem]">
         {runtimeState.status === "ready" ? (
-          <StandardChickenMatch runtime={runtimeState.runtime} />
+          <StandardChickenMatch
+            actor={runtimeState.actor}
+            runtime={runtimeState.runtime}
+          />
         ) : (
           <section
             aria-live="polite"

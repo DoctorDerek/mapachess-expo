@@ -171,6 +171,9 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.2.8(react@19.2.8)
+      xstate:
+        specifier: ^5
+        version: 5.32.6
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
