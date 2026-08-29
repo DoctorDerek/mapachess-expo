@@ -45,10 +45,17 @@ export type StockfishEngineSearchInformation = Readonly<{
   selectiveDepth?: number
 }>
 
+export type StockfishPrincipalVariation = StockfishEngineSearchInformation &
+  Readonly<{
+    moves: readonly string[]
+    rank: number
+  }>
+
 export type StockfishEngineSearchResult = Readonly<{
   bestMove: string | null
   latestInformation?: StockfishEngineSearchInformation
   ponderMove?: string
+  principalVariations?: readonly StockfishPrincipalVariation[]
   requestId: string
 }>
 

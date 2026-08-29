@@ -1,3 +1,13 @@
+import createBetterHintsAnalyst, {
+  BETTER_HINTS_ENGINE_MULTIPV,
+} from "@mapachess/hints/better-hints"
+import type { BetterHintsResult } from "@mapachess/match/better-hints"
+import {
+  createInitialMatchPosition,
+  reconstructMatchPosition,
+  type MatchPosition,
+  type MatchStartingPosition,
+} from "@mapachess/match/match-position"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
@@ -12,6 +22,7 @@ import createWebStockfishSession from "../lib/stockfish/createWebStockfishSessio
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
 const CHESS960_FEN = "bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR w HFhf - 0 1"
+const CHECKED_HINT_FEN = "4k3/8/8/8/8/8/4r3/R3K2R w KQ - 0 1"
 const SEARCH_NODE_LIMIT = 1_000
 const CANCELLATION_NODE_LIMIT = 1_000_000_000
 
@@ -63,7 +74,21 @@ type ClosedSessionResult<Value> = Readonly<{
   value: Value
 }>
 
+export type BetterHintsBrowserProof = Readonly<{
+  checked: BetterHintsResult
+  checkedPositionFen: string
+  finalState: StockfishEngineSessionState
+  identity: StockfishUciIdentity
+  initial: BetterHintsResult
+  timingsMilliseconds: Readonly<{
+    boot: number
+    checked: number
+    initial: number
+  }>
+}>
+
 export type StockfishBrowserHarness = Readonly<{
+  runBetterHintsProof(): Promise<BetterHintsBrowserProof>
   runProof(): Promise<StockfishBrowserProof>
 }>
 
@@ -122,6 +147,66 @@ async function proveCancellation(
   }
 
   throw new Error("The cancelled Stockfish search unexpectedly resolved.")
+}
+
+const STANDARD_STARTING_POSITION: MatchStartingPosition = Object.freeze({
+  chess960PositionId: null,
+  variant: "standard",
+})
+
+const requireStandardPosition = (fen: string): MatchPosition => {
+  const result = reconstructMatchPosition(STANDARD_STARTING_POSITION, fen)
+  if (!result.ok) {
+    throw new Error("Better Hints browser proof contains an invalid position.")
+  }
+  return result.position
+}
+
+async function runBetterHintsProof(): Promise<BetterHintsBrowserProof> {
+  const proof = await useClosedSession(
+    {
+      ...COMMON_CONFIGURATION,
+      multiPv: BETTER_HINTS_ENGINE_MULTIPV,
+      variant: "standard",
+    },
+    async (session) => {
+      const boot = await measure(() => session.boot())
+      const analyst = createBetterHintsAnalyst({ engine: session })
+      const initialPosition = createInitialMatchPosition(
+        STANDARD_STARTING_POSITION,
+      )
+      const initial = await measure(() =>
+        analyst.analyze({
+          playerColor: "white",
+          position: initialPosition,
+          requestId: "browser-proof/initial",
+        }),
+      )
+      const checkedPosition = requireStandardPosition(CHECKED_HINT_FEN)
+      const checked = await measure(() =>
+        analyst.analyze({
+          playerColor: "white",
+          position: checkedPosition,
+          requestId: "browser-proof/checked",
+        }),
+      )
+
+      return { boot, checked, checkedPosition, initial }
+    },
+  )
+
+  return {
+    checked: proof.value.checked.value,
+    checkedPositionFen: proof.value.checkedPosition.fen,
+    finalState: proof.finalState,
+    identity: proof.value.boot.value,
+    initial: proof.value.initial.value,
+    timingsMilliseconds: {
+      boot: proof.value.boot.elapsedMilliseconds,
+      checked: proof.value.checked.elapsedMilliseconds,
+      initial: proof.value.initial.elapsedMilliseconds,
+    },
+  }
 }
 
 async function runProof(): Promise<StockfishBrowserProof> {
@@ -196,4 +281,4 @@ async function runProof(): Promise<StockfishBrowserProof> {
   }
 }
 
-window.mapachessStockfishBrowserHarness = { runProof }
+window.mapachessStockfishBrowserHarness = { runBetterHintsProof, runProof }

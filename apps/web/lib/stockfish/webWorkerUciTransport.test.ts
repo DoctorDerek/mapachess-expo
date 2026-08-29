@@ -3,6 +3,7 @@ import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-s
 import createStockfishUciSession from "@mapachess/stockfish/uci-session"
 import { STOCKFISH_18_WEB_UCI_EXPECTATION } from "@mapachess/stockfish/web-runtime-identity"
 import createWebStockfishSession, {
+  STOCKFISH_WEB_WORKER_NAME,
   STOCKFISH_WEB_WORKER_URL,
 } from "./createWebStockfishSession"
 import createWebWorkerUciTransport, {
@@ -131,7 +132,9 @@ describe("Stockfish web Worker transport", () => {
     }
 
     vi.stubGlobal("Worker", ConstructedFakeWorker)
-    const session = createWebStockfishSession(STANDARD_CONFIGURATION)
+    const session = createWebStockfishSession(STANDARD_CONFIGURATION, {
+      workerName: "mapachess-stockfish-18-hints-test",
+    })
     if (constructedWorker === undefined) {
       throw new Error("Expected the web session to construct a Worker.")
     }
@@ -153,7 +156,9 @@ describe("Stockfish web Worker transport", () => {
     await session.close()
 
     expect(constructedUrl).toBe(STOCKFISH_WEB_WORKER_URL)
-    expect(constructedOptions).toEqual({ name: "mapachess-stockfish-18" })
+    expect(constructedOptions).toEqual({
+      name: "mapachess-stockfish-18-hints-test",
+    })
     expect(constructedWorker.commands.at(-1)).toBe("quit")
     expect(constructedWorker.commands).not.toContain(
       "setoption name SyzygyPath value <empty>",
@@ -163,6 +168,7 @@ describe("Stockfish web Worker transport", () => {
     expect(STOCKFISH_WEB_WORKER_URL).toBe(
       "/stockfish-runtime/stockfish-18-lite-single.js",
     )
+    expect(STOCKFISH_WEB_WORKER_NAME).toBe("mapachess-stockfish-18")
   })
 
   it("turns a Worker error into a failed and terminated session", async () => {

@@ -9,6 +9,8 @@ import type {
 export type StockfishUciSearchInformation = StockfishEngineSearchInformation &
   Readonly<{
     line: string
+    multiPv?: number
+    principalVariation?: readonly string[]
   }>
 
 export type StockfishUciSearchResult = StockfishEngineSearchResult &

@@ -1,6 +1,7 @@
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSessionState,
+  type StockfishPrincipalVariation,
 } from "./engineSession.js"
 import {
   assertStockfishOperationNotAborted,
@@ -218,6 +219,10 @@ export default function createStockfishUciSession(
 
       let informationLineCount = 0
       let latestInformation: StockfishUciSearchInformation | undefined
+      const principalVariationsByRank = new Map<
+        number,
+        StockfishPrincipalVariation
+      >()
 
       while (true) {
         const line = await Promise.race([readLine(operation), stopWriteFailure])
@@ -226,6 +231,28 @@ export default function createStockfishUciSession(
           if (!cancellationRequested) {
             informationLineCount += 1
             latestInformation = parseInformation(line)
+            if (latestInformation.principalVariation !== undefined) {
+              const rank = latestInformation.multiPv ?? 1
+              principalVariationsByRank.set(
+                rank,
+                Object.freeze({
+                  rank,
+                  moves: latestInformation.principalVariation,
+                  ...(latestInformation.depth === undefined
+                    ? {}
+                    : { depth: latestInformation.depth }),
+                  ...(latestInformation.selectiveDepth === undefined
+                    ? {}
+                    : { selectiveDepth: latestInformation.selectiveDepth }),
+                  ...(latestInformation.nodes === undefined
+                    ? {}
+                    : { nodes: latestInformation.nodes }),
+                  ...(latestInformation.score === undefined
+                    ? {}
+                    : { score: latestInformation.score }),
+                }),
+              )
+            }
           }
           continue
         }
@@ -245,6 +272,11 @@ export default function createStockfishUciSession(
           }
 
           const result = parseBestMove(line)
+          const principalVariations = Object.freeze(
+            [...principalVariationsByRank.values()].sort(
+              (left, right) => left.rank - right.rank,
+            ),
+          )
           activeRequestId = undefined
           sessionState = "ready"
 
@@ -256,6 +288,9 @@ export default function createStockfishUciSession(
               ? {}
               : { ponderMove: result.ponderMove }),
             ...(latestInformation === undefined ? {} : { latestInformation }),
+            ...(principalVariations.length === 0
+              ? {}
+              : { principalVariations }),
           }
         }
       }

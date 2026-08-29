@@ -7,6 +7,7 @@ import { parseSha256Hex, STOCKFISH_18_BUILD_IDENTITY } from "./buildIdentity"
 import { StockfishOperationAbortedError } from "./engineSession"
 import createStockfishProcessAdapter from "./uciProcessAdapter"
 import createStockfishUciSession, {
+  StockfishProtocolError,
   type StockfishUciTransport,
   type StockfishUciTransportExit,
 } from "./uciSession"
@@ -264,7 +265,18 @@ describe("Stockfish process adapter", () => {
         selectiveDepth: 9,
         nodes: 200,
         score: { kind: "centipawns", value: 34, bound: "exact" },
+        principalVariation: ["e1e2"],
       },
+      principalVariations: [
+        {
+          rank: 1,
+          moves: ["e1e2"],
+          depth: 7,
+          selectiveDepth: 9,
+          nodes: 200,
+          score: { kind: "centipawns", value: 34, bound: "exact" },
+        },
+      ],
     })
     expect(transport.commands).toEqual([
       "uci",
@@ -285,6 +297,87 @@ describe("Stockfish process adapter", () => {
       "quit",
     ])
     expect(adapter.state()).toBe("closed")
+  })
+
+  it("retains the latest principal variation for every ranked root move", async () => {
+    const transport = new FakeTransport({ deferBestMove: true })
+    const session = createStockfishUciSession({
+      configuration: { ...STANDARD_CONFIGURATION, multiPv: 2 },
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+    await session.boot()
+
+    const search = session.search({
+      requestId: "ranked-root-moves",
+      nodeLimit: 200,
+      position: { fen: STANDARD_FEN, moves: [] },
+    })
+    await transport.waitForCommandCount("go nodes 200", 1)
+    transport.lines.push(
+      "info depth 5 seldepth 7 multipv 2 score cp 12 nodes 100 pv e1d1 e3d3",
+      "info depth 5 seldepth 7 multipv 1 score cp 34 nodes 100 pv e1e2 e3e4",
+      "info depth 7 seldepth 9 multipv 1 score cp 38 nodes 200 pv e1f1 e3f3",
+      "info string a diagnostic may contain the word pv without being a variation",
+      "info depth 8 nodes 200",
+      "bestmove e1f1",
+    )
+
+    await expect(search).resolves.toEqual({
+      requestId: "ranked-root-moves",
+      bestMove: "e1f1",
+      informationLineCount: 5,
+      latestInformation: {
+        line: "info depth 8 nodes 200",
+        depth: 8,
+        nodes: 200,
+      },
+      principalVariations: [
+        {
+          rank: 1,
+          moves: ["e1f1", "e3f3"],
+          depth: 7,
+          selectiveDepth: 9,
+          nodes: 200,
+          score: { kind: "centipawns", value: 38, bound: "exact" },
+        },
+        {
+          rank: 2,
+          moves: ["e1d1", "e3d3"],
+          depth: 5,
+          selectiveDepth: 7,
+          nodes: 100,
+          score: { kind: "centipawns", value: 12, bound: "exact" },
+        },
+      ],
+    })
+    await session.close()
+  })
+
+  it.each([
+    "info depth 5 multipv 0 score cp 34 nodes 100 pv e1e2",
+    "info depth 5 multipv 1 score cp 34 nodes 100 pv invalid",
+    "info depth 5 multipv 1 score cp 34 nodes 100 pv",
+  ])("rejects malformed ranked search information: %s", async (line) => {
+    const transport = new FakeTransport({ deferBestMove: true })
+    const session = createStockfishUciSession({
+      configuration: STANDARD_CONFIGURATION,
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+    await session.boot()
+
+    const search = session.search({
+      requestId: "malformed-ranked-information",
+      nodeLimit: 200,
+      position: { fen: STANDARD_FEN, moves: [] },
+    })
+    await transport.waitForCommandCount("go nodes 200", 1)
+    transport.lines.push(line)
+
+    await expect(search).rejects.toBeInstanceOf(StockfishProtocolError)
+    expect(session.state()).toBe("failed")
+    expect(transport.terminated).toBe(true)
   })
 
   it("keeps SyzygyPath mandatory for the native runtime", async () => {

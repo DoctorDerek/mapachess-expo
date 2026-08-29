@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test, type Locator, type Page } from "@playwright/test"
 
 type DeterministicBrowserCryptography = Readonly<{
   digestDelayMilliseconds: number
@@ -11,6 +11,7 @@ const WHITE_MATCH_WORDS = [1, 2, 3, 4] as const
 const BLACK_MATCH_WORDS = [1, 0x0200_0000, 3, 4] as const
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
+const OWNED_WORKER_COUNT = 2
 
 const installDeterministicCryptography = async (
   page: Page,
@@ -101,9 +102,9 @@ const beginBrowserDiagnostics = (page: Page) => {
   return {
     assertClean: async (): Promise<void> => {
       await page.goto("/")
-      await expect.poll(() => closedWorkerCount).toBe(1)
+      await expect.poll(() => closedWorkerCount).toBe(OWNED_WORKER_COUNT)
       expect(page.workers()).toHaveLength(0)
-      expect(workerUrls).toHaveLength(1)
+      expect(workerUrls).toHaveLength(OWNED_WORKER_COUNT)
       expect(failedRequests).toEqual([])
       expect(browserErrors).toEqual([])
 
@@ -130,6 +131,64 @@ const expectNoHighImpactAccessibilityViolations = async (
   expect(highImpactViolations).toEqual([])
 }
 
+const readHintSourceKeys = async (locator: Locator): Promise<string[]> =>
+  locator.evaluateAll((elements) =>
+    elements
+      .map((element) =>
+        [
+          element.getAttribute("data-hint-owner"),
+          element.getAttribute("data-source-x"),
+          element.getAttribute("data-source-y"),
+        ].join(":"),
+      )
+      .sort(),
+  )
+
+const expectExactBetterHints = async (page: Page): Promise<void> => {
+  await page.getByRole("button", { name: "Show Piece Hints" }).click()
+  await expect(
+    page.getByRole("button", { name: "Show Move Hints" }),
+  ).toBeVisible()
+
+  const sourceHints = page.locator('[data-hint-kind="source"]')
+  const moveHints = page.locator('[data-hint-kind="move"]')
+  await expect(sourceHints).toHaveCount(6)
+  await expect(moveHints).toHaveCount(0)
+  await expect(
+    page.locator(
+      '[data-hint-kind="source"][data-hint-owner="player"][data-hint-shape="circle"]',
+    ),
+  ).toHaveCount(3)
+  await expect(
+    page.locator(
+      '[data-hint-kind="source"][data-hint-owner="opponent"][data-hint-shape="warning-triangle"]',
+    ),
+  ).toHaveCount(3)
+  await expect(page.getByText(/^Piece Hints shown\./)).toHaveCount(1)
+  const pieceSourceKeys = await readHintSourceKeys(sourceHints)
+  expect(new Set(pieceSourceKeys).size).toBe(6)
+
+  await page.getByRole("button", { name: "Show Move Hints" }).click()
+  await expect(
+    page.getByRole("button", { name: "Move Hints Shown" }),
+  ).toBeDisabled()
+  await expect(sourceHints).toHaveCount(6)
+  await expect(moveHints).toHaveCount(6)
+  await expect(
+    page.locator(
+      '[data-hint-kind="move"][data-hint-owner="player"][data-hint-shape="target-cross"]',
+    ),
+  ).toHaveCount(3)
+  await expect(
+    page.locator(
+      '[data-hint-kind="move"][data-hint-owner="opponent"][data-hint-shape="x"]',
+    ),
+  ).toHaveCount(3)
+  await expect(page.getByText(/^Move Hints shown\./)).toHaveCount(1)
+  expect(await readHintSourceKeys(moveHints)).toEqual(pieceSourceKeys)
+  await expectNoHighImpactAccessibilityViolations(page)
+}
+
 test("plays White through cancellation, redo, and a real Stockfish reply", async ({
   page,
 }) => {
@@ -147,9 +206,12 @@ test("plays White through cancellation, redo, and a real Stockfish reply", async
   await expect(page.getByText("White", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
   await expectNoHighImpactAccessibilityViolations(page)
+  await expectExactBetterHints(page)
 
   await page.getByRole("gridcell", { name: /e2, White pawn/ }).click()
   await page.getByRole("gridcell", { name: /e4, empty/ }).click()
+  await expect(page.locator('[data-hint-kind="source"]')).toHaveCount(0)
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(0)
   await expect(
     page.getByText(/Chicken Stockfish is choosing a move/),
   ).toBeVisible()
@@ -182,9 +244,12 @@ test("plays Black through a complete uniform-random Chicken turn", async ({
   await expect(page.getByText("Black", { exact: true })).toBeVisible()
   await expect(page.getByText("1 ply", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+  await expectExactBetterHints(page)
 
   await page.getByRole("gridcell", { name: /e7, Black pawn/ }).click()
   await page.getByRole("gridcell", { name: /e5, empty/ }).click()
+  await expect(page.locator('[data-hint-kind="source"]')).toHaveCount(0)
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(0)
   await expect(page.getByText("3 plies", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
   await expectNoHighImpactAccessibilityViolations(page)

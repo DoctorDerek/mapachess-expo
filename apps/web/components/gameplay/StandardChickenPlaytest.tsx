@@ -47,6 +47,7 @@ export default function StandardChickenPlaytest() {
               chess960PositionId: null,
               variant: "standard",
             }),
+            hintAnalyst: runtime.hintAnalyst,
             matchId: runtime.matchId,
             opponent: runtime.opponent,
             playerColor: runtime.playerColor,

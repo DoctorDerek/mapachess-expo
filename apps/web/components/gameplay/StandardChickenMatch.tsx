@@ -5,8 +5,10 @@ import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectCanRedo,
   selectCanUndo,
+  selectHintStage,
   selectIsOpponentThinking,
   selectIsPlayerTurn,
+  selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
   selectOpponentFailure,
@@ -14,6 +16,7 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import type { StandardChickenRuntime } from "../../lib/chicken/openStandardChickenRuntime"
+import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 
 export type StandardChickenMatchProps = Readonly<{
@@ -61,6 +64,17 @@ export default function StandardChickenMatch({
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
+  const hintStage = selectHintStage(snapshot)
+  const hints = selectMatchHints(snapshot)
+  const visibleHints =
+    hintStage === "piece-hints" || hintStage === "move-hints" ? hints : null
+  if (
+    (hintStage === "piece-hints" || hintStage === "move-hints") &&
+    visibleHints === null
+  ) {
+    throw new Error("Visible Better Hints have no canonical analysis result.")
+  }
+  const matchComplete = snapshot.matches("complete")
   const activeTransitions = timeline.transitions.slice(0, timeline.cursor)
   const lastMove = activeTransitions.at(-1)?.move ?? null
   const legalMoves = playerTurn ? listLegalMatchMoves(position) : []
@@ -73,6 +87,7 @@ export default function StandardChickenMatch({
       <div className="grid min-w-0 place-items-center">
         <CanonicalChessboard
           disabled={!playerTurn}
+          hints={visibleHints}
           lastMove={lastMove}
           legalMoves={legalMoves}
           onMove={(moveId) =>
@@ -80,6 +95,7 @@ export default function StandardChickenMatch({
           }
           orientation={runtime.playerColor}
           position={position}
+          showMoveHints={hintStage === "move-hints"}
         />
       </div>
 
@@ -115,6 +131,18 @@ export default function StandardChickenMatch({
         >
           {matchStatusText(snapshot, runtime.playerColor)}
         </p>
+
+        <BetterHintsControl
+          hints={hints}
+          matchComplete={matchComplete}
+          onMoveHintsRequested={() =>
+            actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+          }
+          onPieceHintsRequested={() =>
+            actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+          }
+          stage={hintStage}
+        />
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button

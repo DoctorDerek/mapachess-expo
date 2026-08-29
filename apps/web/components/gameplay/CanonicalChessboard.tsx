@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
+import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type {
   AppliedMatchMove,
   LegalMatchMove,
@@ -20,6 +21,7 @@ import {
   type BoardNavigationKey,
   type BoardOrientation,
 } from "../../lib/board/boardPresentation"
+import BetterHintsOverlay from "./BetterHintsOverlay"
 
 const PIECE_GLYPHS = Object.freeze({
   black: Object.freeze({
@@ -60,11 +62,13 @@ type PendingPromotion = Readonly<{
 
 export type CanonicalChessboardProps = Readonly<{
   disabled: boolean
+  hints: BetterHintsResult | null
   legalMoves: readonly LegalMatchMove[]
   lastMove: AppliedMatchMove | null
   onMove: (moveId: MatchMoveId) => void
   orientation: BoardOrientation
   position: MatchPosition
+  showMoveHints: boolean
 }>
 
 const pieceAtSquare = (
@@ -82,6 +86,7 @@ const squareLabel = (
   selected: boolean,
   legalDestination: boolean,
   disabled: boolean,
+  hintDescriptions: readonly string[],
 ): string => {
   const parts = [
     square,
@@ -92,7 +97,34 @@ const squareLabel = (
   if (selected) parts.push("selected")
   if (legalDestination) parts.push("legal destination")
   if (disabled) parts.push("board not accepting moves")
+  parts.push(...hintDescriptions)
   return parts.join(", ")
+}
+
+const hintDescriptionsForSquare = (
+  hints: BetterHintsResult | null,
+  showMoveHints: boolean,
+  square: MatchSquare,
+): readonly string[] => {
+  if (hints === null) return []
+
+  const descriptions: string[] = []
+  for (const [owner, ownedHints] of [
+    ["Player", hints.player],
+    ["Opponent", hints.opponent],
+  ] as const) {
+    if (ownedHints.some((hint) => hint.from === square)) {
+      descriptions.push(`${owner} Piece Hint`)
+    }
+    if (showMoveHints) {
+      descriptions.push(
+        ...ownedHints
+          .filter((hint) => hint.to === square)
+          .map((hint) => `${owner} Move Hint destination from ${hint.from}`),
+      )
+    }
+  }
+  return descriptions
 }
 
 const isNavigationKey = (key: string): key is BoardNavigationKey =>
@@ -118,11 +150,13 @@ const pieceColorClasses = (color: MatchColor): string =>
 
 export default function CanonicalChessboard({
   disabled,
+  hints,
   legalMoves,
   lastMove,
   onMove,
   orientation,
   position,
+  showMoveHints,
 }: CanonicalChessboardProps) {
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
   const initialFocusSquare = orientation === "white" ? "e1" : "e8"
@@ -240,6 +274,7 @@ export default function CanonicalChessboard({
                     selected,
                     legalDestination,
                     disabled,
+                    hintDescriptionsForSquare(hints, showMoveHints, square),
                   )}
                   aria-selected={selected}
                   className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-cyan-500 ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-amber-400" : ""} ${checkedKing ? "bg-red-300 ring-4 ring-red-700 ring-inset" : ""}`}
@@ -292,6 +327,14 @@ export default function CanonicalChessboard({
           </div>
         ))}
       </div>
+
+      {hints === null ? null : (
+        <BetterHintsOverlay
+          hints={hints}
+          orientation={orientation}
+          showMoves={showMoveHints}
+        />
+      )}
 
       {pendingPromotion === null ? null : (
         <div

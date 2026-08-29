@@ -1,18 +1,14 @@
 import { defineConfig } from "vitest/config"
 
 export default defineConfig({
-  oxc: {
-    jsx: { runtime: "automatic" },
-  },
   test: {
-    name: "web",
+    name: "hints",
     environment: "node",
-    include: ["components/**/*.test.tsx", "lib/**/*.test.ts"],
+    include: ["test/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["lib/**/*.ts"],
-      exclude: ["lib/**/*.test.ts"],
+      include: ["src/**/*.ts"],
     },
   },
 })

@@ -1,4 +1,9 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
+import type {
+  BetterHintsAnalyst,
+  BetterHintsRequest,
+  BetterHintsResult,
+} from "./betterHints.js"
 import {
   applyMatchMove,
   listLegalMatchMoves,
@@ -42,11 +47,14 @@ export type MatchMachineEvent =
       moveId: MatchMoveId
       type: "MATCH.MOVE_REQUESTED"
     }>
+  | Readonly<{ type: "MATCH.MOVE_HINTS_REQUESTED" }>
   | Readonly<{ type: "MATCH.OPPONENT_RETRY_REQUESTED" }>
+  | Readonly<{ type: "MATCH.PIECE_HINTS_REQUESTED" }>
   | Readonly<{ type: "MATCH.UNDO_REQUESTED" }>
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
 export type MatchMachineInput = Readonly<{
+  hintAnalyst?: BetterHintsAnalyst
   initialPosition: MatchPosition
   matchId: string
   opponent: MatchOpponent
@@ -54,16 +62,39 @@ export type MatchMachineInput = Readonly<{
 }>
 
 export type MatchMachineContext = Readonly<{
+  hintAnalyst: BetterHintsAnalyst | null
+  hintFailure: MatchHintFailure | null
+  hints: BetterHintsResult | null
   matchId: string
+  moveHintsUsed: boolean
   opponent: MatchOpponent
   opponentFailure: MatchOpponentFailure | null
+  pieceHintsUsed: boolean
   playerColor: MatchColor
   timeline: MatchTimeline
 }>
 
+export type MatchHintFailure = Readonly<{
+  type: "MATCH.HINT_REQUEST_FAILED"
+}>
+
+export type MatchHintStage =
+  | "failure"
+  | "hidden"
+  | "loading"
+  | "move-hints"
+  | "piece-hints"
+  | "ready"
+  | "unavailable"
+
 type MatchOpponentActorInput = Readonly<{
   opponent: MatchOpponent
   request: MatchOpponentRequest
+}>
+
+type MatchHintsActorInput = Readonly<{
+  analyst: BetterHintsAnalyst
+  request: BetterHintsRequest
 }>
 
 const createInitialContext = (
@@ -74,9 +105,14 @@ const createInitialContext = (
   }
 
   return {
+    hintAnalyst: input.hintAnalyst ?? null,
+    hintFailure: null,
+    hints: null,
     matchId: input.matchId,
+    moveHintsUsed: false,
     opponent: input.opponent,
     opponentFailure: null,
+    pieceHintsUsed: false,
     playerColor: input.playerColor,
     timeline: createMatchTimeline(input.initialPosition),
   }
@@ -101,6 +137,26 @@ const createOpponentRequest = (
     position,
     requestId: `${context.matchId}/opponent/ply/${String(context.timeline.cursor + 1)}/fen/${position.fen}`,
   })
+}
+
+const createHintsRequest = (
+  context: MatchMachineContext,
+): BetterHintsRequest => {
+  const position = currentMatchPosition(context.timeline)
+  return Object.freeze({
+    playerColor: context.playerColor,
+    position,
+    requestId: `${context.matchId}/hints/ply/${String(context.timeline.cursor + 1)}/fen/${position.fen}`,
+  })
+}
+
+const requireHintAnalyst = (
+  context: MatchMachineContext,
+): BetterHintsAnalyst => {
+  if (context.hintAnalyst === null) {
+    throw new Error("Hint analysis began without an injected analyst.")
+  }
+  return context.hintAnalyst
 }
 
 const moveIsLegal = (timeline: MatchTimeline, moveId: MatchMoveId): boolean =>
@@ -163,6 +219,9 @@ const illegalOpponentMoveFailure = (): MatchOpponentFailure =>
 const opponentRequestFailure = (): MatchOpponentFailure =>
   Object.freeze({ type: "MATCH.OPPONENT_REQUEST_FAILED" })
 
+const hintRequestFailure = (): MatchHintFailure =>
+  Object.freeze({ type: "MATCH.HINT_REQUEST_FAILED" })
+
 const matchMachineDefinition = setup({
   types: {
     context: {} as MatchMachineContext,
@@ -170,6 +229,9 @@ const matchMachineDefinition = setup({
     input: {} as MatchMachineInput,
   },
   actors: {
+    requestHints: fromPromise<BetterHintsResult, MatchHintsActorInput>(
+      ({ input, signal }) => input.analyst.analyze(input.request, signal),
+    ),
     requestOpponentMove: fromPromise<MatchMoveId, MatchOpponentActorInput>(
       ({ input, signal }) => input.opponent.selectMove(input.request, signal),
     ),
@@ -186,6 +248,9 @@ const matchMachineDefinition = setup({
       }
     }),
     clearOpponentFailure: assign({ opponentFailure: null }),
+    clearCurrentHints: assign({ hintFailure: null, hints: null }),
+    clearHintFailure: assign({ hintFailure: null }),
+    markMoveHintsUsed: assign({ moveHintsUsed: true }),
     redoToPlayerDecision: assign(({ context }) => {
       const timeline = redoToNextPlayerDecision(
         context.timeline,
@@ -214,6 +279,7 @@ const matchMachineDefinition = setup({
       currentMatchPosition(context.timeline).status.type !== "playing",
     isPlayerTurn: ({ context }) =>
       currentMatchPosition(context.timeline).turn === context.playerColor,
+    hasHintAnalyst: ({ context }) => context.hintAnalyst !== null,
     requestedMoveIsLegal: ({ context, event }) =>
       event.type === "MATCH.MOVE_REQUESTED" &&
       moveIsLegal(context.timeline, event.moveId),
@@ -234,6 +300,70 @@ const matchMachineDefinition = setup({
       ],
     },
     playerTurn: {
+      initial: "ready",
+      exit: "clearCurrentHints",
+      states: {
+        ready: {
+          on: {
+            "MATCH.PIECE_HINTS_REQUESTED": {
+              guard: "hasHintAnalyst",
+              target: "analyzing",
+            },
+          },
+        },
+        analyzing: {
+          invoke: {
+            src: "requestHints",
+            input: ({ context }) => ({
+              analyst: requireHintAnalyst(context),
+              request: createHintsRequest(context),
+            }),
+            onDone: [
+              {
+                actions: assign(({ event }) => ({
+                  hintFailure: null,
+                  hints: event.output,
+                  pieceHintsUsed: true,
+                })),
+                guard: ({ context, event }) => {
+                  const request = createHintsRequest(context)
+                  return (
+                    event.output.positionFen === request.position.fen &&
+                    event.output.requestId === request.requestId
+                  )
+                },
+                target: "pieceHintsVisible",
+              },
+              {
+                actions: assign({ hintFailure: hintRequestFailure() }),
+                target: "hintFailure",
+              },
+            ],
+            onError: {
+              actions: assign({ hintFailure: hintRequestFailure() }),
+              target: "hintFailure",
+            },
+          },
+        },
+        pieceHintsVisible: {
+          on: {
+            "MATCH.MOVE_HINTS_REQUESTED": {
+              actions: "markMoveHintsUsed",
+              target: "moveHintsVisible",
+            },
+          },
+        },
+        moveHintsVisible: {},
+        hintFailure: {
+          on: {
+            "MATCH.PIECE_HINTS_REQUESTED": {
+              actions: "clearHintFailure",
+              guard: "hasHintAnalyst",
+              target: "analyzing",
+            },
+          },
+        },
+      },
       on: {
         "MATCH.MOVE_REQUESTED": {
           actions: "applyRequestedMove",
@@ -348,6 +478,36 @@ export const selectIsOpponentTurn = (snapshot: MatchMachineSnapshot): boolean =>
 export const selectIsOpponentThinking = (
   snapshot: MatchMachineSnapshot,
 ): boolean => snapshot.matches("opponentThinking")
+
+export const selectHintStage = (
+  snapshot: MatchMachineSnapshot,
+): MatchHintStage => {
+  if (!snapshot.matches("playerTurn")) return "hidden"
+  if (snapshot.context.hintAnalyst === null) return "unavailable"
+  if (snapshot.matches({ playerTurn: "analyzing" })) return "loading"
+  if (snapshot.matches({ playerTurn: "pieceHintsVisible" })) {
+    return "piece-hints"
+  }
+  if (snapshot.matches({ playerTurn: "moveHintsVisible" })) {
+    return "move-hints"
+  }
+  if (snapshot.matches({ playerTurn: "hintFailure" })) return "failure"
+  return "ready"
+}
+
+export const selectMatchHints = (
+  snapshot: MatchMachineSnapshot,
+): BetterHintsResult | null => snapshot.context.hints
+
+export const selectHintFailure = (
+  snapshot: MatchMachineSnapshot,
+): MatchHintFailure | null => snapshot.context.hintFailure
+
+export const selectMoveHintsUsed = (snapshot: MatchMachineSnapshot): boolean =>
+  snapshot.context.moveHintsUsed
+
+export const selectPieceHintsUsed = (snapshot: MatchMachineSnapshot): boolean =>
+  snapshot.context.pieceHintsUsed
 
 export const selectOpponentFailure = (
   snapshot: MatchMachineSnapshot,
