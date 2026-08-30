@@ -54,6 +54,7 @@ export type MatchMachineEvent =
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
 export type MatchMachineInput = Readonly<{
+  autoHintsEnabled: boolean
   hintAnalyst?: BetterHintsAnalyst
   initialPosition: MatchPosition
   matchId: string
@@ -62,6 +63,7 @@ export type MatchMachineInput = Readonly<{
 }>
 
 export type MatchMachineContext = Readonly<{
+  autoHintsEnabled: boolean
   hintAnalyst: BetterHintsAnalyst | null
   hintFailure: MatchHintFailure | null
   hints: BetterHintsResult | null
@@ -97,6 +99,8 @@ type MatchHintsActorInput = Readonly<{
   request: BetterHintsRequest
 }>
 
+export const AUTO_HINTS_PIECE_DWELL_MS = 2_000
+
 const createInitialContext = (
   input: MatchMachineInput,
 ): MatchMachineContext => {
@@ -105,6 +109,7 @@ const createInitialContext = (
   }
 
   return {
+    autoHintsEnabled: input.autoHintsEnabled,
     hintAnalyst: input.hintAnalyst ?? null,
     hintFailure: null,
     hints: null,
@@ -236,6 +241,9 @@ const matchMachineDefinition = setup({
       ({ input, signal }) => input.opponent.selectMove(input.request, signal),
     ),
   },
+  delays: {
+    autoHintsPieceDwell: AUTO_HINTS_PIECE_DWELL_MS,
+  },
   actions: {
     applyRequestedMove: assign(({ context, event }) => {
       if (event.type !== "MATCH.MOVE_REQUESTED") {
@@ -269,6 +277,7 @@ const matchMachineDefinition = setup({
     }),
   },
   guards: {
+    areAutoHintsEnabled: ({ context }) => context.autoHintsEnabled,
     canRedoToPlayerDecision: ({ context }) =>
       redoToNextPlayerDecision(context.timeline, context.playerColor) !==
       undefined,
@@ -283,6 +292,8 @@ const matchMachineDefinition = setup({
     requestedMoveIsLegal: ({ context, event }) =>
       event.type === "MATCH.MOVE_REQUESTED" &&
       moveIsLegal(context.timeline, event.moveId),
+    shouldStartAutoHints: ({ context }) =>
+      context.autoHintsEnabled && context.hintAnalyst !== null,
   },
 }).createMachine({
   id: "match",
@@ -304,6 +315,10 @@ const matchMachineDefinition = setup({
       exit: "clearCurrentHints",
       states: {
         ready: {
+          always: {
+            guard: "shouldStartAutoHints",
+            target: "analyzing",
+          },
           on: {
             "MATCH.PIECE_HINTS_REQUESTED": {
               guard: "hasHintAnalyst",
@@ -346,6 +361,13 @@ const matchMachineDefinition = setup({
           },
         },
         pieceHintsVisible: {
+          after: {
+            autoHintsPieceDwell: {
+              actions: "markMoveHintsUsed",
+              guard: "areAutoHintsEnabled",
+              target: "moveHintsVisible",
+            },
+          },
           on: {
             "MATCH.MOVE_HINTS_REQUESTED": {
               actions: "markMoveHintsUsed",
