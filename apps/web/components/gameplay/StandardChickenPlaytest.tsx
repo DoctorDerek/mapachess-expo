@@ -43,6 +43,7 @@ export default function StandardChickenPlaytest() {
 
         matchActor = createActor(matchMachine, {
           input: {
+            autoHintsEnabled: true,
             initialPosition: createInitialMatchPosition({
               chess960PositionId: null,
               variant: "standard",
@@ -93,8 +94,10 @@ export default function StandardChickenPlaytest() {
             Private engine proof
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            A local-only Standard match against a provisional Chicken policy. No
-            rating, progression, or public Elo claim is recorded.
+            A local-only Standard match against a provisional Chicken policy.
+            Auto-Hints demonstrate Piece Hints followed by Move Hints on every
+            player turn. No rating, progression, or public Elo claim is
+            recorded.
           </p>
         </div>
         <span className="rounded-full border border-white/12 bg-slate-950/60 px-3 py-1.5 font-mono text-xs text-slate-300">

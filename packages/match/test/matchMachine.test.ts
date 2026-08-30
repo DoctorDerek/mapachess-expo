@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
-import { createActor, waitFor } from "xstate"
+import { createActor, SimulatedClock, waitFor } from "xstate"
 import type {
   BetterHintsAnalyst,
   BetterHintsRequest,
   BetterHintsResult,
 } from "../src/betterHints"
 import matchMachine, {
+  AUTO_HINTS_PIECE_DWELL_MS,
   selectCanRedo,
   selectCanUndo,
   selectHintFailure,
@@ -124,6 +125,7 @@ describe("scoped XState match flow", () => {
     }
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         hintAnalyst,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hints",
@@ -175,8 +177,108 @@ describe("scoped XState match flow", () => {
     actor.stop()
   })
 
-  it("cancels pending hint analysis when the board changes", async () => {
+  it("automatically reveals staged hints on every enabled player turn", async () => {
+    const clock = new SimulatedClock()
     const scripted = createScriptedOpponent(["e7e5"])
+    const hintRequests: BetterHintsRequest[] = []
+    const hintAnalyst: BetterHintsAnalyst = {
+      analyze: (request) => {
+        hintRequests.push(request)
+        return Promise.resolve(createHintResult(request))
+      },
+    }
+    const actor = createActor(matchMachine, {
+      clock,
+      input: {
+        autoHintsEnabled: true,
+        hintAnalyst,
+        initialPosition: standardInitialPosition(),
+        matchId: "standard-story-chicken-auto-hints",
+        opponent: scripted.opponent,
+        playerColor: "white",
+      },
+    }).start()
+
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+    expect(hintRequests).toHaveLength(1)
+    expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+
+    clock.increment(AUTO_HINTS_PIECE_DWELL_MS - 1)
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+
+    clock.increment(1)
+    expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+
+    const e4 = requireLegalMove(
+      selectMatchPosition(actor.getSnapshot()),
+      "e2e4",
+    )
+    actor.send({ moveId: e4.id, type: "MATCH.MOVE_REQUESTED" })
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+
+    expect(hintRequests).toHaveLength(2)
+    actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+    expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
+    clock.increment(AUTO_HINTS_PIECE_DWELL_MS)
+    expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
+    expect(hintRequests).toHaveLength(2)
+    actor.stop()
+  })
+
+  it("cancels the automatic Piece Hint dwell when the board changes", async () => {
+    const clock = new SimulatedClock()
+    const selectMove = vi.fn(
+      async (_request: MatchOpponentRequest, signal: AbortSignal) =>
+        await new Promise<MatchMoveId>((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new Error("request aborted")),
+            { once: true },
+          )
+        }),
+    )
+    const actor = createActor(matchMachine, {
+      clock,
+      input: {
+        autoHintsEnabled: true,
+        hintAnalyst: {
+          analyze: (request) => Promise.resolve(createHintResult(request)),
+        },
+        initialPosition: standardInitialPosition(),
+        matchId: "standard-story-chicken-auto-hints-dwell-cancel",
+        opponent: { selectMove },
+        playerColor: "white",
+      },
+    }).start()
+
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+    const e4 = requireLegalMove(
+      selectMatchPosition(actor.getSnapshot()),
+      "e2e4",
+    )
+    actor.send({ moveId: e4.id, type: "MATCH.MOVE_REQUESTED" })
+    await waitFor(actor, selectIsOpponentThinking)
+
+    clock.increment(AUTO_HINTS_PIECE_DWELL_MS)
+    expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+    expect(selectMove).toHaveBeenCalledTimes(1)
+    actor.stop()
+  })
+
+  it("cancels pending hint analysis when the board changes", async () => {
     let hintSignal: AbortSignal | undefined
     const analyze = vi.fn(
       async (_request: BetterHintsRequest, signal?: AbortSignal) => {
@@ -190,27 +292,38 @@ describe("scoped XState match flow", () => {
         })
       },
     )
+    const selectMove = vi.fn(
+      async (_request: MatchOpponentRequest, signal: AbortSignal) =>
+        await new Promise<MatchMoveId>((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new Error("request aborted")),
+            { once: true },
+          )
+        }),
+    )
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: true,
         hintAnalyst: { analyze },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hint-cancel",
-        opponent: scripted.opponent,
+        opponent: { selectMove },
         playerColor: "white",
       },
     }).start()
 
-    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
     await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "loading")
     const e4 = requireLegalMove(
       selectMatchPosition(actor.getSnapshot()),
       "e2e4",
     )
     actor.send({ moveId: e4.id, type: "MATCH.MOVE_REQUESTED" })
-    await waitFor(actor, selectIsPlayerTurn)
+    await waitFor(actor, selectIsOpponentThinking)
 
     expect(hintSignal?.aborted).toBe(true)
     expect(analyze).toHaveBeenCalledTimes(1)
+    expect(selectMove).toHaveBeenCalledTimes(1)
     expect(selectMatchHints(actor.getSnapshot())).toBeNull()
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(false)
@@ -235,6 +348,7 @@ describe("scoped XState match flow", () => {
     }
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: true,
         hintAnalyst,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hint-retry",
@@ -243,7 +357,6 @@ describe("scoped XState match flow", () => {
       },
     }).start()
 
-    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
     await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "failure")
     expect(selectHintFailure(actor.getSnapshot())).toEqual({
       type: "MATCH.HINT_REQUEST_FAILED",
@@ -269,6 +382,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent(["e7e5"])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: true,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-1",
         opponent: scripted.opponent,
@@ -299,9 +413,26 @@ describe("scoped XState match flow", () => {
   })
 
   it("lets the opponent open when Story assigns the player Black", async () => {
+    const clock = new SimulatedClock()
     const scripted = createScriptedOpponent(["e2e4"])
+    const hintRequests: BetterHintsRequest[] = []
     const actor = createActor(matchMachine, {
+      clock,
       input: {
+        autoHintsEnabled: true,
+        hintAnalyst: {
+          analyze: (request) => {
+            hintRequests.push(request)
+            const result = createHintResult(request)
+            return Promise.resolve(
+              Object.freeze({
+                ...result,
+                opponent: result.player,
+                player: result.opponent,
+              }),
+            )
+          },
+        },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-black",
         opponent: scripted.opponent,
@@ -310,11 +441,18 @@ describe("scoped XState match flow", () => {
     }).start()
 
     expect(selectIsOpponentTurn(actor.getSnapshot())).toBe(true)
-    await waitFor(actor, selectIsPlayerTurn)
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
 
     expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(1)
     expect(selectMatchPosition(actor.getSnapshot()).turn).toBe("black")
     expect(selectCanUndo(actor.getSnapshot())).toBe(false)
+    expect(hintRequests).toHaveLength(1)
+    expect(hintRequests[0]?.playerColor).toBe("black")
+    clock.increment(AUTO_HINTS_PIECE_DWELL_MS)
+    expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
     actor.stop()
   })
 
@@ -322,6 +460,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent(["e7e5"])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-history",
         opponent: scripted.opponent,
@@ -362,6 +501,7 @@ describe("scoped XState match flow", () => {
     )
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-cancel",
         opponent: { selectMove },
@@ -388,6 +528,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent(["a1a1", "e7e5"])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-retry",
         opponent: scripted.opponent,
@@ -418,6 +559,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent([new Error("engine unavailable")])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-failure",
         opponent: scripted.opponent,
@@ -443,6 +585,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent(["e7e5", "d8h4"])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-checkmate",
         opponent: scripted.opponent,
@@ -488,6 +631,7 @@ describe("scoped XState match flow", () => {
     const scripted = createScriptedOpponent([])
     const actor = createActor(matchMachine, {
       input: {
+        autoHintsEnabled: false,
         initialPosition: result.position,
         matchId: "terminal-position",
         opponent: scripted.opponent,
