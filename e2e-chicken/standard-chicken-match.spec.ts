@@ -144,8 +144,7 @@ const readHintSourceKeys = async (locator: Locator): Promise<string[]> =>
       .sort(),
   )
 
-const expectExactBetterHints = async (page: Page): Promise<void> => {
-  await page.getByRole("button", { name: "Show Piece Hints" }).click()
+const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
   await expect(
     page.getByRole("button", { name: "Show Move Hints" }),
   ).toBeVisible()
@@ -168,7 +167,6 @@ const expectExactBetterHints = async (page: Page): Promise<void> => {
   const pieceSourceKeys = await readHintSourceKeys(sourceHints)
   expect(new Set(pieceSourceKeys).size).toBe(6)
 
-  await page.getByRole("button", { name: "Show Move Hints" }).click()
   await expect(
     page.getByRole("button", { name: "Move Hints Shown" }),
   ).toBeDisabled()
@@ -189,7 +187,7 @@ const expectExactBetterHints = async (page: Page): Promise<void> => {
   await expectNoHighImpactAccessibilityViolations(page)
 }
 
-test("plays White through cancellation, redo, and a real Stockfish reply", async ({
+test("plays White through automatic hints, cancellation, and redo", async ({
   page,
 }) => {
   await installDeterministicCryptography(page, {
@@ -203,10 +201,9 @@ test("plays White through cancellation, redo, and a real Stockfish reply", async
   await expect(
     page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
   ).toBeVisible()
+  await expectExactAutomaticBetterHints(page)
   await expect(page.getByText("White", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
-  await expectNoHighImpactAccessibilityViolations(page)
-  await expectExactBetterHints(page)
 
   await page.getByRole("gridcell", { name: /e2, White pawn/ }).click()
   await page.getByRole("gridcell", { name: /e4, empty/ }).click()
@@ -223,11 +220,12 @@ test("plays White through cancellation, redo, and a real Stockfish reply", async
   await page.getByRole("button", { name: "Redo" }).click()
   await expect(page.getByText("2 plies", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+  await expectExactAutomaticBetterHints(page)
 
   await diagnostics.assertClean()
 })
 
-test("plays Black through a complete uniform-random Chicken turn", async ({
+test("plays Black through automatic hints and a complete Chicken turn", async ({
   page,
 }) => {
   await installDeterministicCryptography(page, {
@@ -244,15 +242,13 @@ test("plays Black through a complete uniform-random Chicken turn", async ({
   await expect(page.getByText("Black", { exact: true })).toBeVisible()
   await expect(page.getByText("1 ply", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
-  await expectExactBetterHints(page)
+  await expectExactAutomaticBetterHints(page)
 
   await page.getByRole("gridcell", { name: /e7, Black pawn/ }).click()
   await page.getByRole("gridcell", { name: /e5, empty/ }).click()
-  await expect(page.locator('[data-hint-kind="source"]')).toHaveCount(0)
-  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(0)
   await expect(page.getByText("3 plies", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
-  await expectNoHighImpactAccessibilityViolations(page)
+  await expectExactAutomaticBetterHints(page)
 
   await diagnostics.assertClean()
 })
