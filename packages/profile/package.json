@@ -9,6 +9,10 @@
       "types": "./src/durableStore.ts",
       "default": "./dist/durableStore.js"
     },
+    "./durable-store-contract": {
+      "types": "./src/durableStoreContract.ts",
+      "default": "./dist/durableStoreContract.js"
+    },
     "./player-data": {
       "types": "./src/playerData.ts",
       "default": "./dist/playerData.js"

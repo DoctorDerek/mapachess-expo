@@ -1,3 +1,8 @@
+import {
+  freezeDurableStoreSnapshot,
+  type DurableStoreAdapter,
+  type DurableStoreSnapshot,
+} from "./durableStoreContract.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type { Sha256HexDigest } from "./sha256.js"
 import {
@@ -6,34 +11,14 @@ import {
   type StoredPlayerDataDecodeIssue,
 } from "./storedPlayerData.js"
 
-export type DurableStoreSnapshot = Readonly<{
-  current: string | null
-  lastKnownGood: string | null
-  preImportBackup: string | null
-}>
-
-export type DurableStoreWrite = Readonly<{
-  expected: DurableStoreSnapshot
-  next: DurableStoreSnapshot
-}>
-
-export type DurableStoreWriteResult =
-  | Readonly<{
-      ok: true
-      snapshot: DurableStoreSnapshot
-    }>
-  | Readonly<{
-      actual: DurableStoreSnapshot
-      ok: false
-      type: "PROFILE.STORAGE_CONFLICT" | "PROFILE.STORAGE_VERIFICATION_FAILED"
-    }>
-
-export type DurableStoreAdapter = Readonly<{
-  compareAndSwapVerified: (
-    write: DurableStoreWrite,
-  ) => Promise<DurableStoreWriteResult>
-  read: () => Promise<DurableStoreSnapshot>
-}>
+export {
+  durableStoreSnapshotsEqual,
+  EMPTY_DURABLE_STORE_SNAPSHOT,
+  type DurableStoreAdapter,
+  type DurableStoreSnapshot,
+  type DurableStoreWrite,
+  type DurableStoreWriteResult,
+} from "./durableStoreContract.js"
 
 export type DurablePlayerDataSlot =
   | Readonly<{ type: "missing" }>
@@ -73,24 +58,6 @@ export type DurablePlayerDataWriteResult =
       ok: false
     }>
 
-const emptyDurableStoreSnapshot = (): DurableStoreSnapshot =>
-  Object.freeze({ current: null, lastKnownGood: null, preImportBackup: null })
-
-export const durableStoreSnapshotsEqual = (
-  left: DurableStoreSnapshot,
-  right: DurableStoreSnapshot,
-): boolean =>
-  left.current === right.current &&
-  left.lastKnownGood === right.lastKnownGood &&
-  left.preImportBackup === right.preImportBackup
-
-const freezeSnapshot = (snapshot: DurableStoreSnapshot): DurableStoreSnapshot =>
-  Object.freeze({
-    current: snapshot.current,
-    lastKnownGood: snapshot.lastKnownGood,
-    preImportBackup: snapshot.preImportBackup,
-  })
-
 const decodedSlot = async (
   raw: string | null,
   sha256: Sha256HexDigest,
@@ -107,7 +74,7 @@ const loadedState = async (
   snapshot: DurableStoreSnapshot,
   sha256: Sha256HexDigest,
 ): Promise<LoadedDurablePlayerData> => {
-  const frozenSnapshot = freezeSnapshot(snapshot)
+  const frozenSnapshot = freezeDurableStoreSnapshot(snapshot)
   const [current, lastKnownGood, preImportBackup] = await Promise.all([
     decodedSlot(frozenSnapshot.current, sha256),
     decodedSlot(frozenSnapshot.lastKnownGood, sha256),
@@ -195,7 +162,7 @@ export default class SerializedPlayerDataStore {
     )
     const previousValidCurrent =
       expected.current.type === "valid" ? expected.current.raw : null
-    const nextSnapshot = freezeSnapshot({
+    const nextSnapshot = freezeDurableStoreSnapshot({
       current: encodedCandidate,
       lastKnownGood: previousValidCurrent ?? expected.snapshot.lastKnownGood,
       preImportBackup: preservePreImportBackup
@@ -223,5 +190,3 @@ export default class SerializedPlayerDataStore {
     return result
   }
 }
-
-export const EMPTY_DURABLE_STORE_SNAPSHOT = emptyDurableStoreSnapshot()

@@ -17,10 +17,13 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@mapachess/stockfish-native": "workspace:*",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.18",
     "expo-constants": "~57.0.16",
+    "expo-crypto": "~57.0.2",
     "expo-dev-client": "~57.0.16",
     "expo-linking": "~57.0.8",
     "expo-router": "~57.0.17",

@@ -3,8 +3,8 @@ import type {
   DurableStoreSnapshot,
   DurableStoreWrite,
   DurableStoreWriteResult,
-} from "@mapachess/profile/durable-store"
-import { durableStoreSnapshotsEqual } from "@mapachess/profile/durable-store"
+} from "@mapachess/profile/durable-store-contract"
+import { durableStoreSnapshotsEqual } from "@mapachess/profile/durable-store-contract"
 
 export const MAPACHESS_INDEXED_DB_NAME = "mapachess-player-data" as const
 

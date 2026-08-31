@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   EMPTY_DURABLE_STORE_SNAPSHOT,
   type DurableStoreSnapshot,
-} from "@mapachess/profile/durable-store"
+} from "@mapachess/profile/durable-store-contract"
 import IndexedDbDurableStore from "./IndexedDbDurableStore.js"
 
 const snapshot = (
