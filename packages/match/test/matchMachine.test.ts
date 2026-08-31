@@ -28,7 +28,7 @@ import {
   createInitialMatchPosition,
   reconstructMatchPosition,
 } from "../src/matchPosition"
-import { requireLegalMove } from "./matchTestUtils"
+import { createHintResult, requireLegalMove } from "./matchTestUtils"
 
 type ScriptedMove = string | Error
 
@@ -67,52 +67,6 @@ const standardInitialPosition = () =>
     variant: "standard",
   })
 
-const createHintResult = (request: BetterHintsRequest): BetterHintsResult =>
-  Object.freeze({
-    opponent: Object.freeze([
-      Object.freeze({
-        color: "black" as const,
-        from: "e7" as const,
-        to: "e5" as const,
-        uci: "e7e5",
-      }),
-      Object.freeze({
-        color: "black" as const,
-        from: "g8" as const,
-        to: "f6" as const,
-        uci: "g8f6",
-      }),
-      Object.freeze({
-        color: "black" as const,
-        from: "d7" as const,
-        to: "d5" as const,
-        uci: "d7d5",
-      }),
-    ]),
-    player: Object.freeze([
-      Object.freeze({
-        color: "white" as const,
-        from: "e2" as const,
-        to: "e4" as const,
-        uci: "e2e4",
-      }),
-      Object.freeze({
-        color: "white" as const,
-        from: "g1" as const,
-        to: "f3" as const,
-        uci: "g1f3",
-      }),
-      Object.freeze({
-        color: "white" as const,
-        from: "d2" as const,
-        to: "d4" as const,
-        uci: "d2d4",
-      }),
-    ]),
-    positionFen: request.position.fen,
-    requestId: request.requestId,
-  })
-
 describe("scoped XState match flow", () => {
   it("reveals staged hints once and preserves monotonic use evidence", async () => {
     const scripted = createScriptedOpponent(["e7e5"])
@@ -126,6 +80,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         hintAnalyst,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hints",
@@ -191,6 +146,7 @@ describe("scoped XState match flow", () => {
       clock,
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         hintAnalyst,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-auto-hints",
@@ -250,6 +206,7 @@ describe("scoped XState match flow", () => {
       clock,
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         hintAnalyst: {
           analyze: (request) => Promise.resolve(createHintResult(request)),
         },
@@ -305,6 +262,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         hintAnalyst: { analyze },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hint-cancel",
@@ -349,6 +307,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         hintAnalyst,
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-hint-retry",
@@ -383,6 +342,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-1",
         opponent: scripted.opponent,
@@ -420,6 +380,7 @@ describe("scoped XState match flow", () => {
       clock,
       input: {
         autoHintsEnabled: true,
+        durability: { type: "ephemeral" },
         hintAnalyst: {
           analyze: (request) => {
             hintRequests.push(request)
@@ -461,6 +422,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-history",
         opponent: scripted.opponent,
@@ -502,6 +464,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-cancel",
         opponent: { selectMove },
@@ -529,6 +492,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-retry",
         opponent: scripted.opponent,
@@ -560,6 +524,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-failure",
         opponent: scripted.opponent,
@@ -586,6 +551,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: standardInitialPosition(),
         matchId: "standard-story-chicken-checkmate",
         opponent: scripted.opponent,
@@ -632,6 +598,7 @@ describe("scoped XState match flow", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintsEnabled: false,
+        durability: { type: "ephemeral" },
         initialPosition: result.position,
         matchId: "terminal-position",
         opponent: scripted.opponent,

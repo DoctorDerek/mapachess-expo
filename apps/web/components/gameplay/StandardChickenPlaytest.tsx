@@ -44,6 +44,7 @@ export default function StandardChickenPlaytest() {
         matchActor = createActor(matchMachine, {
           input: {
             autoHintsEnabled: true,
+            durability: { type: "ephemeral" },
             initialPosition: createInitialMatchPosition({
               chess960PositionId: null,
               variant: "standard",

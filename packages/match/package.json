@@ -25,6 +25,10 @@
       "types": "./src/matchPosition.ts",
       "default": "./dist/matchPosition.js"
     },
+    "./match-persistence": {
+      "types": "./src/matchPersistence.ts",
+      "default": "./dist/matchPersistence.js"
+    },
     "./match-move": {
       "types": "./src/matchMove.ts",
       "default": "./dist/matchMove.js"

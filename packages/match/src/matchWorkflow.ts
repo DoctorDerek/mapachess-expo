@@ -1,0 +1,246 @@
+import type {
+  BetterHintsAnalyst,
+  BetterHintsRequest,
+  BetterHintsResult,
+} from "./betterHints.js"
+import type {
+  MatchHintFailure,
+  MatchMachineContext,
+  MatchMachineInput,
+  MatchOpponentFailure,
+  MatchOpponentRequest,
+} from "./matchMachineTypes.js"
+import {
+  applyMatchMove,
+  listLegalMatchMoves,
+  type AppliedMatchMove,
+  type MatchMoveId,
+} from "./matchMove.js"
+import {
+  createPendingMatchMutation,
+  type MatchPersistence,
+  type MatchPersistenceFailure,
+  type PendingMatchMutation,
+} from "./matchPersistence.js"
+import type { MatchColor } from "./matchPosition.js"
+import {
+  applyMatchTimelineMove,
+  canRedoMatchTimeline,
+  canUndoMatchTimeline,
+  createMatchTimeline,
+  currentMatchPosition,
+  redoMatchTimeline,
+  undoMatchTimeline,
+  type MatchTimeline,
+} from "./matchTimeline.js"
+
+export const createInitialContext = (
+  input: MatchMachineInput,
+): MatchMachineContext => {
+  if (input.matchId.length === 0 || input.matchId !== input.matchId.trim()) {
+    throw new TypeError("matchId must be nonempty and trimmed.")
+  }
+
+  return {
+    autoHintsEnabled: input.autoHintsEnabled,
+    durability: input.durability,
+    hintAnalyst: input.hintAnalyst ?? null,
+    hintFailure: null,
+    hints: null,
+    matchId: input.matchId,
+    moveHintsUsed: false,
+    mutationSequence: 0,
+    opponent: input.opponent,
+    opponentFailure: null,
+    pendingMutation: null,
+    persistenceFailure: null,
+    pieceHintsUsed: false,
+    playerColor: input.playerColor,
+    timeline: createMatchTimeline(input.initialPosition),
+  }
+}
+
+const acceptedMoves = (timeline: MatchTimeline): readonly AppliedMatchMove[] =>
+  Object.freeze(
+    timeline.transitions
+      .slice(0, timeline.cursor)
+      .map((transition) => transition.move),
+  )
+
+export const createOpponentRequest = (
+  context: MatchMachineContext,
+): MatchOpponentRequest => {
+  const position = currentMatchPosition(context.timeline)
+
+  return Object.freeze({
+    acceptedMoves: acceptedMoves(context.timeline),
+    initialPosition: context.timeline.initialPosition,
+    legalMoves: listLegalMatchMoves(position),
+    position,
+    requestId: `${context.matchId}/opponent/ply/${String(context.timeline.cursor + 1)}/fen/${position.fen}`,
+  })
+}
+
+export const createHintsRequest = (
+  context: MatchMachineContext,
+): BetterHintsRequest => {
+  const position = currentMatchPosition(context.timeline)
+  return Object.freeze({
+    playerColor: context.playerColor,
+    position,
+    requestId: `${context.matchId}/hints/ply/${String(context.timeline.cursor + 1)}/fen/${position.fen}`,
+  })
+}
+
+export const requireHintAnalyst = (
+  context: MatchMachineContext,
+): BetterHintsAnalyst => {
+  if (context.hintAnalyst === null) {
+    throw new Error("Hint analysis began without an injected analyst.")
+  }
+  return context.hintAnalyst
+}
+
+export const moveIsLegal = (
+  timeline: MatchTimeline,
+  moveId: MatchMoveId,
+): boolean => applyMatchMove(currentMatchPosition(timeline), moveId).ok
+
+export const requireAppliedTimelineMove = (
+  timeline: MatchTimeline,
+  moveId: MatchMoveId,
+): MatchTimeline => {
+  const result = applyMatchTimelineMove(timeline, moveId)
+  if (!result.ok) {
+    throw new Error("A guarded canonical match move became illegal.")
+  }
+  return result.timeline
+}
+
+export const undoToPreviousPlayerDecision = (
+  timeline: MatchTimeline,
+  playerColor: MatchColor,
+): MatchTimeline | undefined => {
+  let previousTimeline = timeline
+
+  while (canUndoMatchTimeline(previousTimeline)) {
+    const result = undoMatchTimeline(previousTimeline)
+    if (!result.ok) return undefined
+
+    previousTimeline = result.timeline
+    if (currentMatchPosition(previousTimeline).turn === playerColor) {
+      return previousTimeline
+    }
+  }
+  return undefined
+}
+
+export const redoToNextPlayerDecision = (
+  timeline: MatchTimeline,
+  playerColor: MatchColor,
+): MatchTimeline | undefined => {
+  if (!canRedoMatchTimeline(timeline)) return undefined
+
+  let nextTimeline = timeline
+  do {
+    const result = redoMatchTimeline(nextTimeline)
+    if (!result.ok) return undefined
+
+    nextTimeline = result.timeline
+  } while (
+    canRedoMatchTimeline(nextTimeline) &&
+    currentMatchPosition(nextTimeline).turn !== playerColor
+  )
+  return nextTimeline
+}
+
+export const requireMatchPersistence = (
+  context: MatchMachineContext,
+): MatchPersistence => {
+  if (context.durability.type !== "durable") {
+    throw new Error("Durable match mutation requires persistence.")
+  }
+  return context.durability.persistence
+}
+
+export const requirePendingMutation = (
+  context: MatchMachineContext,
+): PendingMatchMutation => {
+  if (context.pendingMutation === null) {
+    throw new Error("Persistence state requires a pending match mutation.")
+  }
+  return context.pendingMutation
+}
+
+export const pendingPositionMutation = (
+  context: MatchMachineContext,
+  timeline: MatchTimeline,
+): PendingMatchMutation =>
+  createPendingMatchMutation({
+    hints: null,
+    matchId: context.matchId,
+    moveHintsUsed: context.moveHintsUsed,
+    mutationSequence: context.mutationSequence,
+    pieceHintsUsed: context.pieceHintsUsed,
+    route: "resolve-position",
+    timeline,
+  })
+
+export const pendingPieceHintsMutation = (
+  context: MatchMachineContext,
+  hints: BetterHintsResult,
+): PendingMatchMutation =>
+  createPendingMatchMutation({
+    hints,
+    matchId: context.matchId,
+    moveHintsUsed: context.moveHintsUsed,
+    mutationSequence: context.mutationSequence,
+    pieceHintsUsed: true,
+    route: "piece-hints-visible",
+    timeline: context.timeline,
+  })
+
+export const pendingMoveHintsMutation = (
+  context: MatchMachineContext,
+): PendingMatchMutation =>
+  createPendingMatchMutation({
+    hints: context.hints,
+    matchId: context.matchId,
+    moveHintsUsed: true,
+    mutationSequence: context.mutationSequence,
+    pieceHintsUsed: context.pieceHintsUsed,
+    route: "move-hints-visible",
+    timeline: context.timeline,
+  })
+
+export const acceptedPendingMutation = (
+  context: MatchMachineContext,
+): Partial<MatchMachineContext> => {
+  const pending = requirePendingMutation(context)
+  return {
+    hintFailure: null,
+    hints: pending.hints,
+    moveHintsUsed: pending.moveHintsUsed,
+    mutationSequence: context.mutationSequence + 1,
+    opponentFailure: null,
+    pendingMutation: null,
+    persistenceFailure: null,
+    pieceHintsUsed: pending.pieceHintsUsed,
+    timeline: pending.timeline,
+  }
+}
+
+export const illegalOpponentMoveFailure = (): MatchOpponentFailure =>
+  Object.freeze({ type: "MATCH.OPPONENT_MOVE_ILLEGAL" })
+
+export const opponentRequestFailure = (): MatchOpponentFailure =>
+  Object.freeze({ type: "MATCH.OPPONENT_REQUEST_FAILED" })
+
+export const hintRequestFailure = (): MatchHintFailure =>
+  Object.freeze({ type: "MATCH.HINT_REQUEST_FAILED" })
+
+export const persistenceRequestFailure = (): MatchPersistenceFailure =>
+  Object.freeze({ type: "MATCH.PERSISTENCE_REQUEST_FAILED" })
+
+export const stalePersistenceReceiptFailure = (): MatchPersistenceFailure =>
+  Object.freeze({ type: "MATCH.PERSISTENCE_RECEIPT_STALE" })
