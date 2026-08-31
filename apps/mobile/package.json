@@ -12,8 +12,9 @@
     "eas-build-post-install": "pnpm --filter @mapachess/stockfish-native provision",
     "native:prebuild": "expo prebuild --clean",
     "start": "expo start --dev-client",
-    "test:native": "jest --runInBand",
-    "test:native:coverage": "jest --coverage --runInBand",
+    "test:native": "pnpm run test:native:prepare && jest --runInBand",
+    "test:native:coverage": "pnpm run test:native:prepare && jest --coverage --runInBand",
+    "test:native:prepare": "pnpm --filter @mapachess/profile... build",
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
