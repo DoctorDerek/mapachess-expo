@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import StandardChickenPlaytest from "../../components/gameplay/StandardChickenPlaytest"
+import WebProfilePlaytest from "../../components/profile/WebProfilePlaytest"
 
 export const metadata: Metadata = {
   title: "Private Chicken Playtest — Mapachess",
@@ -14,5 +14,5 @@ const privatePlaytestIsEnabled = (): boolean =>
 export default function PlaytestPage() {
   if (!privatePlaytestIsEnabled()) notFound()
 
-  return <StandardChickenPlaytest />
+  return <WebProfilePlaytest />
 }
