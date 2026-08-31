@@ -1,0 +1,47 @@
+{
+  "name": "@mapachess/profile",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./durable-store": {
+      "types": "./src/durableStore.ts",
+      "default": "./dist/durableStore.js"
+    },
+    "./durable-store-contract": {
+      "types": "./src/durableStoreContract.ts",
+      "default": "./dist/durableStoreContract.js"
+    },
+    "./player-data": {
+      "types": "./src/playerData.ts",
+      "default": "./dist/playerData.js"
+    },
+    "./player-data-codec": {
+      "types": "./src/playerDataCodec.ts",
+      "default": "./dist/playerDataCodec.js"
+    },
+    "./profile-match-persistence": {
+      "types": "./src/profileMatchPersistence.ts",
+      "default": "./dist/profileMatchPersistence.js"
+    },
+    "./portable-backup": {
+      "types": "./src/portableBackup.ts",
+      "default": "./dist/portableBackup.js"
+    },
+    "./profile-machine": {
+      "types": "./src/profileMachine.ts",
+      "default": "./dist/profileMachine.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/match": "workspace:*",
+    "xstate": "^5"
+  }
+}

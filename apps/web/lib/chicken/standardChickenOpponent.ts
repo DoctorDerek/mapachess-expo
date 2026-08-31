@@ -14,11 +14,25 @@ import {
   selectUniformRandomLegalMove,
   type DeterministicRandomSeed,
 } from "@mapachess/stockfish/opponent-move-selection"
+import {
+  STOCKFISH_18_WEB_SOURCE_REVISION,
+  STOCKFISH_18_WEB_WASM_ARTIFACT,
+} from "@mapachess/stockfish/web-runtime-identity"
 
 export const STANDARD_CHICKEN_NODE_LIMIT = 10_000 as const
 export const STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
 export const STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION =
   "mapachess-web-sha256-position-state/v1" as const
+export const STANDARD_CHICKEN_WEB_POLICY_VERSION =
+  "mapachess-standard-chicken-web-policy/v1" as const
+export const STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT = [
+  STANDARD_CHICKEN_WEB_POLICY_VERSION,
+  `stockfish-js-source/${STOCKFISH_18_WEB_SOURCE_REVISION}`,
+  `wasm-sha256/${STOCKFISH_18_WEB_WASM_ARTIFACT.sha256}`,
+  `nodes/${String(STANDARD_CHICKEN_NODE_LIMIT)}`,
+  `random-basis-points/${String(STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS)}`,
+  STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION,
+].join("|")
 
 export type StandardChickenCryptography = Readonly<{
   getRandomValues: Crypto["getRandomValues"]
@@ -60,6 +74,12 @@ export function selectStandardStoryPlayerColor(
 ): "black" | "white" {
   const random = createDeterministicRandom(matchSeed)
   return random.nextIndex(2) === 0 ? "white" : "black"
+}
+
+export function standardChickenMatchId(
+  matchSeed: DeterministicRandomSeed,
+): string {
+  return `standard-story-chicken/${matchSeed}`
 }
 
 async function deriveOpponentPositionSeed(

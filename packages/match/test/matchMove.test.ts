@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { applyMatchMove, listLegalMatchMoves } from "../src/matchMove"
+import {
+  applyMatchMove,
+  listLegalMatchMoves,
+  parseMatchMoveId,
+} from "../src/matchMove"
 import {
   createInitialMatchPosition,
   reconstructMatchPosition,
@@ -29,6 +33,15 @@ const requirePosition = (
 }
 
 describe("legal match moves", () => {
+  it("parses canonical durable move identifiers", () => {
+    expect(parseMatchMoveId("e2e4")).toEqual({ moveId: "e2e4", ok: true })
+    expect(parseMatchMoveId("a7a8q")).toEqual({ moveId: "a7a8q", ok: true })
+    expect(parseMatchMoveId("e2-e4")).toEqual({
+      error: { received: "e2-e4", type: "MATCH.MOVE_ID_INVALID" },
+      ok: false,
+    })
+  })
+
   it("lists and applies orthodox opening moves with SAN and UCI", () => {
     const initialPosition = createInitialMatchPosition(standardStartingPosition)
     const legalMoves = listLegalMatchMoves(initialPosition)

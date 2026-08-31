@@ -1,5 +1,12 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Locator, type Page } from "@playwright/test"
+import {
+  MAPACHESS_INDEXED_DB_CURRENT_KEY,
+  MAPACHESS_INDEXED_DB_NAME,
+  MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
+} from "../apps/web/lib/profile/IndexedDbDurableStore"
+import type { MapachessPlayerData } from "../packages/profile/dist/playerData.js"
+import { decodeMapachessPlayerData } from "../packages/profile/dist/playerDataCodec.js"
 
 type DeterministicBrowserCryptography = Readonly<{
   digestDelayMilliseconds: number
@@ -100,11 +107,13 @@ const beginBrowserDiagnostics = (page: Page) => {
   })
 
   return {
-    assertClean: async (): Promise<void> => {
+    assertClean: async (
+      expectedOwnedWorkerCount: number = OWNED_WORKER_COUNT,
+    ): Promise<void> => {
       await page.goto("/")
-      await expect.poll(() => closedWorkerCount).toBe(OWNED_WORKER_COUNT)
+      await expect.poll(() => closedWorkerCount).toBe(expectedOwnedWorkerCount)
       expect(page.workers()).toHaveLength(0)
-      expect(workerUrls).toHaveLength(OWNED_WORKER_COUNT)
+      expect(workerUrls).toHaveLength(expectedOwnedWorkerCount)
       expect(failedRequests).toEqual([])
       expect(browserErrors).toEqual([])
 
@@ -129,6 +138,86 @@ const expectNoHighImpactAccessibilityViolations = async (
     ({ impact }) => impact === "serious" || impact === "critical",
   )
   expect(highImpactViolations).toEqual([])
+}
+
+const openFirstChickenMatch = async (page: Page): Promise<void> => {
+  await page.goto("/playtest")
+  await page.getByRole("button", { name: "Keep Auto-Hints On" }).click()
+  await expect(
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Chicken Stockfish",
+    }),
+  ).toBeVisible()
+}
+
+const readCurrentBrowserPlayerData = async (
+  page: Page,
+): Promise<MapachessPlayerData> => {
+  const rawCurrent = await page.evaluate(
+    async ({ currentKey, databaseName, objectStoreName }) => {
+      const requestResult = <Result>(
+        request: IDBRequest<Result>,
+      ): Promise<Result> =>
+        new Promise((resolve, reject) => {
+          request.addEventListener("success", () => resolve(request.result), {
+            once: true,
+          })
+          request.addEventListener(
+            "error",
+            () =>
+              reject(request.error ?? new Error("IndexedDB request failed.")),
+            { once: true },
+          )
+        })
+      const transactionCompletion = (
+        transaction: IDBTransaction,
+      ): Promise<void> =>
+        new Promise((resolve, reject) => {
+          transaction.addEventListener("complete", () => resolve(), {
+            once: true,
+          })
+          transaction.addEventListener(
+            "error",
+            () =>
+              reject(
+                transaction.error ?? new Error("IndexedDB transaction failed."),
+              ),
+            { once: true },
+          )
+        })
+
+      const database = await requestResult(indexedDB.open(databaseName))
+      try {
+        const transaction = database.transaction(objectStoreName, "readonly")
+        const completion = transactionCompletion(transaction)
+        const current = await requestResult(
+          transaction.objectStore(objectStoreName).get(currentKey),
+        )
+        await completion
+        if (typeof current !== "string") {
+          throw new TypeError("Current player data is not a stored string.")
+        }
+        return current
+      } finally {
+        database.close()
+      }
+    },
+    {
+      currentKey: MAPACHESS_INDEXED_DB_CURRENT_KEY,
+      databaseName: MAPACHESS_INDEXED_DB_NAME,
+      objectStoreName: MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
+    },
+  )
+  const received: unknown = JSON.parse(rawCurrent)
+  const payload =
+    received !== null && typeof received === "object" && "payload" in received
+      ? received.payload
+      : null
+  const decoded = decodeMapachessPlayerData(payload)
+  if (!decoded.ok) throw new Error("Current browser player data must decode")
+  return decoded.data
 }
 
 const readHintSourceKeys = async (locator: Locator): Promise<string[]> =>
@@ -187,7 +276,7 @@ const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
   await expectNoHighImpactAccessibilityViolations(page)
 }
 
-test("plays White through automatic hints, cancellation, and redo", async ({
+test("persists and resumes White through hints, cancellation, and redo", async ({
   page,
 }) => {
   await installDeterministicCryptography(page, {
@@ -197,11 +286,31 @@ test("plays White through automatic hints, cancellation, and redo", async ({
   })
   const diagnostics = beginBrowserDiagnostics(page)
 
-  await page.goto("/playtest")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
-  ).toBeVisible()
+  await openFirstChickenMatch(page)
+  const initialPlayerData = await readCurrentBrowserPlayerData(page)
+  const initialMatch = initialPlayerData.activeMatch
+  if (initialMatch === null) {
+    throw new Error("Play must establish the durable Chicken match first")
+  }
+  expect(initialPlayerData.firstRun.autoHintsChoiceCompleted).toBe(true)
+  expect(initialPlayerData.settings.autoHintsEnabled).toBe(true)
+  expect(initialMatch).toMatchObject({
+    autoHintsEnabledAtStart: true,
+    cursor: 0,
+    matchId: `standard-story-chicken/${RANDOM_POSITION_SEED}`,
+    matchSeed: RANDOM_POSITION_SEED,
+    moveIds: [],
+    opponentId: "chicken-stockfish",
+    playerColor: "white",
+  })
+
   await expectExactAutomaticBetterHints(page)
+  const hintedPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(hintedPlayerData.activeMatch).toMatchObject({
+    matchId: initialMatch.matchId,
+    moveHintsUsed: true,
+    pieceHintsUsed: true,
+  })
   await expect(page.getByText("White", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
 
@@ -222,7 +331,65 @@ test("plays White through automatic hints, cancellation, and redo", async ({
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
   await expectExactAutomaticBetterHints(page)
 
-  await diagnostics.assertClean()
+  await page.getByRole("button", { name: "Undo" }).click()
+  await expect(page.getByText("No moves yet.", { exact: true })).toBeVisible()
+  const savedBeforeReload = await readCurrentBrowserPlayerData(page)
+  const savedMatchBeforeReload = savedBeforeReload.activeMatch
+  if (savedMatchBeforeReload === null) {
+    throw new Error("Undo must retain the durable Chicken match branch")
+  }
+  expect(savedMatchBeforeReload).toMatchObject({
+    cursor: 0,
+    matchId: initialMatch.matchId,
+    matchSeed: initialMatch.matchSeed,
+    moveHintsUsed: true,
+    pieceHintsUsed: true,
+    playerColor: initialMatch.playerColor,
+  })
+  expect(savedMatchBeforeReload.moveIds).toHaveLength(2)
+  expect(savedMatchBeforeReload.moveIds[0]).toBe("e2e4")
+
+  await page.reload()
+  await expect(
+    page.getByRole("button", { name: "Keep Auto-Hints On" }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Chicken Stockfish",
+    }),
+  ).toBeVisible()
+  await expect(page.getByText("White", { exact: true })).toBeVisible()
+  await expect(page.getByText("No moves yet.", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled()
+  await expect(page.getByRole("button", { name: "Redo" })).toBeEnabled()
+  await expectExactAutomaticBetterHints(page)
+
+  const resumedPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(resumedPlayerData.firstRun).toEqual(savedBeforeReload.firstRun)
+  expect(resumedPlayerData.settings).toEqual(savedBeforeReload.settings)
+  expect(resumedPlayerData.activeMatch).toEqual(savedBeforeReload.activeMatch)
+
+  await page.getByRole("button", { name: "Redo" }).click()
+  await expect(page.getByText("2 plies", { exact: true })).toBeVisible()
+  await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+  await expectExactAutomaticBetterHints(page)
+  const savedAfterRedo = await readCurrentBrowserPlayerData(page)
+  expect(savedAfterRedo.activeMatch).toMatchObject({
+    cursor: 2,
+    matchId: initialMatch.matchId,
+    matchSeed: initialMatch.matchSeed,
+    moveHintsUsed: true,
+    moveIds: savedMatchBeforeReload.moveIds,
+    pieceHintsUsed: true,
+    playerColor: initialMatch.playerColor,
+  })
+  expect(savedAfterRedo.activeMatch?.currentFen).not.toBe(
+    savedMatchBeforeReload.currentFen,
+  )
+
+  await diagnostics.assertClean(OWNED_WORKER_COUNT * 2)
 })
 
 test("plays Black through automatic hints and a complete Chicken turn", async ({
@@ -235,10 +402,7 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   })
   const diagnostics = beginBrowserDiagnostics(page)
 
-  await page.goto("/playtest")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
-  ).toBeVisible()
+  await openFirstChickenMatch(page)
   await expect(page.getByText("Black", { exact: true })).toBeVisible()
   await expect(page.getByText("1 ply", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()

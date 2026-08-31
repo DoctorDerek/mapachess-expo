@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
+import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
@@ -7,6 +8,7 @@ import type {
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openStandardChickenRuntime from "./openStandardChickenRuntime"
 import type { StandardChickenCryptography } from "./standardChickenOpponent"
+import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "./standardChickenOpponent"
 
 const ENGINE_IDENTITY: StockfishUciIdentity = Object.freeze({
   author: "the Stockfish developers",
@@ -106,6 +108,7 @@ describe("Standard Chicken runtime ownership", () => {
       engineIdentity: ENGINE_IDENTITY,
       matchId: "standard-story-chicken/00000001000000020000000300000004",
       matchSeed: "00000001000000020000000300000004",
+      opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
       playerColor: "white",
     })
     expect(runtime.hintAnalyst.analyze).toEqual(expect.any(Function))
@@ -113,6 +116,27 @@ describe("Standard Chicken runtime ownership", () => {
     await runtime.close()
     expect(opponent.close).toHaveBeenCalledTimes(1)
     expect(hints.close).toHaveBeenCalledTimes(1)
+  })
+
+  it("reopens the same deterministic match identity from a saved seed", async () => {
+    const opponent = createSession(async () => ENGINE_IDENTITY)
+    const hints = createSession(async () => ENGINE_IDENTITY)
+    const matchSeed = parseDeterministicRandomSeed(
+      "00000005000000060000000700000008",
+      "reopened Chicken test seed",
+    )
+
+    const runtime = await openStandardChickenRuntime({
+      cryptography: createCryptography(),
+      matchSeed,
+      openSession: createSessionQueue([opponent.session, hints.session]),
+    })
+
+    expect(runtime).toMatchObject({
+      matchId: `standard-story-chicken/${matchSeed}`,
+      matchSeed,
+    })
+    await runtime.close()
   })
 
   it("closes both sessions when cancellation arrives after boot", async () => {

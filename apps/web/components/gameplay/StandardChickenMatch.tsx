@@ -7,11 +7,13 @@ import matchMachine, {
   selectCanUndo,
   selectHintStage,
   selectIsOpponentThinking,
+  selectIsPersistingMutation,
   selectIsPlayerTurn,
   selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
   selectOpponentFailure,
+  selectPersistenceFailure,
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -33,6 +35,14 @@ const matchStatusText = (
 ): string => {
   const position = selectMatchPosition(snapshot)
   const failure = selectOpponentFailure(snapshot)
+  const persistenceFailure = selectPersistenceFailure(snapshot)
+
+  if (persistenceFailure !== null) {
+    return "Your last action is paused because its local save was not verified."
+  }
+  if (selectIsPersistingMutation(snapshot)) {
+    return "Saving and verifying your last action…"
+  }
 
   if (failure?.type === "MATCH.OPPONENT_MOVE_ILLEGAL") {
     return "Chicken Stockfish returned an invalid move. Retry or undo."
@@ -64,6 +74,7 @@ export default function StandardChickenMatch({
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
+  const persistenceFailure = selectPersistenceFailure(snapshot)
   const hintStage = selectHintStage(snapshot)
   const hints = selectMatchHints(snapshot)
   const visibleHints =
@@ -172,6 +183,18 @@ export default function StandardChickenMatch({
             type="button"
           >
             Retry Chicken turn
+          </button>
+        )}
+
+        {persistenceFailure === null ? null : (
+          <button
+            className={`${controlClasses} mt-3 w-full border-amber-300/35 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20`}
+            onClick={() =>
+              actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+            }
+            type="button"
+          >
+            Retry local save
           </button>
         )}
 

@@ -31,6 +31,33 @@ declare const matchMoveIdBrand: unique symbol
 
 export type MatchMoveId = string & { readonly [matchMoveIdBrand]: true }
 
+export type MatchMoveIdParseResult =
+  | Readonly<{
+      moveId: MatchMoveId
+      ok: true
+    }>
+  | Readonly<{
+      error: Readonly<{
+        received: unknown
+        type: "MATCH.MOVE_ID_INVALID"
+      }>
+      ok: false
+    }>
+
+export const parseMatchMoveId = (received: unknown): MatchMoveIdParseResult => {
+  const parsedMove =
+    typeof received === "string" ? parseUci(received) : undefined
+  return parsedMove !== undefined && makeUci(parsedMove) === received
+    ? { moveId: received as MatchMoveId, ok: true }
+    : {
+        error: {
+          received,
+          type: "MATCH.MOVE_ID_INVALID",
+        },
+        ok: false,
+      }
+}
+
 type LegalMatchMoveBase = Readonly<{
   id: MatchMoveId
   san: string
