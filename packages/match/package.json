@@ -17,6 +17,10 @@
       "types": "./src/durableMatchRecord.ts",
       "default": "./dist/durableMatchRecord.js"
     },
+    "./durable-match-reconstruction": {
+      "types": "./src/durableMatchReconstruction.ts",
+      "default": "./dist/durableMatchReconstruction.js"
+    },
     "./match-position": {
       "types": "./src/matchPosition.ts",
       "default": "./dist/matchPosition.js"
