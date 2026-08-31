@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./durable-store": {
+      "types": "./src/durableStore.ts",
+      "default": "./dist/durableStore.js"
+    },
     "./player-data": {
       "types": "./src/playerData.ts",
       "default": "./dist/playerData.js"

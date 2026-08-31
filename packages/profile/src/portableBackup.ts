@@ -14,15 +14,18 @@ import {
   decodeMapachessPlayerData,
   type PlayerDataDecodeIssue,
 } from "./playerDataCodec.js"
+import {
+  isSha256Hex,
+  requireSha256Hex,
+  type Sha256HexDigest,
+} from "./sha256.js"
 
 export const MAPACHESS_PORTABLE_BACKUP_FORMAT =
   "mapachess-portable-backup" as const
 export const MAPACHESS_PORTABLE_BACKUP_FORMAT_VERSION = 1 as const
 export const MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS = 5_242_880 as const
 
-const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/u
-
-export type Sha256HexDigest = (canonicalValue: string) => Promise<string>
+export type { Sha256HexDigest } from "./sha256.js"
 
 export type MapachessPortableBackup = Readonly<{
   applicationVersion: string
@@ -61,16 +64,6 @@ export type CreatePortableBackupInput = Readonly<{
   playerData: MapachessPlayerData
   sha256: Sha256HexDigest
 }>
-
-const requireSha256Hex = (received: string): string => {
-  const normalized = received.toLowerCase()
-  if (!SHA256_HEX_PATTERN.test(normalized)) {
-    throw new TypeError(
-      "SHA-256 adapter returned a noncanonical hexadecimal digest.",
-    )
-  }
-  return normalized
-}
 
 const requireBackupIdentity = (received: unknown, path: string): string =>
   requireString(received, path)
@@ -205,7 +198,7 @@ export const decodeMapachessPortableBackup = async (
   if (
     integrity.algorithm !== "SHA-256" ||
     typeof integrity.payloadHash !== "string" ||
-    !SHA256_HEX_PATTERN.test(integrity.payloadHash)
+    !isSha256Hex(integrity.payloadHash)
   ) {
     return backupFailure("$.integrity", "PROFILE.BACKUP_INVALID")
   }
