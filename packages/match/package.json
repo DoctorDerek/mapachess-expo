@@ -13,6 +13,10 @@
       "types": "./src/chess960Position.ts",
       "default": "./dist/chess960Position.js"
     },
+    "./durable-match-record": {
+      "types": "./src/durableMatchRecord.ts",
+      "default": "./dist/durableMatchRecord.js"
+    },
     "./match-position": {
       "types": "./src/matchPosition.ts",
       "default": "./dist/matchPosition.js"
