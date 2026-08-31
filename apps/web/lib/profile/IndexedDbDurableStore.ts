@@ -7,10 +7,11 @@ import type {
 import { durableStoreSnapshotsEqual } from "@mapachess/profile/durable-store-contract"
 
 export const MAPACHESS_INDEXED_DB_NAME = "mapachess-player-data" as const
+export const MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE =
+  "durable-player-data" as const
+export const MAPACHESS_INDEXED_DB_CURRENT_KEY = "current" as const
 
 const DATABASE_VERSION = 1
-const PLAYER_DATA_OBJECT_STORE = "durable-player-data"
-const CURRENT_KEY = "current"
 const LAST_KNOWN_GOOD_KEY = "last-known-good"
 const PRE_IMPORT_BACKUP_KEY = "pre-import-backup"
 
@@ -57,7 +58,7 @@ const readSnapshot = async (
   objectStore: IDBObjectStore,
 ): Promise<DurableStoreSnapshot> => {
   const [current, lastKnownGood, preImportBackup] = await Promise.all([
-    requestResult(objectStore.get(CURRENT_KEY)),
+    requestResult(objectStore.get(MAPACHESS_INDEXED_DB_CURRENT_KEY)),
     requestResult(objectStore.get(LAST_KNOWN_GOOD_KEY)),
     requestResult(objectStore.get(PRE_IMPORT_BACKUP_KEY)),
   ])
@@ -83,7 +84,11 @@ const writeSnapshot = (
   snapshot: DurableStoreSnapshot,
 ): Promise<readonly (IDBValidKey | undefined)[]> =>
   Promise.all([
-    writeStoredValue(objectStore, CURRENT_KEY, snapshot.current),
+    writeStoredValue(
+      objectStore,
+      MAPACHESS_INDEXED_DB_CURRENT_KEY,
+      snapshot.current,
+    ),
     writeStoredValue(objectStore, LAST_KNOWN_GOOD_KEY, snapshot.lastKnownGood),
     writeStoredValue(
       objectStore,
@@ -102,9 +107,13 @@ const openDatabase = (
       "upgradeneeded",
       () => {
         if (
-          !request.result.objectStoreNames.contains(PLAYER_DATA_OBJECT_STORE)
+          !request.result.objectStoreNames.contains(
+            MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
+          )
         ) {
-          request.result.createObjectStore(PLAYER_DATA_OBJECT_STORE)
+          request.result.createObjectStore(
+            MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
+          )
         }
       },
       { once: true },
@@ -146,12 +155,12 @@ export default class IndexedDbDurableStore implements DurableStoreAdapter {
   async read(): Promise<DurableStoreSnapshot> {
     const database = await this.#database()
     const transaction = database.transaction(
-      PLAYER_DATA_OBJECT_STORE,
+      MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
       "readonly",
     )
     const completion = transactionCompletion(transaction)
     const snapshot = await readSnapshot(
-      transaction.objectStore(PLAYER_DATA_OBJECT_STORE),
+      transaction.objectStore(MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE),
     )
     await completion
     return snapshot
@@ -162,11 +171,13 @@ export default class IndexedDbDurableStore implements DurableStoreAdapter {
   ): Promise<DurableStoreWriteResult> {
     const database = await this.#database()
     const transaction = database.transaction(
-      PLAYER_DATA_OBJECT_STORE,
+      MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
       "readwrite",
     )
     const completion = transactionCompletion(transaction)
-    const objectStore = transaction.objectStore(PLAYER_DATA_OBJECT_STORE)
+    const objectStore = transaction.objectStore(
+      MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
+    )
     const actual = await readSnapshot(objectStore)
     if (!durableStoreSnapshotsEqual(actual, write.expected)) {
       await completion
