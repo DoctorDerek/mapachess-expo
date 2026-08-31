@@ -8,6 +8,14 @@
     "./player-data": {
       "types": "./src/playerData.ts",
       "default": "./dist/playerData.js"
+    },
+    "./player-data-codec": {
+      "types": "./src/playerDataCodec.ts",
+      "default": "./dist/playerDataCodec.js"
+    },
+    "./portable-backup": {
+      "types": "./src/portableBackup.ts",
+      "default": "./dist/portableBackup.js"
     }
   },
   "scripts": {
