@@ -7,11 +7,84 @@ import {
   decodeMapachessPortableBackup,
   MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS,
 } from "../src/portableBackup.js"
+import portableActiveChickenV1 from "./fixtures/portableActiveChickenV1.json"
 
 const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
 
 describe("Mapachess portable backups", () => {
+  it("accepts the synthetic cross-platform active-match fixture", async () => {
+    await expect(
+      decodeMapachessPortableBackup(
+        JSON.stringify(portableActiveChickenV1),
+        sha256,
+      ),
+    ).resolves.toMatchObject({
+      backup: {
+        payload: {
+          activeMatch: {
+            cursor: 1,
+            moveHintsUsed: true,
+            moveIds: ["e2e4", "e7e5"],
+            pieceHintsUsed: true,
+          },
+          ratings: portableActiveChickenV1.payload.ratings,
+          settings: { autoHintsEnabled: false },
+        },
+      },
+      ok: true,
+    })
+  })
+
+  it.each([
+    [
+      "an illegal replay move",
+      {
+        ...portableActiveChickenV1.payload.activeMatch,
+        currentFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        cursor: 1,
+        moveIds: ["e2e5"],
+      },
+      "$.activeMatch.moveIds[0]",
+    ],
+    [
+      "a false current FEN",
+      {
+        ...portableActiveChickenV1.payload.activeMatch,
+        currentFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      },
+      "$.activeMatch.currentFen",
+    ],
+    [
+      "Move Hint use without Piece Hint use",
+      {
+        ...portableActiveChickenV1.payload.activeMatch,
+        pieceHintsUsed: false,
+      },
+      "$.activeMatch.moveHintsUsed",
+    ],
+    [
+      "a cursor beyond the retained branch",
+      {
+        ...portableActiveChickenV1.payload.activeMatch,
+        cursor: 3,
+      },
+      "$.activeMatch.cursor",
+    ],
+  ])("rejects %s before accepting its hash", async (_label, match, path) => {
+    const corrupted = JSON.stringify({
+      ...portableActiveChickenV1,
+      payload: { ...portableActiveChickenV1.payload, activeMatch: match },
+    })
+
+    await expect(
+      decodeMapachessPortableBackup(corrupted, sha256),
+    ).resolves.toEqual({
+      issue: { path, type: "PROFILE.DATA_INVALID" },
+      ok: false,
+    })
+  })
+
   it("round-trips the canonical first-run profile", async () => {
     const playerData = createInitialMapachessPlayerData()
     const encoded = await createMapachessPortableBackup({

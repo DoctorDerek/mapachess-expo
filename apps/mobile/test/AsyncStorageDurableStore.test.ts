@@ -1,11 +1,24 @@
-import { describe, expect, it } from "@jest/globals"
+import { describe, expect, it, jest } from "@jest/globals"
+import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import {
   EMPTY_DURABLE_STORE_SNAPSHOT,
   type DurableStoreSnapshot,
 } from "@mapachess/profile/durable-store-contract"
+import { decodeMapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import AsyncStorageDurableStore, {
   type AsyncStorageValueStore,
 } from "@/lib/profile/AsyncStorageDurableStore"
+import expoSha256 from "@/lib/profile/expoSha256"
+import portableActiveChickenV1 from "../../../packages/profile/test/fixtures/portableActiveChickenV1.json"
+
+jest.mock("expo-crypto", () => ({
+  CryptoDigestAlgorithm: { SHA256: "SHA-256" },
+  digestStringAsync: jest.fn(async (_algorithm: string, value: string) => {
+    const { createHash } =
+      jest.requireActual<typeof import("node:crypto")>("node:crypto")
+    return createHash("sha256").update(value).digest("hex")
+  }),
+}))
 
 class InMemoryAsyncStorage implements AsyncStorageValueStore {
   readonly values = new Map<string, string>()
@@ -33,6 +46,29 @@ const snapshot = (
   Object.freeze({ current, lastKnownGood, preImportBackup })
 
 describe("AsyncStorage durable player-data storage", () => {
+  it("imports the shared portable match fixture without semantic loss", async () => {
+    const decoded = await decodeMapachessPortableBackup(
+      JSON.stringify(portableActiveChickenV1),
+      expoSha256,
+    )
+    if (!decoded.ok) throw new Error("Shared portability fixture must decode")
+
+    const adapter = new AsyncStorageDurableStore(new InMemoryAsyncStorage())
+    const store = new SerializedPlayerDataStore(adapter, expoSha256)
+    const imported = await store.replaceWithImportedData(
+      await store.load(),
+      decoded.backup.payload,
+    )
+    if (!imported.ok || imported.state.current.type !== "valid") {
+      throw new Error("Native portability fixture must persist")
+    }
+
+    expect(imported.state.current.data).toEqual({
+      ...decoded.backup.payload,
+      revision: 0,
+    })
+  })
+
   it("writes, removes, and verifies every namespaced slot", async () => {
     const storage = new InMemoryAsyncStorage()
     const adapter = new AsyncStorageDurableStore(storage)
