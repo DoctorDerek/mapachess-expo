@@ -77,12 +77,13 @@ const matchMachineDefinition = setup({
       }
 
       return {
+        hintFailure: null,
+        hints: null,
         opponentFailure: null,
         timeline: requireAppliedTimelineMove(context.timeline, event.moveId),
       }
     }),
     clearOpponentFailure: assign({ opponentFailure: null }),
-    clearCurrentHints: assign({ hintFailure: null, hints: null }),
     clearHintFailure: assign({ hintFailure: null }),
     markMoveHintsUsed: assign({ moveHintsUsed: true }),
     prepareMoveHintsMutation: assign(({ context }) => ({
@@ -133,7 +134,14 @@ const matchMachineDefinition = setup({
         context.playerColor,
       )
 
-      return timeline === undefined ? {} : { opponentFailure: null, timeline }
+      return timeline === undefined
+        ? {}
+        : {
+            hintFailure: null,
+            hints: null,
+            opponentFailure: null,
+            timeline,
+          }
     }),
     undoToPlayerDecision: assign(({ context }) => {
       const timeline = undoToPreviousPlayerDecision(
@@ -141,7 +149,14 @@ const matchMachineDefinition = setup({
         context.playerColor,
       )
 
-      return timeline === undefined ? {} : { opponentFailure: null, timeline }
+      return timeline === undefined
+        ? {}
+        : {
+            hintFailure: null,
+            hints: null,
+            opponentFailure: null,
+            timeline,
+          }
     }),
   },
   guards: {
@@ -205,7 +220,6 @@ const matchMachineDefinition = setup({
     },
     playerTurn: {
       initial: "ready",
-      exit: "clearCurrentHints",
       states: {
         ready: {
           always: {

@@ -226,8 +226,8 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           />
         ) : null}
         <StandardChickenPlaytest
-          autoHintsEnabledAtStart={currentPlayerData.settings.autoHintsEnabled}
           onSettingsRequested={() => setSettingsOpen(true)}
+          profileActor={actor}
           settingsButtonRef={settingsButton}
           settingsOpen={settingsPanelVisible}
         />

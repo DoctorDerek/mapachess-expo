@@ -49,15 +49,31 @@ export type MatchMachineEvent =
   | Readonly<{ type: "MATCH.UNDO_REQUESTED" }>
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
-export type MatchMachineInput = Readonly<{
+type MatchMachineSharedInput = Readonly<{
   autoHintsEnabled: boolean
-  durability: MatchDurability
   hintAnalyst?: BetterHintsAnalyst
-  initialPosition: MatchPosition
   matchId: string
   opponent: MatchOpponent
   playerColor: MatchColor
 }>
+
+export type ResumedMatchState = Readonly<{
+  moveHintsUsed: boolean
+  pieceHintsUsed: boolean
+  timeline: MatchTimeline
+}>
+
+export type MatchMachineInput =
+  | (MatchMachineSharedInput &
+      Readonly<{
+        durability: MatchDurability
+        initialPosition: MatchPosition
+      }>)
+  | (MatchMachineSharedInput &
+      Readonly<{
+        durability: Extract<MatchDurability, { type: "durable" }>
+        resumedState: ResumedMatchState
+      }>)
 
 export type MatchMachineContext = Readonly<{
   autoHintsEnabled: boolean

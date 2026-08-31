@@ -16,6 +16,8 @@ import createWebStockfishSession, {
 import createStandardChickenOpponent, {
   generateStandardChickenMatchSeed,
   selectStandardStoryPlayerColor,
+  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+  standardChickenMatchId,
   type StandardChickenCryptography,
 } from "./standardChickenOpponent"
 
@@ -51,6 +53,7 @@ export type StandardChickenRuntime = Readonly<{
   matchId: string
   matchSeed: DeterministicRandomSeed
   opponent: MatchOpponent
+  opponentPolicyFingerprint: string
   playerColor: MatchColor
 }>
 
@@ -60,6 +63,7 @@ export type OpenStandardChickenRuntimeInput = Readonly<{
     configuration: StockfishEngineConfiguration,
     options?: CreateWebStockfishSessionOptions,
   ) => StockfishUciSession
+  matchSeed?: DeterministicRandomSeed
   signal?: AbortSignal
 }>
 
@@ -108,7 +112,8 @@ export default async function openStandardChickenRuntime(
   input: OpenStandardChickenRuntimeInput = {},
 ): Promise<StandardChickenRuntime> {
   const cryptography = input.cryptography ?? globalThis.crypto
-  const matchSeed = generateStandardChickenMatchSeed(cryptography)
+  const matchSeed =
+    input.matchSeed ?? generateStandardChickenMatchSeed(cryptography)
   const openSession = input.openSession ?? createWebStockfishSession
   const opponentSession = openSession(STANDARD_CHICKEN_ENGINE_CONFIGURATION, {
     workerName: STANDARD_CHICKEN_OPPONENT_WORKER_NAME,
@@ -141,13 +146,14 @@ export default async function openStandardChickenRuntime(
     close: () => closeOwnedSessions(sessions),
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
-    matchId: `standard-story-chicken/${matchSeed}`,
+    matchId: standardChickenMatchId(matchSeed),
     matchSeed,
     opponent: createStandardChickenOpponent(
       opponentSession,
       cryptography,
       matchSeed,
     ),
+    opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
     playerColor: selectStandardStoryPlayerColor(matchSeed),
   })
 }

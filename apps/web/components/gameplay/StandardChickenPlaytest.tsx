@@ -1,18 +1,26 @@
 "use client"
 
-import { useEffect, useRef, useState, type Ref } from "react"
+import { useEffect, useState, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
+import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import profileMachine, {
+  selectCurrentPlayerData,
+} from "@mapachess/profile/profile-machine"
+import ProfileMatchPersistenceBridge from "@mapachess/profile/profile-match-persistence"
 import openStandardChickenRuntime, {
   type StandardChickenRuntime,
 } from "../../lib/chicken/openStandardChickenRuntime"
+import resumeStandardChickenMatch, {
+  buildFreshStandardChickenMatch,
+} from "../../lib/chicken/standardChickenDurableMatch"
 import StandardChickenMatch from "./StandardChickenMatch"
 
 type PlaytestRuntimeState =
   | Readonly<{ status: "opening" }>
   | Readonly<{
       actor: ActorRefFrom<typeof matchMachine>
+      match: DurableMatchRecord
       runtime: StandardChickenRuntime
       status: "ready"
     }>
@@ -22,19 +30,18 @@ const retryButtonClasses =
   "min-h-12 rounded-xl border border-amber-300/35 bg-amber-300/10 px-5 py-3 font-bold text-amber-100 transition-colors hover:bg-amber-300/20 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none"
 
 export type StandardChickenPlaytestProps = Readonly<{
-  autoHintsEnabledAtStart: boolean
   onSettingsRequested: () => void
+  profileActor: ActorRefFrom<typeof profileMachine>
   settingsButtonRef: Ref<HTMLButtonElement>
   settingsOpen: boolean
 }>
 
 export default function StandardChickenPlaytest({
-  autoHintsEnabledAtStart,
   onSettingsRequested,
+  profileActor,
   settingsButtonRef,
   settingsOpen,
 }: StandardChickenPlaytestProps) {
-  const initialAutoHintsEnabled = useRef(autoHintsEnabledAtStart).current
   const [attempt, setAttempt] = useState(0)
   const [runtimeState, setRuntimeState] = useState<PlaytestRuntimeState>({
     status: "opening",
@@ -47,39 +54,75 @@ export default function StandardChickenPlaytest({
     let openedRuntime: StandardChickenRuntime | null = null
 
     setRuntimeState({ status: "opening" })
-    void openStandardChickenRuntime({ signal: controller.signal })
-      .then((runtime) => {
-        openedRuntime = runtime
-        if (disposed) {
-          return runtime.close().catch(() => undefined)
-        }
+    void (async () => {
+      const playerData = selectCurrentPlayerData(profileActor.getSnapshot())
+      if (playerData?.firstRun.autoHintsChoiceCompleted !== true) {
+        throw new Error("Chicken runtime requires a completed player profile.")
+      }
 
-        matchActor = createActor(matchMachine, {
-          input: {
-            autoHintsEnabled: initialAutoHintsEnabled,
-            durability: { type: "ephemeral" },
-            initialPosition: createInitialMatchPosition({
-              chess960PositionId: null,
-              variant: "standard",
-            }),
-            hintAnalyst: runtime.hintAnalyst,
-            matchId: runtime.matchId,
-            opponent: runtime.opponent,
-            playerColor: runtime.playerColor,
+      const expectedActiveMatch = playerData.activeMatch
+      const savedMatch =
+        expectedActiveMatch === null
+          ? null
+          : resumeStandardChickenMatch(expectedActiveMatch)
+      const runtime = await openStandardChickenRuntime(
+        savedMatch === null
+          ? { signal: controller.signal }
+          : { matchSeed: savedMatch.matchSeed, signal: controller.signal },
+      )
+      openedRuntime = runtime
+      const activeMatch =
+        expectedActiveMatch ??
+        buildFreshStandardChickenMatch({
+          autoHintsEnabledAtStart: playerData.settings.autoHintsEnabled,
+          playerEloAtStart: playerData.ratings.standardStory,
+          runtime,
+        })
+      const resumedMatch = savedMatch ?? resumeStandardChickenMatch(activeMatch)
+      const persistence = new ProfileMatchPersistenceBridge({
+        actor: profileActor,
+        expectedActiveMatch,
+        initialMatch: activeMatch,
+      })
+      await persistence.establish(controller.signal)
+
+      if (disposed) {
+        await runtime.close().catch(() => undefined)
+        openedRuntime = null
+        return
+      }
+
+      matchActor = createActor(matchMachine, {
+        input: {
+          autoHintsEnabled: activeMatch.autoHintsEnabledAtStart,
+          durability: { persistence, type: "durable" },
+          hintAnalyst: runtime.hintAnalyst,
+          matchId: activeMatch.matchId,
+          opponent: runtime.opponent,
+          playerColor: activeMatch.playerColor,
+          resumedState: {
+            moveHintsUsed: activeMatch.moveHintsUsed,
+            pieceHintsUsed: activeMatch.pieceHintsUsed,
+            timeline: resumedMatch.timeline,
           },
-        }).start()
-        setRuntimeState({ actor: matchActor, runtime, status: "ready" })
+        },
+      }).start()
+      setRuntimeState({
+        actor: matchActor,
+        match: activeMatch,
+        runtime,
+        status: "ready",
       })
-      .catch(async () => {
-        if (!disposed && !controller.signal.aborted) {
-          matchActor?.stop()
-          await openedRuntime?.close().catch(() => undefined)
-          openedRuntime = null
-          if (!disposed && !controller.signal.aborted) {
-            setRuntimeState({ status: "failed" })
-          }
-        }
-      })
+    })().catch(async () => {
+      matchActor?.stop()
+      if (openedRuntime !== null) {
+        await openedRuntime.close().catch(() => undefined)
+        openedRuntime = null
+      }
+      if (!disposed && !controller.signal.aborted) {
+        setRuntimeState({ status: "failed" })
+      }
+    })
 
     return () => {
       disposed = true
@@ -89,7 +132,15 @@ export default function StandardChickenPlaytest({
         void openedRuntime.close().catch(() => undefined)
       }
     }
-  }, [attempt])
+  }, [attempt, profileActor])
+
+  const currentPlayerData = selectCurrentPlayerData(profileActor.getSnapshot())
+  const autoHintsEnabledAtStart =
+    runtimeState.status === "ready"
+      ? runtimeState.match.autoHintsEnabledAtStart
+      : (currentPlayerData?.activeMatch?.autoHintsEnabledAtStart ??
+        currentPlayerData?.settings.autoHintsEnabled ??
+        true)
 
   return (
     <div className="relative isolate min-h-dvh overflow-hidden px-[clamp(1rem,3vw,3rem)] py-[clamp(1.25rem,4vw,3rem)]">
@@ -109,7 +160,7 @@ export default function StandardChickenPlaytest({
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
             A local-only Standard match against a provisional Chicken policy.{" "}
-            {initialAutoHintsEnabled
+            {autoHintsEnabledAtStart
               ? "Auto-Hints demonstrate Piece Hints followed by Move Hints on every player turn."
               : "Auto-Hints are off; Better Hints remain available on request."}{" "}
             No rating, progression, or public Elo claim is recorded.
@@ -159,18 +210,18 @@ export default function StandardChickenPlaytest({
             ) : (
               <div role="alert">
                 <h1 className="text-2xl font-black text-white">
-                  Chicken Stockfish could not open.
+                  Your Chicken match could not open.
                 </h1>
                 <p className="mt-3 max-w-lg text-slate-400">
-                  Your game data is unchanged. Confirm the local Stockfish files
-                  are provisioned, then try again.
+                  Your verified local profile remains available. Retry the local
+                  save handshake and Stockfish boot.
                 </p>
                 <button
                   className={`${retryButtonClasses} mt-6`}
                   onClick={() => setAttempt((current) => current + 1)}
                   type="button"
                 >
-                  Retry engine boot
+                  Retry match opening
                 </button>
               </div>
             )}

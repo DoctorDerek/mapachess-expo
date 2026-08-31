@@ -7,6 +7,7 @@ import matchMachine, {
   selectHintStage,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
+  selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
   selectMoveHintsUsed,
@@ -20,6 +21,11 @@ import type {
   MatchPersistenceRequest,
 } from "../src/matchPersistence.js"
 import { createInitialMatchPosition } from "../src/matchPosition.js"
+import {
+  applyMatchTimelineMove,
+  createMatchTimeline,
+  currentMatchPosition,
+} from "../src/matchTimeline.js"
 import { createHintResult, requireLegalMove } from "./matchTestUtils.js"
 
 type PendingPersistence = Readonly<{
@@ -94,6 +100,52 @@ const requestE4 = (actor: ReturnType<typeof createDurableActor>["actor"]) => {
 }
 
 describe("verified durable match mutation gate", () => {
+  it("resumes the exact branch, cursor, and monotonic hint-use state", () => {
+    const persistence = new ControlledPersistence()
+    const initialTimeline = createMatchTimeline(standardInitialPosition())
+    const afterE4 = applyMatchTimelineMove(
+      initialTimeline,
+      requireLegalMove(currentMatchPosition(initialTimeline), "e2e4").id,
+    )
+    if (!afterE4.ok) throw new Error("Test e2e4 must be legal")
+    const afterE5 = applyMatchTimelineMove(
+      afterE4.timeline,
+      requireLegalMove(currentMatchPosition(afterE4.timeline), "e7e5").id,
+    )
+    if (!afterE5.ok) throw new Error("Test e7e5 must be legal")
+    const resumedTimeline = Object.freeze({
+      ...afterE5.timeline,
+      cursor: 0,
+    })
+
+    const actor = createActor(matchMachine, {
+      input: {
+        autoHintsEnabled: false,
+        durability: { persistence, type: "durable" },
+        matchId: "resumed-durable-standard-chicken",
+        opponent: {
+          selectMove: async () => {
+            throw new Error("Opponent must not move at the restored cursor")
+          },
+        },
+        playerColor: "white",
+        resumedState: {
+          moveHintsUsed: true,
+          pieceHintsUsed: true,
+          timeline: resumedTimeline,
+        },
+      },
+    }).start()
+
+    expect(selectMatchTimeline(actor.getSnapshot())).toBe(resumedTimeline)
+    expect(selectMatchTimeline(actor.getSnapshot()).transitions).toHaveLength(2)
+    expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(0)
+    expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectCanRedo(actor.getSnapshot())).toBe(true)
+    actor.stop()
+  })
+
   it("accepts player and opponent moves only after each verified write", async () => {
     const persistence = new ControlledPersistence()
     const { actor, selectMove } = createDurableActor(persistence)
@@ -241,6 +293,7 @@ describe("verified durable match mutation gate", () => {
       (snapshot) => selectHintStage(snapshot) === "piece-hints",
     )
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectMatchHints(actor.getSnapshot())).not.toBeNull()
     expect(analyze).toHaveBeenCalledTimes(1)
 
     actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
@@ -250,6 +303,7 @@ describe("verified durable match mutation gate", () => {
       pieceHintsUsed: true,
     })
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+    expect(selectMatchHints(actor.getSnapshot())).not.toBeNull()
 
     persistence.succeedNext()
     await waitFor(
@@ -257,6 +311,7 @@ describe("verified durable match mutation gate", () => {
       (snapshot) => selectHintStage(snapshot) === "move-hints",
     )
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectMatchHints(actor.getSnapshot())).not.toBeNull()
     expect(analyze).toHaveBeenCalledTimes(1)
 
     requestE4(actor)

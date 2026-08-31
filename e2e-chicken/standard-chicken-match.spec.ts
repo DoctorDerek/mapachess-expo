@@ -131,6 +131,14 @@ const expectNoHighImpactAccessibilityViolations = async (
   expect(highImpactViolations).toEqual([])
 }
 
+const openFirstChickenMatch = async (page: Page): Promise<void> => {
+  await page.goto("/playtest")
+  await page.getByRole("button", { name: "Keep Auto-Hints On" }).click()
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
+  ).toBeVisible()
+}
+
 const readHintSourceKeys = async (locator: Locator): Promise<string[]> =>
   locator.evaluateAll((elements) =>
     elements
@@ -197,10 +205,7 @@ test("plays White through automatic hints, cancellation, and redo", async ({
   })
   const diagnostics = beginBrowserDiagnostics(page)
 
-  await page.goto("/playtest")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
-  ).toBeVisible()
+  await openFirstChickenMatch(page)
   await expectExactAutomaticBetterHints(page)
   await expect(page.getByText("White", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
@@ -235,10 +240,7 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   })
   const diagnostics = beginBrowserDiagnostics(page)
 
-  await page.goto("/playtest")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Chicken Stockfish" }),
-  ).toBeVisible()
+  await openFirstChickenMatch(page)
   await expect(page.getByText("Black", { exact: true })).toBeVisible()
   await expect(page.getByText("1 ply", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()

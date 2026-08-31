@@ -21,6 +21,10 @@
       "types": "./src/playerDataCodec.ts",
       "default": "./dist/playerDataCodec.js"
     },
+    "./profile-match-persistence": {
+      "types": "./src/profileMatchPersistence.ts",
+      "default": "./dist/profileMatchPersistence.js"
+    },
     "./portable-backup": {
       "types": "./src/portableBackup.ts",
       "default": "./dist/portableBackup.js"

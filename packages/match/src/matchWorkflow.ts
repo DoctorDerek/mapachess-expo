@@ -41,6 +41,18 @@ export const createInitialContext = (
     throw new TypeError("matchId must be nonempty and trimmed.")
   }
 
+  const resumedState = "resumedState" in input ? input.resumedState : undefined
+  if (resumedState?.moveHintsUsed && !resumedState.pieceHintsUsed) {
+    throw new TypeError("Resumed Move Hint use requires Piece Hint use.")
+  }
+
+  const timeline =
+    "initialPosition" in input
+      ? createMatchTimeline(input.initialPosition)
+      : input.resumedState.timeline
+  const pieceHintsUsed = resumedState?.pieceHintsUsed ?? false
+  const moveHintsUsed = resumedState?.moveHintsUsed ?? false
+
   return {
     autoHintsEnabled: input.autoHintsEnabled,
     durability: input.durability,
@@ -48,15 +60,18 @@ export const createInitialContext = (
     hintFailure: null,
     hints: null,
     matchId: input.matchId,
-    moveHintsUsed: false,
-    mutationSequence: 0,
+    moveHintsUsed,
+    mutationSequence:
+      timeline.transitions.length +
+      Number(pieceHintsUsed) +
+      Number(moveHintsUsed),
     opponent: input.opponent,
     opponentFailure: null,
     pendingMutation: null,
     persistenceFailure: null,
-    pieceHintsUsed: false,
+    pieceHintsUsed,
     playerColor: input.playerColor,
-    timeline: createMatchTimeline(input.initialPosition),
+    timeline,
   }
 }
 
