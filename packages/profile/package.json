@@ -24,6 +24,10 @@
     "./portable-backup": {
       "types": "./src/portableBackup.ts",
       "default": "./dist/portableBackup.js"
+    },
+    "./profile-machine": {
+      "types": "./src/profileMachine.ts",
+      "default": "./dist/profileMachine.js"
     }
   },
   "scripts": {
@@ -33,6 +37,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@mapachess/match": "workspace:*"
+    "@mapachess/match": "workspace:*",
+    "xstate": "^5"
   }
 }

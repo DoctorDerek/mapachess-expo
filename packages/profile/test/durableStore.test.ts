@@ -1,46 +1,13 @@
-import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
 import SerializedPlayerDataStore, {
-  durableStoreSnapshotsEqual,
   EMPTY_DURABLE_STORE_SNAPSHOT,
-  type DurableStoreAdapter,
-  type DurableStoreSnapshot,
   type LoadedDurablePlayerData,
 } from "../src/durableStore.js"
 import createInitialMapachessPlayerData, {
   type MapachessPlayerData,
 } from "../src/playerData.js"
-
-const sha256 = async (canonicalValue: string): Promise<string> =>
-  createHash("sha256").update(canonicalValue).digest("hex")
-
-class InMemoryDurableStoreAdapter implements DurableStoreAdapter {
-  snapshot: DurableStoreSnapshot
-
-  constructor(snapshot = EMPTY_DURABLE_STORE_SNAPSHOT) {
-    this.snapshot = snapshot
-  }
-
-  async read(): Promise<DurableStoreSnapshot> {
-    return this.snapshot
-  }
-
-  async compareAndSwapVerified({
-    expected,
-    next,
-  }: Parameters<DurableStoreAdapter["compareAndSwapVerified"]>[0]) {
-    if (!durableStoreSnapshotsEqual(this.snapshot, expected)) {
-      return {
-        actual: this.snapshot,
-        ok: false as const,
-        type: "PROFILE.STORAGE_CONFLICT" as const,
-      }
-    }
-
-    this.snapshot = next
-    return { ok: true as const, snapshot: this.snapshot }
-  }
-}
+import { createLastKnownGoodRecoveryData } from "../src/profileMutations.js"
+import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 const revisePlayerData = (
   data: MapachessPlayerData,
@@ -179,6 +146,58 @@ describe("serialized durable player-data writes", () => {
 
     await expect(store.commitCurrent(missing, skipped)).resolves.toEqual({
       failure: { type: "PROFILE.REVISION_INVALID" },
+      ok: false,
+    })
+    expect(adapter.snapshot).toBe(EMPTY_DURABLE_STORE_SNAPSHOT)
+  })
+
+  it("replaces corrupt current bytes only through explicit recovery", async () => {
+    const adapter = new InMemoryDurableStoreAdapter()
+    const store = new SerializedPlayerDataStore(adapter, sha256)
+    const missing = await store.load()
+    const initial = createInitialMapachessPlayerData()
+    const firstWrite = await store.commitCurrent(missing, initial)
+    if (!firstWrite.ok) throw new Error("Initial write must succeed")
+    const secondWrite = await store.commitCurrent(
+      firstWrite.state,
+      revisePlayerData(initial, false),
+    )
+    if (!secondWrite.ok) throw new Error("Second write must succeed")
+
+    adapter.snapshot = Object.freeze({
+      ...adapter.snapshot,
+      current: "{corrupt-current",
+    })
+    const corrupt = await store.load()
+    if (corrupt.lastKnownGood.type !== "valid") {
+      throw new Error("Recovery test requires a last-known-good save")
+    }
+    const recovered = await store.recoverInvalidCurrent(
+      corrupt,
+      createLastKnownGoodRecoveryData(corrupt.lastKnownGood),
+    )
+
+    expect(recovered).toMatchObject({
+      ok: true,
+      state: {
+        current: {
+          data: { revision: 1, settings: { autoHintsEnabled: true } },
+          type: "valid",
+        },
+        lastKnownGood: { data: initial, type: "valid" },
+      },
+    })
+  })
+
+  it("refuses recovery when current data is not corrupt", async () => {
+    const adapter = new InMemoryDurableStoreAdapter()
+    const store = new SerializedPlayerDataStore(adapter, sha256)
+    const missing = await store.load()
+
+    await expect(
+      store.recoverInvalidCurrent(missing, createInitialMapachessPlayerData()),
+    ).resolves.toEqual({
+      failure: { type: "PROFILE.CURRENT_DATA_NOT_INVALID" },
       ok: false,
     })
     expect(adapter.snapshot).toBe(EMPTY_DURABLE_STORE_SNAPSHOT)

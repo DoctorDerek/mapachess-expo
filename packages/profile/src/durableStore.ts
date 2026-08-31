@@ -43,6 +43,7 @@ export type LoadedDurablePlayerData = Readonly<{
 export type DurablePlayerDataWriteFailure = Readonly<{
   type:
     | "PROFILE.CURRENT_DATA_INVALID"
+    | "PROFILE.CURRENT_DATA_NOT_INVALID"
     | "PROFILE.REVISION_INVALID"
     | "PROFILE.STORAGE_CONFLICT"
     | "PROFILE.STORAGE_VERIFICATION_FAILED"
@@ -57,6 +58,22 @@ export type DurablePlayerDataWriteResult =
       failure: DurablePlayerDataWriteFailure
       ok: false
     }>
+
+export type DurablePlayerDataStore = Readonly<{
+  commitCurrent: (
+    expected: LoadedDurablePlayerData,
+    candidate: MapachessPlayerData,
+  ) => Promise<DurablePlayerDataWriteResult>
+  load: () => Promise<LoadedDurablePlayerData>
+  recoverInvalidCurrent: (
+    expected: LoadedDurablePlayerData,
+    candidate: MapachessPlayerData,
+  ) => Promise<DurablePlayerDataWriteResult>
+  replaceWithImportedData: (
+    expected: LoadedDurablePlayerData,
+    imported: MapachessPlayerData,
+  ) => Promise<DurablePlayerDataWriteResult>
+}>
 
 const decodedSlot = async (
   raw: string | null,
@@ -101,6 +118,11 @@ const requiredNextRevision = (current: DurablePlayerDataSlot): number => {
   }
   return current.type === "missing" ? 0 : current.data.revision + 1
 }
+
+export const requiredRecoveryRevision = (
+  lastKnownGood: DurablePlayerDataSlot,
+): number =>
+  lastKnownGood.type === "valid" ? lastKnownGood.data.revision + 1 : 0
 
 export default class SerializedPlayerDataStore {
   readonly #adapter: DurableStoreAdapter
@@ -148,6 +170,24 @@ export default class SerializedPlayerDataStore {
         revision: requiredNextRevision(expected.current),
       })
       return this.#writeCandidate(expected, candidate, true)
+    })
+  }
+
+  recoverInvalidCurrent(
+    expected: LoadedDurablePlayerData,
+    candidate: MapachessPlayerData,
+  ): Promise<DurablePlayerDataWriteResult> {
+    return this.#serialize(async () => {
+      if (expected.current.type !== "invalid") {
+        return writeFailure("PROFILE.CURRENT_DATA_NOT_INVALID")
+      }
+      if (
+        candidate.revision !== requiredRecoveryRevision(expected.lastKnownGood)
+      ) {
+        return writeFailure("PROFILE.REVISION_INVALID")
+      }
+
+      return this.#writeCandidate(expected, candidate, false)
     })
   }
 
