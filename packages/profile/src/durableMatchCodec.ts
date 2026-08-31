@@ -1,4 +1,5 @@
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
+import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
@@ -63,6 +64,25 @@ const decodeMoveIds = (received: unknown, path: string) => {
   )
 }
 
+const requireReconstructableMatch = (
+  record: DurableMatchRecord,
+  path: string,
+): DurableMatchRecord => {
+  const reconstruction = reconstructDurableMatch(record)
+  if (reconstruction.ok) return record
+
+  switch (reconstruction.error.type) {
+    case "MATCH.DURABLE_CURSOR_INVALID":
+      return failData(`${path}.cursor`)
+    case "MATCH.DURABLE_CURRENT_FEN_MISMATCH":
+      return failData(`${path}.currentFen`)
+    case "MATCH.DURABLE_MOVE_ILLEGAL":
+      return failData(
+        `${path}.moveIds[${String(reconstruction.error.moveIndex)}]`,
+      )
+  }
+}
+
 export const decodeDurableMatch = (
   received: unknown,
   path: string,
@@ -115,7 +135,7 @@ export const decodeDurableMatch = (
   requireExactKeys(timeControl, ["type"], `${path}.timeControl`)
   if (timeControl.type !== "untimed") failData(`${path}.timeControl.type`)
 
-  return Object.freeze({
+  const record: DurableMatchRecord = Object.freeze({
     autoHintsEnabledAtStart: requireBoolean(
       object.autoHintsEnabledAtStart,
       `${path}.autoHintsEnabledAtStart`,
@@ -157,6 +177,7 @@ export const decodeDurableMatch = (
     ),
     timeControl: Object.freeze({ type: "untimed" }),
   })
+  return requireReconstructableMatch(record, path)
 }
 
 export const canonicalActiveMatch = (match: DurableMatchRecord) => [
