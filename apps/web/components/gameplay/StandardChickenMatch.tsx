@@ -2,14 +2,19 @@
 
 import { useSelector } from "@xstate/react"
 import type { ActorRefFrom } from "xstate"
+import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import matchMachine, {
+  selectCanOfferDraw,
   selectCanRedo,
+  selectCanResign,
   selectCanUndo,
+  selectDrawOfferResponse,
   selectHintStage,
   selectIsOpponentThinking,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
+  selectMatchConclusion,
   selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
@@ -36,7 +41,8 @@ const matchStatusText = (
   snapshot: MatchMachineSnapshot,
   playerColor: StandardChickenRuntime["playerColor"],
 ): string => {
-  const position = selectMatchPosition(snapshot)
+  const conclusion = selectMatchConclusion(snapshot)
+  const drawOfferResponse = selectDrawOfferResponse(snapshot)
   const failure = selectOpponentFailure(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
 
@@ -53,17 +59,29 @@ const matchStatusText = (
   if (failure?.type === "MATCH.OPPONENT_REQUEST_FAILED") {
     return "Chicken Stockfish could not finish its turn. Retry or undo."
   }
-  if (snapshot.matches("complete")) {
-    if (position.status.type === "checkmate") {
-      return position.status.winner === playerColor
+  if (conclusion !== null) {
+    if (conclusion.type === "checkmate") {
+      return conclusion.winner === playerColor
         ? "Checkmate — you won."
         : "Checkmate — Chicken Stockfish won."
     }
-    if (position.status.type === "stalemate") return "Draw by stalemate."
-    return "Draw by insufficient material."
+    if (conclusion.type === "resignation") {
+      return conclusion.winner === playerColor
+        ? "Chicken Stockfish resigned — you won."
+        : "You resigned — Chicken Stockfish won."
+    }
+    if (conclusion.type === "draw-agreement") {
+      return "Draw by agreement."
+    }
+    return conclusion.type === "stalemate"
+      ? "Draw by stalemate."
+      : "Draw by insufficient material."
   }
   if (selectIsOpponentThinking(snapshot)) {
     return "Chicken Stockfish is choosing a move…"
+  }
+  if (drawOfferResponse === "rejected") {
+    return "Chicken Stockfish declines the draw."
   }
   return "Your move."
 }
@@ -74,6 +92,10 @@ export default function StandardChickenMatch({
   runtime,
 }: StandardChickenMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
+  const evaluationResult = useSelector(
+    evaluationActor,
+    (current) => current.context.result,
+  )
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
@@ -89,10 +111,24 @@ export default function StandardChickenMatch({
   ) {
     throw new Error("Visible Better Hints have no canonical analysis result.")
   }
-  const matchComplete = snapshot.matches("complete")
+  const matchComplete = selectMatchConclusion(snapshot) !== null
+  const drawOfferDecision = decideChickenDrawOffer({
+    evaluationResult,
+    playerColor: runtime.playerColor,
+    positionFen: position.fen,
+  })
   const activeTransitions = timeline.transitions.slice(0, timeline.cursor)
   const lastMove = activeTransitions.at(-1)?.move ?? null
   const legalMoves = playerTurn ? listLegalMatchMoves(position) : []
+  const offerDraw = (): void => {
+    if (drawOfferDecision === null) {
+      throw new Error("Offer Draw requires the accepted current evaluation.")
+    }
+    actor.send({
+      decision: drawOfferDecision,
+      type: "MATCH.DRAW_OFFER_REQUESTED",
+    })
+  }
 
   return (
     <section
@@ -164,6 +200,27 @@ export default function StandardChickenMatch({
           }
           stage={hintStage}
         />
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <button
+            className={controlClasses}
+            disabled={
+              !selectCanOfferDraw(snapshot) || drawOfferDecision === null
+            }
+            onClick={offerDraw}
+            type="button"
+          >
+            Offer Draw
+          </button>
+          <button
+            className={controlClasses}
+            disabled={!selectCanResign(snapshot)}
+            onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
+            type="button"
+          >
+            Resign
+          </button>
+        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
