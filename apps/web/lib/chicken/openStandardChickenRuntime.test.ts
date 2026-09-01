@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest"
-import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
+import { POSITION_EVALUATION_NODE_LIMIT } from "@mapachess/evaluation/position-evaluator"
+import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import type {
+  StockfishEngineConfiguration,
+  StockfishSearchRequest,
+} from "@mapachess/stockfish/engine-session"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
@@ -54,18 +59,27 @@ const createSession = (
 ) => {
   const boot = vi.fn(bootBehavior)
   const close = vi.fn(closeBehavior)
+  const search = vi.fn(async (request: StockfishSearchRequest) => ({
+    bestMove: "e2e4",
+    informationLineCount: 1,
+    latestInformation: {
+      line: "info depth 1 score cp 25 pv e2e4",
+      score: {
+        bound: "exact" as const,
+        kind: "centipawns" as const,
+        value: 25,
+      },
+    },
+    requestId: request.requestId,
+  }))
   const session = {
     boot,
     close,
-    search: vi.fn(async () => ({
-      bestMove: "e2e4",
-      informationLineCount: 1,
-      requestId: "unused",
-    })),
+    search,
     state: () => "ready" as const,
   } satisfies StockfishUciSession
 
-  return { boot, close, session }
+  return { boot, close, search, session }
 }
 
 const createSessionQueue = (sessions: readonly StockfishUciSession[]) => {
@@ -151,6 +165,45 @@ describe("Standard Chicken runtime ownership", () => {
       matchId: `standard-story-chicken/${matchSeed}`,
       matchSeed,
     })
+    await runtime.close()
+  })
+
+  it("routes evaluation searches only through the evaluation session", async () => {
+    const opponent = createSession(async () => ENGINE_IDENTITY)
+    const hints = createSession(async () => ENGINE_IDENTITY)
+    const evaluation = createSession(async () => ENGINE_IDENTITY)
+    const runtime = await openStandardChickenRuntime({
+      cryptography: createCryptography(),
+      openSession: createSessionQueue([
+        opponent.session,
+        hints.session,
+        evaluation.session,
+      ]),
+    })
+    const position = createInitialMatchPosition({
+      chess960PositionId: null,
+      variant: "standard",
+    })
+    const signal = new AbortController().signal
+
+    await expect(
+      runtime.positionEvaluator(
+        { position, requestId: "evaluation/runtime-isolation" },
+        signal,
+      ),
+    ).resolves.toMatchObject({
+      evaluation: { kind: "centipawns", whiteCentipawns: 25 },
+    })
+    expect(evaluation.search).toHaveBeenCalledWith(
+      {
+        nodeLimit: POSITION_EVALUATION_NODE_LIMIT,
+        position: { fen: position.fen, moves: [] },
+        requestId: "evaluation/runtime-isolation",
+      },
+      signal,
+    )
+    expect(opponent.search).not.toHaveBeenCalled()
+    expect(hints.search).not.toHaveBeenCalled()
     await runtime.close()
   })
 
@@ -251,6 +304,58 @@ describe("Standard Chicken runtime ownership", () => {
     ).rejects.toBe(constructionError)
     expect(opponent.boot).not.toHaveBeenCalled()
     expect(opponent.close).toHaveBeenCalledTimes(1)
+  })
+
+  it("closes constructed sessions when evaluation construction fails", async () => {
+    const constructionError = new Error("evaluation construction failed")
+    const opponent = createSession(async () => ENGINE_IDENTITY)
+    const hints = createSession(async () => ENGINE_IDENTITY)
+    const openSession = vi
+      .fn<
+        (
+          configuration: StockfishEngineConfiguration,
+          options?: CreateWebStockfishSessionOptions,
+        ) => StockfishUciSession
+      >()
+      .mockReturnValueOnce(opponent.session)
+      .mockReturnValueOnce(hints.session)
+      .mockImplementationOnce(() => {
+        throw constructionError
+      })
+
+    await expect(
+      openStandardChickenRuntime({
+        cryptography: createCryptography(),
+        openSession,
+      }),
+    ).rejects.toBe(constructionError)
+    expect(opponent.boot).not.toHaveBeenCalled()
+    expect(hints.boot).not.toHaveBeenCalled()
+    expect(opponent.close).toHaveBeenCalledTimes(1)
+    expect(hints.close).toHaveBeenCalledTimes(1)
+  })
+
+  it("closes every session when evaluation boot fails", async () => {
+    const bootError = new Error("evaluation boot failed")
+    const opponent = createSession(async () => ENGINE_IDENTITY)
+    const hints = createSession(async () => ENGINE_IDENTITY)
+    const evaluation = createSession(async () => {
+      throw bootError
+    })
+
+    await expect(
+      openStandardChickenRuntime({
+        cryptography: createCryptography(),
+        openSession: createSessionQueue([
+          opponent.session,
+          hints.session,
+          evaluation.session,
+        ]),
+      }),
+    ).rejects.toBe(bootError)
+    expect(opponent.close).toHaveBeenCalledTimes(1)
+    expect(hints.close).toHaveBeenCalledTimes(1)
+    expect(evaluation.close).toHaveBeenCalledTimes(1)
   })
 
   it("reports boot and every cleanup failure together", async () => {
