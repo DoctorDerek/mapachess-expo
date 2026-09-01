@@ -43,11 +43,6 @@ const requirePendingRequest = (
   return context.pendingRequest
 }
 
-const requestTransition = {
-  actions: "captureRequest",
-  target: "analyzing",
-} as const
-
 const positionEvaluationMachineDefinition = setup({
   types: {
     context: {} as PositionEvaluationMachineContext,
@@ -98,7 +93,10 @@ const positionEvaluationMachineDefinition = setup({
   states: {
     idle: {
       on: {
-        "EVALUATION.POSITION_REQUESTED": requestTransition,
+        "EVALUATION.POSITION_REQUESTED": {
+          actions: "captureRequest",
+          target: "analyzing",
+        },
       },
     },
     analyzing: {
@@ -138,19 +136,26 @@ const positionEvaluationMachineDefinition = setup({
       },
       on: {
         "EVALUATION.POSITION_REQUESTED": {
-          ...requestTransition,
+          actions: "captureRequest",
           reenter: true,
+          target: "analyzing",
         },
       },
     },
     ready: {
       on: {
-        "EVALUATION.POSITION_REQUESTED": requestTransition,
+        "EVALUATION.POSITION_REQUESTED": {
+          actions: "captureRequest",
+          target: "analyzing",
+        },
       },
     },
     failure: {
       on: {
-        "EVALUATION.POSITION_REQUESTED": requestTransition,
+        "EVALUATION.POSITION_REQUESTED": {
+          actions: "captureRequest",
+          target: "analyzing",
+        },
         "EVALUATION.RETRY_REQUESTED": {
           target: "analyzing",
         },
