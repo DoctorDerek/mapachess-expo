@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { DURABLE_MATCH_RECORD_VERSION } from "@mapachess/match/durable-match-record"
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 
@@ -48,12 +49,96 @@ describe("durable active-match decoding", () => {
     ).toMatchObject({
       data: {
         activeMatch: {
+          conclusion: null,
           currentFen: AFTER_E4_FEN,
           cursor: 1,
           moveIds: ["e2e4", "e7e5"],
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
         },
       },
       ok: true,
+    })
+  })
+
+  it("derives a retained terminal result while migrating record v1", () => {
+    expect(
+      decodeMapachessPlayerData(
+        playerDataWithMatch({
+          ...activeMatch,
+          currentFen:
+            "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
+          cursor: 4,
+          moveIds: ["f2f3", "e7e5", "g2g4", "d8h4"],
+        }),
+      ),
+    ).toMatchObject({
+      data: {
+        activeMatch: {
+          conclusion: { type: "checkmate", winner: "black" },
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        },
+      },
+      ok: true,
+    })
+  })
+
+  it("accepts a current draw agreement on an active branch", () => {
+    expect(
+      decodeMapachessPlayerData(
+        playerDataWithMatch({
+          ...activeMatch,
+          conclusion: { type: "draw-agreement" },
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        }),
+      ),
+    ).toMatchObject({
+      data: {
+        activeMatch: {
+          conclusion: { type: "draw-agreement" },
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        },
+      },
+      ok: true,
+    })
+  })
+
+  it("rejects a resignation that declares the player the winner", () => {
+    expect(
+      decodeMapachessPlayerData(
+        playerDataWithMatch({
+          ...activeMatch,
+          conclusion: { type: "resignation", winner: "white" },
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        }),
+      ),
+    ).toEqual({
+      issue: {
+        path: "$.activeMatch.conclusion",
+        type: "PROFILE.DATA_INVALID",
+      },
+      ok: false,
+    })
+  })
+
+  it("rejects a voluntary result on a terminal retained branch", () => {
+    expect(
+      decodeMapachessPlayerData(
+        playerDataWithMatch({
+          ...activeMatch,
+          conclusion: { type: "draw-agreement" },
+          currentFen:
+            "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
+          cursor: 4,
+          moveIds: ["f2f3", "e7e5", "g2g4", "d8h4"],
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        }),
+      ),
+    ).toEqual({
+      issue: {
+        path: "$.activeMatch.conclusion",
+        type: "PROFILE.DATA_INVALID",
+      },
+      ok: false,
     })
   })
 
