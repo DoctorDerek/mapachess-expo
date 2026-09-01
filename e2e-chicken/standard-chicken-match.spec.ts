@@ -5,6 +5,7 @@ import {
   MAPACHESS_INDEXED_DB_NAME,
   MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
 } from "../apps/web/lib/profile/IndexedDbDurableStore"
+import { DURABLE_MATCH_RECORD_VERSION } from "../packages/match/dist/durableMatchRecord.js"
 import type { MapachessPlayerData } from "../packages/profile/dist/playerData.js"
 import { decodeMapachessPlayerData } from "../packages/profile/dist/playerDataCodec.js"
 
@@ -471,4 +472,55 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   await expectExactAutomaticBetterHints(page)
 
   await diagnostics.assertClean()
+})
+
+test("persists an accepted Chicken draw across reload", async ({ page }) => {
+  await page.setViewportSize({ height: 800, width: 1_280 })
+  await installDeterministicCryptography(page, {
+    digestDelayMilliseconds: 0,
+    matchWords: WHITE_MATCH_WORDS,
+    positionSeed: STOCKFISH_POSITION_SEED,
+  })
+  const diagnostics = beginBrowserDiagnostics(page)
+
+  await openFirstChickenMatch(page)
+  await expectAcceptedEvaluation(page)
+
+  const offerDraw = page.getByRole("button", { name: "Offer Draw" })
+  const resign = page.getByRole("button", { name: "Resign" })
+  await expect(offerDraw).toBeEnabled()
+  await expect(resign).toBeEnabled()
+
+  await offerDraw.click()
+  await expect(
+    page.getByText("Draw by agreement.", { exact: true }),
+  ).toBeVisible()
+  await expect(offerDraw).toBeDisabled()
+  await expect(resign).toBeDisabled()
+
+  const savedPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(savedPlayerData.activeMatch).toMatchObject({
+    conclusion: { type: "draw-agreement" },
+    recordVersion: DURABLE_MATCH_RECORD_VERSION,
+  })
+
+  await page.reload()
+  await expect(
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Chicken Stockfish",
+    }),
+  ).toBeVisible()
+  await expect(
+    page.getByText("Draw by agreement.", { exact: true }),
+  ).toBeVisible()
+  await expect(offerDraw).toBeDisabled()
+  await expect(resign).toBeDisabled()
+  await expectNoHighImpactAccessibilityViolations(page)
+
+  const resumedPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(resumedPlayerData.activeMatch).toEqual(savedPlayerData.activeMatch)
+
+  await diagnostics.assertClean(OWNED_WORKER_COUNT * 2)
 })
