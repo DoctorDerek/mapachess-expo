@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { createActor, waitFor } from "xstate"
+import {
+  applyMatchMove,
+  listLegalMatchMoves,
+} from "@mapachess/match/match-move"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import positionEvaluationMachine, {
   selectPositionEvaluation,
@@ -33,8 +37,11 @@ const position = createInitialMatchPosition({
   variant: "standard",
 })
 
-const request = (requestId: string): PositionEvaluationRequest =>
-  Object.freeze({ position, requestId })
+const request = (
+  requestId: string,
+  requestedPosition = position,
+): PositionEvaluationRequest =>
+  Object.freeze({ position: requestedPosition, requestId })
 
 const result = (
   source: PositionEvaluationRequest,
@@ -103,6 +110,37 @@ describe("position evaluation lifecycle", () => {
 
     expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
       whiteCentipawns: -27,
+    })
+    actor.stop()
+  })
+
+  it("retains an accepted score while a replacement position analyzes", async () => {
+    const replacement = deferred<PositionEvaluationResult>()
+    const e4 = listLegalMatchMoves(position).find(({ uci }) => uci === "e2e4")
+    if (e4 === undefined) throw new Error("Test position must permit e2e4.")
+    const applied = applyMatchMove(position, e4.id)
+    if (!applied.ok) throw new Error("Test e2e4 must apply.")
+    const first = request("evaluation/accepted")
+    const second = request("evaluation/replacement", applied.transition.after)
+    const evaluator: PositionEvaluator = (received) =>
+      received.requestId === first.requestId
+        ? Promise.resolve(result(first, 31))
+        : replacement.promise
+    const actor = startActor(evaluator)
+
+    actor.send({ request: first, type: "EVALUATION.POSITION_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    actor.send({ request: second, type: "EVALUATION.POSITION_REQUESTED" })
+
+    expect(selectPositionEvaluationStage(actor.getSnapshot())).toBe("analyzing")
+    expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 31,
+    })
+
+    replacement.resolve(result(second, -14))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: -14,
     })
     actor.stop()
   })
