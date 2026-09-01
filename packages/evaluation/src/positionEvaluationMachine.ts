@@ -68,7 +68,6 @@ const positionEvaluationMachineDefinition = setup({
       return {
         failure: null,
         pendingRequest: event.request,
-        result: null,
       }
     }),
     clearFailure: assign({ failure: null }),
