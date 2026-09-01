@@ -21,6 +21,10 @@
       "types": "./src/durableMatchReconstruction.ts",
       "default": "./dist/durableMatchReconstruction.js"
     },
+    "./match-conclusion": {
+      "types": "./src/matchConclusion.ts",
+      "default": "./dist/matchConclusion.js"
+    },
     "./match-position": {
       "types": "./src/matchPosition.ts",
       "default": "./dist/matchPosition.js"
