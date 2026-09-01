@@ -25,6 +25,7 @@ const durableMatch = (
 ): DurableMatchRecord =>
   Object.freeze({
     autoHintsEnabledAtStart: true,
+    conclusion: null,
     currentFen: initialPosition.fen,
     cursor: 0,
     matchId: `standard-story-chicken/${matchSeed}`,

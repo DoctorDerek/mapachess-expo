@@ -40,6 +40,7 @@ export function buildFreshStandardChickenMatch(
   )
   return Object.freeze({
     autoHintsEnabledAtStart: input.autoHintsEnabledAtStart,
+    conclusion: null,
     currentFen: initialPosition.fen,
     cursor: 0,
     matchId: input.runtime.matchId,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 import reconstructDurableMatch from "../src/durableMatchReconstruction.js"
-import type { DurableMatchRecord } from "../src/durableMatchRecord.js"
+import {
+  DURABLE_MATCH_RECORD_VERSION,
+  type DurableMatchRecord,
+} from "../src/durableMatchRecord.js"
 import { parseMatchMoveId } from "../src/matchMove.js"
 import {
   createInitialMatchPosition,
@@ -52,6 +55,7 @@ const createRecord = (
 
   return Object.freeze({
     autoHintsEnabledAtStart: true,
+    conclusion: null,
     currentFen: currentPosition.fen,
     cursor,
     matchId: "durable-reconstruction-test",
@@ -64,7 +68,7 @@ const createRecord = (
     pieceHintsUsed: false,
     playerColor: "white",
     playerEloAtStart: 100,
-    recordVersion: 1,
+    recordVersion: DURABLE_MATCH_RECORD_VERSION,
     startingPosition,
     timeControl: Object.freeze({ type: "untimed" }),
   })
