@@ -162,6 +162,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/evaluation':
+        specifier: workspace:*
+        version: link:../../packages/evaluation
       '@mapachess/hints':
         specifier: workspace:*
         version: link:../../packages/hints
