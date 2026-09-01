@@ -221,6 +221,15 @@ importers:
         specifier: ^1
         version: 1.4.0
 
+  packages/evaluation:
+    dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+
   packages/hints:
     dependencies:
       '@mapachess/match':

@@ -1,0 +1,23 @@
+{
+  "name": "@mapachess/evaluation",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./position-evaluation": {
+      "types": "./src/positionEvaluation.ts",
+      "default": "./dist/positionEvaluation.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/match": "workspace:*",
+    "@mapachess/stockfish": "workspace:*"
+  }
+}
