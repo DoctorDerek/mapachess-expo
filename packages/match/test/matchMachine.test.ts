@@ -14,6 +14,7 @@ import matchMachine, {
   selectIsOpponentThinking,
   selectIsOpponentTurn,
   selectIsPlayerTurn,
+  selectMatchConclusion,
   selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
@@ -546,7 +547,7 @@ describe("scoped XState match flow", () => {
     actor.stop()
   })
 
-  it("moves between active play and complete without duplicated state", async () => {
+  it("keeps a completed result immutable during timeline review", async () => {
     const scripted = createScriptedOpponent(["e7e5", "d8h4"])
     const actor = createActor(matchMachine, {
       input: {
@@ -579,12 +580,28 @@ describe("scoped XState match flow", () => {
       type: "checkmate",
       winner: "black",
     })
+    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
+      type: "checkmate",
+      winner: "black",
+    })
     expect(selectCanUndo(actor.getSnapshot())).toBe(true)
 
     actor.send({ type: "MATCH.UNDO_REQUESTED" })
-    expect(selectIsPlayerTurn(actor.getSnapshot())).toBe(true)
+    expect(actor.getSnapshot().matches("complete")).toBe(true)
     expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(2)
     expect(selectCanRedo(actor.getSnapshot())).toBe(true)
+    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
+      type: "checkmate",
+      winner: "black",
+    })
+
+    actor.send({ type: "MATCH.REDO_REQUESTED" })
+    expect(actor.getSnapshot().matches("complete")).toBe(true)
+    expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(4)
+    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
+      type: "checkmate",
+      winner: "black",
+    })
     actor.stop()
   })
 

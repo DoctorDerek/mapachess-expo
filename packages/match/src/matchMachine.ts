@@ -1,5 +1,10 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
 import type { BetterHintsResult } from "./betterHints.js"
+import {
+  createDrawAgreementConclusion,
+  createPlayerResignationConclusion,
+  deriveRetainedBranchConclusion,
+} from "./matchConclusion.js"
 import type {
   MatchHintsActorInput,
   MatchMachineContext,
@@ -23,6 +28,7 @@ import {
   illegalOpponentMoveFailure,
   moveIsLegal,
   opponentRequestFailure,
+  pendingConclusionMutation,
   pendingMoveHintsMutation,
   pendingPieceHintsMutation,
   pendingPositionMutation,
@@ -48,6 +54,22 @@ export type {
 } from "./matchMachineTypes.js"
 
 export const AUTO_HINTS_PIECE_DWELL_MS = 2_000
+
+const matchCanConclude = (context: MatchMachineContext): boolean =>
+  context.conclusion === null &&
+  context.pendingMutation === null &&
+  currentMatchPosition(context.timeline).status.type === "playing"
+
+const drawOfferDecisionMatches = (
+  context: MatchMachineContext,
+  event: MatchMachineEvent,
+  outcome: "accepted" | "rejected",
+): boolean =>
+  event.type === "MATCH.DRAW_OFFER_REQUESTED" &&
+  event.decision.outcome === outcome &&
+  event.decision.positionFen === currentMatchPosition(context.timeline).fen &&
+  currentMatchPosition(context.timeline).turn === context.playerColor &&
+  matchCanConclude(context)
 
 const matchMachineDefinition = setup({
   types: {
@@ -76,18 +98,46 @@ const matchMachineDefinition = setup({
         throw new Error("Move action received a non-move event.")
       }
 
+      const timeline = requireAppliedTimelineMove(
+        context.timeline,
+        event.moveId,
+      )
       return {
+        conclusion: deriveRetainedBranchConclusion(timeline),
+        drawOfferResponse: null,
         hintFailure: null,
         hints: null,
         opponentFailure: null,
-        timeline: requireAppliedTimelineMove(context.timeline, event.moveId),
+        timeline,
       }
     }),
+    applyAcceptedDrawOffer: assign({
+      conclusion: createDrawAgreementConclusion(),
+      drawOfferResponse: null,
+      hintFailure: null,
+      hints: null,
+      opponentFailure: null,
+    }),
+    applyResignation: assign(({ context }) => ({
+      conclusion: createPlayerResignationConclusion(context.playerColor),
+      drawOfferResponse: null,
+      hintFailure: null,
+      hints: null,
+      opponentFailure: null,
+    })),
     clearOpponentFailure: assign({ opponentFailure: null }),
     clearHintFailure: assign({ hintFailure: null }),
+    markDrawOfferRejected: assign({ drawOfferResponse: "rejected" }),
     markMoveHintsUsed: assign({ moveHintsUsed: true }),
     prepareMoveHintsMutation: assign(({ context }) => ({
       pendingMutation: pendingMoveHintsMutation(context),
+      persistenceFailure: null,
+    })),
+    prepareAcceptedDrawOfferMutation: assign(({ context }) => ({
+      pendingMutation: pendingConclusionMutation(
+        context,
+        createDrawAgreementConclusion(),
+      ),
       persistenceFailure: null,
     })),
     prepareRedoMutation: assign(({ context }) => {
@@ -115,6 +165,13 @@ const matchMachineDefinition = setup({
         persistenceFailure: null,
       }
     }),
+    prepareResignationMutation: assign(({ context }) => ({
+      pendingMutation: pendingConclusionMutation(
+        context,
+        createPlayerResignationConclusion(context.playerColor),
+      ),
+      persistenceFailure: null,
+    })),
     prepareUndoMutation: assign(({ context }) => {
       const timeline = undoToPreviousPlayerDecision(
         context.timeline,
@@ -139,6 +196,7 @@ const matchMachineDefinition = setup({
         : {
             hintFailure: null,
             hints: null,
+            drawOfferResponse: null,
             opponentFailure: null,
             timeline,
           }
@@ -154,12 +212,19 @@ const matchMachineDefinition = setup({
         : {
             hintFailure: null,
             hints: null,
+            drawOfferResponse: null,
             opponentFailure: null,
             timeline,
           }
     }),
   },
   guards: {
+    acceptedDrawNeedsNoPersistence: ({ context, event }) =>
+      context.durability.type === "ephemeral" &&
+      drawOfferDecisionMatches(context, event, "accepted"),
+    acceptedDrawNeedsPersistence: ({ context, event }) =>
+      context.durability.type === "durable" &&
+      drawOfferDecisionMatches(context, event, "accepted"),
     autoMoveHintsNeedNoPersistence: ({ context }) =>
       context.autoHintsEnabled &&
       (context.durability.type === "ephemeral" || context.moveHintsUsed),
@@ -167,8 +232,13 @@ const matchMachineDefinition = setup({
       context.autoHintsEnabled &&
       context.durability.type === "durable" &&
       !context.moveHintsUsed,
-    isComplete: ({ context }) =>
-      currentMatchPosition(context.timeline).status.type !== "playing",
+    canRejectDrawOffer: ({ context, event }) =>
+      drawOfferDecisionMatches(context, event, "rejected"),
+    canResignEphemerally: ({ context }) =>
+      context.durability.type === "ephemeral" && matchCanConclude(context),
+    canResignDurably: ({ context }) =>
+      context.durability.type === "durable" && matchCanConclude(context),
+    isComplete: ({ context }) => context.conclusion !== null,
     isPlayerTurn: ({ context }) =>
       currentMatchPosition(context.timeline).turn === context.playerColor,
     hasHintAnalyst: ({ context }) => context.hintAnalyst !== null,
@@ -207,6 +277,36 @@ const matchMachineDefinition = setup({
   id: "match",
   initial: "setup",
   context: ({ input }) => createInitialContext(input),
+  on: {
+    "MATCH.DRAW_OFFER_REQUESTED": [
+      {
+        actions: "prepareAcceptedDrawOfferMutation",
+        guard: "acceptedDrawNeedsPersistence",
+        target: "#match.persistingMutation",
+      },
+      {
+        actions: "applyAcceptedDrawOffer",
+        guard: "acceptedDrawNeedsNoPersistence",
+        target: "#match.complete",
+      },
+      {
+        actions: "markDrawOfferRejected",
+        guard: "canRejectDrawOffer",
+      },
+    ],
+    "MATCH.RESIGN_REQUESTED": [
+      {
+        actions: "prepareResignationMutation",
+        guard: "canResignDurably",
+        target: "#match.persistingMutation",
+      },
+      {
+        actions: "applyResignation",
+        guard: "canResignEphemerally",
+        target: "#match.complete",
+      },
+    ],
+  },
   states: {
     setup: {
       always: "resolving",
@@ -390,13 +490,18 @@ const matchMachineDefinition = setup({
             target: "persistingMutation",
           },
           {
-            actions: assign(({ context, event }) => ({
-              opponentFailure: null,
-              timeline: requireAppliedTimelineMove(
+            actions: assign(({ context, event }) => {
+              const timeline = requireAppliedTimelineMove(
                 context.timeline,
                 event.output,
-              ),
-            })),
+              )
+              return {
+                conclusion: deriveRetainedBranchConclusion(timeline),
+                drawOfferResponse: null,
+                opponentFailure: null,
+                timeline,
+              }
+            }),
             guard: ({ context, event }) =>
               context.durability.type === "ephemeral" &&
               moveIsLegal(context.timeline, event.output),
@@ -437,6 +542,17 @@ const matchMachineDefinition = setup({
           request: requirePendingMutation(context).request,
         }),
         onDone: [
+          {
+            actions: assign(({ context }) => acceptedPendingMutation(context)),
+            guard: ({ context, event }) => {
+              const pending = requirePendingMutation(context)
+              return (
+                pending.route === "complete" &&
+                persistenceReceiptMatches(pending.request, event.output)
+              )
+            },
+            target: "complete",
+          },
           {
             actions: assign(({ context }) => acceptedPendingMutation(context)),
             guard: ({ context, event }) => {
@@ -514,6 +630,18 @@ const matchMachineDefinition = setup({
     },
     complete: {
       on: {
+        "MATCH.REDO_REQUESTED": [
+          {
+            actions: "prepareRedoMutation",
+            guard: "canRedoDurably",
+            target: "persistingMutation",
+          },
+          {
+            actions: "redoToPlayerDecision",
+            guard: "canRedoEphemerally",
+            target: "complete",
+          },
+        ],
         "MATCH.UNDO_REQUESTED": [
           {
             actions: "prepareUndoMutation",
@@ -523,7 +651,7 @@ const matchMachineDefinition = setup({
           {
             actions: "undoToPlayerDecision",
             guard: "canUndoEphemerally",
-            target: "resolving",
+            target: "complete",
           },
         ],
       },
@@ -535,8 +663,11 @@ export type MatchMachineSnapshot = SnapshotFrom<typeof matchMachineDefinition>
 
 export {
   selectAreMatchMutationsFrozen,
+  selectCanOfferDraw,
   selectCanRedo,
+  selectCanResign,
   selectCanUndo,
+  selectDrawOfferResponse,
   selectHintFailure,
   selectHintStage,
   selectIsOpponentThinking,
@@ -544,6 +675,7 @@ export {
   selectIsPersistingMutation,
   selectIsPlayerTurn,
   selectMatchHints,
+  selectMatchConclusion,
   selectMatchPosition,
   selectMatchTimeline,
   selectMoveHintsUsed,

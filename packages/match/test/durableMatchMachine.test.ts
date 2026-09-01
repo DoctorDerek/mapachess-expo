@@ -130,6 +130,7 @@ describe("verified durable match mutation gate", () => {
         },
         playerColor: "white",
         resumedState: {
+          conclusion: null,
           moveHintsUsed: true,
           pieceHintsUsed: true,
           timeline: resumedTimeline,

@@ -98,6 +98,7 @@ describe("profile-owned match persistence bridge", () => {
 
     const receipt = await bridge.persist(
       {
+        conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
         matchId: initialMatch.matchId,
@@ -120,6 +121,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,
           matchId: initialMatch.matchId,
@@ -151,6 +153,7 @@ describe("profile-owned match persistence bridge", () => {
     })
     const persistence = bridge.persist(
       {
+        conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
         matchId: initialMatch.matchId,
@@ -190,6 +193,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,
           matchId: initialMatch.matchId,

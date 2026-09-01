@@ -3,6 +3,11 @@ import type {
   BetterHintsRequest,
   BetterHintsResult,
 } from "./betterHints.js"
+import {
+  conclusionMatchesRetainedBranch,
+  deriveRetainedBranchConclusion,
+  type MatchConclusion,
+} from "./matchConclusion.js"
 import type {
   MatchHintFailure,
   MatchMachineContext,
@@ -52,10 +57,17 @@ export const createInitialContext = (
       : input.resumedState.timeline
   const pieceHintsUsed = resumedState?.pieceHintsUsed ?? false
   const moveHintsUsed = resumedState?.moveHintsUsed ?? false
+  const conclusion =
+    resumedState?.conclusion ?? deriveRetainedBranchConclusion(timeline)
+  if (!conclusionMatchesRetainedBranch(conclusion, timeline)) {
+    throw new TypeError("Match conclusion does not match its retained branch.")
+  }
 
   return {
     autoHintsEnabled: input.autoHintsEnabled,
+    conclusion,
     durability: input.durability,
+    drawOfferResponse: null,
     hintAnalyst: input.hintAnalyst ?? null,
     hintFailure: null,
     hints: null,
@@ -64,7 +76,8 @@ export const createInitialContext = (
     mutationSequence:
       timeline.transitions.length +
       Number(pieceHintsUsed) +
-      Number(moveHintsUsed),
+      Number(moveHintsUsed) +
+      Number(conclusion !== null),
     opponent: input.opponent,
     opponentFailure: null,
     pendingMutation: null,
@@ -190,22 +203,47 @@ export const requirePendingMutation = (
 export const pendingPositionMutation = (
   context: MatchMachineContext,
   timeline: MatchTimeline,
-): PendingMatchMutation =>
-  createPendingMatchMutation({
+): PendingMatchMutation => {
+  const conclusion =
+    context.conclusion ?? deriveRetainedBranchConclusion(timeline)
+  return createPendingMatchMutation({
+    conclusion,
     hints: null,
     matchId: context.matchId,
     moveHintsUsed: context.moveHintsUsed,
     mutationSequence: context.mutationSequence,
     pieceHintsUsed: context.pieceHintsUsed,
-    route: "resolve-position",
+    route: conclusion === null ? "resolve-position" : "complete",
     timeline,
   })
+}
+
+export const pendingConclusionMutation = (
+  context: MatchMachineContext,
+  conclusion: MatchConclusion,
+): PendingMatchMutation => {
+  if (!conclusionMatchesRetainedBranch(conclusion, context.timeline)) {
+    throw new TypeError("Requested conclusion does not match the match branch.")
+  }
+
+  return createPendingMatchMutation({
+    conclusion,
+    hints: null,
+    matchId: context.matchId,
+    moveHintsUsed: context.moveHintsUsed,
+    mutationSequence: context.mutationSequence,
+    pieceHintsUsed: context.pieceHintsUsed,
+    route: "complete",
+    timeline: context.timeline,
+  })
+}
 
 export const pendingPieceHintsMutation = (
   context: MatchMachineContext,
   hints: BetterHintsResult,
 ): PendingMatchMutation =>
   createPendingMatchMutation({
+    conclusion: context.conclusion,
     hints,
     matchId: context.matchId,
     moveHintsUsed: context.moveHintsUsed,
@@ -219,6 +257,7 @@ export const pendingMoveHintsMutation = (
   context: MatchMachineContext,
 ): PendingMatchMutation =>
   createPendingMatchMutation({
+    conclusion: context.conclusion,
     hints: context.hints,
     matchId: context.matchId,
     moveHintsUsed: true,
@@ -233,6 +272,8 @@ export const acceptedPendingMutation = (
 ): Partial<MatchMachineContext> => {
   const pending = requirePendingMutation(context)
   return {
+    conclusion: pending.conclusion,
+    drawOfferResponse: null,
     hintFailure: null,
     hints: pending.hints,
     moveHintsUsed: pending.moveHintsUsed,
