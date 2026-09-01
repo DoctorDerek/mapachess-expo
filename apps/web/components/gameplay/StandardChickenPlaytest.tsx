@@ -2,6 +2,10 @@
 
 import { useEffect, useState, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
+import bindMatchPositionEvaluation, {
+  type MatchPositionEvaluationBinding,
+} from "@mapachess/evaluation/match-position-evaluation"
+import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import profileMachine, {
@@ -20,6 +24,7 @@ type PlaytestRuntimeState =
   | Readonly<{ status: "opening" }>
   | Readonly<{
       actor: ActorRefFrom<typeof matchMachine>
+      evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
       match: DurableMatchRecord
       runtime: StandardChickenRuntime
       status: "ready"
@@ -50,6 +55,9 @@ export default function StandardChickenPlaytest({
   useEffect(() => {
     const controller = new AbortController()
     let disposed = false
+    let evaluationActor: ActorRefFrom<typeof positionEvaluationMachine> | null =
+      null
+    let evaluationBinding: MatchPositionEvaluationBinding | null = null
     let matchActor: ActorRefFrom<typeof matchMachine> | null = null
     let openedRuntime: StandardChickenRuntime | null = null
 
@@ -107,13 +115,23 @@ export default function StandardChickenPlaytest({
           },
         },
       }).start()
+      evaluationActor = createActor(positionEvaluationMachine, {
+        input: { evaluator: runtime.positionEvaluator },
+      }).start()
+      evaluationBinding = bindMatchPositionEvaluation(
+        matchActor,
+        evaluationActor,
+      )
       setRuntimeState({
         actor: matchActor,
+        evaluationActor,
         match: activeMatch,
         runtime,
         status: "ready",
       })
     })().catch(async () => {
+      evaluationBinding?.disconnect()
+      evaluationActor?.stop()
       matchActor?.stop()
       if (openedRuntime !== null) {
         await openedRuntime.close().catch(() => undefined)
@@ -126,6 +144,8 @@ export default function StandardChickenPlaytest({
 
     return () => {
       disposed = true
+      evaluationBinding?.disconnect()
+      evaluationActor?.stop()
       matchActor?.stop()
       controller.abort()
       if (openedRuntime !== null) {
@@ -187,6 +207,7 @@ export default function StandardChickenPlaytest({
         {runtimeState.status === "ready" ? (
           <StandardChickenMatch
             actor={runtimeState.actor}
+            evaluationActor={runtimeState.evaluationActor}
             runtime={runtimeState.runtime}
           />
         ) : (

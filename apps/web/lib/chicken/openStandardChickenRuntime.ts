@@ -1,3 +1,7 @@
+import {
+  evaluatePositionWithStockfish,
+  type PositionEvaluator,
+} from "@mapachess/evaluation/position-evaluator"
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
@@ -21,7 +25,7 @@ import createStandardChickenOpponent, {
   type StandardChickenCryptography,
 } from "./standardChickenOpponent"
 
-const STANDARD_CHICKEN_ENGINE_CONFIGURATION: StockfishEngineConfiguration =
+const STANDARD_CHICKEN_SINGLE_PV_ENGINE_CONFIGURATION: StockfishEngineConfiguration =
   Object.freeze({
     hashMegabytes: 16,
     multiPv: 1,
@@ -45,6 +49,8 @@ const STANDARD_CHICKEN_OPPONENT_WORKER_NAME =
   "mapachess-stockfish-18-opponent" as const
 const STANDARD_CHICKEN_HINT_WORKER_NAME =
   "mapachess-stockfish-18-better-hints" as const
+const STANDARD_CHICKEN_EVALUATION_WORKER_NAME =
+  "mapachess-stockfish-18-evaluation" as const
 
 export type StandardChickenRuntime = Readonly<{
   close: () => Promise<void>
@@ -55,6 +61,7 @@ export type StandardChickenRuntime = Readonly<{
   opponent: MatchOpponent
   opponentPolicyFingerprint: string
   playerColor: MatchColor
+  positionEvaluator: PositionEvaluator
 }>
 
 export type OpenStandardChickenRuntimeInput = Readonly<{
@@ -115,9 +122,12 @@ export default async function openStandardChickenRuntime(
   const matchSeed =
     input.matchSeed ?? generateStandardChickenMatchSeed(cryptography)
   const openSession = input.openSession ?? createWebStockfishSession
-  const opponentSession = openSession(STANDARD_CHICKEN_ENGINE_CONFIGURATION, {
-    workerName: STANDARD_CHICKEN_OPPONENT_WORKER_NAME,
-  })
+  const opponentSession = openSession(
+    STANDARD_CHICKEN_SINGLE_PV_ENGINE_CONFIGURATION,
+    {
+      workerName: STANDARD_CHICKEN_OPPONENT_WORKER_NAME,
+    },
+  )
   let hintSession: StockfishUciSession
   try {
     hintSession = openSession(STANDARD_CHICKEN_HINT_ENGINE_CONFIGURATION, {
@@ -126,12 +136,24 @@ export default async function openStandardChickenRuntime(
   } catch (error) {
     return closeAfterFailedOpen([opponentSession], error)
   }
-  const sessions = [opponentSession, hintSession] as const
+  let evaluationSession: StockfishUciSession
+  try {
+    evaluationSession = openSession(
+      STANDARD_CHICKEN_SINGLE_PV_ENGINE_CONFIGURATION,
+      {
+        workerName: STANDARD_CHICKEN_EVALUATION_WORKER_NAME,
+      },
+    )
+  } catch (error) {
+    return closeAfterFailedOpen([opponentSession, hintSession], error)
+  }
+  const sessions = [opponentSession, hintSession, evaluationSession] as const
 
   let engineIdentity: StockfishUciIdentity
   try {
     engineIdentity = await opponentSession.boot(input.signal)
     await hintSession.boot(input.signal)
+    await evaluationSession.boot(input.signal)
     if (input.signal?.aborted === true) {
       throw new DOMException(
         "Standard Chicken opening was aborted.",
@@ -155,5 +177,7 @@ export default async function openStandardChickenRuntime(
     ),
     opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
     playerColor: selectStandardStoryPlayerColor(matchSeed),
+    positionEvaluator: (request, signal) =>
+      evaluatePositionWithStockfish(evaluationSession, request, signal),
   })
 }

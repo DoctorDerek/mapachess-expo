@@ -162,6 +162,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/evaluation':
+        specifier: workspace:*
+        version: link:../../packages/evaluation
       '@mapachess/hints':
         specifier: workspace:*
         version: link:../../packages/hints
@@ -220,6 +223,18 @@ importers:
       chess.js:
         specifier: ^1
         version: 1.4.0
+
+  packages/evaluation:
+    dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+      xstate:
+        specifier: ^5
+        version: 5.32.6
 
   packages/hints:
     dependencies:

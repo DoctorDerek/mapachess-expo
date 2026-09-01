@@ -18,7 +18,7 @@ const WHITE_MATCH_WORDS = [1, 2, 3, 4] as const
 const BLACK_MATCH_WORDS = [1, 0x0200_0000, 3, 4] as const
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
-const OWNED_WORKER_COUNT = 2
+const OWNED_WORKER_COUNT = 3
 
 const installDeterministicCryptography = async (
   page: Page,
@@ -138,6 +138,54 @@ const expectNoHighImpactAccessibilityViolations = async (
     ({ impact }) => impact === "serious" || impact === "critical",
   )
   expect(highImpactViolations).toEqual([])
+}
+
+type EvaluationGutterLayout = "horizontal" | "vertical"
+
+const requireBoundingBox = async (
+  locator: Locator,
+  name: string,
+): Promise<NonNullable<Awaited<ReturnType<Locator["boundingBox"]>>>> => {
+  const box = await locator.boundingBox()
+  if (box === null) throw new Error(`${name} has no rendered bounding box.`)
+  return box
+}
+
+const expectAcceptedEvaluation = async (page: Page): Promise<Locator> => {
+  const gutter = page.getByRole("meter", { name: "Stockfish evaluation" })
+  await expect(gutter).toBeVisible()
+  await expect
+    .poll(() => gutter.getAttribute("aria-valuetext"))
+    .toMatch(/^(?:Black|Even|White)(?: |$)/)
+  return gutter
+}
+
+const expectEvaluationGutterLayout = async (
+  page: Page,
+  layout: EvaluationGutterLayout,
+): Promise<void> => {
+  const board = page.getByRole("grid", { name: /^Chessboard,/ })
+  const gutter = await expectAcceptedEvaluation(page)
+  const commandColumn = page.locator("aside")
+  const boardBox = await requireBoundingBox(board, "Chessboard")
+  const gutterBox = await requireBoundingBox(gutter, "Evaluation gutter")
+
+  if (layout === "horizontal") {
+    expect(gutterBox.width).toBeGreaterThan(gutterBox.height)
+    expect(Math.abs(gutterBox.width - boardBox.width)).toBeLessThanOrEqual(1)
+    expect(gutterBox.y).toBeGreaterThan(boardBox.y + boardBox.height)
+    expect(gutterBox.y - (boardBox.y + boardBox.height)).toBeLessThanOrEqual(16)
+    return
+  }
+
+  const commandColumnBox = await requireBoundingBox(
+    commandColumn,
+    "Command Column",
+  )
+  expect(gutterBox.height).toBeGreaterThan(gutterBox.width)
+  expect(Math.abs(gutterBox.height - boardBox.height)).toBeLessThanOrEqual(1)
+  expect(gutterBox.x).toBeGreaterThan(boardBox.x + boardBox.width)
+  expect(gutterBox.x + gutterBox.width).toBeLessThan(commandColumnBox.x)
 }
 
 const openFirstChickenMatch = async (page: Page): Promise<void> => {
@@ -279,6 +327,7 @@ const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
 test("persists and resumes White through hints, cancellation, and redo", async ({
   page,
 }) => {
+  await page.setViewportSize({ height: 800, width: 1_280 })
   await installDeterministicCryptography(page, {
     digestDelayMilliseconds: 750,
     matchWords: WHITE_MATCH_WORDS,
@@ -287,6 +336,7 @@ test("persists and resumes White through hints, cancellation, and redo", async (
   const diagnostics = beginBrowserDiagnostics(page)
 
   await openFirstChickenMatch(page)
+  await expectEvaluationGutterLayout(page, "vertical")
   const initialPlayerData = await readCurrentBrowserPlayerData(page)
   const initialMatch = initialPlayerData.activeMatch
   if (initialMatch === null) {
@@ -325,10 +375,12 @@ test("persists and resumes White through hints, cancellation, and redo", async (
   await page.getByRole("button", { name: "Undo" }).click()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
   await expect(page.getByText("No moves yet.", { exact: true })).toBeVisible()
+  await expectAcceptedEvaluation(page)
 
   await page.getByRole("button", { name: "Redo" }).click()
   await expect(page.getByText("2 plies", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+  await expectAcceptedEvaluation(page)
   await expectExactAutomaticBetterHints(page)
 
   await page.getByRole("button", { name: "Undo" }).click()
@@ -364,6 +416,7 @@ test("persists and resumes White through hints, cancellation, and redo", async (
   await expect(page.getByText("No moves yet.", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled()
   await expect(page.getByRole("button", { name: "Redo" })).toBeEnabled()
+  await expectEvaluationGutterLayout(page, "vertical")
   await expectExactAutomaticBetterHints(page)
 
   const resumedPlayerData = await readCurrentBrowserPlayerData(page)
@@ -395,6 +448,7 @@ test("persists and resumes White through hints, cancellation, and redo", async (
 test("plays Black through automatic hints and a complete Chicken turn", async ({
   page,
 }) => {
+  await page.setViewportSize({ height: 800, width: 1_279 })
   await installDeterministicCryptography(page, {
     digestDelayMilliseconds: 0,
     matchWords: BLACK_MATCH_WORDS,
@@ -403,6 +457,7 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   const diagnostics = beginBrowserDiagnostics(page)
 
   await openFirstChickenMatch(page)
+  await expectEvaluationGutterLayout(page, "horizontal")
   await expect(page.getByText("Black", { exact: true })).toBeVisible()
   await expect(page.getByText("1 ply", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
@@ -412,6 +467,7 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   await page.getByRole("gridcell", { name: /e5, empty/ }).click()
   await expect(page.getByText("3 plies", { exact: true })).toBeVisible()
   await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+  await expectAcceptedEvaluation(page)
   await expectExactAutomaticBetterHints(page)
 
   await diagnostics.assertClean()

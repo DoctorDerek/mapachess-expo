@@ -1,0 +1,36 @@
+{
+  "name": "@mapachess/evaluation",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./match-position-evaluation": {
+      "types": "./src/matchPositionEvaluation.ts",
+      "default": "./dist/matchPositionEvaluation.js"
+    },
+    "./position-evaluation": {
+      "types": "./src/positionEvaluation.ts",
+      "default": "./dist/positionEvaluation.js"
+    },
+    "./position-evaluation-machine": {
+      "types": "./src/positionEvaluationMachine.ts",
+      "default": "./dist/positionEvaluationMachine.js"
+    },
+    "./position-evaluator": {
+      "types": "./src/positionEvaluator.ts",
+      "default": "./dist/positionEvaluator.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/match": "workspace:*",
+    "@mapachess/stockfish": "workspace:*",
+    "xstate": "^5"
+  }
+}
