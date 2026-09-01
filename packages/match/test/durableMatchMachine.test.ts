@@ -2,11 +2,15 @@ import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import type { BetterHintsRequest } from "../src/betterHints.js"
 import matchMachine, {
+  selectCanOfferDraw,
   selectCanRedo,
+  selectCanResign,
   selectCanUndo,
+  selectDrawOfferResponse,
   selectHintStage,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
+  selectMatchConclusion,
   selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
@@ -100,6 +104,115 @@ const requestE4 = (actor: ReturnType<typeof createDurableActor>["actor"]) => {
 }
 
 describe("verified durable match mutation gate", () => {
+  it("persists an accepted draw through exact stale-receipt retry", async () => {
+    const persistence = new ControlledPersistence()
+    const { actor } = createDurableActor(persistence)
+    const positionFen = selectMatchPosition(actor.getSnapshot()).fen
+
+    expect(selectCanOfferDraw(actor.getSnapshot())).toBe(true)
+    actor.send({
+      decision: { outcome: "rejected", positionFen: `${positionFen}/stale` },
+      type: "MATCH.DRAW_OFFER_REQUESTED",
+    })
+    expect(selectDrawOfferResponse(actor.getSnapshot())).toBeNull()
+
+    actor.send({
+      decision: { outcome: "rejected", positionFen },
+      type: "MATCH.DRAW_OFFER_REQUESTED",
+    })
+    expect(selectDrawOfferResponse(actor.getSnapshot())).toBe("rejected")
+    expect(selectIsPlayerTurn(actor.getSnapshot())).toBe(true)
+
+    actor.send({
+      decision: { outcome: "accepted", positionFen },
+      type: "MATCH.DRAW_OFFER_REQUESTED",
+    })
+    expect(selectIsPersistingMutation(actor.getSnapshot())).toBe(true)
+    expect(selectMatchConclusion(actor.getSnapshot())).toBeNull()
+    expect(persistence.requests[0]).toMatchObject({
+      conclusion: { type: "draw-agreement" },
+      cursor: 0,
+    })
+    const requestId = persistence.requests[0]?.requestId
+
+    persistence.succeedNext(`${requestId}/stale`)
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectMatchConclusion(actor.getSnapshot())).toBeNull()
+    expect(actor.getSnapshot().context.pendingMutation).toMatchObject({
+      conclusion: { type: "draw-agreement" },
+    })
+
+    actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+    await waitFor(actor, selectIsPersistingMutation)
+    expect(persistence.requests[1]?.requestId).toBe(requestId)
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => snapshot.matches("complete"))
+
+    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
+      type: "draw-agreement",
+    })
+    expect(selectCanOfferDraw(actor.getSnapshot())).toBe(false)
+    expect(selectCanResign(actor.getSnapshot())).toBe(false)
+    actor.stop()
+  })
+
+  it("aborts an in-flight opponent request before persisting resignation", async () => {
+    const persistence = new ControlledPersistence()
+    let opponentSignal: AbortSignal | undefined
+    const opponent = {
+      selectMove: vi.fn(
+        async (_request: MatchOpponentRequest, signal: AbortSignal) => {
+          opponentSignal = signal
+          return await new Promise<never>((_resolve, reject) => {
+            signal.addEventListener(
+              "abort",
+              () => reject(new Error("opponent request aborted")),
+              { once: true },
+            )
+          })
+        },
+      ),
+    }
+    const actor = createActor(matchMachine, {
+      input: {
+        autoHintsEnabled: false,
+        durability: { persistence, type: "durable" },
+        initialPosition: standardInitialPosition(),
+        matchId: "durable-standard-chicken-resignation",
+        opponent,
+        playerColor: "white",
+      },
+    }).start()
+
+    expect(selectCanResign(actor.getSnapshot())).toBe(true)
+    const move = requireLegalMove(
+      selectMatchPosition(actor.getSnapshot()),
+      "e2e4",
+    )
+    actor.send({ moveId: move.id, type: "MATCH.MOVE_REQUESTED" })
+    persistence.succeedNext()
+    await waitFor(actor, () => opponentSignal !== undefined)
+
+    actor.send({ type: "MATCH.RESIGN_REQUESTED" })
+    await waitFor(actor, selectIsPersistingMutation)
+    expect(opponentSignal?.aborted).toBe(true)
+    expect(opponent.selectMove).toHaveBeenCalledTimes(1)
+    expect(persistence.requests[1]).toMatchObject({
+      conclusion: { type: "resignation", winner: "black" },
+      cursor: 1,
+      moveIds: ["e2e4"],
+    })
+
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => snapshot.matches("complete"))
+    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
+      type: "resignation",
+      winner: "black",
+    })
+    expect(selectCanResign(actor.getSnapshot())).toBe(false)
+    actor.stop()
+  })
+
   it("resumes the exact branch, cursor, and monotonic hint-use state", () => {
     const persistence = new ControlledPersistence()
     const initialTimeline = createMatchTimeline(standardInitialPosition())
