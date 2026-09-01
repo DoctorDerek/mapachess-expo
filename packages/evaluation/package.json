@@ -8,6 +8,14 @@
     "./position-evaluation": {
       "types": "./src/positionEvaluation.ts",
       "default": "./dist/positionEvaluation.js"
+    },
+    "./position-evaluation-machine": {
+      "types": "./src/positionEvaluationMachine.ts",
+      "default": "./dist/positionEvaluationMachine.js"
+    },
+    "./position-evaluator": {
+      "types": "./src/positionEvaluator.ts",
+      "default": "./dist/positionEvaluator.js"
     }
   },
   "scripts": {
@@ -18,6 +26,7 @@
   },
   "dependencies": {
     "@mapachess/match": "workspace:*",
-    "@mapachess/stockfish": "workspace:*"
+    "@mapachess/stockfish": "workspace:*",
+    "xstate": "^5"
   }
 }
