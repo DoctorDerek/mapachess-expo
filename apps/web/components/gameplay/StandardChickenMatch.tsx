@@ -2,6 +2,7 @@
 
 import { useSelector } from "@xstate/react"
 import type { ActorRefFrom } from "xstate"
+import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import matchMachine, {
   selectCanRedo,
   selectCanUndo,
@@ -20,9 +21,11 @@ import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import type { StandardChickenRuntime } from "../../lib/chicken/openStandardChickenRuntime"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
+import PositionEvaluationGutter from "./PositionEvaluationGutter"
 
 export type StandardChickenMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
+  evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
   runtime: StandardChickenRuntime
 }>
 
@@ -67,6 +70,7 @@ const matchStatusText = (
 
 export default function StandardChickenMatch({
   actor,
+  evaluationActor,
   runtime,
 }: StandardChickenMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
@@ -96,18 +100,24 @@ export default function StandardChickenMatch({
       className="grid min-w-0 items-start gap-[clamp(1.25rem,3vw,2.5rem)] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]"
     >
       <div className="grid min-w-0 place-items-center">
-        <CanonicalChessboard
-          disabled={!playerTurn}
-          hints={visibleHints}
-          lastMove={lastMove}
-          legalMoves={legalMoves}
-          onMove={(moveId) =>
-            actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
-          }
-          orientation={runtime.playerColor}
-          position={position}
-          showMoveHints={hintStage === "move-hints"}
-        />
+        <div className="grid w-full max-w-[min(100%,52rem)] min-w-0 gap-3 xl:max-w-[min(100%,calc(100dvh-2rem))] xl:grid-cols-[minmax(0,1fr)_auto] xl:items-stretch">
+          <CanonicalChessboard
+            disabled={!playerTurn}
+            hints={visibleHints}
+            lastMove={lastMove}
+            legalMoves={legalMoves}
+            onMove={(moveId) =>
+              actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
+            }
+            orientation={runtime.playerColor}
+            position={position}
+            showMoveHints={hintStage === "move-hints"}
+          />
+          <PositionEvaluationGutter
+            actor={evaluationActor}
+            orientation={runtime.playerColor}
+          />
+        </div>
       </div>
 
       <aside className="min-w-0 rounded-3xl border border-white/12 bg-slate-950/72 p-[clamp(1.25rem,3vw,2rem)] shadow-[0_1.5rem_5rem_rgba(2,6,23,0.4)] backdrop-blur-xl xl:sticky xl:top-6">

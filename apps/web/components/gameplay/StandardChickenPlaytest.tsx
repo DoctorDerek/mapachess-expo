@@ -207,6 +207,7 @@ export default function StandardChickenPlaytest({
         {runtimeState.status === "ready" ? (
           <StandardChickenMatch
             actor={runtimeState.actor}
+            evaluationActor={runtimeState.evaluationActor}
             runtime={runtimeState.runtime}
           />
         ) : (
