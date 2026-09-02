@@ -19,6 +19,13 @@ export type ProfileMatchPersistenceBridgeInput = Readonly<{
   initialMatch: DurableMatchRecord
 }>
 
+export type PersistProfileActiveMatchInput = Readonly<{
+  actor: ProfileActor
+  candidate: DurableMatchRecord | null
+  expectedActiveMatch: DurableMatchRecord | null
+  signal: AbortSignal
+}>
+
 const activeMatchesEqual = (
   left: DurableMatchRecord | null,
   right: DurableMatchRecord | null,
@@ -36,6 +43,66 @@ const actorStopped = (): Error =>
 
 const activeMatchChanged = (): Error =>
   new Error("Canonical active match changed before persistence completed.")
+
+export const persistProfileActiveMatch = ({
+  actor,
+  candidate,
+  expectedActiveMatch,
+  signal,
+}: PersistProfileActiveMatchInput): Promise<void> => {
+  if (signal.aborted) return Promise.reject(abortedPersistence())
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false
+    let writeRequested = false
+    let subscription: Readonly<{ unsubscribe: () => void }> | null = null
+
+    const cleanup = (): void => {
+      signal.removeEventListener("abort", onAbort)
+      subscription?.unsubscribe()
+    }
+    const settle = (result: "accepted" | Error): void => {
+      if (settled) return
+      settled = true
+      cleanup()
+      if (result === "accepted") resolve()
+      else reject(result)
+    }
+    const onAbort = (): void => settle(abortedPersistence())
+    const inspect = (snapshot: ProfileMachineSnapshot): void => {
+      if (settled) return
+      const playerData = selectCurrentPlayerData(snapshot)
+      if (activeMatchesEqual(playerData?.activeMatch ?? null, candidate)) {
+        settle("accepted")
+        return
+      }
+      if (!snapshot.matches("ready") || writeRequested) return
+      if (
+        playerData === null ||
+        !activeMatchesEqual(playerData.activeMatch, expectedActiveMatch)
+      ) {
+        settle(activeMatchChanged())
+        return
+      }
+
+      writeRequested = true
+      actor.send({
+        activeMatch: candidate,
+        type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED",
+      })
+    }
+
+    signal.addEventListener("abort", onAbort, { once: true })
+    subscription = actor.subscribe({
+      complete: () => settle(actorStopped()),
+      error: (error: unknown) =>
+        settle(error instanceof Error ? error : actorStopped()),
+      next: inspect,
+    })
+    if (settled) subscription.unsubscribe()
+    else inspect(actor.getSnapshot())
+  })
+}
 
 const candidateFromRequest = (
   initialMatch: DurableMatchRecord,
@@ -139,61 +206,13 @@ export default class ProfileMatchPersistenceBridge implements MatchPersistence {
     candidate: DurableMatchRecord,
     signal: AbortSignal,
   ): Promise<void> {
-    if (signal.aborted) return Promise.reject(abortedPersistence())
-
-    return new Promise<void>((resolve, reject) => {
-      let settled = false
-      let writeRequested = false
-      let subscription: Readonly<{ unsubscribe: () => void }> | null = null
-
-      const cleanup = (): void => {
-        signal.removeEventListener("abort", onAbort)
-        subscription?.unsubscribe()
-      }
-      const settle = (result: "accepted" | Error): void => {
-        if (settled) return
-        settled = true
-        cleanup()
-        if (result === "accepted") {
-          this.#acceptedMatch = candidate
-          resolve()
-        } else {
-          reject(result)
-        }
-      }
-      const onAbort = (): void => settle(abortedPersistence())
-      const inspect = (snapshot: ProfileMachineSnapshot): void => {
-        if (settled) return
-        const playerData = selectCurrentPlayerData(snapshot)
-        if (activeMatchesEqual(playerData?.activeMatch ?? null, candidate)) {
-          settle("accepted")
-          return
-        }
-        if (!snapshot.matches("ready") || writeRequested) return
-        if (
-          playerData === null ||
-          !activeMatchesEqual(playerData.activeMatch, this.#acceptedMatch)
-        ) {
-          settle(activeMatchChanged())
-          return
-        }
-
-        writeRequested = true
-        this.#actor.send({
-          activeMatch: candidate,
-          type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED",
-        })
-      }
-
-      signal.addEventListener("abort", onAbort, { once: true })
-      subscription = this.#actor.subscribe({
-        complete: () => settle(actorStopped()),
-        error: (error: unknown) =>
-          settle(error instanceof Error ? error : actorStopped()),
-        next: inspect,
-      })
-      if (settled) subscription.unsubscribe()
-      else inspect(this.#actor.getSnapshot())
+    return persistProfileActiveMatch({
+      actor: this.#actor,
+      candidate,
+      expectedActiveMatch: this.#acceptedMatch,
+      signal,
+    }).then(() => {
+      this.#acceptedMatch = candidate
     })
   }
 }
