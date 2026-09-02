@@ -21,10 +21,6 @@ export default defineConfig({
   ],
   webServer: {
     command: `pnpm --filter @mapachess/web dev --hostname 127.0.0.1 --port ${localChickenPlaywrightPort}`,
-    env: {
-      ...process.env,
-      MAPACHESS_ENABLE_PRIVATE_PLAYTEST: "true",
-    },
     url: localChickenPlaywrightBaseUrl,
     reuseExistingServer: false,
     timeout: 120_000,

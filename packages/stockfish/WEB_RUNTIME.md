@@ -2,7 +2,8 @@
 
 Mapachess currently evaluates the Stockfish.js `v18.0.0` lite single-threaded
 release as its pinned browser candidate. The runtime is provisioned explicitly
-for local verification and is not fetched by application code.
+during local verification and web builds; application runtime code does not
+fetch it.
 
 | Identity                  | Pin                                                                                                                          |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -20,9 +21,11 @@ corepack pnpm stockfish:provision:web
 
 The command downloads only those two release assets, verifies their exact byte
 lengths and SHA-256 digests, and promotes them into the ignored
-`apps/web/public/stockfish-runtime/` directory. Ordinary CI and Vercel do not
-run this command. Application runtime code must load the provisioned files from
-the same origin and must never fall back to a CDN.
+`apps/web/public/stockfish-runtime/` directory. The `@mapachess/web` build runs
+this provisioner before Next.js, so fresh Vercel builds receive the same pinned
+files without committing binaries. Application runtime code loads the files
+from the same origin and never falls back to a CDN. Provisioning does not run
+Stockfish, play engine games, or perform calibration.
 
 The pinned source is available at the
 [Stockfish.js release commit](https://github.com/nmrugg/stockfish.js/tree/31a98753a5d932511693f44775da908377c24513),
