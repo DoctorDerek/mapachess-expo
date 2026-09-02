@@ -2,7 +2,8 @@
 
 Mapachess currently evaluates the Stockfish.js `v18.0.0` lite single-threaded
 release as its pinned browser candidate. The runtime is provisioned explicitly
-for local verification and is not fetched by application code.
+during local verification and web builds; application runtime code does not
+fetch it.
 
 | Identity                  | Pin                                                                                                                          |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |

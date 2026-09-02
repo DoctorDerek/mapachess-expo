@@ -94,12 +94,12 @@ corepack pnpm test:integration:stockfish
 ```
 
 The browser candidate's exact release artifacts, digests, source revisions, and
-local-only provisioning boundary are recorded in
+build-time provisioning boundary are recorded in
 [packages/stockfish/WEB_RUNTIME.md](packages/stockfish/WEB_RUNTIME.md).
 
 ## Production web deployment
 
-The provisional web development build is live at
+The canonical production web origin is
 [mapachess-expo-web.vercel.app](https://mapachess-expo-web.vercel.app/). Vercel
 creates Preview deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
