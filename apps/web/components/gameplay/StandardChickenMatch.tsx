@@ -132,7 +132,7 @@ export default function StandardChickenMatch({
 
   return (
     <section
-      aria-label="Standard Story Chicken playtest"
+      aria-label="Standard Story match against Chicken Stockfish"
       className="grid min-w-0 items-start gap-[clamp(1.25rem,3vw,2.5rem)] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]"
     >
       <div className="grid min-w-0 place-items-center">
@@ -162,7 +162,7 @@ export default function StandardChickenMatch({
             Provisional · unrated
           </span>
           <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 font-mono text-xs font-bold tracking-[0.14em] text-cyan-100 uppercase">
-            Local playtest
+            Local play
           </span>
         </div>
 

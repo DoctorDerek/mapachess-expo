@@ -3,9 +3,9 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = {
-  title: "Mapachess — In Development",
+  title: "Mapachess",
   description:
-    "Mapachess is a permanently free, accountless chess game in pre-production.",
+    "A permanently free, accountless chess game with Better Hints and animal Stockfish opponents.",
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

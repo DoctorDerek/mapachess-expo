@@ -22,7 +22,7 @@ import {
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
-import StandardChickenPlaytest from "../gameplay/StandardChickenPlaytest"
+import StandardChickenGame from "../gameplay/StandardChickenGame"
 import FirstRunProfilePanel from "./FirstRunProfilePanel"
 import FullPageProfilePanel, {
   ImportBackupButton,
@@ -225,7 +225,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
             playerData={pendingPlayerData ?? currentPlayerData}
           />
         ) : null}
-        <StandardChickenPlaytest
+        <StandardChickenGame
           onSettingsRequested={() => setSettingsOpen(true)}
           profileActor={actor}
           settingsButtonRef={settingsButton}
@@ -273,7 +273,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   )
 }
 
-export default function WebProfilePlaytest() {
+export default function WebMapachessApplication() {
   const [runtimeState, setRuntimeState] = useState<ProfileRuntimeState>({
     status: "opening",
   })
@@ -311,7 +311,7 @@ export default function WebProfilePlaytest() {
     <FullPageProfilePanel
       description={
         runtimeState.status === "opening"
-          ? "Preparing the private, local-only player-data runtime."
+          ? "Preparing the local-only player-data runtime."
           : "This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
       }
       eyebrow="Local profile"
