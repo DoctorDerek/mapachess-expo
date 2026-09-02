@@ -3,14 +3,21 @@ import reconstructDurableMatch from "@mapachess/match/durable-match-reconstructi
 import {
   DURABLE_MATCH_RECORD_VERSION,
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
+  LEGACY_DURABLE_MATCH_RECORD_VERSION,
   MATCH_MODES,
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
+import {
+  conclusionMatchesRetainedBranch,
+  deriveRetainedBranchConclusion,
+  type MatchConclusion,
+} from "@mapachess/match/match-conclusion"
 import { parseMatchMoveId } from "@mapachess/match/match-move"
 import {
   MATCH_COLORS,
   type MatchStartingPosition,
 } from "@mapachess/match/match-position"
+import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import {
   failData,
   requireBoolean,
@@ -25,6 +32,24 @@ import {
 const MAX_DURABLE_MATCH_PLY_COUNT = 20_000
 const MAX_FEN_LENGTH = 256
 const MATCH_SEED_PATTERN = /^[0-9a-f]{32}$/u
+
+const DURABLE_MATCH_COMMON_KEYS = [
+  "autoHintsEnabledAtStart",
+  "currentFen",
+  "cursor",
+  "matchId",
+  "matchSeed",
+  "mode",
+  "moveHintsUsed",
+  "moveIds",
+  "opponentId",
+  "opponentPolicyFingerprint",
+  "pieceHintsUsed",
+  "playerColor",
+  "playerEloAtStart",
+  "startingPosition",
+  "timeControl",
+] as const
 
 const decodeStartingPosition = (
   received: unknown,
@@ -64,12 +89,37 @@ const decodeMoveIds = (received: unknown, path: string) => {
   )
 }
 
-const requireReconstructableMatch = (
+const decodeConclusion = (
+  received: unknown,
+  path: string,
+): MatchConclusion | null => {
+  if (received === null) return null
+
+  const object = requireObject(received, path)
+  switch (object.type) {
+    case "checkmate":
+    case "resignation":
+      requireExactKeys(object, ["type", "winner"], path)
+      return Object.freeze({
+        type: object.type,
+        winner: requireEnumValue(object.winner, MATCH_COLORS, `${path}.winner`),
+      })
+    case "draw-agreement":
+    case "insufficient-material":
+    case "stalemate":
+      requireExactKeys(object, ["type"], path)
+      return Object.freeze({ type: object.type })
+    default:
+      return failData(`${path}.type`)
+  }
+}
+
+const requireReconstructableTimeline = (
   record: DurableMatchRecord,
   path: string,
-): DurableMatchRecord => {
+): MatchTimeline => {
   const reconstruction = reconstructDurableMatch(record)
-  if (reconstruction.ok) return record
+  if (reconstruction.ok) return reconstruction.timeline
 
   switch (reconstruction.error.type) {
     case "MATCH.DURABLE_CURSOR_INVALID":
@@ -88,31 +138,20 @@ export const decodeDurableMatch = (
   path: string,
 ): DurableMatchRecord => {
   const object = requireObject(received, path)
-  requireExactKeys(
-    object,
-    [
-      "autoHintsEnabledAtStart",
-      "currentFen",
-      "cursor",
-      "matchId",
-      "matchSeed",
-      "mode",
-      "moveHintsUsed",
-      "moveIds",
-      "opponentId",
-      "opponentPolicyFingerprint",
-      "pieceHintsUsed",
-      "playerColor",
-      "playerEloAtStart",
-      "recordVersion",
-      "startingPosition",
-      "timeControl",
-    ],
-    path,
-  )
-  if (object.recordVersion !== DURABLE_MATCH_RECORD_VERSION) {
+  const legacyRecord =
+    object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION
+  const currentRecord = object.recordVersion === DURABLE_MATCH_RECORD_VERSION
+  if (!legacyRecord && !currentRecord) {
     return failData(`${path}.recordVersion`)
   }
+
+  requireExactKeys(
+    object,
+    currentRecord
+      ? [...DURABLE_MATCH_COMMON_KEYS, "conclusion", "recordVersion"]
+      : [...DURABLE_MATCH_COMMON_KEYS, "recordVersion"],
+    path,
+  )
 
   const moveIds = decodeMoveIds(object.moveIds, `${path}.moveIds`)
   const cursor = requireSafeRevision(object.cursor, `${path}.cursor`)
@@ -135,11 +174,12 @@ export const decodeDurableMatch = (
   requireExactKeys(timeControl, ["type"], `${path}.timeControl`)
   if (timeControl.type !== "untimed") failData(`${path}.timeControl.type`)
 
-  const record: DurableMatchRecord = Object.freeze({
+  const recordWithoutConclusion: DurableMatchRecord = Object.freeze({
     autoHintsEnabledAtStart: requireBoolean(
       object.autoHintsEnabledAtStart,
       `${path}.autoHintsEnabledAtStart`,
     ),
+    conclusion: null,
     currentFen: requireString(
       object.currentFen,
       `${path}.currentFen`,
@@ -177,24 +217,49 @@ export const decodeDurableMatch = (
     ),
     timeControl: Object.freeze({ type: "untimed" }),
   })
-  return requireReconstructableMatch(record, path)
+  const timeline = requireReconstructableTimeline(recordWithoutConclusion, path)
+  const conclusion = legacyRecord
+    ? deriveRetainedBranchConclusion(timeline)
+    : decodeConclusion(object.conclusion, `${path}.conclusion`)
+  if (
+    !conclusionMatchesRetainedBranch(conclusion, timeline) ||
+    (conclusion?.type === "resignation" &&
+      conclusion.winner === recordWithoutConclusion.playerColor)
+  ) {
+    return failData(`${path}.conclusion`)
+  }
+
+  return Object.freeze({ ...recordWithoutConclusion, conclusion })
 }
 
-export const canonicalActiveMatch = (match: DurableMatchRecord) => [
-  match.recordVersion,
-  match.matchId,
-  match.matchSeed,
-  match.mode,
-  match.opponentId,
-  match.opponentPolicyFingerprint,
-  match.playerColor,
-  match.playerEloAtStart,
-  [match.startingPosition.variant, match.startingPosition.chess960PositionId],
-  match.timeControl.type,
-  match.autoHintsEnabledAtStart,
-  match.moveIds,
-  match.cursor,
-  match.currentFen,
-  match.pieceHintsUsed,
-  match.moveHintsUsed,
-]
+const canonicalConclusion = (conclusion: MatchConclusion | null) =>
+  conclusion?.type === "draw-agreement" || conclusion?.type === "resignation"
+    ? conclusion.type === "resignation"
+      ? [conclusion.type, conclusion.winner]
+      : [conclusion.type]
+    : null
+
+export const canonicalActiveMatch = (match: DurableMatchRecord) => {
+  const voluntaryConclusion = canonicalConclusion(match.conclusion)
+  return [
+    voluntaryConclusion === null
+      ? LEGACY_DURABLE_MATCH_RECORD_VERSION
+      : match.recordVersion,
+    match.matchId,
+    match.matchSeed,
+    match.mode,
+    match.opponentId,
+    match.opponentPolicyFingerprint,
+    match.playerColor,
+    match.playerEloAtStart,
+    [match.startingPosition.variant, match.startingPosition.chess960PositionId],
+    match.timeControl.type,
+    match.autoHintsEnabledAtStart,
+    match.moveIds,
+    match.cursor,
+    match.currentFen,
+    match.pieceHintsUsed,
+    match.moveHintsUsed,
+    ...(voluntaryConclusion === null ? [] : [voluntaryConclusion]),
+  ]
+}

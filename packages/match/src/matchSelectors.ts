@@ -1,4 +1,5 @@
 import type { BetterHintsResult } from "./betterHints.js"
+import type { MatchConclusion } from "./matchConclusion.js"
 import type { MatchMachineSnapshot } from "./matchMachine.js"
 import type {
   MatchHintFailure,
@@ -21,6 +22,14 @@ export const selectMatchTimeline = (
   snapshot: MatchMachineSnapshot,
 ): MatchTimeline => snapshot.context.timeline
 
+export const selectMatchConclusion = (
+  snapshot: MatchMachineSnapshot,
+): MatchConclusion | null => snapshot.context.conclusion
+
+export const selectDrawOfferResponse = (
+  snapshot: MatchMachineSnapshot,
+): "rejected" | null => snapshot.context.drawOfferResponse
+
 export const selectAreMatchMutationsFrozen = (
   snapshot: MatchMachineSnapshot,
 ): boolean =>
@@ -40,6 +49,16 @@ export const selectCanRedo = (snapshot: MatchMachineSnapshot): boolean =>
     snapshot.context.timeline,
     snapshot.context.playerColor,
   ) !== undefined
+
+export const selectCanOfferDraw = (snapshot: MatchMachineSnapshot): boolean =>
+  selectIsPlayerTurn(snapshot) &&
+  !selectAreMatchMutationsFrozen(snapshot) &&
+  snapshot.context.conclusion === null
+
+export const selectCanResign = (snapshot: MatchMachineSnapshot): boolean =>
+  !selectAreMatchMutationsFrozen(snapshot) &&
+  snapshot.context.conclusion === null &&
+  selectMatchPosition(snapshot).status.type === "playing"
 
 export const selectIsPlayerTurn = (snapshot: MatchMachineSnapshot): boolean =>
   snapshot.matches("playerTurn")

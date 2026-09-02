@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./chicken-draw-decision": {
+      "types": "./src/chickenDrawDecision.ts",
+      "default": "./dist/chickenDrawDecision.js"
+    },
     "./match-position-evaluation": {
       "types": "./src/matchPositionEvaluation.ts",
       "default": "./dist/matchPositionEvaluation.js"

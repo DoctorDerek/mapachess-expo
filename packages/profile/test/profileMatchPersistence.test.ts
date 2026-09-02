@@ -25,6 +25,7 @@ const durableMatch = (
 ): DurableMatchRecord =>
   Object.freeze({
     autoHintsEnabledAtStart: true,
+    conclusion: null,
     currentFen: initialPosition.fen,
     cursor: 0,
     matchId: `standard-story-chicken/${matchSeed}`,
@@ -80,6 +81,85 @@ const openCompletedProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("accepts one conclusion and rejects every later result change", async () => {
+    const actor = await openCompletedProfile()
+    const initialMatch = durableMatch()
+    const bridge = new ProfileMatchPersistenceBridge({
+      actor,
+      expectedActiveMatch: null,
+      initialMatch,
+    })
+    const controller = new AbortController()
+    await bridge.establish(controller.signal)
+
+    await bridge.persist(
+      {
+        conclusion: { type: "draw-agreement" },
+        currentFen: initialMatch.currentFen,
+        cursor: 0,
+        matchId: initialMatch.matchId,
+        moveHintsUsed: false,
+        moveIds: Object.freeze([]),
+        pieceHintsUsed: false,
+        requestId: `${initialMatch.matchId}/draw-agreement`,
+      },
+      controller.signal,
+    )
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch?.conclusion,
+    ).toEqual({ type: "draw-agreement" })
+
+    await bridge.persist(
+      {
+        conclusion: { type: "draw-agreement" },
+        currentFen: initialMatch.currentFen,
+        cursor: 0,
+        matchId: initialMatch.matchId,
+        moveHintsUsed: false,
+        moveIds: Object.freeze([]),
+        pieceHintsUsed: true,
+        requestId: `${initialMatch.matchId}/review-update`,
+      },
+      controller.signal,
+    )
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch,
+    ).toMatchObject({
+      conclusion: { type: "draw-agreement" },
+      pieceHintsUsed: true,
+    })
+
+    const changedConclusionRequest = {
+      currentFen: initialMatch.currentFen,
+      cursor: 0,
+      matchId: initialMatch.matchId,
+      moveHintsUsed: false,
+      moveIds: Object.freeze([]),
+      pieceHintsUsed: true,
+    } as const
+    await expect(
+      bridge.persist(
+        {
+          ...changedConclusionRequest,
+          conclusion: null,
+          requestId: `${initialMatch.matchId}/cleared-result`,
+        },
+        controller.signal,
+      ),
+    ).rejects.toThrow("Persisted match conclusion cannot change")
+    await expect(
+      bridge.persist(
+        {
+          ...changedConclusionRequest,
+          conclusion: { type: "resignation", winner: "black" },
+          requestId: `${initialMatch.matchId}/replaced-result`,
+        },
+        controller.signal,
+      ),
+    ).rejects.toThrow("Persisted match conclusion cannot change")
+    actor.stop()
+  })
+
   it("establishes the initial match and verifies each candidate", async () => {
     const actor = await openCompletedProfile()
     const initialMatch = durableMatch()
@@ -97,6 +177,7 @@ describe("profile-owned match persistence bridge", () => {
 
     const receipt = await bridge.persist(
       {
+        conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
         matchId: initialMatch.matchId,
@@ -119,6 +200,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,
           matchId: initialMatch.matchId,
@@ -150,6 +232,7 @@ describe("profile-owned match persistence bridge", () => {
     })
     const persistence = bridge.persist(
       {
+        conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
         matchId: initialMatch.matchId,
@@ -189,6 +272,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,
           matchId: initialMatch.matchId,

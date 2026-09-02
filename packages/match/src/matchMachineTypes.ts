@@ -4,6 +4,10 @@ import type {
   BetterHintsResult,
 } from "./betterHints.js"
 import type {
+  MatchConclusion,
+  MatchDrawOfferDecision,
+} from "./matchConclusion.js"
+import type {
   AppliedMatchMove,
   LegalMatchMove,
   MatchMoveId,
@@ -39,6 +43,10 @@ export type MatchOpponentFailure = Readonly<{
 
 export type MatchMachineEvent =
   | Readonly<{
+      decision: MatchDrawOfferDecision
+      type: "MATCH.DRAW_OFFER_REQUESTED"
+    }>
+  | Readonly<{
       moveId: MatchMoveId
       type: "MATCH.MOVE_REQUESTED"
     }>
@@ -46,6 +54,7 @@ export type MatchMachineEvent =
   | Readonly<{ type: "MATCH.OPPONENT_RETRY_REQUESTED" }>
   | Readonly<{ type: "MATCH.PIECE_HINTS_REQUESTED" }>
   | Readonly<{ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" }>
+  | Readonly<{ type: "MATCH.RESIGN_REQUESTED" }>
   | Readonly<{ type: "MATCH.UNDO_REQUESTED" }>
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
@@ -58,6 +67,7 @@ type MatchMachineSharedInput = Readonly<{
 }>
 
 export type ResumedMatchState = Readonly<{
+  conclusion: MatchConclusion | null
   moveHintsUsed: boolean
   pieceHintsUsed: boolean
   timeline: MatchTimeline
@@ -77,7 +87,9 @@ export type MatchMachineInput =
 
 export type MatchMachineContext = Readonly<{
   autoHintsEnabled: boolean
+  conclusion: MatchConclusion | null
   durability: MatchDurability
+  drawOfferResponse: "rejected" | null
   hintAnalyst: BetterHintsAnalyst | null
   hintFailure: MatchHintFailure | null
   hints: BetterHintsResult | null

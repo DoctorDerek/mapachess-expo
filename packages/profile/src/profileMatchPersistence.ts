@@ -50,6 +50,7 @@ const candidateFromRequest = (
 
   return Object.freeze({
     ...initialMatch,
+    conclusion: request.conclusion,
     currentFen: request.currentFen,
     cursor: request.cursor,
     moveHintsUsed: request.moveHintsUsed,
@@ -67,6 +68,27 @@ const requireMonotonicHintUse = (
     (accepted.moveHintsUsed && !candidate.moveHintsUsed)
   ) {
     throw new TypeError("Persisted hint use cannot move backward.")
+  }
+}
+
+const conclusionsEqual = (
+  left: DurableMatchRecord["conclusion"],
+  right: DurableMatchRecord["conclusion"],
+): boolean =>
+  left?.type === right?.type &&
+  (left?.type !== "checkmate" && left?.type !== "resignation"
+    ? true
+    : right?.type === left.type && right.winner === left.winner)
+
+const requireMonotonicConclusion = (
+  accepted: DurableMatchRecord,
+  candidate: DurableMatchRecord,
+): void => {
+  if (
+    accepted.conclusion !== null &&
+    !conclusionsEqual(accepted.conclusion, candidate.conclusion)
+  ) {
+    throw new TypeError("Persisted match conclusion cannot change.")
   }
 }
 
@@ -105,6 +127,7 @@ export default class ProfileMatchPersistenceBridge implements MatchPersistence {
 
     const candidate = candidateFromRequest(this.#initialMatch, request)
     requireMonotonicHintUse(this.#acceptedMatch, candidate)
+    requireMonotonicConclusion(this.#acceptedMatch, candidate)
     await this.#persistCandidate(candidate, signal)
     return Object.freeze({
       requestId: request.requestId,

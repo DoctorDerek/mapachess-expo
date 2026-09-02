@@ -109,6 +109,7 @@ export default function StandardChickenPlaytest({
           opponent: runtime.opponent,
           playerColor: activeMatch.playerColor,
           resumedState: {
+            conclusion: activeMatch.conclusion,
             moveHintsUsed: activeMatch.moveHintsUsed,
             pieceHintsUsed: activeMatch.pieceHintsUsed,
             timeline: resumedMatch.timeline,
