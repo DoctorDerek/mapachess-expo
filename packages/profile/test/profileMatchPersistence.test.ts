@@ -11,7 +11,9 @@ import { decodeMapachessPortableBackup } from "../src/portableBackup.js"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "../src/profileMachine.js"
-import ProfileMatchPersistenceBridge from "../src/profileMatchPersistence.js"
+import ProfileMatchPersistenceBridge, {
+  persistProfileActiveMatch,
+} from "../src/profileMatchPersistence.js"
 import { completeAutoHintsFirstRun } from "../src/profileMutations.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
@@ -81,6 +83,64 @@ const openCompletedProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("atomically replaces and clears the active match", async () => {
+    const actor = await openCompletedProfile()
+    const initialMatch = durableMatch()
+    const replacementMatch = durableMatch("00000005000000060000000700000008")
+    const controller = new AbortController()
+
+    await persistProfileActiveMatch({
+      actor,
+      candidate: initialMatch,
+      expectedActiveMatch: null,
+      signal: controller.signal,
+    })
+    await persistProfileActiveMatch({
+      actor,
+      candidate: replacementMatch,
+      expectedActiveMatch: initialMatch,
+      signal: controller.signal,
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.activeMatch).toEqual(
+      replacementMatch,
+    )
+
+    await persistProfileActiveMatch({
+      actor,
+      candidate: null,
+      expectedActiveMatch: replacementMatch,
+      signal: controller.signal,
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.activeMatch).toBeNull()
+    actor.stop()
+  })
+
+  it("rejects replacement when the expected active match is stale", async () => {
+    const actor = await openCompletedProfile()
+    const acceptedMatch = durableMatch("00000005000000060000000700000008")
+    const controller = new AbortController()
+
+    await persistProfileActiveMatch({
+      actor,
+      candidate: acceptedMatch,
+      expectedActiveMatch: null,
+      signal: controller.signal,
+    })
+
+    await expect(
+      persistProfileActiveMatch({
+        actor,
+        candidate: durableMatch("000000090000000a0000000b0000000c"),
+        expectedActiveMatch: durableMatch(),
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow("Canonical active match changed")
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.activeMatch).toEqual(
+      acceptedMatch,
+    )
+    actor.stop()
+  })
+
   it("accepts one conclusion and rejects every later result change", async () => {
     const actor = await openCompletedProfile()
     const initialMatch = durableMatch()
