@@ -17,9 +17,10 @@ pre-production. Its defining design combines:
 - Standard and Chess960 across Story and Challenge, with four separately tracked
   player Elo ratings.
 
-There is no public playable build yet. Difficulty labels, including Chicken
-Stockfish at 100 Elo, remain internal and provisional until their evidence and
-human playtesting gates are complete.
+The current web development build exposes the first Standard Story opponent
+through the normal application route. Chicken Stockfish's 100-Elo target is
+explicitly provisional and unrated until calibration evidence and human
+playtesting support promotion.
 
 ## Current repository
 
@@ -32,21 +33,26 @@ The implemented foundation currently provides:
   evidence and local BayesElo rating analysis.
 - An evidence-ranked provisional Standard Chicken shortlist without automatic
   policy promotion or a public rating claim.
+- A durable Standard Story browser match with exact Better Hints, evaluation,
+  Undo/Redo, Resign, Offer Draw, reload recovery, Restart Match, and Return to
+  Menu.
 - Advisory ESLint, blocking TypeScript and tests, measured coverage reporting,
   dependency review, advisory XState topology visualization, deployed-preview
   Playwright coverage, and five-run Production Mobile Web Lighthouse reporting.
 
 Stockfish and calibration executables, generated evidence, the private game
-design document, commercial assets, and player data are never committed.
-Ordinary CI never provisions or runs Stockfish and never plays calibration
-games.
+design document, commercial assets, and player data are never committed. Web
+builds provision the exact pinned browser runtime, but ordinary GitHub quality
+CI never runs Stockfish or calibration games.
 
 ## Next implementation phases
 
-1. Prove one typed Stockfish contract across a web WASM worker and Expo native
-   modules.
-2. Establish the shared web and mobile application foundation.
-3. Deliver and playtest the complete Standard Story Chicken experience.
+1. Playtest and complete the first Standard Story opponent's full QREAM
+   presentation, results, progression, and responsive behavior.
+2. Expand the same shared architecture across all twenty-three Story opponents
+   without making Chicken the owner of reusable behavior.
+3. Complete Chess960 Story and both Challenge modes through the same canonical
+   match, profile, and engine contracts.
 
 The planned application stack uses Next.js, React, Tailwind CSS, shadcn/ui, and
 Motion for web; React Native, Expo, Uniwind, React Native Reusables, and React
@@ -78,7 +84,8 @@ corepack pnpm build
 corepack pnpm test:e2e
 ```
 
-Real-engine verification is explicit and local only:
+Native-engine, calibration, and dedicated browser-engine verification remain
+explicit rather than part of ordinary quality CI:
 
 ```powershell
 corepack pnpm stockfish:provision
@@ -92,7 +99,7 @@ local-only provisioning boundary are recorded in
 
 ## Production web deployment
 
-The honest pre-production status page is live at
+The provisional web development build is live at
 [mapachess-expo-web.vercel.app](https://mapachess-expo-web.vercel.app/). Vercel
 creates Preview deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
@@ -101,9 +108,10 @@ publishes the median of five Mobile Web Lighthouse runs against the canonical
 Production URL and rejects audits that leave that origin.
 
 The published Lighthouse report and dynamic scores are available through
-[GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The current
-placeholder requires no environment variables or `vercel.json`. Local Vercel
-project state remains ignored under `.vercel/`.
+[GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The application
+requires no playtest flag or `vercel.json`; each web build provisions and
+verifies the pinned same-origin Stockfish.js runtime before Next.js compiles.
+Local Vercel project state remains ignored under `.vercel/`.
 
 ## Rights and third-party software
 
@@ -117,7 +125,8 @@ non-code materials. Third-party software and assets retain their respective
 licenses.
 
 [Stockfish](https://github.com/official-stockfish/Stockfish) is distributed
-under the GNU General Public License version 3. Any future distributed
-Stockfish-powered Mapachess build must include the applicable notices and make
-the complete corresponding source and build instructions available for the
-exact distributed code. No distributable Mapachess build exists yet.
+under the GNU General Public License version 3. Mapachess web builds distribute
+the pinned Stockfish.js runtime documented in
+[packages/stockfish/WEB_RUNTIME.md](packages/stockfish/WEB_RUNTIME.md), including
+the exact corresponding source revisions, upstream license, and source-build
+instructions.
