@@ -11,13 +11,16 @@ import { decodeMapachessPlayerData } from "../packages/profile/dist/playerDataCo
 
 type DeterministicBrowserCryptography = Readonly<{
   digestDelayMilliseconds: number
-  matchWords: readonly [number, number, number, number]
+  matchWordSequence: readonly (readonly [number, number, number, number])[]
   positionSeed: string
 }>
 
 const WHITE_MATCH_WORDS = [1, 2, 3, 4] as const
 const BLACK_MATCH_WORDS = [1, 0x0200_0000, 3, 4] as const
-const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
+const SECOND_WHITE_MATCH_WORDS = [5, 6, 7, 8] as const
+const WHITE_MATCH_SEED = "00000001000000020000000300000004"
+const BLACK_MATCH_SEED = "00000001020000000000000300000004"
+const SECOND_WHITE_MATCH_SEED = "00000005000000060000000700000008"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
 const OWNED_WORKER_COUNT = 3
 
@@ -32,12 +35,24 @@ const installDeterministicCryptography = async (
     const originalDigest = globalThis.crypto.subtle.digest.bind(
       globalThis.crypto.subtle,
     )
+    let matchWordIndex = 0
 
     Object.defineProperty(globalThis.crypto, "getRandomValues", {
       configurable: true,
       value: <Value extends ArrayBufferView | null>(array: Value): Value => {
         if (array instanceof Uint32Array && array.length === 4) {
-          array.set(configuration.matchWords)
+          const matchWords =
+            configuration.matchWordSequence[
+              Math.min(
+                matchWordIndex,
+                configuration.matchWordSequence.length - 1,
+              )
+            ]
+          if (matchWords === undefined) {
+            throw new Error("Deterministic match seed sequence is empty.")
+          }
+          matchWordIndex += 1
+          array.set(matchWords)
           return array
         }
         return originalGetRandomValues(array)
@@ -111,7 +126,10 @@ const beginBrowserDiagnostics = (page: Page) => {
     assertClean: async (
       expectedOwnedWorkerCount: number = OWNED_WORKER_COUNT,
     ): Promise<void> => {
-      await page.goto("/")
+      await page.getByRole("button", { name: "Return to Menu" }).click()
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Standard Story" }),
+      ).toBeVisible()
       await expect.poll(() => closedWorkerCount).toBe(expectedOwnedWorkerCount)
       expect(page.workers()).toHaveLength(0)
       expect(workerUrls).toHaveLength(expectedOwnedWorkerCount)
@@ -189,9 +207,17 @@ const expectEvaluationGutterLayout = async (
   expect(gutterBox.x + gutterBox.width).toBeLessThan(commandColumnBox.x)
 }
 
-const openFirstChickenMatch = async (page: Page): Promise<void> => {
-  await page.goto("/playtest")
-  await page.getByRole("button", { name: "Keep Auto-Hints On" }).click()
+const openFirstChickenMatch = async (
+  page: Page,
+  autoHintsEnabled = true,
+): Promise<void> => {
+  await page.goto("/")
+  await page
+    .getByRole("button", {
+      name: autoHintsEnabled ? "Keep Auto-Hints On" : "Turn Auto-Hints Off",
+    })
+    .click()
+  await page.getByRole("button", { name: "Play Chicken Stockfish" }).click()
   await expect(
     page.getByRole("heading", {
       exact: true,
@@ -331,7 +357,7 @@ test("persists and resumes White through hints, cancellation, and redo", async (
   await page.setViewportSize({ height: 800, width: 1_280 })
   await installDeterministicCryptography(page, {
     digestDelayMilliseconds: 750,
-    matchWords: WHITE_MATCH_WORDS,
+    matchWordSequence: [WHITE_MATCH_WORDS],
     positionSeed: STOCKFISH_POSITION_SEED,
   })
   const diagnostics = beginBrowserDiagnostics(page)
@@ -348,8 +374,8 @@ test("persists and resumes White through hints, cancellation, and redo", async (
   expect(initialMatch).toMatchObject({
     autoHintsEnabledAtStart: true,
     cursor: 0,
-    matchId: `standard-story-chicken/${RANDOM_POSITION_SEED}`,
-    matchSeed: RANDOM_POSITION_SEED,
+    matchId: `standard-story-chicken/${WHITE_MATCH_SEED}`,
+    matchSeed: WHITE_MATCH_SEED,
     moveIds: [],
     opponentId: "chicken-stockfish",
     playerColor: "white",
@@ -452,8 +478,8 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   await page.setViewportSize({ height: 800, width: 1_279 })
   await installDeterministicCryptography(page, {
     digestDelayMilliseconds: 0,
-    matchWords: BLACK_MATCH_WORDS,
-    positionSeed: RANDOM_POSITION_SEED,
+    matchWordSequence: [BLACK_MATCH_WORDS],
+    positionSeed: WHITE_MATCH_SEED,
   })
   const diagnostics = beginBrowserDiagnostics(page)
 
@@ -474,11 +500,76 @@ test("plays Black through automatic hints and a complete Chicken turn", async ({
   await diagnostics.assertClean()
 })
 
+test("restarts with a fresh side and returns through the Story menu", async ({
+  page,
+}) => {
+  await installDeterministicCryptography(page, {
+    digestDelayMilliseconds: 0,
+    matchWordSequence: [
+      WHITE_MATCH_WORDS,
+      BLACK_MATCH_WORDS,
+      SECOND_WHITE_MATCH_WORDS,
+    ],
+    positionSeed: WHITE_MATCH_SEED,
+  })
+  const diagnostics = beginBrowserDiagnostics(page)
+
+  await openFirstChickenMatch(page, false)
+  const initialPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(initialPlayerData.activeMatch).toMatchObject({
+    matchSeed: WHITE_MATCH_SEED,
+    playerColor: "white",
+  })
+
+  await page.getByRole("button", { name: "Restart Match" }).click()
+  await expect(
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Chicken Stockfish",
+    }),
+  ).toBeVisible()
+  await expect(page.getByText("Black", { exact: true })).toBeVisible()
+  await expect(page.getByText("Your move.", { exact: true })).toBeVisible()
+
+  const restartedPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(restartedPlayerData.activeMatch).toMatchObject({
+    matchSeed: BLACK_MATCH_SEED,
+    playerColor: "black",
+  })
+  expect(restartedPlayerData.activeMatch?.matchId).not.toBe(
+    initialPlayerData.activeMatch?.matchId,
+  )
+
+  await page.getByRole("button", { name: "Return to Menu" }).click()
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Standard Story" }),
+  ).toBeVisible()
+  expect((await readCurrentBrowserPlayerData(page)).activeMatch).toBeNull()
+
+  await page.getByRole("button", { name: "Play Chicken Stockfish" }).click()
+  await expect(
+    page.getByRole("heading", {
+      exact: true,
+      level: 1,
+      name: "Chicken Stockfish",
+    }),
+  ).toBeVisible()
+  await expect(page.getByText("White", { exact: true })).toBeVisible()
+  const thirdPlayerData = await readCurrentBrowserPlayerData(page)
+  expect(thirdPlayerData.activeMatch).toMatchObject({
+    matchSeed: SECOND_WHITE_MATCH_SEED,
+    playerColor: "white",
+  })
+
+  await diagnostics.assertClean(OWNED_WORKER_COUNT * 3)
+})
+
 test("persists an accepted Chicken draw across reload", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 1_280 })
   await installDeterministicCryptography(page, {
     digestDelayMilliseconds: 0,
-    matchWords: WHITE_MATCH_WORDS,
+    matchWordSequence: [WHITE_MATCH_WORDS],
     positionSeed: STOCKFISH_POSITION_SEED,
   })
   const diagnostics = beginBrowserDiagnostics(page)
