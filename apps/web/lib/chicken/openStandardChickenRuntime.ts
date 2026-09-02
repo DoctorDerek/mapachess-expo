@@ -1,19 +1,14 @@
-import {
-  evaluatePositionWithStockfish,
-  type PositionEvaluator,
-} from "@mapachess/evaluation/position-evaluator"
+import { evaluatePositionWithStockfish } from "@mapachess/evaluation/position-evaluator"
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
-import type { BetterHintsAnalyst } from "@mapachess/match/better-hints"
-import type { MatchOpponent } from "@mapachess/match/match-machine"
-import type { MatchColor } from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import type { DeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
+import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import createWebStockfishSession, {
   type CreateWebStockfishSessionOptions,
 } from "../stockfish/createWebStockfishSession"
@@ -51,18 +46,6 @@ const STANDARD_CHICKEN_HINT_WORKER_NAME =
   "mapachess-stockfish-18-better-hints" as const
 const STANDARD_CHICKEN_EVALUATION_WORKER_NAME =
   "mapachess-stockfish-18-evaluation" as const
-
-export type StandardChickenRuntime = Readonly<{
-  close: () => Promise<void>
-  engineIdentity: StockfishUciIdentity
-  hintAnalyst: BetterHintsAnalyst
-  matchId: string
-  matchSeed: DeterministicRandomSeed
-  opponent: MatchOpponent
-  opponentPolicyFingerprint: string
-  playerColor: MatchColor
-  positionEvaluator: PositionEvaluator
-}>
 
 export type OpenStandardChickenRuntimeInput = Readonly<{
   cryptography?: StandardChickenCryptography
@@ -117,7 +100,7 @@ const closeAfterFailedOpen = async (
 
 export default async function openStandardChickenRuntime(
   input: OpenStandardChickenRuntimeInput = {},
-): Promise<StandardChickenRuntime> {
+): Promise<WebMatchRuntime> {
   const cryptography = input.cryptography ?? globalThis.crypto
   const matchSeed =
     input.matchSeed ?? generateStandardChickenMatchSeed(cryptography)

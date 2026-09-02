@@ -12,12 +12,11 @@ import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
 import ProfileMatchPersistenceBridge from "@mapachess/profile/profile-match-persistence"
-import openStandardChickenRuntime, {
-  type StandardChickenRuntime,
-} from "../../lib/chicken/openStandardChickenRuntime"
+import openStandardChickenRuntime from "../../lib/chicken/openStandardChickenRuntime"
 import resumeStandardChickenMatch, {
   buildFreshStandardChickenMatch,
 } from "../../lib/chicken/standardChickenDurableMatch"
+import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import StandardChickenMatch from "./StandardChickenMatch"
 
 type PlaytestRuntimeState =
@@ -26,7 +25,7 @@ type PlaytestRuntimeState =
       actor: ActorRefFrom<typeof matchMachine>
       evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
       match: DurableMatchRecord
-      runtime: StandardChickenRuntime
+      runtime: WebMatchRuntime
       status: "ready"
     }>
   | Readonly<{ status: "failed" }>
@@ -59,7 +58,7 @@ export default function StandardChickenPlaytest({
       null
     let evaluationBinding: MatchPositionEvaluationBinding | null = null
     let matchActor: ActorRefFrom<typeof matchMachine> | null = null
-    let openedRuntime: StandardChickenRuntime | null = null
+    let openedRuntime: WebMatchRuntime | null = null
 
     setRuntimeState({ status: "opening" })
     void (async () => {

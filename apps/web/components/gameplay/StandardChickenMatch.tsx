@@ -23,7 +23,7 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
-import type { StandardChickenRuntime } from "../../lib/chicken/openStandardChickenRuntime"
+import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
@@ -31,7 +31,7 @@ import PositionEvaluationGutter from "./PositionEvaluationGutter"
 export type StandardChickenMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
-  runtime: StandardChickenRuntime
+  runtime: WebMatchRuntime
 }>
 
 const controlClasses =
@@ -39,7 +39,7 @@ const controlClasses =
 
 const matchStatusText = (
   snapshot: MatchMachineSnapshot,
-  playerColor: StandardChickenRuntime["playerColor"],
+  playerColor: WebMatchRuntime["playerColor"],
 ): string => {
   const conclusion = selectMatchConclusion(snapshot)
   const drawOfferResponse = selectDrawOfferResponse(snapshot)

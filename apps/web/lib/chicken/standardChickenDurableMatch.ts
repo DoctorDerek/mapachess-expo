@@ -6,7 +6,7 @@ import {
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import type { StandardChickenRuntime } from "./openStandardChickenRuntime"
+import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import {
   selectStandardStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
@@ -19,7 +19,7 @@ const STANDARD_CHICKEN_STARTING_POSITION = Object.freeze({
 })
 
 export type ResumedStandardChickenMatch = Readonly<{
-  matchSeed: StandardChickenRuntime["matchSeed"]
+  matchSeed: WebMatchRuntime["matchSeed"]
   timeline: MatchTimeline
 }>
 
@@ -27,7 +27,7 @@ export type FreshStandardChickenMatchInput = Readonly<{
   autoHintsEnabledAtStart: boolean
   playerEloAtStart: number
   runtime: Pick<
-    StandardChickenRuntime,
+    WebMatchRuntime,
     "matchId" | "matchSeed" | "opponentPolicyFingerprint" | "playerColor"
   >
 }>
