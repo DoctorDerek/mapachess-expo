@@ -150,9 +150,9 @@ describe("position evaluation lifecycle", () => {
 
     attempts[0]?.deferredResult.reject(new Error("superseded failure"))
     await waitFor(actor, () => attempts.length === 2)
-    expect(attempts.map(({ request: attempted }) => attempted.requestId)).toEqual(
-      [first.requestId, latest.requestId],
-    )
+    expect(
+      attempts.map(({ request: attempted }) => attempted.requestId),
+    ).toEqual([first.requestId, latest.requestId])
 
     attempts[1]?.deferredResult.reject(new Error("latest failure"))
     await waitFor(actor, (snapshot) => snapshot.matches("failure"))

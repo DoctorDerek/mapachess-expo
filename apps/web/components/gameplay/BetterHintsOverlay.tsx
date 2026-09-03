@@ -155,7 +155,6 @@ export default function BetterHintsOverlay({
             )
           })
         : null}
-
     </svg>
   )
 }
