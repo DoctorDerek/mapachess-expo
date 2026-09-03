@@ -126,6 +126,52 @@ describe("position evaluation lifecycle", () => {
     actor.stop()
   })
 
+  it("coalesces queued positions and retries the latest request after failure", async () => {
+    const attempts: Array<{
+      deferredResult: Deferred<PositionEvaluationResult>
+      request: PositionEvaluationRequest
+    }> = []
+    const evaluator: PositionEvaluator = (received) => {
+      const deferredResult = deferred<PositionEvaluationResult>()
+      attempts.push({ deferredResult, request: received })
+      return deferredResult.promise
+    }
+    const actor = startActor(evaluator)
+    const first = request("evaluation/coalesced-first")
+    const skipped = request("evaluation/coalesced-skipped")
+    const latest = request("evaluation/coalesced-latest")
+
+    actor.send({ request: first, type: "EVALUATION.POSITION_REQUESTED" })
+    await waitFor(actor, () => attempts.length === 1)
+    actor.send({ request: skipped, type: "EVALUATION.POSITION_REQUESTED" })
+    actor.send({ request: latest, type: "EVALUATION.POSITION_REQUESTED" })
+    await Promise.resolve()
+    expect(attempts).toHaveLength(1)
+
+    attempts[0]?.deferredResult.reject(new Error("superseded failure"))
+    await waitFor(actor, () => attempts.length === 2)
+    expect(attempts.map(({ request: attempted }) => attempted.requestId)).toEqual(
+      [first.requestId, latest.requestId],
+    )
+
+    attempts[1]?.deferredResult.reject(new Error("latest failure"))
+    await waitFor(actor, (snapshot) => snapshot.matches("failure"))
+    expect(selectPositionEvaluationFailure(actor.getSnapshot())).toEqual({
+      requestId: latest.requestId,
+      type: "EVALUATION.REQUEST_FAILED",
+    })
+
+    actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
+    await waitFor(actor, () => attempts.length === 3)
+    expect(attempts[2]?.request).toBe(latest)
+    attempts[2]?.deferredResult.resolve(result(latest, 42))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 42,
+    })
+    actor.stop()
+  })
+
   it("retains an accepted score while a replacement position analyzes", async () => {
     const replacement = deferred<PositionEvaluationResult>()
     const e4 = listLegalMatchMoves(position).find(({ uci }) => uci === "e2e4")
