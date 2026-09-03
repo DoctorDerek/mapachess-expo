@@ -95,14 +95,14 @@ export default function PositionEvaluationGutter({
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}
       aria-valuetext={statusText}
-      className="relative h-10 w-full overflow-hidden rounded-xl border border-white/25 bg-slate-950 shadow-[0_0.75rem_2rem_rgba(2,6,23,0.35)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)] xl:rounded-2xl"
+      className="relative h-10 w-full overflow-hidden rounded-[0.65rem_0.15rem_0.65rem_0.15rem] border-[3px] border-[var(--mapa-ink)] bg-[var(--mapa-ink)] shadow-[0.25rem_0.25rem_0_var(--mapa-coral),0.45rem_0.45rem_0_var(--mapa-sun)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
       data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
       role="meter"
       style={style}
     >
       <div
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 w-[var(--white-share)] bg-slate-100 transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
+        className={`absolute inset-y-0 left-0 w-[var(--white-share)] bg-[var(--mapa-cream)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
       />
       <span
         aria-hidden="true"
