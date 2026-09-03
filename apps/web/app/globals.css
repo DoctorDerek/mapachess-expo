@@ -42,13 +42,6 @@ body {
   background-size: 3rem 3rem;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
 button {
   -webkit-tap-highlight-color: transparent;
 }
