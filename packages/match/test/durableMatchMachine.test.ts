@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import type { BetterHintsRequest } from "../src/betterHints.js"
 import matchMachine, {
+  selectAutoHintMode,
   selectCanOfferDraw,
   selectCanRedo,
   selectCanResign,
@@ -444,6 +445,70 @@ describe("verified durable match mutation gate", () => {
     expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
     expect(persistence.requests).toHaveLength(persistedRequestCount)
     expect(analyze).toHaveBeenCalledTimes(2)
+    actor.stop()
+  })
+
+  it("persists live hint-mode changes before changing visible hints", async () => {
+    const persistence = new ControlledPersistence()
+    const actor = createActor(matchMachine, {
+      input: {
+        autoHintMode: "no-auto-hints",
+        durability: { persistence, type: "durable" },
+        hintAnalyst: {
+          analyze: (request) => Promise.resolve(createHintResult(request)),
+        },
+        initialPosition: standardInitialPosition(),
+        matchId: "durable-standard-chicken-live-hint-mode",
+        opponent: {
+          selectMove: async () => {
+            throw new Error("This test does not request an opponent move.")
+          },
+        },
+        playerColor: "white",
+      },
+    }).start()
+
+    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+    await waitFor(actor, selectIsPersistingMutation)
+    persistence.succeedNext()
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+
+    actor.send({
+      autoHintMode: "auto-move-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(persistence.requests[1]).toMatchObject({
+      autoHintMode: "auto-move-hints",
+      moveHintsUsed: true,
+      pieceHintsUsed: true,
+    })
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("no-auto-hints")
+    expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
+
+    persistence.succeedNext()
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "move-hints",
+    )
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-move-hints")
+
+    actor.send({
+      autoHintMode: "no-auto-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(persistence.requests[2]).toMatchObject({
+      autoHintMode: "no-auto-hints",
+      moveHintsUsed: true,
+      pieceHintsUsed: true,
+    })
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "ready")
+    expect(selectMatchHints(actor.getSnapshot())).toBeNull()
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
     actor.stop()
   })
 

@@ -33,6 +33,10 @@ export const replaceActiveMatch = (
     ...current,
     activeMatch,
     revision: current.revision + 1,
+    settings:
+      activeMatch === null
+        ? current.settings
+        : Object.freeze({ autoHintMode: activeMatch.autoHintMode }),
   })
 
 export const createFreshRecoveryData = (

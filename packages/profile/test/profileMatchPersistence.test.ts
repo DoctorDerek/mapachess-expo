@@ -267,8 +267,12 @@ describe("profile-owned match persistence bridge", () => {
     actor.stop()
   })
 
-  it("waits behind another profile write without losing that update", async () => {
+  it("waits behind a profile write and syncs the active hint preference", async () => {
     const actor = await openProfile()
+    actor.send({
+      autoHintMode: "no-auto-hints",
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+    })
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
       actor,
@@ -277,10 +281,12 @@ describe("profile-owned match persistence bridge", () => {
     })
     const controller = new AbortController()
     await bridge.establish(controller.signal)
-
     actor.send({
       autoHintMode: "no-auto-hints",
       type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
+      autoHintMode: "auto-move-hints",
     })
     const persistence = bridge.persist(
       {
@@ -300,7 +306,7 @@ describe("profile-owned match persistence bridge", () => {
     await persistence
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
       activeMatch: { moveHintsUsed: true, pieceHintsUsed: true },
-      settings: { autoHintMode: "no-auto-hints" },
+      settings: { autoHintMode: "auto-move-hints" },
     })
     actor.stop()
   })

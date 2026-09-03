@@ -28,6 +28,7 @@ import {
   prepareImportPending,
   prepareInitialPending,
   prepareLastKnownGoodRecoveryPending,
+  requireCurrentPlayerData,
   requireImportRaw,
   requireLoaded,
   requirePendingWrite,
@@ -128,6 +129,8 @@ const profileMachineDefinition = setup({
     })),
   },
   guards: {
+    autoHintModeIsStandalone: ({ context }) =>
+      requireCurrentPlayerData(context).activeMatch === null,
     currentIsInvalid: ({ context }) =>
       requireLoaded(context).current.type === "invalid",
     currentIsMissing: ({ context }) =>
@@ -197,6 +200,7 @@ const profileMachineDefinition = setup({
         },
         "PROFILE.AUTO_HINT_MODE_CHANGED": {
           actions: "prepareAutoHintModeWrite",
+          guard: "autoHintModeIsStandalone",
           target: "persisting",
         },
         "PROFILE.IMPORT_PREVIEW_REQUESTED": importRequestTransition,

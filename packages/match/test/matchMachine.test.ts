@@ -6,6 +6,7 @@ import type {
   BetterHintsResult,
 } from "../src/betterHints"
 import matchMachine, {
+  selectAutoHintMode,
   selectCanRedo,
   selectCanUndo,
   selectHintFailure,
@@ -214,6 +215,61 @@ describe("scoped XState match flow", () => {
     expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
     expect(selectMove).toHaveBeenCalledTimes(1)
+    actor.stop()
+  })
+
+  it("applies live automatic hint modes without resetting medal evidence", async () => {
+    const analyze = vi.fn((request: BetterHintsRequest) =>
+      Promise.resolve(createHintResult(request)),
+    )
+    const actor = createActor(matchMachine, {
+      input: {
+        autoHintMode: "no-auto-hints",
+        durability: { type: "ephemeral" },
+        hintAnalyst: { analyze },
+        initialPosition: standardInitialPosition(),
+        matchId: "standard-story-chicken-live-hint-mode",
+        opponent: createScriptedOpponent(["e7e5"]).opponent,
+        playerColor: "white",
+      },
+    }).start()
+
+    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+    const acceptedHints = selectMatchHints(actor.getSnapshot())
+
+    actor.send({
+      autoHintMode: "auto-move-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-move-hints")
+    expect(selectHintStage(actor.getSnapshot())).toBe("move-hints")
+    expect(selectMatchHints(actor.getSnapshot())).toBe(acceptedHints)
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+
+    actor.send({
+      autoHintMode: "no-auto-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("no-auto-hints")
+    expect(selectHintStage(actor.getSnapshot())).toBe("ready")
+    expect(selectMatchHints(actor.getSnapshot())).toBeNull()
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
+    expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
+
+    actor.send({
+      autoHintMode: "auto-piece-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    await waitFor(
+      actor,
+      (snapshot) => selectHintStage(snapshot) === "piece-hints",
+    )
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-piece-hints")
+    expect(analyze).toHaveBeenCalledTimes(2)
     actor.stop()
   })
 

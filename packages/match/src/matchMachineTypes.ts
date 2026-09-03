@@ -44,6 +44,10 @@ export type MatchOpponentFailure = Readonly<{
 
 export type MatchMachineEvent =
   | Readonly<{
+      autoHintMode: AutoHintMode
+      type: "MATCH.AUTO_HINT_MODE_CHANGED"
+    }>
+  | Readonly<{
       decision: MatchDrawOfferDecision
       type: "MATCH.DRAW_OFFER_REQUESTED"
     }>

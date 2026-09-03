@@ -21,6 +21,7 @@ import {
 import { currentMatchPosition } from "./matchTimeline.js"
 import {
   acceptedPendingMutation,
+  autoHintModeState,
   createHintsRequest,
   createInitialContext,
   createOpponentRequest,
@@ -29,6 +30,7 @@ import {
   moveIsLegal,
   opponentRequestFailure,
   pendingAcceptedHintsMutation,
+  pendingAutoHintModeMutation,
   pendingConclusionMutation,
   pendingMoveHintsMutation,
   pendingPositionMutation,
@@ -57,6 +59,14 @@ const matchCanConclude = (context: MatchMachineContext): boolean =>
   context.conclusion === null &&
   context.pendingMutation === null &&
   currentMatchPosition(context.timeline).status.type === "playing"
+
+const autoHintModeCanChange = (
+  context: MatchMachineContext,
+  event: MatchMachineEvent,
+): boolean =>
+  event.type === "MATCH.AUTO_HINT_MODE_CHANGED" &&
+  event.autoHintMode !== context.autoHintMode &&
+  context.pendingMutation === null
 
 const drawOfferDecisionMatches = (
   context: MatchMachineContext,
@@ -88,6 +98,12 @@ const matchMachineDefinition = setup({
     >(({ input, signal }) => input.persistence.persist(input.request, signal)),
   },
   actions: {
+    applyAutoHintMode: assign(({ context, event }) => {
+      if (event.type !== "MATCH.AUTO_HINT_MODE_CHANGED") {
+        throw new Error("Hint-mode action received a non-setting event.")
+      }
+      return autoHintModeState(context, event.autoHintMode)
+    }),
     applyRequestedMove: assign(({ context, event }) => {
       if (event.type !== "MATCH.MOVE_REQUESTED") {
         throw new Error("Move action received a non-move event.")
@@ -128,6 +144,18 @@ const matchMachineDefinition = setup({
       pendingMutation: pendingMoveHintsMutation(context),
       persistenceFailure: null,
     })),
+    prepareAutoHintModeMutation: assign(({ context, event }) => {
+      if (event.type !== "MATCH.AUTO_HINT_MODE_CHANGED") {
+        throw new Error("Hint-mode persistence received a non-setting event.")
+      }
+      return {
+        pendingMutation: pendingAutoHintModeMutation(
+          context,
+          event.autoHintMode,
+        ),
+        persistenceFailure: null,
+      }
+    }),
     prepareAcceptedDrawOfferMutation: assign(({ context }) => ({
       pendingMutation: pendingConclusionMutation(
         context,
@@ -222,6 +250,12 @@ const matchMachineDefinition = setup({
       drawOfferDecisionMatches(context, event, "accepted"),
     autoMoveHintsAreEnabled: ({ context }) =>
       context.autoHintMode === "auto-move-hints",
+    autoHintModeChangeNeedsNoPersistence: ({ context, event }) =>
+      context.durability.type === "ephemeral" &&
+      autoHintModeCanChange(context, event),
+    autoHintModeChangeNeedsPersistence: ({ context, event }) =>
+      context.durability.type === "durable" &&
+      autoHintModeCanChange(context, event),
     canRejectDrawOffer: ({ context, event }) =>
       drawOfferDecisionMatches(context, event, "rejected"),
     canResignEphemerally: ({ context }) =>
@@ -262,12 +296,28 @@ const matchMachineDefinition = setup({
       moveIsLegal(context.timeline, event.moveId),
     shouldStartAutoHints: ({ context }) =>
       context.autoHintMode !== "no-auto-hints" && context.hintAnalyst !== null,
+    shouldShowAcceptedMoveHints: ({ context }) =>
+      context.hints !== null && context.autoHintMode === "auto-move-hints",
+    shouldShowAcceptedPieceHints: ({ context }) =>
+      context.hints !== null && context.autoHintMode === "auto-piece-hints",
   },
 }).createMachine({
   id: "match",
   initial: "setup",
   context: ({ input }) => createInitialContext(input),
   on: {
+    "MATCH.AUTO_HINT_MODE_CHANGED": [
+      {
+        actions: "prepareAutoHintModeMutation",
+        guard: "autoHintModeChangeNeedsPersistence",
+        target: "#match.persistingMutation",
+      },
+      {
+        actions: "applyAutoHintMode",
+        guard: "autoHintModeChangeNeedsNoPersistence",
+        target: "#match.resolving",
+      },
+    ],
     "MATCH.DRAW_OFFER_REQUESTED": [
       {
         actions: "prepareAcceptedDrawOfferMutation",
@@ -312,10 +362,20 @@ const matchMachineDefinition = setup({
       initial: "ready",
       states: {
         ready: {
-          always: {
-            guard: "shouldStartAutoHints",
-            target: "analyzing",
-          },
+          always: [
+            {
+              guard: "shouldShowAcceptedMoveHints",
+              target: "moveHintsVisible",
+            },
+            {
+              guard: "shouldShowAcceptedPieceHints",
+              target: "pieceHintsVisible",
+            },
+            {
+              guard: "shouldStartAutoHints",
+              target: "analyzing",
+            },
+          ],
           on: {
             "MATCH.PIECE_HINTS_REQUESTED": {
               guard: "hasHintAnalyst",
