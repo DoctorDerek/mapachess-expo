@@ -52,11 +52,6 @@ const pointForSquare = (
 const hintColor = (owner: HintOwner): string =>
   owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
 
-const destinationPath = (owner: HintOwner, point: BoardPoint): string =>
-  owner === "player"
-    ? `M ${String(point.x - 0.25)} ${String(point.y)} L ${String(point.x + 0.25)} ${String(point.y)} M ${String(point.x)} ${String(point.y - 0.25)} L ${String(point.x)} ${String(point.y + 0.25)}`
-    : `M ${String(point.x - 0.23)} ${String(point.y - 0.23)} L ${String(point.x + 0.23)} ${String(point.y + 0.23)} M ${String(point.x + 0.23)} ${String(point.y - 0.23)} L ${String(point.x - 0.23)} ${String(point.y + 0.23)}`
-
 export default function BetterHintsOverlay({
   hints,
   orientation,
@@ -70,7 +65,7 @@ export default function BetterHintsOverlay({
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-[15] size-full"
+      className="pointer-events-none absolute inset-0 z-[5] size-full"
       preserveAspectRatio="none"
       viewBox="0 0 8 8"
     >
@@ -84,9 +79,9 @@ export default function BetterHintsOverlay({
           <marker
             id={id}
             key={id}
-            markerHeight="0.42"
+            markerHeight="0.72"
             markerUnits="userSpaceOnUse"
-            markerWidth="0.42"
+            markerWidth="0.72"
             orient="auto"
             refX="8.5"
             refY="5"
@@ -129,15 +124,14 @@ export default function BetterHintsOverlay({
             const source = pointForSquare(ownedHint.hint.from, orientation)
             const destination = pointForSquare(ownedHint.hint.to, orientation)
             const color = hintColor(ownedHint.owner)
-            const targetPath = destinationPath(ownedHint.owner, destination)
             return (
               <g
                 data-destination-x={destination.x}
                 data-destination-y={destination.y}
                 data-hint-kind="move"
                 data-hint-owner={ownedHint.owner}
-                data-hint-shape={
-                  ownedHint.owner === "player" ? "target-cross" : "x"
+                data-hint-pattern={
+                  ownedHint.owner === "player" ? "solid" : "dashed"
                 }
                 data-source-x={source.x}
                 data-source-y={source.y}
@@ -147,37 +141,15 @@ export default function BetterHintsOverlay({
                   markerEnd={`url(#${ownedHint.owner === "player" ? playerMarkerId : opponentMarkerId})`}
                   opacity="0.9"
                   stroke={color}
-                  strokeDasharray="0.22 0.13"
+                  strokeDasharray={
+                    ownedHint.owner === "opponent" ? "0.22 0.13" : undefined
+                  }
                   strokeLinecap="round"
-                  strokeWidth="0.14"
+                  strokeWidth="0.18"
                   x1={source.x}
                   x2={destination.x}
                   y1={source.y}
                   y2={destination.y}
-                />
-                {ownedHint.owner === "player" ? (
-                  <circle
-                    cx={destination.x}
-                    cy={destination.y}
-                    fill="none"
-                    r="0.34"
-                    stroke="white"
-                    strokeWidth="0.08"
-                  />
-                ) : null}
-                <path
-                  d={targetPath}
-                  fill="none"
-                  stroke="white"
-                  strokeLinecap="round"
-                  strokeWidth="0.17"
-                />
-                <path
-                  d={targetPath}
-                  fill="none"
-                  stroke={color}
-                  strokeLinecap="round"
-                  strokeWidth="0.09"
                 />
               </g>
             )
