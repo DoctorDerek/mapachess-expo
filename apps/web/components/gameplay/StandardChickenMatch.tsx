@@ -3,7 +3,9 @@
 import { useSelector } from "@xstate/react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
-import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import positionEvaluationMachine, {
+  selectPositionEvaluationStage,
+} from "@mapachess/evaluation/position-evaluation-machine"
 import matchMachine, {
   selectCanOfferDraw,
   selectCanRedo,
@@ -95,6 +97,10 @@ export default function StandardChickenMatch({
   const evaluationResult = useSelector(
     evaluationActor,
     (current) => current.context.result,
+  )
+  const evaluationStage = useSelector(
+    evaluationActor,
+    selectPositionEvaluationStage,
   )
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)
@@ -188,6 +194,18 @@ export default function StandardChickenMatch({
         >
           {matchStatusText(snapshot, runtime.playerColor)}
         </p>
+
+        {evaluationStage === "failure" ? (
+          <button
+            className={`${controlClasses} mt-3 w-full border-amber-300/35 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20`}
+            onClick={() =>
+              evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
+            }
+            type="button"
+          >
+            Retry Evaluation
+          </button>
+        ) : null}
 
         <BetterHintsControl
           hints={hints}
