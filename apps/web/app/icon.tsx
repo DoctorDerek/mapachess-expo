@@ -12,10 +12,12 @@ export default function Icon() {
     <div
       style={{
         alignItems: "center",
-        background: "#07121e",
-        color: "#67e8f9",
+        background: "#ffd84d",
+        border: "6px solid #1c1036",
+        color: "#1c1036",
         display: "flex",
-        fontSize: 44,
+        fontFamily: "Arial Black, sans-serif",
+        fontSize: 40,
         fontWeight: 900,
         height: "100%",
         justifyContent: "center",

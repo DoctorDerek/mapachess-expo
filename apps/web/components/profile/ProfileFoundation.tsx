@@ -6,17 +6,17 @@ import type {
   ProfileImportIssue,
   ProfilePersistenceFailure,
 } from "@mapachess/profile/profile-machine"
+import MapachessWordmark from "../presentation/MapachessWordmark"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
 
-export const primaryProfileButtonClasses =
-  "min-h-12 rounded-xl border border-cyan-300/45 bg-cyan-300/15 px-5 py-3 font-bold text-cyan-50 transition-colors hover:bg-cyan-300/25 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-cyan-300/15"
+export const primaryProfileButtonClasses = "mapa-button mapa-button--primary"
 
 export const secondaryProfileButtonClasses =
-  "min-h-12 rounded-xl border border-white/15 bg-slate-800 px-5 py-3 font-bold text-slate-100 transition-colors hover:bg-slate-700 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-slate-800"
+  "mapa-button mapa-button--secondary"
 
 export const destructiveProfileButtonClasses =
-  "min-h-12 rounded-xl border border-rose-300/45 bg-rose-300/10 px-5 py-3 font-bold text-rose-100 transition-colors hover:bg-rose-300/20 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-rose-300/10"
+  "mapa-button mapa-button--destructive"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -50,26 +50,21 @@ export default function FullPageProfilePanel({
   title,
 }: FullPageProfilePanelProps) {
   return (
-    <main className="relative isolate grid min-h-dvh place-items-center overflow-x-hidden px-[clamp(1rem,4vw,3rem)] py-[clamp(1.5rem,6vw,5rem)]">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.13),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.11),transparent_38%),linear-gradient(145deg,#07121e_0%,#0d1726_48%,#171128_100%)]"
-      />
-      <section
-        aria-live={live}
-        className="min-h-[min(44rem,calc(100dvh-3rem))] w-full max-w-2xl rounded-3xl border border-white/12 bg-slate-950/80 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0_1.5rem_5rem_rgba(2,6,23,0.5)] backdrop-blur-xl"
-      >
-        <p className="font-mono text-xs font-bold tracking-[0.24em] text-cyan-200 uppercase">
-          {eyebrow}
-        </p>
-        <h1 className="mt-4 text-[clamp(2rem,7vw,4rem)] leading-[0.95] font-black tracking-[-0.05em] text-white">
-          {title}
-        </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300">
-          {description}
-        </p>
-        {children}
-      </section>
+    <main className="mapa-shell grid place-items-center">
+      <div className="w-full max-w-3xl">
+        <div className="mb-5 pl-1">
+          <MapachessWordmark />
+        </div>
+        <section
+          aria-live={live}
+          className="mapa-surface min-h-[min(42rem,calc(100dvh-8rem))] p-[clamp(1.5rem,5vw,3.5rem)]"
+        >
+          <p className="mapa-eyebrow">{eyebrow}</p>
+          <h1 className="mapa-display mt-4">{title}</h1>
+          <p className="mapa-copy mt-6 max-w-xl">{description}</p>
+          {children}
+        </section>
+      </div>
     </main>
   )
 }
