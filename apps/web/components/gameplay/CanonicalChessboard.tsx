@@ -136,7 +136,7 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:z-20 focus-visible:ring-4 focus-visible:ring-[var(--mapa-sun)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mapa-ink)] aria-disabled:cursor-default"
+  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:z-20 focus-visible:ring-4 focus-visible:ring-[var(--mapachito-sun)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mapachito-ink)] aria-disabled:cursor-default"
 
 const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
   (rowIndex + columnIndex) % 2 === 0
@@ -245,7 +245,7 @@ export default function CanonicalChessboard({
     <div className="relative w-full max-w-[min(100%,52rem)] xl:max-w-[min(100%,calc(100dvh-6rem))]">
       <div
         aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
-        className="mapa-board-frame grid aspect-square w-full grid-rows-8"
+        className="mapachess-board-frame grid aspect-square w-full grid-rows-8"
         role="grid"
       >
         {rows.map((row, rowIndex) => (
@@ -277,7 +277,7 @@ export default function CanonicalChessboard({
                     hintDescriptionsForSquare(hints, showMoveHints, square),
                   )}
                   aria-selected={selected}
-                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-[var(--mapa-coral)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapa-sun)]" : ""} ${checkedKing ? "bg-red-300 ring-4 ring-red-700 ring-inset" : ""}`}
+                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-[var(--mapachito-coral)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-sun)]" : ""} ${checkedKing ? "bg-red-300 ring-4 ring-red-700 ring-inset" : ""}`}
                   data-square={square}
                   key={square}
                   onClick={() => chooseSquare(square)}
@@ -302,7 +302,7 @@ export default function CanonicalChessboard({
                   {legalDestination ? (
                     <span
                       aria-hidden="true"
-                      className={`pointer-events-none absolute z-[5] rounded-full border-4 border-[var(--mapa-ink)] ${piece === undefined ? "size-[22%] bg-[var(--mapa-mint)]" : "inset-[9%]"}`}
+                      className={`pointer-events-none absolute z-[5] rounded-full border-4 border-[var(--mapachito-ink)] ${piece === undefined ? "size-[22%] bg-[var(--mapachito-mint)]" : "inset-[9%]"}`}
                     />
                   ) : null}
                   {columnIndex === 0 ? (
@@ -346,15 +346,15 @@ export default function CanonicalChessboard({
           }}
           role="dialog"
         >
-          <div className="mapa-surface w-full max-w-md p-5">
-            <h2 className="mapa-subheading" id="promotion-title">
+          <div className="mapachess-surface w-full max-w-md p-5">
+            <h2 className="mapachess-subheading" id="promotion-title">
               Promote on {pendingPromotion.to}
             </h2>
             <div className="mt-4 grid grid-cols-4 gap-3">
               {PROMOTION_ROLES.map((role, index) => (
                 <button
                   aria-label={`Promote to ${PIECE_NAMES[role]}`}
-                  className="mapa-button mapa-button--secondary grid aspect-square place-items-center text-5xl"
+                  className="mapachess-button mapachess-button--secondary grid aspect-square place-items-center text-5xl"
                   key={role}
                   onClick={() => choosePromotion(role)}
                   ref={index === 0 ? firstPromotionButton : undefined}
@@ -367,7 +367,7 @@ export default function CanonicalChessboard({
               ))}
             </div>
             <button
-              className="mapa-button mapa-button--secondary mt-4 w-full"
+              className="mapachess-button mapachess-button--secondary mt-4 w-full"
               onClick={clearSelection}
               type="button"
             >

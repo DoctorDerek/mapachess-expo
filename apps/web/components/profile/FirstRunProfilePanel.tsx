@@ -46,15 +46,15 @@ export default function FirstRunProfilePanel({
           Turn Auto-Hints Off
         </button>
       </div>
-      <div className="mapa-rule mt-8 border-t-2 pt-6">
-        <p className="mapa-muted mb-4 text-sm">
+      <div className="mapachess-rule mt-8 border-t-2 pt-6">
+        <p className="mapachess-muted mb-4 text-sm">
           Already played elsewhere? Importing first shows a non-destructive
           preview.
         </p>
         <ImportBackupButton disabled={disabled} onBackupRead={onBackupRead} />
         {importIssue === null ? null : (
           <p
-            className="mapa-notice mapa-notice--warning mt-4 text-sm"
+            className="mapachess-notice mapachess-notice--warning mt-4 text-sm"
             role="alert"
           >
             {importIssueMessage(importIssue)}

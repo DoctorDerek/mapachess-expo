@@ -23,13 +23,13 @@ import StandardChickenMatch from "./StandardChickenMatch"
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
 
 const secondaryControlClasses =
-  "mapa-button mapa-button--secondary min-h-11 px-4 py-2"
+  "mapachess-button mapachess-button--secondary min-h-11 px-4 py-2"
 
 const primaryControlClasses =
-  "mapa-button mapa-button--primary min-h-12 px-5 py-3"
+  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
 
 const retryControlClasses =
-  "mapa-button mapa-button--primary min-h-12 px-5 py-3"
+  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
 
 export type StandardChickenGameProps = Readonly<{
   onSettingsRequested: () => void
@@ -56,7 +56,7 @@ function GameFrame({
   settingsOpen,
 }: GameFrameProps) {
   return (
-    <div className="mapa-shell px-[clamp(1rem,3vw,3rem)] py-[clamp(1.5rem,4vw,3rem)]">
+    <div className="mapachess-shell px-[clamp(1rem,3vw,3rem)] py-[clamp(1.5rem,4vw,3rem)]">
       <header className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5">
         <MapachessWordmark />
         <div className="flex flex-wrap items-center gap-3">
@@ -146,23 +146,23 @@ function MatchSessionExperience({
       {snapshot.matches("menu") ? (
         <section
           aria-labelledby="standard-story-title"
-          className="mapa-story-board mapa-surface mx-auto max-w-5xl p-[clamp(1.5rem,5vw,3.5rem)]"
+          className="mapachess-story-board mapachess-surface mx-auto max-w-5xl p-[clamp(1.5rem,5vw,3.5rem)]"
         >
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
-              <p className="mapa-eyebrow">Story opponent 1 of 23</p>
-              <h1 className="mapa-display mt-4" id="standard-story-title">
+              <p className="mapachess-eyebrow">Story opponent 1 of 23</p>
+              <h1 className="mapachess-display mt-4" id="standard-story-title">
                 Standard Story
               </h1>
-              <p className="mapa-copy mt-6 max-w-2xl">
+              <p className="mapachess-copy mt-6 max-w-2xl">
                 Your first animal challenge is a complete local game of Standard
                 chess. The 100-Elo target stays explicitly provisional while
                 calibration and human playtesting continue.
               </p>
             </div>
-            <div aria-hidden="true" className="mapa-opponent-poster">
-              <span className="mapa-opponent-poster__number">01</span>
-              <span className="mapa-opponent-poster__label">
+            <div aria-hidden="true" className="mapachess-opponent-poster">
+              <span className="mapachess-opponent-poster__number">01</span>
+              <span className="mapachess-opponent-poster__label">
                 First opponent
               </span>
             </div>
@@ -170,8 +170,8 @@ function MatchSessionExperience({
 
           <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div>
-              <h2 className="mapa-section-title">Chicken Stockfish</h2>
-              <dl className="mapa-story-facts mt-4 overflow-hidden">
+              <h2 className="mapachess-section-title">Chicken Stockfish</h2>
+              <dl className="mapachess-story-facts mt-4 overflow-hidden">
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Variant</dt>
                   <dd>Standard</dd>
@@ -206,13 +206,13 @@ function MatchSessionExperience({
       ) : snapshot.matches("failed") && failure !== null ? (
         <section
           aria-live="assertive"
-          className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+          className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
         >
           <div role="alert">
-            <h1 className="mapa-section-title">
+            <h1 className="mapachess-section-title">
               {failureTitle(failure.operation)}
             </h1>
-            <p className="mapa-muted mt-4 max-w-lg">
+            <p className="mapachess-muted mt-4 max-w-lg">
               Your last verified local profile remains available. Retry the
               interrupted session operation.
             </p>
@@ -230,15 +230,17 @@ function MatchSessionExperience({
       ) : (
         <section
           aria-live="polite"
-          className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+          className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
         >
           <div role="status">
             <div
               aria-hidden="true"
-              className="mapa-loading-mark mx-auto motion-reduce:animate-none"
+              className="mapachess-loading-mark mx-auto motion-reduce:animate-none"
             />
-            <h1 className="mapa-section-title mt-6">{openingTitle(actor)}</h1>
-            <p className="mapa-muted mt-4">
+            <h1 className="mapachess-section-title mt-6">
+              {openingTitle(actor)}
+            </h1>
+            <p className="mapachess-muted mt-4">
               Loading the pinned local engine and validating its identity.
             </p>
           </div>
@@ -325,9 +327,9 @@ export default function StandardChickenGame({
     <GameFrame matchSessionActive={false} {...frameProps}>
       <section
         aria-live="polite"
-        className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+        className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
       >
-        <h1 className="mapa-section-title">Opening Mapachess…</h1>
+        <h1 className="mapachess-section-title">Opening Mapachess…</h1>
       </section>
     </GameFrame>
   )

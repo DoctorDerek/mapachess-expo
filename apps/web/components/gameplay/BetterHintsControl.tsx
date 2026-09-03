@@ -113,13 +113,13 @@ export default function BetterHintsControl({
 
   return (
     <section aria-labelledby="better-hints-title" className="mt-5">
-      <h2 className="mapa-subheading" id="better-hints-title">
+      <h2 className="mapachess-subheading" id="better-hints-title">
         Better Hints
       </h2>
       <button
         aria-busy={stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="mapa-button mapa-button--mint mt-3 min-h-12 w-full px-4 py-3"
+        className="mapachess-button mapachess-button--mint mt-3 min-h-12 w-full px-4 py-3"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={control.action === null}
         onClick={activate}
@@ -128,7 +128,7 @@ export default function BetterHintsControl({
         {control.label}
       </button>
       <p
-        className="mapa-muted mt-2 text-sm leading-relaxed"
+        className="mapachess-muted mt-2 text-sm leading-relaxed"
         id="better-hints-guidance"
       >
         {guidance}
@@ -140,7 +140,7 @@ export default function BetterHintsControl({
       {visibleHints === null ? null : (
         <ul
           aria-label="Better Hints legend"
-          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapa-ink)] sm:grid-cols-2 xl:grid-cols-1"
+          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapachito-ink)] sm:grid-cols-2 xl:grid-cols-1"
         >
           <li className="flex items-center gap-2">
             <span

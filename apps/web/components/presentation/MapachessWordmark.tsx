@@ -1,10 +1,10 @@
 export default function MapachessWordmark() {
   return (
-    <div aria-label="Mapachess" className="mapa-wordmark" role="img">
-      <span aria-hidden="true" className="mapa-wordmark__emblem">
+    <div aria-label="Mapachess" className="mapachess-wordmark" role="img">
+      <span aria-hidden="true" className="mapachess-wordmark__emblem">
         M
       </span>
-      <span aria-hidden="true" className="mapa-wordmark__type">
+      <span aria-hidden="true" className="mapachess-wordmark__type">
         <span>Mapa</span>
         <strong>Chess</strong>
       </span>

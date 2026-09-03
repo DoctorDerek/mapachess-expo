@@ -36,7 +36,8 @@ export type StandardChickenMatchProps = Readonly<{
   runtime: WebMatchRuntime
 }>
 
-const controlClasses = "mapa-button mapa-button--secondary min-h-12 px-4 py-3"
+const controlClasses =
+  "mapachess-button mapachess-button--secondary min-h-12 px-4 py-3"
 
 const matchStatusText = (
   snapshot: MatchMachineSnapshot,
@@ -161,14 +162,14 @@ export default function StandardChickenMatch({
         </div>
       </div>
 
-      <aside className="mapa-command-deck min-w-0 p-[clamp(1.25rem,3vw,2rem)] xl:sticky xl:top-6">
-        <div className="mapa-match-ribbon">
+      <aside className="mapachess-command-deck min-w-0 p-[clamp(1.25rem,3vw,2rem)] xl:sticky xl:top-6">
+        <div className="mapachess-match-ribbon">
           <span>Standard Story · 01 / 23</span>
           <span>Provisional · Local</span>
         </div>
 
-        <h1 className="mapa-section-title mt-6">Chicken Stockfish</h1>
-        <dl className="mapa-data-grid mt-5">
+        <h1 className="mapachess-section-title mt-6">Chicken Stockfish</h1>
+        <dl className="mapachess-data-grid mt-5">
           <dt>Mode</dt>
           <dd>Standard Story</dd>
           <dt>You play</dt>
@@ -177,13 +178,13 @@ export default function StandardChickenMatch({
           <dd className="truncate">{runtime.engineIdentity.name}</dd>
         </dl>
 
-        <p aria-live="polite" className="mapa-turn-banner mt-6 px-4 py-4">
+        <p aria-live="polite" className="mapachess-turn-banner mt-6 px-4 py-4">
           {matchStatusText(snapshot, runtime.playerColor)}
         </p>
 
         {evaluationStage === "failure" ? (
           <button
-            className="mapa-button mapa-button--primary mt-3 w-full"
+            className="mapachess-button mapachess-button--primary mt-3 w-full"
             onClick={() =>
               evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
             }
@@ -247,7 +248,7 @@ export default function StandardChickenMatch({
 
         {opponentFailure === null ? null : (
           <button
-            className="mapa-button mapa-button--primary mt-3 w-full"
+            className="mapachess-button mapachess-button--primary mt-3 w-full"
             onClick={() =>
               actor.send({ type: "MATCH.OPPONENT_RETRY_REQUESTED" })
             }
@@ -259,7 +260,7 @@ export default function StandardChickenMatch({
 
         {persistenceFailure === null ? null : (
           <button
-            className="mapa-button mapa-button--primary mt-3 w-full"
+            className="mapachess-button mapachess-button--primary mt-3 w-full"
             onClick={() =>
               actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
             }
@@ -271,25 +272,25 @@ export default function StandardChickenMatch({
 
         <section aria-labelledby="move-history-title" className="mt-7">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="mapa-subheading" id="move-history-title">
+            <h2 className="mapachess-subheading" id="move-history-title">
               Move History
             </h2>
-            <span className="mapa-muted font-mono text-xs font-bold">
+            <span className="mapachess-muted font-mono text-xs font-bold">
               {activeTransitions.length === 1
                 ? "1 ply"
                 : `${String(activeTransitions.length)} plies`}
             </span>
           </div>
           {activeTransitions.length === 0 ? (
-            <p className="mapa-muted mt-3 text-sm">No moves yet.</p>
+            <p className="mapachess-muted mt-3 text-sm">No moves yet.</p>
           ) : (
-            <ol className="mapa-inset mt-3 max-h-64 space-y-1 overflow-y-auto p-3 font-mono text-sm">
+            <ol className="mapachess-inset mt-3 max-h-64 space-y-1 overflow-y-auto p-3 font-mono text-sm">
               {activeTransitions.map((transition, index) => (
                 <li
                   className="grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5 odd:bg-[rgb(28_16_54/0.06)]"
                   key={`${String(index)}-${transition.move.beforeFen}`}
                 >
-                  <span className="mapa-muted">{String(index + 1)}.</span>
+                  <span className="mapachess-muted">{String(index + 1)}.</span>
                   <span>{transition.move.san}</span>
                 </li>
               ))}

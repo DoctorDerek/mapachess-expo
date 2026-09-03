@@ -10,13 +10,14 @@ import MapachessWordmark from "../presentation/MapachessWordmark"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
 
-export const primaryProfileButtonClasses = "mapa-button mapa-button--primary"
+export const primaryProfileButtonClasses =
+  "mapachess-button mapachess-button--primary"
 
 export const secondaryProfileButtonClasses =
-  "mapa-button mapa-button--secondary"
+  "mapachess-button mapachess-button--secondary"
 
 export const destructiveProfileButtonClasses =
-  "mapa-button mapa-button--destructive"
+  "mapachess-button mapachess-button--destructive"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -35,7 +36,7 @@ export function ProfileCard({ children, labelledBy }: ProfileCardProps) {
   return (
     <section
       aria-labelledby={labelledBy}
-      className="mapa-surface mx-auto w-full max-w-3xl p-[clamp(1.25rem,4vw,2.5rem)]"
+      className="mapachess-surface mx-auto w-full max-w-3xl p-[clamp(1.25rem,4vw,2.5rem)]"
     >
       {children}
     </section>
@@ -50,18 +51,18 @@ export default function FullPageProfilePanel({
   title,
 }: FullPageProfilePanelProps) {
   return (
-    <main className="mapa-shell grid place-items-center">
+    <main className="mapachess-shell grid place-items-center">
       <div className="w-full max-w-3xl">
         <div className="mb-5 pl-1">
           <MapachessWordmark />
         </div>
         <section
           aria-live={live}
-          className="mapa-surface min-h-[min(42rem,calc(100dvh-8rem))] p-[clamp(1.5rem,5vw,3.5rem)]"
+          className="mapachess-surface min-h-[min(42rem,calc(100dvh-8rem))] p-[clamp(1.5rem,5vw,3.5rem)]"
         >
-          <p className="mapa-eyebrow">{eyebrow}</p>
-          <h1 className="mapa-display mt-4">{title}</h1>
-          <p className="mapa-copy mt-6 max-w-xl">{description}</p>
+          <p className="mapachess-eyebrow">{eyebrow}</p>
+          <h1 className="mapachess-display mt-4">{title}</h1>
+          <p className="mapachess-copy mt-6 max-w-xl">{description}</p>
           {children}
         </section>
       </div>
@@ -123,7 +124,7 @@ export function ImportBackupButton({
       />
       {fileIssue === null ? null : (
         <p
-          className="mapa-notice mapa-notice--warning mt-4 text-sm"
+          className="mapachess-notice mapachess-notice--warning mt-4 text-sm"
           role="alert"
         >
           {fileIssue === "too-large"

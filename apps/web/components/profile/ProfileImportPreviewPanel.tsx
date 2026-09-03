@@ -23,20 +23,20 @@ export default function ProfileImportPreviewPanel({
   return (
     <div className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-import-preview-title">
-        <p className="mapa-eyebrow">Verified backup preview</p>
+        <p className="mapachess-eyebrow">Verified backup preview</p>
         <h2
-          className="mapa-section-title mt-3"
+          className="mapachess-section-title mt-3"
           id="profile-import-preview-title"
         >
           Review before replacing local data
         </h2>
-        <p className="mapa-muted mt-5 text-sm">
+        <p className="mapachess-muted mt-5 text-sm">
           The backup passed structural and integrity checks. Nothing has been
           replaced yet. Confirming first creates and verifies a backup of the
           current readable profile when one exists.
         </p>
 
-        <dl className="mapa-data-grid mt-7 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 p-5 text-sm">
+        <dl className="mapachess-data-grid mt-7 grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 p-5 text-sm">
           <dt>Backup application</dt>
           <dd className="text-right">{backup.applicationVersion}</dd>
           <dt>Data revision</dt>

@@ -27,15 +27,15 @@ export default function ProfilePersistenceFailurePanel({
   return (
     <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
-        <p className="mapa-eyebrow">Local save paused</p>
+        <p className="mapachess-eyebrow">Local save paused</p>
         <h2
-          className="mapa-section-title mt-3"
+          className="mapachess-section-title mt-3"
           id="profile-persistence-failure-title"
         >
           This change was not marked saved.
         </h2>
         <p
-          className="mapa-notice mapa-notice--warning mt-5 text-sm"
+          className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
           role="alert"
         >
           {persistenceFailureMessage(failure)} Later state-changing actions are

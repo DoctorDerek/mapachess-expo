@@ -56,7 +56,7 @@ export default function ProfileRecoveryPanel({
     >
       {downloadFailed ? (
         <p
-          className="mapa-notice mapa-notice--warning mt-6 text-sm"
+          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
           role="alert"
         >
           The download could not be created. Your preserved local bytes are
@@ -65,7 +65,7 @@ export default function ProfileRecoveryPanel({
       ) : null}
       {importIssue === null ? null : (
         <p
-          className="mapa-notice mapa-notice--warning mt-6 text-sm"
+          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
           role="alert"
         >
           {importIssueMessage(importIssue)}
@@ -75,12 +75,12 @@ export default function ProfileRecoveryPanel({
       {confirmingReset ? (
         <section
           aria-labelledby="recovery-reset-title"
-          className="mapa-inset mt-8 bg-[#ffdce1] p-5"
+          className="mapachess-inset mt-8 bg-[#ffdce1] p-5"
         >
-          <h2 className="mapa-subheading" id="recovery-reset-title">
+          <h2 className="mapachess-subheading" id="recovery-reset-title">
             Reset all local player data?
           </h2>
-          <p className="mapa-muted mt-3 text-sm">
+          <p className="mapachess-muted mt-3 text-sm">
             This replaces the unreadable profile, removes the active match,
             resets all four ratings to 100, and restores default settings. It
             does not affect backup files you already exported.

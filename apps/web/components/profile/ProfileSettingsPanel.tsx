@@ -39,8 +39,11 @@ export default function ProfileSettingsPanel({
       <ProfileCard labelledBy="profile-settings-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="mapa-eyebrow">Local profile</p>
-            <h2 className="mapa-section-title mt-3" id="profile-settings-title">
+            <p className="mapachess-eyebrow">Local profile</p>
+            <h2
+              className="mapachess-section-title mt-3"
+              id="profile-settings-title"
+            >
               Settings &amp; Player Data
             </h2>
           </div>
@@ -55,14 +58,14 @@ export default function ProfileSettingsPanel({
           </button>
         </div>
 
-        <fieldset className="mapa-inset mt-8 p-5">
-          <legend className="px-2 font-black text-[var(--mapa-ink)]">
+        <fieldset className="mapachess-inset mt-8 p-5">
+          <legend className="px-2 font-black text-[var(--mapachito-ink)]">
             Better Hints
           </legend>
           <label className="flex min-h-12 cursor-pointer items-start gap-4">
             <input
               checked={playerData.settings.autoHintsEnabled}
-              className="mapa-checkbox mt-1"
+              className="mapachess-checkbox mt-1"
               disabled={busy}
               onChange={(event) =>
                 onAutoHintsChanged(event.currentTarget.checked)
@@ -70,10 +73,10 @@ export default function ProfileSettingsPanel({
               type="checkbox"
             />
             <span>
-              <span className="block font-black text-[var(--mapa-ink)]">
+              <span className="block font-black text-[var(--mapachito-ink)]">
                 Start new matches with Auto-Hints
               </span>
-              <span className="mapa-muted mt-1 block text-sm">
+              <span className="mapachess-muted mt-1 block text-sm">
                 The active match keeps the setting it started with. You can
                 still request Better Hints manually when Auto-Hints are off.
               </span>
@@ -82,10 +85,10 @@ export default function ProfileSettingsPanel({
         </fieldset>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">
-          <h2 className="mapa-subheading" id="player-data-actions-title">
+          <h2 className="mapachess-subheading" id="player-data-actions-title">
             Portable Player Data
           </h2>
-          <p className="mapa-muted mt-3 text-sm">
+          <p className="mapachess-muted mt-3 text-sm">
             Data stays on this device unless you explicitly download or import a
             JSON backup. Import first opens a non-destructive preview and is
             never applied before you review it.
@@ -104,7 +107,7 @@ export default function ProfileSettingsPanel({
 
         {importIssue === null ? null : (
           <p
-            className="mapa-notice mapa-notice--warning mt-5 text-sm"
+            className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
             role="alert"
           >
             {importIssueMessage(importIssue)}
@@ -113,7 +116,7 @@ export default function ProfileSettingsPanel({
         {activityMessage === null ? null : (
           <p
             aria-live="polite"
-            className="mapa-notice mt-5 text-sm"
+            className="mapachess-notice mt-5 text-sm"
             role="status"
           >
             {activityMessage}

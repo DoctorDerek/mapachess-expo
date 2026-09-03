@@ -46,7 +46,7 @@ const completedPlayerData = (
   playerData?.firstRun.autoHintsChoiceCompleted === true
 
 const standaloneCardClasses =
-  "mapa-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
+  "mapachess-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
@@ -110,7 +110,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 
   const exportFailure = exportFailed ? (
     <p
-      className="mapa-notice mapa-notice--warning relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
+      className="mapachess-notice mapachess-notice--warning relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
       role="alert"
     >
       The download could not be created. Your local data is unchanged. Try again
