@@ -56,7 +56,7 @@ export default function ProfileRecoveryPanel({
     >
       {downloadFailed ? (
         <p
-          className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-relaxed text-amber-100"
+          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
           role="alert"
         >
           The download could not be created. Your preserved local bytes are
@@ -65,7 +65,7 @@ export default function ProfileRecoveryPanel({
       ) : null}
       {importIssue === null ? null : (
         <p
-          className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-relaxed text-amber-100"
+          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
           role="alert"
         >
           {importIssueMessage(importIssue)}
@@ -75,15 +75,12 @@ export default function ProfileRecoveryPanel({
       {confirmingReset ? (
         <section
           aria-labelledby="recovery-reset-title"
-          className="mt-7 rounded-2xl border border-rose-300/35 bg-rose-300/8 p-5"
+          className="mapachess-inset mapachess-inset--danger mt-8 p-5"
         >
-          <h2
-            className="text-xl font-black text-white"
-            id="recovery-reset-title"
-          >
+          <h2 className="mapachess-subheading" id="recovery-reset-title">
             Reset all local player data?
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+          <p className="mapachess-muted mt-3 text-sm">
             This replaces the unreadable profile, removes the active match,
             resets all four ratings to 100, and restores default settings. It
             does not affect backup files you already exported.
@@ -114,7 +111,7 @@ export default function ProfileRecoveryPanel({
           </div>
         </section>
       ) : (
-        <div className="mt-8 grid gap-3 xl:grid-cols-2">
+        <div className="mt-8 grid gap-4 xl:grid-cols-2">
           <button
             className={primaryProfileButtonClasses}
             onClick={onTryAgain}

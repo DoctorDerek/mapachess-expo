@@ -26,8 +26,8 @@ export type BetterHintsOverlayProps = Readonly<{
   showMoves: boolean
 }>
 
-const PLAYER_HINT_COLOR = "#16a34a"
-const OPPONENT_HINT_COLOR = "#dc2626"
+const PLAYER_HINT_COLOR = "var(--mapachito-green)"
+const OPPONENT_HINT_COLOR = "var(--mapachito-red)"
 
 const ownHints = (hints: BetterHintsResult): readonly OwnedHint[] => [
   ...hints.player.map((hint) => ({ hint, owner: "player" as const })),

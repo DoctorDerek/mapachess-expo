@@ -113,13 +113,13 @@ export default function BetterHintsControl({
 
   return (
     <section aria-labelledby="better-hints-title" className="mt-5">
-      <h2 className="text-lg font-black text-white" id="better-hints-title">
+      <h2 className="mapachess-subheading" id="better-hints-title">
         Better Hints
       </h2>
       <button
         aria-busy={stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="mt-3 min-h-12 w-full rounded-xl border border-emerald-300/35 bg-emerald-300/10 px-4 py-3 font-bold text-emerald-50 transition-colors hover:bg-emerald-300/20 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-emerald-300/10"
+        className="mapachess-button mapachess-button--hint mt-3 min-h-12 w-full px-4 py-3"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={control.action === null}
         onClick={activate}
@@ -128,7 +128,7 @@ export default function BetterHintsControl({
         {control.label}
       </button>
       <p
-        className="mt-2 text-sm leading-relaxed text-slate-400"
+        className="mapachess-muted mt-2 text-sm leading-relaxed"
         id="better-hints-guidance"
       >
         {guidance}
@@ -140,7 +140,7 @@ export default function BetterHintsControl({
       {visibleHints === null ? null : (
         <ul
           aria-label="Better Hints legend"
-          className="mt-3 grid gap-2 text-xs text-slate-200 sm:grid-cols-2 xl:grid-cols-1"
+          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapachito-charcoal)] sm:grid-cols-2 xl:grid-cols-1"
         >
           <li className="flex items-center gap-2">
             <span

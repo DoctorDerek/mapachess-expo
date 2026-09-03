@@ -7,15 +7,20 @@ export const size = {
 
 export const contentType = "image/png"
 
+const MAPACHITO_DEEP_GOLD = "#a77e18"
+const MAPACHITO_CHARCOAL = "#1e1e1e"
+
 export default function Icon() {
   return new ImageResponse(
     <div
       style={{
         alignItems: "center",
-        background: "#07121e",
-        color: "#67e8f9",
+        background: MAPACHITO_DEEP_GOLD,
+        border: `6px solid ${MAPACHITO_CHARCOAL}`,
+        color: MAPACHITO_CHARCOAL,
         display: "flex",
-        fontSize: 44,
+        fontFamily: "Arial Black, sans-serif",
+        fontSize: 40,
         fontWeight: 900,
         height: "100%",
         justifyContent: "center",

@@ -95,14 +95,14 @@ export default function PositionEvaluationGutter({
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}
       aria-valuetext={statusText}
-      className="relative h-10 w-full overflow-hidden rounded-xl border border-white/25 bg-slate-950 shadow-[0_0.75rem_2rem_rgba(2,6,23,0.35)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)] xl:rounded-2xl"
+      className="relative h-10 w-full overflow-hidden rounded-[0.65rem_0.15rem_0.65rem_0.15rem] border-[3px] border-[var(--mapachito-charcoal)] bg-[var(--mapachito-charcoal)] shadow-[0.25rem_0.25rem_0_var(--mapachito-raspberry),0.45rem_0.45rem_0_var(--mapachito-orange)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
       data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
       role="meter"
       style={style}
     >
       <div
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 w-[var(--white-share)] bg-slate-100 transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
+        className={`absolute inset-y-0 left-0 w-[var(--white-share)] bg-[var(--mapachito-white)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
       />
       <span
         aria-hidden="true"
@@ -131,7 +131,7 @@ export default function PositionEvaluationGutter({
       <span
         aria-atomic="true"
         aria-live="polite"
-        className="absolute inset-0 z-10 grid place-items-center px-10 text-center font-mono text-[0.6875rem] font-black whitespace-nowrap text-white [text-shadow:0_1px_3px_rgb(2_6_23),0_0_4px_rgb(2_6_23)] xl:rotate-180 xl:px-0 xl:[writing-mode:vertical-rl]"
+        className="absolute inset-0 z-10 grid place-items-center px-10 text-center font-mono text-[0.6875rem] font-black whitespace-nowrap text-white [text-shadow:0_1px_3px_rgb(30_30_30),0_0_4px_rgb(30_30_30)] xl:rotate-180 xl:px-0 xl:[writing-mode:vertical-rl]"
       >
         {statusText}
       </span>

@@ -25,18 +25,19 @@ export default function ProfilePersistenceFailurePanel({
   onRetry,
 }: ProfilePersistenceFailurePanelProps) {
   return (
-    <div className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1rem,3vw,2rem)]">
+    <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
-        <p className="font-mono text-xs font-bold tracking-[0.2em] text-amber-200 uppercase">
-          Local save paused
-        </p>
+        <p className="mapachess-eyebrow">Local save paused</p>
         <h2
-          className="mt-2 text-3xl font-black tracking-[-0.035em] text-white"
+          className="mapachess-section-title mt-3"
           id="profile-persistence-failure-title"
         >
           This change was not marked saved.
         </h2>
-        <p className="mt-4 text-sm leading-relaxed text-slate-300" role="alert">
+        <p
+          className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
+          role="alert"
+        >
           {persistenceFailureMessage(failure)} Later state-changing actions are
           frozen until Retry succeeds.
         </p>
