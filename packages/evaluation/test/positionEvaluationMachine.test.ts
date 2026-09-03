@@ -83,16 +83,26 @@ describe("position evaluation lifecycle", () => {
     actor.stop()
   })
 
-  it("aborts an older request and accepts only the superseding result", async () => {
+  it("waits for an active serialized search before evaluating the latest position", async () => {
     const attempts: Array<{
       deferredResult: Deferred<PositionEvaluationResult>
       request: PositionEvaluationRequest
       signal: AbortSignal
     }> = []
+    let searchActive = false
     const evaluator: PositionEvaluator = (received, signal) => {
+      if (searchActive) {
+        return Promise.reject(
+          new Error("A serialized evaluation session cannot overlap searches."),
+        )
+      }
+
+      searchActive = true
       const deferredResult = deferred<PositionEvaluationResult>()
       attempts.push({ deferredResult, request: received, signal })
-      return deferredResult.promise
+      return deferredResult.promise.finally(() => {
+        searchActive = false
+      })
     }
     const actor = startActor(evaluator)
     const first = request("evaluation/first")
@@ -101,15 +111,63 @@ describe("position evaluation lifecycle", () => {
     actor.send({ request: first, type: "EVALUATION.POSITION_REQUESTED" })
     await waitFor(actor, () => attempts.length === 1)
     actor.send({ request: second, type: "EVALUATION.POSITION_REQUESTED" })
-    await waitFor(actor, () => attempts.length === 2)
+    await Promise.resolve()
 
-    expect(attempts[0]?.signal.aborted).toBe(true)
+    expect(attempts).toHaveLength(1)
+    expect(attempts[0]?.signal.aborted).toBe(false)
     attempts[0]?.deferredResult.resolve(result(first, 99))
+    await waitFor(actor, () => attempts.length === 2)
     attempts[1]?.deferredResult.resolve(result(second, -27))
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
 
     expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
       whiteCentipawns: -27,
+    })
+    actor.stop()
+  })
+
+  it("coalesces queued positions and retries the latest request after failure", async () => {
+    const attempts: Array<{
+      deferredResult: Deferred<PositionEvaluationResult>
+      request: PositionEvaluationRequest
+    }> = []
+    const evaluator: PositionEvaluator = (received) => {
+      const deferredResult = deferred<PositionEvaluationResult>()
+      attempts.push({ deferredResult, request: received })
+      return deferredResult.promise
+    }
+    const actor = startActor(evaluator)
+    const first = request("evaluation/coalesced-first")
+    const skipped = request("evaluation/coalesced-skipped")
+    const latest = request("evaluation/coalesced-latest")
+
+    actor.send({ request: first, type: "EVALUATION.POSITION_REQUESTED" })
+    await waitFor(actor, () => attempts.length === 1)
+    actor.send({ request: skipped, type: "EVALUATION.POSITION_REQUESTED" })
+    actor.send({ request: latest, type: "EVALUATION.POSITION_REQUESTED" })
+    await Promise.resolve()
+    expect(attempts).toHaveLength(1)
+
+    attempts[0]?.deferredResult.reject(new Error("superseded failure"))
+    await waitFor(actor, () => attempts.length === 2)
+    expect(
+      attempts.map(({ request: attempted }) => attempted.requestId),
+    ).toEqual([first.requestId, latest.requestId])
+
+    attempts[1]?.deferredResult.reject(new Error("latest failure"))
+    await waitFor(actor, (snapshot) => snapshot.matches("failure"))
+    expect(selectPositionEvaluationFailure(actor.getSnapshot())).toEqual({
+      requestId: latest.requestId,
+      type: "EVALUATION.REQUEST_FAILED",
+    })
+
+    actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
+    await waitFor(actor, () => attempts.length === 3)
+    expect(attempts[2]?.request).toBe(latest)
+    attempts[2]?.deferredResult.resolve(result(latest, 42))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 42,
     })
     actor.stop()
   })

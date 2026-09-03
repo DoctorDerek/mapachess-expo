@@ -62,16 +62,17 @@ describe("Better Hints board presentation", () => {
     expect(pieceMarkup).toContain('aria-label="Better Hints legend"')
     expect(pieceMarkup).toContain("Player Piece Hint")
     expect(pieceMarkup).toContain("Opponent Piece Hint")
-    expect(pieceMarkup).not.toContain("Player Move Hint target")
+    expect(pieceMarkup).not.toContain("Player Move Hint")
     expect(moveMarkup).toContain("Move Hints Shown")
-    expect(moveMarkup).toContain("Player Move Hint target")
-    expect(moveMarkup).toContain("Opponent Move Hint target")
+    expect(moveMarkup).toContain("Player Move Hint")
+    expect(moveMarkup).toContain("Opponent Move Hint")
+    expect(moveMarkup).not.toMatch(/[○△×]/)
     expect(moveMarkup).toContain(
       "Player Move Hints: e2 to e4; d2 to d4; g1 to f3.",
     )
   })
 
-  it("shows six shaped source cues before revealing moves", () => {
+  it("shows six patterned source borders before revealing moves", () => {
     const markup = renderToStaticMarkup(
       createElement(BetterHintsOverlay, {
         hints: HINTS,
@@ -82,13 +83,13 @@ describe("Better Hints board presentation", () => {
 
     expect(countOccurrences(markup, 'data-hint-kind="source"')).toBe(6)
     expect(countOccurrences(markup, 'data-hint-kind="move"')).toBe(0)
-    expect(countOccurrences(markup, 'data-hint-shape="circle"')).toBe(3)
-    expect(countOccurrences(markup, 'data-hint-shape="warning-triangle"')).toBe(
-      3,
-    )
+    expect(countOccurrences(markup, 'data-hint-pattern="solid"')).toBe(3)
+    expect(countOccurrences(markup, 'data-hint-pattern="dashed"')).toBe(3)
+    expect(markup).not.toContain("data-hint-shape")
+    expect(markup).not.toContain("<circle")
   })
 
-  it("reveals the same six orientation-safe moves with distinct targets", () => {
+  it("reveals six orientation-safe arrows with owner-specific patterns", () => {
     const whiteMarkup = renderToStaticMarkup(
       createElement(BetterHintsOverlay, {
         hints: HINTS,
@@ -106,14 +107,25 @@ describe("Better Hints board presentation", () => {
 
     expect(countOccurrences(whiteMarkup, 'data-hint-kind="move"')).toBe(6)
     expect(
-      countOccurrences(whiteMarkup, 'data-hint-shape="target-cross"'),
+      countOccurrences(
+        whiteMarkup,
+        'data-hint-kind="move" data-hint-owner="player" data-hint-pattern="solid"',
+      ),
     ).toBe(3)
-    expect(countOccurrences(whiteMarkup, 'data-hint-shape="x"')).toBe(3)
+    expect(
+      countOccurrences(
+        whiteMarkup,
+        'data-hint-kind="move" data-hint-owner="opponent" data-hint-pattern="dashed"',
+      ),
+    ).toBe(3)
+    expect(countOccurrences(whiteMarkup, 'markerHeight="0.72"')).toBe(2)
+    expect(whiteMarkup).toContain("z-[5]")
+    expect(whiteMarkup).not.toContain("data-hint-shape")
     expect(whiteMarkup).toContain(
-      'data-destination-x="4.5" data-destination-y="4.5" data-hint-kind="move" data-hint-owner="player" data-hint-shape="target-cross" data-source-x="4.5" data-source-y="6.5"',
+      'data-destination-x="4.5" data-destination-y="4.5" data-hint-kind="move" data-hint-owner="player" data-hint-pattern="solid" data-source-x="4.5" data-source-y="6.5"',
     )
     expect(blackMarkup).toContain(
-      'data-destination-x="3.5" data-destination-y="3.5" data-hint-kind="move" data-hint-owner="player" data-hint-shape="target-cross" data-source-x="3.5" data-source-y="1.5"',
+      'data-destination-x="3.5" data-destination-y="3.5" data-hint-kind="move" data-hint-owner="player" data-hint-pattern="solid" data-source-x="3.5" data-source-y="1.5"',
     )
   })
 

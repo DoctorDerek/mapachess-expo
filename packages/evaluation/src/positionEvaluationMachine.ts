@@ -26,6 +26,7 @@ export type PositionEvaluationMachineContext = Readonly<{
   evaluator: PositionEvaluator
   failure: PositionEvaluationFailure | null
   pendingRequest: PositionEvaluationRequest | null
+  queuedRequest: PositionEvaluationRequest | null
   result: PositionEvaluationResult | null
 }>
 
@@ -41,6 +42,15 @@ const requirePendingRequest = (
     throw new Error("Position evaluation requires a pending request.")
   }
   return context.pendingRequest
+}
+
+const requireQueuedRequest = (
+  context: PositionEvaluationMachineContext,
+): PositionEvaluationRequest => {
+  if (context.queuedRequest === null) {
+    throw new Error("Position evaluation requires a queued request.")
+  }
+  return context.queuedRequest
 }
 
 const positionEvaluationMachineDefinition = setup({
@@ -63,8 +73,20 @@ const positionEvaluationMachineDefinition = setup({
       return {
         failure: null,
         pendingRequest: event.request,
+        queuedRequest: null,
       }
     }),
+    acceptResult: assign((_, result: PositionEvaluationResult) => ({
+      failure: null,
+      pendingRequest: null,
+      queuedRequest: null,
+      result,
+    })),
+    advanceQueuedRequest: assign(({ context }) => ({
+      failure: null,
+      pendingRequest: requireQueuedRequest(context),
+      queuedRequest: null,
+    })),
     clearFailure: assign({ failure: null }),
     markRequestFailed: assign(({ context }) => ({
       failure: Object.freeze({
@@ -80,6 +102,25 @@ const positionEvaluationMachineDefinition = setup({
       }),
       result: null,
     })),
+    queueRequest: assign(({ event }) => {
+      if (event.type !== "EVALUATION.POSITION_REQUESTED") {
+        throw new Error("Evaluation queue action received another event.")
+      }
+      return { queuedRequest: event.request }
+    }),
+  },
+  guards: {
+    hasQueuedRequest: ({ context }) => context.queuedRequest !== null,
+    responseMatchesPendingRequest: (
+      { context },
+      result: PositionEvaluationResult,
+    ) => {
+      const request = requirePendingRequest(context)
+      return (
+        result.requestId === request.requestId &&
+        result.positionFen === request.position.fen
+      )
+    },
   },
 }).createMachine({
   id: "positionEvaluation",
@@ -88,6 +129,7 @@ const positionEvaluationMachineDefinition = setup({
     evaluator: input.evaluator,
     failure: null,
     pendingRequest: null,
+    queuedRequest: null,
     result: null,
   }),
   states: {
@@ -110,17 +152,19 @@ const positionEvaluationMachineDefinition = setup({
         }),
         onDone: [
           {
-            actions: assign(({ event }) => ({
-              failure: null,
-              pendingRequest: null,
-              result: event.output,
-            })),
-            guard: ({ context, event }) => {
-              const request = requirePendingRequest(context)
-              return (
-                event.output.requestId === request.requestId &&
-                event.output.positionFen === request.position.fen
-              )
+            actions: "advanceQueuedRequest",
+            guard: "hasQueuedRequest",
+            reenter: true,
+            target: "analyzing",
+          },
+          {
+            actions: {
+              type: "acceptResult",
+              params: ({ event }) => event.output,
+            },
+            guard: {
+              type: "responseMatchesPendingRequest",
+              params: ({ event }) => event.output,
             },
             target: "ready",
           },
@@ -129,16 +173,22 @@ const positionEvaluationMachineDefinition = setup({
             target: "failure",
           },
         ],
-        onError: {
-          actions: "markRequestFailed",
-          target: "failure",
-        },
+        onError: [
+          {
+            actions: "advanceQueuedRequest",
+            guard: "hasQueuedRequest",
+            reenter: true,
+            target: "analyzing",
+          },
+          {
+            actions: "markRequestFailed",
+            target: "failure",
+          },
+        ],
       },
       on: {
         "EVALUATION.POSITION_REQUESTED": {
-          actions: "captureRequest",
-          reenter: true,
-          target: "analyzing",
+          actions: "queueRequest",
         },
       },
     },

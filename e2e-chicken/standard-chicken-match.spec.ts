@@ -319,12 +319,12 @@ const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
   await expect(moveHints).toHaveCount(0)
   await expect(
     page.locator(
-      '[data-hint-kind="source"][data-hint-owner="player"][data-hint-shape="circle"]',
+      '[data-hint-kind="source"][data-hint-owner="player"][data-hint-pattern="solid"]',
     ),
   ).toHaveCount(3)
   await expect(
     page.locator(
-      '[data-hint-kind="source"][data-hint-owner="opponent"][data-hint-shape="warning-triangle"]',
+      '[data-hint-kind="source"][data-hint-owner="opponent"][data-hint-pattern="dashed"]',
     ),
   ).toHaveCount(3)
   await expect(page.getByText(/^Piece Hints shown\./)).toHaveCount(1)
@@ -338,12 +338,12 @@ const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
   await expect(moveHints).toHaveCount(6)
   await expect(
     page.locator(
-      '[data-hint-kind="move"][data-hint-owner="player"][data-hint-shape="target-cross"]',
+      '[data-hint-kind="move"][data-hint-owner="player"][data-hint-pattern="solid"]',
     ),
   ).toHaveCount(3)
   await expect(
     page.locator(
-      '[data-hint-kind="move"][data-hint-owner="opponent"][data-hint-shape="x"]',
+      '[data-hint-kind="move"][data-hint-owner="opponent"][data-hint-pattern="dashed"]',
     ),
   ).toHaveCount(3)
   await expect(page.getByText(/^Move Hints shown\./)).toHaveCount(1)
@@ -351,7 +351,7 @@ const expectExactAutomaticBetterHints = async (page: Page): Promise<void> => {
   await expectNoHighImpactAccessibilityViolations(page)
 }
 
-test("persists and resumes White through hints, cancellation, and redo", async ({
+test("keeps White evaluation reliable through hints, cancellation, and redo", async ({
   page,
 }) => {
   await page.setViewportSize({ height: 800, width: 1_280 })
