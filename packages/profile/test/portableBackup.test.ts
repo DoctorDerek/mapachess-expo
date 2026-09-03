@@ -23,6 +23,7 @@ describe("Mapachess portable backups", () => {
       backup: {
         payload: {
           activeMatch: {
+            autoHintMode: "auto-move-hints",
             cursor: 1,
             moveHintsUsed: true,
             moveIds: ["e2e4", "e7e5"],

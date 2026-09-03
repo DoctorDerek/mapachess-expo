@@ -198,7 +198,7 @@ describe("Standard Chicken web match session ownership", () => {
 
     const acceptedRuntime = createRuntime(SECOND_MATCH_SEED)
     const acceptedMatch = buildFreshStandardChickenMatch({
-      autoHintsEnabledAtStart: firstSession.match.autoHintsEnabledAtStart,
+      autoHintMode: firstSession.match.autoHintMode,
       playerEloAtStart: firstSession.match.playerEloAtStart,
       runtime: acceptedRuntime.runtime,
     })

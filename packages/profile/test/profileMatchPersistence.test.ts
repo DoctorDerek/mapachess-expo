@@ -26,7 +26,7 @@ const durableMatch = (
   matchSeed = "00000001000000020000000300000004",
 ): DurableMatchRecord =>
   Object.freeze({
-    autoHintsEnabledAtStart: true,
+    autoHintMode: "auto-move-hints",
     conclusion: null,
     currentFen: initialPosition.fen,
     cursor: 0,
@@ -154,6 +154,7 @@ describe("profile-owned match persistence bridge", () => {
 
     await bridge.persist(
       {
+        autoHintMode: initialMatch.autoHintMode,
         conclusion: { type: "draw-agreement" },
         currentFen: initialMatch.currentFen,
         cursor: 0,
@@ -171,6 +172,7 @@ describe("profile-owned match persistence bridge", () => {
 
     await bridge.persist(
       {
+        autoHintMode: initialMatch.autoHintMode,
         conclusion: { type: "draw-agreement" },
         currentFen: initialMatch.currentFen,
         cursor: 0,
@@ -190,6 +192,7 @@ describe("profile-owned match persistence bridge", () => {
     })
 
     const changedConclusionRequest = {
+      autoHintMode: initialMatch.autoHintMode,
       currentFen: initialMatch.currentFen,
       cursor: 0,
       matchId: initialMatch.matchId,
@@ -237,6 +240,7 @@ describe("profile-owned match persistence bridge", () => {
 
     const receipt = await bridge.persist(
       {
+        autoHintMode: initialMatch.autoHintMode,
         conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
@@ -260,6 +264,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          autoHintMode: initialMatch.autoHintMode,
           conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,
@@ -292,6 +297,7 @@ describe("profile-owned match persistence bridge", () => {
     })
     const persistence = bridge.persist(
       {
+        autoHintMode: initialMatch.autoHintMode,
         conclusion: null,
         currentFen: initialMatch.currentFen,
         cursor: 0,
@@ -332,6 +338,7 @@ describe("profile-owned match persistence bridge", () => {
     await expect(
       bridge.persist(
         {
+          autoHintMode: initialMatch.autoHintMode,
           conclusion: null,
           currentFen: initialMatch.currentFen,
           cursor: 0,

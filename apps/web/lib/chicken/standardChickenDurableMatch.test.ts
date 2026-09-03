@@ -43,13 +43,13 @@ const requireMoveId = (uci: string) => {
 describe("Standard Chicken durable match mapping", () => {
   it("builds the exact cursor-zero record for a fresh runtime", () => {
     const record = buildFreshStandardChickenMatch({
-      autoHintsEnabledAtStart: false,
+      autoHintMode: "no-auto-hints",
       playerEloAtStart: 100,
       runtime,
     })
 
     expect(record).toMatchObject({
-      autoHintsEnabledAtStart: false,
+      autoHintMode: "no-auto-hints",
       cursor: 0,
       matchId: runtime.matchId,
       matchSeed,
@@ -72,7 +72,7 @@ describe("Standard Chicken durable match mapping", () => {
 
   it("reconstructs the full branch while retaining the saved cursor", () => {
     const fresh = buildFreshStandardChickenMatch({
-      autoHintsEnabledAtStart: true,
+      autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })
@@ -102,7 +102,7 @@ describe("Standard Chicken durable match mapping", () => {
 
   it("rejects a saved match from another Chicken policy", () => {
     const fresh = buildFreshStandardChickenMatch({
-      autoHintsEnabledAtStart: true,
+      autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })

@@ -108,9 +108,7 @@ const openActorSession = async ({
   try {
     const openedMatchActor = createActor(matchMachine, {
       input: {
-        autoHintMode: autoHintModeFromLegacyEnabled(
-          match.autoHintsEnabledAtStart,
-        ),
+        autoHintMode: match.autoHintMode,
         durability: { persistence, type: "durable" },
         hintAnalyst: runtime.hintAnalyst,
         matchId: match.matchId,
@@ -212,7 +210,9 @@ export async function openFreshStandardChickenMatchSession({
 
   const runtime = await openRuntime({ signal })
   const freshMatch = buildFreshStandardChickenMatch({
-    autoHintsEnabledAtStart: playerData.settings.autoHintsEnabled,
+    autoHintMode: autoHintModeFromLegacyEnabled(
+      playerData.settings.autoHintsEnabled,
+    ),
     playerEloAtStart: playerData.ratings.standardStory,
     runtime,
   })

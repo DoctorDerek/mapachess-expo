@@ -207,6 +207,7 @@ export const pendingPositionMutation = (
   const conclusion =
     context.conclusion ?? deriveRetainedBranchConclusion(timeline)
   return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
     matchId: context.matchId,
@@ -227,6 +228,7 @@ export const pendingConclusionMutation = (
   }
 
   return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
     matchId: context.matchId,
@@ -246,6 +248,7 @@ export const pendingAcceptedHintsMutation = (
     context.moveHintsUsed || context.autoHintMode === "auto-move-hints"
 
   return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints,
     matchId: context.matchId,
@@ -261,6 +264,7 @@ export const pendingMoveHintsMutation = (
   context: MatchMachineContext,
 ): PendingMatchMutation =>
   createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints: context.hints,
     matchId: context.matchId,
@@ -276,6 +280,7 @@ export const acceptedPendingMutation = (
 ): Partial<MatchMachineContext> => {
   const pending = requirePendingMutation(context)
   return {
+    autoHintMode: pending.request.autoHintMode,
     conclusion: pending.conclusion,
     drawOfferResponse: null,
     hintFailure: null,

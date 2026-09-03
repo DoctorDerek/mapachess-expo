@@ -9,7 +9,7 @@ import {
   type PlayerDataDecodeIssue,
 } from "./decodePrimitives.js"
 import {
-  canonicalActiveMatch,
+  canonicalLegacyActiveMatch,
   decodeDurableMatch,
 } from "./durableMatchCodec.js"
 import {
@@ -132,5 +132,7 @@ export const canonicalPlayerData = (data: MapachessPlayerData): string =>
     data.firstRun.autoHintsChoiceCompleted,
     data.settings.autoHintsEnabled,
     PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
-    data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
+    data.activeMatch === null
+      ? null
+      : canonicalLegacyActiveMatch(data.activeMatch),
   ])

@@ -46,7 +46,7 @@ const createSession = (seed: string): WebMatchSession => {
     }),
   }) satisfies WebMatchRuntime
   const match = buildFreshStandardChickenMatch({
-    autoHintsEnabledAtStart: true,
+    autoHintMode: "auto-move-hints",
     playerEloAtStart: 100,
     runtime,
   })

@@ -1,9 +1,14 @@
+import {
+  AUTO_HINT_MODES,
+  autoHintModeFromLegacyEnabled,
+} from "@mapachess/match/auto-hint-mode"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
   LEGACY_DURABLE_MATCH_RECORD_VERSION,
+  LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
   MATCH_MODES,
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
@@ -34,7 +39,6 @@ const MAX_FEN_LENGTH = 256
 const MATCH_SEED_PATTERN = /^[0-9a-f]{32}$/u
 
 const DURABLE_MATCH_COMMON_KEYS = [
-  "autoHintsEnabledAtStart",
   "currentFen",
   "cursor",
   "matchId",
@@ -140,16 +144,34 @@ export const decodeDurableMatch = (
   const object = requireObject(received, path)
   const legacyRecord =
     object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION
+  const legacyRecordV2 =
+    object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION_2
   const currentRecord = object.recordVersion === DURABLE_MATCH_RECORD_VERSION
-  if (!legacyRecord && !currentRecord) {
+  if (!legacyRecord && !legacyRecordV2 && !currentRecord) {
     return failData(`${path}.recordVersion`)
   }
 
   requireExactKeys(
     object,
     currentRecord
-      ? [...DURABLE_MATCH_COMMON_KEYS, "conclusion", "recordVersion"]
-      : [...DURABLE_MATCH_COMMON_KEYS, "recordVersion"],
+      ? [
+          ...DURABLE_MATCH_COMMON_KEYS,
+          "autoHintMode",
+          "conclusion",
+          "recordVersion",
+        ]
+      : legacyRecordV2
+        ? [
+            ...DURABLE_MATCH_COMMON_KEYS,
+            "autoHintsEnabledAtStart",
+            "conclusion",
+            "recordVersion",
+          ]
+        : [
+            ...DURABLE_MATCH_COMMON_KEYS,
+            "autoHintsEnabledAtStart",
+            "recordVersion",
+          ],
     path,
   )
 
@@ -175,10 +197,18 @@ export const decodeDurableMatch = (
   if (timeControl.type !== "untimed") failData(`${path}.timeControl.type`)
 
   const recordWithoutConclusion: DurableMatchRecord = Object.freeze({
-    autoHintsEnabledAtStart: requireBoolean(
-      object.autoHintsEnabledAtStart,
-      `${path}.autoHintsEnabledAtStart`,
-    ),
+    autoHintMode: currentRecord
+      ? requireEnumValue(
+          object.autoHintMode,
+          AUTO_HINT_MODES,
+          `${path}.autoHintMode`,
+        )
+      : autoHintModeFromLegacyEnabled(
+          requireBoolean(
+            object.autoHintsEnabledAtStart,
+            `${path}.autoHintsEnabledAtStart`,
+          ),
+        ),
     conclusion: null,
     currentFen: requireString(
       object.currentFen,
@@ -239,22 +269,26 @@ const canonicalConclusion = (conclusion: MatchConclusion | null) =>
       : [conclusion.type]
     : null
 
-export const canonicalActiveMatch = (match: DurableMatchRecord) => {
+const canonicalActiveMatchFields = (match: DurableMatchRecord) => [
+  match.matchId,
+  match.matchSeed,
+  match.mode,
+  match.opponentId,
+  match.opponentPolicyFingerprint,
+  match.playerColor,
+  match.playerEloAtStart,
+  [match.startingPosition.variant, match.startingPosition.chess960PositionId],
+  match.timeControl.type,
+]
+
+export const canonicalLegacyActiveMatch = (match: DurableMatchRecord) => {
   const voluntaryConclusion = canonicalConclusion(match.conclusion)
   return [
     voluntaryConclusion === null
       ? LEGACY_DURABLE_MATCH_RECORD_VERSION
-      : match.recordVersion,
-    match.matchId,
-    match.matchSeed,
-    match.mode,
-    match.opponentId,
-    match.opponentPolicyFingerprint,
-    match.playerColor,
-    match.playerEloAtStart,
-    [match.startingPosition.variant, match.startingPosition.chess960PositionId],
-    match.timeControl.type,
-    match.autoHintsEnabledAtStart,
+      : LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
+    ...canonicalActiveMatchFields(match),
+    match.autoHintMode !== "no-auto-hints",
     match.moveIds,
     match.cursor,
     match.currentFen,
@@ -263,3 +297,15 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => {
     ...(voluntaryConclusion === null ? [] : [voluntaryConclusion]),
   ]
 }
+
+export const canonicalActiveMatch = (match: DurableMatchRecord) => [
+  match.recordVersion,
+  ...canonicalActiveMatchFields(match),
+  match.autoHintMode,
+  match.moveIds,
+  match.cursor,
+  match.currentFen,
+  match.pieceHintsUsed,
+  match.moveHintsUsed,
+  canonicalConclusion(match.conclusion),
+]
