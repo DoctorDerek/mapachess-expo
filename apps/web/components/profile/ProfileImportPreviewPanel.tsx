@@ -1,6 +1,7 @@
 "use client"
 
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import { autoHintModeLabel } from "../../lib/profile/autoHintModePresentation"
 import {
   primaryProfileButtonClasses,
   ProfileCard,
@@ -41,9 +42,9 @@ export default function ProfileImportPreviewPanel({
           <dd className="text-right">{backup.applicationVersion}</dd>
           <dt>Data revision</dt>
           <dd className="text-right">{data.revision}</dd>
-          <dt>Auto-Hints</dt>
+          <dt>Automatic hints</dt>
           <dd className="text-right">
-            {data.settings.autoHintsEnabled ? "On" : "Off"}
+            {autoHintModeLabel(data.settings.autoHintMode)}
           </dd>
           <dt>Active match</dt>
           <dd className="text-right">

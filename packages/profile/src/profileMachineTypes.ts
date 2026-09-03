@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type {
   DurablePlayerDataStore,
@@ -53,12 +54,8 @@ export type ProfileMachineEvent =
       type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED"
     }>
   | Readonly<{
-      enabled: boolean
-      type: "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED"
-    }>
-  | Readonly<{
-      enabled: boolean
-      type: "PROFILE.AUTO_HINTS_SETTING_CHANGED"
+      autoHintMode: AutoHintMode
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED"
     }>
   | Readonly<{ type: "PROFILE.BOOT_RETRY_REQUESTED" }>
   | Readonly<{ type: "PROFILE.IMPORT_CANCELLED" }>

@@ -12,6 +12,7 @@ import {
 import {
   canonicalPlayerData,
   decodeMapachessPlayerData,
+  decodeMapachessPlayerDataWithSource,
   type PlayerDataDecodeIssue,
 } from "./playerDataCodec.js"
 import {
@@ -172,9 +173,9 @@ export const decodeMapachessPortableBackup = async (
     return backupFailure("$.formatVersion", "PROFILE.BACKUP_INVALID")
   }
 
-  const decodedData = decodeMapachessPlayerData(object.payload)
+  const decodedData = decodeMapachessPlayerDataWithSource(object.payload)
   if (!decodedData.ok) return decodedData
-  if (object.saveSchemaVersion !== decodedData.data.schemaVersion) {
+  if (object.saveSchemaVersion !== decodedData.source.schemaVersion) {
     return backupFailure("$.saveSchemaVersion", "PROFILE.BACKUP_INVALID")
   }
 
@@ -204,7 +205,7 @@ export const decodeMapachessPortableBackup = async (
   }
 
   const computedHash = requireSha256Hex(
-    await sha256(canonicalPlayerData(decodedData.data)),
+    await sha256(decodedData.source.canonical),
   )
   if (computedHash !== integrity.payloadHash) {
     return backupFailure(
@@ -212,6 +213,11 @@ export const decodeMapachessPortableBackup = async (
       "PROFILE.BACKUP_INTEGRITY_MISMATCH",
     )
   }
+
+  const migratedPayloadHash =
+    decodedData.source.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? integrity.payloadHash
+      : requireSha256Hex(await sha256(canonicalPlayerData(decodedData.data)))
 
   return {
     backup: Object.freeze({
@@ -221,7 +227,7 @@ export const decodeMapachessPortableBackup = async (
       gddRevision,
       integrity: Object.freeze({
         algorithm: "SHA-256",
-        payloadHash: integrity.payloadHash,
+        payloadHash: migratedPayloadHash,
       }),
       payload: decodedData.data,
       saveSchemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,

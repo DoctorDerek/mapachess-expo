@@ -3,7 +3,6 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
@@ -23,7 +22,6 @@ import {
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
 import StandardChickenGame from "../gameplay/StandardChickenGame"
-import FirstRunProfilePanel from "./FirstRunProfilePanel"
 import FullPageProfilePanel, {
   ImportBackupButton,
   primaryProfileButtonClasses,
@@ -40,11 +38,6 @@ type ProfileRuntimeState =
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 
-const completedPlayerData = (
-  playerData: MapachessPlayerData | null,
-): playerData is MapachessPlayerData =>
-  playerData?.firstRun.autoHintsChoiceCompleted === true
-
 const standaloneCardClasses =
   "mapachess-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
 
@@ -60,7 +53,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const importIssue = selectImportIssue(snapshot)
   const importPreview = selectImportPreview(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
-  const playableProfile = completedPlayerData(currentPlayerData)
+  const playableProfile = currentPlayerData !== null
   const profileBusy =
     snapshot.matches("importDecoding") ||
     snapshot.matches("persisting") ||
@@ -138,22 +131,6 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     )
   }
 
-  if (snapshot.matches("firstRun")) {
-    return (
-      <FirstRunProfilePanel
-        disabled={false}
-        importIssue={importIssue}
-        onAutoHintsChoice={(enabled) =>
-          actor.send({
-            enabled,
-            type: "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED",
-          })
-        }
-        onBackupRead={requestImportPreview}
-      />
-    )
-  }
-
   if (snapshot.matches("recovery")) {
     return (
       <ProfileRecoveryPanel
@@ -213,10 +190,10 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           <ProfileSettingsPanel
             activityMessage={profileActivityMessage}
             importIssue={importIssue}
-            onAutoHintsChanged={(enabled) =>
+            onAutoHintModeChanged={(autoHintMode) =>
               actor.send({
-                enabled,
-                type: "PROFILE.AUTO_HINTS_SETTING_CHANGED",
+                autoHintMode,
+                type: "PROFILE.AUTO_HINT_MODE_CHANGED",
               })
             }
             onBackupRead={requestImportPreview}

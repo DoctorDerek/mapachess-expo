@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
@@ -14,25 +15,14 @@ const freezePlayerData = (
     revision,
   })
 
-export const completeAutoHintsFirstRun = (
+export const changeAutoHintMode = (
   current: MapachessPlayerData,
-  autoHintsEnabled: boolean,
-): MapachessPlayerData =>
-  Object.freeze({
-    ...current,
-    firstRun: Object.freeze({ autoHintsChoiceCompleted: true }),
-    revision: current.revision + 1,
-    settings: Object.freeze({ autoHintsEnabled }),
-  })
-
-export const changeAutoHintsSetting = (
-  current: MapachessPlayerData,
-  autoHintsEnabled: boolean,
+  autoHintMode: AutoHintMode,
 ): MapachessPlayerData =>
   Object.freeze({
     ...current,
     revision: current.revision + 1,
-    settings: Object.freeze({ autoHintsEnabled }),
+    settings: Object.freeze({ autoHintMode }),
   })
 
 export const replaceActiveMatch = (

@@ -23,15 +23,10 @@ import {
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
 
-const openCompletedProfileRuntime = async () => {
+const openProfileRuntime = async () => {
   const runtime = openWebProfileRuntime({
     indexedDb: new IDBFactory(),
     subtleCrypto: webcrypto.subtle,
-  })
-  await waitFor(runtime.actor, (snapshot) => snapshot.matches("firstRun"))
-  runtime.actor.send({
-    enabled: false,
-    type: "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED",
   })
   await waitFor(runtime.actor, (snapshot) => snapshot.matches("ready"))
   return runtime
@@ -82,7 +77,7 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
 
 describe("Standard Chicken web match session ownership", () => {
   it("persists a fresh session and closes every owned resource once", async () => {
-    const profileRuntime = await openCompletedProfileRuntime()
+    const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
     const session = await openFreshStandardChickenMatchSession({
       openRuntime: runtimeOpener(engineRuntime.runtime),
@@ -106,7 +101,7 @@ describe("Standard Chicken web match session ownership", () => {
   })
 
   it("replaces the saved match only after closing the prior session", async () => {
-    const profileRuntime = await openCompletedProfileRuntime()
+    const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
     const secondRuntime = createRuntime(SECOND_MATCH_SEED)
     const firstSession = await openFreshStandardChickenMatchSession({
@@ -135,7 +130,7 @@ describe("Standard Chicken web match session ownership", () => {
   })
 
   it("resumes the exact saved seed without replacing the active match", async () => {
-    const profileRuntime = await openCompletedProfileRuntime()
+    const profileRuntime = await openProfileRuntime()
     const initialRuntime = createRuntime(FIRST_MATCH_SEED)
     const initialSession = await openFreshStandardChickenMatchSession({
       openRuntime: runtimeOpener(initialRuntime.runtime),
@@ -163,7 +158,7 @@ describe("Standard Chicken web match session ownership", () => {
   })
 
   it("closes the session before clearing its verified active match", async () => {
-    const profileRuntime = await openCompletedProfileRuntime()
+    const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
     const session = await openFreshStandardChickenMatchSession({
       openRuntime: runtimeOpener(engineRuntime.runtime),
@@ -186,7 +181,7 @@ describe("Standard Chicken web match session ownership", () => {
   })
 
   it("resumes a replacement already accepted during a restart retry", async () => {
-    const profileRuntime = await openCompletedProfileRuntime()
+    const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
     const firstSession = await openFreshStandardChickenMatchSession({
       openRuntime: runtimeOpener(firstRuntime.runtime),

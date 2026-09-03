@@ -3,7 +3,6 @@ import bindMatchPositionEvaluation, {
   type MatchPositionEvaluationBinding,
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
-import { autoHintModeFromLegacyEnabled } from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import profileMachine, {
@@ -46,10 +45,10 @@ export type ReturnStandardChickenMatchSessionToMenuInput = Readonly<{
   signal: AbortSignal
 }>
 
-const requireCompletedPlayerData = (profileActor: ProfileActor) => {
+const requirePlayerData = (profileActor: ProfileActor) => {
   const playerData = selectCurrentPlayerData(profileActor.getSnapshot())
-  if (playerData?.firstRun.autoHintsChoiceCompleted !== true) {
-    throw new Error("A completed player profile is required to open a match.")
+  if (playerData === null) {
+    throw new Error("A valid player profile is required to open a match.")
   }
   return playerData
 }
@@ -164,7 +163,7 @@ export async function openCurrentStandardChickenMatchSession({
   profileActor,
   signal,
 }: OpenStandardChickenMatchSessionInput): Promise<WebMatchSession> {
-  const activeMatch = requireCompletedPlayerData(profileActor).activeMatch
+  const activeMatch = requirePlayerData(profileActor).activeMatch
   if (activeMatch === null) {
     throw new Error("The player profile has no active match to resume.")
   }
@@ -191,7 +190,7 @@ export async function openFreshStandardChickenMatchSession({
 }: OpenFreshStandardChickenMatchSessionInput): Promise<WebMatchSession> {
   await previousSession?.close()
 
-  const playerData = requireCompletedPlayerData(profileActor)
+  const playerData = requirePlayerData(profileActor)
   const activeMatch = playerData.activeMatch
   if (
     activeMatch !== null &&
@@ -210,9 +209,7 @@ export async function openFreshStandardChickenMatchSession({
 
   const runtime = await openRuntime({ signal })
   const freshMatch = buildFreshStandardChickenMatch({
-    autoHintMode: autoHintModeFromLegacyEnabled(
-      playerData.settings.autoHintsEnabled,
-    ),
+    autoHintMode: playerData.settings.autoHintMode,
     playerEloAtStart: playerData.ratings.standardStory,
     runtime,
   })
@@ -244,7 +241,7 @@ export async function returnStandardChickenMatchSessionToMenu({
 }: ReturnStandardChickenMatchSessionToMenuInput): Promise<void> {
   await session.close()
 
-  const activeMatch = requireCompletedPlayerData(profileActor).activeMatch
+  const activeMatch = requirePlayerData(profileActor).activeMatch
   if (activeMatch === null) return
   if (activeMatch.matchId !== session.match.matchId) {
     throw new Error(

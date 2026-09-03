@@ -10,6 +10,7 @@ import {
 import {
   canonicalPlayerData,
   decodeMapachessPlayerData,
+  decodeMapachessPlayerDataWithSource,
   type PlayerDataDecodeIssue,
 } from "./playerDataCodec.js"
 import {
@@ -110,9 +111,9 @@ export const decodeStoredPlayerData = async (
     return { issue: { type: "PROFILE.STORED_DATA_INVALID" }, ok: false }
   }
 
-  const decodedData = decodeMapachessPlayerData(object.payload)
+  const decodedData = decodeMapachessPlayerDataWithSource(object.payload)
   if (!decodedData.ok) return decodedData
-  if (object.saveSchemaVersion !== decodedData.data.schemaVersion) {
+  if (object.saveSchemaVersion !== decodedData.source.schemaVersion) {
     return { issue: { type: "PROFILE.STORED_DATA_INVALID" }, ok: false }
   }
 
@@ -134,7 +135,7 @@ export const decodeStoredPlayerData = async (
   }
 
   const computedHash = requireSha256Hex(
-    await sha256(canonicalPlayerData(decodedData.data)),
+    await sha256(decodedData.source.canonical),
   )
   return computedHash === integrity.payloadHash
     ? { data: decodedData.data, ok: true }

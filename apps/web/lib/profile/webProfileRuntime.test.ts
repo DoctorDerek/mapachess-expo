@@ -19,13 +19,13 @@ describe("web durable profile runtime", () => {
     )
   })
 
-  it("boots a fresh IndexedDB profile into the first-run choice", async () => {
+  it("boots a fresh IndexedDB profile directly into ready play", async () => {
     const runtime = openWebProfileRuntime({
       indexedDb: new IDBFactory(),
       subtleCrypto: webcrypto.subtle,
     })
 
-    await waitFor(runtime.actor, (snapshot) => snapshot.matches("firstRun"))
+    await waitFor(runtime.actor, (snapshot) => snapshot.matches("ready"))
     expect(selectCurrentPlayerData(runtime.actor.getSnapshot())).toEqual(
       createInitialMapachessPlayerData(),
     )

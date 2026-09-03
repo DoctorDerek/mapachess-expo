@@ -23,13 +23,11 @@ import {
   executePendingWrite,
   persistenceFailureUpdate,
   prepareActiveMatchPending,
-  prepareAutoHintsChoicePending,
-  prepareAutoHintsSettingPending,
+  prepareAutoHintModePending,
   prepareFreshRecoveryPending,
   prepareImportPending,
   prepareInitialPending,
   prepareLastKnownGoodRecoveryPending,
-  requireCurrentPlayerData,
   requireImportRaw,
   requireLoaded,
   requirePendingWrite,
@@ -103,21 +101,12 @@ const profileMachineDefinition = setup({
         persistenceFailure: null,
       }
     }),
-    prepareAutoHintsChoiceWrite: assign(({ context, event }) => {
-      if (event.type !== "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED") {
-        throw new Error("First-run action received a non-choice event.")
-      }
-      return {
-        pendingWrite: prepareAutoHintsChoicePending(context, event.enabled),
-        persistenceFailure: null,
-      }
-    }),
-    prepareAutoHintsSettingWrite: assign(({ context, event }) => {
-      if (event.type !== "PROFILE.AUTO_HINTS_SETTING_CHANGED") {
+    prepareAutoHintModeWrite: assign(({ context, event }) => {
+      if (event.type !== "PROFILE.AUTO_HINT_MODE_CHANGED") {
         throw new Error("Settings action received a non-setting event.")
       }
       return {
-        pendingWrite: prepareAutoHintsSettingPending(context, event.enabled),
+        pendingWrite: prepareAutoHintModePending(context, event.autoHintMode),
         persistenceFailure: null,
       }
     }),
@@ -143,8 +132,6 @@ const profileMachineDefinition = setup({
       requireLoaded(context).current.type === "invalid",
     currentIsMissing: ({ context }) =>
       requireLoaded(context).current.type === "missing",
-    firstRunChoiceIsIncomplete: ({ context }) =>
-      !requireCurrentPlayerData(context).firstRun.autoHintsChoiceCompleted,
     hasLastKnownGood: ({ context }) =>
       requireLoaded(context).lastKnownGood.type === "valid",
   },
@@ -195,7 +182,6 @@ const profileMachineDefinition = setup({
       always: [
         { guard: "currentIsInvalid", target: "recovery" },
         { guard: "currentIsMissing", target: "preparingInitial" },
-        { guard: "firstRunChoiceIsIncomplete", target: "firstRun" },
         { target: "ready" },
       ],
     },
@@ -203,23 +189,14 @@ const profileMachineDefinition = setup({
       entry: "prepareInitialWrite",
       always: "persisting",
     },
-    firstRun: {
-      on: {
-        "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED": {
-          actions: "prepareAutoHintsChoiceWrite",
-          target: "persisting",
-        },
-        "PROFILE.IMPORT_PREVIEW_REQUESTED": importRequestTransition,
-      },
-    },
     ready: {
       on: {
         "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED": {
           actions: "prepareActiveMatchWrite",
           target: "persisting",
         },
-        "PROFILE.AUTO_HINTS_SETTING_CHANGED": {
-          actions: "prepareAutoHintsSettingWrite",
+        "PROFILE.AUTO_HINT_MODE_CHANGED": {
+          actions: "prepareAutoHintModeWrite",
           target: "persisting",
         },
         "PROFILE.IMPORT_PREVIEW_REQUESTED": importRequestTransition,

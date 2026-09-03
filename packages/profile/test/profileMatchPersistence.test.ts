@@ -14,7 +14,6 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "../src/profileMatchPersistence.js"
-import { completeAutoHintsFirstRun } from "../src/profileMutations.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 const initialPosition = createInitialMatchPosition({
@@ -48,7 +47,7 @@ const durableMatch = (
     timeControl: Object.freeze({ type: "untimed" }),
   })
 
-const openCompletedProfile = async () => {
+const openProfile = async () => {
   const store = new SerializedPlayerDataStore(
     new InMemoryDurableStoreAdapter(),
     sha256,
@@ -59,18 +58,6 @@ const openCompletedProfile = async () => {
     createInitialMapachessPlayerData(),
   )
   if (!initialWrite.ok) throw new Error("Initial test profile write failed")
-  const completed = completeAutoHintsFirstRun(
-    initialWrite.state.current.type === "valid"
-      ? initialWrite.state.current.data
-      : createInitialMapachessPlayerData(),
-    true,
-  )
-  const completedWrite = await store.commitCurrent(
-    initialWrite.state,
-    completed,
-  )
-  if (!completedWrite.ok) throw new Error("Completed test profile write failed")
-
   const actor = createActor(profileMachine, {
     input: {
       decodePortableBackup: (rawBackup) =>
@@ -84,7 +71,7 @@ const openCompletedProfile = async () => {
 
 describe("profile-owned match persistence bridge", () => {
   it("atomically replaces and clears the active match", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const initialMatch = durableMatch()
     const replacementMatch = durableMatch("00000005000000060000000700000008")
     const controller = new AbortController()
@@ -116,7 +103,7 @@ describe("profile-owned match persistence bridge", () => {
   })
 
   it("rejects replacement when the expected active match is stale", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const acceptedMatch = durableMatch("00000005000000060000000700000008")
     const controller = new AbortController()
 
@@ -142,7 +129,7 @@ describe("profile-owned match persistence bridge", () => {
   })
 
   it("accepts one conclusion and rejects every later result change", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
       actor,
@@ -224,7 +211,7 @@ describe("profile-owned match persistence bridge", () => {
   })
 
   it("establishes the initial match and verifies each candidate", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
       actor,
@@ -281,7 +268,7 @@ describe("profile-owned match persistence bridge", () => {
   })
 
   it("waits behind another profile write without losing that update", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
       actor,
@@ -292,8 +279,8 @@ describe("profile-owned match persistence bridge", () => {
     await bridge.establish(controller.signal)
 
     actor.send({
-      enabled: false,
-      type: "PROFILE.AUTO_HINTS_SETTING_CHANGED",
+      autoHintMode: "no-auto-hints",
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
     })
     const persistence = bridge.persist(
       {
@@ -313,13 +300,13 @@ describe("profile-owned match persistence bridge", () => {
     await persistence
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
       activeMatch: { moveHintsUsed: true, pieceHintsUsed: true },
-      settings: { autoHintsEnabled: false },
+      settings: { autoHintMode: "no-auto-hints" },
     })
     actor.stop()
   })
 
   it("refuses to overwrite an independently replaced active match", async () => {
-    const actor = await openCompletedProfile()
+    const actor = await openProfile()
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
       actor,

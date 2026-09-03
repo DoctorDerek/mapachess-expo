@@ -260,8 +260,8 @@ export default function StandardChickenGame({
 
   useEffect(() => {
     const playerData = selectCurrentPlayerData(profileActor.getSnapshot())
-    if (playerData?.firstRun.autoHintsChoiceCompleted !== true) {
-      throw new Error("A completed player profile is required to enter play.")
+    if (playerData === null) {
+      throw new Error("A valid player profile is required to enter play.")
     }
 
     let disposed = false
