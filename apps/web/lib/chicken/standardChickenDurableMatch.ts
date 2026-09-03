@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import {
   DURABLE_MATCH_RECORD_VERSION,
@@ -24,7 +25,7 @@ export type ResumedStandardChickenMatch = Readonly<{
 }>
 
 export type FreshStandardChickenMatchInput = Readonly<{
-  autoHintsEnabledAtStart: boolean
+  autoHintMode: AutoHintMode
   playerEloAtStart: number
   runtime: Pick<
     WebMatchRuntime,
@@ -39,7 +40,7 @@ export function buildFreshStandardChickenMatch(
     STANDARD_CHICKEN_STARTING_POSITION,
   )
   return Object.freeze({
-    autoHintsEnabledAtStart: input.autoHintsEnabledAtStart,
+    autoHintMode: input.autoHintMode,
     conclusion: null,
     currentFen: initialPosition.fen,
     cursor: 0,

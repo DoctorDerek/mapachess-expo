@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
-import FirstRunProfilePanel from "./FirstRunProfilePanel"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
@@ -21,27 +20,10 @@ const backup = Object.freeze({
     payloadHash: "0".repeat(64),
   }),
   payload: playerData,
-  saveSchemaVersion: 1,
+  saveSchemaVersion: 2,
 }) satisfies MapachessPortableBackup
 
 describe("web player-data controls", () => {
-  it("offers the required first-run Auto-Hints choice before play", () => {
-    const markup = renderToStaticMarkup(
-      createElement(FirstRunProfilePanel, {
-        disabled: false,
-        importIssue: { path: "$", type: "PROFILE.BACKUP_INVALID" },
-        onAutoHintsChoice: vi.fn(),
-        onBackupRead: vi.fn(),
-      }),
-    )
-
-    expect(markup).toContain("Before your first game")
-    expect(markup).toContain("Keep Auto-Hints On")
-    expect(markup).toContain("Turn Auto-Hints Off")
-    expect(markup).toContain("Import Backup")
-    expect(markup).toContain("not a valid Mapachess backup")
-  })
-
   it("names every applicable corrupt-data recovery action", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileRecoveryPanel, {
@@ -81,21 +63,23 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Restore Last Known-Good Save")
   })
 
-  it("explains portable settings and new-match Auto-Hints semantics", () => {
+  it("offers all three automatic hint modes during play", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
         activityMessage: null,
+        autoHintMode: playerData.settings.autoHintMode,
         importIssue: null,
-        onAutoHintsChanged: vi.fn(),
+        onAutoHintModeChanged: vi.fn(),
         onBackupRead: vi.fn(),
         onClose: vi.fn(),
         onExportPlayerData: vi.fn(),
-        playerData,
       }),
     )
 
-    expect(markup).toContain("Start new matches with Auto-Hints")
-    expect(markup).toContain("active match keeps the setting it started with")
+    expect(markup).toContain("Auto Move Hints")
+    expect(markup).toContain("Auto Piece Hints")
+    expect(markup).toContain("No Auto Hints")
+    expect(markup).toContain("changes take effect immediately")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("non-destructive preview")
   })

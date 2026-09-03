@@ -1,7 +1,8 @@
 "use client"
 
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
 import {
   ImportBackupButton,
   importIssueMessage,
@@ -10,24 +11,45 @@ import {
   secondaryProfileButtonClasses,
 } from "./ProfileFoundation"
 
+const AUTO_HINT_OPTIONS = [
+  {
+    description:
+      "Show the three Piece Hints and their three Move Hints automatically.",
+    mode: "auto-move-hints",
+  },
+  {
+    description:
+      "Show the three Piece Hints automatically, then leave Move Hints in your control.",
+    mode: "auto-piece-hints",
+  },
+  {
+    description:
+      "Wait until you request Piece Hints or Move Hints during the match.",
+    mode: "no-auto-hints",
+  },
+] as const satisfies readonly Readonly<{
+  description: string
+  mode: AutoHintMode
+}>[]
+
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  autoHintMode: AutoHintMode
   importIssue: ProfileImportIssue | null
-  onAutoHintsChanged: (enabled: boolean) => void
+  onAutoHintModeChanged: (autoHintMode: AutoHintMode) => void
   onBackupRead: (rawBackup: string) => void
   onClose: () => void
   onExportPlayerData: () => void
-  playerData: MapachessPlayerData
 }>
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  autoHintMode,
   importIssue,
-  onAutoHintsChanged,
+  onAutoHintModeChanged,
   onBackupRead,
   onClose,
   onExportPlayerData,
-  playerData,
 }: ProfileSettingsPanelProps) {
   const busy = activityMessage !== null
 
@@ -62,26 +84,37 @@ export default function ProfileSettingsPanel({
           <legend className="px-2 font-black text-[var(--mapachito-charcoal)]">
             Better Hints
           </legend>
-          <label className="flex min-h-12 cursor-pointer items-start gap-4">
-            <input
-              checked={playerData.settings.autoHintsEnabled}
-              className="mapachess-checkbox mt-1"
-              disabled={busy}
-              onChange={(event) =>
-                onAutoHintsChanged(event.currentTarget.checked)
-              }
-              type="checkbox"
-            />
-            <span>
-              <span className="block font-black text-[var(--mapachito-charcoal)]">
-                Start new matches with Auto-Hints
-              </span>
-              <span className="mapachess-muted mt-1 block text-sm">
-                The active match keeps the setting it started with. You can
-                still request Better Hints manually when Auto-Hints are off.
-              </span>
-            </span>
-          </label>
+          <p className="mapachess-muted mb-4 text-sm">
+            Choose how Better Hints appear automatically. During a match,
+            changes take effect immediately and become the default for future
+            matches. Every Better Hint remains available manually.
+          </p>
+          <div className="grid gap-3">
+            {AUTO_HINT_OPTIONS.map(({ description, mode }) => (
+              <label
+                className="flex min-h-12 cursor-pointer items-start gap-4"
+                key={mode}
+              >
+                <input
+                  checked={autoHintMode === mode}
+                  className="mapachess-checkbox mt-1"
+                  disabled={busy}
+                  name="auto-hint-mode"
+                  onChange={() => onAutoHintModeChanged(mode)}
+                  type="radio"
+                  value={mode}
+                />
+                <span>
+                  <span className="block font-black text-[var(--mapachito-charcoal)]">
+                    {AUTO_HINT_MODE_LABELS[mode]}
+                  </span>
+                  <span className="mapachess-muted mt-1 block text-sm">
+                    {description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
         </fieldset>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">

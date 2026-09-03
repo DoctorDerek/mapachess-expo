@@ -4,8 +4,11 @@ import createInitialMapachessPlayerData from "../src/playerData.js"
 import {
   decodeStoredPlayerData,
   encodeStoredPlayerData,
+  MAPACHESS_STORED_PLAYER_DATA_FORMAT,
+  MAPACHESS_STORED_PLAYER_DATA_FORMAT_VERSION,
   MAX_STORED_PLAYER_DATA_UTF16_CODE_UNITS,
 } from "../src/storedPlayerData.js"
+import portableActiveChickenV1 from "./fixtures/portableActiveChickenV1.json"
 
 const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
@@ -27,13 +30,37 @@ describe("stored Mapachess player data", () => {
       sha256,
     )
     const damaged = encoded.replace(
-      '"autoHintsEnabled":true',
-      '"autoHintsEnabled":false',
+      '"autoHintMode":"auto-move-hints"',
+      '"autoHintMode":"no-auto-hints"',
     )
 
     await expect(decodeStoredPlayerData(damaged, sha256)).resolves.toEqual({
       issue: { type: "PROFILE.STORED_DATA_INTEGRITY_MISMATCH" },
       ok: false,
+    })
+  })
+
+  it("authenticates legacy bytes before migrating their player schema", async () => {
+    const legacyStoredData = JSON.stringify({
+      format: MAPACHESS_STORED_PLAYER_DATA_FORMAT,
+      formatVersion: MAPACHESS_STORED_PLAYER_DATA_FORMAT_VERSION,
+      integrity: portableActiveChickenV1.integrity,
+      payload: portableActiveChickenV1.payload,
+      saveSchemaVersion: 1,
+    })
+
+    await expect(
+      decodeStoredPlayerData(legacyStoredData, sha256),
+    ).resolves.toMatchObject({
+      data: {
+        activeMatch: {
+          autoHintMode: "auto-move-hints",
+          recordVersion: 3,
+        },
+        schemaVersion: 2,
+        settings: { autoHintMode: "no-auto-hints" },
+      },
+      ok: true,
     })
   })
 

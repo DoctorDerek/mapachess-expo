@@ -46,7 +46,7 @@ const createSession = (seed: string): WebMatchSession => {
     }),
   }) satisfies WebMatchRuntime
   const match = buildFreshStandardChickenMatch({
-    autoHintsEnabledAtStart: true,
+    autoHintMode: "auto-move-hints",
     playerEloAtStart: 100,
     runtime,
   })
@@ -54,7 +54,7 @@ const createSession = (seed: string): WebMatchSession => {
   return Object.freeze({
     actor: createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { type: "ephemeral" },
         initialPosition,
         matchId: match.matchId,

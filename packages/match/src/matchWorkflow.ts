@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "./autoHintMode.js"
 import type {
   BetterHintsAnalyst,
   BetterHintsRequest,
@@ -64,7 +65,7 @@ export const createInitialContext = (
   }
 
   return {
-    autoHintsEnabled: input.autoHintsEnabled,
+    autoHintMode: input.autoHintMode,
     conclusion,
     durability: input.durability,
     drawOfferResponse: null,
@@ -207,6 +208,7 @@ export const pendingPositionMutation = (
   const conclusion =
     context.conclusion ?? deriveRetainedBranchConclusion(timeline)
   return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
     matchId: context.matchId,
@@ -227,6 +229,7 @@ export const pendingConclusionMutation = (
   }
 
   return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
     matchId: context.matchId,
@@ -238,25 +241,31 @@ export const pendingConclusionMutation = (
   })
 }
 
-export const pendingPieceHintsMutation = (
+export const pendingAcceptedHintsMutation = (
   context: MatchMachineContext,
   hints: BetterHintsResult,
-): PendingMatchMutation =>
-  createPendingMatchMutation({
+): PendingMatchMutation => {
+  const moveHintsUsed =
+    context.moveHintsUsed || context.autoHintMode === "auto-move-hints"
+
+  return createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints,
     matchId: context.matchId,
-    moveHintsUsed: context.moveHintsUsed,
+    moveHintsUsed,
     mutationSequence: context.mutationSequence,
     pieceHintsUsed: true,
-    route: "piece-hints-visible",
+    route: "accepted-hints-visible",
     timeline: context.timeline,
   })
+}
 
 export const pendingMoveHintsMutation = (
   context: MatchMachineContext,
 ): PendingMatchMutation =>
   createPendingMatchMutation({
+    autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints: context.hints,
     matchId: context.matchId,
@@ -267,11 +276,56 @@ export const pendingMoveHintsMutation = (
     timeline: context.timeline,
   })
 
+type AutoHintModeState = Readonly<{
+  autoHintMode: AutoHintMode
+  hintFailure: null
+  hints: BetterHintsResult | null
+  moveHintsUsed: boolean
+  pieceHintsUsed: boolean
+}>
+
+export const autoHintModeState = (
+  context: MatchMachineContext,
+  autoHintMode: AutoHintMode,
+): AutoHintModeState => {
+  const hints = autoHintMode === "no-auto-hints" ? null : context.hints
+  return {
+    autoHintMode,
+    hintFailure: null,
+    hints,
+    moveHintsUsed:
+      context.moveHintsUsed ||
+      (hints !== null && autoHintMode === "auto-move-hints"),
+    pieceHintsUsed:
+      context.pieceHintsUsed ||
+      (hints !== null && autoHintMode !== "no-auto-hints"),
+  }
+}
+
+export const pendingAutoHintModeMutation = (
+  context: MatchMachineContext,
+  autoHintMode: AutoHintMode,
+): PendingMatchMutation => {
+  const state = autoHintModeState(context, autoHintMode)
+  return createPendingMatchMutation({
+    autoHintMode: state.autoHintMode,
+    conclusion: context.conclusion,
+    hints: state.hints,
+    matchId: context.matchId,
+    moveHintsUsed: state.moveHintsUsed,
+    mutationSequence: context.mutationSequence,
+    pieceHintsUsed: state.pieceHintsUsed,
+    route: context.conclusion === null ? "resolve-position" : "complete",
+    timeline: context.timeline,
+  })
+}
+
 export const acceptedPendingMutation = (
   context: MatchMachineContext,
 ): Partial<MatchMachineContext> => {
   const pending = requirePendingMutation(context)
   return {
+    autoHintMode: pending.request.autoHintMode,
     conclusion: pending.conclusion,
     drawOfferResponse: null,
     hintFailure: null,

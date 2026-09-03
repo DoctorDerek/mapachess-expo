@@ -22,10 +22,7 @@ import profileMachine, {
   selectPersistenceFailure,
   selectUnreadablePlayerData,
 } from "../src/profileMachine.js"
-import {
-  changeAutoHintsSetting,
-  completeAutoHintsFirstRun,
-} from "../src/profileMutations.js"
+import { changeAutoHintMode } from "../src/profileMutations.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 const createStore = (
@@ -41,22 +38,21 @@ const createProfileActor = (store: SerializedPlayerDataStore) =>
     },
   }).start()
 
-const seedCompletedProfile = async (
+const seedProfile = async (
   store: SerializedPlayerDataStore,
-  autoHintsEnabled = true,
+  autoHintMode: MapachessPlayerData["settings"]["autoHintMode"] = "auto-move-hints",
 ): Promise<MapachessPlayerData> => {
   const missing = await store.load()
   const initial = createInitialMapachessPlayerData()
   const initialWrite = await store.commitCurrent(missing, initial)
   if (!initialWrite.ok) throw new Error("Initial profile seed failed")
 
-  const completed = completeAutoHintsFirstRun(initial, autoHintsEnabled)
-  const completedWrite = await store.commitCurrent(
-    initialWrite.state,
-    completed,
-  )
-  if (!completedWrite.ok) throw new Error("Completed profile seed failed")
-  return completed
+  if (autoHintMode === initial.settings.autoHintMode) return initial
+
+  const changed = changeAutoHintMode(initial, autoHintMode)
+  const changedWrite = await store.commitCurrent(initialWrite.state, changed)
+  if (!changedWrite.ok) throw new Error("Changed profile seed failed")
+  return changed
 }
 
 class FailFirstWriteAdapter implements DurableStoreAdapter {
@@ -83,30 +79,23 @@ class FailFirstWriteAdapter implements DurableStoreAdapter {
 }
 
 describe("XState durable profile orchestration", () => {
-  it("persists a fresh profile before accepting the first-run choice", async () => {
+  it("persists a fresh profile with automatic move hints by default", async () => {
     const actor = createProfileActor(createStore())
-    await waitFor(actor, (snapshot) => snapshot.matches("firstRun"))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
 
     expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(
       createInitialMapachessPlayerData(),
     )
-    actor.send({
-      enabled: false,
-      type: "PROFILE.AUTO_HINTS_CHOICE_CONFIRMED",
-    })
-    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
-
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
-      firstRun: { autoHintsChoiceCompleted: true },
-      revision: 1,
-      settings: { autoHintsEnabled: false },
+      revision: 0,
+      settings: { autoHintMode: "auto-move-hints" },
     })
     actor.stop()
   })
 
   it("boots valid data directly and freezes corrupt data in recovery", async () => {
     const validStore = createStore()
-    const completed = await seedCompletedProfile(validStore)
+    const completed = await seedProfile(validStore)
     const validActor = createProfileActor(validStore)
     await waitFor(validActor, (snapshot) => snapshot.matches("ready"))
     expect(selectCurrentPlayerData(validActor.getSnapshot())).toEqual(completed)
@@ -130,9 +119,9 @@ describe("XState durable profile orchestration", () => {
   it("restores a last-known-good profile only after an explicit event", async () => {
     const adapter = new InMemoryDurableStoreAdapter()
     const store = createStore(adapter)
-    const completed = await seedCompletedProfile(store, false)
+    const completed = await seedProfile(store, "no-auto-hints")
     const loaded = await store.load()
-    const changed = changeAutoHintsSetting(completed, true)
+    const changed = changeAutoHintMode(completed, "auto-move-hints")
     const changedWrite = await store.commitCurrent(loaded, changed)
     if (!changedWrite.ok) throw new Error("Changed profile seed failed")
     adapter.snapshot = Object.freeze({
@@ -149,7 +138,7 @@ describe("XState durable profile orchestration", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
       revision: completed.revision + 1,
-      settings: { autoHintsEnabled: false },
+      settings: { autoHintMode: "no-auto-hints" },
     })
     actor.stop()
   })
@@ -166,7 +155,7 @@ describe("XState durable profile orchestration", () => {
     )
 
     actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
-    await waitFor(actor, (snapshot) => snapshot.matches("firstRun"))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     expect(selectPendingPlayerData(actor.getSnapshot())).toBeNull()
     expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(
       createInitialMapachessPlayerData(),
@@ -183,7 +172,7 @@ describe("XState durable profile orchestration", () => {
     const missing = await externalStore.load()
     const externalCandidate = Object.freeze({
       ...createInitialMapachessPlayerData(),
-      settings: Object.freeze({ autoHintsEnabled: false }),
+      settings: Object.freeze({ autoHintMode: "no-auto-hints" }),
     })
     const externalWrite = await externalStore.commitCurrent(
       missing,
@@ -208,13 +197,13 @@ describe("XState durable profile orchestration", () => {
 
   it("previews, cancels, and confirms a verified portable replacement", async () => {
     const store = createStore()
-    const current = await seedCompletedProfile(store, true)
+    const current = await seedProfile(store)
     const actor = createProfileActor(store)
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
 
-    const imported = completeAutoHintsFirstRun(
+    const imported = changeAutoHintMode(
       createInitialMapachessPlayerData(),
-      false,
+      "no-auto-hints",
     )
     const rawBackup = await createMapachessPortableBackup({
       applicationVersion: "0.0.0-test",
@@ -237,7 +226,7 @@ describe("XState durable profile orchestration", () => {
 
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
       revision: current.revision + 1,
-      settings: { autoHintsEnabled: false },
+      settings: { autoHintMode: "no-auto-hints" },
     })
     expect(actor.getSnapshot().context.loaded?.preImportBackup).toMatchObject({
       data: current,
@@ -248,7 +237,7 @@ describe("XState durable profile orchestration", () => {
 
   it("rejects a malformed import without mutating current data", async () => {
     const store = createStore()
-    const current = await seedCompletedProfile(store)
+    const current = await seedProfile(store)
     const actor = createProfileActor(store)
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
 
@@ -274,9 +263,9 @@ describe("XState durable profile orchestration", () => {
     })
     const actor = createProfileActor(createStore(adapter))
     await waitFor(actor, (snapshot) => snapshot.matches("recovery"))
-    const imported = completeAutoHintsFirstRun(
+    const imported = changeAutoHintMode(
       createInitialMapachessPlayerData(),
-      false,
+      "no-auto-hints",
     )
     const rawBackup = await createMapachessPortableBackup({
       applicationVersion: "0.0.0-test",
@@ -292,7 +281,7 @@ describe("XState durable profile orchestration", () => {
 
     expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
       revision: 0,
-      settings: { autoHintsEnabled: false },
+      settings: { autoHintMode: "no-auto-hints" },
     })
     expect(actor.getSnapshot().context.loaded?.preImportBackup).toEqual({
       type: "missing",

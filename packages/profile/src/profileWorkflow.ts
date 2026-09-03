@@ -16,8 +16,7 @@ import type {
   ProfileMachineContext,
 } from "./profileMachineTypes.js"
 import {
-  changeAutoHintsSetting,
-  completeAutoHintsFirstRun,
+  changeAutoHintMode,
   createFreshRecoveryData,
   createLastKnownGoodRecoveryData,
   prepareImportedPlayerData,
@@ -95,26 +94,14 @@ export const prepareActiveMatchPending = (
   )
 }
 
-export const prepareAutoHintsChoicePending = (
+export const prepareAutoHintModePending = (
   context: ProfileMachineContext,
-  enabled: boolean,
+  autoHintMode: MapachessPlayerData["settings"]["autoHintMode"],
 ): PendingProfileWrite => {
   const loaded = requireLoaded(context)
   return pendingWrite(
     loaded,
-    completeAutoHintsFirstRun(requireCurrentPlayerData(context), enabled),
-    "commit",
-  )
-}
-
-export const prepareAutoHintsSettingPending = (
-  context: ProfileMachineContext,
-  enabled: boolean,
-): PendingProfileWrite => {
-  const loaded = requireLoaded(context)
-  return pendingWrite(
-    loaded,
-    changeAutoHintsSetting(requireCurrentPlayerData(context), enabled),
+    changeAutoHintMode(requireCurrentPlayerData(context), autoHintMode),
     "commit",
   )
 }

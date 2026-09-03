@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "./autoHintMode.js"
 import type { BetterHintsResult } from "./betterHints.js"
 import type { MatchConclusion } from "./matchConclusion.js"
 import type { MatchMachineSnapshot } from "./matchMachine.js"
@@ -21,6 +22,10 @@ export const selectMatchPosition = (
 export const selectMatchTimeline = (
   snapshot: MatchMachineSnapshot,
 ): MatchTimeline => snapshot.context.timeline
+
+export const selectAutoHintMode = (
+  snapshot: MatchMachineSnapshot,
+): AutoHintMode => snapshot.context.autoHintMode
 
 export const selectMatchConclusion = (
   snapshot: MatchMachineSnapshot,

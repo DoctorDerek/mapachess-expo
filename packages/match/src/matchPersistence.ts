@@ -1,9 +1,11 @@
+import type { AutoHintMode } from "./autoHintMode.js"
 import type { BetterHintsResult } from "./betterHints.js"
 import type { MatchConclusion } from "./matchConclusion.js"
 import type { MatchMoveId } from "./matchMove.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
 export type MatchPersistenceRequest = Readonly<{
+  autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   currentFen: string
   cursor: number
@@ -38,7 +40,10 @@ export type MatchDurability =
     }>
 
 export type PendingMatchMutationRoute =
-  "complete" | "move-hints-visible" | "piece-hints-visible" | "resolve-position"
+  | "accepted-hints-visible"
+  | "complete"
+  | "move-hints-visible"
+  | "resolve-position"
 
 export type PendingMatchMutation = Readonly<{
   conclusion: MatchConclusion | null
@@ -51,6 +56,7 @@ export type PendingMatchMutation = Readonly<{
 }>
 
 export type CreatePendingMatchMutationInput = Readonly<{
+  autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   hints: BetterHintsResult | null
   matchId: string
@@ -72,7 +78,7 @@ export const createPendingMatchMutation = (
           input.conclusion.type === "resignation"
         ? `${input.conclusion.type}-${input.conclusion.winner}`
         : input.conclusion.type
-  const requestId = `${input.matchId}/persistence/${String(input.mutationSequence)}/conclusion/${conclusionIdentity}/cursor/${String(input.timeline.cursor)}/fen/${position.fen}`
+  const requestId = `${input.matchId}/persistence/${String(input.mutationSequence)}/auto-hints/${input.autoHintMode}/conclusion/${conclusionIdentity}/cursor/${String(input.timeline.cursor)}/fen/${position.fen}`
 
   return Object.freeze({
     conclusion: input.conclusion,
@@ -80,6 +86,7 @@ export const createPendingMatchMutation = (
     moveHintsUsed: input.moveHintsUsed,
     pieceHintsUsed: input.pieceHintsUsed,
     request: Object.freeze({
+      autoHintMode: input.autoHintMode,
       conclusion: input.conclusion,
       currentFen: position.fen,
       cursor: input.timeline.cursor,

@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./auto-hint-mode": {
+      "types": "./src/autoHintMode.ts",
+      "default": "./dist/autoHintMode.js"
+    },
     "./better-hints": {
       "types": "./src/betterHints.ts",
       "default": "./dist/betterHints.js"

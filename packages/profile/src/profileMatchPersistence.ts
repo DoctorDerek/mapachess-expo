@@ -117,6 +117,7 @@ const candidateFromRequest = (
 
   return Object.freeze({
     ...initialMatch,
+    autoHintMode: request.autoHintMode,
     conclusion: request.conclusion,
     currentFen: request.currentFen,
     cursor: request.cursor,

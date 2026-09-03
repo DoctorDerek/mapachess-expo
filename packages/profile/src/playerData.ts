@@ -1,7 +1,12 @@
+import {
+  DEFAULT_AUTO_HINT_MODE,
+  type AutoHintMode,
+} from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 
 export const MAPACHESS_PLAYER_DATA_SCHEMA = "mapachess-player-data" as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
+export const LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 2 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -22,13 +27,24 @@ export type MapachessPlayerDataV1 = Readonly<{
   ratings: PlayerEloRatings
   revision: number
   schema: typeof MAPACHESS_PLAYER_DATA_SCHEMA
-  schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+  schemaVersion: typeof LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
   settings: Readonly<{
     autoHintsEnabled: boolean
   }>
 }>
 
-export type MapachessPlayerData = MapachessPlayerDataV1
+export type MapachessPlayerDataV2 = Readonly<{
+  activeMatch: DurableMatchRecord | null
+  ratings: PlayerEloRatings
+  revision: number
+  schema: typeof MAPACHESS_PLAYER_DATA_SCHEMA
+  schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+  settings: Readonly<{
+    autoHintMode: AutoHintMode
+  }>
+}>
+
+export type MapachessPlayerData = MapachessPlayerDataV2
 
 export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
   Object.freeze({
@@ -41,11 +57,10 @@ export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
 export default function createInitialMapachessPlayerData(): MapachessPlayerData {
   return Object.freeze({
     activeMatch: null,
-    firstRun: Object.freeze({ autoHintsChoiceCompleted: false }),
     ratings: createInitialPlayerEloRatings(),
     revision: 0,
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-    settings: Object.freeze({ autoHintsEnabled: true }),
+    settings: Object.freeze({ autoHintMode: DEFAULT_AUTO_HINT_MODE }),
   })
 }

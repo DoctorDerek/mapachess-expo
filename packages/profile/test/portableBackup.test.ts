@@ -23,13 +23,15 @@ describe("Mapachess portable backups", () => {
       backup: {
         payload: {
           activeMatch: {
+            autoHintMode: "auto-move-hints",
             cursor: 1,
             moveHintsUsed: true,
             moveIds: ["e2e4", "e7e5"],
             pieceHintsUsed: true,
           },
           ratings: portableActiveChickenV1.payload.ratings,
-          settings: { autoHintsEnabled: false },
+          schemaVersion: 2,
+          settings: { autoHintMode: "no-auto-hints" },
         },
       },
       ok: true,
@@ -85,7 +87,7 @@ describe("Mapachess portable backups", () => {
     })
   })
 
-  it("round-trips the canonical first-run profile", async () => {
+  it("round-trips the canonical player profile", async () => {
     const playerData = createInitialMapachessPlayerData()
     const encoded = await createMapachessPortableBackup({
       applicationVersion: "0.0.0-test",
@@ -107,7 +109,7 @@ describe("Mapachess portable backups", () => {
           payloadHash: expect.stringMatching(/^[0-9a-f]{64}$/u),
         },
         payload: playerData,
-        saveSchemaVersion: 1,
+        saveSchemaVersion: 2,
       },
       ok: true,
     })
@@ -165,8 +167,8 @@ describe("Mapachess portable backups", () => {
       sha256,
     })
     const tampered = encoded.replace(
-      '"autoHintsEnabled": true',
-      '"autoHintsEnabled": false',
+      '"autoHintMode": "auto-move-hints"',
+      '"autoHintMode": "no-auto-hints"',
     )
 
     await expect(
@@ -203,7 +205,7 @@ describe("Mapachess portable backups", () => {
           gddRevision: "future",
           integrity: { algorithm: "SHA-256", payloadHash: "0".repeat(64) },
           payload: createInitialMapachessPlayerData(),
-          saveSchemaVersion: 1,
+          saveSchemaVersion: 2,
         }),
         sha256,
       ),
@@ -229,11 +231,11 @@ describe("Mapachess player-data decoding", () => {
     expect(
       decodeMapachessPlayerData({
         ...createInitialMapachessPlayerData(),
-        schemaVersion: 2,
+        schemaVersion: 3,
       }),
     ).toEqual({
       issue: {
-        receivedVersion: 2,
+        receivedVersion: 3,
         type: "PROFILE.SCHEMA_VERSION_UNSUPPORTED",
       },
       ok: false,

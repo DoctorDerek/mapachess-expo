@@ -7,12 +7,11 @@ import createInitialMapachessPlayerData, {
 } from "../src/playerData.js"
 
 describe("Mapachess player data", () => {
-  it("creates the canonical private first-run profile", () => {
+  it("creates the canonical private player profile", () => {
     const playerData = createInitialMapachessPlayerData()
 
     expect(playerData).toEqual({
       activeMatch: null,
-      firstRun: { autoHintsChoiceCompleted: false },
       ratings: {
         chess960Challenge: INITIAL_PLAYER_ELO,
         chess960Story: INITIAL_PLAYER_ELO,
@@ -22,13 +21,12 @@ describe("Mapachess player data", () => {
       revision: 0,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-      settings: { autoHintsEnabled: true },
+      settings: { autoHintMode: "auto-move-hints" },
     })
     expect(Object.keys(playerData.ratings).sort()).toEqual(
       [...PLAYER_ELO_RATING_IDS].sort(),
     )
     expect(Object.isFrozen(playerData)).toBe(true)
-    expect(Object.isFrozen(playerData.firstRun)).toBe(true)
     expect(Object.isFrozen(playerData.ratings)).toBe(true)
     expect(Object.isFrozen(playerData.settings)).toBe(true)
   })

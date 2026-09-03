@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import SerializedPlayerDataStore, {
   EMPTY_DURABLE_STORE_SNAPSHOT,
   type LoadedDurablePlayerData,
@@ -11,13 +12,12 @@ import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 const revisePlayerData = (
   data: MapachessPlayerData,
-  autoHintsEnabled: boolean,
+  autoHintMode: AutoHintMode,
 ): MapachessPlayerData =>
   Object.freeze({
     ...data,
-    firstRun: Object.freeze({ autoHintsChoiceCompleted: true }),
     revision: data.revision + 1,
-    settings: Object.freeze({ autoHintsEnabled }),
+    settings: Object.freeze({ autoHintMode }),
   })
 
 const requireCurrentData = (
@@ -38,7 +38,7 @@ describe("serialized durable player-data writes", () => {
     const firstWrite = await store.commitCurrent(missing, initial)
     if (!firstWrite.ok) throw new Error("Initial write must succeed")
 
-    const revised = revisePlayerData(initial, false)
+    const revised = revisePlayerData(initial, "no-auto-hints")
     const secondWrite = await store.commitCurrent(firstWrite.state, revised)
 
     expect(secondWrite).toMatchObject({
@@ -64,11 +64,17 @@ describe("serialized durable player-data writes", () => {
     const [first, stale] = await Promise.all([
       store.commitCurrent(
         initialWrite.state,
-        revisePlayerData(requireCurrentData(initialWrite.state), false),
+        revisePlayerData(
+          requireCurrentData(initialWrite.state),
+          "no-auto-hints",
+        ),
       ),
       store.commitCurrent(
         initialWrite.state,
-        revisePlayerData(requireCurrentData(initialWrite.state), true),
+        revisePlayerData(
+          requireCurrentData(initialWrite.state),
+          "auto-move-hints",
+        ),
       ),
     ])
 
@@ -115,8 +121,8 @@ describe("serialized durable player-data writes", () => {
     if (!initialWrite.ok) throw new Error("Initial write must succeed")
 
     const imported = revisePlayerData(
-      revisePlayerData(createInitialMapachessPlayerData(), false),
-      true,
+      revisePlayerData(createInitialMapachessPlayerData(), "no-auto-hints"),
+      "auto-move-hints",
     )
     const result = await store.replaceWithImportedData(
       initialWrite.state,
@@ -160,7 +166,7 @@ describe("serialized durable player-data writes", () => {
     if (!firstWrite.ok) throw new Error("Initial write must succeed")
     const secondWrite = await store.commitCurrent(
       firstWrite.state,
-      revisePlayerData(initial, false),
+      revisePlayerData(initial, "no-auto-hints"),
     )
     if (!secondWrite.ok) throw new Error("Second write must succeed")
 
@@ -181,7 +187,10 @@ describe("serialized durable player-data writes", () => {
       ok: true,
       state: {
         current: {
-          data: { revision: 1, settings: { autoHintsEnabled: true } },
+          data: {
+            revision: 1,
+            settings: { autoHintMode: "auto-move-hints" },
+          },
           type: "valid",
         },
         lastKnownGood: { data: initial, type: "valid" },

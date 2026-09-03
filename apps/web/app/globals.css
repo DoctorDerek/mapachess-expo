@@ -12,6 +12,12 @@
   --mapachito-deep-gold: #a77e18;
   --mapachito-charcoal: #1e1e1e;
   --mapachito-white: #ffffff;
+  --mapachess-board-dark-square: var(--mapachito-blue);
+  --mapachess-board-light-square: var(--mapachito-white);
+  --mapachess-board-hint-outline: var(--mapachito-charcoal);
+  --mapachess-board-opponent-hint: var(--mapachito-red);
+  --mapachess-board-player-hint: var(--mapachito-green);
+  --mapachess-board-legal-move: var(--mapachito-deep-gold);
   --mapachess-display-font:
     Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
   --mapachess-body-font: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;

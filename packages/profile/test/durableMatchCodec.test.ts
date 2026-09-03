@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { DURABLE_MATCH_RECORD_VERSION } from "@mapachess/match/durable-match-record"
+import {
+  DURABLE_MATCH_RECORD_VERSION,
+  LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
+} from "@mapachess/match/durable-match-record"
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 
@@ -8,8 +11,7 @@ const INITIAL_STANDARD_FEN =
 const AFTER_E4_FEN =
   "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
 
-const activeMatch = Object.freeze({
-  autoHintsEnabledAtStart: true,
+const activeMatchFields = Object.freeze({
   currentFen: INITIAL_STANDARD_FEN,
   cursor: 0,
   matchId: "standard-story-chicken/0123456789abcdef0123456789abcdef",
@@ -22,12 +24,24 @@ const activeMatch = Object.freeze({
   pieceHintsUsed: false,
   playerColor: "white",
   playerEloAtStart: 100,
-  recordVersion: 1,
   startingPosition: Object.freeze({
     chess960PositionId: null,
     variant: "standard",
   }),
   timeControl: Object.freeze({ type: "untimed" }),
+})
+
+const legacyActiveMatch = Object.freeze({
+  ...activeMatchFields,
+  autoHintsEnabledAtStart: true,
+  recordVersion: 1,
+})
+
+const activeMatch = Object.freeze({
+  ...activeMatchFields,
+  autoHintMode: "auto-move-hints",
+  conclusion: null,
+  recordVersion: DURABLE_MATCH_RECORD_VERSION,
 })
 
 const playerDataWithMatch = (match: unknown): unknown => ({
@@ -40,7 +54,7 @@ describe("durable active-match decoding", () => {
     expect(
       decodeMapachessPlayerData(
         playerDataWithMatch({
-          ...activeMatch,
+          ...legacyActiveMatch,
           currentFen: AFTER_E4_FEN,
           cursor: 1,
           moveIds: ["e2e4", "e7e5"],
@@ -49,6 +63,7 @@ describe("durable active-match decoding", () => {
     ).toMatchObject({
       data: {
         activeMatch: {
+          autoHintMode: "auto-move-hints",
           conclusion: null,
           currentFen: AFTER_E4_FEN,
           cursor: 1,
@@ -60,11 +75,32 @@ describe("durable active-match decoding", () => {
     })
   })
 
+  it("migrates record v2 and its binary Auto-Hints setting", () => {
+    expect(
+      decodeMapachessPlayerData(
+        playerDataWithMatch({
+          ...legacyActiveMatch,
+          conclusion: null,
+          recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
+        }),
+      ),
+    ).toMatchObject({
+      data: {
+        activeMatch: {
+          autoHintMode: "auto-move-hints",
+          conclusion: null,
+          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+        },
+      },
+      ok: true,
+    })
+  })
+
   it("derives a retained terminal result while migrating record v1", () => {
     expect(
       decodeMapachessPlayerData(
         playerDataWithMatch({
-          ...activeMatch,
+          ...legacyActiveMatch,
           currentFen:
             "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
           cursor: 4,
@@ -88,7 +124,6 @@ describe("durable active-match decoding", () => {
         playerDataWithMatch({
           ...activeMatch,
           conclusion: { type: "draw-agreement" },
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
         }),
       ),
     ).toMatchObject({
@@ -108,7 +143,6 @@ describe("durable active-match decoding", () => {
         playerDataWithMatch({
           ...activeMatch,
           conclusion: { type: "resignation", winner: "white" },
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
         }),
       ),
     ).toEqual({
@@ -130,7 +164,6 @@ describe("durable active-match decoding", () => {
             "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
           cursor: 4,
           moveIds: ["f2f3", "e7e5", "g2g4", "d8h4"],
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
         }),
       ),
     ).toEqual({

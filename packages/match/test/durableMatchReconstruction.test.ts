@@ -54,7 +54,7 @@ const createRecord = (
   }
 
   return Object.freeze({
-    autoHintsEnabledAtStart: true,
+    autoHintMode: "auto-move-hints",
     conclusion: null,
     currentFen: currentPosition.fen,
     cursor,
