@@ -2,24 +2,22 @@
 
 :root {
   color-scheme: dark;
-  --mapachito-ink: #1c1036;
-  --mapachito-ink-soft: #35205f;
-  --mapachito-night: #27134f;
-  --mapachito-violet: #8b5cf6;
-  --mapachito-coral: #ff5d73;
-  --mapachito-sun: #ffd84d;
-  --mapachito-mint: #43e6a1;
-  --mapachito-sky: #57d5ff;
-  --mapachito-cream: #fff4d6;
-  --mapachito-paper: #fffaf0;
+  --mapachito-deep-cyan: #008b8b;
+  --mapachito-raspberry: #9c0052;
+  --mapachito-blue: #008ec1;
+  --mapachito-orange: #ff4500;
+  --mapachito-violet: #790fc5;
+  --mapachito-green: #008f39;
+  --mapachito-red: #ff0000;
+  --mapachito-deep-gold: #a77e18;
+  --mapachito-charcoal: #1e1e1e;
   --mapachito-white: #ffffff;
-  --mapachito-focus: #ffffff;
-  --mapachito-display-font:
+  --mapachess-display-font:
     Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
-  --mapachito-body-font: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;
-  background: var(--mapachito-night);
-  color: var(--mapachito-cream);
-  font-family: var(--mapachito-body-font);
+  --mapachess-body-font: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;
+  background: var(--mapachito-charcoal);
+  color: var(--mapachito-white);
+  font-family: var(--mapachess-body-font);
 }
 
 * {
@@ -34,7 +32,7 @@ body {
 
 body {
   min-height: 100vh;
-  background-color: var(--mapachito-night);
+  background-color: var(--mapachito-charcoal);
   background-image:
     linear-gradient(rgb(255 255 255 / 0.035) 2px, transparent 2px),
     linear-gradient(90deg, rgb(255 255 255 / 0.035) 2px, transparent 2px);
@@ -47,13 +45,13 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid var(--mapachito-focus);
+  outline: 3px solid var(--mapachito-white);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: var(--mapachito-sun);
-  color: var(--mapachito-ink);
+  background: var(--mapachito-orange);
+  color: var(--mapachito-charcoal);
 }
 
 .mapachess-shell {
@@ -73,11 +71,13 @@ button {
   height: 0.625rem;
   background: repeating-linear-gradient(
     90deg,
-    var(--mapachito-coral) 0 3rem,
-    var(--mapachito-sun) 3rem 6rem,
-    var(--mapachito-mint) 6rem 9rem,
-    var(--mapachito-sky) 9rem 12rem,
-    var(--mapachito-violet) 12rem 15rem
+    var(--mapachito-raspberry) 0 3rem,
+    var(--mapachito-orange) 3rem 6rem,
+    var(--mapachito-deep-gold) 6rem 9rem,
+    var(--mapachito-green) 9rem 12rem,
+    var(--mapachito-deep-cyan) 12rem 15rem,
+    var(--mapachito-blue) 15rem 18rem,
+    var(--mapachito-violet) 18rem 21rem
   );
   content: "";
 }
@@ -89,29 +89,22 @@ button {
   bottom: -10rem;
   width: 24rem;
   height: 24rem;
-  border: 4rem solid rgb(255 216 77 / 0.1);
+  border: 4rem solid rgb(167 126 24 / 0.12);
   border-radius: 50%;
   content: "";
 }
 
 .mapachess-surface {
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1.5rem 0.5rem 1.5rem 0.5rem;
-  background: var(--mapachito-paper);
-  box-shadow: 0.625rem 0.625rem 0 var(--mapachito-ink);
-}
-
-.mapachess-surface--night {
-  color: var(--mapachito-cream);
-  border-color: var(--mapachito-cream);
-  background: var(--mapachito-ink);
-  box-shadow: 0.625rem 0.625rem 0 rgb(8 3 20 / 0.7);
+  background: var(--mapachito-white);
+  box-shadow: 0.625rem 0.625rem 0 var(--mapachito-charcoal);
 }
 
 .mapachess-eyebrow {
   margin: 0;
-  color: #5b2bbf;
+  color: var(--mapachito-violet);
   font-family:
     ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   font-size: 0.75rem;
@@ -123,8 +116,8 @@ button {
 
 .mapachess-display {
   margin: 0;
-  color: var(--mapachito-ink);
-  font-family: var(--mapachito-display-font);
+  color: var(--mapachito-charcoal);
+  font-family: var(--mapachess-display-font);
   font-size: clamp(2.5rem, 8vw, 5.5rem);
   font-stretch: condensed;
   font-weight: 900;
@@ -135,16 +128,17 @@ button {
 }
 
 .mapachess-copy {
-  color: #514467;
+  color: var(--mapachito-charcoal);
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.65;
+  opacity: 0.82;
 }
 
 .mapachess-section-title {
   margin: 0;
-  color: var(--mapachito-ink);
-  font-family: var(--mapachito-display-font);
+  color: var(--mapachito-charcoal);
+  font-family: var(--mapachess-display-font);
   font-size: clamp(1.75rem, 5vw, 3rem);
   font-weight: 900;
   letter-spacing: -0.025em;
@@ -155,8 +149,8 @@ button {
 
 .mapachess-subheading {
   margin: 0;
-  color: var(--mapachito-ink);
-  font-family: var(--mapachito-display-font);
+  color: var(--mapachito-charcoal);
+  font-family: var(--mapachess-display-font);
   font-size: 1.35rem;
   font-weight: 900;
   letter-spacing: 0.015em;
@@ -165,60 +159,64 @@ button {
 }
 
 .mapachess-muted {
-  color: #66597a;
+  color: var(--mapachito-charcoal);
   font-weight: 600;
   line-height: 1.55;
+  opacity: 0.76;
 }
 
 .mapachess-rule {
-  border-color: rgb(28 16 54 / 0.2);
+  border-color: rgb(30 30 30 / 0.2);
 }
 
 .mapachess-inset {
-  border: 3px solid var(--mapachito-ink);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1rem 0.25rem 1rem 0.25rem;
-  background: #eee6ff;
+  background: var(--mapachito-white);
+  box-shadow: inset 0.5rem 0 0 var(--mapachito-deep-cyan);
+}
+
+.mapachess-inset--danger {
+  box-shadow: inset 0.5rem 0 0 var(--mapachito-red);
 }
 
 .mapachess-data-grid {
-  border: 3px solid var(--mapachito-ink);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1rem 0.25rem 1rem 0.25rem;
-  background: #eee6ff;
-  box-shadow: 0.25rem 0.25rem 0 rgb(28 16 54 / 0.18);
+  background: var(--mapachito-white);
+  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-blue);
 }
 
 .mapachess-data-grid dt {
-  color: #695880;
+  color: var(--mapachito-charcoal);
   font-weight: 900;
+  opacity: 0.72;
 }
 
 .mapachess-data-grid dd {
-  color: var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
   font-weight: 800;
 }
 
 .mapachess-notice {
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1rem 0.25rem 1rem 0.25rem;
   padding: 1rem;
-  background: var(--mapachito-sky);
+  background: var(--mapachito-white);
+  box-shadow: inset 0.5rem 0 0 var(--mapachito-blue);
   font-weight: 700;
   line-height: 1.55;
 }
 
 .mapachess-notice--warning {
-  background: var(--mapachito-sun);
-}
-
-.mapachess-notice--danger {
-  background: #ffb6c1;
+  box-shadow: inset 0.5rem 0 0 var(--mapachito-deep-gold);
 }
 
 .mapachess-checkbox {
   width: 1.35rem;
   height: 1.35rem;
-  accent-color: #6c2bd9;
+  accent-color: var(--mapachito-violet);
 }
 
 .mapachess-story-board {
@@ -234,7 +232,7 @@ button {
   height: clamp(4.5rem, 18vw, 10rem);
   translate: 30% -35%;
   rotate: 18deg;
-  border: 1.5rem solid rgb(139 92 246 / 0.2);
+  border: 1.5rem solid rgb(121 15 197 / 0.2);
   content: "";
 }
 
@@ -243,23 +241,23 @@ button {
   min-height: 13rem;
   place-content: center;
   padding: 1.5rem;
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-white);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1.25rem 0.25rem 1.25rem 0.25rem;
   background:
     linear-gradient(
       135deg,
       transparent 0 48%,
-      rgb(28 16 54 / 0.12) 48% 52%,
+      rgb(255 255 255 / 0.22) 48% 52%,
       transparent 52%
     ),
-    var(--mapachito-coral);
-  box-shadow: 0.5rem 0.5rem 0 var(--mapachito-sun);
+    var(--mapachito-raspberry);
+  box-shadow: 0.5rem 0.5rem 0 var(--mapachito-orange);
   text-align: center;
 }
 
 .mapachess-opponent-poster__number {
-  font-family: var(--mapachito-display-font);
+  font-family: var(--mapachess-display-font);
   font-size: clamp(5rem, 18vw, 9rem);
   font-weight: 900;
   letter-spacing: -0.06em;
@@ -276,25 +274,26 @@ button {
 }
 
 .mapachess-story-facts {
-  border: 3px solid var(--mapachito-ink);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1rem 0.25rem 1rem 0.25rem;
-  background: var(--mapachito-cream);
+  background: var(--mapachito-white);
 }
 
 .mapachess-story-facts > div + div {
-  border-top: 2px solid rgb(28 16 54 / 0.18);
+  border-top: 2px solid rgb(30 30 30 / 0.18);
 }
 
 .mapachess-story-facts dt {
-  color: #695880;
+  color: var(--mapachito-charcoal);
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  opacity: 0.72;
 }
 
 .mapachess-story-facts dd {
-  color: var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
   font-weight: 900;
 }
 
@@ -302,28 +301,28 @@ button {
   width: 3.5rem;
   height: 3.5rem;
   rotate: 8deg;
-  border: 0.625rem solid var(--mapachito-coral);
-  border-top-color: var(--mapachito-sun);
-  border-right-color: var(--mapachito-mint);
+  border: 0.625rem solid var(--mapachito-raspberry);
+  border-top-color: var(--mapachito-orange);
+  border-right-color: var(--mapachito-green);
   background: var(--mapachito-violet);
   animation: mapachess-loading-turn 900ms steps(8, end) infinite;
 }
 
 .mapachess-board-frame {
   overflow: hidden;
-  border: 4px solid var(--mapachito-ink);
+  border: 4px solid var(--mapachito-charcoal);
   border-radius: 1rem 0.25rem 1rem 0.25rem;
   box-shadow:
-    0.5rem 0.5rem 0 var(--mapachito-coral),
-    0.85rem 0.85rem 0 var(--mapachito-sun);
+    0.5rem 0.5rem 0 var(--mapachito-raspberry),
+    0.85rem 0.85rem 0 var(--mapachito-orange);
 }
 
 .mapachess-command-deck {
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 1.5rem 0.5rem 1.5rem 0.5rem;
-  background: var(--mapachito-paper);
-  box-shadow: 0.625rem 0.625rem 0 var(--mapachito-ink);
+  background: var(--mapachito-white);
+  box-shadow: 0.625rem 0.625rem 0 var(--mapachito-charcoal);
 }
 
 .mapachess-match-ribbon {
@@ -332,10 +331,10 @@ button {
   gap: 1rem;
   align-items: center;
   padding: 0.75rem 1rem;
-  color: var(--mapachito-cream);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-white);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
-  background: #6c2bd9;
+  background: var(--mapachito-violet);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.72rem;
   font-weight: 900;
@@ -345,25 +344,26 @@ button {
 }
 
 .mapachess-match-ribbon span:last-child {
-  color: var(--mapachito-sun);
+  color: var(--mapachito-white);
   text-align: right;
 }
 
 .mapachess-turn-banner {
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
-  background: var(--mapachito-sun);
-  box-shadow: 0.25rem 0.25rem 0 rgb(28 16 54 / 0.2);
+  background: var(--mapachito-orange);
+  box-shadow: 0.25rem 0.25rem 0 rgb(30 30 30 / 0.2);
   font-weight: 900;
 }
 
-.mapachess-button--mint {
-  background: var(--mapachito-mint);
+.mapachess-button--hint {
+  background: var(--mapachito-white);
+  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-green);
 }
 
-.mapachess-button--mint:hover:not(:disabled) {
-  background: #7aefbf;
+.mapachess-button--hint:hover:not(:disabled) {
+  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-green);
 }
 
 @keyframes mapachess-loading-turn {
@@ -374,13 +374,13 @@ button {
 
 .mapachess-button {
   min-height: 3rem;
-  border: 3px solid var(--mapachito-ink);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 0.75rem 0.25rem 0.75rem 0.25rem;
   padding: 0.75rem 1.125rem;
-  color: var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
   font-weight: 900;
   line-height: 1.2;
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-ink);
+  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-charcoal);
   cursor: pointer;
   transition:
     translate 120ms ease,
@@ -390,12 +390,12 @@ button {
 
 .mapachess-button:hover:not(:disabled) {
   translate: -1px -1px;
-  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-ink);
+  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-charcoal);
 }
 
 .mapachess-button:active:not(:disabled) {
   translate: 0.1875rem 0.1875rem;
-  box-shadow: 0.0625rem 0.0625rem 0 var(--mapachito-ink);
+  box-shadow: 0.0625rem 0.0625rem 0 var(--mapachito-charcoal);
 }
 
 .mapachess-button:disabled {
@@ -404,34 +404,39 @@ button {
 }
 
 .mapachess-button--primary {
-  background: var(--mapachito-sun);
+  color: var(--mapachito-white);
+  background: var(--mapachito-raspberry);
 }
 
 .mapachess-button--primary:hover:not(:disabled) {
-  background: #ffe983;
+  background: var(--mapachito-raspberry);
 }
 
 .mapachess-button--secondary {
-  background: var(--mapachito-sky);
+  color: var(--mapachito-white);
+  background: var(--mapachito-violet);
 }
 
 .mapachess-button--secondary:hover:not(:disabled) {
-  background: #92e6ff;
+  background: var(--mapachito-violet);
 }
 
 .mapachess-button--destructive {
-  background: var(--mapachito-coral);
+  color: var(--mapachito-white);
+  border-color: var(--mapachito-red);
+  background: var(--mapachito-charcoal);
+  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-red);
 }
 
 .mapachess-button--destructive:hover:not(:disabled) {
-  background: #ff8b9b;
+  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-red);
 }
 
 .mapachess-wordmark {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--mapachito-cream);
+  color: var(--mapachito-white);
 }
 
 .mapachess-wordmark__emblem {
@@ -440,19 +445,19 @@ button {
   height: 2.75rem;
   place-items: center;
   rotate: -4deg;
-  color: var(--mapachito-ink);
-  border: 3px solid var(--mapachito-ink);
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
   border-radius: 0.625rem 0.125rem 0.625rem 0.125rem;
-  background: var(--mapachito-sun);
-  font-family: var(--mapachito-display-font);
+  background: var(--mapachito-orange);
+  font-family: var(--mapachess-display-font);
   font-size: 2rem;
   line-height: 1;
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-coral);
+  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-raspberry);
 }
 
 .mapachess-wordmark__type {
   display: grid;
-  font-family: var(--mapachito-display-font);
+  font-family: var(--mapachess-display-font);
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: 0.055em;
@@ -461,7 +466,7 @@ button {
 }
 
 .mapachess-wordmark__type strong {
-  color: var(--mapachito-sun);
+  color: var(--mapachito-deep-gold);
   font: inherit;
 }
 

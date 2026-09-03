@@ -136,17 +136,17 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:z-20 focus-visible:ring-4 focus-visible:ring-[var(--mapachito-sun)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mapachito-ink)] aria-disabled:cursor-default"
+  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:z-20 focus-visible:ring-4 focus-visible:ring-[var(--mapachito-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mapachito-charcoal)] aria-disabled:cursor-default"
 
 const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
   (rowIndex + columnIndex) % 2 === 0
-    ? "bg-[#fff0c5] text-slate-950"
-    : "bg-[#9878cf] text-slate-950"
+    ? "bg-[var(--mapachito-white)] text-[var(--mapachito-charcoal)]"
+    : "bg-[var(--mapachito-blue)] text-[var(--mapachito-charcoal)]"
 
 const pieceColorClasses = (color: MatchColor): string =>
   color === "white"
-    ? "text-slate-50 [filter:drop-shadow(0_2px_1px_rgba(15,23,42,0.95))]"
-    : "text-slate-950 [filter:drop-shadow(0_1px_0_rgba(248,250,252,0.75))]"
+    ? "text-[var(--mapachito-white)] [filter:drop-shadow(0_2px_1px_rgb(30_30_30/0.95))]"
+    : "text-[var(--mapachito-charcoal)] [filter:drop-shadow(0_1px_0_rgb(255_255_255/0.75))]"
 
 export default function CanonicalChessboard({
   disabled,
@@ -277,7 +277,7 @@ export default function CanonicalChessboard({
                     hintDescriptionsForSquare(hints, showMoveHints, square),
                   )}
                   aria-selected={selected}
-                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-[var(--mapachito-coral)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-sun)]" : ""} ${checkedKing ? "bg-red-300 ring-4 ring-red-700 ring-inset" : ""}`}
+                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-[var(--mapachito-raspberry)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-orange)]" : ""} ${checkedKing ? "bg-[var(--mapachito-red)] ring-4 ring-[var(--mapachito-charcoal)] ring-inset" : ""}`}
                   data-square={square}
                   key={square}
                   onClick={() => chooseSquare(square)}
@@ -302,13 +302,13 @@ export default function CanonicalChessboard({
                   {legalDestination ? (
                     <span
                       aria-hidden="true"
-                      className={`pointer-events-none absolute z-[5] rounded-full border-4 border-[var(--mapachito-ink)] ${piece === undefined ? "size-[22%] bg-[var(--mapachito-mint)]" : "inset-[9%]"}`}
+                      className={`pointer-events-none absolute z-[5] rounded-full border-4 border-[var(--mapachito-charcoal)] ${piece === undefined ? "size-[22%] bg-[var(--mapachito-green)]" : "inset-[9%]"}`}
                     />
                   ) : null}
                   {columnIndex === 0 ? (
                     <span
                       aria-hidden="true"
-                      className="absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-slate-950/70"
+                      className="absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-[var(--mapachito-charcoal)] opacity-75"
                     >
                       {rank}
                     </span>
@@ -316,7 +316,7 @@ export default function CanonicalChessboard({
                   {rowIndex === 7 ? (
                     <span
                       aria-hidden="true"
-                      className="absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-slate-950/70"
+                      className="absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-[var(--mapachito-charcoal)] opacity-75"
                     >
                       {file}
                     </span>
@@ -340,7 +340,7 @@ export default function CanonicalChessboard({
         <div
           aria-labelledby="promotion-title"
           aria-modal="true"
-          className="absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] bg-[rgb(28_16_54/0.84)] p-6 backdrop-blur-sm"
+          className="absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] bg-[rgb(30_30_30/0.84)] p-6 backdrop-blur-sm"
           onKeyDown={(event) => {
             if (event.key === "Escape") clearSelection()
           }}

@@ -59,7 +59,7 @@ export default function ProfileSettingsPanel({
         </div>
 
         <fieldset className="mapachess-inset mt-8 p-5">
-          <legend className="px-2 font-black text-[var(--mapachito-ink)]">
+          <legend className="px-2 font-black text-[var(--mapachito-charcoal)]">
             Better Hints
           </legend>
           <label className="flex min-h-12 cursor-pointer items-start gap-4">
@@ -73,7 +73,7 @@ export default function ProfileSettingsPanel({
               type="checkbox"
             />
             <span>
-              <span className="block font-black text-[var(--mapachito-ink)]">
+              <span className="block font-black text-[var(--mapachito-charcoal)]">
                 Start new matches with Auto-Hints
               </span>
               <span className="mapachess-muted mt-1 block text-sm">

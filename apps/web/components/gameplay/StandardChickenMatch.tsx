@@ -287,7 +287,7 @@ export default function StandardChickenMatch({
             <ol className="mapachess-inset mt-3 max-h-64 space-y-1 overflow-y-auto p-3 font-mono text-sm">
               {activeTransitions.map((transition, index) => (
                 <li
-                  className="grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5 odd:bg-[rgb(28_16_54/0.06)]"
+                  className="grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5 odd:bg-[rgb(30_30_30/0.06)]"
                   key={`${String(index)}-${transition.move.beforeFen}`}
                 >
                   <span className="mapachess-muted">{String(index + 1)}.</span>

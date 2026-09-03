@@ -119,7 +119,7 @@ export default function BetterHintsControl({
       <button
         aria-busy={stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="mapachess-button mapachess-button--mint mt-3 min-h-12 w-full px-4 py-3"
+        className="mapachess-button mapachess-button--hint mt-3 min-h-12 w-full px-4 py-3"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={control.action === null}
         onClick={activate}
@@ -140,7 +140,7 @@ export default function BetterHintsControl({
       {visibleHints === null ? null : (
         <ul
           aria-label="Better Hints legend"
-          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapachito-ink)] sm:grid-cols-2 xl:grid-cols-1"
+          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapachito-charcoal)] sm:grid-cols-2 xl:grid-cols-1"
         >
           <li className="flex items-center gap-2">
             <span

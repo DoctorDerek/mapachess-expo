@@ -75,7 +75,7 @@ export default function ProfileRecoveryPanel({
       {confirmingReset ? (
         <section
           aria-labelledby="recovery-reset-title"
-          className="mapachess-inset mt-8 bg-[#ffdce1] p-5"
+          className="mapachess-inset mapachess-inset--danger mt-8 p-5"
         >
           <h2 className="mapachess-subheading" id="recovery-reset-title">
             Reset all local player data?
