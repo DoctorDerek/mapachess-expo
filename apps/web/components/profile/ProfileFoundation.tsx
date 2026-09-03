@@ -35,7 +35,7 @@ export function ProfileCard({ children, labelledBy }: ProfileCardProps) {
   return (
     <section
       aria-labelledby={labelledBy}
-      className="mx-auto w-full max-w-3xl rounded-3xl border border-white/12 bg-slate-950/92 p-[clamp(1.25rem,4vw,2.5rem)] shadow-[0_1.5rem_5rem_rgba(2,6,23,0.5)] backdrop-blur-xl"
+      className="mapa-surface mx-auto w-full max-w-3xl p-[clamp(1.25rem,4vw,2.5rem)]"
     >
       {children}
     </section>
@@ -122,7 +122,10 @@ export function ImportBackupButton({
         type="file"
       />
       {fileIssue === null ? null : (
-        <p className="mt-3 text-sm leading-relaxed text-amber-200" role="alert">
+        <p
+          className="mapa-notice mapa-notice--warning mt-4 text-sm"
+          role="alert"
+        >
           {fileIssue === "too-large"
             ? "That file is larger than Mapachess can safely inspect. Your saved data is unchanged."
             : "That file could not be read. Your saved data is unchanged. Choose the file again or select another backup."}

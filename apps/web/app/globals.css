@@ -148,6 +148,86 @@ button {
   line-height: 1.65;
 }
 
+.mapa-section-title {
+  margin: 0;
+  color: var(--mapa-ink);
+  font-family: var(--mapa-display-font);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+  text-wrap: balance;
+  text-transform: uppercase;
+}
+
+.mapa-subheading {
+  margin: 0;
+  color: var(--mapa-ink);
+  font-family: var(--mapa-display-font);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mapa-muted {
+  color: #66597a;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.mapa-rule {
+  border-color: rgb(28 16 54 / 0.2);
+}
+
+.mapa-inset {
+  border: 3px solid var(--mapa-ink);
+  border-radius: 1rem 0.25rem 1rem 0.25rem;
+  background: #eee6ff;
+}
+
+.mapa-data-grid {
+  border: 3px solid var(--mapa-ink);
+  border-radius: 1rem 0.25rem 1rem 0.25rem;
+  background: #eee6ff;
+  box-shadow: 0.25rem 0.25rem 0 rgb(28 16 54 / 0.18);
+}
+
+.mapa-data-grid dt {
+  color: #695880;
+  font-weight: 900;
+}
+
+.mapa-data-grid dd {
+  color: var(--mapa-ink);
+  font-weight: 800;
+}
+
+.mapa-notice {
+  color: var(--mapa-ink);
+  border: 3px solid var(--mapa-ink);
+  border-radius: 1rem 0.25rem 1rem 0.25rem;
+  padding: 1rem;
+  background: var(--mapa-sky);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.mapa-notice--warning {
+  background: var(--mapa-sun);
+}
+
+.mapa-notice--danger {
+  background: #ffb6c1;
+}
+
+.mapa-checkbox {
+  width: 1.35rem;
+  height: 1.35rem;
+  accent-color: #6c2bd9;
+}
+
 .mapa-button {
   min-height: 3rem;
   border: 3px solid var(--mapa-ink);

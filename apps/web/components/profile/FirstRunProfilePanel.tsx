@@ -27,7 +27,7 @@ export default function FirstRunProfilePanel({
       eyebrow="Before your first game"
       title="Start with Auto-Hints?"
     >
-      <div className="mt-8 grid gap-3 xl:grid-cols-2">
+      <div className="mt-8 grid gap-4 xl:grid-cols-2">
         <button
           autoFocus
           className={primaryProfileButtonClasses}
@@ -46,15 +46,15 @@ export default function FirstRunProfilePanel({
           Turn Auto-Hints Off
         </button>
       </div>
-      <div className="mt-7 border-t border-white/10 pt-6">
-        <p className="mb-3 text-sm leading-relaxed text-slate-400">
+      <div className="mapa-rule mt-8 border-t-2 pt-6">
+        <p className="mapa-muted mb-4 text-sm">
           Already played elsewhere? Importing first shows a non-destructive
           preview.
         </p>
         <ImportBackupButton disabled={disabled} onBackupRead={onBackupRead} />
         {importIssue === null ? null : (
           <p
-            className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-relaxed text-amber-100"
+            className="mapa-notice mapa-notice--warning mt-4 text-sm"
             role="alert"
           >
             {importIssueMessage(importIssue)}

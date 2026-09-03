@@ -33,19 +33,14 @@ export default function ProfileSettingsPanel({
 
   return (
     <div
-      className="relative z-10 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1rem,3vw,2rem)]"
+      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]"
       id="profile-settings-panel"
     >
       <ProfileCard labelledBy="profile-settings-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-xs font-bold tracking-[0.2em] text-cyan-200 uppercase">
-              Local profile
-            </p>
-            <h2
-              className="mt-2 text-3xl font-black tracking-[-0.035em] text-white"
-              id="profile-settings-title"
-            >
+            <p className="mapa-eyebrow">Local profile</p>
+            <h2 className="mapa-section-title mt-3" id="profile-settings-title">
               Settings &amp; Player Data
             </h2>
           </div>
@@ -60,12 +55,14 @@ export default function ProfileSettingsPanel({
           </button>
         </div>
 
-        <fieldset className="mt-7 rounded-2xl border border-white/10 bg-slate-900/65 p-5">
-          <legend className="px-2 font-black text-white">Better Hints</legend>
+        <fieldset className="mapa-inset mt-8 p-5">
+          <legend className="px-2 font-black text-[var(--mapa-ink)]">
+            Better Hints
+          </legend>
           <label className="flex min-h-12 cursor-pointer items-start gap-4">
             <input
               checked={playerData.settings.autoHintsEnabled}
-              className="mt-1 size-5 accent-cyan-300"
+              className="mapa-checkbox mt-1"
               disabled={busy}
               onChange={(event) =>
                 onAutoHintsChanged(event.currentTarget.checked)
@@ -73,10 +70,10 @@ export default function ProfileSettingsPanel({
               type="checkbox"
             />
             <span>
-              <span className="block font-bold text-slate-100">
+              <span className="block font-black text-[var(--mapa-ink)]">
                 Start new matches with Auto-Hints
               </span>
-              <span className="mt-1 block text-sm leading-relaxed text-slate-400">
+              <span className="mapa-muted mt-1 block text-sm">
                 The active match keeps the setting it started with. You can
                 still request Better Hints manually when Auto-Hints are off.
               </span>
@@ -85,13 +82,10 @@ export default function ProfileSettingsPanel({
         </fieldset>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">
-          <h2
-            className="text-lg font-black text-white"
-            id="player-data-actions-title"
-          >
+          <h2 className="mapa-subheading" id="player-data-actions-title">
             Portable Player Data
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+          <p className="mapa-muted mt-3 text-sm">
             Data stays on this device unless you explicitly download or import a
             JSON backup. Import first opens a non-destructive preview and is
             never applied before you review it.
@@ -110,7 +104,7 @@ export default function ProfileSettingsPanel({
 
         {importIssue === null ? null : (
           <p
-            className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-relaxed text-amber-100"
+            className="mapa-notice mapa-notice--warning mt-5 text-sm"
             role="alert"
           >
             {importIssueMessage(importIssue)}
@@ -119,7 +113,7 @@ export default function ProfileSettingsPanel({
         {activityMessage === null ? null : (
           <p
             aria-live="polite"
-            className="mt-5 font-semibold text-cyan-100"
+            className="mapa-notice mt-5 text-sm"
             role="status"
           >
             {activityMessage}
