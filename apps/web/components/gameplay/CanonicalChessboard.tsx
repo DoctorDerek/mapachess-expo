@@ -136,12 +136,12 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:z-20 focus-visible:ring-4 focus-visible:ring-[var(--mapachito-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mapachito-charcoal)] aria-disabled:cursor-default"
+  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-[var(--mapachito-orange)] focus-visible:ring-inset aria-disabled:cursor-default"
 
 const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
   (rowIndex + columnIndex) % 2 === 0
-    ? "bg-[var(--mapachito-white)] text-[var(--mapachito-charcoal)]"
-    : "bg-[var(--mapachito-blue)] text-[var(--mapachito-charcoal)]"
+    ? "bg-[var(--mapachess-board-light-square)] text-[var(--mapachito-charcoal)]"
+    : "bg-[var(--mapachess-board-dark-square)] text-[var(--mapachito-charcoal)]"
 
 const pieceColorClasses = (color: MatchColor): string =>
   color === "white"
@@ -277,7 +277,7 @@ export default function CanonicalChessboard({
                     hintDescriptionsForSquare(hints, showMoveHints, square),
                   )}
                   aria-selected={selected}
-                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "z-10 ring-4 ring-[var(--mapachito-raspberry)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-orange)]" : ""} ${checkedKing ? "bg-[var(--mapachito-red)] ring-4 ring-[var(--mapachito-charcoal)] ring-inset" : ""}`}
+                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-4 ring-[var(--mapachito-raspberry)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-orange)]" : ""} ${checkedKing ? "bg-[var(--mapachito-red)] ring-4 ring-[var(--mapachito-charcoal)] ring-inset" : ""}`}
                   data-square={square}
                   key={square}
                   onClick={() => chooseSquare(square)}
@@ -302,7 +302,8 @@ export default function CanonicalChessboard({
                   {legalDestination ? (
                     <span
                       aria-hidden="true"
-                      className={`pointer-events-none absolute z-[5] rounded-full border-4 border-[var(--mapachito-charcoal)] ${piece === undefined ? "size-[22%] bg-[var(--mapachito-green)]" : "inset-[9%]"}`}
+                      className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline)]"
+                      data-legal-destination-shape="square-outline"
                     />
                   ) : null}
                   {columnIndex === 0 ? (

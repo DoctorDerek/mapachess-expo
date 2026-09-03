@@ -26,8 +26,9 @@ export type BetterHintsOverlayProps = Readonly<{
   showMoves: boolean
 }>
 
-const PLAYER_HINT_COLOR = "var(--mapachito-green)"
-const OPPONENT_HINT_COLOR = "var(--mapachito-red)"
+const HINT_OUTLINE_COLOR = "var(--mapachess-board-hint-outline)"
+const PLAYER_HINT_COLOR = "var(--mapachess-board-player-hint)"
+const OPPONENT_HINT_COLOR = "var(--mapachess-board-opponent-hint)"
 
 const ownHints = (hints: BetterHintsResult): readonly OwnedHint[] => [
   ...hints.player.map((hint) => ({ hint, owner: "player" as const })),
@@ -79,15 +80,21 @@ export default function BetterHintsOverlay({
           <marker
             id={id}
             key={id}
-            markerHeight="0.72"
+            markerHeight="0.96"
             markerUnits="userSpaceOnUse"
-            markerWidth="0.72"
+            markerWidth="0.96"
             orient="auto"
-            refX="8.5"
+            refX="8.25"
             refY="5"
             viewBox="0 0 10 10"
           >
-            <path d="M 0 0 L 10 5 L 0 10 Z" fill={color} />
+            <path
+              d="M 0 0 L 10 5 L 0 10 Z"
+              fill={color}
+              stroke={HINT_OUTLINE_COLOR}
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+            />
           </marker>
         ))}
       </defs>
@@ -95,7 +102,7 @@ export default function BetterHintsOverlay({
       {ownedHints.map((ownedHint) => {
         const source = pointForSquare(ownedHint.hint.from, orientation)
         return (
-          <rect
+          <g
             data-hint-kind="source"
             data-hint-owner={ownedHint.owner}
             data-hint-pattern={
@@ -103,19 +110,37 @@ export default function BetterHintsOverlay({
             }
             data-source-x={source.x}
             data-source-y={source.y}
-            fill="none"
-            height="0.84"
             key={`highlight-${ownedHint.owner}-${ownedHint.hint.uci}`}
-            rx="0.06"
-            stroke={hintColor(ownedHint.owner)}
-            strokeDasharray={
-              ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
-            }
-            strokeWidth="0.12"
-            width="0.84"
-            x={Math.floor(source.x) + 0.08}
-            y={Math.floor(source.y) + 0.08}
-          />
+          >
+            <rect
+              data-hint-stroke="outline"
+              fill="none"
+              height="0.82"
+              rx="0.06"
+              stroke={HINT_OUTLINE_COLOR}
+              strokeDasharray={
+                ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
+              }
+              strokeWidth="0.22"
+              width="0.82"
+              x={Math.floor(source.x) + 0.09}
+              y={Math.floor(source.y) + 0.09}
+            />
+            <rect
+              data-hint-stroke="owner"
+              fill="none"
+              height="0.82"
+              rx="0.06"
+              stroke={hintColor(ownedHint.owner)}
+              strokeDasharray={
+                ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
+              }
+              strokeWidth="0.12"
+              width="0.82"
+              x={Math.floor(source.x) + 0.09}
+              y={Math.floor(source.y) + 0.09}
+            />
+          </g>
         )
       })}
 
@@ -138,14 +163,27 @@ export default function BetterHintsOverlay({
                 key={`move-${ownedHint.owner}-${ownedHint.hint.uci}`}
               >
                 <line
+                  data-hint-stroke="outline"
+                  stroke={HINT_OUTLINE_COLOR}
+                  strokeDasharray={
+                    ownedHint.owner === "opponent" ? "0.22 0.13" : undefined
+                  }
+                  strokeLinecap="round"
+                  strokeWidth="0.34"
+                  x1={source.x}
+                  x2={destination.x}
+                  y1={source.y}
+                  y2={destination.y}
+                />
+                <line
+                  data-hint-stroke="owner"
                   markerEnd={`url(#${ownedHint.owner === "player" ? playerMarkerId : opponentMarkerId})`}
-                  opacity="0.9"
                   stroke={color}
                   strokeDasharray={
                     ownedHint.owner === "opponent" ? "0.22 0.13" : undefined
                   }
                   strokeLinecap="round"
-                  strokeWidth="0.18"
+                  strokeWidth="0.2"
                   x1={source.x}
                   x2={destination.x}
                   y1={source.y}
