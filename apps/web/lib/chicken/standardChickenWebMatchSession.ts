@@ -3,6 +3,7 @@ import bindMatchPositionEvaluation, {
   type MatchPositionEvaluationBinding,
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import { autoHintModeFromLegacyEnabled } from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import profileMachine, {
@@ -107,7 +108,9 @@ const openActorSession = async ({
   try {
     const openedMatchActor = createActor(matchMachine, {
       input: {
-        autoHintsEnabled: match.autoHintsEnabledAtStart,
+        autoHintMode: autoHintModeFromLegacyEnabled(
+          match.autoHintsEnabledAtStart,
+        ),
         durability: { persistence, type: "durable" },
         hintAnalyst: runtime.hintAnalyst,
         matchId: match.matchId,

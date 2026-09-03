@@ -28,9 +28,9 @@ import {
   illegalOpponentMoveFailure,
   moveIsLegal,
   opponentRequestFailure,
+  pendingAcceptedHintsMutation,
   pendingConclusionMutation,
   pendingMoveHintsMutation,
-  pendingPieceHintsMutation,
   pendingPositionMutation,
   persistenceRequestFailure,
   redoToNextPlayerDecision,
@@ -52,8 +52,6 @@ export type {
   MatchOpponentFailure,
   MatchOpponentRequest,
 } from "./matchMachineTypes.js"
-
-export const AUTO_HINTS_PIECE_DWELL_MS = 2_000
 
 const matchCanConclude = (context: MatchMachineContext): boolean =>
   context.conclusion === null &&
@@ -88,9 +86,6 @@ const matchMachineDefinition = setup({
       MatchPersistenceReceipt,
       MatchPersistenceActorInput
     >(({ input, signal }) => input.persistence.persist(input.request, signal)),
-  },
-  delays: {
-    autoHintsPieceDwell: AUTO_HINTS_PIECE_DWELL_MS,
   },
   actions: {
     applyRequestedMove: assign(({ context, event }) => {
@@ -225,13 +220,8 @@ const matchMachineDefinition = setup({
     acceptedDrawNeedsPersistence: ({ context, event }) =>
       context.durability.type === "durable" &&
       drawOfferDecisionMatches(context, event, "accepted"),
-    autoMoveHintsNeedNoPersistence: ({ context }) =>
-      context.autoHintsEnabled &&
-      (context.durability.type === "ephemeral" || context.moveHintsUsed),
-    autoMoveHintsNeedPersistence: ({ context }) =>
-      context.autoHintsEnabled &&
-      context.durability.type === "durable" &&
-      !context.moveHintsUsed,
+    autoMoveHintsAreEnabled: ({ context }) =>
+      context.autoHintMode === "auto-move-hints",
     canRejectDrawOffer: ({ context, event }) =>
       drawOfferDecisionMatches(context, event, "rejected"),
     canResignEphemerally: ({ context }) =>
@@ -271,7 +261,7 @@ const matchMachineDefinition = setup({
       event.type === "MATCH.MOVE_REQUESTED" &&
       moveIsLegal(context.timeline, event.moveId),
     shouldStartAutoHints: ({ context }) =>
-      context.autoHintsEnabled && context.hintAnalyst !== null,
+      context.autoHintMode !== "no-auto-hints" && context.hintAnalyst !== null,
   },
 }).createMachine({
   id: "match",
@@ -345,14 +335,16 @@ const matchMachineDefinition = setup({
                 guard: ({ context, event }) => {
                   const request = createHintsRequest(context)
                   return (
-                    context.durability.type === "durable" &&
-                    !context.pieceHintsUsed &&
                     event.output.positionFen === request.position.fen &&
-                    event.output.requestId === request.requestId
+                    event.output.requestId === request.requestId &&
+                    context.durability.type === "durable" &&
+                    (!context.pieceHintsUsed ||
+                      (context.autoHintMode === "auto-move-hints" &&
+                        !context.moveHintsUsed))
                   )
                 },
                 actions: assign(({ context, event }) => ({
-                  pendingMutation: pendingPieceHintsMutation(
+                  pendingMutation: pendingAcceptedHintsMutation(
                     context,
                     event.output,
                   ),
@@ -361,9 +353,12 @@ const matchMachineDefinition = setup({
                 target: "#match.persistingMutation",
               },
               {
-                actions: assign(({ event }) => ({
+                actions: assign(({ context, event }) => ({
                   hintFailure: null,
                   hints: event.output,
+                  moveHintsUsed:
+                    context.moveHintsUsed ||
+                    context.autoHintMode === "auto-move-hints",
                   pieceHintsUsed: true,
                 })),
                 guard: ({ context, event }) => {
@@ -375,7 +370,7 @@ const matchMachineDefinition = setup({
                     event.output.requestId === request.requestId
                   )
                 },
-                target: "pieceHintsVisible",
+                target: "acceptedHintsVisible",
               },
               {
                 actions: assign({ hintFailure: hintRequestFailure() }),
@@ -388,21 +383,16 @@ const matchMachineDefinition = setup({
             },
           },
         },
+        acceptedHintsVisible: {
+          always: [
+            {
+              guard: "autoMoveHintsAreEnabled",
+              target: "moveHintsVisible",
+            },
+            { target: "pieceHintsVisible" },
+          ],
+        },
         pieceHintsVisible: {
-          after: {
-            autoHintsPieceDwell: [
-              {
-                actions: "prepareMoveHintsMutation",
-                guard: "autoMoveHintsNeedPersistence",
-                target: "#match.persistingMutation",
-              },
-              {
-                actions: "markMoveHintsUsed",
-                guard: "autoMoveHintsNeedNoPersistence",
-                target: "moveHintsVisible",
-              },
-            ],
-          },
           on: {
             "MATCH.MOVE_HINTS_REQUESTED": [
               {
@@ -569,11 +559,11 @@ const matchMachineDefinition = setup({
             guard: ({ context, event }) => {
               const pending = requirePendingMutation(context)
               return (
-                pending.route === "piece-hints-visible" &&
+                pending.route === "accepted-hints-visible" &&
                 persistenceReceiptMatches(pending.request, event.output)
               )
             },
-            target: "#match.playerTurn.pieceHintsVisible",
+            target: "#match.playerTurn.acceptedHintsVisible",
           },
           {
             actions: assign(({ context }) => acceptedPendingMutation(context)),
@@ -663,6 +653,7 @@ export type MatchMachineSnapshot = SnapshotFrom<typeof matchMachineDefinition>
 
 export {
   selectAreMatchMutationsFrozen,
+  selectAutoHintMode,
   selectCanOfferDraw,
   selectCanRedo,
   selectCanResign,

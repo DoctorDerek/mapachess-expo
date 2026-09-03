@@ -54,7 +54,7 @@ const createSession = (seed: string): WebMatchSession => {
   return Object.freeze({
     actor: createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { type: "ephemeral" },
         initialPosition,
         matchId: match.matchId,

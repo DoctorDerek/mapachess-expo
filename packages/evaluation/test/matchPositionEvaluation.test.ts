@@ -71,7 +71,7 @@ describe("accepted match position evaluation binding", () => {
     const persistence = new ControlledPersistence()
     const actor = createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { persistence, type: "durable" },
         initialPosition: initialPosition(),
         matchId: "evaluation-binding",

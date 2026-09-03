@@ -38,7 +38,10 @@ export type MatchDurability =
     }>
 
 export type PendingMatchMutationRoute =
-  "complete" | "move-hints-visible" | "piece-hints-visible" | "resolve-position"
+  | "accepted-hints-visible"
+  | "complete"
+  | "move-hints-visible"
+  | "resolve-position"
 
 export type PendingMatchMutation = Readonly<{
   conclusion: MatchConclusion | null

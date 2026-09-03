@@ -1,3 +1,4 @@
+import type { AutoHintMode } from "./autoHintMode.js"
 import type {
   BetterHintsAnalyst,
   BetterHintsRequest,
@@ -59,7 +60,7 @@ export type MatchMachineEvent =
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
 type MatchMachineSharedInput = Readonly<{
-  autoHintsEnabled: boolean
+  autoHintMode: AutoHintMode
   hintAnalyst?: BetterHintsAnalyst
   matchId: string
   opponent: MatchOpponent
@@ -86,7 +87,7 @@ export type MatchMachineInput =
       }>)
 
 export type MatchMachineContext = Readonly<{
-  autoHintsEnabled: boolean
+  autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   durability: MatchDurability
   drawOfferResponse: "rejected" | null

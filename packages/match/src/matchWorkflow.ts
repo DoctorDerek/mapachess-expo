@@ -64,7 +64,7 @@ export const createInitialContext = (
   }
 
   return {
-    autoHintsEnabled: input.autoHintsEnabled,
+    autoHintMode: input.autoHintMode,
     conclusion,
     durability: input.durability,
     drawOfferResponse: null,
@@ -238,20 +238,24 @@ export const pendingConclusionMutation = (
   })
 }
 
-export const pendingPieceHintsMutation = (
+export const pendingAcceptedHintsMutation = (
   context: MatchMachineContext,
   hints: BetterHintsResult,
-): PendingMatchMutation =>
-  createPendingMatchMutation({
+): PendingMatchMutation => {
+  const moveHintsUsed =
+    context.moveHintsUsed || context.autoHintMode === "auto-move-hints"
+
+  return createPendingMatchMutation({
     conclusion: context.conclusion,
     hints,
     matchId: context.matchId,
-    moveHintsUsed: context.moveHintsUsed,
+    moveHintsUsed,
     mutationSequence: context.mutationSequence,
     pieceHintsUsed: true,
-    route: "piece-hints-visible",
+    route: "accepted-hints-visible",
     timeline: context.timeline,
   })
+}
 
 export const pendingMoveHintsMutation = (
   context: MatchMachineContext,

@@ -84,7 +84,7 @@ const createDurableActor = (
   })
   const actor = createActor(matchMachine, {
     input: {
-      autoHintsEnabled: false,
+      autoHintMode: "no-auto-hints",
       durability: { persistence, type: "durable" },
       initialPosition: standardInitialPosition(),
       matchId: "durable-standard-chicken",
@@ -175,7 +175,7 @@ describe("verified durable match mutation gate", () => {
     }
     const actor = createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { persistence, type: "durable" },
         initialPosition: standardInitialPosition(),
         matchId: "durable-standard-chicken-resignation",
@@ -233,7 +233,7 @@ describe("verified durable match mutation gate", () => {
 
     const actor = createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { persistence, type: "durable" },
         matchId: "resumed-durable-standard-chicken",
         opponent: {
@@ -376,7 +376,7 @@ describe("verified durable match mutation gate", () => {
     )
     const actor = createActor(matchMachine, {
       input: {
-        autoHintsEnabled: false,
+        autoHintMode: "no-auto-hints",
         durability: { persistence, type: "durable" },
         hintAnalyst: { analyze },
         initialPosition: standardInitialPosition(),
