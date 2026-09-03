@@ -150,9 +150,9 @@ function MatchSessionExperience({
         >
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
-              <p className="mapa-eyebrow">Standard Story · Opponent 01 / 23</p>
+              <p className="mapa-eyebrow">Story opponent 1 of 23</p>
               <h1 className="mapa-display mt-4" id="standard-story-title">
-                Chicken Stockfish
+                Standard Story
               </h1>
               <p className="mapa-copy mt-6 max-w-2xl">
                 Your first animal challenge is a complete local game of Standard
@@ -169,20 +169,23 @@ function MatchSessionExperience({
           </div>
 
           <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-            <dl className="mapa-story-facts overflow-hidden">
-              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
-                <dt>Variant</dt>
-                <dd>Standard</dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
-                <dt>Clock</dt>
-                <dd>Untimed</dd>
-              </div>
-              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
-                <dt>Strength</dt>
-                <dd>Provisional 100-Elo target</dd>
-              </div>
-            </dl>
+            <div>
+              <h2 className="mapa-section-title">Chicken Stockfish</h2>
+              <dl className="mapa-story-facts mt-4 overflow-hidden">
+                <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                  <dt>Variant</dt>
+                  <dd>Standard</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                  <dt>Clock</dt>
+                  <dd>Untimed</dd>
+                </div>
+                <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                  <dt>Strength</dt>
+                  <dd>Provisional 100-Elo target</dd>
+                </div>
+              </dl>
+            </div>
             <button
               className={primaryControlClasses}
               onClick={() =>
