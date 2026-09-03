@@ -55,7 +55,7 @@ const HINT_GUIDANCE = Object.freeze({
   "move-hints":
     "Target crosses show Player destinations. X marks show Opponent destinations.",
   "piece-hints":
-    "White circles mark Player pieces. White warning triangles mark Opponent pieces.",
+    "Solid green borders mark Player pieces. Dashed red borders mark Opponent pieces.",
   ready: "Start by finding the most important Player and Opponent pieces.",
   unavailable: "This runtime has no Better Hints analyst.",
 }) satisfies Readonly<Record<MatchHintStage, string>>
@@ -145,19 +145,15 @@ export default function BetterHintsControl({
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className="grid size-6 place-items-center rounded-md bg-emerald-700 font-black text-white"
-            >
-              ○
-            </span>
+              className="size-6 rounded-md border-[3px] border-emerald-500"
+            />
             Player Piece Hint
           </li>
           <li className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className="grid size-6 place-items-center rounded-md bg-red-700 font-black text-white"
-            >
-              △
-            </span>
+              className="size-6 rounded-md border-[3px] border-dashed border-red-500"
+            />
             Opponent Piece Hint
           </li>
           {stage === "move-hints" ? (
