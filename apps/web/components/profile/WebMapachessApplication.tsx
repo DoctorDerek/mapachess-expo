@@ -1,8 +1,12 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import matchMachine, {
+  selectAutoHintMode,
+} from "@mapachess/match/match-machine"
 import profileMachine, {
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
@@ -30,6 +34,7 @@ import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
 import ProfileSettingsPanel from "./ProfileSettingsPanel"
+import type { ProfileSettingsPanelProps } from "./ProfileSettingsPanel"
 
 type ProfileRuntimeState =
   | Readonly<{ status: "opening" }>
@@ -37,6 +42,21 @@ type ProfileRuntimeState =
   | Readonly<{ status: "unsupported" }>
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
+type MatchActor = ActorRefFrom<typeof matchMachine>
+
+type ActiveMatchSettingsPanelProps = Omit<
+  ProfileSettingsPanelProps,
+  "autoHintMode"
+> &
+  Readonly<{ matchActor: MatchActor }>
+
+function ActiveMatchSettingsPanel({
+  matchActor,
+  ...settingsProps
+}: ActiveMatchSettingsPanelProps) {
+  const autoHintMode = useSelector(matchActor, selectAutoHintMode)
+  return <ProfileSettingsPanel {...settingsProps} autoHintMode={autoHintMode} />
+}
 
 const standaloneCardClasses =
   "mapachess-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
@@ -44,6 +64,9 @@ const standaloneCardClasses =
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeMatchActor, setActiveMatchActor] = useState<MatchActor | null>(
+    null,
+  )
   const settingsButton = useRef<HTMLButtonElement>(null)
   const [exportFailed, setExportFailed] = useState(false)
   const currentPlayerData = selectCurrentPlayerData(snapshot)
@@ -68,6 +91,13 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     setSettingsOpen(false)
     settingsButton.current?.focus()
   }
+
+  const trackActiveMatchActor = useCallback(
+    (matchActor: MatchActor | null): void => {
+      setActiveMatchActor(matchActor)
+    },
+    [],
+  )
 
   const requestImportPreview = (rawBackup: string): void => {
     actor.send({ rawBackup, type: "PROFILE.IMPORT_PREVIEW_REQUESTED" })
@@ -181,28 +211,49 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     persistenceFailurePanel === null
 
   if (playableProfile) {
+    const settingsProps = {
+      activityMessage: profileActivityMessage,
+      importIssue,
+      onAutoHintModeChanged: (autoHintMode: AutoHintMode): void => {
+        if (activeMatchActor === null) {
+          actor.send({
+            autoHintMode,
+            type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+          })
+          return
+        }
+        activeMatchActor.send({
+          autoHintMode,
+          type: "MATCH.AUTO_HINT_MODE_CHANGED",
+        })
+      },
+      onBackupRead: requestImportPreview,
+      onClose: closeSettings,
+      onExportPlayerData: () => void exportPlayerData(),
+    } satisfies Omit<ProfileSettingsPanelProps, "autoHintMode">
+
     return (
       <main>
         {exportFailure}
         {importPreviewPanel}
         {persistenceFailurePanel}
         {settingsPanelVisible ? (
-          <ProfileSettingsPanel
-            activityMessage={profileActivityMessage}
-            importIssue={importIssue}
-            onAutoHintModeChanged={(autoHintMode) =>
-              actor.send({
-                autoHintMode,
-                type: "PROFILE.AUTO_HINT_MODE_CHANGED",
-              })
-            }
-            onBackupRead={requestImportPreview}
-            onClose={closeSettings}
-            onExportPlayerData={() => void exportPlayerData()}
-            playerData={pendingPlayerData ?? currentPlayerData}
-          />
+          activeMatchActor === null ? (
+            <ProfileSettingsPanel
+              {...settingsProps}
+              autoHintMode={
+                (pendingPlayerData ?? currentPlayerData).settings.autoHintMode
+              }
+            />
+          ) : (
+            <ActiveMatchSettingsPanel
+              {...settingsProps}
+              matchActor={activeMatchActor}
+            />
+          )
         ) : null}
         <StandardChickenGame
+          onActiveMatchActorChanged={trackActiveMatchActor}
           onSettingsRequested={() => setSettingsOpen(true)}
           profileActor={actor}
           settingsButtonRef={settingsButton}

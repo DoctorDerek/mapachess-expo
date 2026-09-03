@@ -32,13 +32,17 @@ const retryControlClasses =
   "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
 
 export type StandardChickenGameProps = Readonly<{
+  onActiveMatchActorChanged: (actor: WebMatchSession["actor"] | null) => void
   onSettingsRequested: () => void
   profileActor: ActorRefFrom<typeof profileMachine>
   settingsButtonRef: Ref<HTMLButtonElement>
   settingsOpen: boolean
 }>
 
-type GameFrameProps = Omit<StandardChickenGameProps, "profileActor"> &
+type GameFrameProps = Omit<
+  StandardChickenGameProps,
+  "onActiveMatchActorChanged" | "profileActor"
+> &
   Readonly<{
     children: ReactNode
     matchSessionActive: boolean
@@ -117,6 +121,7 @@ const failureTitle = (operation: WebMatchSessionFailureOperation): string => {
 
 function MatchSessionExperience({
   actor,
+  onActiveMatchActorChanged,
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
@@ -125,6 +130,12 @@ function MatchSessionExperience({
   const snapshot = useSelector(actor, (current) => current)
   const session = selectWebMatchSession(snapshot)
   const failure = selectWebMatchSessionFailure(snapshot)
+  const activeMatchActor = snapshot.matches("active") ? session?.actor : null
+
+  useEffect(() => {
+    onActiveMatchActorChanged(activeMatchActor ?? null)
+    return () => onActiveMatchActorChanged(null)
+  }, [activeMatchActor, onActiveMatchActorChanged])
 
   if (snapshot.matches("active") && session === null) {
     throw new Error("Active web match state has no owned session.")
@@ -251,6 +262,7 @@ function MatchSessionExperience({
 }
 
 export default function StandardChickenGame({
+  onActiveMatchActorChanged,
   profileActor,
   ...frameProps
 }: StandardChickenGameProps) {
@@ -320,7 +332,13 @@ export default function StandardChickenGame({
   }, [profileActor])
 
   if (sessionActor !== null) {
-    return <MatchSessionExperience actor={sessionActor} {...frameProps} />
+    return (
+      <MatchSessionExperience
+        actor={sessionActor}
+        onActiveMatchActorChanged={onActiveMatchActorChanged}
+        {...frameProps}
+      />
+    )
   }
 
   return (

@@ -1,7 +1,6 @@
 "use client"
 
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
 import {
@@ -35,22 +34,22 @@ const AUTO_HINT_OPTIONS = [
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  autoHintMode: AutoHintMode
   importIssue: ProfileImportIssue | null
   onAutoHintModeChanged: (autoHintMode: AutoHintMode) => void
   onBackupRead: (rawBackup: string) => void
   onClose: () => void
   onExportPlayerData: () => void
-  playerData: MapachessPlayerData
 }>
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  autoHintMode,
   importIssue,
   onAutoHintModeChanged,
   onBackupRead,
   onClose,
   onExportPlayerData,
-  playerData,
 }: ProfileSettingsPanelProps) {
   const busy = activityMessage !== null
 
@@ -86,8 +85,9 @@ export default function ProfileSettingsPanel({
             Better Hints
           </legend>
           <p className="mapachess-muted mb-4 text-sm">
-            Choose the automatic help used by new matches. Every Better Hint
-            remains available manually.
+            Choose how Better Hints appear automatically. During a match,
+            changes take effect immediately and become the default for future
+            matches. Every Better Hint remains available manually.
           </p>
           <div className="grid gap-3">
             {AUTO_HINT_OPTIONS.map(({ description, mode }) => (
@@ -96,7 +96,7 @@ export default function ProfileSettingsPanel({
                 key={mode}
               >
                 <input
-                  checked={playerData.settings.autoHintMode === mode}
+                  checked={autoHintMode === mode}
                   className="mapachess-checkbox mt-1"
                   disabled={busy}
                   name="auto-hint-mode"

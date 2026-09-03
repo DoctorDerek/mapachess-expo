@@ -63,23 +63,23 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Restore Last Known-Good Save")
   })
 
-  it("offers all three automatic hint modes for new matches", () => {
+  it("offers all three automatic hint modes during play", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
         activityMessage: null,
+        autoHintMode: playerData.settings.autoHintMode,
         importIssue: null,
         onAutoHintModeChanged: vi.fn(),
         onBackupRead: vi.fn(),
         onClose: vi.fn(),
         onExportPlayerData: vi.fn(),
-        playerData,
       }),
     )
 
     expect(markup).toContain("Auto Move Hints")
     expect(markup).toContain("Auto Piece Hints")
     expect(markup).toContain("No Auto Hints")
-    expect(markup).toContain("automatic help used by new matches")
+    expect(markup).toContain("changes take effect immediately")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("non-destructive preview")
   })
