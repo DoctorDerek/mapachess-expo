@@ -17,18 +17,19 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
+import MapachessWordmark from "../presentation/MapachessWordmark"
 import StandardChickenMatch from "./StandardChickenMatch"
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
 
 const secondaryControlClasses =
-  "min-h-11 rounded-xl border border-white/15 bg-slate-900/75 px-4 py-2 font-bold text-slate-100 transition-colors hover:bg-slate-800 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none"
+  "mapa-button mapa-button--secondary min-h-11 px-4 py-2"
 
 const primaryControlClasses =
-  "min-h-12 rounded-xl border border-cyan-300/40 bg-cyan-300 px-5 py-3 font-black text-slate-950 transition-colors hover:bg-cyan-200 focus-visible:ring-4 focus-visible:ring-amber-300 focus-visible:outline-none"
+  "mapa-button mapa-button--primary min-h-12 px-5 py-3"
 
 const retryControlClasses =
-  "min-h-12 rounded-xl border border-amber-300/35 bg-amber-300/10 px-5 py-3 font-bold text-amber-100 transition-colors hover:bg-amber-300/20 focus-visible:ring-4 focus-visible:ring-cyan-300 focus-visible:outline-none"
+  "mapa-button mapa-button--primary min-h-12 px-5 py-3"
 
 export type StandardChickenGameProps = Readonly<{
   onSettingsRequested: () => void
@@ -55,27 +56,9 @@ function GameFrame({
   settingsOpen,
 }: GameFrameProps) {
   return (
-    <div className="relative isolate min-h-dvh overflow-hidden px-[clamp(1rem,3vw,3rem)] py-[clamp(1.25rem,4vw,3rem)]">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.13),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.11),transparent_38%),linear-gradient(145deg,#07121e_0%,#0d1726_48%,#171128_100%)]"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-[8%] top-[9%] -z-10 h-px bg-gradient-to-r from-transparent via-cyan-200/35 to-transparent"
-      />
-
-      <header className="mx-auto mb-[clamp(1.25rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs font-bold tracking-[0.24em] text-cyan-200 uppercase">
-            Standard Story
-          </p>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            Play locally against an animal Stockfish opponent. Current strength
-            labels are provisional until calibration is complete; rating and
-            progression changes are not enabled yet.
-          </p>
-        </div>
+    <div className="mapa-shell px-[clamp(1rem,3vw,3rem)] py-[clamp(1.5rem,4vw,3rem)]">
+      <header className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5">
+        <MapachessWordmark />
         <div className="flex flex-wrap items-center gap-3">
           {matchSessionActive ? (
             <>
@@ -163,35 +146,43 @@ function MatchSessionExperience({
       {snapshot.matches("menu") ? (
         <section
           aria-labelledby="standard-story-title"
-          className="mx-auto max-w-4xl rounded-3xl border border-white/12 bg-slate-950/72 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0_1.5rem_5rem_rgba(2,6,23,0.4)] backdrop-blur-xl"
+          className="mapa-story-board mapa-surface mx-auto max-w-5xl p-[clamp(1.5rem,5vw,3.5rem)]"
         >
-          <p className="font-mono text-xs font-bold tracking-[0.2em] text-amber-200 uppercase">
-            Choose an opponent
-          </p>
-          <h1
-            className="mt-3 text-[clamp(2.25rem,7vw,4.5rem)] leading-none font-black tracking-[-0.05em] text-white"
-            id="standard-story-title"
-          >
-            Standard Story
-          </h1>
-          <p className="mt-5 max-w-2xl leading-relaxed text-slate-300">
-            Chicken Stockfish is the first playable animal opponent. Its 100-Elo
-            target remains explicitly provisional while seeded calibration and
-            human playtesting continue.
-          </p>
-
-          <article className="mt-8 flex flex-col gap-5 rounded-2xl border border-amber-300/25 bg-amber-300/[0.07] p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
-              <p className="font-mono text-xs font-bold tracking-[0.16em] text-amber-200 uppercase">
-                Story opponent 1 of 23
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-white">
+              <p className="mapa-eyebrow">Standard Story · Opponent 01 / 23</p>
+              <h1 className="mapa-display mt-4" id="standard-story-title">
                 Chicken Stockfish
-              </h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Standard chess · untimed · provisional 100-Elo target
+              </h1>
+              <p className="mapa-copy mt-6 max-w-2xl">
+                Your first animal challenge is a complete local game of Standard
+                chess. The 100-Elo target stays explicitly provisional while
+                calibration and human playtesting continue.
               </p>
             </div>
+            <div aria-hidden="true" className="mapa-opponent-poster">
+              <span className="mapa-opponent-poster__number">01</span>
+              <span className="mapa-opponent-poster__label">
+                First opponent
+              </span>
+            </div>
+          </div>
+
+          <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+            <dl className="mapa-story-facts overflow-hidden">
+              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                <dt>Variant</dt>
+                <dd>Standard</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                <dt>Clock</dt>
+                <dd>Untimed</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-5 px-5 py-3">
+                <dt>Strength</dt>
+                <dd>Provisional 100-Elo target</dd>
+              </div>
+            </dl>
             <button
               className={primaryControlClasses}
               onClick={() =>
@@ -212,13 +203,13 @@ function MatchSessionExperience({
       ) : snapshot.matches("failed") && failure !== null ? (
         <section
           aria-live="assertive"
-          className="grid min-h-[min(74dvh,50rem)] place-items-center rounded-3xl border border-white/12 bg-slate-950/72 p-8 text-center shadow-[0_1.5rem_5rem_rgba(2,6,23,0.4)] backdrop-blur-xl"
+          className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
         >
           <div role="alert">
-            <h1 className="text-2xl font-black text-white">
+            <h1 className="mapa-section-title">
               {failureTitle(failure.operation)}
             </h1>
-            <p className="mt-3 max-w-lg text-slate-400">
+            <p className="mapa-muted mt-4 max-w-lg">
               Your last verified local profile remains available. Retry the
               interrupted session operation.
             </p>
@@ -236,17 +227,15 @@ function MatchSessionExperience({
       ) : (
         <section
           aria-live="polite"
-          className="grid min-h-[min(74dvh,50rem)] place-items-center rounded-3xl border border-white/12 bg-slate-950/72 p-8 text-center shadow-[0_1.5rem_5rem_rgba(2,6,23,0.4)] backdrop-blur-xl"
+          className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
         >
           <div role="status">
             <div
               aria-hidden="true"
-              className="mx-auto size-12 animate-spin rounded-full border-4 border-cyan-200/20 border-t-cyan-200 motion-reduce:animate-none"
+              className="mapa-loading-mark mx-auto motion-reduce:animate-none"
             />
-            <h1 className="mt-5 text-2xl font-black text-white">
-              {openingTitle(actor)}
-            </h1>
-            <p className="mt-3 text-slate-400">
+            <h1 className="mapa-section-title mt-6">{openingTitle(actor)}</h1>
+            <p className="mapa-muted mt-4">
               Loading the pinned local engine and validating its identity.
             </p>
           </div>
@@ -333,9 +322,9 @@ export default function StandardChickenGame({
     <GameFrame matchSessionActive={false} {...frameProps}>
       <section
         aria-live="polite"
-        className="grid min-h-[min(74dvh,50rem)] place-items-center rounded-3xl border border-white/12 bg-slate-950/72 p-8 text-center"
+        className="mapa-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
       >
-        <h1 className="text-2xl font-black text-white">Opening Mapachess…</h1>
+        <h1 className="mapa-section-title">Opening Mapachess…</h1>
       </section>
     </GameFrame>
   )

@@ -228,6 +228,100 @@ button {
   accent-color: #6c2bd9;
 }
 
+.mapa-story-board {
+  position: relative;
+  overflow: hidden;
+}
+
+.mapa-story-board::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(4.5rem, 18vw, 10rem);
+  height: clamp(4.5rem, 18vw, 10rem);
+  translate: 30% -35%;
+  rotate: 18deg;
+  border: 1.5rem solid rgb(139 92 246 / 0.2);
+  content: "";
+}
+
+.mapa-opponent-poster {
+  display: grid;
+  min-height: 13rem;
+  place-content: center;
+  padding: 1.5rem;
+  color: var(--mapa-ink);
+  border: 3px solid var(--mapa-ink);
+  border-radius: 1.25rem 0.25rem 1.25rem 0.25rem;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 48%,
+      rgb(28 16 54 / 0.12) 48% 52%,
+      transparent 52%
+    ),
+    var(--mapa-coral);
+  box-shadow: 0.5rem 0.5rem 0 var(--mapa-sun);
+  text-align: center;
+}
+
+.mapa-opponent-poster__number {
+  font-family: var(--mapa-display-font);
+  font-size: clamp(5rem, 18vw, 9rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 0.72;
+}
+
+.mapa-opponent-poster__label {
+  margin-top: 1rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mapa-story-facts {
+  border: 3px solid var(--mapa-ink);
+  border-radius: 1rem 0.25rem 1rem 0.25rem;
+  background: var(--mapa-cream);
+}
+
+.mapa-story-facts > div + div {
+  border-top: 2px solid rgb(28 16 54 / 0.18);
+}
+
+.mapa-story-facts dt {
+  color: #695880;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mapa-story-facts dd {
+  color: var(--mapa-ink);
+  font-weight: 900;
+}
+
+.mapa-loading-mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  rotate: 8deg;
+  border: 0.625rem solid var(--mapa-coral);
+  border-top-color: var(--mapa-sun);
+  border-right-color: var(--mapa-mint);
+  background: var(--mapa-violet);
+  animation: mapa-loading-turn 900ms steps(8, end) infinite;
+}
+
+@keyframes mapa-loading-turn {
+  to {
+    rotate: 368deg;
+  }
+}
+
 .mapa-button {
   min-height: 3rem;
   border: 3px solid var(--mapa-ink);
