@@ -19,6 +19,7 @@
     "@mapachess/evaluation": "workspace:*",
     "@mapachess/hints": "workspace:*",
     "@mapachess/match": "workspace:*",
+    "@mapachess/match-presentation": "workspace:*",
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@xstate/react": "^6",
