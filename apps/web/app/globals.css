@@ -182,12 +182,6 @@ button {
   font-weight: 800;
 }
 
-.mapachess-checkbox {
-  width: 1.35rem;
-  height: 1.35rem;
-  accent-color: var(--mapachito-violet);
-}
-
 .mapachess-story-board {
   position: relative;
   overflow: hidden;
