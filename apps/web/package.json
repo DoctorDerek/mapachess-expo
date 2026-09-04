@@ -19,6 +19,7 @@
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@xstate/react": "^6",
+    "motion": "^13",
     "next": "^16",
     "react": "^19",
     "react-dom": "^19",
