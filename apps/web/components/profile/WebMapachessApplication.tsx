@@ -27,6 +27,7 @@ import {
 } from "../../lib/profile/webPlayerDataFiles"
 import StandardChickenGame from "../gameplay/StandardChickenGame"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessShell from "../presentation/MapachessShell"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
@@ -55,9 +56,6 @@ function ActiveMatchSettingsPanel({
   const autoHintMode = useSelector(matchActor, selectAutoHintMode)
   return <ProfileSettingsPanel {...settingsProps} autoHintMode={autoHintMode} />
 }
-
-const standaloneCardClasses =
-  "mapachess-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
@@ -263,13 +261,13 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 
   if (importPreviewPanel !== null || persistenceFailurePanel !== null) {
     return (
-      <main className={standaloneCardClasses}>
+      <MapachessShell as="main" className="grid place-items-start">
         <div className="w-full">
           {exportFailure}
           {importPreviewPanel}
           {persistenceFailurePanel}
         </div>
-      </main>
+      </MapachessShell>
     )
   }
 

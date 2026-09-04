@@ -7,6 +7,7 @@ import type {
   ProfilePersistenceFailure,
 } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
@@ -28,7 +29,7 @@ export function ProfileCard({ children, labelledBy }: ProfileCardProps) {
   return (
     <section
       aria-labelledby={labelledBy}
-      className="mapachess-surface mx-auto w-full max-w-3xl p-[clamp(1.25rem,4vw,2.5rem)]"
+      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal mx-auto w-full max-w-3xl rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.25rem,4vw,2.5rem)] shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
     >
       {children}
     </section>
@@ -43,22 +44,28 @@ export default function FullPageProfilePanel({
   title,
 }: FullPageProfilePanelProps) {
   return (
-    <main className="mapachess-shell grid place-items-center">
+    <MapachessShell as="main" className="grid place-items-center">
       <div className="w-full max-w-3xl">
         <div className="mb-5 pl-1">
           <MapachessWordmark />
         </div>
         <section
           aria-live={live}
-          className="mapachess-surface min-h-[min(42rem,calc(100dvh-8rem))] p-[clamp(1.5rem,5vw,3.5rem)]"
+          className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal min-h-[min(42rem,calc(100dvh-8rem))] rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
-          <p className="mapachess-eyebrow">{eyebrow}</p>
-          <h1 className="mapachess-display mt-4">{title}</h1>
-          <p className="mapachess-copy mt-6 max-w-xl">{description}</p>
+          <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+            {eyebrow}
+          </p>
+          <h1 className="font-display text-mapachito-charcoal mt-4 text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] font-black tracking-[-0.035em] text-balance uppercase font-stretch-condensed">
+            {title}
+          </h1>
+          <p className="text-mapachito-charcoal mt-6 max-w-xl text-base leading-[1.65] font-semibold opacity-82">
+            {description}
+          </p>
           {children}
         </section>
       </div>
-    </main>
+    </MapachessShell>
   )
 }
 

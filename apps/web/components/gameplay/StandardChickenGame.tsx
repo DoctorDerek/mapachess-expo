@@ -19,6 +19,7 @@ import webMatchSessionMachine, {
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import StandardChickenMatch from "./StandardChickenMatch"
 
@@ -53,7 +54,7 @@ function GameFrame({
   settingsOpen,
 }: GameFrameProps) {
   return (
-    <div className="mapachess-shell px-[clamp(1rem,3vw,3rem)] py-[clamp(1.5rem,4vw,3rem)]">
+    <MapachessShell>
       <header className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5">
         <MapachessWordmark />
         <div className="flex flex-wrap items-center gap-3">
@@ -89,7 +90,7 @@ function GameFrame({
       </header>
 
       <div className="mx-auto w-full max-w-[96rem]">{children}</div>
-    </div>
+    </MapachessShell>
   )
 }
 

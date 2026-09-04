@@ -78,46 +78,6 @@ button {
   color: var(--mapachito-charcoal);
 }
 
-.mapachess-shell {
-  position: relative;
-  isolation: isolate;
-  min-height: 100dvh;
-  overflow-x: clip;
-  padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem);
-}
-
-.mapachess-shell::before {
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 0.625rem;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--mapachito-raspberry) 0 3rem,
-    var(--mapachito-orange) 3rem 6rem,
-    var(--mapachito-deep-gold) 6rem 9rem,
-    var(--mapachito-green) 9rem 12rem,
-    var(--mapachito-deep-cyan) 12rem 15rem,
-    var(--mapachito-blue) 15rem 18rem,
-    var(--mapachito-violet) 18rem 21rem
-  );
-  content: "";
-}
-
-.mapachess-shell::after {
-  position: fixed;
-  z-index: -2;
-  right: -9rem;
-  bottom: -10rem;
-  width: 24rem;
-  height: 24rem;
-  border: 4rem solid rgb(167 126 24 / 0.12);
-  border-radius: 50%;
-  content: "";
-}
-
 .mapachess-surface {
   color: var(--mapachito-charcoal);
   border: 3px solid var(--mapachito-charcoal);
@@ -747,44 +707,6 @@ button {
   }
 }
 
-.mapachess-wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--mapachito-white);
-}
-
-.mapachess-wordmark__emblem {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  rotate: -4deg;
-  color: var(--mapachito-charcoal);
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 0.625rem 0.125rem 0.625rem 0.125rem;
-  background: var(--mapachito-orange);
-  font-family: var(--mapachess-display-font);
-  font-size: 2rem;
-  line-height: 1;
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-raspberry);
-}
-
-.mapachess-wordmark__type {
-  display: grid;
-  font-family: var(--mapachess-display-font);
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: 0.055em;
-  line-height: 0.78;
-  text-transform: uppercase;
-}
-
-.mapachess-wordmark__type strong {
-  color: var(--mapachito-deep-gold);
-  font: inherit;
-}
-
 @media (width >= 1280px) {
   .mapachess-active-match {
     grid-template-areas:
@@ -832,7 +754,6 @@ button {
 
 @media (forced-colors: active) {
   .mapachess-surface,
-  .mapachess-wordmark__emblem,
   .mapachess-battle-stage,
   .mapachess-battle-stage__header,
   .mapachess-battle-stage__versus,
