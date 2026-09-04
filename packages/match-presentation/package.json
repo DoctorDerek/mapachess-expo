@@ -1,0 +1,43 @@
+{
+  "name": "@mapachess/match-presentation",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./animal-opponent": {
+      "types": "./src/animalOpponent.ts",
+      "default": "./dist/animalOpponent.js"
+    },
+    "./coach-portrait": {
+      "types": "./src/coachPortrait.ts",
+      "default": "./dist/coachPortrait.js"
+    },
+    "./match-presentation-observation": {
+      "types": "./src/matchPresentationObservation.ts",
+      "default": "./dist/matchPresentationObservation.js"
+    },
+    "./match-presentation-machine": {
+      "types": "./src/matchPresentationMachine.ts",
+      "default": "./dist/matchPresentationMachine.js"
+    },
+    "./match-reaction": {
+      "types": "./src/matchReaction.ts",
+      "default": "./dist/matchReaction.js"
+    },
+    "./presentation-asset-manifest": {
+      "types": "./src/presentationAssetManifest.ts",
+      "default": "./dist/presentationAssetManifest.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/match": "workspace:*",
+    "xstate": "^5"
+  }
+}

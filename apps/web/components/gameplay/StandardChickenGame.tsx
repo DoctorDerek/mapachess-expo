@@ -6,6 +6,7 @@ import { createActor, type ActorRefFrom } from "xstate"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
+import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
 import {
   openCurrentStandardChickenMatchSession,
   openFreshStandardChickenMatchSession,
@@ -193,7 +194,10 @@ function MatchSessionExperience({
                 </div>
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Strength</dt>
-                  <dd>Provisional 100-Elo target</dd>
+                  <dd>
+                    Provisional {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo
+                    target
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -212,6 +216,8 @@ function MatchSessionExperience({
         <StandardChickenMatch
           actor={session.actor}
           evaluationActor={session.evaluationActor}
+          key={session.match.matchId}
+          playerEloAtStart={session.match.playerEloAtStart}
           runtime={session.runtime}
         />
       ) : snapshot.matches("failed") && failure !== null ? (
