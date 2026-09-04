@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
+@theme {
+  --color-mapachito-deep-cyan: #008b8b;
+  --color-mapachito-raspberry: #9c0052;
+  --color-mapachito-blue: #008ec1;
+  --color-mapachito-orange: #ff4500;
+  --color-mapachito-violet: #790fc5;
+  --color-mapachito-green: #008f39;
+  --color-mapachito-red: #ff0000;
+  --color-mapachito-deep-gold: #a77e18;
+  --color-mapachito-charcoal: #1e1e1e;
+  --color-mapachito-white: #ffffff;
+  --font-display:
+    Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
+  --font-body: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  --breakpoint-xl: 1280px;
+}
+
 :root {
   color-scheme: dark;
-  --mapachito-deep-cyan: #008b8b;
-  --mapachito-raspberry: #9c0052;
-  --mapachito-blue: #008ec1;
-  --mapachito-orange: #ff4500;
-  --mapachito-violet: #790fc5;
-  --mapachito-green: #008f39;
-  --mapachito-red: #ff0000;
-  --mapachito-deep-gold: #a77e18;
-  --mapachito-charcoal: #1e1e1e;
-  --mapachito-white: #ffffff;
+  --mapachito-deep-cyan: var(--color-mapachito-deep-cyan);
+  --mapachito-raspberry: var(--color-mapachito-raspberry);
+  --mapachito-blue: var(--color-mapachito-blue);
+  --mapachito-orange: var(--color-mapachito-orange);
+  --mapachito-violet: var(--color-mapachito-violet);
+  --mapachito-green: var(--color-mapachito-green);
+  --mapachito-red: var(--color-mapachito-red);
+  --mapachito-deep-gold: var(--color-mapachito-deep-gold);
+  --mapachito-charcoal: var(--color-mapachito-charcoal);
+  --mapachito-white: var(--color-mapachito-white);
   --mapachess-board-dark-square: var(--mapachito-blue);
   --mapachess-board-light-square: var(--mapachito-white);
   --mapachess-board-hint-outline: var(--mapachito-charcoal);
   --mapachess-board-opponent-hint: var(--mapachito-red);
   --mapachess-board-player-hint: var(--mapachito-green);
   --mapachess-board-legal-move: var(--mapachito-deep-gold);
-  --mapachess-display-font:
-    Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
-  --mapachess-body-font: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;
+  --mapachess-display-font: var(--font-display);
+  --mapachess-body-font: var(--font-body);
   background: var(--mapachito-charcoal);
   color: var(--mapachito-white);
   font-family: var(--mapachess-body-font);
