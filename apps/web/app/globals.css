@@ -98,27 +98,6 @@ button {
   text-transform: uppercase;
 }
 
-.mapachess-display {
-  margin: 0;
-  color: var(--mapachito-charcoal);
-  font-family: var(--mapachess-display-font);
-  font-size: clamp(2.5rem, 8vw, 5.5rem);
-  font-stretch: condensed;
-  font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 0.86;
-  text-wrap: balance;
-  text-transform: uppercase;
-}
-
-.mapachess-copy {
-  color: var(--mapachito-charcoal);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.65;
-  opacity: 0.82;
-}
-
 .mapachess-section-title {
   margin: 0;
   color: var(--mapachito-charcoal);
@@ -176,95 +155,6 @@ button {
 .mapachess-data-grid dd {
   color: var(--mapachito-charcoal);
   font-weight: 800;
-}
-
-.mapachess-story-board {
-  position: relative;
-  overflow: hidden;
-}
-
-.mapachess-story-board::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: clamp(4.5rem, 18vw, 10rem);
-  height: clamp(4.5rem, 18vw, 10rem);
-  translate: 30% -35%;
-  rotate: 18deg;
-  border: 1.5rem solid rgb(121 15 197 / 0.2);
-  content: "";
-}
-
-.mapachess-opponent-poster {
-  display: grid;
-  min-height: 13rem;
-  place-content: center;
-  padding: 1.5rem;
-  color: var(--mapachito-white);
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 1.25rem 0.25rem 1.25rem 0.25rem;
-  background:
-    linear-gradient(
-      135deg,
-      transparent 0 48%,
-      rgb(255 255 255 / 0.22) 48% 52%,
-      transparent 52%
-    ),
-    var(--mapachito-raspberry);
-  box-shadow: 0.5rem 0.5rem 0 var(--mapachito-orange);
-  text-align: center;
-}
-
-.mapachess-opponent-poster__number {
-  font-family: var(--mapachess-display-font);
-  font-size: clamp(5rem, 18vw, 9rem);
-  font-weight: 900;
-  letter-spacing: -0.06em;
-  line-height: 0.72;
-}
-
-.mapachess-opponent-poster__label {
-  margin-top: 1rem;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.mapachess-story-facts {
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 1rem 0.25rem 1rem 0.25rem;
-  background: var(--mapachito-white);
-}
-
-.mapachess-story-facts > div + div {
-  border-top: 2px solid rgb(30 30 30 / 0.18);
-}
-
-.mapachess-story-facts dt {
-  color: var(--mapachito-charcoal);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-.mapachess-story-facts dd {
-  color: var(--mapachito-charcoal);
-  font-weight: 900;
-}
-
-.mapachess-loading-mark {
-  width: 3.5rem;
-  height: 3.5rem;
-  rotate: 8deg;
-  border: 0.625rem solid var(--mapachito-raspberry);
-  border-top-color: var(--mapachito-orange);
-  border-right-color: var(--mapachito-green);
-  background: var(--mapachito-violet);
-  animation: mapachess-loading-turn 900ms steps(8, end) infinite;
 }
 
 .mapachess-board-frame {
