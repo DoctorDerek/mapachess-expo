@@ -331,6 +331,200 @@ button {
   box-shadow: 0.625rem 0.625rem 0 var(--mapachito-charcoal);
 }
 
+.mapachess-reaction-deck {
+  display: grid;
+  gap: 1rem;
+}
+
+.mapachess-battle-stage {
+  overflow: hidden;
+  color: var(--mapachito-white);
+  border: 3px solid var(--mapachito-charcoal);
+  border-radius: 1rem 0.25rem 1rem 0.25rem;
+  background: var(--mapachito-deep-cyan);
+  box-shadow: 0.35rem 0.35rem 0 var(--mapachito-orange);
+}
+
+.mapachess-battle-stage__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  color: var(--mapachito-charcoal);
+  border-bottom: 3px solid var(--mapachito-charcoal);
+  background: var(--mapachito-white);
+}
+
+.mapachess-battle-stage__title {
+  margin: 0.2rem 0 0;
+  font-family: var(--mapachess-display-font);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mapachess-battle-stage__live {
+  padding: 0.35rem 0.55rem;
+  color: var(--mapachito-white);
+  border: 2px solid var(--mapachito-charcoal);
+  background: var(--mapachito-red);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mapachess-battle-stage__arena {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-height: 12rem;
+  align-items: end;
+  padding: 1rem 0.6rem 0.8rem;
+  background:
+    linear-gradient(
+      transparent 0 68%,
+      rgb(30 30 30 / 0.22) 68% 71%,
+      var(--mapachito-deep-gold) 71%
+    ),
+    var(--mapachito-blue);
+}
+
+.mapachess-battle-stage__versus {
+  align-self: center;
+  padding: 0.25rem 0.4rem;
+  color: var(--mapachito-white);
+  background: var(--mapachito-raspberry);
+  font-family: var(--mapachess-display-font);
+  font-size: 1.35rem;
+  font-weight: 900;
+  rotate: -5deg;
+}
+
+.mapachess-battle-fighter {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+}
+
+.mapachess-battle-fighter__motion {
+  display: grid;
+  width: 100%;
+  height: 8.5rem;
+  place-items: end center;
+}
+
+.mapachess-battle-sprite {
+  display: block;
+  transform: scale(3);
+  transform-origin: center bottom;
+  image-rendering: pixelated;
+}
+
+.mapachess-battle-sprite--faces-right {
+  transform: scaleX(-1) scale(3);
+}
+
+.mapachess-battle-fighter__fallback {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  place-items: center;
+  color: var(--mapachito-charcoal);
+  border: 0.35rem solid var(--mapachito-charcoal);
+  background: var(--mapachito-orange);
+  font-family: var(--mapachess-display-font);
+  font-size: 2.6rem;
+  font-weight: 900;
+  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-charcoal);
+}
+
+.mapachess-battle-fighter:last-child .mapachess-battle-fighter__fallback {
+  background: var(--mapachito-white);
+}
+
+.mapachess-battle-fighter__name {
+  z-index: 1;
+  max-width: 100%;
+  margin-top: 0.45rem;
+  overflow: hidden;
+  color: var(--mapachito-white);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 2px 2px 0 var(--mapachito-charcoal);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mapachess-coach {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  margin: 0;
+  padding: 0.8rem;
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
+  border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
+  background: var(--mapachito-orange);
+  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-raspberry);
+}
+
+.mapachess-coach__portrait-frame,
+.mapachess-coach__fallback {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.mapachess-coach__portrait-frame {
+  overflow: hidden;
+  border: 3px solid var(--mapachito-charcoal);
+  background: var(--mapachito-violet);
+}
+
+.mapachess-coach__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.mapachess-coach__fallback {
+  display: grid;
+  place-items: center;
+  color: var(--mapachito-white);
+  font-family: var(--mapachess-display-font);
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.mapachess-coach__caption {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mapachess-coach__caption span {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mapachess-coach__caption strong {
+  font-family: var(--mapachess-display-font);
+  font-size: 1.5rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .mapachess-match-ribbon {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -375,6 +569,16 @@ button {
 @keyframes mapachess-loading-turn {
   to {
     rotate: 368deg;
+  }
+}
+
+@keyframes mapachess-battle-sprite-frames {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 100% 0;
   }
 }
 
@@ -474,6 +678,16 @@ button {
 .mapachess-wordmark__type strong {
   color: var(--mapachito-deep-gold);
   font: inherit;
+}
+
+@media (width >= 1280px) {
+  .mapachess-battle-sprite {
+    transform: scale(4);
+  }
+
+  .mapachess-battle-sprite--faces-right {
+    transform: scaleX(-1) scale(4);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

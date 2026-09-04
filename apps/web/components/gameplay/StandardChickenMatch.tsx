@@ -26,9 +26,12 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
+import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
+import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
+import ReactiveBattleStage from "./ReactiveBattleStage"
 
 export type StandardChickenMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
@@ -101,6 +104,10 @@ export default function StandardChickenMatch({
   const evaluationStage = useSelector(
     evaluationActor,
     selectPositionEvaluationStage,
+  )
+  const presentation = useAcceptedMatchPresentation(
+    snapshot,
+    runtime.playerColor,
   )
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)
@@ -177,6 +184,18 @@ export default function StandardChickenMatch({
           <dt>Engine</dt>
           <dd className="truncate">{runtime.engineIdentity.name}</dd>
         </dl>
+
+        <div className="mapachess-reaction-deck mt-6">
+          <ReactiveBattleStage
+            onParticipantAnimationCompleted={
+              presentation.notifyParticipantAnimationCompleted
+            }
+            presentationSnapshot={presentation.snapshot}
+          />
+          <MapachitoCoachPortrait
+            presentationSnapshot={presentation.snapshot}
+          />
+        </div>
 
         <p aria-live="polite" className="mapachess-turn-banner mt-6 px-4 py-4">
           {matchStatusText(snapshot, runtime.playerColor)}

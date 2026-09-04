@@ -212,6 +212,7 @@ function MatchSessionExperience({
         <StandardChickenMatch
           actor={session.actor}
           evaluationActor={session.evaluationActor}
+          key={session.match.matchId}
           runtime={session.runtime}
         />
       ) : snapshot.matches("failed") && failure !== null ? (
