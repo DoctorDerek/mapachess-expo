@@ -28,6 +28,7 @@ import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
+import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
@@ -40,9 +41,6 @@ export type StandardChickenMatchProps = Readonly<{
   playerEloAtStart: number
   runtime: WebMatchRuntime
 }>
-
-const controlClasses =
-  "mapachess-button mapachess-button--secondary min-h-12 px-4 py-3"
 
 const matchStatusText = (
   snapshot: MatchMachineSnapshot,
@@ -287,15 +285,15 @@ export default function StandardChickenMatch({
           </p>
 
           {evaluationStage === "failure" ? (
-            <button
-              className="mapachess-button mapachess-button--primary mt-3 w-full"
+            <MapachessButton
+              className="mt-3 w-full"
               onClick={() =>
                 evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
               }
               type="button"
             >
               Retry Evaluation
-            </button>
+            </MapachessButton>
           ) : null}
 
           <BetterHintsControl
@@ -311,8 +309,8 @@ export default function StandardChickenMatch({
           />
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <button
-              className={controlClasses}
+            <MapachessButton
+              variant="secondary"
               disabled={
                 !selectCanOfferDraw(snapshot) || drawOfferDecision === null
               }
@@ -320,58 +318,58 @@ export default function StandardChickenMatch({
               type="button"
             >
               Offer Draw
-            </button>
-            <button
-              className={controlClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="secondary"
               disabled={!selectCanResign(snapshot)}
               onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
               type="button"
             >
               Resign
-            </button>
+            </MapachessButton>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3">
-            <button
-              className={controlClasses}
+            <MapachessButton
+              variant="secondary"
               disabled={!selectCanUndo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
               type="button"
             >
               Undo
-            </button>
-            <button
-              className={controlClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="secondary"
               disabled={!selectCanRedo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
               type="button"
             >
               Redo
-            </button>
+            </MapachessButton>
           </div>
 
           {opponentFailure === null ? null : (
-            <button
-              className="mapachess-button mapachess-button--primary mt-3 w-full"
+            <MapachessButton
+              className="mt-3 w-full"
               onClick={() =>
                 actor.send({ type: "MATCH.OPPONENT_RETRY_REQUESTED" })
               }
               type="button"
             >
               Retry Chicken turn
-            </button>
+            </MapachessButton>
           )}
 
           {persistenceFailure === null ? null : (
-            <button
-              className="mapachess-button mapachess-button--primary mt-3 w-full"
+            <MapachessButton
+              className="mt-3 w-full"
               onClick={() =>
                 actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
               }
               type="button"
             >
               Retry local save
-            </button>
+            </MapachessButton>
           )}
         </section>
       </aside>

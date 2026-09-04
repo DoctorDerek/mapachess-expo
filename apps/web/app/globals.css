@@ -731,15 +731,6 @@ button {
   font-weight: 900;
 }
 
-.mapachess-button--hint {
-  background: var(--mapachito-white);
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-green);
-}
-
-.mapachess-button--hint:hover:not(:disabled) {
-  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-green);
-}
-
 @keyframes mapachess-loading-turn {
   to {
     rotate: 368deg;
@@ -754,66 +745,6 @@ button {
   to {
     background-position: 100% 0;
   }
-}
-
-.mapachess-button {
-  min-height: 3rem;
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 0.75rem 0.25rem 0.75rem 0.25rem;
-  padding: 0.75rem 1.125rem;
-  color: var(--mapachito-charcoal);
-  font-weight: 900;
-  line-height: 1.2;
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-charcoal);
-  cursor: pointer;
-  transition:
-    translate 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease;
-}
-
-.mapachess-button:hover:not(:disabled) {
-  translate: -1px -1px;
-  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-charcoal);
-}
-
-.mapachess-button:active:not(:disabled) {
-  translate: 0.1875rem 0.1875rem;
-  box-shadow: 0.0625rem 0.0625rem 0 var(--mapachito-charcoal);
-}
-
-.mapachess-button:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-}
-
-.mapachess-button--primary {
-  color: var(--mapachito-white);
-  background: var(--mapachito-raspberry);
-}
-
-.mapachess-button--primary:hover:not(:disabled) {
-  background: var(--mapachito-raspberry);
-}
-
-.mapachess-button--secondary {
-  color: var(--mapachito-white);
-  background: var(--mapachito-violet);
-}
-
-.mapachess-button--secondary:hover:not(:disabled) {
-  background: var(--mapachito-violet);
-}
-
-.mapachess-button--destructive {
-  color: var(--mapachito-white);
-  border-color: var(--mapachito-red);
-  background: var(--mapachito-charcoal);
-  box-shadow: 0.25rem 0.25rem 0 var(--mapachito-red);
-}
-
-.mapachess-button--destructive:hover:not(:disabled) {
-  box-shadow: 0.375rem 0.375rem 0 var(--mapachito-red);
 }
 
 .mapachess-wordmark {
@@ -897,16 +828,10 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  .mapachess-button:hover:not(:disabled),
-  .mapachess-button:active:not(:disabled) {
-    translate: none;
-  }
 }
 
 @media (forced-colors: active) {
   .mapachess-surface,
-  .mapachess-button,
   .mapachess-wordmark__emblem,
   .mapachess-battle-stage,
   .mapachess-battle-stage__header,

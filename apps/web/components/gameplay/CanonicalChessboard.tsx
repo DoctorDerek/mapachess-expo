@@ -21,6 +21,7 @@ import {
   type BoardNavigationKey,
   type BoardOrientation,
 } from "../../lib/board/boardPresentation"
+import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsOverlay from "./BetterHintsOverlay"
 
 const PIECE_GLYPHS = Object.freeze({
@@ -353,9 +354,10 @@ export default function CanonicalChessboard({
             </h2>
             <div className="mt-4 grid grid-cols-4 gap-3">
               {PROMOTION_ROLES.map((role, index) => (
-                <button
+                <MapachessButton
+                  variant="secondary"
                   aria-label={`Promote to ${PIECE_NAMES[role]}`}
-                  className="mapachess-button mapachess-button--secondary grid aspect-square place-items-center text-5xl"
+                  className="grid aspect-square place-items-center text-5xl"
                   key={role}
                   onClick={() => choosePromotion(role)}
                   ref={index === 0 ? firstPromotionButton : undefined}
@@ -364,16 +366,17 @@ export default function CanonicalChessboard({
                   <span aria-hidden="true">
                     {PIECE_GLYPHS[position.turn][role]}
                   </span>
-                </button>
+                </MapachessButton>
               ))}
             </div>
-            <button
-              className="mapachess-button mapachess-button--secondary mt-4 w-full"
+            <MapachessButton
+              variant="secondary"
+              className="mt-4 w-full"
               onClick={clearSelection}
               type="button"
             >
               Cancel promotion
-            </button>
+            </MapachessButton>
           </div>
         </div>
       )}

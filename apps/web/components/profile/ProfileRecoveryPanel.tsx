@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from "react"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import MapachessButton from "../presentation/MapachessButton"
 import FullPageProfilePanel, {
-  destructiveProfileButtonClasses,
   ImportBackupButton,
   importIssueMessage,
-  primaryProfileButtonClasses,
-  secondaryProfileButtonClasses,
 } from "./ProfileFoundation"
 
 export type ProfileRecoveryPanelProps = Readonly<{
@@ -86,64 +84,60 @@ export default function ProfileRecoveryPanel({
             does not affect backup files you already exported.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button
+            <MapachessButton
+              variant="secondary"
               autoFocus
-              className={secondaryProfileButtonClasses}
               onClick={cancelReset}
               type="button"
             >
               Cancel
-            </button>
-            <button
-              className={secondaryProfileButtonClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="secondary"
               onClick={onExportUnreadable}
               type="button"
             >
               Export Unreadable Data
-            </button>
-            <button
-              className={destructiveProfileButtonClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="destructive"
               onClick={onResetConfirmed}
               type="button"
             >
               Reset All Local Player Data
-            </button>
+            </MapachessButton>
           </div>
         </section>
       ) : (
         <div className="mt-8 grid gap-4 xl:grid-cols-2">
-          <button
-            className={primaryProfileButtonClasses}
-            onClick={onTryAgain}
-            type="button"
-          >
+          <MapachessButton onClick={onTryAgain} type="button">
             Try Again
-          </button>
-          <button
-            className={secondaryProfileButtonClasses}
+          </MapachessButton>
+          <MapachessButton
+            variant="secondary"
             onClick={onExportUnreadable}
             type="button"
           >
             Export Unreadable Data
-          </button>
+          </MapachessButton>
           <ImportBackupButton disabled={false} onBackupRead={onBackupRead} />
           {hasLastKnownGood ? (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onRestoreLastKnownGood}
               type="button"
             >
               Restore Last Known-Good Save
-            </button>
+            </MapachessButton>
           ) : null}
-          <button
-            className={destructiveProfileButtonClasses}
+          <MapachessButton
+            variant="destructive"
             onClick={() => setConfirmingReset(true)}
             ref={resetTrigger}
             type="button"
           >
             Review Full Local Reset
-          </button>
+          </MapachessButton>
         </div>
       )}
     </FullPageProfilePanel>

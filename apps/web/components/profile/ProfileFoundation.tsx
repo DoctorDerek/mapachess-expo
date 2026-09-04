@@ -6,18 +6,10 @@ import type {
   ProfileImportIssue,
   ProfilePersistenceFailure,
 } from "@mapachess/profile/profile-machine"
+import MapachessButton from "../presentation/MapachessButton"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
-
-export const primaryProfileButtonClasses =
-  "mapachess-button mapachess-button--primary"
-
-export const secondaryProfileButtonClasses =
-  "mapachess-button mapachess-button--secondary"
-
-export const destructiveProfileButtonClasses =
-  "mapachess-button mapachess-button--destructive"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -105,14 +97,14 @@ export function ImportBackupButton({
 
   return (
     <div>
-      <button
-        className={secondaryProfileButtonClasses}
+      <MapachessButton
+        variant="secondary"
         disabled={disabled}
         onClick={() => fileInput.current?.click()}
         type="button"
       >
         Import Backup
-      </button>
+      </MapachessButton>
       <input
         accept=".json,application/json"
         disabled={disabled}

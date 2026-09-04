@@ -2,11 +2,8 @@
 
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { autoHintModeLabel } from "../../lib/profile/autoHintModePresentation"
-import {
-  primaryProfileButtonClasses,
-  ProfileCard,
-  secondaryProfileButtonClasses,
-} from "./ProfileFoundation"
+import MapachessButton from "../presentation/MapachessButton"
+import { ProfileCard } from "./ProfileFoundation"
 
 export type ProfileImportPreviewPanelProps = Readonly<{
   backup: MapachessPortableBackup
@@ -61,21 +58,17 @@ export default function ProfileImportPreviewPanel({
         </dl>
 
         <div className="mt-7 flex flex-wrap gap-3">
-          <button
+          <MapachessButton
+            variant="secondary"
             autoFocus
-            className={secondaryProfileButtonClasses}
             onClick={onCancel}
             type="button"
           >
             Cancel Import
-          </button>
-          <button
-            className={primaryProfileButtonClasses}
-            onClick={onConfirm}
-            type="button"
-          >
+          </MapachessButton>
+          <MapachessButton onClick={onConfirm} type="button">
             Replace Local Player Data
-          </button>
+          </MapachessButton>
         </div>
       </ProfileCard>
     </div>

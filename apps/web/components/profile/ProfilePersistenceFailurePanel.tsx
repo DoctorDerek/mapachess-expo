@@ -2,12 +2,8 @@
 
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machine"
-import {
-  persistenceFailureMessage,
-  primaryProfileButtonClasses,
-  ProfileCard,
-  secondaryProfileButtonClasses,
-} from "./ProfileFoundation"
+import MapachessButton from "../presentation/MapachessButton"
+import { persistenceFailureMessage, ProfileCard } from "./ProfileFoundation"
 
 export type ProfilePersistenceFailurePanelProps = Readonly<{
   exportablePlayerData: MapachessPlayerData | null
@@ -42,31 +38,26 @@ export default function ProfilePersistenceFailurePanel({
           frozen until Retry succeeds.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            autoFocus
-            className={primaryProfileButtonClasses}
-            onClick={onRetry}
-            type="button"
-          >
+          <MapachessButton autoFocus onClick={onRetry} type="button">
             Retry Save
-          </button>
+          </MapachessButton>
           {exportablePlayerData === null ? null : (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onExportPlayerData}
               type="button"
             >
               Export Pending Player Data
-            </button>
+            </MapachessButton>
           )}
           {onExportUnreadable === null ? null : (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onExportUnreadable}
               type="button"
             >
               Export Unreadable Data
-            </button>
+            </MapachessButton>
           )}
         </div>
       </ProfileCard>

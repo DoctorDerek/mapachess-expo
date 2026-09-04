@@ -3,12 +3,11 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
+import MapachessButton from "../presentation/MapachessButton"
 import {
   ImportBackupButton,
   importIssueMessage,
-  primaryProfileButtonClasses,
   ProfileCard,
-  secondaryProfileButtonClasses,
 } from "./ProfileFoundation"
 
 const AUTO_HINT_OPTIONS = [
@@ -69,15 +68,15 @@ export default function ProfileSettingsPanel({
               Settings &amp; Player Data
             </h2>
           </div>
-          <button
+          <MapachessButton
+            variant="secondary"
             autoFocus
-            className={secondaryProfileButtonClasses}
             disabled={busy}
             onClick={onClose}
             type="button"
           >
             Close Settings
-          </button>
+          </MapachessButton>
         </div>
 
         <fieldset className="mapachess-inset mt-8 p-5">
@@ -127,13 +126,9 @@ export default function ProfileSettingsPanel({
             never applied before you review it.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              className={primaryProfileButtonClasses}
-              onClick={onExportPlayerData}
-              type="button"
-            >
+            <MapachessButton onClick={onExportPlayerData} type="button">
               Export Player Data
-            </button>
+            </MapachessButton>
             <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
           </div>
         </section>

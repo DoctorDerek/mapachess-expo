@@ -18,19 +18,11 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
+import MapachessButton from "../presentation/MapachessButton"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import StandardChickenMatch from "./StandardChickenMatch"
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
-
-const secondaryControlClasses =
-  "mapachess-button mapachess-button--secondary min-h-11 px-4 py-2"
-
-const primaryControlClasses =
-  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
-
-const retryControlClasses =
-  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
 
 export type StandardChickenGameProps = Readonly<{
   onActiveMatchActorChanged: (actor: WebMatchSession["actor"] | null) => void
@@ -67,32 +59,32 @@ function GameFrame({
         <div className="flex flex-wrap items-center gap-3">
           {matchSessionActive ? (
             <>
-              <button
-                className={secondaryControlClasses}
+              <MapachessButton
+                variant="secondary"
                 onClick={onRestartRequested}
                 type="button"
               >
                 Restart Match
-              </button>
-              <button
-                className={secondaryControlClasses}
+              </MapachessButton>
+              <MapachessButton
+                variant="secondary"
                 onClick={onReturnToMenuRequested}
                 type="button"
               >
                 Return to Menu
-              </button>
+              </MapachessButton>
             </>
           ) : null}
-          <button
+          <MapachessButton
+            variant="secondary"
             aria-controls="profile-settings-panel"
             aria-expanded={settingsOpen}
-            className={secondaryControlClasses}
             onClick={onSettingsRequested}
             ref={settingsButtonRef}
             type="button"
           >
             Settings
-          </button>
+          </MapachessButton>
         </div>
       </header>
 
@@ -201,15 +193,14 @@ function MatchSessionExperience({
                 </div>
               </dl>
             </div>
-            <button
-              className={primaryControlClasses}
+            <MapachessButton
               onClick={() =>
                 actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" })
               }
               type="button"
             >
               Play Chicken Stockfish
-            </button>
+            </MapachessButton>
           </article>
         </section>
       ) : snapshot.matches("active") && session !== null ? (
@@ -233,15 +224,15 @@ function MatchSessionExperience({
               Your last verified local profile remains available. Retry the
               interrupted session operation.
             </p>
-            <button
-              className={`${retryControlClasses} mt-6`}
+            <MapachessButton
+              className="mt-6"
               onClick={() =>
                 actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
               }
               type="button"
             >
               Retry
-            </button>
+            </MapachessButton>
           </div>
         </section>
       ) : (
