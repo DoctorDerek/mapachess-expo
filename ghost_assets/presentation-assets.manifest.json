@@ -1,0 +1,192 @@
+{
+  "files": [
+    {
+      "path": "battle/chicken/chicken_attack_air_strip6.png",
+      "sha256": "8e165d873ca4994bbba9a3677fb4599653fb5307ba3f8fba8310096215a27f2f"
+    },
+    {
+      "path": "battle/chicken/chicken_attack_ground_strip6.png",
+      "sha256": "a9e97cf214d77a7711d588773c53a6d2e78593680c5ecbb18f6859f4488a1d6d"
+    },
+    {
+      "path": "battle/chicken/chicken_die_strip10.png",
+      "sha256": "09d36bee3522a66c3848ae38a00df686f5130282811b367bcd76f495921ddd70"
+    },
+    {
+      "path": "battle/chicken/chicken_fall_strip2.png",
+      "sha256": "3664917f39fa3b899622a9e127c3fd084ac8b34b8f656fa97b644ba755949d38"
+    },
+    {
+      "path": "battle/chicken/chicken_fly_strip4.png",
+      "sha256": "7f67e9e1144853d1bcc53b6f42054bf472a02dfa347756053c3dd1fe1c1464fd"
+    },
+    {
+      "path": "battle/chicken/chicken_fright_strip5.png",
+      "sha256": "4932b60a105f288770f9acd9da3095b7a71ec5d98030c0bc0f91fe83b15c23e1"
+    },
+    {
+      "path": "battle/chicken/chicken_hurt_strip5.png",
+      "sha256": "dcca1f590e1ebac9ef0bde7d2348fc60565cdbd388b97422559bbecaa80ab31b"
+    },
+    {
+      "path": "battle/chicken/chicken_idle_blink_strip4.png",
+      "sha256": "273d4ee24c76686446f393ce68d1ca56d9bf62d6c32047cdbe41ccce1dc9549b"
+    },
+    {
+      "path": "battle/chicken/chicken_idle_strip4.png",
+      "sha256": "f9945d83a24b5596dab81ba34bda609936481bda9b1424b7da047143db77c789"
+    },
+    {
+      "path": "battle/chicken/chicken_land_strip4.png",
+      "sha256": "9be1a32c639703213c7bca14b904a3880ea0b421435076a43115eb0b2a947896"
+    },
+    {
+      "path": "battle/chicken/chicken_peck_strip9.png",
+      "sha256": "e420820f62340da16489ef58c4580d7509a63aac3244c94232fbdf0aaed87f6e"
+    },
+    {
+      "path": "battle/chicken/chicken_run_strip4.png",
+      "sha256": "f0f5c4868e272c46bbaea4efba38598b81a0a69bac62902e2583702ddd73f94c"
+    },
+    {
+      "path": "battle/chicken/chicken_sit_strip4.png",
+      "sha256": "086d363385ed7fbd5a7fc38d9b44456c66f4ce3d6fbae1fc61c2d1e5fd7f3980"
+    },
+    {
+      "path": "battle/chicken/chicken_takeoff_strip7.png",
+      "sha256": "2888d0edb77ddc2a30fd26c7697b0faf71ade6e551fdecc6b9fe3a58d13c0476"
+    },
+    {
+      "path": "battle/chicken/chicken_walk_strip8.png",
+      "sha256": "f9d133b2448a8af91d7bbf3457959ac91ef82a696a4a1ce908dd7494870499d2"
+    },
+    {
+      "path": "battle/mapachito/raccoon_attack_strip7.png",
+      "sha256": "977dba1fd408aa57fddbb650e99f6f7f44c0f28f40e6b2f693900a84cd61a3aa"
+    },
+    {
+      "path": "battle/mapachito/raccoon_bark_strip6.png",
+      "sha256": "8a3356af99e9bedda08abf5d092c0df6588da8126786c5f3ea90f959798f0139"
+    },
+    {
+      "path": "battle/mapachito/raccoon_crouch_strip8.png",
+      "sha256": "1616f3b20e9840e88704660eb948185a26bd305aefb70e76e0e7a4f43859335e"
+    },
+    {
+      "path": "battle/mapachito/raccoon_dash_strip9.png",
+      "sha256": "ac964451f6b7df3822e4264a864a61b50fa8bfc3d3f6157af8528267b11e5339"
+    },
+    {
+      "path": "battle/mapachito/raccoon_die_strip8.png",
+      "sha256": "a16df9263494f40f04e1942d24d7bcf4e3a99690d549eff4f43b4968c022c790"
+    },
+    {
+      "path": "battle/mapachito/raccoon_fall_strip5.png",
+      "sha256": "c9a1bf0d4e340cd5808a2c4c75f79e63001946e0e6cc019721e0efbf6923ed81"
+    },
+    {
+      "path": "battle/mapachito/raccoon_fright_strip4.png",
+      "sha256": "6bc2c12ba349f1df6fa8884c1d8cbb85d01aba86289a69dea094f8663b105ab1"
+    },
+    {
+      "path": "battle/mapachito/raccoon_hurt_strip7.png",
+      "sha256": "12d5d49f25c4a0859cebc04345cb14e76c164e27e684391fe676674a5fa5fb9d"
+    },
+    {
+      "path": "battle/mapachito/raccoon_idle_blink_strip8.png",
+      "sha256": "5f80e2cba651eb7fe23bc59de777a80f8c93fac13b3724f316791bc5fa761262"
+    },
+    {
+      "path": "battle/mapachito/raccoon_idle_strip8.png",
+      "sha256": "09d3cee5f7081a11d89e443ef7b1d8289c9a1f7df95096f08a5d34caec054c29"
+    },
+    {
+      "path": "battle/mapachito/raccoon_jump_strip14.png",
+      "sha256": "a8c67583372f8653cb01030f01fe3af2f95da2dc139a6a67302deb2b44815856"
+    },
+    {
+      "path": "battle/mapachito/raccoon_land_strip3.png",
+      "sha256": "be304396370dc0c2e8631177e0b393fe28fd9d4c5595551346d7f46341608ed9"
+    },
+    {
+      "path": "battle/mapachito/raccoon_run_strip8.png",
+      "sha256": "9ec0b3d5b652167d5467601db9d8405dc226c376dd5b46290d6fe6f3a584b694"
+    },
+    {
+      "path": "battle/mapachito/raccoon_sit01_strip8.png",
+      "sha256": "c2558abef62df636ef43ab73e991bf1aff14e8e5319337ee14666643b9e27cdd"
+    },
+    {
+      "path": "battle/mapachito/raccoon_sit02_strip24.png",
+      "sha256": "c4af6358b4e4b2d477a4a1812380b115ff6f4efaa70c82198f4e3b8df2ea880a"
+    },
+    {
+      "path": "battle/mapachito/raccoon_wallgrab_strip8.png",
+      "sha256": "8c6fceec427a6993bd8adcbd7ebe98e8ba8813d197058cf9050112133da25fa4"
+    },
+    {
+      "path": "coach/brilliance.png",
+      "sha256": "e8de67498a960eb8a2b16a8c1bfd557d4ee185d59206005d24b2835e0c29113c"
+    },
+    {
+      "path": "coach/eager_high.png",
+      "sha256": "63c3b20a2c582efb6c069f5c9dd3a883c1b4f4b679d0d6183b9b50d2f4c72b6a"
+    },
+    {
+      "path": "coach/eager_low.png",
+      "sha256": "e461d02edd9270c18f3f2c7d24be616da780845d101dd3e73c9345980fcadbd3"
+    },
+    {
+      "path": "coach/eager_peak.png",
+      "sha256": "9fe3121989e057d02075b19fd57fbe1601049aae4aa09d00dfc2dfea9c2e2d0d"
+    },
+    {
+      "path": "coach/happy_high.png",
+      "sha256": "a9bb155d60bb7a63f3cc52cc30eb105765fa2cd80a99f1c25d130f12d479fb92"
+    },
+    {
+      "path": "coach/happy_low.png",
+      "sha256": "4e15954c7a550fef39da9b39bf5da85a2481a4907ec8f8f155efaa8c455e43fd"
+    },
+    {
+      "path": "coach/hurt_high.png",
+      "sha256": "82fcc9787b27811ab18a26679ad87b6d9a9e27b7ce5c0129cc7075ff1de4dc9d"
+    },
+    {
+      "path": "coach/hurt_low.png",
+      "sha256": "a482b83889d36d6ef268b62f9ddad360364c0d5c8f44411cc64b844ada5dcb73"
+    },
+    {
+      "path": "coach/hurt_medium.png",
+      "sha256": "3a79b7755872aaba474bb028aa2b1d8f7b02e61cb894fc1a2791251a4fc34762"
+    },
+    {
+      "path": "coach/impressed_1.png",
+      "sha256": "2faa0317eefa18a367419ab8a3c87d25b4f6f1ffbd7fba3cd4140f78a2629046"
+    },
+    {
+      "path": "coach/impressed_2.png",
+      "sha256": "bb28356d67d1f419283ca775a50e82873c3a287102eeba33f54a2decec1c1033"
+    },
+    {
+      "path": "coach/neutral.png",
+      "sha256": "99097bdfceba3a7d590e121a6e345a771ac85ff065ee1fb7a2d924f9779041e9"
+    },
+    {
+      "path": "coach/sad_high.png",
+      "sha256": "ca58e22d00bd08bfcec43a5a0c5733c66ba1dc83a19aa8e948279082bf5335f2"
+    },
+    {
+      "path": "coach/sad_low.png",
+      "sha256": "e7a7bf13e58da4449b412c068c095490b6f29f11392c6ac6e61f28352567d812"
+    },
+    {
+      "path": "coach/satisfied_high.png",
+      "sha256": "90d4558f5d0677eab4601aa20483c028554a2b246a3df93e23b23718a0ceddaa"
+    },
+    {
+      "path": "coach/wow_great.png",
+      "sha256": "f7965d56694d733f461e62489d529e618d6839642c2ed6bae31e7b7c423213c6"
+    }
+  ]
+}

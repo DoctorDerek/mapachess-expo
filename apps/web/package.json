@@ -5,8 +5,11 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
+    "assets:prepare": "node --import jiti/register ../../scripts/decrypt-assets.ts",
     "build": "pnpm --workspace-root stockfish:provision:web && next build",
     "dev": "next dev",
+    "prebuild": "pnpm run assets:prepare",
+    "predev": "pnpm run assets:prepare",
     "start": "next start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

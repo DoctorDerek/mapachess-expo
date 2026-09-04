@@ -1,0 +1,37 @@
+PROPRIETARY THIRD-PARTY ASSETS
+
+The encrypted archive in this directory contains purchased third-party assets
+used under their original licenses. The archive and its contents are not
+covered by the GNU General Public License applied to Mapachess source code.
+
+The archive exists only to support authorized Mapachess builds. This
+repository grants no permission to decrypt, extract, redistribute, sublicense,
+sell, publish, or reuse its contents. Encryption does not alter the original
+licenses or create redistribution rights.
+
+SEETHINGSWARM CHICKENPACK AND RACCOONPACK
+
+Creator: SeethingSwarm
+Sources:
+https://seethingswarm.itch.io/chickenpack
+https://seethingswarm.itch.io/raccoonpack
+
+The current storefront terms permit use and modification in commercial
+projects while prohibiting resale, giveaway, and open distribution of the
+assets. They also prohibit blockchain, NFT, play-to-earn, and cryptocurrency
+uses. The current source terms govern every build and distribution.
+
+CAPTAINSKOLOT RACOON PORTRAIT PACK
+
+Creator: CaptainSkolot
+Source:
+https://captainskolot.itch.io/racoon-portrait-pack-asset-pixelart-pixel-art-sprite-badass-bust-pack-rpg-vis
+License identified by the source page: Creative Commons Attribution 4.0
+International, with the source page also prohibiting standalone redistribution
+or resale of the assets, including NFT or image-asset compilations.
+
+Attribution: “Racoon Portrait Pack” by CaptainSkolot.
+
+Receipts and purchase records remain outside source control. Anyone creating or
+deploying this archive must independently possess the required licenses and
+review the current source terms.
