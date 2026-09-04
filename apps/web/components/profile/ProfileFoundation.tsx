@@ -7,6 +7,7 @@ import type {
   ProfilePersistenceFailure,
 } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 
@@ -122,14 +123,11 @@ export function ImportBackupButton({
         type="file"
       />
       {fileIssue === null ? null : (
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-4 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-4 text-sm" role="alert">
           {fileIssue === "too-large"
             ? "That file is larger than Mapachess can safely inspect. Your saved data is unchanged."
             : "That file could not be read. Your saved data is unchanged. Choose the file again or select another backup."}
-        </p>
+        </MapachessNotice>
       )}
     </div>
   )

@@ -182,21 +182,6 @@ button {
   font-weight: 800;
 }
 
-.mapachess-notice {
-  color: var(--mapachito-charcoal);
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 1rem 0.25rem 1rem 0.25rem;
-  padding: 1rem;
-  background: var(--mapachito-white);
-  box-shadow: inset 0.5rem 0 0 var(--mapachito-blue);
-  font-weight: 700;
-  line-height: 1.55;
-}
-
-.mapachess-notice--warning {
-  box-shadow: inset 0.5rem 0 0 var(--mapachito-deep-gold);
-}
-
 .mapachess-checkbox {
   width: 1.35rem;
   height: 1.35rem;

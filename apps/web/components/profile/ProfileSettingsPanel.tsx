@@ -4,6 +4,7 @@ import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import {
   ImportBackupButton,
   importIssueMessage,
@@ -134,21 +135,18 @@ export default function ProfileSettingsPanel({
         </section>
 
         {importIssue === null ? null : (
-          <p
-            className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
-            role="alert"
-          >
+          <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
             {importIssueMessage(importIssue)}
-          </p>
+          </MapachessNotice>
         )}
         {activityMessage === null ? null : (
-          <p
+          <MapachessNotice
             aria-live="polite"
-            className="mapachess-notice mt-5 text-sm"
+            className="mt-5 text-sm"
             role="status"
           >
             {activityMessage}
-          </p>
+          </MapachessNotice>
         )}
       </ProfileCard>
     </div>

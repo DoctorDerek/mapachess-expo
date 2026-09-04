@@ -27,6 +27,7 @@ import {
 } from "../../lib/profile/webPlayerDataFiles"
 import StandardChickenGame from "../gameplay/StandardChickenGame"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
@@ -128,13 +129,14 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   }
 
   const exportFailure = exportFailed ? (
-    <p
-      className="mapachess-notice mapachess-notice--warning relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
+    <MapachessNotice
+      tone="warning"
+      className="relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
       role="alert"
     >
       The download could not be created. Your local data is unchanged. Try again
       or use another browser download destination.
-    </p>
+    </MapachessNotice>
   ) : null
 
   if (snapshot.matches("loadFailure")) {

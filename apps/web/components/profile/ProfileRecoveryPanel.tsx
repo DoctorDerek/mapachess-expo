@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import FullPageProfilePanel, {
   ImportBackupButton,
   importIssueMessage,
@@ -53,21 +54,15 @@ export default function ProfileRecoveryPanel({
       title="Your save needs attention."
     >
       {downloadFailed ? (
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
           The download could not be created. Your preserved local bytes are
           unchanged. Try again or use another browser download destination.
-        </p>
+        </MapachessNotice>
       ) : null}
       {importIssue === null ? null : (
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
           {importIssueMessage(importIssue)}
-        </p>
+        </MapachessNotice>
       )}
 
       {confirmingReset ? (

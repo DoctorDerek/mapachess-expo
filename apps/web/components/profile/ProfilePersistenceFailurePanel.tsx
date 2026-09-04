@@ -3,6 +3,7 @@
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import { persistenceFailureMessage, ProfileCard } from "./ProfileFoundation"
 
 export type ProfilePersistenceFailurePanelProps = Readonly<{
@@ -30,13 +31,10 @@ export default function ProfilePersistenceFailurePanel({
         >
           This change was not marked saved.
         </h2>
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
           {persistenceFailureMessage(failure)} Later state-changing actions are
           frozen until Retry succeeds.
-        </p>
+        </MapachessNotice>
         <div className="mt-6 flex flex-wrap gap-3">
           <MapachessButton autoFocus onClick={onRetry} type="button">
             Retry Save
