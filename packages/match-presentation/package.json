@@ -9,6 +9,10 @@
       "types": "./src/animalOpponent.ts",
       "default": "./dist/animalOpponent.js"
     },
+    "./coach-portrait": {
+      "types": "./src/coachPortrait.ts",
+      "default": "./dist/coachPortrait.js"
+    },
     "./match-presentation-observation": {
       "types": "./src/matchPresentationObservation.ts",
       "default": "./dist/matchPresentationObservation.js"
@@ -20,6 +24,10 @@
     "./match-reaction": {
       "types": "./src/matchReaction.ts",
       "default": "./dist/matchReaction.js"
+    },
+    "./presentation-asset-manifest": {
+      "types": "./src/presentationAssetManifest.ts",
+      "default": "./dist/presentationAssetManifest.js"
     }
   },
   "scripts": {
