@@ -260,7 +260,11 @@ importers:
         specifier: ^5
         version: 5.32.6
 
-  packages/match-presentation: {}
+  packages/match-presentation:
+    dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
 
   packages/profile:
     dependencies:

@@ -8,10 +8,21 @@
     "./animal-opponent": {
       "types": "./src/animalOpponent.ts",
       "default": "./dist/animalOpponent.js"
+    },
+    "./match-presentation-observation": {
+      "types": "./src/matchPresentationObservation.ts",
+      "default": "./dist/matchPresentationObservation.js"
+    },
+    "./match-reaction": {
+      "types": "./src/matchReaction.ts",
+      "default": "./dist/matchReaction.js"
     }
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/match": "workspace:*"
   }
 }
