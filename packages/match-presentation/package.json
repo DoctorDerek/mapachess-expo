@@ -13,6 +13,10 @@
       "types": "./src/matchPresentationObservation.ts",
       "default": "./dist/matchPresentationObservation.js"
     },
+    "./match-presentation-machine": {
+      "types": "./src/matchPresentationMachine.ts",
+      "default": "./dist/matchPresentationMachine.js"
+    },
     "./match-reaction": {
       "types": "./src/matchReaction.ts",
       "default": "./dist/matchReaction.js"
@@ -23,6 +27,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@mapachess/match": "workspace:*"
+    "@mapachess/match": "workspace:*",
+    "xstate": "^5"
   }
 }
