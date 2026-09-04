@@ -68,12 +68,15 @@ export default function ProfileRecoveryPanel({
       {confirmingReset ? (
         <section
           aria-labelledby="recovery-reset-title"
-          className="mapachess-inset mapachess-inset--danger mt-8 p-5"
+          className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-red mt-8 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 inset-shadow-[0.5rem_0_0]"
         >
-          <h2 className="mapachess-subheading" id="recovery-reset-title">
+          <h2
+            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+            id="recovery-reset-title"
+          >
             Reset all local player data?
           </h2>
-          <p className="mapachess-muted mt-3 text-sm">
+          <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
             This replaces the unreadable profile, removes the active match,
             resets all four ratings to 100, and restores default settings. It
             does not affect backup files you already exported.

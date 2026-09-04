@@ -24,9 +24,11 @@ export default function ProfilePersistenceFailurePanel({
   return (
     <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
-        <p className="mapachess-eyebrow">Local save paused</p>
+        <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+          Local save paused
+        </p>
         <h2
-          className="mapachess-section-title mt-3"
+          className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase"
           id="profile-persistence-failure-title"
         >
           This change was not marked saved.
