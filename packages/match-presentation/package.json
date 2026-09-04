@@ -1,0 +1,17 @@
+{
+  "name": "@mapachess/match-presentation",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./animal-opponent": {
+      "types": "./src/animalOpponent.ts",
+      "default": "./dist/animalOpponent.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}
