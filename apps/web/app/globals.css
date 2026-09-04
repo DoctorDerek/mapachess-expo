@@ -323,12 +323,122 @@ button {
     0.85rem 0.85rem 0 var(--mapachito-orange);
 }
 
+.mapachess-active-match {
+  display: grid;
+  grid-template-areas:
+    "opponent"
+    "board"
+    "player"
+    "command";
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: start;
+  min-width: 0;
+}
+
+.mapachess-active-match__board {
+  grid-area: board;
+}
+
+.mapachess-participant-band {
+  display: flex;
+  grid-area: player;
+  width: 100%;
+  max-width: 52rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  justify-self: center;
+  gap: 0.8rem 1.5rem;
+  padding: 0.85rem 1rem;
+  color: var(--mapachito-charcoal);
+  border: 3px solid var(--mapachito-charcoal);
+  border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
+  background: var(--mapachito-orange);
+  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-charcoal);
+}
+
+.mapachess-participant-band--opponent {
+  grid-area: opponent;
+  background: var(--mapachito-white);
+  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-red);
+}
+
+.mapachess-participant-band__name {
+  margin: 0.2rem 0 0;
+  font-family: var(--mapachess-display-font);
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.mapachess-participant-band__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  margin: 0;
+}
+
+.mapachess-participant-band__facts div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.mapachess-participant-band__facts dt {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.mapachess-participant-band__facts dd {
+  margin: 0;
+  font-weight: 900;
+}
+
 .mapachess-command-deck {
+  display: grid;
+  grid-area: command;
+  grid-template-areas:
+    "actions"
+    "reactions"
+    "data"
+    "history";
+  gap: 1.5rem;
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
   color: var(--mapachito-charcoal);
   border: 3px solid var(--mapachito-charcoal);
   border-radius: 1.5rem 0.5rem 1.5rem 0.5rem;
   background: var(--mapachito-white);
   box-shadow: 0.625rem 0.625rem 0 var(--mapachito-charcoal);
+}
+
+.mapachess-command-deck__actions {
+  position: sticky;
+  z-index: 5;
+  bottom: 0.75rem;
+  grid-area: actions;
+  padding: 0.8rem;
+  border: 3px solid var(--mapachito-charcoal);
+  border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
+  background: var(--mapachito-white);
+  box-shadow: 0.35rem 0.35rem 0 var(--mapachito-violet);
+}
+
+.mapachess-command-deck__reactions {
+  grid-area: reactions;
+}
+
+.mapachess-command-deck__data {
+  grid-area: data;
+}
+
+.mapachess-command-deck__history {
+  grid-area: history;
 }
 
 .mapachess-reaction-deck {
@@ -525,29 +635,6 @@ button {
   text-transform: uppercase;
 }
 
-.mapachess-match-ribbon {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  color: var(--mapachito-white);
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
-  background: var(--mapachito-violet);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  line-height: 1.3;
-  text-transform: uppercase;
-}
-
-.mapachess-match-ribbon span:last-child {
-  color: var(--mapachito-white);
-  text-align: right;
-}
-
 .mapachess-turn-banner {
   color: var(--mapachito-charcoal);
   border: 3px solid var(--mapachito-charcoal);
@@ -681,6 +768,30 @@ button {
 }
 
 @media (width >= 1280px) {
+  .mapachess-active-match {
+    grid-template-areas:
+      "opponent command"
+      "board command"
+      "player command";
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
+    grid-template-rows: auto auto auto;
+    gap: clamp(1rem, 2vw, 2rem);
+  }
+
+  .mapachess-command-deck {
+    position: sticky;
+    top: 1.5rem;
+    grid-template-areas:
+      "reactions"
+      "data"
+      "history"
+      "actions";
+  }
+
+  .mapachess-command-deck__actions {
+    position: static;
+  }
+
   .mapachess-battle-sprite {
     transform: scale(4);
   }

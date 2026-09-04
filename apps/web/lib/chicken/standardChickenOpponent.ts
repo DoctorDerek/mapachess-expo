@@ -21,6 +21,7 @@ import {
 
 export const STANDARD_CHICKEN_NODE_LIMIT = 10_000 as const
 export const STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
+export const STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO = 100 as const
 export const STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION =
   "mapachess-web-sha256-position-state/v1" as const
 export const STANDARD_CHICKEN_WEB_POLICY_VERSION =

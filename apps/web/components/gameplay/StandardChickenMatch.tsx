@@ -25,6 +25,7 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import BetterHintsControl from "./BetterHintsControl"
@@ -36,6 +37,7 @@ import ReactiveBattleStage from "./ReactiveBattleStage"
 export type StandardChickenMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
+  playerEloAtStart: number
   runtime: WebMatchRuntime
 }>
 
@@ -94,6 +96,7 @@ const matchStatusText = (
 export default function StandardChickenMatch({
   actor,
   evaluationActor,
+  playerEloAtStart,
   runtime,
 }: StandardChickenMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
@@ -146,9 +149,34 @@ export default function StandardChickenMatch({
   return (
     <section
       aria-label="Standard Story match against Chicken Stockfish"
-      className="grid min-w-0 items-start gap-[clamp(1.25rem,3vw,2.5rem)] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)]"
+      className="mapachess-active-match"
     >
-      <div className="grid min-w-0 place-items-center">
+      <section
+        aria-labelledby="opponent-band-title"
+        className="mapachess-participant-band mapachess-participant-band--opponent"
+      >
+        <div>
+          <p className="mapachess-eyebrow">Story opponent 01 / 23</p>
+          <h1
+            className="mapachess-participant-band__name"
+            id="opponent-band-title"
+          >
+            Chicken Stockfish
+          </h1>
+        </div>
+        <dl className="mapachess-participant-band__facts">
+          <div>
+            <dt>Elo target</dt>
+            <dd>{STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO} · Provisional</dd>
+          </div>
+          <div>
+            <dt>Clock</dt>
+            <dd>Untimed</dd>
+          </div>
+        </dl>
+      </section>
+
+      <div className="mapachess-active-match__board grid min-w-0 place-items-center">
         <div className="grid w-full max-w-[min(100%,52rem)] min-w-0 gap-3 xl:max-w-[min(100%,calc(100dvh-2rem))] xl:grid-cols-[minmax(0,1fr)_auto] xl:items-stretch">
           <CanonicalChessboard
             disabled={!playerTurn}
@@ -169,23 +197,33 @@ export default function StandardChickenMatch({
         </div>
       </div>
 
-      <aside className="mapachess-command-deck min-w-0 p-[clamp(1.25rem,3vw,2rem)] xl:sticky xl:top-6">
-        <div className="mapachess-match-ribbon">
-          <span>Standard Story · 01 / 23</span>
-          <span>Provisional · Local</span>
+      <section
+        aria-labelledby="player-band-title"
+        className="mapachess-participant-band mapachess-participant-band--player"
+      >
+        <div>
+          <p className="mapachess-eyebrow">Player</p>
+          <h2
+            className="mapachess-participant-band__name"
+            id="player-band-title"
+          >
+            Mapachito
+          </h2>
         </div>
-
-        <h1 className="mapachess-section-title mt-6">Chicken Stockfish</h1>
-        <dl className="mapachess-data-grid mt-5">
-          <dt>Mode</dt>
-          <dd>Standard Story</dd>
-          <dt>You play</dt>
-          <dd>{runtime.playerColor === "white" ? "White" : "Black"}</dd>
-          <dt>Engine</dt>
-          <dd className="truncate">{runtime.engineIdentity.name}</dd>
+        <dl className="mapachess-participant-band__facts">
+          <div>
+            <dt>Standard Story Elo</dt>
+            <dd>{playerEloAtStart}</dd>
+          </div>
+          <div>
+            <dt>Playing</dt>
+            <dd>{runtime.playerColor === "white" ? "White" : "Black"}</dd>
+          </div>
         </dl>
+      </section>
 
-        <div className="mapachess-reaction-deck mt-6">
+      <aside className="mapachess-command-deck">
+        <div className="mapachess-command-deck__reactions mapachess-reaction-deck">
           <ReactiveBattleStage
             onParticipantAnimationCompleted={
               presentation.notifyParticipantAnimationCompleted
@@ -197,99 +235,22 @@ export default function StandardChickenMatch({
           />
         </div>
 
-        <p aria-live="polite" className="mapachess-turn-banner mt-6 px-4 py-4">
-          {matchStatusText(snapshot, runtime.playerColor)}
-        </p>
+        <dl
+          aria-label="Current match data"
+          className="mapachess-command-deck__data mapachess-data-grid grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 p-5 text-sm"
+        >
+          <dt>Mode</dt>
+          <dd>Standard Story</dd>
+          <dt>Privacy</dt>
+          <dd>Local · Accountless</dd>
+          <dt>Engine</dt>
+          <dd className="truncate">{runtime.engineIdentity.name}</dd>
+        </dl>
 
-        {evaluationStage === "failure" ? (
-          <button
-            className="mapachess-button mapachess-button--primary mt-3 w-full"
-            onClick={() =>
-              evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
-            }
-            type="button"
-          >
-            Retry Evaluation
-          </button>
-        ) : null}
-
-        <BetterHintsControl
-          hints={hints}
-          matchComplete={matchComplete}
-          onMoveHintsRequested={() =>
-            actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-          }
-          onPieceHintsRequested={() =>
-            actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-          }
-          stage={hintStage}
-        />
-
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <button
-            className={controlClasses}
-            disabled={
-              !selectCanOfferDraw(snapshot) || drawOfferDecision === null
-            }
-            onClick={offerDraw}
-            type="button"
-          >
-            Offer Draw
-          </button>
-          <button
-            className={controlClasses}
-            disabled={!selectCanResign(snapshot)}
-            onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
-            type="button"
-          >
-            Resign
-          </button>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <button
-            className={controlClasses}
-            disabled={!selectCanUndo(snapshot)}
-            onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
-            type="button"
-          >
-            Undo
-          </button>
-          <button
-            className={controlClasses}
-            disabled={!selectCanRedo(snapshot)}
-            onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
-            type="button"
-          >
-            Redo
-          </button>
-        </div>
-
-        {opponentFailure === null ? null : (
-          <button
-            className="mapachess-button mapachess-button--primary mt-3 w-full"
-            onClick={() =>
-              actor.send({ type: "MATCH.OPPONENT_RETRY_REQUESTED" })
-            }
-            type="button"
-          >
-            Retry Chicken turn
-          </button>
-        )}
-
-        {persistenceFailure === null ? null : (
-          <button
-            className="mapachess-button mapachess-button--primary mt-3 w-full"
-            onClick={() =>
-              actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
-            }
-            type="button"
-          >
-            Retry local save
-          </button>
-        )}
-
-        <section aria-labelledby="move-history-title" className="mt-7">
+        <section
+          aria-labelledby="move-history-title"
+          className="mapachess-command-deck__history"
+        >
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="mapachess-subheading" id="move-history-title">
               Move History
@@ -314,6 +275,103 @@ export default function StandardChickenMatch({
                 </li>
               ))}
             </ol>
+          )}
+        </section>
+
+        <section
+          aria-label="Core match actions"
+          className="mapachess-command-deck__actions"
+        >
+          <p aria-live="polite" className="mapachess-turn-banner px-4 py-4">
+            {matchStatusText(snapshot, runtime.playerColor)}
+          </p>
+
+          {evaluationStage === "failure" ? (
+            <button
+              className="mapachess-button mapachess-button--primary mt-3 w-full"
+              onClick={() =>
+                evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
+              }
+              type="button"
+            >
+              Retry Evaluation
+            </button>
+          ) : null}
+
+          <BetterHintsControl
+            hints={hints}
+            matchComplete={matchComplete}
+            onMoveHintsRequested={() =>
+              actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+            }
+            onPieceHintsRequested={() =>
+              actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+            }
+            stage={hintStage}
+          />
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              className={controlClasses}
+              disabled={
+                !selectCanOfferDraw(snapshot) || drawOfferDecision === null
+              }
+              onClick={offerDraw}
+              type="button"
+            >
+              Offer Draw
+            </button>
+            <button
+              className={controlClasses}
+              disabled={!selectCanResign(snapshot)}
+              onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
+              type="button"
+            >
+              Resign
+            </button>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              className={controlClasses}
+              disabled={!selectCanUndo(snapshot)}
+              onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
+              type="button"
+            >
+              Undo
+            </button>
+            <button
+              className={controlClasses}
+              disabled={!selectCanRedo(snapshot)}
+              onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
+              type="button"
+            >
+              Redo
+            </button>
+          </div>
+
+          {opponentFailure === null ? null : (
+            <button
+              className="mapachess-button mapachess-button--primary mt-3 w-full"
+              onClick={() =>
+                actor.send({ type: "MATCH.OPPONENT_RETRY_REQUESTED" })
+              }
+              type="button"
+            >
+              Retry Chicken turn
+            </button>
+          )}
+
+          {persistenceFailure === null ? null : (
+            <button
+              className="mapachess-button mapachess-button--primary mt-3 w-full"
+              onClick={() =>
+                actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+              }
+              type="button"
+            >
+              Retry local save
+            </button>
           )}
         </section>
       </aside>
