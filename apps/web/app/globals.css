@@ -217,137 +217,6 @@ button {
   box-shadow: 0.2rem 0.2rem 0 var(--mapachito-charcoal);
 }
 
-.mapachess-battle-fighter {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  min-width: 0;
-  justify-items: center;
-}
-
-.mapachess-battle-fighter__motion {
-  display: grid;
-  width: 100%;
-  height: 8.5rem;
-  place-items: end center;
-}
-
-.mapachess-battle-sprite {
-  display: block;
-  transform: scale(3);
-  transform-origin: center bottom;
-  filter: drop-shadow(0.18rem 0.18rem 0 var(--mapachito-charcoal));
-  image-rendering: pixelated;
-}
-
-.mapachess-battle-sprite--faces-right {
-  transform: scaleX(-1) scale(3);
-}
-
-.mapachess-battle-fighter__fallback {
-  display: grid;
-  width: 4.5rem;
-  height: 4.5rem;
-  place-items: center;
-  color: var(--mapachito-charcoal);
-  border: 0.35rem solid var(--mapachito-charcoal);
-  background: var(--mapachito-orange);
-  font-family: var(--mapachess-display-font);
-  font-size: 2.6rem;
-  font-weight: 900;
-  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-charcoal);
-}
-
-.mapachess-battle-fighter:last-child .mapachess-battle-fighter__fallback {
-  background: var(--mapachito-white);
-}
-
-.mapachess-battle-fighter__name {
-  z-index: 1;
-  max-width: 100%;
-  margin-top: 0.45rem;
-  padding: 0.2rem 0.35rem;
-  overflow: hidden;
-  color: var(--mapachito-white);
-  border: 2px solid var(--mapachito-charcoal);
-  background: var(--mapachito-violet);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-overflow: ellipsis;
-  text-shadow: 2px 2px 0 var(--mapachito-charcoal);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.mapachess-battle-fighter:last-child .mapachess-battle-fighter__name {
-  background: var(--mapachito-raspberry);
-}
-
-.mapachess-coach {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.9rem;
-  align-items: center;
-  margin: 0;
-  padding: 0.8rem;
-  color: var(--mapachito-charcoal);
-  border: 3px solid var(--mapachito-charcoal);
-  border-radius: 0.75rem 0.2rem 0.75rem 0.2rem;
-  background: var(--mapachito-orange);
-  box-shadow: 0.3rem 0.3rem 0 var(--mapachito-raspberry);
-}
-
-.mapachess-coach__portrait-frame,
-.mapachess-coach__fallback {
-  width: 4.5rem;
-  height: 4.5rem;
-}
-
-.mapachess-coach__portrait-frame {
-  overflow: hidden;
-  border: 3px solid var(--mapachito-charcoal);
-  background: var(--mapachito-violet);
-}
-
-.mapachess-coach__portrait {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-}
-
-.mapachess-coach__fallback {
-  display: grid;
-  place-items: center;
-  color: var(--mapachito-white);
-  font-family: var(--mapachess-display-font);
-  font-size: 2.5rem;
-  font-weight: 900;
-}
-
-.mapachess-coach__caption {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.mapachess-coach__caption span {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.mapachess-coach__caption strong {
-  font-family: var(--mapachess-display-font);
-  font-size: 1.5rem;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
 @keyframes mapachess-loading-turn {
   to {
     rotate: 368deg;
@@ -361,16 +230,6 @@ button {
 
   to {
     background-position: 100% 0;
-  }
-}
-
-@media (width >= 1280px) {
-  .mapachess-battle-sprite {
-    transform: scale(4);
-  }
-
-  .mapachess-battle-sprite--faces-right {
-    transform: scaleX(-1) scale(4);
   }
 }
 
@@ -388,8 +247,7 @@ button {
 @media (forced-colors: active) {
   .mapachess-battle-stage,
   .mapachess-battle-stage__header,
-  .mapachess-battle-stage__versus,
-  .mapachess-battle-fighter__name {
+  .mapachess-battle-stage__versus {
     border-color: CanvasText;
     box-shadow: none;
   }
