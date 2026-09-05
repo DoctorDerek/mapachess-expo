@@ -18,19 +18,12 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
+import MapachessButton from "../presentation/MapachessButton"
+import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import StandardChickenMatch from "./StandardChickenMatch"
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
-
-const secondaryControlClasses =
-  "mapachess-button mapachess-button--secondary min-h-11 px-4 py-2"
-
-const primaryControlClasses =
-  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
-
-const retryControlClasses =
-  "mapachess-button mapachess-button--primary min-h-12 px-5 py-3"
 
 export type StandardChickenGameProps = Readonly<{
   onActiveMatchActorChanged: (actor: WebMatchSession["actor"] | null) => void
@@ -61,43 +54,43 @@ function GameFrame({
   settingsOpen,
 }: GameFrameProps) {
   return (
-    <div className="mapachess-shell px-[clamp(1rem,3vw,3rem)] py-[clamp(1.5rem,4vw,3rem)]">
+    <MapachessShell>
       <header className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5">
         <MapachessWordmark />
         <div className="flex flex-wrap items-center gap-3">
           {matchSessionActive ? (
             <>
-              <button
-                className={secondaryControlClasses}
+              <MapachessButton
+                variant="secondary"
                 onClick={onRestartRequested}
                 type="button"
               >
                 Restart Match
-              </button>
-              <button
-                className={secondaryControlClasses}
+              </MapachessButton>
+              <MapachessButton
+                variant="secondary"
                 onClick={onReturnToMenuRequested}
                 type="button"
               >
                 Return to Menu
-              </button>
+              </MapachessButton>
             </>
           ) : null}
-          <button
+          <MapachessButton
+            variant="secondary"
             aria-controls="profile-settings-panel"
             aria-expanded={settingsOpen}
-            className={secondaryControlClasses}
             onClick={onSettingsRequested}
             ref={settingsButtonRef}
             type="button"
           >
             Settings
-          </button>
+          </MapachessButton>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-[96rem]">{children}</div>
-    </div>
+    </MapachessShell>
   )
 }
 
@@ -158,23 +151,33 @@ function MatchSessionExperience({
       {snapshot.matches("menu") ? (
         <section
           aria-labelledby="standard-story-title"
-          className="mapachess-story-board mapachess-surface mx-auto max-w-5xl p-[clamp(1.5rem,5vw,3.5rem)]"
+          className="before:border-mapachito-violet/20 border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal relative mx-auto max-w-5xl overflow-hidden rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0.625rem_0.625rem_0] before:absolute before:top-0 before:right-0 before:size-[clamp(4.5rem,18vw,10rem)] before:translate-x-[30%] before:-translate-y-[35%] before:rotate-18 before:border-[1.5rem] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
-              <p className="mapachess-eyebrow">Story opponent 1 of 23</p>
-              <h1 className="mapachess-display mt-4" id="standard-story-title">
+              <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+                Story opponent 1 of 23
+              </p>
+              <h1
+                className="font-display text-mapachito-charcoal mt-4 text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] font-black tracking-[-0.035em] text-balance uppercase font-stretch-condensed"
+                id="standard-story-title"
+              >
                 Standard Story
               </h1>
-              <p className="mapachess-copy mt-6 max-w-2xl">
+              <p className="text-mapachito-charcoal mt-6 max-w-2xl text-base leading-[1.65] font-semibold opacity-82">
                 Your first animal challenge is a complete local game of Standard
                 chess. The 100-Elo target stays explicitly provisional while
                 calibration and human playtesting continue.
               </p>
             </div>
-            <div aria-hidden="true" className="mapachess-opponent-poster">
-              <span className="mapachess-opponent-poster__number">01</span>
-              <span className="mapachess-opponent-poster__label">
+            <div
+              aria-hidden="true"
+              className="border-mapachito-charcoal bg-mapachito-raspberry text-mapachito-white shadow-mapachito-orange grid min-h-52 place-content-center rounded-[1.25rem_0.25rem_1.25rem_0.25rem] border-3 bg-[linear-gradient(135deg,transparent_0_48%,color-mix(in_srgb,var(--color-mapachito-white)_22%,transparent)_48%_52%,transparent_52%)] p-6 text-center shadow-[0.5rem_0.5rem_0]"
+            >
+              <span className="font-display text-[clamp(5rem,18vw,9rem)] leading-[0.72] font-black tracking-[-0.06em]">
+                01
+              </span>
+              <span className="mt-4 font-mono text-xs font-black tracking-[0.18em] uppercase">
                 First opponent
               </span>
             </div>
@@ -182,8 +185,10 @@ function MatchSessionExperience({
 
           <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div>
-              <h2 className="mapachess-section-title">Chicken Stockfish</h2>
-              <dl className="mapachess-story-facts mt-4 overflow-hidden">
+              <h2 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
+                Chicken Stockfish
+              </h2>
+              <dl className="border-mapachito-charcoal bg-mapachito-white [&>div+div]:border-mapachito-charcoal/18 [&_dt]:text-mapachito-charcoal [&_dd]:text-mapachito-charcoal mt-4 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-3 [&_dd]:font-black [&_dt]:text-[0.72rem] [&_dt]:font-black [&_dt]:tracking-[0.12em] [&_dt]:uppercase [&_dt]:opacity-72 [&>div+div]:border-t-2">
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Variant</dt>
                   <dd>Standard</dd>
@@ -201,15 +206,14 @@ function MatchSessionExperience({
                 </div>
               </dl>
             </div>
-            <button
-              className={primaryControlClasses}
+            <MapachessButton
               onClick={() =>
                 actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" })
               }
               type="button"
             >
               Play Chicken Stockfish
-            </button>
+            </MapachessButton>
           </article>
         </section>
       ) : snapshot.matches("active") && session !== null ? (
@@ -223,41 +227,41 @@ function MatchSessionExperience({
       ) : snapshot.matches("failed") && failure !== null ? (
         <section
           aria-live="assertive"
-          className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+          className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-h-[min(74dvh,50rem)] place-items-center rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-8 text-center shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
           <div role="alert">
-            <h1 className="mapachess-section-title">
+            <h1 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
               {failureTitle(failure.operation)}
             </h1>
-            <p className="mapachess-muted mt-4 max-w-lg">
+            <p className="text-mapachito-charcoal mt-4 max-w-lg leading-[1.55] font-semibold opacity-76">
               Your last verified local profile remains available. Retry the
               interrupted session operation.
             </p>
-            <button
-              className={`${retryControlClasses} mt-6`}
+            <MapachessButton
+              className="mt-6"
               onClick={() =>
                 actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
               }
               type="button"
             >
               Retry
-            </button>
+            </MapachessButton>
           </div>
         </section>
       ) : (
         <section
           aria-live="polite"
-          className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+          className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-h-[min(74dvh,50rem)] place-items-center rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-8 text-center shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
           <div role="status">
             <div
               aria-hidden="true"
-              className="mapachess-loading-mark mx-auto motion-reduce:animate-none"
+              className="border-mapachito-raspberry border-t-mapachito-orange border-r-mapachito-green bg-mapachito-violet mx-auto size-14 rotate-8 animate-[mapachess-loading-turn_900ms_steps(8,end)_infinite] border-[0.625rem] motion-reduce:animate-none"
             />
-            <h1 className="mapachess-section-title mt-6">
+            <h1 className="font-display text-mapachito-charcoal mt-6 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
               {openingTitle(actor)}
             </h1>
-            <p className="mapachess-muted mt-4">
+            <p className="text-mapachito-charcoal mt-4 leading-[1.55] font-semibold opacity-76">
               Loading the pinned local engine and validating its identity.
             </p>
           </div>
@@ -351,9 +355,11 @@ export default function StandardChickenGame({
     <GameFrame matchSessionActive={false} {...frameProps}>
       <section
         aria-live="polite"
-        className="mapachess-surface grid min-h-[min(74dvh,50rem)] place-items-center p-8 text-center"
+        className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-h-[min(74dvh,50rem)] place-items-center rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-8 text-center shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
       >
-        <h1 className="mapachess-section-title">Opening Mapachess…</h1>
+        <h1 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
+          Opening Mapachess…
+        </h1>
       </section>
     </GameFrame>
   )

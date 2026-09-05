@@ -37,6 +37,8 @@ When more detail is needed, read the applicable GDD section verbatim. Do not cre
 - Use TypeScript and XState for canonical domain behavior and state.
 - Use Next.js, React, Tailwind CSS, shadcn/ui, and Motion for the web application.
 - Use React Native, Expo, Uniwind, React Native Reusables, and React Native Reanimated for the native application.
+- Presentation is utility-first: use Tailwind className utilities on web and Uniwind className utilities on native. Global stylesheets own framework imports, canonical theme tokens, genuinely global base rules, and necessary keyframes, not BEM or other component-selector systems. Reuse real components and focused typed variants; do not rebuild a parallel stylesheet with @apply, class dictionaries, or static inline style objects. Keep typed runtime sprite geometry, SVG coordinates, and Motion/Reanimated values where they are genuinely dynamic.
+- Review every non-utility styling exception against an actual platform limitation. Inspect the source and compiled presentation; passing types, tests, or a build does not establish styling-architecture compliance or visual quality.
 - Use a single-product pnpm/Turborepo monorepo with `apps/web`, `apps/mobile`, and only narrow private workspace packages that own real shared responsibilities.
 - Share as much code as practical: chess rules, state machines, types, schemas, catalogs, persistence contracts, calibration logic, localization contracts, semantic component contracts, and tests are DRY by default.
 - Use WET implementations only for genuine platform differences. Prefer a typed platform adapter or Expo `Platform` boundary over duplicating domain behavior.

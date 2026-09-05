@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import FullPageProfilePanel, {
-  destructiveProfileButtonClasses,
   ImportBackupButton,
   importIssueMessage,
-  primaryProfileButtonClasses,
-  secondaryProfileButtonClasses,
 } from "./ProfileFoundation"
 
 export type ProfileRecoveryPanelProps = Readonly<{
@@ -55,95 +54,88 @@ export default function ProfileRecoveryPanel({
       title="Your save needs attention."
     >
       {downloadFailed ? (
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
           The download could not be created. Your preserved local bytes are
           unchanged. Try again or use another browser download destination.
-        </p>
+        </MapachessNotice>
       ) : null}
       {importIssue === null ? null : (
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-6 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
           {importIssueMessage(importIssue)}
-        </p>
+        </MapachessNotice>
       )}
 
       {confirmingReset ? (
         <section
           aria-labelledby="recovery-reset-title"
-          className="mapachess-inset mapachess-inset--danger mt-8 p-5"
+          className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-red mt-8 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 inset-shadow-[0.5rem_0_0]"
         >
-          <h2 className="mapachess-subheading" id="recovery-reset-title">
+          <h2
+            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+            id="recovery-reset-title"
+          >
             Reset all local player data?
           </h2>
-          <p className="mapachess-muted mt-3 text-sm">
+          <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
             This replaces the unreadable profile, removes the active match,
             resets all four ratings to 100, and restores default settings. It
             does not affect backup files you already exported.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button
+            <MapachessButton
+              variant="secondary"
               autoFocus
-              className={secondaryProfileButtonClasses}
               onClick={cancelReset}
               type="button"
             >
               Cancel
-            </button>
-            <button
-              className={secondaryProfileButtonClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="secondary"
               onClick={onExportUnreadable}
               type="button"
             >
               Export Unreadable Data
-            </button>
-            <button
-              className={destructiveProfileButtonClasses}
+            </MapachessButton>
+            <MapachessButton
+              variant="destructive"
               onClick={onResetConfirmed}
               type="button"
             >
               Reset All Local Player Data
-            </button>
+            </MapachessButton>
           </div>
         </section>
       ) : (
         <div className="mt-8 grid gap-4 xl:grid-cols-2">
-          <button
-            className={primaryProfileButtonClasses}
-            onClick={onTryAgain}
-            type="button"
-          >
+          <MapachessButton onClick={onTryAgain} type="button">
             Try Again
-          </button>
-          <button
-            className={secondaryProfileButtonClasses}
+          </MapachessButton>
+          <MapachessButton
+            variant="secondary"
             onClick={onExportUnreadable}
             type="button"
           >
             Export Unreadable Data
-          </button>
+          </MapachessButton>
           <ImportBackupButton disabled={false} onBackupRead={onBackupRead} />
           {hasLastKnownGood ? (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onRestoreLastKnownGood}
               type="button"
             >
               Restore Last Known-Good Save
-            </button>
+            </MapachessButton>
           ) : null}
-          <button
-            className={destructiveProfileButtonClasses}
+          <MapachessButton
+            variant="destructive"
             onClick={() => setConfirmingReset(true)}
             ref={resetTrigger}
             type="button"
           >
             Review Full Local Reset
-          </button>
+          </MapachessButton>
         </div>
       )}
     </FullPageProfilePanel>

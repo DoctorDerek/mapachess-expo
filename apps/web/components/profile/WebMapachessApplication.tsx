@@ -26,10 +26,10 @@ import {
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
 import StandardChickenGame from "../gameplay/StandardChickenGame"
-import FullPageProfilePanel, {
-  ImportBackupButton,
-  primaryProfileButtonClasses,
-} from "./ProfileFoundation"
+import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
+import MapachessShell from "../presentation/MapachessShell"
+import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
@@ -57,9 +57,6 @@ function ActiveMatchSettingsPanel({
   const autoHintMode = useSelector(matchActor, selectAutoHintMode)
   return <ProfileSettingsPanel {...settingsProps} autoHintMode={autoHintMode} />
 }
-
-const standaloneCardClasses =
-  "mapachess-shell grid place-items-start px-0 py-[clamp(1rem,3vw,2rem)]"
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
@@ -132,13 +129,14 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   }
 
   const exportFailure = exportFailed ? (
-    <p
-      className="mapachess-notice mapachess-notice--warning relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
+    <MapachessNotice
+      tone="warning"
+      className="relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
       role="alert"
     >
       The download could not be created. Your local data is unchanged. Try again
       or use another browser download destination.
-    </p>
+    </MapachessNotice>
   ) : null
 
   if (snapshot.matches("loadFailure")) {
@@ -149,14 +147,14 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
         live="assertive"
         title="Mapachess could not read local data."
       >
-        <button
+        <MapachessButton
           autoFocus
-          className={`${primaryProfileButtonClasses} mt-7`}
+          className="mt-7"
           onClick={() => actor.send({ type: "PROFILE.BOOT_RETRY_REQUESTED" })}
           type="button"
         >
           Try Again
-        </button>
+        </MapachessButton>
       </FullPageProfilePanel>
     )
   }
@@ -265,13 +263,13 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 
   if (importPreviewPanel !== null || persistenceFailurePanel !== null) {
     return (
-      <main className={standaloneCardClasses}>
+      <MapachessShell as="main" className="grid place-items-start">
         <div className="w-full">
           {exportFailure}
           {importPreviewPanel}
           {persistenceFailurePanel}
         </div>
-      </main>
+      </MapachessShell>
     )
   }
 
@@ -289,13 +287,13 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
       }
     >
       {snapshot.matches("importDecoding") ? (
-        <button
-          className={`${primaryProfileButtonClasses} mt-7`}
+        <MapachessButton
+          className="mt-7"
           onClick={() => actor.send({ type: "PROFILE.IMPORT_CANCELLED" })}
           type="button"
         >
           Cancel Import
-        </button>
+        </MapachessButton>
       ) : null}
     </FullPageProfilePanel>
   )

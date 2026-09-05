@@ -21,6 +21,7 @@ import {
   type BoardNavigationKey,
   type BoardOrientation,
 } from "../../lib/board/boardPresentation"
+import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsOverlay from "./BetterHintsOverlay"
 
 const PIECE_GLYPHS = Object.freeze({
@@ -136,17 +137,17 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-[var(--mapachito-orange)] focus-visible:ring-inset aria-disabled:cursor-default"
+  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-mapachito-orange focus-visible:ring-inset aria-disabled:cursor-default"
 
 const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
   (rowIndex + columnIndex) % 2 === 0
-    ? "bg-[var(--mapachess-board-light-square)] text-[var(--mapachito-charcoal)]"
-    : "bg-[var(--mapachess-board-dark-square)] text-[var(--mapachito-charcoal)]"
+    ? "bg-[var(--mapachess-board-light-square)] text-mapachito-charcoal"
+    : "bg-[var(--mapachess-board-dark-square)] text-mapachito-charcoal"
 
 const pieceColorClasses = (color: MatchColor): string =>
   color === "white"
-    ? "text-[var(--mapachito-white)] [filter:drop-shadow(0_2px_1px_rgb(30_30_30/0.95))]"
-    : "text-[var(--mapachito-charcoal)] [filter:drop-shadow(0_1px_0_rgb(255_255_255/0.75))]"
+    ? "text-mapachito-white [filter:drop-shadow(0_2px_1px_rgb(30_30_30/0.95))]"
+    : "text-mapachito-charcoal [filter:drop-shadow(0_1px_0_rgb(255_255_255/0.75))]"
 
 export default function CanonicalChessboard({
   disabled,
@@ -245,7 +246,7 @@ export default function CanonicalChessboard({
     <div className="relative w-full max-w-[min(100%,52rem)] xl:max-w-[min(100%,calc(100dvh-6rem))]">
       <div
         aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
-        className="mapachess-board-frame grid aspect-square w-full grid-rows-8"
+        className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-4 shadow-[0.5rem_0.5rem_0_var(--color-mapachito-raspberry),0.85rem_0.85rem_0_var(--color-mapachito-orange)]"
         role="grid"
       >
         {rows.map((row, rowIndex) => (
@@ -277,7 +278,7 @@ export default function CanonicalChessboard({
                     hintDescriptionsForSquare(hints, showMoveHints, square),
                   )}
                   aria-selected={selected}
-                  className={`${baseSquareClasses} ${squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-4 ring-[var(--mapachito-raspberry)] ring-inset" : ""} ${partOfLastMove ? "after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:border-[var(--mapachito-orange)]" : ""} ${checkedKing ? "bg-[var(--mapachito-red)] ring-4 ring-[var(--mapachito-charcoal)] ring-inset" : ""}`}
+                  className={`${baseSquareClasses} ${checkedKing ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset" : squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-mapachito-raspberry ring-4 ring-inset" : ""} ${partOfLastMove ? "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]" : ""}`}
                   data-square={square}
                   key={square}
                   onClick={() => chooseSquare(square)}
@@ -309,7 +310,7 @@ export default function CanonicalChessboard({
                   {columnIndex === 0 ? (
                     <span
                       aria-hidden="true"
-                      className="absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-[var(--mapachito-charcoal)] opacity-75"
+                      className="text-mapachito-charcoal absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
                     >
                       {rank}
                     </span>
@@ -317,7 +318,7 @@ export default function CanonicalChessboard({
                   {rowIndex === 7 ? (
                     <span
                       aria-hidden="true"
-                      className="absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black text-[var(--mapachito-charcoal)] opacity-75"
+                      className="text-mapachito-charcoal absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
                     >
                       {file}
                     </span>
@@ -341,21 +342,25 @@ export default function CanonicalChessboard({
         <div
           aria-labelledby="promotion-title"
           aria-modal="true"
-          className="absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] bg-[rgb(30_30_30/0.84)] p-6 backdrop-blur-sm"
+          className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] p-6 backdrop-blur-sm"
           onKeyDown={(event) => {
             if (event.key === "Escape") clearSelection()
           }}
           role="dialog"
         >
-          <div className="mapachess-surface w-full max-w-md p-5">
-            <h2 className="mapachess-subheading" id="promotion-title">
+          <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal w-full max-w-md rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-5 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
+            <h2
+              className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+              id="promotion-title"
+            >
               Promote on {pendingPromotion.to}
             </h2>
             <div className="mt-4 grid grid-cols-4 gap-3">
               {PROMOTION_ROLES.map((role, index) => (
-                <button
+                <MapachessButton
+                  variant="secondary"
                   aria-label={`Promote to ${PIECE_NAMES[role]}`}
-                  className="mapachess-button mapachess-button--secondary grid aspect-square place-items-center text-5xl"
+                  className="grid aspect-square place-items-center text-5xl"
                   key={role}
                   onClick={() => choosePromotion(role)}
                   ref={index === 0 ? firstPromotionButton : undefined}
@@ -364,16 +369,17 @@ export default function CanonicalChessboard({
                   <span aria-hidden="true">
                     {PIECE_GLYPHS[position.turn][role]}
                   </span>
-                </button>
+                </MapachessButton>
               ))}
             </div>
-            <button
-              className="mapachess-button mapachess-button--secondary mt-4 w-full"
+            <MapachessButton
+              variant="secondary"
+              className="mt-4 w-full"
               onClick={clearSelection}
               type="button"
             >
               Cancel promotion
-            </button>
+            </MapachessButton>
           </div>
         </div>
       )}

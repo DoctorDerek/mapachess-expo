@@ -5,6 +5,7 @@ import type {
   BetterHintsResult,
 } from "@mapachess/match/better-hints"
 import type { MatchHintStage } from "@mapachess/match/match-machine"
+import MapachessButton from "../presentation/MapachessButton"
 
 type HintControlAction = "move-hints" | "piece-hints"
 
@@ -113,22 +114,26 @@ export default function BetterHintsControl({
 
   return (
     <section aria-labelledby="better-hints-title" className="mt-5">
-      <h2 className="mapachess-subheading" id="better-hints-title">
+      <h2
+        className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+        id="better-hints-title"
+      >
         Better Hints
       </h2>
-      <button
+      <MapachessButton
+        variant="hint"
         aria-busy={stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="mapachess-button mapachess-button--hint mt-3 min-h-12 w-full px-4 py-3"
+        className="mt-3 w-full"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={control.action === null}
         onClick={activate}
         type="button"
       >
         {control.label}
-      </button>
+      </MapachessButton>
       <p
-        className="mapachess-muted mt-2 text-sm leading-relaxed"
+        className="text-mapachito-charcoal mt-2 text-sm leading-[1.55] font-semibold opacity-76"
         id="better-hints-guidance"
       >
         {guidance}
@@ -140,7 +145,7 @@ export default function BetterHintsControl({
       {visibleHints === null ? null : (
         <ul
           aria-label="Better Hints legend"
-          className="mt-3 grid gap-2 text-xs font-bold text-[var(--mapachito-charcoal)] sm:grid-cols-2 xl:grid-cols-1"
+          className="text-mapachito-charcoal mt-3 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-2 text-xs font-bold xl:grid-cols-1"
         >
           <li className="flex items-center gap-2">
             <span

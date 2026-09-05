@@ -2,12 +2,9 @@
 
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machine"
-import {
-  persistenceFailureMessage,
-  primaryProfileButtonClasses,
-  ProfileCard,
-  secondaryProfileButtonClasses,
-} from "./ProfileFoundation"
+import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
+import { persistenceFailureMessage, ProfileCard } from "./ProfileFoundation"
 
 export type ProfilePersistenceFailurePanelProps = Readonly<{
   exportablePlayerData: MapachessPlayerData | null
@@ -27,46 +24,40 @@ export default function ProfilePersistenceFailurePanel({
   return (
     <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
-        <p className="mapachess-eyebrow">Local save paused</p>
+        <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+          Local save paused
+        </p>
         <h2
-          className="mapachess-section-title mt-3"
+          className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase"
           id="profile-persistence-failure-title"
         >
           This change was not marked saved.
         </h2>
-        <p
-          className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
-          role="alert"
-        >
+        <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
           {persistenceFailureMessage(failure)} Later state-changing actions are
           frozen until Retry succeeds.
-        </p>
+        </MapachessNotice>
         <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            autoFocus
-            className={primaryProfileButtonClasses}
-            onClick={onRetry}
-            type="button"
-          >
+          <MapachessButton autoFocus onClick={onRetry} type="button">
             Retry Save
-          </button>
+          </MapachessButton>
           {exportablePlayerData === null ? null : (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onExportPlayerData}
               type="button"
             >
               Export Pending Player Data
-            </button>
+            </MapachessButton>
           )}
           {onExportUnreadable === null ? null : (
-            <button
-              className={secondaryProfileButtonClasses}
+            <MapachessButton
+              variant="secondary"
               onClick={onExportUnreadable}
               type="button"
             >
               Export Unreadable Data
-            </button>
+            </MapachessButton>
           )}
         </div>
       </ProfileCard>

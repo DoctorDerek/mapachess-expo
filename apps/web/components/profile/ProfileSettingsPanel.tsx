@@ -3,12 +3,12 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
+import MapachessButton from "../presentation/MapachessButton"
+import MapachessNotice from "../presentation/MapachessNotice"
 import {
   ImportBackupButton,
   importIssueMessage,
-  primaryProfileButtonClasses,
   ProfileCard,
-  secondaryProfileButtonClasses,
 } from "./ProfileFoundation"
 
 const AUTO_HINT_OPTIONS = [
@@ -61,30 +61,32 @@ export default function ProfileSettingsPanel({
       <ProfileCard labelledBy="profile-settings-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="mapachess-eyebrow">Local profile</p>
+            <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+              Local profile
+            </p>
             <h2
-              className="mapachess-section-title mt-3"
+              className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase"
               id="profile-settings-title"
             >
               Settings &amp; Player Data
             </h2>
           </div>
-          <button
+          <MapachessButton
+            variant="secondary"
             autoFocus
-            className={secondaryProfileButtonClasses}
             disabled={busy}
             onClick={onClose}
             type="button"
           >
             Close Settings
-          </button>
+          </MapachessButton>
         </div>
 
-        <fieldset className="mapachess-inset mt-8 p-5">
-          <legend className="px-2 font-black text-[var(--mapachito-charcoal)]">
+        <fieldset className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-8 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 inset-shadow-[0.5rem_0_0]">
+          <legend className="text-mapachito-charcoal px-2 font-black">
             Better Hints
           </legend>
-          <p className="mapachess-muted mb-4 text-sm">
+          <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
             Choose how Better Hints appear automatically. During a match,
             changes take effect immediately and become the default for future
             matches. Every Better Hint remains available manually.
@@ -97,7 +99,7 @@ export default function ProfileSettingsPanel({
               >
                 <input
                   checked={autoHintMode === mode}
-                  className="mapachess-checkbox mt-1"
+                  className="accent-mapachito-violet mt-1 size-[1.35rem]"
                   disabled={busy}
                   name="auto-hint-mode"
                   onChange={() => onAutoHintModeChanged(mode)}
@@ -105,10 +107,10 @@ export default function ProfileSettingsPanel({
                   value={mode}
                 />
                 <span>
-                  <span className="block font-black text-[var(--mapachito-charcoal)]">
+                  <span className="text-mapachito-charcoal block font-black">
                     {AUTO_HINT_MODE_LABELS[mode]}
                   </span>
-                  <span className="mapachess-muted mt-1 block text-sm">
+                  <span className="text-mapachito-charcoal mt-1 block text-sm leading-[1.55] font-semibold opacity-76">
                     {description}
                   </span>
                 </span>
@@ -118,42 +120,38 @@ export default function ProfileSettingsPanel({
         </fieldset>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">
-          <h2 className="mapachess-subheading" id="player-data-actions-title">
+          <h2
+            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+            id="player-data-actions-title"
+          >
             Portable Player Data
           </h2>
-          <p className="mapachess-muted mt-3 text-sm">
+          <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
             Data stays on this device unless you explicitly download or import a
             JSON backup. Import first opens a non-destructive preview and is
             never applied before you review it.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              className={primaryProfileButtonClasses}
-              onClick={onExportPlayerData}
-              type="button"
-            >
+            <MapachessButton onClick={onExportPlayerData} type="button">
               Export Player Data
-            </button>
+            </MapachessButton>
             <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
           </div>
         </section>
 
         {importIssue === null ? null : (
-          <p
-            className="mapachess-notice mapachess-notice--warning mt-5 text-sm"
-            role="alert"
-          >
+          <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
             {importIssueMessage(importIssue)}
-          </p>
+          </MapachessNotice>
         )}
         {activityMessage === null ? null : (
-          <p
+          <MapachessNotice
             aria-live="polite"
-            className="mapachess-notice mt-5 text-sm"
+            className="mt-5 text-sm"
             role="status"
           >
             {activityMessage}
-          </p>
+          </MapachessNotice>
         )}
       </ProfileCard>
     </div>
