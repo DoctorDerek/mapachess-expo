@@ -60,6 +60,12 @@ Process every task through the complete Forge before claiming completion:
 
 Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only after successful applicable 5RUN evidence. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
 
+### Active UI development and the QA Trophy
+
+- The current development phase is test-after development, not TDD. Defer broad new automated suites, mock-heavy isolated tests, and percentage-driven coverage expansion until the approved interactions stabilize. Keep applicable static checks, risk-targeted regression checks, and manual Preview playtesting; this is not permission to remove existing tests, weaken CI, or claim untested behavior works. Record stale expectations and remaining QA honestly without expanding unrelated tasks into suite maintenance.
+- Prefer accessible role/name, label, and text queries for controls. Use narrowly scoped test IDs or data attributes only when meaningful user-facing queries are unavailable, such as decorative aria-hidden SVG or sprite surfaces. Do not add speculative test hooks, accessibility roles, or labels solely to make tests convenient.
+- Test interactions and rendered outcomes at the fidelity required by the claim. Metadata counts, serialized markup, and class-name assertions can check structure but do not prove visibility, actual geometry, layering, motion, input behavior, accessibility, or game feel. Keep those evidence limits explicit rather than presenting structural checks as visual or usability validation.
+
 ## 5. Scope, decomposition, and PR workflow
 
 - Work in one semantic domain at a time. Do not combine product features, refactors, packages, tooling, formatting, tests, and documentation merely because the same files are nearby.
