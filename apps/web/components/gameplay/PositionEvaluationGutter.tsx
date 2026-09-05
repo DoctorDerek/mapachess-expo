@@ -95,14 +95,14 @@ export default function PositionEvaluationGutter({
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}
       aria-valuetext={statusText}
-      className="relative h-10 w-full overflow-hidden rounded-[0.65rem_0.15rem_0.65rem_0.15rem] border-[3px] border-[var(--mapachito-charcoal)] bg-[var(--mapachito-charcoal)] shadow-[0.25rem_0.25rem_0_var(--mapachito-raspberry),0.45rem_0.45rem_0_var(--mapachito-orange)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
+      className="border-mapachito-charcoal bg-mapachito-charcoal relative h-10 w-full overflow-hidden rounded-[0.65rem_0.15rem_0.65rem_0.15rem] border-[3px] shadow-[0.25rem_0.25rem_0_var(--color-mapachito-raspberry),0.45rem_0.45rem_0_var(--color-mapachito-orange)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
       data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
       role="meter"
       style={style}
     >
       <div
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 w-[var(--white-share)] bg-[var(--mapachito-white)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
+        className={`bg-mapachito-white absolute inset-y-0 left-0 w-[var(--white-share)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
       />
       <span
         aria-hidden="true"
