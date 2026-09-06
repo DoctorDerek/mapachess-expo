@@ -1,7 +1,13 @@
 import { castlingSide, Chess } from "chessops/chess"
 import { makeFen, parseFen } from "chessops/fen"
 import type { NormalMove } from "chessops/types"
-import { kingCastlesTo, makeSquare, makeUci, squareRank } from "chessops/util"
+import {
+  kingCastlesTo,
+  makeSquare,
+  makeUci,
+  rookCastlesTo,
+  squareRank,
+} from "chessops/util"
 import {
   BETTER_HINTS_PER_SIDE,
   type BetterHint,
@@ -116,7 +122,21 @@ const createHintFromLegalMove = (
   color: MatchColor,
   move: LegalMatchMove,
 ): BetterHint =>
-  Object.freeze({ color, from: move.from, to: move.to, uci: move.uci })
+  Object.freeze({
+    color,
+    from: move.from,
+    to: move.to,
+    uci: move.uci,
+    ...(move.kind === "castle"
+      ? {
+          castling: Object.freeze({
+            rookFrom: move.rookFrom,
+            rookTo: move.rookTo,
+            side: move.side,
+          }),
+        }
+      : {}),
+  })
 
 const requireMatchingResult = (
   result: StockfishEngineSearchResult,
@@ -227,6 +247,15 @@ const createCheckedOpponentMove = (
       from: makeSquare(move.from) as MatchSquare,
       to: makeSquare(displayTo) as MatchSquare,
       uci: engineUci,
+      ...(side === undefined
+        ? {}
+        : {
+            castling: Object.freeze({
+              rookFrom: makeSquare(move.to),
+              rookTo: makeSquare(rookCastlesTo(color, side)),
+              side: side === "h" ? ("king" as const) : ("queen" as const),
+            }),
+          }),
     }),
     rulesMove: Object.freeze(move),
   })

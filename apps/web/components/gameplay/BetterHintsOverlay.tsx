@@ -146,8 +146,17 @@ export default function BetterHintsOverlay({
 
       {showMoves
         ? ownedHints.map((ownedHint) => {
-            const source = pointForSquare(ownedHint.hint.from, orientation)
-            const destination = pointForSquare(ownedHint.hint.to, orientation)
+            const hint = ownedHint.hint
+            const rookMovement =
+              hint.from === hint.to ? hint.castling : undefined
+            const source = pointForSquare(
+              rookMovement?.rookFrom ?? hint.from,
+              orientation,
+            )
+            const destination = pointForSquare(
+              rookMovement?.rookTo ?? hint.to,
+              orientation,
+            )
             const color = hintColor(ownedHint.owner)
             return (
               <g

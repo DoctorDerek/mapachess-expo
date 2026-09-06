@@ -138,7 +138,11 @@ const hintDescriptionsForSquare = (
       descriptions.push(
         ...ownedHints
           .filter((hint) => hint.to === square)
-          .map((hint) => `${owner} Move Hint destination from ${hint.from}`),
+          .map((hint) =>
+            hint.castling === undefined
+              ? `${owner} Move Hint destination from ${hint.from}`
+              : `${owner} Move Hint: castle ${hint.castling.side}side, king to ${hint.to}, rook from ${hint.castling.rookFrom} to ${hint.castling.rookTo}`,
+          ),
       )
     }
   }
