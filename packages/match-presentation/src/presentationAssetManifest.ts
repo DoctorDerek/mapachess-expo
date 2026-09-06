@@ -127,8 +127,16 @@ export default function resolveSpritePresentation<
   availableSourceIds: readonly SourceId[],
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
+  const idleStep = manifest.reactionPlans.idle
+    .map((step) => resolveStep(manifest, step, availableSourceIds))
+    .find((step) => step !== null)
+  const idleFallback =
+    idleStep === undefined
+      ? null
+      : Object.freeze({ ...idleStep, playback: "loop" as const })
   const resolvedSteps = manifest.reactionPlans[reactionSlot].flatMap((step) => {
-    const resolvedStep = resolveStep(manifest, step, availableSourceIds)
+    const resolvedStep =
+      resolveStep(manifest, step, availableSourceIds) ?? idleFallback
     return resolvedStep === null ? [] : [resolvedStep]
   })
   const [firstStep, ...remainingSteps] = resolvedSteps
