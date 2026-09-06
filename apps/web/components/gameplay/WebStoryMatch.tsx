@@ -40,7 +40,7 @@ import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
-export type StandardChickenMatchProps = Readonly<{
+export type WebStoryMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
   playerEloAtStart: number
@@ -97,12 +97,12 @@ const matchStatusText = (
   return "Your move."
 }
 
-export default function StandardChickenMatch({
+export default function WebStoryMatch({
   actor,
   evaluationActor,
   playerEloAtStart,
   runtime,
-}: StandardChickenMatchProps) {
+}: WebStoryMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
   const evaluationResult = useSelector(
     evaluationActor,
@@ -122,6 +122,7 @@ export default function StandardChickenMatch({
     presentation.snapshot.context.currentPhase?.opponent,
   )
   const position = selectMatchPosition(snapshot)
+  const modeLabel = `${position.variant === "standard" ? "Standard" : "Chess960"} Story`
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
@@ -157,7 +158,7 @@ export default function StandardChickenMatch({
 
   return (
     <section
-      aria-label={`Standard Story match against ${opponent.displayName}`}
+      aria-label={`${modeLabel} match against ${opponent.displayName}`}
       className="grid min-w-0 items-start gap-[clamp(1rem,3vw,2rem)] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] xl:grid-rows-[auto_auto_auto] xl:gap-[clamp(1rem,2vw,2rem)] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
     >
       <section
@@ -226,7 +227,7 @@ export default function StandardChickenMatch({
         </div>
         <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
           <div>
-            <dt>Standard Story Elo</dt>
+            <dt>{modeLabel} Elo</dt>
             <dd>{playerEloAtStart}</dd>
           </div>
           <div>
@@ -256,7 +257,7 @@ export default function StandardChickenMatch({
           className="border-mapachito-charcoal bg-mapachito-white shadow-mapachito-blue [&_dt]:text-mapachito-charcoal [&_dd]:text-mapachito-charcoal grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 text-sm shadow-[0.25rem_0.25rem_0] [grid-area:data] [&_dd]:font-extrabold [&_dt]:font-black [&_dt]:opacity-72"
         >
           <dt>Mode</dt>
-          <dd>Standard Story</dd>
+          <dd>{modeLabel}</dd>
           <dt>Privacy</dt>
           <dd>Local · Accountless</dd>
           <dt>Engine</dt>
