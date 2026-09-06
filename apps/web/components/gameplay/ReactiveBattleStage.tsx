@@ -1,6 +1,5 @@
 "use client"
 
-import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import type { MatchPresentationMachineSnapshot } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
   MatchParticipantReaction,
@@ -10,6 +9,7 @@ import type {
 import resolveSpritePresentation, {
   type ResolvedSpritePresentation,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import {
   AVAILABLE_MAPACHITO_SPRITE_SOURCES,
   MAPACHITO_SPRITE_MANIFEST,
@@ -52,8 +52,7 @@ const stageAnnouncement = (
   }
   if (phase.kind === "capture" || phase.kind === "check") {
     const attacker = participantWithRole(phase, "attacker")
-    const attackerName =
-      attacker === "player" ? "Mapachito" : opponentName
+    const attackerName = attacker === "player" ? "Mapachito" : opponentName
     const victimName =
       participantWithRole(phase, "victim") === "player"
         ? "Mapachito"

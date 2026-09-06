@@ -182,7 +182,10 @@ function MatchSessionExperience({
               className="border-mapachito-charcoal bg-mapachito-raspberry text-mapachito-white shadow-mapachito-orange grid min-h-52 place-content-center rounded-[1.25rem_0.25rem_1.25rem_0.25rem] border-3 bg-[linear-gradient(135deg,transparent_0_48%,color-mix(in_srgb,var(--color-mapachito-white)_22%,transparent)_48%_52%,transparent_52%)] p-6 text-center shadow-[0.5rem_0.5rem_0]"
             >
               <span className="font-display text-[clamp(5rem,18vw,9rem)] leading-[0.72] font-black tracking-[-0.06em]">
-                {String(STANDARD_CHICKEN_OPPONENT.storyPosition).padStart(2, "0")}
+                {String(STANDARD_CHICKEN_OPPONENT.storyPosition).padStart(
+                  2,
+                  "0",
+                )}
               </span>
               <span className="mt-4 font-mono text-xs font-black tracking-[0.18em] uppercase">
                 First opponent

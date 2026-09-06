@@ -309,7 +309,11 @@ export default function StandardChickenMatch({
             aria-live="polite"
             className="border-mapachito-charcoal bg-mapachito-orange text-mapachito-charcoal shadow-mapachito-charcoal/20 rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 px-4 py-4 font-black shadow-[0.25rem_0.25rem_0]"
           >
-            {matchStatusText(snapshot, runtime.playerColor, opponent.displayName)}
+            {matchStatusText(
+              snapshot,
+              runtime.playerColor,
+              opponent.displayName,
+            )}
           </p>
 
           {evaluationStage === "failure" ? (

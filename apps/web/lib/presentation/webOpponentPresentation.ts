@@ -1,8 +1,8 @@
-import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
 import type { MatchParticipantReaction } from "@mapachess/match-presentation/match-reaction"
 import resolveSpritePresentation, {
   type ResolvedSpritePresentation,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
 import {
   AVAILABLE_CHICKEN_SPRITE_SOURCES,
   CHICKEN_SPRITE_MANIFEST,
