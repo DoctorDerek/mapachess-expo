@@ -98,7 +98,11 @@ const profileMachineDefinition = setup({
         throw new Error("Match-save action received a non-match event.")
       }
       return {
-        pendingWrite: prepareActiveMatchPending(context, event.activeMatch),
+        pendingWrite: prepareActiveMatchPending(
+          context,
+          event.activeMatch,
+          event.challengeSetup,
+        ),
         persistenceFailure: null,
       }
     }),

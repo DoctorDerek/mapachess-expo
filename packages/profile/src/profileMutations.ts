@@ -1,4 +1,5 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
@@ -28,8 +29,21 @@ export const changeAutoHintMode = (
 export const replaceActiveMatch = (
   current: MapachessPlayerData,
   activeMatch: DurableMatchRecord | null,
-): MapachessPlayerData =>
-  Object.freeze({
+  challengeSetup?: ChallengeSetup,
+): MapachessPlayerData => {
+  if (
+    challengeSetup !== undefined &&
+    (activeMatch?.mode !== "challenge" ||
+      activeMatch.playerColor !== challengeSetup.playerColor ||
+      activeMatch.startingPosition.variant !== challengeSetup.variant ||
+      (challengeSetup.chess960PositionId !== null &&
+        activeMatch.startingPosition.chess960PositionId !==
+          challengeSetup.chess960PositionId))
+  ) {
+    throw new TypeError("Challenge setup must describe the match being saved.")
+  }
+
+  return Object.freeze({
     ...current,
     activeMatch,
     revision: current.revision + 1,
@@ -39,8 +53,10 @@ export const replaceActiveMatch = (
         : Object.freeze({
             ...current.settings,
             autoHintMode: activeMatch.autoHintMode,
+            challengeSetup: challengeSetup ?? current.settings.challengeSetup,
           }),
   })
+}
 
 export const createFreshRecoveryData = (
   lastKnownGood: DurablePlayerDataSlot,
