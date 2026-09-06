@@ -2,9 +2,12 @@ import type { AutoHintMode } from "./autoHintMode.js"
 import type { MatchConclusion } from "./matchConclusion.js"
 import type { MatchMoveId } from "./matchMove.js"
 import type { MatchColor, MatchStartingPosition } from "./matchPosition.js"
+import type { StockfishOpponentId } from "./stockfishOpponent.js"
 
 export const MATCH_MODES = ["story", "challenge"] as const
-export const IMPLEMENTED_DURABLE_OPPONENT_IDS = ["chicken-stockfish"] as const
+export const IMPLEMENTED_DURABLE_OPPONENT_IDS = [
+  "chicken-stockfish",
+] as const satisfies readonly StockfishOpponentId[]
 export const LEGACY_DURABLE_MATCH_RECORD_VERSION = 1 as const
 export const LEGACY_DURABLE_MATCH_RECORD_VERSION_2 = 2 as const
 export const DURABLE_MATCH_RECORD_VERSION = 3 as const
