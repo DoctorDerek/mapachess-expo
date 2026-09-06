@@ -1,0 +1,49 @@
+{
+  "applicationVersion": "portability-fixture",
+  "format": "mapachess-portable-backup",
+  "formatVersion": 1,
+  "gddRevision": "synthetic-test-fixture",
+  "integrity": {
+    "algorithm": "SHA-256",
+    "payloadHash": "d16e873efe81e48b363edc79b759529cb52330febc1e666c6a0c88f627ef6ef2"
+  },
+  "payload": {
+    "activeMatch": {
+      "currentFen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+      "cursor": 1,
+      "matchId": "standard-story-chicken/0123456789abcdef0123456789abcdef",
+      "matchSeed": "0123456789abcdef0123456789abcdef",
+      "mode": "story",
+      "moveHintsUsed": true,
+      "moveIds": ["e2e4", "e7e5"],
+      "opponentId": "chicken-stockfish",
+      "opponentPolicyFingerprint": "synthetic-portability-fixture-policy/v1",
+      "pieceHintsUsed": true,
+      "playerColor": "white",
+      "playerEloAtStart": 100,
+      "recordVersion": 3,
+      "startingPosition": {
+        "chess960PositionId": null,
+        "variant": "standard"
+      },
+      "timeControl": {
+        "type": "untimed"
+      },
+      "autoHintMode": "auto-move-hints",
+      "conclusion": null
+    },
+    "ratings": {
+      "chess960Challenge": 913,
+      "chess960Story": 712.5,
+      "standardChallenge": 511,
+      "standardStory": 314.25
+    },
+    "revision": 42,
+    "schema": "mapachess-player-data",
+    "schemaVersion": 2,
+    "settings": {
+      "autoHintMode": "no-auto-hints"
+    }
+  },
+  "saveSchemaVersion": 2
+}

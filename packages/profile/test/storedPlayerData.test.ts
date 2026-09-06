@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
-import createInitialMapachessPlayerData from "../src/playerData.js"
+import createInitialMapachessPlayerData, {
+  MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+} from "../src/playerData.js"
 import {
   decodeStoredPlayerData,
   encodeStoredPlayerData,
@@ -9,6 +11,7 @@ import {
   MAX_STORED_PLAYER_DATA_UTF16_CODE_UNITS,
 } from "../src/storedPlayerData.js"
 import portableActiveChickenV1 from "./fixtures/portableActiveChickenV1.json"
+import portableActiveChickenV2 from "./fixtures/portableActiveChickenV2.json"
 
 const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
@@ -40,29 +43,32 @@ describe("stored Mapachess player data", () => {
     })
   })
 
-  it("authenticates legacy bytes before migrating their player schema", async () => {
-    const legacyStoredData = JSON.stringify({
-      format: MAPACHESS_STORED_PLAYER_DATA_FORMAT,
-      formatVersion: MAPACHESS_STORED_PLAYER_DATA_FORMAT_VERSION,
-      integrity: portableActiveChickenV1.integrity,
-      payload: portableActiveChickenV1.payload,
-      saveSchemaVersion: 1,
-    })
+  it.each([portableActiveChickenV1, portableActiveChickenV2])(
+    "authenticates legacy bytes before migrating their player schema",
+    async (fixture) => {
+      const legacyStoredData = JSON.stringify({
+        format: MAPACHESS_STORED_PLAYER_DATA_FORMAT,
+        formatVersion: MAPACHESS_STORED_PLAYER_DATA_FORMAT_VERSION,
+        integrity: fixture.integrity,
+        payload: fixture.payload,
+        saveSchemaVersion: fixture.saveSchemaVersion,
+      })
 
-    await expect(
-      decodeStoredPlayerData(legacyStoredData, sha256),
-    ).resolves.toMatchObject({
-      data: {
-        activeMatch: {
-          autoHintMode: "auto-move-hints",
-          recordVersion: 3,
+      await expect(
+        decodeStoredPlayerData(legacyStoredData, sha256),
+      ).resolves.toMatchObject({
+        data: {
+          activeMatch: {
+            autoHintMode: "auto-move-hints",
+            recordVersion: 3,
+          },
+          schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+          settings: { autoHintMode: "no-auto-hints" },
         },
-        schemaVersion: 2,
-        settings: { autoHintMode: "no-auto-hints" },
-      },
-      ok: true,
-    })
-  })
+        ok: true,
+      })
+    },
+  )
 
   it("rejects oversized and unsupported future storage envelopes", async () => {
     await expect(

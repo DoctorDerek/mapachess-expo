@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
+import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialMapachessPlayerData, {
   INITIAL_PLAYER_ELO,
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
 } from "../src/playerData.js"
+import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 
 describe("Mapachess player data", () => {
   it("creates the canonical private player profile", () => {
@@ -21,7 +23,10 @@ describe("Mapachess player data", () => {
       revision: 0,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-      settings: { autoHintMode: "auto-move-hints" },
+      settings: {
+        autoHintMode: "auto-move-hints",
+        challengeSetup: DEFAULT_CHALLENGE_SETUP,
+      },
     })
     expect(Object.keys(playerData.ratings).sort()).toEqual(
       [...PLAYER_ELO_RATING_IDS].sort(),
@@ -38,4 +43,62 @@ describe("Mapachess player data", () => {
     expect(first.ratings).not.toBe(second.ratings)
     expect(first.ratings).toEqual(second.ratings)
   })
+
+  it.each([null, 0, 959])(
+    "preserves Chess960 selection %s without sharing mutable input",
+    (chess960PositionId) => {
+      const setup = {
+        chess960PositionId,
+        playerColor: "black",
+        variant: "chess960",
+      }
+      const initial = createInitialMapachessPlayerData()
+      const decoded = decodeMapachessPlayerData({
+        ...initial,
+        settings: { ...initial.settings, challengeSetup: setup },
+      })
+      if (!decoded.ok) throw new Error("Valid Challenge setup must decode")
+      expect(decoded.data.settings.challengeSetup).toEqual(setup)
+      expect(decoded.data.settings.challengeSetup).not.toBe(setup)
+      expect(Object.isFrozen(decoded.data.settings.challengeSetup)).toBe(true)
+      expect(decoded.data.ratings).toEqual(initial.ratings)
+    },
+  )
+
+  it.each([
+    undefined,
+    null,
+    { ...DEFAULT_CHALLENGE_SETUP, variant: "unsupported" },
+    { ...DEFAULT_CHALLENGE_SETUP, playerColor: "random" },
+    { ...DEFAULT_CHALLENGE_SETUP, chess960PositionId: 0 },
+    { ...DEFAULT_CHALLENGE_SETUP, variant: "chess960", chess960PositionId: -1 },
+    {
+      ...DEFAULT_CHALLENGE_SETUP,
+      variant: "chess960",
+      chess960PositionId: 960,
+    },
+    {
+      ...DEFAULT_CHALLENGE_SETUP,
+      variant: "chess960",
+      chess960PositionId: 0.5,
+    },
+    { ...DEFAULT_CHALLENGE_SETUP, extra: true },
+  ])(
+    "rejects invalid saved Challenge setup %j rather than substituting defaults",
+    (challengeSetup) => {
+      const initial = createInitialMapachessPlayerData()
+      expect(
+        decodeMapachessPlayerData({
+          ...initial,
+          settings: { ...initial.settings, challengeSetup },
+        }),
+      ).toEqual({
+        issue: {
+          path: "$.settings.challengeSetup",
+          type: "PROFILE.DATA_INVALID",
+        },
+        ok: false,
+      })
+    },
+  )
 })

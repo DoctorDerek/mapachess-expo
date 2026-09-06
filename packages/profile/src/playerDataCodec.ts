@@ -221,7 +221,7 @@ const decodeModernPlayerData = (
       ? DEFAULT_CHALLENGE_SETUP
       : settings.challengeSetup,
   )
-  if (!challengeSetup.ok) failData("$.settings.challengeSetup")
+  if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
   const data: MapachessPlayerData = Object.freeze({
     activeMatch:
       object.activeMatch === null

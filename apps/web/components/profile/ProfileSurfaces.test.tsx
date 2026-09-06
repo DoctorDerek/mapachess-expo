@@ -1,7 +1,9 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
-import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
+import createInitialMapachessPlayerData, {
+  MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+} from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
@@ -20,7 +22,7 @@ const backup = Object.freeze({
     payloadHash: "0".repeat(64),
   }),
   payload: playerData,
-  saveSchemaVersion: 2,
+  saveSchemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 }) satisfies MapachessPortableBackup
 
 describe("web player-data controls", () => {
