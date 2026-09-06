@@ -10,6 +10,9 @@ import {
   createMatchTimeline,
   currentMatchPosition,
 } from "@mapachess/match/match-timeline"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
+import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
   buildFreshStandardChickenMatch,
@@ -30,6 +33,7 @@ const matchSeed = parseDeterministicRandomSeed(
 const runtime = Object.freeze({
   matchId: standardChickenMatchId(matchSeed),
   matchSeed,
+  opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
   playerColor: selectStandardStoryPlayerColor(matchSeed),
 }) satisfies FreshStandardChickenMatchInput["runtime"]
@@ -113,5 +117,38 @@ describe("Standard Chicken durable match mapping", () => {
         opponentPolicyFingerprint: `${STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT}/changed`,
       }),
     ).toThrow("Saved Chicken policy does not match")
+  })
+
+  it("round-trips the implemented identity but rejects catalog-only opponents", () => {
+    const record = buildFreshStandardChickenMatch({
+      autoHintMode: "auto-move-hints",
+      playerEloAtStart: 100,
+      runtime,
+    })
+    const playerData = {
+      ...createInitialMapachessPlayerData(),
+      activeMatch: record,
+    }
+    const importedData: unknown = JSON.parse(JSON.stringify(playerData))
+    const decoded = decodeMapachessPlayerData(importedData)
+    expect(decoded).toMatchObject({ data: playerData, ok: true })
+    if (!decoded.ok || decoded.data.activeMatch === null) {
+      throw new Error("The implemented Chicken match must round-trip.")
+    }
+    expect(resumeStandardChickenMatch(decoded.data.activeMatch)).toEqual(
+      resumeStandardChickenMatch(record),
+    )
+    expect(
+      decodeMapachessPlayerData({
+        ...playerData,
+        activeMatch: {
+          ...record,
+          opponentId: stockfishOpponent("bunny-stockfish").id,
+        },
+      }),
+    ).toEqual({
+      issue: { path: "$.activeMatch.opponentId", type: "PROFILE.DATA_INVALID" },
+      ok: false,
+    })
   })
 })

@@ -59,6 +59,7 @@ const createRuntime = (seed: string) => {
       }),
     }),
     opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+    opponentId: "chicken-stockfish",
     playerColor: selectStandardStoryPlayerColor(matchSeed),
     positionEvaluator: vi.fn(async (request) =>
       Object.freeze({

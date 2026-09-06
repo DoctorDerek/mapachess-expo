@@ -40,6 +40,7 @@ const createSession = (seed: string): WebMatchSession => {
       }),
     }),
     opponentPolicyFingerprint: "web-session-test-policy",
+    opponentId: "chicken-stockfish",
     playerColor: "white",
     positionEvaluator: vi.fn(async () => {
       throw new Error("Web session test does not request evaluation.")

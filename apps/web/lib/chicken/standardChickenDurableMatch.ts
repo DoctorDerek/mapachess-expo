@@ -29,7 +29,11 @@ export type FreshStandardChickenMatchInput = Readonly<{
   playerEloAtStart: number
   runtime: Pick<
     WebMatchRuntime,
-    "matchId" | "matchSeed" | "opponentPolicyFingerprint" | "playerColor"
+    | "matchId"
+    | "matchSeed"
+    | "opponentId"
+    | "opponentPolicyFingerprint"
+    | "playerColor"
   >
 }>
 
@@ -49,7 +53,7 @@ export function buildFreshStandardChickenMatch(
     mode: "story",
     moveHintsUsed: false,
     moveIds: Object.freeze([]),
-    opponentId: "chicken-stockfish",
+    opponentId: input.runtime.opponentId,
     opponentPolicyFingerprint: input.runtime.opponentPolicyFingerprint,
     pieceHintsUsed: false,
     playerColor: input.runtime.playerColor,

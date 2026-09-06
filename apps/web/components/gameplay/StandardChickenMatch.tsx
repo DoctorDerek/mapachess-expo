@@ -25,9 +25,14 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import stockfishOpponent, {
+  STOCKFISH_OPPONENTS,
+  type StockfishOpponentDefinition,
+} from "@mapachess/match/stockfish-opponent"
 import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
+import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
@@ -45,6 +50,7 @@ export type StandardChickenMatchProps = Readonly<{
 const matchStatusText = (
   snapshot: MatchMachineSnapshot,
   playerColor: WebMatchRuntime["playerColor"],
+  opponentName: StockfishOpponentDefinition["displayName"],
 ): string => {
   const conclusion = selectMatchConclusion(snapshot)
   const drawOfferResponse = selectDrawOfferResponse(snapshot)
@@ -59,21 +65,21 @@ const matchStatusText = (
   }
 
   if (failure?.type === "MATCH.OPPONENT_MOVE_ILLEGAL") {
-    return "Chicken Stockfish returned an invalid move. Retry or undo."
+    return `${opponentName} returned an invalid move. Retry or undo.`
   }
   if (failure?.type === "MATCH.OPPONENT_REQUEST_FAILED") {
-    return "Chicken Stockfish could not finish its turn. Retry or undo."
+    return `${opponentName} could not finish its turn. Retry or undo.`
   }
   if (conclusion !== null) {
     if (conclusion.type === "checkmate") {
       return conclusion.winner === playerColor
         ? "Checkmate — you won."
-        : "Checkmate — Chicken Stockfish won."
+        : `Checkmate — ${opponentName} won.`
     }
     if (conclusion.type === "resignation") {
       return conclusion.winner === playerColor
-        ? "Chicken Stockfish resigned — you won."
-        : "You resigned — Chicken Stockfish won."
+        ? `${opponentName} resigned — you won.`
+        : `You resigned — ${opponentName} won.`
     }
     if (conclusion.type === "draw-agreement") {
       return "Draw by agreement."
@@ -83,10 +89,10 @@ const matchStatusText = (
       : "Draw by insufficient material."
   }
   if (selectIsOpponentThinking(snapshot)) {
-    return "Chicken Stockfish is choosing a move…"
+    return `${opponentName} is choosing a move…`
   }
   if (drawOfferResponse === "rejected") {
-    return "Chicken Stockfish declines the draw."
+    return `${opponentName} declines the draw.`
   }
   return "Your move."
 }
@@ -109,6 +115,11 @@ export default function StandardChickenMatch({
   const presentation = useAcceptedMatchPresentation(
     snapshot,
     runtime.playerColor,
+  )
+  const opponent = stockfishOpponent(runtime.opponentId)
+  const opponentPresentation = resolveWebOpponentPresentation(
+    runtime.opponentId,
+    presentation.snapshot.context.currentPhase?.opponent,
   )
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)
@@ -146,7 +157,7 @@ export default function StandardChickenMatch({
 
   return (
     <section
-      aria-label="Standard Story match against Chicken Stockfish"
+      aria-label={`Standard Story match against ${opponent.displayName}`}
       className="grid min-w-0 items-start gap-[clamp(1rem,3vw,2rem)] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] xl:grid-rows-[auto_auto_auto] xl:gap-[clamp(1rem,2vw,2rem)] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
     >
       <section
@@ -155,13 +166,14 @@ export default function StandardChickenMatch({
       >
         <div>
           <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-            Story opponent 01 / 23
+            Story opponent {String(opponent.storyPosition).padStart(2, "0")} /{" "}
+            {STOCKFISH_OPPONENTS.length}
           </p>
           <h1
             className="font-display mt-[0.2rem] text-[clamp(1.5rem,5vw,2.25rem)] leading-[0.95] font-black tracking-[-0.02em] uppercase"
             id="opponent-band-title"
           >
-            Chicken Stockfish
+            {opponent.displayName}
           </h1>
         </div>
         <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
@@ -230,6 +242,8 @@ export default function StandardChickenMatch({
             onParticipantAnimationCompleted={
               presentation.notifyParticipantAnimationCompleted
             }
+            opponentName={opponent.displayName}
+            opponentPresentation={opponentPresentation}
             presentationSnapshot={presentation.snapshot}
           />
           <MapachitoCoachPortrait
@@ -295,7 +309,11 @@ export default function StandardChickenMatch({
             aria-live="polite"
             className="border-mapachito-charcoal bg-mapachito-orange text-mapachito-charcoal shadow-mapachito-charcoal/20 rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 px-4 py-4 font-black shadow-[0.25rem_0.25rem_0]"
           >
-            {matchStatusText(snapshot, runtime.playerColor)}
+            {matchStatusText(
+              snapshot,
+              runtime.playerColor,
+              opponent.displayName,
+            )}
           </p>
 
           {evaluationStage === "failure" ? (
@@ -370,7 +388,7 @@ export default function StandardChickenMatch({
               }
               type="button"
             >
-              Retry Chicken turn
+              Retry {opponent.displayName} turn
             </MapachessButton>
           )}
 

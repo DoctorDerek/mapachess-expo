@@ -158,6 +158,7 @@ export default async function openStandardChickenRuntime(
       cryptography,
       matchSeed,
     ),
+    opponentId: "chicken-stockfish",
     opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
     playerColor: selectStandardStoryPlayerColor(matchSeed),
     positionEvaluator: (request, signal) =>
