@@ -172,6 +172,7 @@ export type ChickenSpriteSourceId =
 
 export const CHICKEN_SPRITE_MANIFEST = {
   animations: chickenAnimations,
+  sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
       { animationIds: ["run", "walk"], playback: "once" },
@@ -328,6 +329,7 @@ export type MapachitoSpriteSourceId =
 
 export const MAPACHITO_SPRITE_MANIFEST = {
   animations: mapachitoAnimations,
+  sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
       { animationIds: ["dash", "run"], playback: "once" },

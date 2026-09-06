@@ -3,7 +3,10 @@
 import { motion, useReducedMotion } from "motion/react"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
-import type { ResolvedSpritePresentation } from "@mapachess/match-presentation/presentation-asset-manifest"
+import type {
+  ResolvedSpritePresentation,
+  SpriteFacing,
+} from "@mapachess/match-presentation/presentation-asset-manifest"
 
 const AUTHORED_FALLBACK_ANIMATION_SECONDS = 0.36
 const ATTACKER_TRAVEL_PIXELS_PER_STEP = 24
@@ -11,7 +14,7 @@ const VICTIM_RECOIL_PIXELS = 10
 
 export type BattleFighterProps = Readonly<{
   displayName: string
-  facing: "left" | "right"
+  facing: SpriteFacing
   onAnimationCompleted: (
     participant: MatchPresentationParticipant,
     phaseIndex: number,
@@ -163,7 +166,7 @@ export default function BattleFighter({
         {presentation.kind === "sprite" ? (
           <span
             aria-hidden="true"
-            className={`drop-shadow-mapachito-charcoal block origin-bottom scale-y-300 bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [animation-direction:normal] [image-rendering:pixelated] xl:scale-y-400 ${facing === "right" ? "-scale-x-300 xl:-scale-x-400" : "scale-x-300 xl:scale-x-400"}`}
+            className={`drop-shadow-mapachito-charcoal block origin-bottom scale-y-300 bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [animation-direction:normal] [image-rendering:pixelated] xl:scale-y-400 ${facing !== presentation.sourceFacing ? "-scale-x-300 xl:-scale-x-400" : "scale-x-300 xl:scale-x-400"}`}
             key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
             style={spriteStyle(
               presentation,

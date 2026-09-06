@@ -131,6 +131,7 @@ const orderedReactionStep = (
   })
 
 const SPRITE_MANIFEST = Object.freeze({
+  sourceFacing: "right",
   animations: Object.freeze({
     fallback: testAnimation("fallback-source"),
     preferred: testAnimation("preferred-source"),

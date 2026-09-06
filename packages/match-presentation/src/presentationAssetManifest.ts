@@ -15,6 +15,8 @@ export type MatchSpriteReactionSlot =
 
 export type SpritePlaybackMode = "loop" | "once" | "once-hold-final-frame"
 
+export type SpriteFacing = "left" | "right"
+
 export type SpriteFrameGeometry = Readonly<{
   bottomCenterX: number
   bottomY: number
@@ -44,6 +46,7 @@ export type SpriteAssetManifest<
   SourceId extends string,
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
+  sourceFacing: SpriteFacing
   reactionPlans: Readonly<
     Record<
       MatchSpriteReactionSlot,
@@ -71,6 +74,7 @@ export type ResolvedSpritePresentation<
   | Readonly<{
       kind: "sprite"
       reactionSlot: MatchSpriteReactionSlot
+      sourceFacing: SpriteFacing
       steps: readonly [
         ResolvedSpriteStep<AnimationId, SourceId>,
         ...ResolvedSpriteStep<AnimationId, SourceId>[],
@@ -132,6 +136,7 @@ export default function resolveSpritePresentation<
     : Object.freeze({
         kind: "sprite",
         reactionSlot,
+        sourceFacing: manifest.sourceFacing,
         steps: Object.freeze([firstStep, ...remainingSteps] as const),
       })
 }
