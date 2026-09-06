@@ -11,17 +11,17 @@ import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
 import { CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/chickenOpponent"
+import {
+  openCurrentWebMatchSession,
+  openFreshWebMatchSession,
+  returnWebMatchSessionToMenu,
+} from "../../lib/gameplay/webMatchSession"
 import webMatchSessionMachine, {
   selectWebMatchSession,
   selectWebMatchSessionFailure,
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
-import {
-  openCurrentWebStoryMatchSession,
-  openFreshWebStoryMatchSession,
-  returnWebStoryMatchSessionToMenu,
-} from "../../lib/gameplay/webStoryMatchSession"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
@@ -331,14 +331,14 @@ export default function WebStoryGame({
         operations: {
           openCurrentMatch: (signal) =>
             captureSession(
-              openCurrentWebStoryMatchSession({
+              openCurrentWebMatchSession({
                 profileActor,
                 signal,
               }),
             ),
           openFreshMatch: (previousSession, variant, signal) =>
             captureSession(
-              openFreshWebStoryMatchSession({
+              openFreshWebMatchSession({
                 previousSession,
                 variant,
                 profileActor,
@@ -346,7 +346,7 @@ export default function WebStoryGame({
               }),
             ),
           returnToMenu: async (session, signal) => {
-            await returnWebStoryMatchSessionToMenu({
+            await returnWebMatchSessionToMenu({
               profileActor,
               session,
               signal,

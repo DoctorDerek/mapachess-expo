@@ -22,10 +22,10 @@ import {
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
 } from "../chicken/chickenOpponent"
 import {
-  buildFreshWebStoryMatch,
-  default as resumeWebStoryMatch,
-  type FreshWebStoryMatchInput,
-} from "./webStoryDurableMatch"
+  buildFreshWebMatch,
+  default as resumeWebMatch,
+  type FreshWebMatchInput,
+} from "./webDurableMatch"
 
 const matchSeed = parseDeterministicRandomSeed(
   "00000001000000020000000300000004",
@@ -39,7 +39,7 @@ const runtime = Object.freeze({
   opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
   playerColor: selectStoryPlayerColor(matchSeed),
   startingPosition: { variant: "standard", chess960PositionId: null } as const,
-}) satisfies FreshWebStoryMatchInput["runtime"]
+}) satisfies FreshWebMatchInput["runtime"]
 
 const requireMoveId = (uci: string) => {
   const result = parseMatchMoveId(uci)
@@ -57,7 +57,7 @@ describe("web Story durable match mapping", () => {
         variant: "chess960",
         chess960PositionId: parsed.positionId,
       } as const
-      const fresh = buildFreshWebStoryMatch({
+      const fresh = buildFreshWebMatch({
         autoHintMode: "auto-piece-hints",
         playerEloAtStart: 725,
         runtime: {
@@ -81,26 +81,26 @@ describe("web Story durable match mapping", () => {
       const decoded = decodeMapachessPlayerData(imported)
       if (!decoded.ok || decoded.data.activeMatch === null)
         throw new Error("Chess960 profile must decode")
-      const resumed = resumeWebStoryMatch(decoded.data.activeMatch)
+      const resumed = resumeWebMatch(decoded.data.activeMatch)
       expect(resumed.timeline.cursor).toBe(0)
       expect(resumed.timeline.transitions).toHaveLength(2)
       expect(resumed.matchSeed).toBe(matchSeed)
       expect(currentMatchPosition(resumed.timeline).fen).toBe(fresh.currentFen)
       expect(decoded.data.activeMatch).toEqual(saved)
       expect(() =>
-        resumeWebStoryMatch({
+        resumeWebMatch({
           ...saved,
           opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
         }),
       ).toThrow("policy does not match")
       expect(() =>
-        resumeWebStoryMatch({ ...saved, matchId: chickenMatchId(matchSeed) }),
+        resumeWebMatch({ ...saved, matchId: chickenMatchId(matchSeed) }),
       ).toThrow("identity does not match")
     },
   )
 
   it("builds the exact cursor-zero record for a fresh runtime", () => {
-    const record = buildFreshWebStoryMatch({
+    const record = buildFreshWebMatch({
       autoHintMode: "no-auto-hints",
       playerEloAtStart: 100,
       runtime,
@@ -129,7 +129,7 @@ describe("web Story durable match mapping", () => {
   })
 
   it("reconstructs the full branch while retaining the saved cursor", () => {
-    const fresh = buildFreshWebStoryMatch({
+    const fresh = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -151,7 +151,7 @@ describe("web Story durable match mapping", () => {
       pieceHintsUsed: true,
     })
 
-    const resumed = resumeWebStoryMatch(saved)
+    const resumed = resumeWebMatch(saved)
     expect(resumed.matchSeed).toBe(matchSeed)
     expect(resumed.timeline.cursor).toBe(0)
     expect(resumed.timeline.transitions).toHaveLength(2)
@@ -159,14 +159,14 @@ describe("web Story durable match mapping", () => {
   })
 
   it("rejects a saved match from another Chicken policy", () => {
-    const fresh = buildFreshWebStoryMatch({
+    const fresh = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })
 
     expect(() =>
-      resumeWebStoryMatch({
+      resumeWebMatch({
         ...fresh,
         opponentPolicyFingerprint: `${STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT}/changed`,
       }),
@@ -174,7 +174,7 @@ describe("web Story durable match mapping", () => {
   })
 
   it("round-trips the implemented identity but rejects catalog-only opponents", () => {
-    const record = buildFreshWebStoryMatch({
+    const record = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -189,8 +189,8 @@ describe("web Story durable match mapping", () => {
     if (!decoded.ok || decoded.data.activeMatch === null) {
       throw new Error("The implemented Chicken match must round-trip.")
     }
-    expect(resumeWebStoryMatch(decoded.data.activeMatch)).toEqual(
-      resumeWebStoryMatch(record),
+    expect(resumeWebMatch(decoded.data.activeMatch)).toEqual(
+      resumeWebMatch(record),
     )
     expect(
       decodeMapachessPlayerData({

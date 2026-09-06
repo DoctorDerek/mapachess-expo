@@ -18,13 +18,13 @@ import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
 import webSha256 from "../profile/webSha256"
 import type { OpenWebMatchRuntimeInput } from "./openWebMatchRuntime"
+import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
-import { buildFreshWebStoryMatch } from "./webStoryDurableMatch"
 import {
-  openCurrentWebStoryMatchSession,
-  openFreshWebStoryMatchSession,
-  returnWebStoryMatchSessionToMenu,
-} from "./webStoryMatchSession"
+  openCurrentWebMatchSession,
+  openFreshWebMatchSession,
+  returnWebMatchSessionToMenu,
+} from "./webMatchSession"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
@@ -120,7 +120,7 @@ describe("web Story match session ownership", () => {
     const profileRuntime = await openProfileRuntime(725)
     const firstRuntime = createRuntime(FIRST_MATCH_SEED, startingPosition)
     const freshOpener = runtimeOpener(firstRuntime.runtime)
-    const first = await openFreshWebStoryMatchSession({
+    const first = await openFreshWebMatchSession({
       variant: "chess960",
       previousSession: null,
       openRuntime: freshOpener,
@@ -136,7 +136,7 @@ describe("web Story match session ownership", () => {
     const resumedOpener = runtimeOpener(
       createRuntime(FIRST_MATCH_SEED, startingPosition).runtime,
     )
-    const resumed = await openCurrentWebStoryMatchSession({
+    const resumed = await openCurrentWebMatchSession({
       openRuntime: resumedOpener,
       profileActor: profileRuntime.actor,
       signal: new AbortController().signal,
@@ -150,7 +150,7 @@ describe("web Story match session ownership", () => {
     const restartOpener = runtimeOpener(
       createRuntime(SECOND_MATCH_SEED, startingPosition).runtime,
     )
-    const restarted = await openFreshWebStoryMatchSession({
+    const restarted = await openFreshWebMatchSession({
       variant: "chess960",
       previousSession: resumed,
       openRuntime: restartOpener,
@@ -176,7 +176,7 @@ describe("web Story match session ownership", () => {
   it("persists a fresh session and closes every owned resource once", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
-    const session = await openFreshWebStoryMatchSession({
+    const session = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(engineRuntime.runtime),
       previousSession: null,
@@ -202,7 +202,7 @@ describe("web Story match session ownership", () => {
     const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
     const secondRuntime = createRuntime(SECOND_MATCH_SEED)
-    const firstSession = await openFreshWebStoryMatchSession({
+    const firstSession = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(firstRuntime.runtime),
       previousSession: null,
@@ -210,7 +210,7 @@ describe("web Story match session ownership", () => {
       signal: new AbortController().signal,
     })
 
-    const secondSession = await openFreshWebStoryMatchSession({
+    const secondSession = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(secondRuntime.runtime),
       previousSession: firstSession,
@@ -232,7 +232,7 @@ describe("web Story match session ownership", () => {
   it("resumes the exact saved seed without replacing the active match", async () => {
     const profileRuntime = await openProfileRuntime()
     const initialRuntime = createRuntime(FIRST_MATCH_SEED)
-    const initialSession = await openFreshWebStoryMatchSession({
+    const initialSession = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(initialRuntime.runtime),
       previousSession: null,
@@ -243,7 +243,7 @@ describe("web Story match session ownership", () => {
     const resumedRuntime = createRuntime(FIRST_MATCH_SEED)
     const openRuntime = runtimeOpener(resumedRuntime.runtime)
 
-    const resumedSession = await openCurrentWebStoryMatchSession({
+    const resumedSession = await openCurrentWebMatchSession({
       openRuntime,
       profileActor: profileRuntime.actor,
       signal: new AbortController().signal,
@@ -262,7 +262,7 @@ describe("web Story match session ownership", () => {
   it("closes the session before clearing its verified active match", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
-    const session = await openFreshWebStoryMatchSession({
+    const session = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(engineRuntime.runtime),
       previousSession: null,
@@ -270,7 +270,7 @@ describe("web Story match session ownership", () => {
       signal: new AbortController().signal,
     })
 
-    await returnWebStoryMatchSessionToMenu({
+    await returnWebMatchSessionToMenu({
       profileActor: profileRuntime.actor,
       session,
       signal: new AbortController().signal,
@@ -286,7 +286,7 @@ describe("web Story match session ownership", () => {
   it("resumes a replacement already accepted during a restart retry", async () => {
     const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
-    const firstSession = await openFreshWebStoryMatchSession({
+    const firstSession = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime: runtimeOpener(firstRuntime.runtime),
       previousSession: null,
@@ -296,7 +296,7 @@ describe("web Story match session ownership", () => {
     await firstSession.close()
 
     const acceptedRuntime = createRuntime(SECOND_MATCH_SEED)
-    const acceptedMatch = buildFreshWebStoryMatch({
+    const acceptedMatch = buildFreshWebMatch({
       autoHintMode: firstSession.match.autoHintMode,
       playerEloAtStart: firstSession.match.playerEloAtStart,
       runtime: acceptedRuntime.runtime,
@@ -310,7 +310,7 @@ describe("web Story match session ownership", () => {
     const resumedRuntime = createRuntime(SECOND_MATCH_SEED)
     const openRuntime = runtimeOpener(resumedRuntime.runtime)
 
-    const resumedSession = await openFreshWebStoryMatchSession({
+    const resumedSession = await openFreshWebMatchSession({
       variant: "standard",
       openRuntime,
       previousSession: firstSession,

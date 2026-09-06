@@ -9,6 +9,7 @@ import {
 } from "@mapachess/match/match-position"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
+import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
   selectWebMatchSession,
@@ -16,7 +17,6 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
-import { buildFreshWebStoryMatch } from "./webStoryDurableMatch"
 
 const createSession = (
   seed: string,
@@ -53,7 +53,7 @@ const createSession = (
       throw new Error("Web session test does not request evaluation.")
     }),
   }) satisfies WebMatchRuntime
-  const match = buildFreshWebStoryMatch({
+  const match = buildFreshWebMatch({
     autoHintMode: "auto-move-hints",
     playerEloAtStart: 100,
     runtime,
