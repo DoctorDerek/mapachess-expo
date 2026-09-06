@@ -2,6 +2,7 @@ import { webcrypto } from "node:crypto"
 import { IDBFactory } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"
 import { waitFor } from "xstate"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import type { MatchStartingPosition } from "@mapachess/match/match-position"
 import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
@@ -29,8 +30,10 @@ import {
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
 
-const openProfileRuntime = async (chess960StoryElo?: number) => {
-  const indexedDb = new IDBFactory()
+const openProfileRuntime = async (
+  chess960StoryElo?: number,
+  indexedDb = new IDBFactory(),
+) => {
   if (chess960StoryElo !== undefined) {
     const adapter = new IndexedDbDurableStore(indexedDb)
     const store = new SerializedPlayerDataStore(adapter, (value) =>
@@ -43,6 +46,8 @@ const openProfileRuntime = async (chess960StoryElo?: number) => {
         ...initial.ratings,
         standardStory: 450,
         chess960Story: chess960StoryElo,
+        standardChallenge: 600,
+        chess960Challenge: 800,
       },
     })
     if (!saved.ok) throw new Error("Initial rating fixture must persist")
@@ -62,6 +67,9 @@ const createRuntime = (
     variant: "standard",
     chess960PositionId: null,
   },
+  selection: NonNullable<Parameters<typeof chickenMatchId>[2]> = {
+    mode: "story",
+  },
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -77,7 +85,7 @@ const createRuntime = (
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: chickenMatchId(matchSeed, startingPosition),
+    matchId: chickenMatchId(matchSeed, startingPosition, selection),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -92,7 +100,10 @@ const createRuntime = (
       startingPosition.variant,
     ),
     opponentId: "chicken-stockfish",
-    playerColor: selectStoryPlayerColor(matchSeed),
+    playerColor:
+      selection.mode === "challenge"
+        ? selection.playerColor
+        : selectStoryPlayerColor(matchSeed),
     startingPosition,
     positionEvaluator: vi.fn(async (request) =>
       Object.freeze({
@@ -109,7 +120,199 @@ const createRuntime = (
 const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
-describe("web Story match session ownership", () => {
+describe("web match session ownership", () => {
+  it.each(["standard", "chess960"] as const)(
+    "persists and reloads %s Challenge with chosen Black and its independent rating",
+    async (variant) => {
+      const layout = parseChess960PositionId(959)
+      if (!layout.ok) throw new Error("Invalid test layout")
+      const startingPosition: MatchStartingPosition =
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: layout.positionId }
+      const challengeSetup: ChallengeSetup = {
+        ...startingPosition,
+        playerColor: "black",
+      }
+      const selection = { mode: "challenge", playerColor: "black" } as const
+      const indexedDb = new IDBFactory()
+      const profile = await openProfileRuntime(725, indexedDb)
+      const engine = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        selection,
+      )
+      const opener = runtimeOpener(engine.runtime)
+      const first = await openFreshWebMatchSession({
+        mode: "challenge",
+        challengeSetup,
+        previousSession: null,
+        openRuntime: opener,
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      })
+      expect(opener).toHaveBeenCalledWith({
+        ...selection,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(first.match).toMatchObject({
+        mode: "challenge",
+        playerColor: "black",
+        playerEloAtStart: variant === "standard" ? 600 : 800,
+      })
+      await first.close()
+      await waitFor(profile.actor, (snapshot) => snapshot.matches("ready"))
+      const saved = selectCurrentPlayerData(profile.actor.getSnapshot())
+      expect(saved?.settings.challengeSetup).toEqual(challengeSetup)
+      await profile.close()
+
+      const reloaded = await openProfileRuntime(undefined, indexedDb)
+      expect(selectCurrentPlayerData(reloaded.actor.getSnapshot())).toEqual(
+        saved,
+      )
+      const resumeOpener = runtimeOpener(
+        createRuntime(FIRST_MATCH_SEED, startingPosition, selection).runtime,
+      )
+      const resumed = await openCurrentWebMatchSession({
+        openRuntime: resumeOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(resumeOpener).toHaveBeenCalledWith({
+        ...selection,
+        matchSeed: FIRST_MATCH_SEED,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(resumed.match).toEqual(saved?.activeMatch)
+      const restartOpener = runtimeOpener(
+        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+      )
+      const restarted = await openFreshWebMatchSession({
+        mode: "challenge",
+        challengeSetup,
+        previousSession: resumed,
+        openRuntime: restartOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(restartOpener).toHaveBeenCalledWith({
+        ...selection,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(restarted.match).toMatchObject({
+        mode: "challenge",
+        playerColor: "black",
+        matchSeed: SECOND_MATCH_SEED,
+        startingPosition,
+      })
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.ratings,
+      ).toEqual(saved?.ratings)
+      await restarted.close()
+      await reloaded.close()
+    },
+  )
+
+  it("remembers Random without replacing it with the concrete board during restart or resume", async () => {
+    const layout = parseChess960PositionId(959)
+    if (!layout.ok) throw new Error("Invalid test layout")
+    const startingPosition = {
+      variant: "chess960",
+      chess960PositionId: layout.positionId,
+    } as const
+    const challengeSetup: ChallengeSetup = {
+      variant: "chess960",
+      chess960PositionId: null,
+      playerColor: "white",
+    }
+    const selection = { mode: "challenge", playerColor: "white" } as const
+    const profile = await openProfileRuntime()
+    const opener = runtimeOpener(
+      createRuntime(FIRST_MATCH_SEED, startingPosition, selection).runtime,
+    )
+    const first = await openFreshWebMatchSession({
+      mode: "challenge",
+      challengeSetup,
+      previousSession: null,
+      openRuntime: opener,
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+    })
+    expect(opener).toHaveBeenCalledWith({
+      ...selection,
+      setup: { variant: "chess960" },
+      signal: expect.any(AbortSignal),
+    })
+    const restarted = await openFreshWebMatchSession({
+      mode: "challenge",
+      challengeSetup,
+      previousSession: first,
+      openRuntime: runtimeOpener(
+        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+      ),
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+    })
+    expect(restarted.match.startingPosition).toEqual(startingPosition)
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.settings
+        .challengeSetup,
+    ).toEqual(challengeSetup)
+    await restarted.close()
+    const resumed = await openCurrentWebMatchSession({
+      openRuntime: runtimeOpener(
+        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+      ),
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+    })
+    expect(resumed.match.startingPosition).toEqual(startingPosition)
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.settings
+        .challengeSetup,
+    ).toEqual(challengeSetup)
+    await resumed.close()
+    await profile.close()
+  })
+
+  it("closes an aborted Challenge launch without saving its match or setup", async () => {
+    const profile = await openProfileRuntime()
+    const initial = selectCurrentPlayerData(profile.actor.getSnapshot())
+    const challengeSetup = {
+      variant: "standard",
+      playerColor: "black",
+      chess960PositionId: null,
+    } as const
+    const engine = createRuntime(
+      FIRST_MATCH_SEED,
+      { variant: "standard", chess960PositionId: null },
+      { mode: "challenge", playerColor: "black" },
+    )
+    const controller = new AbortController()
+    const openRuntime = vi.fn(async () => {
+      controller.abort()
+      return engine.runtime
+    })
+    await expect(
+      openFreshWebMatchSession({
+        mode: "challenge",
+        challengeSetup,
+        previousSession: null,
+        openRuntime,
+        profileActor: profile.actor,
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow("aborted")
+    expect(engine.close).toHaveBeenCalledOnce()
+    expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+      initial,
+    )
+    await profile.close()
+  })
+
   it("persists and resumes Chess960, then restarts the same layout with a fresh seed", async () => {
     const layout = parseChess960PositionId(0)
     if (!layout.ok) throw new Error("Invalid test layout")

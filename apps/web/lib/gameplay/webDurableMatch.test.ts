@@ -5,7 +5,10 @@ import {
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
 import { parseMatchMoveId } from "@mapachess/match/match-move"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import {
+  createInitialMatchPosition,
+  type MatchStartingPosition,
+} from "@mapachess/match/match-position"
 import {
   applyMatchTimelineMove,
   createMatchTimeline,
@@ -47,7 +50,55 @@ const requireMoveId = (uci: string) => {
   return result.moveId
 }
 
-describe("web Story durable match mapping", () => {
+describe("web durable match mapping", () => {
+  it.each(["white", "black"] as const)(
+    "round-trips Challenge identities for chosen %s without accepting Story or opposite-color identities",
+    (playerColor) => {
+      const parsed = parseChess960PositionId(959)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const positions: readonly MatchStartingPosition[] = [
+        { variant: "standard", chess960PositionId: null },
+        { variant: "chess960", chess960PositionId: parsed.positionId },
+      ]
+      for (const startingPosition of positions) {
+        const selection = { mode: "challenge", playerColor } as const
+        const fresh = buildFreshWebMatch({
+          mode: "challenge",
+          autoHintMode: "no-auto-hints",
+          playerEloAtStart: 550,
+          runtime: {
+            ...runtime,
+            playerColor,
+            startingPosition,
+            matchId: chickenMatchId(matchSeed, startingPosition, selection),
+            opponentPolicyFingerprint: chickenPolicyFingerprint(
+              startingPosition.variant,
+            ),
+          },
+        })
+        const decoded = decodeMapachessPlayerData({
+          ...createInitialMapachessPlayerData(),
+          activeMatch: fresh,
+        })
+        if (!decoded.ok || decoded.data.activeMatch === null)
+          throw new Error("Challenge save must decode")
+        expect(decoded.data.activeMatch).toEqual(fresh)
+        expect(resumeWebMatch(decoded.data.activeMatch).matchSeed).toBe(
+          matchSeed,
+        )
+        expect(() => resumeWebMatch({ ...fresh, mode: "story" })).toThrow(
+          "identity does not match",
+        )
+        expect(() =>
+          resumeWebMatch({
+            ...fresh,
+            playerColor: playerColor === "white" ? "black" : "white",
+          }),
+        ).toThrow("identity does not match")
+      }
+    },
+  )
+
   it.each([0, 959])(
     "round-trips Chess960 layout %i, its seed, and undone history",
     (layout) => {
