@@ -2,20 +2,27 @@ import { evaluatePositionWithStockfish } from "@mapachess/evaluation/position-ev
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
+import {
+  CHESS960_POSITION_COUNT,
+  parseChess960PositionId,
+} from "@mapachess/match/chess960-position"
 import type { MatchStartingPosition } from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
-import type { DeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
+import {
+  createDeterministicRandom,
+  type DeterministicRandomSeed,
+} from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
-import createStandardChickenOpponent, {
-  generateStandardChickenMatchSeed,
-  selectStandardStoryPlayerColor,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  standardChickenMatchId,
-  type StandardChickenCryptography,
-} from "../chicken/standardChickenOpponent"
+import createChickenOpponent, {
+  chickenMatchId,
+  chickenPolicyFingerprint,
+  generateChickenMatchSeed,
+  selectStoryPlayerColor,
+  type ChickenCryptography,
+} from "../chicken/chickenOpponent"
 import createWebStockfishSession, {
   type CreateWebStockfishSessionOptions,
 } from "../stockfish/createWebStockfishSession"
@@ -36,13 +43,15 @@ const HINT_WORKER_NAME = "mapachess-stockfish-18-better-hints" as const
 const EVALUATION_WORKER_NAME = "mapachess-stockfish-18-evaluation" as const
 
 export type OpenWebMatchRuntimeInput = Readonly<{
-  cryptography?: StandardChickenCryptography
+  cryptography?: ChickenCryptography
   openSession?: (
     configuration: StockfishEngineConfiguration,
     options?: CreateWebStockfishSessionOptions,
   ) => StockfishUciSession
   matchSeed?: DeterministicRandomSeed
-  startingPosition?: MatchStartingPosition
+  setup?:
+    | MatchStartingPosition
+    | Readonly<{ variant: "chess960"; chess960PositionId?: never }>
   signal?: AbortSignal
 }>
 
@@ -90,17 +99,32 @@ const closeAfterFailedOpen = async (
 export default async function openWebMatchRuntime(
   input: OpenWebMatchRuntimeInput = {},
 ): Promise<WebMatchRuntime> {
-  const startingPosition = input.startingPosition ?? {
+  const setup = input.setup ?? {
     chess960PositionId: null,
     variant: "standard",
+  }
+  const cryptography = input.cryptography ?? globalThis.crypto
+  const matchSeed = input.matchSeed ?? generateChickenMatchSeed(cryptography)
+  let startingPosition: MatchStartingPosition
+  if (setup.variant === "chess960" && setup.chess960PositionId === undefined) {
+    const random = createDeterministicRandom(matchSeed)
+    // Invariant: Story color owns the first draw; layout uses the next draw.
+    random.nextIndex(2)
+    const parsed = parseChess960PositionId(
+      random.nextIndex(CHESS960_POSITION_COUNT),
+    )
+    if (!parsed.ok) throw new Error("Generated Chess960 layout is invalid.")
+    startingPosition = {
+      variant: "chess960",
+      chess960PositionId: parsed.positionId,
+    }
+  } else {
+    startingPosition = setup
   }
   const singlePvConfiguration: StockfishEngineConfiguration = {
     ...SINGLE_PV_ENGINE_CONFIGURATION,
     variant: startingPosition.variant,
   }
-  const cryptography = input.cryptography ?? globalThis.crypto
-  const matchSeed =
-    input.matchSeed ?? generateStandardChickenMatchSeed(cryptography)
   const openSession = input.openSession ?? createWebStockfishSession
   const opponentSession = openSession(singlePvConfiguration, {
     workerName: OPPONENT_WORKER_NAME,
@@ -140,16 +164,20 @@ export default async function openWebMatchRuntime(
     close: () => closeOwnedSessions(sessions),
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
-    matchId: standardChickenMatchId(matchSeed),
+    matchId: chickenMatchId(matchSeed, startingPosition),
     matchSeed,
-    opponent: createStandardChickenOpponent(
+    opponent: createChickenOpponent(
       opponentSession,
       cryptography,
       matchSeed,
+      startingPosition.variant,
     ),
     opponentId: "chicken-stockfish",
-    opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-    playerColor: selectStandardStoryPlayerColor(matchSeed),
+    opponentPolicyFingerprint: chickenPolicyFingerprint(
+      startingPosition.variant,
+    ),
+    playerColor: selectStoryPlayerColor(matchSeed),
+    startingPosition,
     positionEvaluator: (request, signal) =>
       evaluatePositionWithStockfish(evaluationSession, request, signal),
   })

@@ -29,7 +29,7 @@ import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
   type StockfishOpponentDefinition,
 } from "@mapachess/match/stockfish-opponent"
-import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
+import { CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/chickenOpponent"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
@@ -179,7 +179,7 @@ export default function StandardChickenMatch({
         <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
           <div>
             <dt>Elo target</dt>
-            <dd>{STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO} · Provisional</dd>
+            <dd>{CHICKEN_PROVISIONAL_TARGET_ELO} · Provisional</dd>
           </div>
           <div>
             <dt>Clock</dt>

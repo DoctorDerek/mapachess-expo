@@ -2,7 +2,10 @@ import type { PositionEvaluator } from "@mapachess/evaluation/position-evaluator
 import type { BetterHintsAnalyst } from "@mapachess/match/better-hints"
 import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
 import type { MatchOpponent } from "@mapachess/match/match-machine"
-import type { MatchColor } from "@mapachess/match/match-position"
+import type {
+  MatchColor,
+  MatchStartingPosition,
+} from "@mapachess/match/match-position"
 import type { DeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type { StockfishUciIdentity } from "@mapachess/stockfish/uci-session"
 
@@ -17,4 +20,5 @@ export type WebMatchRuntime = Readonly<{
   opponentPolicyFingerprint: string
   playerColor: MatchColor
   positionEvaluator: PositionEvaluator
+  startingPosition: MatchStartingPosition
 }>

@@ -15,15 +15,15 @@ import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
+  chickenMatchId,
+  selectStoryPlayerColor,
+  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+} from "./chickenOpponent"
+import {
   buildFreshStandardChickenMatch,
   default as resumeStandardChickenMatch,
   type FreshStandardChickenMatchInput,
 } from "./standardChickenDurableMatch"
-import {
-  selectStandardStoryPlayerColor,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  standardChickenMatchId,
-} from "./standardChickenOpponent"
 
 const matchSeed = parseDeterministicRandomSeed(
   "00000001000000020000000300000004",
@@ -31,11 +31,11 @@ const matchSeed = parseDeterministicRandomSeed(
 )
 
 const runtime = Object.freeze({
-  matchId: standardChickenMatchId(matchSeed),
+  matchId: chickenMatchId(matchSeed),
   matchSeed,
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  playerColor: selectStandardStoryPlayerColor(matchSeed),
+  playerColor: selectStoryPlayerColor(matchSeed),
 }) satisfies FreshStandardChickenMatchInput["runtime"]
 
 const requireMoveId = (uci: string) => {

@@ -10,8 +10,8 @@ import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
-import type { StandardChickenCryptography } from "../chicken/standardChickenOpponent"
-import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "../chicken/standardChickenOpponent"
+import type { ChickenCryptography } from "../chicken/chickenOpponent"
+import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "../chicken/chickenOpponent"
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openWebMatchRuntime from "./openWebMatchRuntime"
 
@@ -39,7 +39,7 @@ const HINT_CONFIGURATION: StockfishEngineConfiguration = Object.freeze({
   variant: "standard",
 })
 
-const createCryptography = (): StandardChickenCryptography => {
+const createCryptography = (): ChickenCryptography => {
   const getRandomValues = <Value extends ArrayBufferView<ArrayBuffer> | null>(
     array: Value,
   ): Value => {

@@ -9,7 +9,7 @@ import stockfishOpponent, {
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
-import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
+import { CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/chickenOpponent"
 import {
   openCurrentStandardChickenMatchSession,
   openFreshStandardChickenMatchSession,
@@ -172,9 +172,9 @@ function MatchSessionExperience({
               </h1>
               <p className="text-mapachito-charcoal mt-6 max-w-2xl text-base leading-[1.65] font-semibold opacity-82">
                 Your first animal challenge is a complete local game of Standard
-                chess. The {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target
-                stays explicitly provisional while calibration and human
-                playtesting continue.
+                chess. The {CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target stays
+                explicitly provisional while calibration and human playtesting
+                continue.
               </p>
             </div>
             <div
@@ -210,8 +210,7 @@ function MatchSessionExperience({
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Strength</dt>
                   <dd>
-                    Provisional {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo
-                    target
+                    Provisional {CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target
                   </dd>
                 </div>
               </dl>

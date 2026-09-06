@@ -9,10 +9,10 @@ import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import {
-  selectStandardStoryPlayerColor,
+  chickenMatchId,
+  selectStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  standardChickenMatchId,
-} from "./standardChickenOpponent"
+} from "./chickenOpponent"
 
 const STANDARD_CHICKEN_STARTING_POSITION = Object.freeze({
   chess960PositionId: null,
@@ -83,11 +83,11 @@ export default function resumeStandardChickenMatch(
 
   const matchSeed = parseDeterministicRandomSeed(
     record.matchSeed,
-    "Saved Standard Chicken match seed",
+    "Saved Chicken match seed",
   )
   if (
-    record.matchId !== standardChickenMatchId(matchSeed) ||
-    record.playerColor !== selectStandardStoryPlayerColor(matchSeed)
+    record.matchId !== chickenMatchId(matchSeed) ||
+    record.playerColor !== selectStoryPlayerColor(matchSeed)
   ) {
     throw new TypeError("Saved Chicken identity does not match its seed.")
   }

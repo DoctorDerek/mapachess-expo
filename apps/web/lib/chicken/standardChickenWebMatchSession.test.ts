@@ -8,12 +8,12 @@ import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move
 import type { OpenWebMatchRuntimeInput } from "../gameplay/openWebMatchRuntime"
 import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
-import { buildFreshStandardChickenMatch } from "./standardChickenDurableMatch"
 import {
-  selectStandardStoryPlayerColor,
+  chickenMatchId,
+  selectStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  standardChickenMatchId,
-} from "./standardChickenOpponent"
+} from "./chickenOpponent"
+import { buildFreshStandardChickenMatch } from "./standardChickenDurableMatch"
 import {
   openCurrentStandardChickenMatchSession,
   openFreshStandardChickenMatchSession,
@@ -47,7 +47,7 @@ const createRuntime = (seed: string) => {
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: standardChickenMatchId(matchSeed),
+    matchId: chickenMatchId(matchSeed),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -60,7 +60,8 @@ const createRuntime = (seed: string) => {
     }),
     opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
     opponentId: "chicken-stockfish",
-    playerColor: selectStandardStoryPlayerColor(matchSeed),
+    playerColor: selectStoryPlayerColor(matchSeed),
+    startingPosition: { variant: "standard", chess960PositionId: null },
     positionEvaluator: vi.fn(async (request) =>
       Object.freeze({
         evaluation: Object.freeze({ kind: "draw" as const }),

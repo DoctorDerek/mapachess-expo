@@ -3,6 +3,8 @@ import type {
   MatchOpponentRequest,
 } from "@mapachess/match/match-machine"
 import type { LegalMatchMove } from "@mapachess/match/match-move"
+import type { MatchStartingPosition } from "@mapachess/match/match-position"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
@@ -19,23 +21,33 @@ import {
   STOCKFISH_18_WEB_WASM_ARTIFACT,
 } from "@mapachess/stockfish/web-runtime-identity"
 
-export const STANDARD_CHICKEN_NODE_LIMIT = 10_000 as const
-export const STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
-export const STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO = 100 as const
-export const STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION =
+export const CHICKEN_NODE_LIMIT = 10_000 as const
+export const CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
+export const CHICKEN_PROVISIONAL_TARGET_ELO = 100 as const
+export const CHICKEN_WEB_SEED_DERIVATION_VERSION =
   "mapachess-web-sha256-position-state/v1" as const
 export const STANDARD_CHICKEN_WEB_POLICY_VERSION =
   "mapachess-standard-chicken-web-policy/v1" as const
-export const STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT = [
-  STANDARD_CHICKEN_WEB_POLICY_VERSION,
+const CHICKEN_WEB_POLICY_ENGINE_FINGERPRINT = [
   `stockfish-js-source/${STOCKFISH_18_WEB_SOURCE_REVISION}`,
   `wasm-sha256/${STOCKFISH_18_WEB_WASM_ARTIFACT.sha256}`,
-  `nodes/${String(STANDARD_CHICKEN_NODE_LIMIT)}`,
-  `random-basis-points/${String(STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS)}`,
-  STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION,
+  `nodes/${String(CHICKEN_NODE_LIMIT)}`,
+  `random-basis-points/${String(CHICKEN_RANDOM_MOVE_BASIS_POINTS)}`,
+  CHICKEN_WEB_SEED_DERIVATION_VERSION,
 ].join("|")
 
-export type StandardChickenCryptography = Readonly<{
+export function chickenPolicyFingerprint(variant: MatchVariant): string {
+  const version =
+    variant === "standard"
+      ? STANDARD_CHICKEN_WEB_POLICY_VERSION
+      : "mapachess-chess960-chicken-web-policy/v1"
+  return `${version}|${CHICKEN_WEB_POLICY_ENGINE_FINGERPRINT}`
+}
+
+export const STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT =
+  chickenPolicyFingerprint("standard")
+
+export type ChickenCryptography = Readonly<{
   getRandomValues: Crypto["getRandomValues"]
   subtle: Pick<SubtleCrypto, "digest">
 }>
@@ -59,39 +71,45 @@ const compareLegalMovesByUci = (
   right: LegalMatchMove,
 ): number => (left.uci < right.uci ? -1 : left.uci > right.uci ? 1 : 0)
 
-export function generateStandardChickenMatchSeed(
-  cryptography: StandardChickenCryptography,
+export function generateChickenMatchSeed(
+  cryptography: ChickenCryptography,
 ): DeterministicRandomSeed {
   const words = cryptography.getRandomValues(new Uint32Array(4))
   const seed = [...words]
     .map((word) => word.toString(16).padStart(8, "0"))
     .join("")
 
-  return parseDeterministicRandomSeed(seed, "Standard Chicken match seed")
+  return parseDeterministicRandomSeed(seed, "Chicken match seed")
 }
 
-export function selectStandardStoryPlayerColor(
+export function selectStoryPlayerColor(
   matchSeed: DeterministicRandomSeed,
 ): "black" | "white" {
   const random = createDeterministicRandom(matchSeed)
   return random.nextIndex(2) === 0 ? "white" : "black"
 }
 
-export function standardChickenMatchId(
+export function chickenMatchId(
   matchSeed: DeterministicRandomSeed,
+  startingPosition: MatchStartingPosition = {
+    variant: "standard",
+    chess960PositionId: null,
+  },
 ): string {
-  return `standard-story-chicken/${matchSeed}`
+  return startingPosition.variant === "standard"
+    ? `standard-story-chicken/${matchSeed}`
+    : `chess960-story-chicken/${String(startingPosition.chess960PositionId)}/${matchSeed}`
 }
 
 async function deriveOpponentPositionSeed(
-  cryptography: StandardChickenCryptography,
+  cryptography: ChickenCryptography,
   matchSeed: DeterministicRandomSeed,
   request: MatchOpponentRequest,
   signal: AbortSignal,
 ): Promise<DeterministicRandomSeed> {
   throwIfSelectionAborted(signal)
   const canonicalInput = JSON.stringify([
-    STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION,
+    CHICKEN_WEB_SEED_DERIVATION_VERSION,
     matchSeed,
     request.requestId,
   ])
@@ -103,27 +121,31 @@ async function deriveOpponentPositionSeed(
 
   return parseDeterministicRandomSeed(
     first128BitsAsHexadecimal(digest),
-    "Standard Chicken position seed",
+    "Chicken position seed",
   )
 }
 
-const requireStandardPosition = (request: MatchOpponentRequest): void => {
+const requireVariantPosition = (
+  request: MatchOpponentRequest,
+  variant: MatchVariant,
+): void => {
   if (
-    request.initialPosition.variant !== "standard" ||
-    request.position.variant !== "standard"
+    request.initialPosition.variant !== variant ||
+    request.position.variant !== variant
   ) {
-    throw new TypeError("Standard Chicken received a non-Standard position.")
+    throw new TypeError("Chicken received a position for a different variant.")
   }
 }
 
-export default function createStandardChickenOpponent(
+export default function createChickenOpponent(
   session: StockfishEngineSession,
-  cryptography: StandardChickenCryptography,
+  cryptography: ChickenCryptography,
   matchSeed: DeterministicRandomSeed,
+  variant: MatchVariant = "standard",
 ): MatchOpponent {
   return Object.freeze({
     selectMove: async (request, signal) => {
-      requireStandardPosition(request)
+      requireVariantPosition(request, variant)
       const random = createDeterministicRandom(
         await deriveOpponentPositionSeed(
           cryptography,
@@ -137,7 +159,7 @@ export default function createStandardChickenOpponent(
       )
       const source = selectOpponentMoveSource(
         random,
-        STANDARD_CHICKEN_RANDOM_MOVE_BASIS_POINTS,
+        CHICKEN_RANDOM_MOVE_BASIS_POINTS,
       )
 
       if (source === "uniform-random-legal") {
@@ -146,7 +168,7 @@ export default function createStandardChickenOpponent(
 
       const result = await session.search(
         {
-          nodeLimit: STANDARD_CHICKEN_NODE_LIMIT,
+          nodeLimit: CHICKEN_NODE_LIMIT,
           position: {
             fen: request.initialPosition.fen,
             moves: request.acceptedMoves.map((move) => move.uci),
