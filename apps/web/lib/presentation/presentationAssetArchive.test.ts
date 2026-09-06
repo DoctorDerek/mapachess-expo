@@ -222,7 +222,7 @@ describe("licensed presentation asset preparation", () => {
     },
   )
 
-  it.each(["x".repeat(32), FIXTURE_KEY.repeat(2)])(
+  it.each(["x", "x".repeat(32), FIXTURE_KEY.repeat(2)])(
     "replaces an archive through the creator CLI with the exact chosen password (%s)",
     async (key) => {
       await writeFile(archivePath, "previous noncommercial archive fixture")
@@ -246,7 +246,6 @@ describe("licensed presentation asset preparation", () => {
   it.each([
     { key: undefined, reason: "is required to encrypt or decrypt" },
     { key: "", reason: "is required to encrypt or decrypt" },
-    { key: "x".repeat(31), reason: "at least 32 characters" },
   ])(
     "preserves the existing archive when the creator rejects its key ($key)",
     async ({ key, reason }) => {
@@ -262,7 +261,7 @@ describe("licensed presentation asset preparation", () => {
     },
   )
 
-  it("decrypts an existing archive without applying the creation minimum", async () => {
+  it("decrypts an existing archive with the exact supplied password", async () => {
     const key = " existing fixture "
     const writer = new ZipWriter(new Uint8ArrayWriter(), {
       password: key,

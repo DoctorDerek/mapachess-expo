@@ -26,7 +26,6 @@ export const LICENSED_PRESENTATION_ASSET_KEY_VARIABLE =
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "../..")
 const ARCHIVE_ENTRY_DATE = new Date("2026-09-03T00:00:00.000Z")
-const MINIMUM_ARCHIVE_CREATION_KEY_LENGTH = 32
 const ASSET_FAILURE_MESSAGES = Object.freeze({
   manifest: "The licensed presentation asset manifest is invalid.",
   path: "An asset path resolves outside its destination.",
@@ -34,7 +33,6 @@ const ASSET_FAILURE_MESSAGES = Object.freeze({
   archive: "The licensed presentation archive is invalid.",
   incompleteArchive: "The licensed presentation archive is incomplete.",
   key: `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE} is required to encrypt or decrypt the presentation archive.`,
-  creationKey: `The protected asset key must contain at least ${MINIMUM_ARCHIVE_CREATION_KEY_LENGTH} characters to create an archive.`,
   missingArchive: "The licensed presentation asset archive is required.",
 })
 
@@ -336,8 +334,6 @@ export const createLicensedPresentationAssetArchive = async (
   const paths = resolvePresentationAssetPaths(repositoryRoot)
   loadLocalEnvironment(paths.localEnvironment)
   const assetKey = requireAssetKey()
-  if (assetKey.length < MINIMUM_ARCHIVE_CREATION_KEY_LENGTH)
-    throw new Error(ASSET_FAILURE_MESSAGES.creationKey)
   const manifest = await readLicensedPresentationAssetManifest(paths.manifest)
   await assertValidAssetFiles(paths.localSource, manifest)
 

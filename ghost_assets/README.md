@@ -108,11 +108,10 @@ When using the environment file, quote values containing `#` or leading/trailing
 spaces so the dotenv parser preserves the password. See
 [Node's environment-file syntax](https://nodejs.org/api/environment_variables.html#dotenv).
 
-Following WAYVM's archive-creation policy, the password must contain at least
-32 characters when creating an archive. There is no exact-length or character-set
-restriction, and the supplied password is not trimmed or normalized. Decryption
-uses the existing password unchanged without imposing the creation minimum.
-Missing or empty creation passwords fail instead of producing plaintext.
+Creation and decryption use the exact supplied password, without a minimum
+length, exact-length requirement, character-set restriction, trimming, or
+normalization. Missing or empty creation passwords fail instead of producing
+plaintext. Choose and retain a strong, unique password privately.
 
 The command validates `vendor/presentation-assets/` against the manifest and
 writes or replaces `ghost_assets/presentation-assets.zip` with encrypted data.
