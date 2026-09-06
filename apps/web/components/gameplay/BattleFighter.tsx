@@ -1,7 +1,13 @@
 "use client"
 
 import { motion, useReducedMotion } from "motion/react"
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+} from "react"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import type {
   ResolvedSpritePresentation,
@@ -14,6 +20,7 @@ const ATTACKER_TRAVEL_PIXELS_PER_STEP = 24
 const VICTIM_RECOIL_PIXELS = 10
 const MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS = 60
 const DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS = 80
+const SPRITE_ANIMATION_NAME = "mapachess-battle-sprite-frames"
 
 type BattleSpriteStyle = CSSProperties &
   Readonly<{
@@ -89,9 +96,7 @@ const spriteStyle = (
     animationFillMode:
       playback === "once-hold-final-frame" ? "forwards" : "none",
     animationIterationCount: playback === "loop" ? "infinite" : 1,
-    animationName: shouldReduceMotion
-      ? undefined
-      : "mapachess-battle-sprite-frames",
+    animationName: shouldReduceMotion ? undefined : SPRITE_ANIMATION_NAME,
     animationTimingFunction:
       animation.frameCount === 1
         ? "step-end"
@@ -151,6 +156,18 @@ export default function BattleFighter({
     }
   }
 
+  const completeSpriteAnimation = (
+    event: AnimationEvent<HTMLSpanElement>,
+  ): void => {
+    if (
+      event.target === event.currentTarget &&
+      event.animationName === SPRITE_ANIMATION_NAME &&
+      !shouldReduceMotion
+    ) {
+      completeCurrentAnimation()
+    }
+  }
+
   useEffect(() => {
     if (shouldReduceMotion && shouldReportCompletion) {
       completeCurrentAnimation()
@@ -184,7 +201,9 @@ export default function BattleFighter({
           duration: animationDurationSeconds,
           ease: "easeInOut",
         }}
-        {...(shouldReduceMotion || (!hasNextStep && !shouldReportCompletion)
+        {...(presentation.kind === "sprite" ||
+        shouldReduceMotion ||
+        !shouldReportCompletion
           ? {}
           : { onAnimationComplete: completeCurrentAnimation })}
       >
@@ -196,6 +215,12 @@ export default function BattleFighter({
             <span
               className="drop-shadow-mapachito-charcoal absolute block bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [--sprite-scale:var(--sprite-mobile-scale)] [animation-direction:normal] [image-rendering:pixelated] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
               key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
+              onAnimationEnd={completeSpriteAnimation}
+              onAnimationIteration={
+                hasNextStep || shouldReportCompletion
+                  ? completeSpriteAnimation
+                  : undefined
+              }
               style={spriteStyle(
                 presentation,
                 renderedStepIndex,
