@@ -5,7 +5,6 @@ import matchMachine from "@mapachess/match/match-machine"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import { buildFreshStandardChickenMatch } from "../chicken/standardChickenDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
   selectWebMatchSession,
@@ -13,6 +12,7 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
+import { buildFreshWebStoryMatch } from "./webStoryDurableMatch"
 
 const initialPosition = createInitialMatchPosition({
   chess960PositionId: null,
@@ -48,7 +48,7 @@ const createSession = (seed: string): WebMatchSession => {
       throw new Error("Web session test does not request evaluation.")
     }),
   }) satisfies WebMatchRuntime
-  const match = buildFreshStandardChickenMatch({
+  const match = buildFreshWebStoryMatch({
     autoHintMode: "auto-move-hints",
     playerEloAtStart: 100,
     runtime,

@@ -5,20 +5,20 @@ import { waitFor } from "xstate"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import type { OpenWebMatchRuntimeInput } from "../gameplay/openWebMatchRuntime"
-import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
-import openWebProfileRuntime from "../profile/openWebProfileRuntime"
 import {
   chickenMatchId,
   selectStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-} from "./chickenOpponent"
-import { buildFreshStandardChickenMatch } from "./standardChickenDurableMatch"
+} from "../chicken/chickenOpponent"
+import openWebProfileRuntime from "../profile/openWebProfileRuntime"
+import type { OpenWebMatchRuntimeInput } from "./openWebMatchRuntime"
+import type { WebMatchRuntime } from "./webMatchRuntime"
+import { buildFreshWebStoryMatch } from "./webStoryDurableMatch"
 import {
-  openCurrentStandardChickenMatchSession,
-  openFreshStandardChickenMatchSession,
-  returnStandardChickenMatchSessionToMenu,
-} from "./standardChickenWebMatchSession"
+  openCurrentWebStoryMatchSession,
+  openFreshWebStoryMatchSession,
+  returnWebStoryMatchSessionToMenu,
+} from "./webStoryMatchSession"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
@@ -81,7 +81,8 @@ describe("Standard Chicken web match session ownership", () => {
   it("persists a fresh session and closes every owned resource once", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
-    const session = await openFreshStandardChickenMatchSession({
+    const session = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(engineRuntime.runtime),
       previousSession: null,
       profileActor: profileRuntime.actor,
@@ -106,14 +107,16 @@ describe("Standard Chicken web match session ownership", () => {
     const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
     const secondRuntime = createRuntime(SECOND_MATCH_SEED)
-    const firstSession = await openFreshStandardChickenMatchSession({
+    const firstSession = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(firstRuntime.runtime),
       previousSession: null,
       profileActor: profileRuntime.actor,
       signal: new AbortController().signal,
     })
 
-    const secondSession = await openFreshStandardChickenMatchSession({
+    const secondSession = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(secondRuntime.runtime),
       previousSession: firstSession,
       profileActor: profileRuntime.actor,
@@ -134,7 +137,8 @@ describe("Standard Chicken web match session ownership", () => {
   it("resumes the exact saved seed without replacing the active match", async () => {
     const profileRuntime = await openProfileRuntime()
     const initialRuntime = createRuntime(FIRST_MATCH_SEED)
-    const initialSession = await openFreshStandardChickenMatchSession({
+    const initialSession = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(initialRuntime.runtime),
       previousSession: null,
       profileActor: profileRuntime.actor,
@@ -144,7 +148,7 @@ describe("Standard Chicken web match session ownership", () => {
     const resumedRuntime = createRuntime(FIRST_MATCH_SEED)
     const openRuntime = runtimeOpener(resumedRuntime.runtime)
 
-    const resumedSession = await openCurrentStandardChickenMatchSession({
+    const resumedSession = await openCurrentWebStoryMatchSession({
       openRuntime,
       profileActor: profileRuntime.actor,
       signal: new AbortController().signal,
@@ -153,6 +157,7 @@ describe("Standard Chicken web match session ownership", () => {
     expect(openRuntime).toHaveBeenCalledWith({
       matchSeed: FIRST_MATCH_SEED,
       signal: expect.any(AbortSignal),
+      setup: { variant: "standard", chess960PositionId: null },
     })
     expect(resumedSession.match).toEqual(initialSession.match)
     await resumedSession.close()
@@ -162,14 +167,15 @@ describe("Standard Chicken web match session ownership", () => {
   it("closes the session before clearing its verified active match", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
-    const session = await openFreshStandardChickenMatchSession({
+    const session = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(engineRuntime.runtime),
       previousSession: null,
       profileActor: profileRuntime.actor,
       signal: new AbortController().signal,
     })
 
-    await returnStandardChickenMatchSessionToMenu({
+    await returnWebStoryMatchSessionToMenu({
       profileActor: profileRuntime.actor,
       session,
       signal: new AbortController().signal,
@@ -185,7 +191,8 @@ describe("Standard Chicken web match session ownership", () => {
   it("resumes a replacement already accepted during a restart retry", async () => {
     const profileRuntime = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
-    const firstSession = await openFreshStandardChickenMatchSession({
+    const firstSession = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime: runtimeOpener(firstRuntime.runtime),
       previousSession: null,
       profileActor: profileRuntime.actor,
@@ -194,7 +201,7 @@ describe("Standard Chicken web match session ownership", () => {
     await firstSession.close()
 
     const acceptedRuntime = createRuntime(SECOND_MATCH_SEED)
-    const acceptedMatch = buildFreshStandardChickenMatch({
+    const acceptedMatch = buildFreshWebStoryMatch({
       autoHintMode: firstSession.match.autoHintMode,
       playerEloAtStart: firstSession.match.playerEloAtStart,
       runtime: acceptedRuntime.runtime,
@@ -208,7 +215,8 @@ describe("Standard Chicken web match session ownership", () => {
     const resumedRuntime = createRuntime(SECOND_MATCH_SEED)
     const openRuntime = runtimeOpener(resumedRuntime.runtime)
 
-    const resumedSession = await openFreshStandardChickenMatchSession({
+    const resumedSession = await openFreshWebStoryMatchSession({
+      variant: "standard",
       openRuntime,
       previousSession: firstSession,
       profileActor: profileRuntime.actor,
@@ -218,6 +226,7 @@ describe("Standard Chicken web match session ownership", () => {
     expect(openRuntime).toHaveBeenCalledWith({
       matchSeed: SECOND_MATCH_SEED,
       signal: expect.any(AbortSignal),
+      setup: { variant: "standard", chess960PositionId: null },
     })
     expect(resumedSession.match).toEqual(acceptedMatch)
     await resumedSession.close()

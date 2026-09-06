@@ -18,12 +18,12 @@ import {
   chickenMatchId,
   selectStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-} from "./chickenOpponent"
+} from "../chicken/chickenOpponent"
 import {
-  buildFreshStandardChickenMatch,
-  default as resumeStandardChickenMatch,
-  type FreshStandardChickenMatchInput,
-} from "./standardChickenDurableMatch"
+  buildFreshWebStoryMatch,
+  default as resumeWebStoryMatch,
+  type FreshWebStoryMatchInput,
+} from "./webStoryDurableMatch"
 
 const matchSeed = parseDeterministicRandomSeed(
   "00000001000000020000000300000004",
@@ -36,7 +36,8 @@ const runtime = Object.freeze({
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
   playerColor: selectStoryPlayerColor(matchSeed),
-}) satisfies FreshStandardChickenMatchInput["runtime"]
+  startingPosition: { variant: "standard", chess960PositionId: null },
+}) satisfies FreshWebStoryMatchInput["runtime"]
 
 const requireMoveId = (uci: string) => {
   const result = parseMatchMoveId(uci)
@@ -46,7 +47,7 @@ const requireMoveId = (uci: string) => {
 
 describe("Standard Chicken durable match mapping", () => {
   it("builds the exact cursor-zero record for a fresh runtime", () => {
-    const record = buildFreshStandardChickenMatch({
+    const record = buildFreshWebStoryMatch({
       autoHintMode: "no-auto-hints",
       playerEloAtStart: 100,
       runtime,
@@ -75,7 +76,7 @@ describe("Standard Chicken durable match mapping", () => {
   })
 
   it("reconstructs the full branch while retaining the saved cursor", () => {
-    const fresh = buildFreshStandardChickenMatch({
+    const fresh = buildFreshWebStoryMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -97,7 +98,7 @@ describe("Standard Chicken durable match mapping", () => {
       pieceHintsUsed: true,
     })
 
-    const resumed = resumeStandardChickenMatch(saved)
+    const resumed = resumeWebStoryMatch(saved)
     expect(resumed.matchSeed).toBe(matchSeed)
     expect(resumed.timeline.cursor).toBe(0)
     expect(resumed.timeline.transitions).toHaveLength(2)
@@ -105,14 +106,14 @@ describe("Standard Chicken durable match mapping", () => {
   })
 
   it("rejects a saved match from another Chicken policy", () => {
-    const fresh = buildFreshStandardChickenMatch({
+    const fresh = buildFreshWebStoryMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })
 
     expect(() =>
-      resumeStandardChickenMatch({
+      resumeWebStoryMatch({
         ...fresh,
         opponentPolicyFingerprint: `${STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT}/changed`,
       }),
@@ -120,7 +121,7 @@ describe("Standard Chicken durable match mapping", () => {
   })
 
   it("round-trips the implemented identity but rejects catalog-only opponents", () => {
-    const record = buildFreshStandardChickenMatch({
+    const record = buildFreshWebStoryMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -135,8 +136,8 @@ describe("Standard Chicken durable match mapping", () => {
     if (!decoded.ok || decoded.data.activeMatch === null) {
       throw new Error("The implemented Chicken match must round-trip.")
     }
-    expect(resumeStandardChickenMatch(decoded.data.activeMatch)).toEqual(
-      resumeStandardChickenMatch(record),
+    expect(resumeWebStoryMatch(decoded.data.activeMatch)).toEqual(
+      resumeWebStoryMatch(record),
     )
     expect(
       decodeMapachessPlayerData({
