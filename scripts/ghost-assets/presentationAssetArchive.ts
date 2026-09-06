@@ -12,6 +12,8 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { loadEnvFile } from "node:process"
 import { fileURLToPath } from "node:url"
 import {
+  ERR_INVALID_PASSWORD,
+  ERR_INVALID_SIGNATURE,
   Uint8ArrayReader,
   Uint8ArrayWriter,
   ZipReader,
@@ -24,6 +26,15 @@ export const LICENSED_PRESENTATION_ASSET_KEY_VARIABLE =
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "../..")
 const ARCHIVE_ENTRY_DATE = new Date("2026-09-03T00:00:00.000Z")
+const ASSET_FAILURE_MESSAGES = Object.freeze({
+  manifest: "The licensed presentation asset manifest is invalid.",
+  path: "An asset path resolves outside its destination.",
+  integrity: "Licensed presentation assets failed integrity checks.",
+  archive: "The licensed presentation archive is invalid.",
+  incompleteArchive: "The licensed presentation archive is incomplete.",
+  key: `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE} must contain the existing 43-character archive key without added quotes or whitespace.`,
+  missingArchive: "The licensed presentation asset archive is required.",
+})
 
 const resolvePresentationAssetPaths = (repositoryRoot: string) => ({
   manifest: join(
@@ -51,6 +62,33 @@ type LicensedPresentationAssetFile = Readonly<{
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
 
+export const describeLicensedPresentationAssetFailure = (
+  error: unknown,
+): string => {
+  if (error instanceof Error) {
+    const knownMessage = Object.values(ASSET_FAILURE_MESSAGES).find(
+      (message) => message === error.message,
+    )
+    if (knownMessage) return knownMessage
+    if (
+      error.message === ERR_INVALID_PASSWORD ||
+      error.message === ERR_INVALID_SIGNATURE
+    )
+      return `The presentation archive could not authenticate with ${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE}. Verify the existing key and archive pairing; do not regenerate either.`
+  }
+
+  if (isRecord(error)) {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR")
+      return "A required presentation asset file or directory is missing. Verify the committed manifest and archive are available to this build."
+    if (error.code === "EACCES" || error.code === "EPERM")
+      return "Presentation asset preparation cannot access its input or output directories. Check build filesystem permissions."
+    if (error.code === "ENOSPC")
+      return "Presentation asset preparation ran out of filesystem space."
+  }
+
+  return "Licensed presentation asset preparation failed with an unrecognized error; private error details were withheld."
+}
+
 const parseManifestFile = (value: unknown): LicensedPresentationAssetFile => {
   if (
     !isRecord(value) ||
@@ -59,7 +97,7 @@ const parseManifestFile = (value: unknown): LicensedPresentationAssetFile => {
     typeof value.sha256 !== "string" ||
     !/^[a-f0-9]{64}$/.test(value.sha256)
   )
-    throw new Error("The licensed presentation asset manifest is invalid.")
+    throw new Error(ASSET_FAILURE_MESSAGES.manifest)
 
   return Object.freeze({ path: value.path, sha256: value.sha256 })
 }
@@ -73,13 +111,13 @@ export const readLicensedPresentationAssetManifest = async (
   )
 
   if (!isRecord(parsedManifest) || !Array.isArray(parsedManifest.files))
-    throw new Error("The licensed presentation asset manifest is invalid.")
+    throw new Error(ASSET_FAILURE_MESSAGES.manifest)
 
   const files = parsedManifest.files.map(parseManifestFile)
   const uniquePaths = new Set(files.map((file) => file.path))
 
   if (files.length === 0 || uniquePaths.size !== files.length)
-    throw new Error("The licensed presentation asset manifest is invalid.")
+    throw new Error(ASSET_FAILURE_MESSAGES.manifest)
 
   return Object.freeze(files)
 }
@@ -103,7 +141,7 @@ const resolveContainedAssetPath = (
     relativeResolvedPath === ".." ||
     relativeResolvedPath.startsWith(`..${sep}`)
   )
-    throw new Error("An asset path resolves outside its destination.")
+    throw new Error(ASSET_FAILURE_MESSAGES.path)
 
   return resolvedAssetPath
 }
@@ -140,7 +178,7 @@ const assertValidAssetFiles = async (
   manifest: readonly LicensedPresentationAssetFile[],
 ): Promise<void> => {
   if (!(await hasValidAssetFiles(sourceRoot, manifest)))
-    throw new Error("Licensed presentation assets failed integrity checks.")
+    throw new Error(ASSET_FAILURE_MESSAGES.integrity)
 }
 
 const extractEncryptedArchive = async (
@@ -171,7 +209,7 @@ const extractEncryptedArchive = async (
         !expectedPaths.has(normalizedPath) ||
         extractedPaths.has(normalizedPath)
       )
-        throw new Error("The licensed presentation archive is invalid.")
+        throw new Error(ASSET_FAILURE_MESSAGES.archive)
 
       const entryData = await entry.getData(new Uint8ArrayWriter(), {
         checkAmbiguity: true,
@@ -180,7 +218,7 @@ const extractEncryptedArchive = async (
       })
 
       if (entryData === undefined)
-        throw new Error("The licensed presentation archive is invalid.")
+        throw new Error(ASSET_FAILURE_MESSAGES.archive)
 
       const destinationPath = resolveContainedAssetPath(
         destinationRoot,
@@ -195,7 +233,7 @@ const extractEncryptedArchive = async (
   }
 
   if (extractedPaths.size !== expectedPaths.size)
-    throw new Error("The licensed presentation archive is incomplete.")
+    throw new Error(ASSET_FAILURE_MESSAGES.incompleteArchive)
 
   await assertValidAssetFiles(destinationRoot, manifest)
 }
@@ -207,7 +245,7 @@ const loadLocalEnvironment = (environmentPath: string): void => {
 const requireAssetKey = (): string => {
   const assetKey = process.env[LICENSED_PRESENTATION_ASSET_KEY_VARIABLE]
   if (assetKey === undefined || !/^[A-Za-z0-9_-]{43}$/.test(assetKey))
-    throw new Error("The licensed presentation asset key is required.")
+    throw new Error(ASSET_FAILURE_MESSAGES.key)
   return assetKey
 }
 
@@ -216,7 +254,7 @@ const prepareArchiveSource = async (
   manifest: readonly LicensedPresentationAssetFile[],
 ): Promise<string> => {
   if (!existsSync(paths.archive))
-    throw new Error("The licensed presentation asset archive is required.")
+    throw new Error(ASSET_FAILURE_MESSAGES.missingArchive)
 
   const temporaryExtractionRoot = join(
     paths.vendor,
