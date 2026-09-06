@@ -99,7 +99,79 @@ const createSessionQueue = (sessions: readonly StockfishUciSession[]) => {
   )
 }
 
-describe("Standard Chicken runtime ownership", () => {
+describe("web match runtime ownership", () => {
+  it("configures all three Chess960 workers and retains an explicit restart layout", async () => {
+    const openFixture = async (
+      input: Parameters<typeof openWebMatchRuntime>[0],
+    ) => {
+      const sessions = [0, 1, 2].map(() =>
+        createSession(async () => ENGINE_IDENTITY),
+      )
+      const openSession = createSessionQueue(
+        sessions.map((entry) => entry.session),
+      )
+      const runtime = await openWebMatchRuntime({
+        ...input,
+        cryptography: createCryptography(),
+        openSession,
+      })
+      return { runtime, openSession }
+    }
+    const first = await openFixture({ setup: { variant: "chess960" } })
+    const secondSeed = parseDeterministicRandomSeed(
+      "ffffffffffffffffffffffffffffffff",
+    )
+    const restarted = await openFixture({
+      setup: first.runtime.startingPosition,
+      matchSeed: secondSeed,
+    })
+    const fresh = await openFixture({
+      setup: { variant: "chess960" },
+      matchSeed: secondSeed,
+    })
+    const resumed = await openFixture({
+      setup: first.runtime.startingPosition,
+      matchSeed: first.runtime.matchSeed,
+    })
+    try {
+      expect(
+        first.openSession.mock.calls.map(([configuration]) => configuration),
+      ).toEqual([
+        { ...OPPONENT_CONFIGURATION, variant: "chess960" },
+        { ...HINT_CONFIGURATION, variant: "chess960" },
+        { ...OPPONENT_CONFIGURATION, variant: "chess960" },
+      ])
+      expect(first.runtime.startingPosition.variant).toBe("chess960")
+      expect(first.runtime.startingPosition.chess960PositionId).toBe(0)
+      expect(
+        first.runtime.startingPosition.chess960PositionId,
+      ).toBeGreaterThanOrEqual(0)
+      expect(first.runtime.startingPosition.chess960PositionId).toBeLessThan(
+        960,
+      )
+      expect(restarted.runtime.startingPosition).toEqual(
+        first.runtime.startingPosition,
+      )
+      expect(restarted.runtime.matchId).not.toBe(first.runtime.matchId)
+      expect(fresh.runtime.startingPosition).not.toEqual(
+        first.runtime.startingPosition,
+      )
+      expect(fresh.runtime.startingPosition.chess960PositionId).toBe(439)
+      expect(restarted.runtime.playerColor).not.toBe(first.runtime.playerColor)
+      expect(resumed.runtime.matchId).toBe(first.runtime.matchId)
+      expect(resumed.runtime.playerColor).toBe(first.runtime.playerColor)
+      expect(first.runtime.opponentPolicyFingerprint).not.toBe(
+        STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+      )
+    } finally {
+      await Promise.all(
+        [first, restarted, fresh, resumed].map(({ runtime }) =>
+          runtime.close(),
+        ),
+      )
+    }
+  })
+
   it("boots isolated opponent, Better Hints, and evaluation sessions", async () => {
     const opponent = createSession(async () => ENGINE_IDENTITY)
     const hints = createSession(async () => ENGINE_IDENTITY)

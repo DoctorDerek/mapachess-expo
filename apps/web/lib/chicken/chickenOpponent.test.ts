@@ -5,7 +5,10 @@ import {
   applyMatchMove,
   listLegalMatchMoves,
 } from "@mapachess/match/match-move"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import {
+  createInitialMatchPosition,
+  reconstructMatchPosition,
+} from "@mapachess/match/match-position"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
@@ -115,7 +118,53 @@ const createSession = (
   return { search, session }
 }
 
-describe("provisional Standard Chicken opponent", () => {
+describe("provisional Chicken opponent", () => {
+  it.each([RANDOM_POSITION_SEED, STOCKFISH_POSITION_SEED])(
+    "selects canonical Chess960 moves with position seed %s",
+    async (positionSeed) => {
+      const parsed = parseChess960PositionId(0)
+      if (!parsed.ok) throw new Error("Invalid layout fixture")
+      const reconstructed = reconstructMatchPosition(
+        { variant: "chess960", chess960PositionId: parsed.positionId },
+        "4k3/8/8/8/8/8/8/R5KR w HA - 0 1",
+      )
+      if (!reconstructed.ok) throw new Error("Invalid castling fixture")
+      const position = reconstructed.position
+      const request: MatchOpponentRequest = {
+        acceptedMoves: [],
+        initialPosition: position,
+        legalMoves: listLegalMatchMoves(position),
+        position,
+        requestId: "chess960/castle",
+      }
+      const { cryptography } = createCryptography(positionSeed)
+      const { session, search } = createSession((request) => ({
+        bestMove: "g1h1",
+        requestId: request.requestId,
+      }))
+      const opponent = createChickenOpponent(
+        session,
+        cryptography,
+        parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+        "chess960",
+      )
+      const result = await opponent.selectMove(
+        request,
+        new AbortController().signal,
+      )
+      expect(request.legalMoves.some((move) => move.id === result)).toBe(true)
+      if (positionSeed === STOCKFISH_POSITION_SEED) {
+        expect(result).toBe("g1h1")
+        expect(search).toHaveBeenCalledWith(
+          expect.objectContaining({
+            position: { fen: position.fen, moves: [] },
+          }),
+          expect.any(AbortSignal),
+        )
+      } else expect(search).not.toHaveBeenCalled()
+    },
+  )
+
   it("creates a nonzero cryptographic match seed and both Story colors", () => {
     const { cryptography } = createCryptography()
 

@@ -2,15 +2,21 @@ import { webcrypto } from "node:crypto"
 import { IDBFactory } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"
 import { waitFor } from "xstate"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
+import type { MatchStartingPosition } from "@mapachess/match/match-position"
+import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
+import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
   chickenMatchId,
+  chickenPolicyFingerprint,
   selectStoryPlayerColor,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
 } from "../chicken/chickenOpponent"
+import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
+import webSha256 from "../profile/webSha256"
 import type { OpenWebMatchRuntimeInput } from "./openWebMatchRuntime"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import { buildFreshWebStoryMatch } from "./webStoryDurableMatch"
@@ -23,16 +29,40 @@ import {
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
 
-const openProfileRuntime = async () => {
+const openProfileRuntime = async (chess960StoryElo?: number) => {
+  const indexedDb = new IDBFactory()
+  if (chess960StoryElo !== undefined) {
+    const adapter = new IndexedDbDurableStore(indexedDb)
+    const store = new SerializedPlayerDataStore(adapter, (value) =>
+      webSha256(value, webcrypto.subtle),
+    )
+    const initial = createInitialMapachessPlayerData()
+    const saved = await store.commitCurrent(await store.load(), {
+      ...initial,
+      ratings: {
+        ...initial.ratings,
+        standardStory: 450,
+        chess960Story: chess960StoryElo,
+      },
+    })
+    if (!saved.ok) throw new Error("Initial rating fixture must persist")
+    await adapter.close()
+  }
   const runtime = openWebProfileRuntime({
-    indexedDb: new IDBFactory(),
+    indexedDb,
     subtleCrypto: webcrypto.subtle,
   })
   await waitFor(runtime.actor, (snapshot) => snapshot.matches("ready"))
   return runtime
 }
 
-const createRuntime = (seed: string) => {
+const createRuntime = (
+  seed: string,
+  startingPosition: MatchStartingPosition = {
+    variant: "standard",
+    chess960PositionId: null,
+  },
+) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
   const runtime = Object.freeze({
@@ -47,7 +77,7 @@ const createRuntime = (seed: string) => {
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: chickenMatchId(matchSeed),
+    matchId: chickenMatchId(matchSeed, startingPosition),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -58,10 +88,12 @@ const createRuntime = (seed: string) => {
         return move.id
       }),
     }),
-    opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+    opponentPolicyFingerprint: chickenPolicyFingerprint(
+      startingPosition.variant,
+    ),
     opponentId: "chicken-stockfish",
     playerColor: selectStoryPlayerColor(matchSeed),
-    startingPosition: { variant: "standard", chess960PositionId: null },
+    startingPosition,
     positionEvaluator: vi.fn(async (request) =>
       Object.freeze({
         evaluation: Object.freeze({ kind: "draw" as const }),
@@ -77,7 +109,70 @@ const createRuntime = (seed: string) => {
 const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
-describe("Standard Chicken web match session ownership", () => {
+describe("web Story match session ownership", () => {
+  it("persists and resumes Chess960, then restarts the same layout with a fresh seed", async () => {
+    const layout = parseChess960PositionId(0)
+    if (!layout.ok) throw new Error("Invalid test layout")
+    const startingPosition = {
+      variant: "chess960",
+      chess960PositionId: layout.positionId,
+    } as const
+    const profileRuntime = await openProfileRuntime(725)
+    const firstRuntime = createRuntime(FIRST_MATCH_SEED, startingPosition)
+    const freshOpener = runtimeOpener(firstRuntime.runtime)
+    const first = await openFreshWebStoryMatchSession({
+      variant: "chess960",
+      previousSession: null,
+      openRuntime: freshOpener,
+      profileActor: profileRuntime.actor,
+      signal: new AbortController().signal,
+    })
+    expect(freshOpener).toHaveBeenCalledWith({
+      setup: { variant: "chess960" },
+      signal: expect.any(AbortSignal),
+    })
+    expect(first.match.playerEloAtStart).toBe(725)
+    await first.close()
+    const resumedOpener = runtimeOpener(
+      createRuntime(FIRST_MATCH_SEED, startingPosition).runtime,
+    )
+    const resumed = await openCurrentWebStoryMatchSession({
+      openRuntime: resumedOpener,
+      profileActor: profileRuntime.actor,
+      signal: new AbortController().signal,
+    })
+    expect(resumedOpener).toHaveBeenCalledWith({
+      matchSeed: FIRST_MATCH_SEED,
+      setup: startingPosition,
+      signal: expect.any(AbortSignal),
+    })
+    expect(resumed.match).toEqual(first.match)
+    const restartOpener = runtimeOpener(
+      createRuntime(SECOND_MATCH_SEED, startingPosition).runtime,
+    )
+    const restarted = await openFreshWebStoryMatchSession({
+      variant: "chess960",
+      previousSession: resumed,
+      openRuntime: restartOpener,
+      profileActor: profileRuntime.actor,
+      signal: new AbortController().signal,
+    })
+    expect(restartOpener).toHaveBeenCalledWith({
+      setup: startingPosition,
+      signal: expect.any(AbortSignal),
+    })
+    expect(restarted.match.startingPosition).toEqual(
+      first.match.startingPosition,
+    )
+    expect(restarted.match.matchSeed).toBe(SECOND_MATCH_SEED)
+    expect(restarted.match.matchId).not.toBe(first.match.matchId)
+    expect(
+      selectCurrentPlayerData(profileRuntime.actor.getSnapshot())?.activeMatch,
+    ).toEqual(restarted.match)
+    await restarted.close()
+    await profileRuntime.close()
+  })
+
   it("persists a fresh session and closes every owned resource once", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)

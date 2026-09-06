@@ -2,11 +2,17 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import {
+  createInitialMatchPosition,
+  reconstructMatchPosition,
+} from "@mapachess/match/match-position"
 import BetterHintsControl from "./BetterHintsControl"
 import BetterHintsOverlay from "./BetterHintsOverlay"
-import CanonicalChessboard from "./CanonicalChessboard"
+import CanonicalChessboard, {
+  boardDestinationMoves,
+} from "./CanonicalChessboard"
 
 const HINTS = Object.freeze({
   opponent: Object.freeze([
@@ -27,6 +33,91 @@ const countOccurrences = (value: string, pattern: string): number =>
   value.match(new RegExp(pattern, "g"))?.length ?? 0
 
 describe("Better Hints board presentation", () => {
+  it("distinguishes castling gestures from an ordinary king move to the same square", () => {
+    const layout = parseChess960PositionId(0)
+    if (!layout.ok) throw new Error("Invalid test layout")
+    for (const [rank, king, expected] of [
+      ["R4K1R", "f1", ["f1g1", "f1h1"]],
+      ["R5KR", "g1", ["g1h1"]],
+    ] as const) {
+      const reconstructed = reconstructMatchPosition(
+        { variant: "chess960", chess960PositionId: layout.positionId },
+        `4k3/8/8/8/8/8/8/${rank} w HA - 0 1`,
+      )
+      if (!reconstructed.ok) throw new Error("Invalid castling fixture")
+      const moves = listLegalMatchMoves(reconstructed.position).filter(
+        (move) => move.from === king,
+      )
+      expect(
+        boardDestinationMoves(moves, "g1")
+          .map((move) => move.id)
+          .sort(),
+      ).toEqual([...expected].sort())
+      expect(boardDestinationMoves(moves, "h1")).toMatchObject([
+        { kind: "castle", rookFrom: "h1", rookTo: "f1" },
+      ])
+    }
+  })
+
+  it("keeps four pawn promotion choices distinct from castling choices", () => {
+    const reconstructed = reconstructMatchPosition(
+      { variant: "standard", chess960PositionId: null },
+      "7k/P7/8/8/8/8/8/4K3 w - - 0 1",
+    )
+    if (!reconstructed.ok) throw new Error("Invalid promotion fixture")
+    const moves = listLegalMatchMoves(reconstructed.position).filter(
+      (move) => move.from === "a7",
+    )
+    expect(
+      boardDestinationMoves(moves, "a8")
+        .map((move) => move.id)
+        .sort(),
+    ).toEqual(["a7a8b", "a7a8n", "a7a8q", "a7a8r"])
+  })
+
+  it.each(["white", "black"] as const)(
+    "renders nonzero rook travel and castling text from the %s orientation",
+    (orientation) => {
+      const hints: BetterHintsResult = {
+        ...HINTS,
+        opponent: [],
+        player: [
+          {
+            color: "white",
+            from: "g1",
+            to: "g1",
+            uci: "g1h1",
+            castling: { rookFrom: "h1", rookTo: "f1", side: "king" },
+          },
+        ],
+      }
+      const markup = renderToStaticMarkup(
+        createElement(BetterHintsOverlay, {
+          hints,
+          orientation,
+          showMoves: true,
+        }),
+      )
+      expect(countOccurrences(markup, 'data-hint-kind="move"')).toBe(1)
+      expect(markup).toContain(
+        orientation === "white" ? 'x1="7.5" x2="5.5"' : 'x1="0.5" x2="2.5"',
+      )
+      const announcement = renderToStaticMarkup(
+        createElement(BetterHintsControl, {
+          hints,
+          matchComplete: false,
+          stage: "move-hints",
+          onMoveHintsRequested: vi.fn(),
+          onPieceHintsRequested: vi.fn(),
+        }),
+      )
+      expect(announcement).toContain(
+        "castle kingside, king to g1, rook from h1 to f1",
+      )
+      expect(announcement).not.toContain("g1 to g1")
+    },
+  )
+
   it("progresses the accessible control from pieces to moves", () => {
     const readyMarkup = renderToStaticMarkup(
       createElement(BetterHintsControl, {

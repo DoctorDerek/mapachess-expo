@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import {
   createInitialMatchPosition,
   reconstructMatchPosition,
@@ -53,6 +54,54 @@ const createEngine = (search: SearchHandler): StockfishEngineSession => ({
 })
 
 describe("Better Hints analysis", () => {
+  it("keeps Chess960 castling intent for both sides on the unchanged board", async () => {
+    const layout = parseChess960PositionId(0)
+    if (!layout.ok) throw new Error("Invalid test layout")
+    const reconstructed = reconstructMatchPosition(
+      { variant: "chess960", chess960PositionId: layout.positionId },
+      "r5kr/8/8/8/8/8/8/R5KR w HAha - 0 1",
+    )
+    if (!reconstructed.ok) throw new Error("Invalid test position")
+    const position = reconstructed.position
+    const requests: StockfishSearchRequest[] = []
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) => {
+        requests.push(request)
+        return rankedResult(
+          request.requestId,
+          requests.length === 1
+            ? ["g1h1", "a1a2", "h1h2"]
+            : ["g8h8", "a8a7", "h8h7"],
+        )
+      }),
+    })
+    const result = await analyst.analyze({
+      playerColor: "white",
+      position,
+      requestId: "chess960-hints",
+    })
+    expect(result.player).toHaveLength(3)
+    expect(result.opponent).toHaveLength(3)
+    expect(result.player[0]).toEqual({
+      color: "white",
+      from: "g1",
+      to: "g1",
+      uci: "g1h1",
+      castling: { rookFrom: "h1", rookTo: "f1", side: "king" },
+    })
+    expect(result.opponent[0]).toEqual({
+      color: "black",
+      from: "g8",
+      to: "g8",
+      uci: "g8h8",
+      castling: { rookFrom: "h8", rookTo: "f8", side: "king" },
+    })
+    expect(requests[0]?.position.fen).toBe(position.fen)
+    expect(requests[1]?.position.fen).toBe(position.fen.replace(" w ", " b "))
+    expect(result.positionFen).toBe(position.fen)
+    expect(position.turn).toBe("white")
+  })
+
   it("selects three ranked distinct legal pieces for Player and Opponent", async () => {
     const position = createInitialMatchPosition(STANDARD_STARTING_POSITION)
     const requests: StockfishSearchRequest[] = []

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
@@ -16,6 +17,7 @@ import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
   chickenMatchId,
+  chickenPolicyFingerprint,
   selectStoryPlayerColor,
   STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
 } from "../chicken/chickenOpponent"
@@ -36,7 +38,7 @@ const runtime = Object.freeze({
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
   playerColor: selectStoryPlayerColor(matchSeed),
-  startingPosition: { variant: "standard", chess960PositionId: null },
+  startingPosition: { variant: "standard", chess960PositionId: null } as const,
 }) satisfies FreshWebStoryMatchInput["runtime"]
 
 const requireMoveId = (uci: string) => {
@@ -45,7 +47,58 @@ const requireMoveId = (uci: string) => {
   return result.moveId
 }
 
-describe("Standard Chicken durable match mapping", () => {
+describe("web Story durable match mapping", () => {
+  it.each([0, 959])(
+    "round-trips Chess960 layout %i, its seed, and undone history",
+    (layout) => {
+      const parsed = parseChess960PositionId(layout)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const startingPosition = {
+        variant: "chess960",
+        chess960PositionId: parsed.positionId,
+      } as const
+      const fresh = buildFreshWebStoryMatch({
+        autoHintMode: "auto-piece-hints",
+        playerEloAtStart: 725,
+        runtime: {
+          ...runtime,
+          startingPosition,
+          matchId: chickenMatchId(matchSeed, startingPosition),
+          opponentPolicyFingerprint: chickenPolicyFingerprint("chess960"),
+        },
+      })
+      const saved = {
+        ...fresh,
+        moveIds: [requireMoveId("e2e4"), requireMoveId("e7e5")],
+        pieceHintsUsed: true,
+      }
+      const imported: unknown = JSON.parse(
+        JSON.stringify({
+          ...createInitialMapachessPlayerData(),
+          activeMatch: saved,
+        }),
+      )
+      const decoded = decodeMapachessPlayerData(imported)
+      if (!decoded.ok || decoded.data.activeMatch === null)
+        throw new Error("Chess960 profile must decode")
+      const resumed = resumeWebStoryMatch(decoded.data.activeMatch)
+      expect(resumed.timeline.cursor).toBe(0)
+      expect(resumed.timeline.transitions).toHaveLength(2)
+      expect(resumed.matchSeed).toBe(matchSeed)
+      expect(currentMatchPosition(resumed.timeline).fen).toBe(fresh.currentFen)
+      expect(decoded.data.activeMatch).toEqual(saved)
+      expect(() =>
+        resumeWebStoryMatch({
+          ...saved,
+          opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+        }),
+      ).toThrow("policy does not match")
+      expect(() =>
+        resumeWebStoryMatch({ ...saved, matchId: chickenMatchId(matchSeed) }),
+      ).toThrow("identity does not match")
+    },
+  )
+
   it("builds the exact cursor-zero record for a fresh runtime", () => {
     const record = buildFreshWebStoryMatch({
       autoHintMode: "no-auto-hints",
