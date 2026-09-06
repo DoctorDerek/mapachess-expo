@@ -7,10 +7,19 @@ import type {
   ResolvedSpritePresentation,
   SpriteFacing,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
 
 const AUTHORED_FALLBACK_ANIMATION_SECONDS = 0.36
 const ATTACKER_TRAVEL_PIXELS_PER_STEP = 24
 const VICTIM_RECOIL_PIXELS = 10
+const MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS = 60
+const DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS = 80
+
+type BattleSpriteStyle = CSSProperties &
+  Readonly<{
+    "--sprite-mobile-scale": number
+    "--sprite-desktop-scale": number
+  }>
 
 export type BattleFighterProps = Readonly<{
   displayName: string
@@ -47,7 +56,7 @@ const spriteStyle = (
   presentation: Extract<BattleFighterProps["presentation"], { kind: "sprite" }>,
   stepIndex: number,
   shouldReduceMotion: boolean,
-): CSSProperties => {
+): BattleSpriteStyle => {
   const step = shouldReduceMotion
     ? presentation.steps.at(-1)
     : presentation.steps[stepIndex]
@@ -56,6 +65,16 @@ const spriteStyle = (
   }
 
   const { animation, playback } = step
+  const geometry = createSpritePresentationGeometry(
+    animation.geometry,
+    presentation.referenceGeometry,
+    MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS,
+  )
+  const desktopGeometry = createSpritePresentationGeometry(
+    animation.geometry,
+    presentation.referenceGeometry,
+    DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS,
+  )
   const frameTransitionCount = Math.max(1, animation.frameCount - 1)
   const reducedMotionFrameProgress =
     animation.frameCount === 1
@@ -63,6 +82,8 @@ const spriteStyle = (
       : (animation.reducedMotionFrameIndex / (animation.frameCount - 1)) * 100
 
   return {
+    "--sprite-mobile-scale": geometry.integerScale,
+    "--sprite-desktop-scale": desktopGeometry.integerScale,
     animationDuration: `${String(
       (animation.frameCount * animation.frameDurationMilliseconds) / 1000,
     )}s`,
@@ -78,8 +99,10 @@ const spriteStyle = (
       ? `${String(reducedMotionFrameProgress)}% 0`
       : "0 0",
     backgroundSize: `${String(animation.frameCount * 100)}% 100%`,
-    height: animation.geometry.frameHeight,
-    width: animation.geometry.frameWidth,
+    height: `calc(${String(geometry.frameHeight)}px * var(--sprite-scale))`,
+    left: `calc(${String(geometry.frameOffsetX)}px * var(--sprite-scale))`,
+    top: `calc(${String(geometry.frameOffsetY)}px * var(--sprite-scale))`,
+    width: `calc(${String(geometry.frameWidth)}px * var(--sprite-scale))`,
   }
 }
 
@@ -166,14 +189,18 @@ export default function BattleFighter({
         {presentation.kind === "sprite" ? (
           <span
             aria-hidden="true"
-            className={`drop-shadow-mapachito-charcoal block origin-bottom scale-y-300 bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [animation-direction:normal] [image-rendering:pixelated] xl:scale-y-400 ${facing !== presentation.sourceFacing ? "-scale-x-300 xl:-scale-x-400" : "scale-x-300 xl:scale-x-400"}`}
-            key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
-            style={spriteStyle(
-              presentation,
-              renderedStepIndex,
-              shouldReduceMotion,
-            )}
-          />
+            className={`relative block size-0 ${facing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+          >
+            <span
+              className="drop-shadow-mapachito-charcoal absolute block bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [--sprite-scale:var(--sprite-mobile-scale)] [animation-direction:normal] [image-rendering:pixelated] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
+              key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
+              style={spriteStyle(
+                presentation,
+                renderedStepIndex,
+                shouldReduceMotion,
+              )}
+            />
+          </span>
         ) : (
           <span
             aria-hidden="true"

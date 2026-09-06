@@ -28,6 +28,10 @@
     "./presentation-asset-manifest": {
       "types": "./src/presentationAssetManifest.ts",
       "default": "./dist/presentationAssetManifest.js"
+    },
+    "./sprite-presentation-geometry": {
+      "types": "./src/spritePresentationGeometry.ts",
+      "default": "./dist/spritePresentationGeometry.js"
     }
   },
   "scripts": {

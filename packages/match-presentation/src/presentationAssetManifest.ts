@@ -46,6 +46,7 @@ export type SpriteAssetManifest<
   SourceId extends string,
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
+  referenceGeometry: SpriteFrameGeometry
   sourceFacing: SpriteFacing
   reactionPlans: Readonly<
     Record<
@@ -74,6 +75,7 @@ export type ResolvedSpritePresentation<
   | Readonly<{
       kind: "sprite"
       reactionSlot: MatchSpriteReactionSlot
+      referenceGeometry: SpriteFrameGeometry
       sourceFacing: SpriteFacing
       steps: readonly [
         ResolvedSpriteStep<AnimationId, SourceId>,
@@ -136,6 +138,7 @@ export default function resolveSpritePresentation<
     : Object.freeze({
         kind: "sprite",
         reactionSlot,
+        referenceGeometry: manifest.referenceGeometry,
         sourceFacing: manifest.sourceFacing,
         steps: Object.freeze([firstStep, ...remainingSteps] as const),
       })

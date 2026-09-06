@@ -9,6 +9,28 @@ import type {
 const PRESENTATION_ASSET_ROOT = "/generated/presentation-assets"
 const PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS = 100
 
+const CHICKEN_REFERENCE_GEOMETRY = Object.freeze({
+  bottomCenterX: 18.5,
+  bottomY: 33,
+  frameHeight: 40,
+  frameWidth: 40,
+  visibleHeight: 20,
+  visibleWidth: 17,
+  visibleX: 10,
+  visibleY: 13,
+}) satisfies SpriteFrameGeometry
+
+const MAPACHITO_REFERENCE_GEOMETRY = Object.freeze({
+  bottomCenterX: 27.5,
+  bottomY: 53,
+  frameHeight: 60,
+  frameWidth: 60,
+  visibleHeight: 18,
+  visibleWidth: 29,
+  visibleX: 13,
+  visibleY: 35,
+}) satisfies SpriteFrameGeometry
+
 export const LICENSED_PRESENTATION_ASSETS_ENABLED =
   process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS === "licensed"
 
@@ -18,17 +40,14 @@ const presentationAssetSource = <RelativePath extends string>(
   `${PRESENTATION_ASSET_ROOT}/${relativePath}`
 
 const frameGeometry = (
-  frameSize: number,
+  referenceGeometry: SpriteFrameGeometry,
   visibleX: number,
   visibleY: number,
   visibleWidth: number,
   visibleHeight: number,
 ): SpriteFrameGeometry =>
   Object.freeze({
-    bottomCenterX: frameSize / 2,
-    bottomY: frameSize,
-    frameHeight: frameSize,
-    frameWidth: frameSize,
+    ...referenceGeometry,
     visibleHeight,
     visibleWidth,
     visibleX,
@@ -78,91 +97,91 @@ const chickenAnimations = {
     CHICKEN_SPRITE_SOURCES.attackAir,
     6,
     3,
-    frameGeometry(40, 7, 13, 30, 19),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 7, 13, 30, 19),
   ),
   "attack-ground": spriteAnimation(
     CHICKEN_SPRITE_SOURCES.attackGround,
     6,
     3,
-    frameGeometry(40, 9, 14, 28, 19),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 9, 14, 28, 19),
   ),
   die: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.die,
     10,
     9,
-    frameGeometry(40, 8, 13, 24, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 8, 13, 24, 20),
   ),
   fall: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.fall,
     2,
     1,
-    frameGeometry(40, 9, 16, 22, 17),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 9, 16, 22, 17),
   ),
   fly: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.fly,
     4,
     1,
-    frameGeometry(40, 9, 15, 23, 16),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 9, 15, 23, 16),
   ),
   fright: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.fright,
     5,
     2,
-    frameGeometry(40, 8, 13, 22, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 8, 13, 22, 20),
   ),
   hurt: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.hurt,
     5,
     3,
-    frameGeometry(40, 8, 13, 22, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 8, 13, 22, 20),
   ),
   idle: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.idle,
     4,
     0,
-    frameGeometry(40, 10, 13, 17, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 13, 17, 20),
   ),
   "idle-blink": spriteAnimation(
     CHICKEN_SPRITE_SOURCES.idleBlink,
     4,
     0,
-    frameGeometry(40, 10, 13, 17, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 13, 17, 20),
   ),
   land: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.land,
     4,
     3,
-    frameGeometry(40, 9, 15, 24, 18),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 9, 15, 24, 18),
   ),
   peck: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.peck,
     9,
     5,
-    frameGeometry(40, 10, 13, 23, 20),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 13, 23, 20),
   ),
   run: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.run,
     4,
     2,
-    frameGeometry(40, 10, 12, 21, 21),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 12, 21, 21),
   ),
   sit: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.sit,
     4,
     0,
-    frameGeometry(40, 10, 16, 17, 17),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 16, 17, 17),
   ),
   takeoff: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.takeoff,
     7,
     5,
-    frameGeometry(40, 9, 15, 23, 18),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 9, 15, 23, 18),
   ),
   walk: spriteAnimation(
     CHICKEN_SPRITE_SOURCES.walk,
     8,
     4,
-    frameGeometry(40, 10, 12, 19, 21),
+    frameGeometry(CHICKEN_REFERENCE_GEOMETRY, 10, 12, 19, 21),
   ),
 } as const
 
@@ -172,6 +191,7 @@ export type ChickenSpriteSourceId =
 
 export const CHICKEN_SPRITE_MANIFEST = {
   animations: chickenAnimations,
+  referenceGeometry: CHICKEN_REFERENCE_GEOMETRY,
   sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
@@ -229,97 +249,97 @@ const mapachitoAnimations = {
     MAPACHITO_SPRITE_SOURCES.attack,
     7,
     4,
-    frameGeometry(60, 11, 34, 38, 19),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 11, 34, 38, 19),
   ),
   bark: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.bark,
     6,
     4,
-    frameGeometry(60, 11, 33, 34, 20),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 11, 33, 34, 20),
   ),
   crouch: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.crouch,
     8,
     4,
-    frameGeometry(60, 12, 36, 30, 17),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 12, 36, 30, 17),
   ),
   dash: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.dash,
     9,
     5,
-    frameGeometry(60, 11, 36, 34, 17),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 11, 36, 34, 17),
   ),
   die: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.die,
     8,
     7,
-    frameGeometry(60, 12, 34, 32, 19),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 12, 34, 32, 19),
   ),
   fall: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.fall,
     5,
     3,
-    frameGeometry(60, 11, 36, 33, 14),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 11, 36, 33, 14),
   ),
   fright: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.fright,
     4,
     2,
-    frameGeometry(60, 10, 38, 30, 15),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 10, 38, 30, 15),
   ),
   hurt: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.hurt,
     7,
     4,
-    frameGeometry(60, 13, 34, 30, 19),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 13, 34, 30, 19),
   ),
   idle: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.idle,
     8,
     0,
-    frameGeometry(60, 13, 35, 29, 18),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 13, 35, 29, 18),
   ),
   "idle-blink": spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.idleBlink,
     8,
     0,
-    frameGeometry(60, 13, 35, 29, 18),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 13, 35, 29, 18),
   ),
   jump: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.jump,
     14,
     8,
-    frameGeometry(60, 13, 34, 31, 19),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 13, 34, 31, 19),
   ),
   land: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.land,
     3,
     2,
-    frameGeometry(60, 13, 37, 29, 16),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 13, 37, 29, 16),
   ),
   run: spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.run,
     8,
     4,
-    frameGeometry(60, 11, 34, 33, 19),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 11, 34, 33, 19),
   ),
   "sit-one": spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.sitOne,
     8,
     0,
-    frameGeometry(60, 15, 36, 26, 17),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 15, 36, 26, 17),
   ),
   "sit-two": spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.sitTwo,
     24,
     0,
-    frameGeometry(60, 15, 36, 26, 17),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 15, 36, 26, 17),
   ),
   "wall-grab": spriteAnimation(
     MAPACHITO_SPRITE_SOURCES.wallGrab,
     8,
     5,
-    frameGeometry(60, 24, 27, 16, 29),
+    frameGeometry(MAPACHITO_REFERENCE_GEOMETRY, 24, 27, 16, 29),
   ),
 } as const
 
@@ -329,6 +349,7 @@ export type MapachitoSpriteSourceId =
 
 export const MAPACHITO_SPRITE_MANIFEST = {
   animations: mapachitoAnimations,
+  referenceGeometry: MAPACHITO_REFERENCE_GEOMETRY,
   sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
