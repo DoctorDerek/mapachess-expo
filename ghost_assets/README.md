@@ -30,13 +30,15 @@ private key is never included in that browser-visible availability value.
 ## Vercel setup
 
 Use the `apps/web` project root and its Turbo-aware web build. Configure the
-existing 43-character private `GHOST_ASSET_KEY_MAPACHESS` on the Mapachess web
+private `GHOST_ASSET_KEY_MAPACHESS` on the Mapachess web
 project for Development, Preview, and Production. Mark it Sensitive where
 supported; never expose it in source, logs, screenshots, or chat. It is the only
 hosting setting required by this asset pipeline.
 
-Use the same existing archive key from authorized local setup; do not regenerate
-the archive or rotate a working key just to connect another build environment.
+Use the same owner-selected password that encrypted the committed archive.
+If the hosting password was selected separately, an authorized operator can
+re-encrypt the verified local assets with that password using the command below;
+the hosting settings do not need to be replaced with a different local key.
 Vercel applies environment changes to subsequent deployments, not already-built
 artifacts. Verify the project's actual Build Command and environment scopes;
 storing a secret alone does not prove the consuming task receives it.
@@ -85,7 +87,7 @@ fallbacks and fallback-compatible tests do not prove licensed artwork shipped.
 Hosted visual playtesting belongs to the project owner; agents use the approved
 local verification scope.
 
-The same existing key can be configured in EAS Development, Preview, and
+The same archive password can be configured in EAS Development, Preview, and
 Production; the project owner has configured both hosts. This does not by itself
 connect a native asset consumer. The current `eas-build-post-install` hook
 provisions native Stockfish, not this presentation inventory. Native licensed
@@ -95,6 +97,33 @@ complete this web correction.
 
 ## Updating the encrypted source archive
 
-Run `pnpm assets:create-encrypted-archive` only after updating the ignored
-source directory and manifest together. Never commit the plaintext source, a
-decryption key, generated public output, receipts, or purchase records.
+From the repository root, supply `GHOST_ASSET_KEY_MAPACHESS` privately in the
+process environment or the ignored `apps/web/.env.local` file, then run:
+
+```powershell
+pnpm assets:create-encrypted-archive
+```
+
+When using the environment file, quote values containing `#` or leading/trailing
+spaces so the dotenv parser preserves the password. See
+[Node's environment-file syntax](https://nodejs.org/api/environment_variables.html#dotenv).
+
+Following WAYVM's archive-creation policy, the password must contain at least
+32 characters when creating an archive. There is no exact-length or character-set
+restriction, and the supplied password is not trimmed or normalized. Decryption
+uses the existing password unchanged without imposing the creation minimum.
+Missing or empty creation passwords fail instead of producing plaintext.
+
+The command validates `vendor/presentation-assets/` against the manifest and
+writes or replaces `ghost_assets/presentation-assets.zip` with encrypted data.
+An existing ZIP does not need to be deleted first, and its old password is not
+needed when the verified local source files are available. Re-encrypting unchanged
+files does not require changing the manifest; update its digests only when the
+approved source content changes.
+
+The success message confirms creation, not archive-only extraction or hosted
+delivery. Verify a replacement with its password before committing it; a local
+build that uses the authoring directory bypasses archive decryption. Commit only
+the encrypted archive and approved text changes, never the plaintext source,
+decryption key, local environment file, generated public output, receipts, or
+purchase records.
