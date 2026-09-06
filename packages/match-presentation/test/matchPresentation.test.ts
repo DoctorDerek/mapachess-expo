@@ -97,8 +97,8 @@ const completeParticipant = (
   })
 }
 
-type TestAnimationId = "fallback" | "preferred"
-type TestSourceId = "fallback-source" | "preferred-source"
+type TestAnimationId = "fallback" | "idle" | "preferred"
+type TestSourceId = "fallback-source" | "idle-source" | "preferred-source"
 
 const TEST_FRAME_GEOMETRY = Object.freeze({
   bottomCenterX: 8,
@@ -131,12 +131,17 @@ const orderedReactionStep = (
   })
 
 const SPRITE_MANIFEST = Object.freeze({
+  referenceGeometry: TEST_FRAME_GEOMETRY,
+  sourceFacing: "right",
   animations: Object.freeze({
     fallback: testAnimation("fallback-source"),
+    idle: testAnimation("idle-source"),
     preferred: testAnimation("preferred-source"),
   }),
   reactionPlans: Object.freeze({
-    idle: Object.freeze([orderedReactionStep("loop")] as const),
+    idle: Object.freeze([
+      { animationIds: ["idle"], playback: "loop" },
+    ] as const),
     "capture-attacker": Object.freeze([orderedReactionStep("once")] as const),
     "capture-victim": Object.freeze([orderedReactionStep("once")] as const),
     "check-attacker": Object.freeze([orderedReactionStep("once")] as const),
@@ -236,6 +241,56 @@ describe("match presentation contracts", () => {
     expect(resolveCoachPortrait({ family: "defeat" }, [])).toEqual({
       kind: "authored-fallback",
       label: "neutral",
+    })
+  })
+
+  it("keeps an available strike after a missing locomotion step uses idle", () => {
+    const manifest = {
+      ...SPRITE_MANIFEST,
+      reactionPlans: {
+        ...SPRITE_MANIFEST.reactionPlans,
+        "capture-attacker": [
+          { animationIds: ["preferred"], playback: "once" },
+          { animationIds: ["fallback"], playback: "once" },
+        ],
+      },
+    } as const satisfies SpriteAssetManifest<TestAnimationId, TestSourceId>
+
+    expect(
+      resolveSpritePresentation(
+        manifest,
+        { family: "capture", role: "attacker" },
+        ["idle-source", "fallback-source"],
+      ),
+    ).toMatchObject({
+      kind: "sprite",
+      reactionSlot: "capture-attacker",
+      referenceGeometry: TEST_FRAME_GEOMETRY,
+      sourceFacing: "right",
+      steps: [
+        { animationId: "idle", playback: "loop" },
+        { animationId: "fallback", playback: "once" },
+      ],
+    })
+  })
+
+  it("uses valid idle for a missing terminal clip without replacing available death playback", () => {
+    expect(
+      resolveSpritePresentation(SPRITE_MANIFEST, { family: "defeat" }, [
+        "idle-source",
+      ]),
+    ).toMatchObject({
+      kind: "sprite",
+      reactionSlot: "defeat",
+      steps: [{ animationId: "idle", playback: "loop" }],
+    })
+    expect(
+      resolveSpritePresentation(SPRITE_MANIFEST, { family: "defeat" }, [
+        "preferred-source",
+        "idle-source",
+      ]),
+    ).toMatchObject({
+      steps: [{ animationId: "preferred", playback: "once-hold-final-frame" }],
     })
   })
 })

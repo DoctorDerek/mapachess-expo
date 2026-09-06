@@ -1,17 +1,36 @@
 "use client"
 
 import { motion, useReducedMotion } from "motion/react"
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+} from "react"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
-import type { ResolvedSpritePresentation } from "@mapachess/match-presentation/presentation-asset-manifest"
+import type {
+  ResolvedSpritePresentation,
+  SpriteFacing,
+} from "@mapachess/match-presentation/presentation-asset-manifest"
+import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
 
 const AUTHORED_FALLBACK_ANIMATION_SECONDS = 0.36
 const ATTACKER_TRAVEL_PIXELS_PER_STEP = 24
 const VICTIM_RECOIL_PIXELS = 10
+const MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS = 60
+const DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS = 80
+const SPRITE_ANIMATION_NAME = "mapachess-battle-sprite-frames"
+
+type BattleSpriteStyle = CSSProperties &
+  Readonly<{
+    "--sprite-mobile-scale": number
+    "--sprite-desktop-scale": number
+  }>
 
 export type BattleFighterProps = Readonly<{
   displayName: string
-  facing: "left" | "right"
+  facing: SpriteFacing
   onAnimationCompleted: (
     participant: MatchPresentationParticipant,
     phaseIndex: number,
@@ -44,7 +63,7 @@ const spriteStyle = (
   presentation: Extract<BattleFighterProps["presentation"], { kind: "sprite" }>,
   stepIndex: number,
   shouldReduceMotion: boolean,
-): CSSProperties => {
+): BattleSpriteStyle => {
   const step = shouldReduceMotion
     ? presentation.steps.at(-1)
     : presentation.steps[stepIndex]
@@ -53,30 +72,43 @@ const spriteStyle = (
   }
 
   const { animation, playback } = step
-  const frameTransitionCount = Math.max(1, animation.frameCount - 1)
+  const geometry = createSpritePresentationGeometry(
+    animation.geometry,
+    presentation.referenceGeometry,
+    MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS,
+  )
+  const desktopGeometry = createSpritePresentationGeometry(
+    animation.geometry,
+    presentation.referenceGeometry,
+    DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS,
+  )
   const reducedMotionFrameProgress =
     animation.frameCount === 1
       ? 0
       : (animation.reducedMotionFrameIndex / (animation.frameCount - 1)) * 100
 
   return {
+    "--sprite-mobile-scale": geometry.integerScale,
+    "--sprite-desktop-scale": desktopGeometry.integerScale,
     animationDuration: `${String(
       (animation.frameCount * animation.frameDurationMilliseconds) / 1000,
     )}s`,
-    animationFillMode:
-      playback === "once-hold-final-frame" ? "forwards" : "none",
+    animationFillMode: "forwards",
     animationIterationCount: playback === "loop" ? "infinite" : 1,
-    animationName: shouldReduceMotion
-      ? undefined
-      : "mapachess-battle-sprite-frames",
-    animationTimingFunction: `steps(${String(frameTransitionCount)}, end)`,
+    animationName: shouldReduceMotion ? undefined : SPRITE_ANIMATION_NAME,
+    animationTimingFunction:
+      animation.frameCount === 1
+        ? "step-end"
+        : `steps(${String(animation.frameCount)}, jump-none)`,
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: shouldReduceMotion
       ? `${String(reducedMotionFrameProgress)}% 0`
       : "0 0",
     backgroundSize: `${String(animation.frameCount * 100)}% 100%`,
-    height: animation.geometry.frameHeight,
-    width: animation.geometry.frameWidth,
+    height: `calc(${String(geometry.frameHeight)}px * var(--sprite-scale))`,
+    left: `calc(${String(geometry.frameOffsetX)}px * var(--sprite-scale))`,
+    top: `calc(${String(geometry.frameOffsetY)}px * var(--sprite-scale))`,
+    width: `calc(${String(geometry.frameWidth)}px * var(--sprite-scale))`,
   }
 }
 
@@ -117,15 +149,36 @@ export default function BattleFighter({
     completedIdentity.current = completionIdentity
 
     if (hasNextStep) {
-      setStepIndex((currentStepIndex) => currentStepIndex + 1)
+      setStepIndex((currentStepIndex) =>
+        currentStepIndex === renderedStepIndex
+          ? currentStepIndex + 1
+          : currentStepIndex,
+      )
     } else if (shouldReportCompletion) {
       onAnimationCompleted(participant, phaseIndex, reactionSequence)
     }
   }
 
-  useEffect(() => {
-    if (shouldReduceMotion && shouldReportCompletion) {
+  const completeSpriteAnimation = (
+    event: AnimationEvent<HTMLSpanElement>,
+  ): void => {
+    if (
+      event.target === event.currentTarget &&
+      event.animationName === SPRITE_ANIMATION_NAME &&
+      !shouldReduceMotion
+    ) {
       completeCurrentAnimation()
+    }
+  }
+
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      if (stepIndex !== renderedStepIndex) {
+        setStepIndex(renderedStepIndex)
+      }
+      if (shouldReportCompletion) {
+        completeCurrentAnimation()
+      }
     }
   })
 
@@ -156,21 +209,33 @@ export default function BattleFighter({
           duration: animationDurationSeconds,
           ease: "easeInOut",
         }}
-        {...(shouldReduceMotion || (!hasNextStep && !shouldReportCompletion)
+        {...(presentation.kind === "sprite" ||
+        shouldReduceMotion ||
+        !shouldReportCompletion
           ? {}
           : { onAnimationComplete: completeCurrentAnimation })}
       >
         {presentation.kind === "sprite" ? (
           <span
             aria-hidden="true"
-            className={`drop-shadow-mapachito-charcoal block origin-bottom scale-y-300 bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [animation-direction:normal] [image-rendering:pixelated] xl:scale-y-400 ${facing === "right" ? "-scale-x-300 xl:-scale-x-400" : "scale-x-300 xl:scale-x-400"}`}
-            key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
-            style={spriteStyle(
-              presentation,
-              renderedStepIndex,
-              shouldReduceMotion,
-            )}
-          />
+            className={`relative block size-0 ${facing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+          >
+            <span
+              className="drop-shadow-mapachito-charcoal absolute block bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [--sprite-scale:var(--sprite-mobile-scale)] [animation-direction:normal] [image-rendering:pixelated] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
+              key={`${completionIdentity}:${String(shouldReduceMotion)}`}
+              onAnimationEnd={completeSpriteAnimation}
+              onAnimationIteration={
+                hasNextStep || shouldReportCompletion
+                  ? completeSpriteAnimation
+                  : undefined
+              }
+              style={spriteStyle(
+                presentation,
+                renderedStepIndex,
+                shouldReduceMotion,
+              )}
+            />
+          </span>
         ) : (
           <span
             aria-hidden="true"

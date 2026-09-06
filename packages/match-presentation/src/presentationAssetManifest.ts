@@ -15,6 +15,8 @@ export type MatchSpriteReactionSlot =
 
 export type SpritePlaybackMode = "loop" | "once" | "once-hold-final-frame"
 
+export type SpriteFacing = "left" | "right"
+
 export type SpriteFrameGeometry = Readonly<{
   bottomCenterX: number
   bottomY: number
@@ -44,6 +46,8 @@ export type SpriteAssetManifest<
   SourceId extends string,
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
+  referenceGeometry: SpriteFrameGeometry
+  sourceFacing: SpriteFacing
   reactionPlans: Readonly<
     Record<
       MatchSpriteReactionSlot,
@@ -71,6 +75,8 @@ export type ResolvedSpritePresentation<
   | Readonly<{
       kind: "sprite"
       reactionSlot: MatchSpriteReactionSlot
+      referenceGeometry: SpriteFrameGeometry
+      sourceFacing: SpriteFacing
       steps: readonly [
         ResolvedSpriteStep<AnimationId, SourceId>,
         ...ResolvedSpriteStep<AnimationId, SourceId>[],
@@ -121,8 +127,16 @@ export default function resolveSpritePresentation<
   availableSourceIds: readonly SourceId[],
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
+  const idleStep = manifest.reactionPlans.idle
+    .map((step) => resolveStep(manifest, step, availableSourceIds))
+    .find((step) => step !== null)
+  const idleFallback =
+    idleStep === undefined
+      ? null
+      : Object.freeze({ ...idleStep, playback: "loop" as const })
   const resolvedSteps = manifest.reactionPlans[reactionSlot].flatMap((step) => {
-    const resolvedStep = resolveStep(manifest, step, availableSourceIds)
+    const resolvedStep =
+      resolveStep(manifest, step, availableSourceIds) ?? idleFallback
     return resolvedStep === null ? [] : [resolvedStep]
   })
   const [firstStep, ...remainingSteps] = resolvedSteps
@@ -132,6 +146,8 @@ export default function resolveSpritePresentation<
     : Object.freeze({
         kind: "sprite",
         reactionSlot,
+        referenceGeometry: manifest.referenceGeometry,
+        sourceFacing: manifest.sourceFacing,
         steps: Object.freeze([firstStep, ...remainingSteps] as const),
       })
 }
