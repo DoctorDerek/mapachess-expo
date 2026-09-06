@@ -93,8 +93,7 @@ const spriteStyle = (
     animationDuration: `${String(
       (animation.frameCount * animation.frameDurationMilliseconds) / 1000,
     )}s`,
-    animationFillMode:
-      playback === "once-hold-final-frame" ? "forwards" : "none",
+    animationFillMode: "forwards",
     animationIterationCount: playback === "loop" ? "infinite" : 1,
     animationName: shouldReduceMotion ? undefined : SPRITE_ANIMATION_NAME,
     animationTimingFunction:
@@ -150,7 +149,11 @@ export default function BattleFighter({
     completedIdentity.current = completionIdentity
 
     if (hasNextStep) {
-      setStepIndex((currentStepIndex) => currentStepIndex + 1)
+      setStepIndex((currentStepIndex) =>
+        currentStepIndex === renderedStepIndex
+          ? currentStepIndex + 1
+          : currentStepIndex,
+      )
     } else if (shouldReportCompletion) {
       onAnimationCompleted(participant, phaseIndex, reactionSequence)
     }
@@ -169,8 +172,13 @@ export default function BattleFighter({
   }
 
   useEffect(() => {
-    if (shouldReduceMotion && shouldReportCompletion) {
-      completeCurrentAnimation()
+    if (shouldReduceMotion) {
+      if (stepIndex !== renderedStepIndex) {
+        setStepIndex(renderedStepIndex)
+      }
+      if (shouldReportCompletion) {
+        completeCurrentAnimation()
+      }
     }
   })
 
@@ -214,7 +222,7 @@ export default function BattleFighter({
           >
             <span
               className="drop-shadow-mapachito-charcoal absolute block bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [--sprite-scale:var(--sprite-mobile-scale)] [animation-direction:normal] [image-rendering:pixelated] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
-              key={`${presentation.steps[renderedStepIndex]?.animationId ?? "missing"}:${String(renderedStepIndex)}`}
+              key={`${completionIdentity}:${String(shouldReduceMotion)}`}
               onAnimationEnd={completeSpriteAnimation}
               onAnimationIteration={
                 hasNextStep || shouldReportCompletion
