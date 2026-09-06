@@ -5,41 +5,42 @@ import bindMatchPositionEvaluation, {
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "@mapachess/profile/profile-match-persistence"
-import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
-import type { WebMatchSession } from "../gameplay/webMatchSessionMachine"
-import openStandardChickenRuntime, {
-  type OpenStandardChickenRuntimeInput,
-} from "./openStandardChickenRuntime"
-import resumeStandardChickenMatch, {
-  buildFreshStandardChickenMatch,
-  type ResumedStandardChickenMatch,
-} from "./standardChickenDurableMatch"
+import openWebMatchRuntime, {
+  type OpenWebMatchRuntimeInput,
+} from "./openWebMatchRuntime"
+import type { WebMatchRuntime } from "./webMatchRuntime"
+import type { WebMatchSession } from "./webMatchSessionMachine"
+import resumeWebStoryMatch, {
+  buildFreshWebStoryMatch,
+  type ResumedWebStoryMatch,
+} from "./webStoryDurableMatch"
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 
-type OpenStandardChickenRuntime = (
-  input?: OpenStandardChickenRuntimeInput,
+type OpenWebMatchRuntime = (
+  input?: OpenWebMatchRuntimeInput,
 ) => Promise<WebMatchRuntime>
 
-export type OpenStandardChickenMatchSessionInput = Readonly<{
-  openRuntime?: OpenStandardChickenRuntime
+export type OpenWebStoryMatchSessionInput = Readonly<{
+  openRuntime?: OpenWebMatchRuntime
   profileActor: ProfileActor
   signal: AbortSignal
 }>
 
-export type OpenFreshStandardChickenMatchSessionInput =
-  OpenStandardChickenMatchSessionInput &
-    Readonly<{
-      previousSession: WebMatchSession | null
-    }>
+export type OpenFreshWebStoryMatchSessionInput = OpenWebStoryMatchSessionInput &
+  Readonly<{
+    previousSession: WebMatchSession | null
+    variant: MatchVariant
+  }>
 
-export type ReturnStandardChickenMatchSessionToMenuInput = Readonly<{
+export type ReturnWebStoryMatchSessionToMenuInput = Readonly<{
   profileActor: ProfileActor
   session: WebMatchSession
   signal: AbortSignal
@@ -74,7 +75,7 @@ const closeRuntimeAfterFailure = async (
 type OpenActorSessionInput = Readonly<{
   match: DurableMatchRecord
   profileActor: ProfileActor
-  resumedMatch: ResumedStandardChickenMatch
+  resumedMatch: ResumedWebStoryMatch
   runtime: WebMatchRuntime
   signal: AbortSignal
 }>
@@ -158,19 +159,20 @@ const openActorSession = async ({
   }
 }
 
-export async function openCurrentStandardChickenMatchSession({
-  openRuntime = openStandardChickenRuntime,
+export async function openCurrentWebStoryMatchSession({
+  openRuntime = openWebMatchRuntime,
   profileActor,
   signal,
-}: OpenStandardChickenMatchSessionInput): Promise<WebMatchSession> {
+}: OpenWebStoryMatchSessionInput): Promise<WebMatchSession> {
   const activeMatch = requirePlayerData(profileActor).activeMatch
   if (activeMatch === null) {
     throw new Error("The player profile has no active match to resume.")
   }
 
-  const resumedMatch = resumeStandardChickenMatch(activeMatch)
+  const resumedMatch = resumeWebStoryMatch(activeMatch)
   const runtime = await openRuntime({
     matchSeed: resumedMatch.matchSeed,
+    setup: activeMatch.startingPosition,
     signal,
   })
   return openActorSession({
@@ -182,12 +184,13 @@ export async function openCurrentStandardChickenMatchSession({
   })
 }
 
-export async function openFreshStandardChickenMatchSession({
-  openRuntime = openStandardChickenRuntime,
+export async function openFreshWebStoryMatchSession({
+  openRuntime = openWebMatchRuntime,
   previousSession,
   profileActor,
   signal,
-}: OpenFreshStandardChickenMatchSessionInput): Promise<WebMatchSession> {
+  variant,
+}: OpenFreshWebStoryMatchSessionInput): Promise<WebMatchSession> {
   await previousSession?.close()
 
   const playerData = requirePlayerData(profileActor)
@@ -197,7 +200,7 @@ export async function openFreshStandardChickenMatchSession({
     (previousSession === null ||
       activeMatch.matchId !== previousSession.match.matchId)
   ) {
-    return openCurrentStandardChickenMatchSession({
+    return openCurrentWebStoryMatchSession({
       openRuntime,
       profileActor,
       signal,
@@ -207,10 +210,18 @@ export async function openFreshStandardChickenMatchSession({
     throw new Error("The match selected for restart is no longer active.")
   }
 
-  const runtime = await openRuntime({ signal })
-  const freshMatch = buildFreshStandardChickenMatch({
+  const setup =
+    previousSession?.match.startingPosition ??
+    (variant === "standard"
+      ? { variant, chess960PositionId: null }
+      : { variant })
+  const runtime = await openRuntime({ setup, signal })
+  const freshMatch = buildFreshWebStoryMatch({
     autoHintMode: playerData.settings.autoHintMode,
-    playerEloAtStart: playerData.ratings.standardStory,
+    playerEloAtStart:
+      runtime.startingPosition.variant === "standard"
+        ? playerData.ratings.standardStory
+        : playerData.ratings.chess960Story,
     runtime,
   })
 
@@ -228,17 +239,17 @@ export async function openFreshStandardChickenMatchSession({
   return openActorSession({
     match: freshMatch,
     profileActor,
-    resumedMatch: resumeStandardChickenMatch(freshMatch),
+    resumedMatch: resumeWebStoryMatch(freshMatch),
     runtime,
     signal,
   })
 }
 
-export async function returnStandardChickenMatchSessionToMenu({
+export async function returnWebStoryMatchSessionToMenu({
   profileActor,
   session,
   signal,
-}: ReturnStandardChickenMatchSessionToMenuInput): Promise<void> {
+}: ReturnWebStoryMatchSessionToMenuInput): Promise<void> {
   await session.close()
 
   const activeMatch = requirePlayerData(profileActor).activeMatch

@@ -7,24 +7,19 @@ import {
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import {
-  selectStandardStoryPlayerColor,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-  standardChickenMatchId,
-} from "./standardChickenOpponent"
+  chickenMatchId,
+  chickenPolicyFingerprint,
+  selectStoryPlayerColor,
+} from "../chicken/chickenOpponent"
+import type { WebMatchRuntime } from "./webMatchRuntime"
 
-const STANDARD_CHICKEN_STARTING_POSITION = Object.freeze({
-  chess960PositionId: null,
-  variant: "standard" as const,
-})
-
-export type ResumedStandardChickenMatch = Readonly<{
+export type ResumedWebStoryMatch = Readonly<{
   matchSeed: WebMatchRuntime["matchSeed"]
   timeline: MatchTimeline
 }>
 
-export type FreshStandardChickenMatchInput = Readonly<{
+export type FreshWebStoryMatchInput = Readonly<{
   autoHintMode: AutoHintMode
   playerEloAtStart: number
   runtime: Pick<
@@ -34,14 +29,15 @@ export type FreshStandardChickenMatchInput = Readonly<{
     | "opponentId"
     | "opponentPolicyFingerprint"
     | "playerColor"
+    | "startingPosition"
   >
 }>
 
-export function buildFreshStandardChickenMatch(
-  input: FreshStandardChickenMatchInput,
+export function buildFreshWebStoryMatch(
+  input: FreshWebStoryMatchInput,
 ): DurableMatchRecord {
   const initialPosition = createInitialMatchPosition(
-    STANDARD_CHICKEN_STARTING_POSITION,
+    input.runtime.startingPosition,
   )
   return Object.freeze({
     autoHintMode: input.autoHintMode,
@@ -59,35 +55,31 @@ export function buildFreshStandardChickenMatch(
     playerColor: input.runtime.playerColor,
     playerEloAtStart: input.playerEloAtStart,
     recordVersion: DURABLE_MATCH_RECORD_VERSION,
-    startingPosition: STANDARD_CHICKEN_STARTING_POSITION,
+    startingPosition: input.runtime.startingPosition,
     timeControl: Object.freeze({ type: "untimed" }),
   })
 }
 
-export default function resumeStandardChickenMatch(
+export default function resumeWebStoryMatch(
   record: DurableMatchRecord,
-): ResumedStandardChickenMatch {
-  if (
-    record.mode !== "story" ||
-    record.opponentId !== "chicken-stockfish" ||
-    record.startingPosition.variant !== "standard" ||
-    record.startingPosition.chess960PositionId !== null
-  ) {
-    throw new TypeError("Saved match is not Standard Story Chicken.")
+): ResumedWebStoryMatch {
+  if (record.mode !== "story" || record.opponentId !== "chicken-stockfish") {
+    throw new TypeError("Saved match is not an implemented Story opponent.")
   }
   if (
-    record.opponentPolicyFingerprint !== STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT
+    record.opponentPolicyFingerprint !==
+    chickenPolicyFingerprint(record.startingPosition.variant)
   ) {
     throw new TypeError("Saved Chicken policy does not match this runtime.")
   }
 
   const matchSeed = parseDeterministicRandomSeed(
     record.matchSeed,
-    "Saved Standard Chicken match seed",
+    "Saved Chicken match seed",
   )
   if (
-    record.matchId !== standardChickenMatchId(matchSeed) ||
-    record.playerColor !== selectStandardStoryPlayerColor(matchSeed)
+    record.matchId !== chickenMatchId(matchSeed, record.startingPosition) ||
+    record.playerColor !== selectStoryPlayerColor(matchSeed)
   ) {
     throw new TypeError("Saved Chicken identity does not match its seed.")
   }

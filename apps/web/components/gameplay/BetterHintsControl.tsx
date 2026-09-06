@@ -71,7 +71,17 @@ const describeHintMoves = (
   owner: "Opponent" | "Player",
   hints: readonly BetterHint[],
 ): string =>
-  `${owner} Move Hints: ${hints.length === 0 ? "none" : hints.map((hint) => `${hint.from} to ${hint.to}`).join("; ")}.`
+  `${owner} Move Hints: ${
+    hints.length === 0
+      ? "none"
+      : hints
+          .map((hint) =>
+            hint.castling === undefined
+              ? `${hint.from} to ${hint.to}`
+              : `castle ${hint.castling.side}side, king to ${hint.to}, rook from ${hint.castling.rookFrom} to ${hint.castling.rookTo}`,
+          )
+          .join("; ")
+  }.`
 
 const hintAnnouncement = (
   stage: MatchHintStage,

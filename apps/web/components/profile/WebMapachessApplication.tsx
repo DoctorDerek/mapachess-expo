@@ -25,7 +25,7 @@ import {
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
-import StandardChickenGame from "../gameplay/StandardChickenGame"
+import WebStoryGame from "../gameplay/WebStoryGame"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
@@ -250,7 +250,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
             />
           )
         ) : null}
-        <StandardChickenGame
+        <WebStoryGame
           onActiveMatchActorChanged={trackActiveMatchActor}
           onSettingsRequested={() => setSettingsOpen(true)}
           profileActor={actor}

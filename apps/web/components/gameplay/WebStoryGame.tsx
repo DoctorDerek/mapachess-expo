@@ -3,34 +3,35 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
+import { MATCH_VARIANTS } from "@mapachess/match/match-variant"
 import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
 } from "@mapachess/match/stockfish-opponent"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
-import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
-import {
-  openCurrentStandardChickenMatchSession,
-  openFreshStandardChickenMatchSession,
-  returnStandardChickenMatchSessionToMenu,
-} from "../../lib/chicken/standardChickenWebMatchSession"
+import { CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/chickenOpponent"
 import webMatchSessionMachine, {
   selectWebMatchSession,
   selectWebMatchSessionFailure,
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
+import {
+  openCurrentWebStoryMatchSession,
+  openFreshWebStoryMatchSession,
+  returnWebStoryMatchSessionToMenu,
+} from "../../lib/gameplay/webStoryMatchSession"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
-import StandardChickenMatch from "./StandardChickenMatch"
+import WebStoryMatch from "./WebStoryMatch"
 
-const STANDARD_CHICKEN_OPPONENT = stockfishOpponent("chicken-stockfish")
+const FIRST_STORY_OPPONENT = stockfishOpponent("chicken-stockfish")
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
 
-export type StandardChickenGameProps = Readonly<{
+export type WebStoryGameProps = Readonly<{
   onActiveMatchActorChanged: (actor: WebMatchSession["actor"] | null) => void
   onSettingsRequested: () => void
   profileActor: ActorRefFrom<typeof profileMachine>
@@ -39,7 +40,7 @@ export type StandardChickenGameProps = Readonly<{
 }>
 
 type GameFrameProps = Omit<
-  StandardChickenGameProps,
+  WebStoryGameProps,
   "onActiveMatchActorChanged" | "profileActor"
 > &
   Readonly<{
@@ -124,7 +125,7 @@ function MatchSessionExperience({
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
-}: Omit<StandardChickenGameProps, "profileActor"> &
+}: Omit<WebStoryGameProps, "profileActor"> &
   Readonly<{ actor: WebMatchSessionActor }>) {
   const snapshot = useSelector(actor, (current) => current)
   const session = selectWebMatchSession(snapshot)
@@ -155,26 +156,25 @@ function MatchSessionExperience({
     >
       {snapshot.matches("menu") ? (
         <section
-          aria-labelledby="standard-story-title"
+          aria-labelledby="story-title"
           className="before:border-mapachito-violet/20 border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal relative mx-auto max-w-5xl overflow-hidden rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0.625rem_0.625rem_0] before:absolute before:top-0 before:right-0 before:size-[clamp(4.5rem,18vw,10rem)] before:translate-x-[30%] before:-translate-y-[35%] before:rotate-18 before:border-[1.5rem] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
               <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-                Story opponent {STANDARD_CHICKEN_OPPONENT.storyPosition} of{" "}
+                Story opponent {FIRST_STORY_OPPONENT.storyPosition} of{" "}
                 {STOCKFISH_OPPONENTS.length}
               </p>
               <h1
                 className="font-display text-mapachito-charcoal mt-4 text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] font-black tracking-[-0.035em] text-balance uppercase font-stretch-condensed"
-                id="standard-story-title"
+                id="story-title"
               >
-                Standard Story
+                Story
               </h1>
               <p className="text-mapachito-charcoal mt-6 max-w-2xl text-base leading-[1.65] font-semibold opacity-82">
-                Your first animal challenge is a complete local game of Standard
-                chess. The {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target
-                stays explicitly provisional while calibration and human
-                playtesting continue.
+                Play Standard chess or a fresh Chess960 starting position. The{" "}
+                {CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target stays explicitly
+                provisional while calibration and human playtesting continue.
               </p>
             </div>
             <div
@@ -182,10 +182,7 @@ function MatchSessionExperience({
               className="border-mapachito-charcoal bg-mapachito-raspberry text-mapachito-white shadow-mapachito-orange grid min-h-52 place-content-center rounded-[1.25rem_0.25rem_1.25rem_0.25rem] border-3 bg-[linear-gradient(135deg,transparent_0_48%,color-mix(in_srgb,var(--color-mapachito-white)_22%,transparent)_48%_52%,transparent_52%)] p-6 text-center shadow-[0.5rem_0.5rem_0]"
             >
               <span className="font-display text-[clamp(5rem,18vw,9rem)] leading-[0.72] font-black tracking-[-0.06em]">
-                {String(STANDARD_CHICKEN_OPPONENT.storyPosition).padStart(
-                  2,
-                  "0",
-                )}
+                {String(FIRST_STORY_OPPONENT.storyPosition).padStart(2, "0")}
               </span>
               <span className="mt-4 font-mono text-xs font-black tracking-[0.18em] uppercase">
                 First opponent
@@ -193,15 +190,39 @@ function MatchSessionExperience({
             </div>
           </div>
 
-          <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <form
+            className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const value = new FormData(event.currentTarget).get("variant")
+              const variant = MATCH_VARIANTS.find(
+                (candidate) => candidate === value,
+              )
+              if (variant === undefined)
+                throw new TypeError("Select a supported chess variant.")
+              actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", variant })
+            }}
+          >
             <div>
               <h2 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
-                {STANDARD_CHICKEN_OPPONENT.displayName}
+                {FIRST_STORY_OPPONENT.displayName}
               </h2>
               <dl className="border-mapachito-charcoal bg-mapachito-white [&>div+div]:border-mapachito-charcoal/18 [&_dt]:text-mapachito-charcoal [&_dd]:text-mapachito-charcoal mt-4 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-3 [&_dd]:font-black [&_dt]:text-[0.72rem] [&_dt]:font-black [&_dt]:tracking-[0.12em] [&_dt]:uppercase [&_dt]:opacity-72 [&>div+div]:border-t-2">
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
-                  <dt>Variant</dt>
-                  <dd>Standard</dd>
+                  <dt>
+                    <label htmlFor="story-variant">Variant</label>
+                  </dt>
+                  <dd>
+                    <select
+                      id="story-variant"
+                      name="variant"
+                      defaultValue={snapshot.context.requestedVariant}
+                      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-orange min-h-11 rounded-lg border-2 px-3 py-2 focus-visible:outline-3"
+                    >
+                      <option value="standard">Standard</option>
+                      <option value="chess960">Chess960</option>
+                    </select>
+                  </dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Clock</dt>
@@ -210,24 +231,18 @@ function MatchSessionExperience({
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
                   <dt>Strength</dt>
                   <dd>
-                    Provisional {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo
-                    target
+                    Provisional {CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target
                   </dd>
                 </div>
               </dl>
             </div>
-            <MapachessButton
-              onClick={() =>
-                actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" })
-              }
-              type="button"
-            >
-              Play {STANDARD_CHICKEN_OPPONENT.displayName}
+            <MapachessButton type="submit">
+              Play {FIRST_STORY_OPPONENT.displayName}
             </MapachessButton>
-          </article>
+          </form>
         </section>
       ) : snapshot.matches("active") && session !== null ? (
-        <StandardChickenMatch
+        <WebStoryMatch
           actor={session.actor}
           evaluationActor={session.evaluationActor}
           key={session.match.matchId}
@@ -281,11 +296,11 @@ function MatchSessionExperience({
   )
 }
 
-export default function StandardChickenGame({
+export default function WebStoryGame({
   onActiveMatchActorChanged,
   profileActor,
   ...frameProps
-}: StandardChickenGameProps) {
+}: WebStoryGameProps) {
   const [sessionActor, setSessionActor] = useState<WebMatchSessionActor | null>(
     null,
   )
@@ -316,21 +331,22 @@ export default function StandardChickenGame({
         operations: {
           openCurrentMatch: (signal) =>
             captureSession(
-              openCurrentStandardChickenMatchSession({
+              openCurrentWebStoryMatchSession({
                 profileActor,
                 signal,
               }),
             ),
-          openFreshMatch: (previousSession, signal) =>
+          openFreshMatch: (previousSession, variant, signal) =>
             captureSession(
-              openFreshStandardChickenMatchSession({
+              openFreshWebStoryMatchSession({
                 previousSession,
+                variant,
                 profileActor,
                 signal,
               }),
             ),
           returnToMenu: async (session, signal) => {
-            await returnStandardChickenMatchSessionToMenu({
+            await returnWebStoryMatchSessionToMenu({
               profileActor,
               session,
               signal,

@@ -10,10 +10,10 @@ import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
+import type { ChickenCryptography } from "../chicken/chickenOpponent"
+import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "../chicken/chickenOpponent"
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
-import openStandardChickenRuntime from "./openStandardChickenRuntime"
-import type { StandardChickenCryptography } from "./standardChickenOpponent"
-import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "./standardChickenOpponent"
+import openWebMatchRuntime from "./openWebMatchRuntime"
 
 const ENGINE_IDENTITY: StockfishUciIdentity = Object.freeze({
   author: "the Stockfish developers",
@@ -39,7 +39,7 @@ const HINT_CONFIGURATION: StockfishEngineConfiguration = Object.freeze({
   variant: "standard",
 })
 
-const createCryptography = (): StandardChickenCryptography => {
+const createCryptography = (): ChickenCryptography => {
   const getRandomValues = <Value extends ArrayBufferView<ArrayBuffer> | null>(
     array: Value,
   ): Value => {
@@ -99,7 +99,79 @@ const createSessionQueue = (sessions: readonly StockfishUciSession[]) => {
   )
 }
 
-describe("Standard Chicken runtime ownership", () => {
+describe("web match runtime ownership", () => {
+  it("configures all three Chess960 workers and retains an explicit restart layout", async () => {
+    const openFixture = async (
+      input: Parameters<typeof openWebMatchRuntime>[0],
+    ) => {
+      const sessions = [0, 1, 2].map(() =>
+        createSession(async () => ENGINE_IDENTITY),
+      )
+      const openSession = createSessionQueue(
+        sessions.map((entry) => entry.session),
+      )
+      const runtime = await openWebMatchRuntime({
+        ...input,
+        cryptography: createCryptography(),
+        openSession,
+      })
+      return { runtime, openSession }
+    }
+    const first = await openFixture({ setup: { variant: "chess960" } })
+    const secondSeed = parseDeterministicRandomSeed(
+      "ffffffffffffffffffffffffffffffff",
+    )
+    const restarted = await openFixture({
+      setup: first.runtime.startingPosition,
+      matchSeed: secondSeed,
+    })
+    const fresh = await openFixture({
+      setup: { variant: "chess960" },
+      matchSeed: secondSeed,
+    })
+    const resumed = await openFixture({
+      setup: first.runtime.startingPosition,
+      matchSeed: first.runtime.matchSeed,
+    })
+    try {
+      expect(
+        first.openSession.mock.calls.map(([configuration]) => configuration),
+      ).toEqual([
+        { ...OPPONENT_CONFIGURATION, variant: "chess960" },
+        { ...HINT_CONFIGURATION, variant: "chess960" },
+        { ...OPPONENT_CONFIGURATION, variant: "chess960" },
+      ])
+      expect(first.runtime.startingPosition.variant).toBe("chess960")
+      expect(first.runtime.startingPosition.chess960PositionId).toBe(0)
+      expect(
+        first.runtime.startingPosition.chess960PositionId,
+      ).toBeGreaterThanOrEqual(0)
+      expect(first.runtime.startingPosition.chess960PositionId).toBeLessThan(
+        960,
+      )
+      expect(restarted.runtime.startingPosition).toEqual(
+        first.runtime.startingPosition,
+      )
+      expect(restarted.runtime.matchId).not.toBe(first.runtime.matchId)
+      expect(fresh.runtime.startingPosition).not.toEqual(
+        first.runtime.startingPosition,
+      )
+      expect(fresh.runtime.startingPosition.chess960PositionId).toBe(439)
+      expect(restarted.runtime.playerColor).not.toBe(first.runtime.playerColor)
+      expect(resumed.runtime.matchId).toBe(first.runtime.matchId)
+      expect(resumed.runtime.playerColor).toBe(first.runtime.playerColor)
+      expect(first.runtime.opponentPolicyFingerprint).not.toBe(
+        STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+      )
+    } finally {
+      await Promise.all(
+        [first, restarted, fresh, resumed].map(({ runtime }) =>
+          runtime.close(),
+        ),
+      )
+    }
+  })
+
   it("boots isolated opponent, Better Hints, and evaluation sessions", async () => {
     const opponent = createSession(async () => ENGINE_IDENTITY)
     const hints = createSession(async () => ENGINE_IDENTITY)
@@ -110,7 +182,7 @@ describe("Standard Chicken runtime ownership", () => {
       evaluation.session,
     ])
 
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession,
     })
@@ -152,7 +224,7 @@ describe("Standard Chicken runtime ownership", () => {
       "reopened Chicken test seed",
     )
 
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       matchSeed,
       openSession: createSessionQueue([
@@ -174,7 +246,7 @@ describe("Standard Chicken runtime ownership", () => {
     const opponent = createSession(async () => ENGINE_IDENTITY)
     const hints = createSession(async () => ENGINE_IDENTITY)
     const evaluation = createSession(async () => ENGINE_IDENTITY)
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession: createSessionQueue([
         opponent.session,
@@ -219,7 +291,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -243,7 +315,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -268,7 +340,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -299,7 +371,7 @@ describe("Standard Chicken runtime ownership", () => {
       })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession,
       }),
@@ -326,7 +398,7 @@ describe("Standard Chicken runtime ownership", () => {
       })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession,
       }),
@@ -346,7 +418,7 @@ describe("Standard Chicken runtime ownership", () => {
     })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -381,7 +453,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -392,7 +464,7 @@ describe("Standard Chicken runtime ownership", () => {
     ).rejects.toEqual(
       new AggregateError(
         [bootError, opponentCloseError, hintCloseError],
-        "Standard Chicken failed to open and close cleanly.",
+        "Web match failed to open and close cleanly.",
       ),
     )
   })
@@ -413,7 +485,7 @@ describe("Standard Chicken runtime ownership", () => {
       },
     )
     const evaluation = createSession(async () => ENGINE_IDENTITY)
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession: createSessionQueue([
         opponent.session,
@@ -425,7 +497,7 @@ describe("Standard Chicken runtime ownership", () => {
     await expect(runtime.close()).rejects.toEqual(
       new AggregateError(
         [opponentCloseError, hintCloseError],
-        "Standard Chicken sessions failed to close cleanly.",
+        "Web match sessions failed to close cleanly.",
       ),
     )
   })

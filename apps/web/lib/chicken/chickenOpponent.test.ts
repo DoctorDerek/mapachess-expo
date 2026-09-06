@@ -5,20 +5,23 @@ import {
   applyMatchMove,
   listLegalMatchMoves,
 } from "@mapachess/match/match-move"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import {
+  createInitialMatchPosition,
+  reconstructMatchPosition,
+} from "@mapachess/match/match-position"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import createStandardChickenOpponent, {
-  generateStandardChickenMatchSeed,
-  selectStandardStoryPlayerColor,
-  STANDARD_CHICKEN_NODE_LIMIT,
-  STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION,
-  type StandardChickenCryptography,
-} from "./standardChickenOpponent"
+import createChickenOpponent, {
+  CHICKEN_NODE_LIMIT,
+  CHICKEN_WEB_SEED_DERIVATION_VERSION,
+  generateChickenMatchSeed,
+  selectStoryPlayerColor,
+  type ChickenCryptography,
+} from "./chickenOpponent"
 
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
@@ -60,7 +63,7 @@ const createCryptography = (
   const cryptography = {
     getRandomValues,
     subtle: { digest },
-  } satisfies StandardChickenCryptography
+  } satisfies ChickenCryptography
 
   return { cryptography, digest }
 }
@@ -115,22 +118,64 @@ const createSession = (
   return { search, session }
 }
 
-describe("provisional Standard Chicken opponent", () => {
+describe("provisional Chicken opponent", () => {
+  it.each([RANDOM_POSITION_SEED, STOCKFISH_POSITION_SEED])(
+    "selects canonical Chess960 moves with position seed %s",
+    async (positionSeed) => {
+      const parsed = parseChess960PositionId(0)
+      if (!parsed.ok) throw new Error("Invalid layout fixture")
+      const reconstructed = reconstructMatchPosition(
+        { variant: "chess960", chess960PositionId: parsed.positionId },
+        "4k3/8/8/8/8/8/8/R5KR w HA - 0 1",
+      )
+      if (!reconstructed.ok) throw new Error("Invalid castling fixture")
+      const position = reconstructed.position
+      const request: MatchOpponentRequest = {
+        acceptedMoves: [],
+        initialPosition: position,
+        legalMoves: listLegalMatchMoves(position),
+        position,
+        requestId: "chess960/castle",
+      }
+      const { cryptography } = createCryptography(positionSeed)
+      const { session, search } = createSession((request) => ({
+        bestMove: "g1h1",
+        requestId: request.requestId,
+      }))
+      const opponent = createChickenOpponent(
+        session,
+        cryptography,
+        parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+        "chess960",
+      )
+      const result = await opponent.selectMove(
+        request,
+        new AbortController().signal,
+      )
+      expect(request.legalMoves.some((move) => move.id === result)).toBe(true)
+      if (positionSeed === STOCKFISH_POSITION_SEED) {
+        expect(result).toBe("g1h1")
+        expect(search).toHaveBeenCalledWith(
+          expect.objectContaining({
+            position: { fen: position.fen, moves: [] },
+          }),
+          expect.any(AbortSignal),
+        )
+      } else expect(search).not.toHaveBeenCalled()
+    },
+  )
+
   it("creates a nonzero cryptographic match seed and both Story colors", () => {
     const { cryptography } = createCryptography()
 
-    expect(generateStandardChickenMatchSeed(cryptography)).toBe(
-      RANDOM_POSITION_SEED,
-    )
+    expect(generateChickenMatchSeed(cryptography)).toBe(RANDOM_POSITION_SEED)
     expect(
-      selectStandardStoryPlayerColor(
+      selectStoryPlayerColor(
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
       ),
     ).toBe("white")
     expect(
-      selectStandardStoryPlayerColor(
-        parseDeterministicRandomSeed(BLACK_PLAYER_SEED),
-      ),
+      selectStoryPlayerColor(parseDeterministicRandomSeed(BLACK_PLAYER_SEED)),
     ).toBe("black")
   })
 
@@ -141,11 +186,7 @@ describe("provisional Standard Chicken opponent", () => {
       requestId: request.requestId,
     }))
     const matchSeed = parseDeterministicRandomSeed(RANDOM_POSITION_SEED)
-    const opponent = createStandardChickenOpponent(
-      session,
-      cryptography,
-      matchSeed,
-    )
+    const opponent = createChickenOpponent(session, cryptography, matchSeed)
     const request = createStandardRequest()
     const signal = new AbortController().signal
 
@@ -169,7 +210,7 @@ describe("provisional Standard Chicken opponent", () => {
       : new Uint8Array(digestInput)
     expect(new TextDecoder().decode(digestBytes)).toBe(
       JSON.stringify([
-        STANDARD_CHICKEN_WEB_SEED_DERIVATION_VERSION,
+        CHICKEN_WEB_SEED_DERIVATION_VERSION,
         matchSeed,
         request.requestId,
       ]),
@@ -182,7 +223,7 @@ describe("provisional Standard Chicken opponent", () => {
       bestMove: "e7e5",
       requestId: request.requestId,
     }))
-    const opponent = createStandardChickenOpponent(
+    const opponent = createChickenOpponent(
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
@@ -193,7 +234,7 @@ describe("provisional Standard Chicken opponent", () => {
     await expect(opponent.selectMove(request, signal)).resolves.toBe("e7e5")
     expect(search).toHaveBeenCalledWith(
       {
-        nodeLimit: STANDARD_CHICKEN_NODE_LIMIT,
+        nodeLimit: CHICKEN_NODE_LIMIT,
         position: { fen: request.initialPosition.fen, moves: ["e2e4"] },
         requestId: request.requestId,
       },
@@ -225,7 +266,7 @@ describe("provisional Standard Chicken opponent", () => {
         bestMove,
         requestId: responseRequestId ?? request.requestId,
       }))
-      const opponent = createStandardChickenOpponent(
+      const opponent = createChickenOpponent(
         session,
         cryptography,
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
@@ -259,7 +300,7 @@ describe("provisional Standard Chicken opponent", () => {
       bestMove: "a2a3",
       requestId: engineRequest.requestId,
     }))
-    const opponent = createStandardChickenOpponent(
+    const opponent = createChickenOpponent(
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
@@ -267,7 +308,7 @@ describe("provisional Standard Chicken opponent", () => {
 
     await expect(
       opponent.selectMove(request, new AbortController().signal),
-    ).rejects.toThrow("non-Standard position")
+    ).rejects.toThrow("position for a different variant")
     expect(digest).not.toHaveBeenCalled()
     expect(search).not.toHaveBeenCalled()
   })
@@ -280,7 +321,7 @@ describe("provisional Standard Chicken opponent", () => {
       bestMove: "e2e4",
       requestId: request.requestId,
     }))
-    const beforeOpponent = createStandardChickenOpponent(
+    const beforeOpponent = createChickenOpponent(
       beforeSession.session,
       before.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
@@ -301,7 +342,7 @@ describe("provisional Standard Chicken opponent", () => {
       bestMove: "e2e4",
       requestId: request.requestId,
     }))
-    const afterOpponent = createStandardChickenOpponent(
+    const afterOpponent = createChickenOpponent(
       afterSession.session,
       after.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),

@@ -1,8 +1,13 @@
+import type { LegalMatchMove } from "./matchMove.js"
 import type { MatchColor, MatchPosition, MatchSquare } from "./matchPosition.js"
 
 export const BETTER_HINTS_PER_SIDE = 3 as const
 
 export type BetterHint = Readonly<{
+  castling?: Pick<
+    Extract<LegalMatchMove, { kind: "castle" }>,
+    "rookFrom" | "rookTo" | "side"
+  >
   color: MatchColor
   from: MatchSquare
   to: MatchSquare
