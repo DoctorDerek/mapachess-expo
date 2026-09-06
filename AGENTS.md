@@ -58,16 +58,23 @@ Process every task through the complete Forge before claiming completion:
 - **1PLAN — Blueprint:** Write the smallest complete architecture and verification plan, including exact paths and state/data flow.
 - **2CHECK — Red Team:** Attack the plan for scope creep, duplication, stale assumptions, platform mismatch, unsafe asset/data handling, race conditions, and unverified package/API claims.
 - **3CODE — Execute:** Implement only the approved plan with strict types, descriptive names, and no unrelated cleanup.
-- **4CHECK — Verify:** Inspect the exact diff and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
+- **4CHECK — Verify:** After implementing the approved coherent feature, group behavior-focused tests and broader verification, run the required lint/format checks, inspect the exact diff, and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
 - **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks. Report the exact commands, targets, results, unknowns, and confidence level.
 
-Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only after successful applicable 5RUN evidence. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
+Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only for Mapachito-confirmed live 5RUN results. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
 
 ### Active UI development and the QA Trophy
 
-- The current development phase is test-after development, not TDD. Defer broad new automated suites, mock-heavy isolated tests, and percentage-driven coverage expansion until the approved interactions stabilize. Keep applicable static checks, risk-targeted regression checks, and manual Preview playtesting; this is not permission to remove existing tests, weaken CI, or claim untested behavior works. Record stale expectations and remaining QA honestly without expanding unrelated tasks into suite maintenance.
+- The current development phase is test-after development, not TDD. Implement the approved coherent interaction first, then group its verification in 4CHECK; do not require a full suite after each small commit. Defer broad new automated suites, mock-heavy isolated tests, and percentage-driven coverage expansion until the approved interactions stabilize. Keep necessary diagnostics, required lint/format checks, applicable static checks, risk-targeted regression checks, and manual Preview playtesting; this is not permission to remove existing tests, weaken CI, or claim untested behavior works. Record stale expectations and remaining QA honestly without expanding unrelated tasks into suite maintenance.
 - Prefer accessible role/name, label, and text queries for controls. Use narrowly scoped test IDs or data attributes only when meaningful user-facing queries are unavailable, such as decorative aria-hidden SVG or sprite surfaces. Do not add speculative test hooks, accessibility roles, or labels solely to make tests convenient.
 - Test interactions and rendered outcomes at the fidelity required by the claim. Metadata counts, serialized markup, and class-name assertions can check structure but do not prove visibility, actual geometry, layering, motion, input behavior, accessibility, or game feel. Keep those evidence limits explicit rather than presenting structural checks as visual or usability validation.
+
+### Existing test runners and coverage ownership
+
+- Vitest remains the default for portable TypeScript, shared XState/domain behavior, and web behavior. Inspect the owning test configuration before claiming browser-interaction evidence; do not assume a DOM-testing environment is installed.
+- Existing Jest with `jest-expo` and React Native Testing Library supplements genuine native-renderer semantics, Expo-compatible transforms, and native-module seams that Vitest cannot faithfully exercise. Do not duplicate portable or web tests, or mistake mocked native-module checks for physical-device proof.
+- When native coverage is part of the approved verification plan, use `pnpm --filter @mapachess/mobile test:native:coverage`. Its existing `native-jest` job belongs to `.github/workflows/eslint-vitest-xstate.yml`, writes `coverage/native/lcov.info`, and uploads that report under Codecov's `native` flag. Reuse this owner; do not create a standalone native workflow or another badge for the same quality surface.
+- Preserve the repository's approved coverage policy. Report gaps and evidence limits without inventing, removing, or changing coverage gates unless separately approved.
 
 ## 5. Scope, decomposition, and PR workflow
 
@@ -105,7 +112,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 4. **Almost No Print Statements:** Production code contains no casual console output or raw player data; only deliberate QA-harness output and minimal hypothesis-specific temporary debugging instrumentation are allowed.
 5. **Instantaneous Debugging:** When evidence is insufficient, place the smallest targeted probes at every critical junction of the relevant event, state, engine, storage, or render path, reproduce the failure, isolate the cause, then fix it.
 6. **Delete Temporary Instrumentation:** Remove every temporary probe, debug surface, fixture, and log before completion while protecting permanent QA-harness output required for verification.
-7. **Intellectual Honesty:** Label hypotheses CL1, source-checked plans or output CL2, and only successful applicable 5RUN results CL3 while stating the tested build, target, result, and unknowns.
+7. **Intellectual Honesty:** Label hypotheses CL1, source-checked plans or output CL2, and only Mapachito-confirmed live 5RUN results CL3 while stating the tested build, target, result, and unknowns.
 8. **Almost No Code Comments:** Prefer self-explanatory names, typed contracts, statecharts, tests, and GDD rationale; comments are limited to labeled non-obvious invariants, regression fixes, sourced platform workarounds, complex logic, or required boot and migration order.
 9. **Check State Directly:** Views read the canonical XState snapshot and focused selectors directly; they never mirror machine state into independent booleans or hide simple state checks behind speculative wrappers.
 10. **No Unnecessary If Statements:** Eliminate guards that conceal impossible internal states or continue half-working while validating every untrusted import, storage result, optional platform capability, permission, and player-controlled boundary explicitly.
