@@ -6,7 +6,6 @@ import type {
   AppliedMatchMove,
   LegalMatchMove,
   MatchMoveId,
-  MatchPromotionRole,
 } from "@mapachess/match/match-move"
 import type {
   MatchBoardPiece,
@@ -56,10 +55,28 @@ const PIECE_NAMES = Object.freeze({
 
 const PROMOTION_ROLES = ["queen", "rook", "bishop", "knight"] as const
 
-type PendingPromotion = Readonly<{
+type PendingMoveChoice = Readonly<{
   moves: readonly LegalMatchMove[]
   to: MatchSquare
 }>
+
+export const boardDestinationMoves = (
+  moves: readonly LegalMatchMove[],
+  square: MatchSquare,
+): readonly LegalMatchMove[] =>
+  moves.filter(
+    (move) =>
+      move.to === square ||
+      (move.kind === "castle" && move.rookFrom === square),
+  )
+
+const moveChoiceLabel = (move: LegalMatchMove): string => {
+  if (move.kind === "castle")
+    return `Castle ${move.san} — king to ${move.to}, rook to ${move.rookTo}`
+  return move.promotion === null
+    ? `Move king to ${move.to}`
+    : `Promote to ${PIECE_NAMES[move.promotion]}`
+}
 
 export type CanonicalChessboardProps = Readonly<{
   disabled: boolean
@@ -164,19 +181,20 @@ export default function CanonicalChessboard({
   const [focusedSquare, setFocusedSquare] =
     useState<MatchSquare>(initialFocusSquare)
   const [selectedSquare, setSelectedSquare] = useState<MatchSquare | null>(null)
-  const [pendingPromotion, setPendingPromotion] =
-    useState<PendingPromotion | null>(null)
+  const [pendingChoice, setPendingChoice] = useState<PendingMoveChoice | null>(
+    null,
+  )
   const squareElements = useRef(new Map<MatchSquare, HTMLButtonElement>())
-  const firstPromotionButton = useRef<HTMLButtonElement>(null)
+  const firstChoiceButton = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    setPendingPromotion(null)
+    setPendingChoice(null)
     setSelectedSquare(null)
   }, [position.fen])
 
   useEffect(() => {
-    if (pendingPromotion !== null) firstPromotionButton.current?.focus()
-  }, [pendingPromotion])
+    if (pendingChoice !== null) firstChoiceButton.current?.focus()
+  }, [pendingChoice])
 
   const selectedMoves =
     selectedSquare === null
@@ -184,30 +202,32 @@ export default function CanonicalChessboard({
       : legalMoves.filter((move) => move.from === selectedSquare)
 
   const clearSelection = (): void => {
-    setPendingPromotion(null)
+    setPendingChoice(null)
+    squareElements.current.get(selectedSquare ?? focusedSquare)?.focus()
     setSelectedSquare(null)
   }
 
   const commitMove = (moveId: MatchMoveId): void => {
+    if (disabled) return
     clearSelection()
     onMove(moveId)
   }
 
   const chooseSquare = (square: MatchSquare): void => {
-    if (disabled || pendingPromotion !== null) return
+    if (disabled || pendingChoice !== null) return
     if (selectedSquare === square) {
       setSelectedSquare(null)
       return
     }
 
-    const destinationMoves = selectedMoves.filter((move) => move.to === square)
+    const destinationMoves = boardDestinationMoves(selectedMoves, square)
     if (destinationMoves.length === 1) {
       const move = destinationMoves[0]
       if (move !== undefined) commitMove(move.id)
       return
     }
     if (destinationMoves.length > 1) {
-      setPendingPromotion({ moves: destinationMoves, to: square })
+      setPendingChoice({ moves: destinationMoves, to: square })
       return
     }
 
@@ -230,145 +250,200 @@ export default function CanonicalChessboard({
     squareElements.current.get(nextSquare)?.focus()
   }
 
-  const choosePromotion = (role: MatchPromotionRole): void => {
-    const move = pendingPromotion?.moves.find(
-      (candidate) =>
-        candidate.kind === "normal" && candidate.promotion === role,
-    )
-    if (move === undefined) {
-      throw new Error("Promotion selection has no canonical legal move.")
-    }
-
-    commitMove(move.id)
-  }
+  const choosingPromotion =
+    pendingChoice?.moves.every(
+      (move) => move.kind === "normal" && move.promotion !== null,
+    ) ?? false
+  const choiceMoves =
+    pendingChoice === null
+      ? []
+      : [...pendingChoice.moves].sort((left, right) =>
+          left.kind === "normal" &&
+          right.kind === "normal" &&
+          left.promotion !== null &&
+          right.promotion !== null
+            ? PROMOTION_ROLES.indexOf(left.promotion) -
+              PROMOTION_ROLES.indexOf(right.promotion)
+            : 0,
+        )
+  const castles = selectedMoves.filter((move) => move.kind === "castle")
 
   return (
     <div className="relative w-full max-w-[min(100%,52rem)] xl:max-w-[min(100%,calc(100dvh-6rem))]">
-      <div
-        aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
-        className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-4 shadow-[0.5rem_0.5rem_0_var(--color-mapachito-raspberry),0.85rem_0.85rem_0_var(--color-mapachito-orange)]"
-        role="grid"
-      >
-        {rows.map((row, rowIndex) => (
-          <div className="grid grid-cols-8" key={row[0]} role="row">
-            {row.map((square, columnIndex) => {
-              const piece = pieceAtSquare(position, square)
-              const selected = selectedSquare === square
-              const legalDestination = selectedMoves.some(
-                (move) => move.to === square,
-              )
-              const partOfLastMove =
-                lastMove?.from === square || lastMove?.to === square
-              const checkedKing =
-                position.inCheck &&
-                piece?.color === position.turn &&
-                piece.role === "king"
-              const file = square.slice(0, 1)
-              const rank = square.slice(1)
+      <div className="relative">
+        <div
+          aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
+          className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-4 shadow-[0.5rem_0.5rem_0_var(--color-mapachito-raspberry),0.85rem_0.85rem_0_var(--color-mapachito-orange)]"
+          role="grid"
+        >
+          {rows.map((row, rowIndex) => (
+            <div className="grid grid-cols-8" key={row[0]} role="row">
+              {row.map((square, columnIndex) => {
+                const piece = pieceAtSquare(position, square)
+                const selected = selectedSquare === square
+                const legalDestination =
+                  boardDestinationMoves(selectedMoves, square).length > 0
+                const partOfLastMove =
+                  lastMove?.from === square || lastMove?.to === square
+                const checkedKing =
+                  position.inCheck &&
+                  piece?.color === position.turn &&
+                  piece.role === "king"
+                const file = square.slice(0, 1)
+                const rank = square.slice(1)
 
-              return (
-                <button
-                  aria-disabled={disabled}
-                  aria-label={squareLabel(
-                    square,
-                    piece,
-                    selected,
-                    legalDestination,
-                    disabled,
-                    hintDescriptionsForSquare(hints, showMoveHints, square),
-                  )}
-                  aria-selected={selected}
-                  className={`${baseSquareClasses} ${checkedKing ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset" : squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-mapachito-raspberry ring-4 ring-inset" : ""} ${partOfLastMove ? "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]" : ""}`}
-                  data-square={square}
-                  key={square}
-                  onClick={() => chooseSquare(square)}
-                  onFocus={() => setFocusedSquare(square)}
-                  onKeyDown={(event) => moveFocus(event, square)}
-                  ref={(element) => {
-                    if (element === null) squareElements.current.delete(square)
-                    else squareElements.current.set(square, element)
-                  }}
-                  role="gridcell"
-                  tabIndex={focusedSquare === square ? 0 : -1}
-                  type="button"
-                >
-                  {piece === undefined ? null : (
-                    <span
-                      aria-hidden="true"
-                      className={`relative z-10 select-none ${pieceColorClasses(piece.color)}`}
-                    >
-                      {PIECE_GLYPHS[piece.color][piece.role]}
-                    </span>
-                  )}
-                  {legalDestination ? (
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline)]"
-                      data-legal-destination-shape="square-outline"
-                    />
-                  ) : null}
-                  {columnIndex === 0 ? (
-                    <span
-                      aria-hidden="true"
-                      className="text-mapachito-charcoal absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
-                    >
-                      {rank}
-                    </span>
-                  ) : null}
-                  {rowIndex === 7 ? (
-                    <span
-                      aria-hidden="true"
-                      className="text-mapachito-charcoal absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
-                    >
-                      {file}
-                    </span>
-                  ) : null}
-                </button>
-              )
-            })}
-          </div>
-        ))}
+                return (
+                  <button
+                    aria-disabled={disabled}
+                    aria-label={squareLabel(
+                      square,
+                      piece,
+                      selected,
+                      legalDestination,
+                      disabled,
+                      hintDescriptionsForSquare(hints, showMoveHints, square),
+                    )}
+                    aria-selected={selected}
+                    className={`${baseSquareClasses} ${checkedKing ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset" : squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-mapachito-raspberry ring-4 ring-inset" : ""} ${partOfLastMove ? "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]" : ""}`}
+                    data-square={square}
+                    key={square}
+                    onClick={() => chooseSquare(square)}
+                    onFocus={() => setFocusedSquare(square)}
+                    onKeyDown={(event) => moveFocus(event, square)}
+                    ref={(element) => {
+                      if (element === null)
+                        squareElements.current.delete(square)
+                      else squareElements.current.set(square, element)
+                    }}
+                    role="gridcell"
+                    tabIndex={focusedSquare === square ? 0 : -1}
+                    type="button"
+                  >
+                    {piece === undefined ? null : (
+                      <span
+                        aria-hidden="true"
+                        className={`relative z-10 select-none ${pieceColorClasses(piece.color)}`}
+                      >
+                        {PIECE_GLYPHS[piece.color][piece.role]}
+                      </span>
+                    )}
+                    {legalDestination ? (
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline)]"
+                        data-legal-destination-shape="square-outline"
+                      />
+                    ) : null}
+                    {columnIndex === 0 ? (
+                      <span
+                        aria-hidden="true"
+                        className="text-mapachito-charcoal absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
+                      >
+                        {rank}
+                      </span>
+                    ) : null}
+                    {rowIndex === 7 ? (
+                      <span
+                        aria-hidden="true"
+                        className="text-mapachito-charcoal absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
+                      >
+                        {file}
+                      </span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        {hints === null ? null : (
+          <BetterHintsOverlay
+            hints={hints}
+            orientation={orientation}
+            showMoves={showMoveHints}
+          />
+        )}
       </div>
 
-      {hints === null ? null : (
-        <BetterHintsOverlay
-          hints={hints}
-          orientation={orientation}
-          showMoves={showMoveHints}
-        />
+      {disabled || pendingChoice !== null || castles.length === 0 ? null : (
+        <div
+          aria-label="Castling choices"
+          className="mt-4 flex flex-wrap gap-3"
+          role="group"
+        >
+          {castles.map((move) => (
+            <MapachessButton
+              key={move.id}
+              onClick={() => commitMove(move.id)}
+              type="button"
+              variant="secondary"
+            >
+              {moveChoiceLabel(move)}
+            </MapachessButton>
+          ))}
+        </div>
       )}
 
-      {pendingPromotion === null ? null : (
+      {pendingChoice === null ? null : (
         <div
-          aria-labelledby="promotion-title"
+          aria-labelledby="move-choice-title"
           aria-modal="true"
           className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] p-6 backdrop-blur-sm"
           onKeyDown={(event) => {
             if (event.key === "Escape") clearSelection()
+            if (event.key === "Tab") {
+              const buttons =
+                event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                  "button:not(:disabled)",
+                )
+              const first = buttons[0]
+              const last = buttons[buttons.length - 1]
+              if (event.shiftKey && event.target === first) {
+                event.preventDefault()
+                last?.focus()
+              } else if (!event.shiftKey && event.target === last) {
+                event.preventDefault()
+                first?.focus()
+              }
+            }
           }}
           role="dialog"
         >
           <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal w-full max-w-md rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-5 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
             <h2
               className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-              id="promotion-title"
+              id="move-choice-title"
             >
-              Promote on {pendingPromotion.to}
+              {choosingPromotion
+                ? `Promote on ${pendingChoice.to}`
+                : `Choose your move to ${pendingChoice.to}`}
             </h2>
-            <div className="mt-4 grid grid-cols-4 gap-3">
-              {PROMOTION_ROLES.map((role, index) => (
+            <div
+              className={`mt-4 grid gap-3 ${choosingPromotion ? "grid-cols-4" : "grid-cols-1"}`}
+            >
+              {choiceMoves.map((move, index) => (
                 <MapachessButton
                   variant="secondary"
-                  aria-label={`Promote to ${PIECE_NAMES[role]}`}
-                  className="grid aspect-square place-items-center text-5xl"
-                  key={role}
-                  onClick={() => choosePromotion(role)}
-                  ref={index === 0 ? firstPromotionButton : undefined}
+                  aria-label={moveChoiceLabel(move)}
+                  className={
+                    choosingPromotion
+                      ? "grid aspect-square place-items-center text-5xl"
+                      : "w-full"
+                  }
+                  disabled={disabled}
+                  key={move.id}
+                  onClick={() => commitMove(move.id)}
+                  ref={index === 0 ? firstChoiceButton : undefined}
                   type="button"
                 >
-                  <span aria-hidden="true">
-                    {PIECE_GLYPHS[position.turn][role]}
-                  </span>
+                  {move.kind === "normal" && move.promotion !== null ? (
+                    <span aria-hidden="true">
+                      {PIECE_GLYPHS[position.turn][move.promotion]}
+                    </span>
+                  ) : (
+                    moveChoiceLabel(move)
+                  )}
                 </MapachessButton>
               ))}
             </div>
@@ -378,7 +453,7 @@ export default function CanonicalChessboard({
               onClick={clearSelection}
               type="button"
             >
-              Cancel promotion
+              {choosingPromotion ? "Cancel promotion" : "Cancel move"}
             </MapachessButton>
           </div>
         </div>
