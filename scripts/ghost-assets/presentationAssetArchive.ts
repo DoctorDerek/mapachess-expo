@@ -26,13 +26,15 @@ export const LICENSED_PRESENTATION_ASSET_KEY_VARIABLE =
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "../..")
 const ARCHIVE_ENTRY_DATE = new Date("2026-09-03T00:00:00.000Z")
+const MINIMUM_ARCHIVE_CREATION_KEY_LENGTH = 32
 const ASSET_FAILURE_MESSAGES = Object.freeze({
   manifest: "The licensed presentation asset manifest is invalid.",
   path: "An asset path resolves outside its destination.",
   integrity: "Licensed presentation assets failed integrity checks.",
   archive: "The licensed presentation archive is invalid.",
   incompleteArchive: "The licensed presentation archive is incomplete.",
-  key: `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE} must contain the existing 43-character archive key without added quotes or whitespace.`,
+  key: `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE} is required to encrypt or decrypt the presentation archive.`,
+  creationKey: `The protected asset key must contain at least ${MINIMUM_ARCHIVE_CREATION_KEY_LENGTH} characters to create an archive.`,
   missingArchive: "The licensed presentation asset archive is required.",
 })
 
@@ -74,19 +76,19 @@ export const describeLicensedPresentationAssetFailure = (
       error.message === ERR_INVALID_PASSWORD ||
       error.message === ERR_INVALID_SIGNATURE
     )
-      return `The presentation archive could not authenticate with ${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE}. Verify the existing key and archive pairing; do not regenerate either.`
+      return `The presentation archive could not authenticate with ${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE}. Verify that the password matches the one used to create this archive.`
   }
 
   if (isRecord(error)) {
     if (error.code === "ENOENT" || error.code === "ENOTDIR")
-      return "A required presentation asset file or directory is missing. Verify the committed manifest and archive are available to this build."
+      return "A required presentation asset file or directory is missing. Verify the manifest and source files needed for this operation."
     if (error.code === "EACCES" || error.code === "EPERM")
-      return "Presentation asset preparation cannot access its input or output directories. Check build filesystem permissions."
+      return "Presentation asset files could not be accessed. Check filesystem permissions."
     if (error.code === "ENOSPC")
-      return "Presentation asset preparation ran out of filesystem space."
+      return "Presentation asset processing ran out of filesystem space."
   }
 
-  return "Licensed presentation asset preparation failed with an unrecognized error; private error details were withheld."
+  return "Licensed presentation asset processing failed with an unrecognized error; private error details were withheld."
 }
 
 const parseManifestFile = (value: unknown): LicensedPresentationAssetFile => {
@@ -244,8 +246,7 @@ const loadLocalEnvironment = (environmentPath: string): void => {
 
 const requireAssetKey = (): string => {
   const assetKey = process.env[LICENSED_PRESENTATION_ASSET_KEY_VARIABLE]
-  if (assetKey === undefined || !/^[A-Za-z0-9_-]{43}$/.test(assetKey))
-    throw new Error(ASSET_FAILURE_MESSAGES.key)
+  if (!assetKey) throw new Error(ASSET_FAILURE_MESSAGES.key)
   return assetKey
 }
 
@@ -335,6 +336,8 @@ export const createLicensedPresentationAssetArchive = async (
   const paths = resolvePresentationAssetPaths(repositoryRoot)
   loadLocalEnvironment(paths.localEnvironment)
   const assetKey = requireAssetKey()
+  if (assetKey.length < MINIMUM_ARCHIVE_CREATION_KEY_LENGTH)
+    throw new Error(ASSET_FAILURE_MESSAGES.creationKey)
   const manifest = await readLicensedPresentationAssetManifest(paths.manifest)
   await assertValidAssetFiles(paths.localSource, manifest)
 
