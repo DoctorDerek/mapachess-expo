@@ -4,6 +4,9 @@ import { afterAll, describe, expect, it, vi } from "vitest"
 import { createActor } from "xstate"
 import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationPhase } from "@mapachess/match-presentation/match-reaction"
+import { matchSpriteReactionSlot } from "@mapachess/match-presentation/presentation-asset-manifest"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
@@ -76,6 +79,11 @@ describe("Reactive Battle Stage web presentation", () => {
         null,
         createElement(ReactiveBattleStage, {
           onParticipantAnimationCompleted: vi.fn(),
+          opponentName: stockfishOpponent("chicken-stockfish").displayName,
+          opponentPresentation: resolveWebOpponentPresentation(
+            "chicken-stockfish",
+            PLAYER_CAPTURE_PHASE.opponent,
+          ),
           presentationSnapshot: actor.getSnapshot(),
         }),
         createElement(MapachitoCoachPortrait, {
@@ -99,4 +107,72 @@ describe("Reactive Battle Stage web presentation", () => {
     expect(markup).not.toContain("animation-name")
     actor.stop()
   })
+
+  it.each([
+    {
+      announcement: "Mapachito and Bunny Stockfish are ready.",
+      description: "idle readiness",
+      phase: null,
+    },
+    {
+      announcement: "Mapachito captures; Bunny Stockfish reacts.",
+      description: "the opponent's capture reaction",
+      phase: PLAYER_CAPTURE_PHASE,
+    },
+    {
+      announcement: "Bunny Stockfish gives check; Mapachito reacts.",
+      description: "the opponent's check",
+      phase: {
+        kind: "check",
+        opponent: { family: "check", role: "attacker" },
+        player: { family: "check", role: "victim" },
+      },
+    },
+    {
+      announcement: "Bunny Stockfish wins the chess battle.",
+      description: "the opponent's victory",
+      phase: {
+        kind: "conclusion",
+        opponent: { family: "victory" },
+        player: { family: "defeat" },
+      },
+    },
+  ] as const satisfies readonly Readonly<{
+    announcement: string
+    description: string
+    phase: MatchPresentationPhase | null
+  }>[])(
+    "uses the selected opponent for $description",
+    ({ announcement, phase }) => {
+      const actor = createActor(matchPresentationMachine, {
+        input: { initialConclusionPhase: null },
+      }).start()
+      if (phase !== null) {
+        actor.send({
+          phases: Object.freeze([phase]),
+          type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+        })
+      }
+      const markup = renderToStaticMarkup(
+        createElement(ReactiveBattleStage, {
+          onParticipantAnimationCompleted: vi.fn(),
+          opponentName: stockfishOpponent("bunny-stockfish").displayName,
+          opponentPresentation: {
+            kind: "authored-fallback",
+            reactionSlot: matchSpriteReactionSlot(
+              phase?.opponent ?? { family: "idle" },
+            ),
+          },
+          presentationSnapshot: actor.getSnapshot(),
+        }),
+      )
+
+      expect(markup).toContain(announcement)
+      expect(markup).not.toContain("Chicken Stockfish")
+      expect(markup).not.toContain(
+        "/generated/presentation-assets/battle/chicken/",
+      )
+      actor.stop()
+    },
+  )
 })

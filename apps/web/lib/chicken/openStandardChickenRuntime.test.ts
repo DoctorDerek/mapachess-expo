@@ -131,6 +131,7 @@ describe("Standard Chicken runtime ownership", () => {
       engineIdentity: ENGINE_IDENTITY,
       matchId: "standard-story-chicken/00000001000000020000000300000004",
       matchSeed: "00000001000000020000000300000004",
+      opponentId: "chicken-stockfish",
       opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
       playerColor: "white",
     })
@@ -164,6 +165,7 @@ describe("Standard Chicken runtime ownership", () => {
     expect(runtime).toMatchObject({
       matchId: `standard-story-chicken/${matchSeed}`,
       matchSeed,
+      opponentId: "chicken-stockfish",
     })
     await runtime.close()
   })
