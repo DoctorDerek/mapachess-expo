@@ -32,7 +32,7 @@ const MAPACHITO_REFERENCE_GEOMETRY = Object.freeze({
 }) satisfies SpriteFrameGeometry
 
 export const LICENSED_PRESENTATION_ASSETS_ENABLED =
-  process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS === "licensed"
+  process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS === "true"
 
 const presentationAssetSource = <RelativePath extends string>(
   relativePath: RelativePath,

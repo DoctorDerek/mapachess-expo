@@ -10,9 +10,9 @@ import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPr
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
-const previousPresentationAssetMode = vi.hoisted(() => {
-  const previousValue = process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS
-  process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS = "licensed"
+const previousPresentationAssetAvailability = vi.hoisted(() => {
+  const previousValue = process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS
+  process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS = "true"
   return previousValue
 })
 
@@ -55,11 +55,11 @@ const PLAYER_CAPTURE_PHASE = Object.freeze({
 }) satisfies MatchPresentationPhase
 
 afterAll(() => {
-  if (previousPresentationAssetMode === undefined) {
-    delete process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS
+  if (previousPresentationAssetAvailability === undefined) {
+    delete process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS
   } else {
-    process.env.NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS =
-      previousPresentationAssetMode
+    process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS =
+      previousPresentationAssetAvailability
   }
 })
 
