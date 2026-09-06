@@ -1,11 +1,9 @@
 {
   "extends": ["//"],
   "tasks": {
-    "build": {
-      "env": [
-        "GHOST_ASSET_KEY_MAPACHESS",
-        "NEXT_PUBLIC_MAPACHESS_PRESENTATION_ASSETS"
-      ],
+    "assets:prepare": {
+      "cache": false,
+      "env": ["GHOST_ASSET_KEY_MAPACHESS"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/ghost_assets/presentation-assets.zip",
@@ -15,12 +13,12 @@
         "$TURBO_ROOT$/tsconfig.json",
         "$TURBO_ROOT$/vendor/presentation-assets/**",
         ".env.local"
-      ],
-      "outputs": [
-        "$TURBO_EXTENDS$",
-        "public/generated/presentation-assets/**",
-        "public/stockfish-runtime/**"
       ]
+    },
+    "build": {
+      "dependsOn": ["$TURBO_EXTENDS$", "assets:prepare"],
+      "env": ["GHOST_ASSET_KEY_MAPACHESS"],
+      "outputs": ["$TURBO_EXTENDS$", "public/stockfish-runtime/**"]
     }
   }
 }
