@@ -3,6 +3,9 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
+import stockfishOpponent, {
+  STOCKFISH_OPPONENTS,
+} from "@mapachess/match/stockfish-opponent"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
@@ -22,6 +25,8 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import StandardChickenMatch from "./StandardChickenMatch"
+
+const STANDARD_CHICKEN_OPPONENT = stockfishOpponent("chicken-stockfish")
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
 
@@ -156,7 +161,8 @@ function MatchSessionExperience({
           <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_17rem] xl:items-center">
             <div>
               <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-                Story opponent 1 of 23
+                Story opponent {STANDARD_CHICKEN_OPPONENT.storyPosition} of{" "}
+                {STOCKFISH_OPPONENTS.length}
               </p>
               <h1
                 className="font-display text-mapachito-charcoal mt-4 text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] font-black tracking-[-0.035em] text-balance uppercase font-stretch-condensed"
@@ -166,8 +172,9 @@ function MatchSessionExperience({
               </h1>
               <p className="text-mapachito-charcoal mt-6 max-w-2xl text-base leading-[1.65] font-semibold opacity-82">
                 Your first animal challenge is a complete local game of Standard
-                chess. The 100-Elo target stays explicitly provisional while
-                calibration and human playtesting continue.
+                chess. The {STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO}-Elo target
+                stays explicitly provisional while calibration and human
+                playtesting continue.
               </p>
             </div>
             <div
@@ -175,7 +182,7 @@ function MatchSessionExperience({
               className="border-mapachito-charcoal bg-mapachito-raspberry text-mapachito-white shadow-mapachito-orange grid min-h-52 place-content-center rounded-[1.25rem_0.25rem_1.25rem_0.25rem] border-3 bg-[linear-gradient(135deg,transparent_0_48%,color-mix(in_srgb,var(--color-mapachito-white)_22%,transparent)_48%_52%,transparent_52%)] p-6 text-center shadow-[0.5rem_0.5rem_0]"
             >
               <span className="font-display text-[clamp(5rem,18vw,9rem)] leading-[0.72] font-black tracking-[-0.06em]">
-                01
+                {String(STANDARD_CHICKEN_OPPONENT.storyPosition).padStart(2, "0")}
               </span>
               <span className="mt-4 font-mono text-xs font-black tracking-[0.18em] uppercase">
                 First opponent
@@ -186,7 +193,7 @@ function MatchSessionExperience({
           <article className="mt-9 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
             <div>
               <h2 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
-                Chicken Stockfish
+                {STANDARD_CHICKEN_OPPONENT.displayName}
               </h2>
               <dl className="border-mapachito-charcoal bg-mapachito-white [&>div+div]:border-mapachito-charcoal/18 [&_dt]:text-mapachito-charcoal [&_dd]:text-mapachito-charcoal mt-4 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-3 [&_dd]:font-black [&_dt]:text-[0.72rem] [&_dt]:font-black [&_dt]:tracking-[0.12em] [&_dt]:uppercase [&_dt]:opacity-72 [&>div+div]:border-t-2">
                 <div className="flex items-baseline justify-between gap-5 px-5 py-3">
@@ -212,7 +219,7 @@ function MatchSessionExperience({
               }
               type="button"
             >
-              Play Chicken Stockfish
+              Play {STANDARD_CHICKEN_OPPONENT.displayName}
             </MapachessButton>
           </article>
         </section>
