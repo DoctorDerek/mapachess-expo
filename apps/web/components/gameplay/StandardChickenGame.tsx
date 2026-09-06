@@ -218,7 +218,10 @@ function MatchSessionExperience({
             </div>
             <MapachessButton
               onClick={() =>
-                actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" })
+                actor.send({
+                  type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+                  variant: "standard",
+                })
               }
               type="button"
             >
@@ -321,7 +324,7 @@ export default function StandardChickenGame({
                 signal,
               }),
             ),
-          openFreshMatch: (previousSession, signal) =>
+          openFreshMatch: (previousSession, _variant, signal) =>
             captureSession(
               openFreshStandardChickenMatchSession({
                 previousSession,

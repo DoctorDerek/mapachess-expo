@@ -3,6 +3,7 @@ import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import matchMachine from "@mapachess/match/match-machine"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import { buildFreshStandardChickenMatch } from "../chicken/standardChickenDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
@@ -99,8 +100,11 @@ describe("web match session machine", () => {
   it("opens a selected match from the menu", async () => {
     const freshSession = createSession("00000005000000060000000700000008")
     const openFreshMatch = vi.fn(
-      async (_previousSession: WebMatchSession | null, _signal: AbortSignal) =>
-        freshSession,
+      async (
+        _previousSession: WebMatchSession | null,
+        _variant: MatchVariant,
+        _signal: AbortSignal,
+      ) => freshSession,
     )
     const actor = createActor(webMatchSessionMachine, {
       input: {
@@ -109,7 +113,10 @@ describe("web match session machine", () => {
       },
     }).start()
 
-    actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" })
+    actor.send({
+      type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+      variant: "standard",
+    })
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
     expect(openFreshMatch).toHaveBeenCalledOnce()

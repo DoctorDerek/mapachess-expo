@@ -8,6 +8,7 @@ import {
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 
 export type WebMatchSession = Readonly<{
@@ -30,6 +31,7 @@ export type WebMatchSessionOperations = Readonly<{
   openCurrentMatch: (signal: AbortSignal) => Promise<WebMatchSession>
   openFreshMatch: (
     previousSession: WebMatchSession | null,
+    variant: MatchVariant,
     signal: AbortSignal,
   ) => Promise<WebMatchSession>
   returnToMenu: (session: WebMatchSession, signal: AbortSignal) => Promise<void>
@@ -44,11 +46,15 @@ type WebMatchSessionMachineContext = Readonly<{
   activeMatchExists: boolean
   failure: WebMatchSessionFailure | null
   operations: WebMatchSessionOperations
+  requestedVariant: MatchVariant
   session: WebMatchSession | null
 }>
 
 export type WebMatchSessionMachineEvent =
-  | Readonly<{ type: "WEB_MATCH_SESSION.MATCH_REQUESTED" }>
+  | Readonly<{
+      type: "WEB_MATCH_SESSION.MATCH_REQUESTED"
+      variant: MatchVariant
+    }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" }>
@@ -60,6 +66,7 @@ type OpenCurrentMatchInput = Readonly<{
 type OpenFreshMatchInput = Readonly<{
   operations: WebMatchSessionOperations
   previousSession: WebMatchSession | null
+  variant: MatchVariant
 }>
 
 type ReturnToMenuInput = Readonly<{
@@ -93,16 +100,26 @@ const webMatchSessionMachineDefinition = setup({
     ),
     openFreshMatch: fromPromise<WebMatchSession, OpenFreshMatchInput>(
       ({ input, signal }) =>
-        input.operations.openFreshMatch(input.previousSession, signal),
+        input.operations.openFreshMatch(
+          input.previousSession,
+          input.variant,
+          signal,
+        ),
     ),
     returnToMenu: fromPromise<void, ReturnToMenuInput>(({ input, signal }) =>
       input.operations.returnToMenu(input.session, signal),
     ),
   },
   actions: {
+    rememberRequestedVariant: assign(
+      (_, params: Readonly<{ variant: MatchVariant }>) => ({
+        requestedVariant: params.variant,
+      }),
+    ),
     acceptOpenedSession: assign(
       (_, params: Readonly<{ session: WebMatchSession }>) => ({
         failure: null,
+        requestedVariant: params.session.match.startingPosition.variant,
         session: params.session,
       }),
     ),
@@ -129,6 +146,7 @@ const webMatchSessionMachineDefinition = setup({
     activeMatchExists: input.activeMatchExists,
     failure: null,
     operations: input.operations,
+    requestedVariant: "standard",
     session: null,
   }),
   states: {
@@ -141,6 +159,10 @@ const webMatchSessionMachineDefinition = setup({
     menu: {
       on: {
         "WEB_MATCH_SESSION.MATCH_REQUESTED": {
+          actions: {
+            type: "rememberRequestedVariant",
+            params: ({ event }) => ({ variant: event.variant }),
+          },
           target: "openingFreshMatch",
         },
       },
@@ -176,6 +198,7 @@ const webMatchSessionMachineDefinition = setup({
         input: ({ context }) => ({
           operations: context.operations,
           previousSession: null,
+          variant: context.requestedVariant,
         }),
         onDone: {
           actions: {
@@ -213,6 +236,7 @@ const webMatchSessionMachineDefinition = setup({
         input: ({ context }) => ({
           operations: context.operations,
           previousSession: requireSession(context),
+          variant: requireSession(context).match.startingPosition.variant,
         }),
         onDone: {
           actions: {
