@@ -1,18 +1,24 @@
+import { execFile } from "node:child_process"
 import { createHash } from "node:crypto"
 import { existsSync } from "node:fs"
 import {
+  copyFile,
   mkdir,
   mkdtemp,
   readdir,
   readFile,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { promisify } from "node:util"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createLicensedPresentationAssetArchive,
+  describeLicensedPresentationAssetFailure,
   hasPublishedLicensedPresentationAssets,
   LICENSED_PRESENTATION_ASSET_KEY_VARIABLE,
   prepareLicensedPresentationAssets,
@@ -22,6 +28,7 @@ const FIXTURE_KEY = "A".repeat(43)
 const FIXTURE_PATH = "coach/fixture.png"
 const FIXTURE_BYTES = Buffer.from("noncommercial asset integrity fixture")
 const FIXTURE_DIGEST = createHash("sha256").update(FIXTURE_BYTES).digest("hex")
+const executeFile = promisify(execFile)
 
 describe("licensed presentation asset preparation", () => {
   let repositoryRoot: string
@@ -67,8 +74,46 @@ describe("licensed presentation asset preparation", () => {
 
   const expectExtractionCleaned = async (): Promise<void> => {
     expect(existsSync(archiveSource)).toBe(false)
-    expect(await readdir(join(repositoryRoot, "vendor"))).not.toContain(
-      `.presentation-assets-${process.pid}`,
+    expect(
+      (await readdir(join(repositoryRoot, "vendor"))).filter((name) =>
+        name.startsWith(".presentation-assets-"),
+      ),
+    ).toEqual([])
+  }
+
+  const runDeploymentLauncher = async (key: string) => {
+    for (const path of [
+      "package.json",
+      "tsconfig.json",
+      "scripts/decrypt-assets.ts",
+      "scripts/ghost-assets/presentationAssetArchive.ts",
+    ]) {
+      const destination = join(repositoryRoot, path)
+      await mkdir(dirname(destination), { recursive: true })
+      await copyFile(
+        new URL(`../../../../${path}`, import.meta.url),
+        destination,
+      )
+    }
+    await symlink(
+      fileURLToPath(new URL("../../../../node_modules", import.meta.url)),
+      join(repositoryRoot, "node_modules"),
+      "junction",
+    )
+    const workingDirectory = join(repositoryRoot, "apps/web")
+    await mkdir(workingDirectory, { recursive: true })
+    return executeFile(
+      process.execPath,
+      ["--import", "jiti/register", "../../scripts/decrypt-assets.ts"],
+      {
+        cwd: workingDirectory,
+        windowsHide: true,
+        timeout: 10_000,
+        env: {
+          ...process.env,
+          [LICENSED_PRESENTATION_ASSET_KEY_VARIABLE]: key,
+        },
+      },
     )
   }
 
@@ -123,6 +168,58 @@ describe("licensed presentation asset preparation", () => {
     expect(existsSync(archivePath)).toBe(true)
     expect(existsSync(localSource)).toBe(false)
     await expectExtractionCleaned()
+  })
+
+  it("publishes through the deployment launcher without local authoring or environment files", async () => {
+    await useArchiveOnly()
+
+    const result = await runDeploymentLauncher(FIXTURE_KEY)
+
+    expect(result.stdout).toBe("")
+    expect(result.stderr).toBe("")
+    expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(
+      FIXTURE_BYTES,
+    )
+    expect(existsSync(localSource)).toBe(false)
+    expect(existsSync(join(repositoryRoot, "apps/web/.env.local"))).toBe(false)
+    await expectExtractionCleaned()
+  })
+
+  it.each([
+    {
+      key: "invalid-private-fixture",
+      reason: "existing 43-character archive key",
+    },
+    { key: "B".repeat(43), reason: "could not authenticate" },
+  ])(
+    "reports a safe actionable CLI failure for $reason",
+    async ({ key, reason }) => {
+      await useArchiveOnly()
+
+      await expect(runDeploymentLauncher(key)).rejects.toMatchObject({
+        code: 1,
+        stdout: "",
+        stderr: expect.stringContaining(reason),
+      })
+      expect(existsSync(publicAssets)).toBe(false)
+      await expectExtractionCleaned()
+    },
+  )
+
+  it("withholds arbitrary errors, private paths, and nested causes from build logs", () => {
+    const privateDetail = "private-diagnostic-fixture"
+    for (const error of [
+      new Error(privateDetail),
+      new Error("Invalid password", { cause: new Error(privateDetail) }),
+      { code: "ENOENT", path: privateDetail, message: privateDetail },
+      { code: "EACCES", path: privateDetail, message: privateDetail },
+      { code: "ENOSPC", path: privateDetail, message: privateDetail },
+      { code: privateDetail, message: privateDetail },
+    ]) {
+      expect(describeLicensedPresentationAssetFailure(error)).not.toContain(
+        privateDetail,
+      )
+    }
   })
 
   it.each(["", "invalid", "B".repeat(43)])(
