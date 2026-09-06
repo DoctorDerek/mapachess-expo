@@ -38,13 +38,16 @@ When more detail is needed, read the applicable GDD section verbatim. Do not cre
 - Use Next.js, React, Tailwind CSS, shadcn/ui, and Motion for the web application.
 - Use React Native, Expo, Uniwind, React Native Reusables, and React Native Reanimated for the native application.
 - Presentation is utility-first: use Tailwind className utilities on web and Uniwind className utilities on native. Global stylesheets own framework imports, canonical theme tokens, genuinely global base rules, and necessary keyframes. Do not introduce CSS Modules, BEM, or another component-selector system when utilities work. Reuse real components and focused typed variants; do not rebuild a parallel stylesheet with @apply, class dictionaries, or static inline style objects. Keep typed runtime sprite geometry, SVG coordinates, and Motion/Reanimated values where they are genuinely dynamic.
+- Tailwind/Uniwind owns structural responsiveness, not viewport hooks selecting duplicated render trees. Preserve the GDD's single structural breakpoint and fluid sizing, wrapping, safe areas, and accessible text scaling within each composition.
 - Before extending presentation, audit the owning component, theme tokens, and styling mechanism against this contract. Justify every non-utility styling exception with an actual platform limitation; an inherited exception in this repository, legacy code, or a sibling project is not permission to repeat it. Inspect the source and compiled presentation; passing types, tests, or a build does not establish styling-architecture compliance or visual quality.
 - Unapproved styling-system drift is a refactor emergency: stop propagating it, record the affected ownership and bounded correction plan, and correct it through reviewable approved PRs before extending the affected presentation. The emergency does not authorize unrelated gameplay, palette, dependency, or CI changes.
 - Use a single-product pnpm/Turborepo monorepo with `apps/web`, `apps/mobile`, and only narrow private workspace packages that own real shared responsibilities.
-- Share as much code as practical: chess rules, state machines, types, schemas, catalogs, persistence contracts, calibration logic, localization contracts, semantic component contracts, and tests are DRY by default.
-- Use WET implementations only for genuine platform differences. Prefer a typed platform adapter or Expo `Platform` boundary over duplicating domain behavior.
+- Share as much code as practical: chess rules, state machines, types, schemas, catalogs, copy, validation, design tokens, persistence contracts, calibration logic, localization contracts, semantic component contracts, compatible UI composition, and tests are DRY by default.
+- Use WET implementations only for genuine platform differences. Reuse shared composition first, specialize focused leaves through `Platform.OS` or `Platform.select` where appropriate, then use platform files when structure materially diverges, and separate screens only when demonstrated requirements justify them. Do not duplicate canonical state, product rules, copy, validation, or persistence semantics, or force identical browser and native renderers.
+- Keep shared domain logic independent of Next.js, Expo Router, DOM, React Native, and concrete storage/file APIs. Resolve genuine platform dependencies through typed actor inputs or scoped providers and focused platform adapters; never import another application's internals.
 - Do not create empty ceremonial packages, speculative abstractions, broad barrel files, or a dependency on another game repository.
 - Keep Stockfish local and behind typed platform adapters. Preserve deterministic request identity, stale-response rejection, cancellation, policy fingerprints, and GPL source-compliance boundaries.
+- Keep presentation completion semantic and identity-aware; animation timers do not prove accepted chess or persistence completion. Preserve cancellation, Reduced Motion, and backgrounding without erasing or repeating canonical game updates, and clean up resources owned by the presentation scope.
 - Treat commercial assets as licensed inputs. Public source history contains only authorized encrypted archives, allowed placeholders, metadata, scripts, and derived artifacts whose licenses permit publication.
 
 ## 4. The 5-Step Forge
@@ -55,16 +58,23 @@ Process every task through the complete Forge before claiming completion:
 - **1PLAN — Blueprint:** Write the smallest complete architecture and verification plan, including exact paths and state/data flow.
 - **2CHECK — Red Team:** Attack the plan for scope creep, duplication, stale assumptions, platform mismatch, unsafe asset/data handling, race conditions, and unverified package/API claims.
 - **3CODE — Execute:** Implement only the approved plan with strict types, descriptive names, and no unrelated cleanup.
-- **4CHECK — Verify:** Inspect the exact diff and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
-- **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks. Report the exact commands, targets, results, unknowns, and confidence level.
+- **4CHECK — Verify:** After implementing the approved coherent feature, group behavior-focused tests and broader verification, run the required lint/format checks, inspect the exact diff, and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
+- **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks within the approved task and target. Honor the infrastructure, build, upload, and release approval gates below; a generic completion checklist does not authorize additional actions. Report the exact commands, targets, results, unknowns, and confidence level.
 
-Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only after successful applicable 5RUN evidence. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
+Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only for Mapachito-confirmed live 5RUN results. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
 
 ### Active UI development and the QA Trophy
 
-- The current development phase is test-after development, not TDD. Defer broad new automated suites, mock-heavy isolated tests, and percentage-driven coverage expansion until the approved interactions stabilize. Keep applicable static checks, risk-targeted regression checks, and manual Preview playtesting; this is not permission to remove existing tests, weaken CI, or claim untested behavior works. Record stale expectations and remaining QA honestly without expanding unrelated tasks into suite maintenance.
+- The current development phase is test-after development, not TDD. Implement the approved coherent interaction first, then group its verification in 4CHECK; do not require a full suite after each small commit. Defer broad new automated suites, mock-heavy isolated tests, and percentage-driven coverage expansion until the approved interactions stabilize. Keep necessary diagnostics, required lint/format checks, applicable static checks, risk-targeted regression checks, and manual Preview playtesting; this is not permission to remove existing tests, weaken CI, or claim untested behavior works. Record stale expectations and remaining QA honestly without expanding unrelated tasks into suite maintenance.
 - Prefer accessible role/name, label, and text queries for controls. Use narrowly scoped test IDs or data attributes only when meaningful user-facing queries are unavailable, such as decorative aria-hidden SVG or sprite surfaces. Do not add speculative test hooks, accessibility roles, or labels solely to make tests convenient.
 - Test interactions and rendered outcomes at the fidelity required by the claim. Metadata counts, serialized markup, and class-name assertions can check structure but do not prove visibility, actual geometry, layering, motion, input behavior, accessibility, or game feel. Keep those evidence limits explicit rather than presenting structural checks as visual or usability validation.
+
+### Existing test runners and coverage ownership
+
+- Vitest remains the default for portable TypeScript, shared XState/domain behavior, and web behavior. Inspect the owning test configuration before claiming browser-interaction evidence; do not assume a DOM-testing environment is installed.
+- Existing Jest with `jest-expo` and React Native Testing Library supplements genuine native-renderer semantics, Expo-compatible transforms, and native-module seams that Vitest cannot faithfully exercise. Do not duplicate portable or web tests, or mistake mocked native-module checks for physical-device proof.
+- When native coverage is part of the approved verification plan, use `pnpm --filter @mapachess/mobile test:native:coverage`. Its existing `native-jest` job belongs to `.github/workflows/eslint-vitest-xstate.yml`, writes `coverage/native/lcov.info`, and uploads that report under Codecov's `native` flag. Reuse this owner; do not create a standalone native workflow or another badge for the same quality surface.
+- Preserve the repository's approved coverage policy. Report gaps and evidence limits without inventing, removing, or changing coverage gates unless separately approved.
 
 ## 5. Scope, decomposition, and PR workflow
 
@@ -81,6 +91,13 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - Stage only the exact approved paths. Never use `git add .`, `git add -A`, or broad staging shortcuts.
 - Never commit GDD artifacts, Constitution files, scratch/control records, generated junk, player saves, secrets, decrypted commercial assets, or unrelated worktree changes.
 
+### Infrastructure, builds, and native QA approval
+
+- Reuse existing quality workflows, runner/coverage owners, caches, and frozen-lockfile installation. Shared CI/CD changes, new scripts, and changes to reusable scripts require a separate explicit infrastructure plan and approval, a verified pilot, an approved shared-policy amendment when needed, and selective propagation to repositories with the same demonstrated need. Do not hide infrastructure changes inside a feature task.
+- Before approved infrastructure propagation, reverify immutable action SHAs, commands, report paths, job/check names, and package compatibility. Never copy another repository's versions, thresholds, secrets, or identifiers without Mapachess-specific authority.
+- Do not launch Metro, EAS builds, Expo exports, or physical-device QA sessions unless the approved task calls for them. A requested development server must be accessible to Mapachito, not hidden in an inaccessible terminal. Deferred manual QA does not authorize weakening existing CI.
+- Credential changes, source uploads, deployment, and releases retain separate explicit authorization. Previously granted account access does not establish that a new build or upload is necessary for the current task.
+
 ## 6. Windows, PowerShell, fnm, and package evidence
 
 - Use PowerShell commands on Windows. Use `rg` and `rg --files` first for text and file discovery.
@@ -91,7 +108,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - If sandboxed PowerShell cannot see `fnm`, locate and invoke Mapachito’s installed fnm executable. Do not substitute an unverified system Node installation.
 - Use pnpm exclusively. npm and Yarn commands and lockfiles are prohibited.
 - Verify current package versions with `pnpm info <package> version` and verify framework compatibility from current official primary documentation before editing manifests.
-- Use `^MAJOR` ranges for stable packages, exact Expo-compatible versions where Expo requires them, and `^0.MINOR.PATCH` for zero-major packages. Commit resolved lockfile changes separately when that improves review clarity.
+- Use `^MAJOR` ranges for independent stable packages and `^0.MINOR.PATCH` for independent zero-major packages. Expo-coupled dependencies follow the approved SDK's compatibility contract: preserve supported exact core pins and compatible module ranges, including `~` ranges, rather than applying independent-library defaults. Inspect the installed SDK, current official compatibility guidance, native peers, and synchronized pnpm lockfile before editing manifests. A newer release or sibling repository never authorizes an unrelated SDK/package upgrade. Commit resolved lockfile changes separately when that improves review clarity.
 - Do not add Husky, lint-staged, Git hooks, hidden precommit mutation, or formatting in CI.
 
 ## 7. Forty Mapachess MQA engineering pillars
@@ -102,7 +119,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 4. **Almost No Print Statements:** Production code contains no casual console output or raw player data; only deliberate QA-harness output and minimal hypothesis-specific temporary debugging instrumentation are allowed.
 5. **Instantaneous Debugging:** When evidence is insufficient, place the smallest targeted probes at every critical junction of the relevant event, state, engine, storage, or render path, reproduce the failure, isolate the cause, then fix it.
 6. **Delete Temporary Instrumentation:** Remove every temporary probe, debug surface, fixture, and log before completion while protecting permanent QA-harness output required for verification.
-7. **Intellectual Honesty:** Label hypotheses CL1, source-checked plans or output CL2, and only successful applicable 5RUN results CL3 while stating the tested build, target, result, and unknowns.
+7. **Intellectual Honesty:** Label hypotheses CL1, source-checked plans or output CL2, and only Mapachito-confirmed live 5RUN results CL3 while stating the tested build, target, result, and unknowns.
 8. **Almost No Code Comments:** Prefer self-explanatory names, typed contracts, statecharts, tests, and GDD rationale; comments are limited to labeled non-obvious invariants, regression fixes, sourced platform workarounds, complex logic, or required boot and migration order.
 9. **Check State Directly:** Views read the canonical XState snapshot and focused selectors directly; they never mirror machine state into independent booleans or hide simple state checks behind speculative wrappers.
 10. **No Unnecessary If Statements:** Eliminate guards that conceal impossible internal states or continue half-working while validating every untrusted import, storage result, optional platform capability, permission, and player-controlled boundary explicitly.
