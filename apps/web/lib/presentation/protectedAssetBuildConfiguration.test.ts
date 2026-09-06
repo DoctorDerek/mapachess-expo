@@ -16,7 +16,7 @@ const rootGitIgnore = await readFile(
   new URL("../../../../.gitignore", import.meta.url),
   "utf8",
 )
-const FIXTURE_KEY = "A".repeat(43)
+const FIXTURE_KEY = "fixture asset password"
 const ROOT_INPUTS = [
   "ghost_assets/presentation-assets.zip",
   "ghost_assets/presentation-assets.manifest.json",
@@ -169,7 +169,9 @@ describe("protected web build configuration", () => {
   it("hashes private key availability and changes instead of merely passing it through", async () => {
     const fallback = parseWebTask(await runTurbo(undefined, true))
     const firstKey = parseWebTask(await runTurbo(FIXTURE_KEY, true))
-    const differentKey = parseWebTask(await runTurbo("B".repeat(43), true))
+    const differentKey = parseWebTask(
+      await runTurbo("rotated fixture asset password", true),
+    )
 
     expect(
       new Set([fallback.hash, firstKey.hash, differentKey.hash]).size,

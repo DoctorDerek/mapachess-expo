@@ -15,6 +15,11 @@ import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
+import {
+  Uint8ArrayReader,
+  Uint8ArrayWriter,
+  ZipWriter,
+} from "@zip.js/zip.js/index-native.js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createLicensedPresentationAssetArchive,
@@ -24,7 +29,7 @@ import {
   prepareLicensedPresentationAssets,
 } from "../../../../scripts/ghost-assets/presentationAssetArchive"
 
-const FIXTURE_KEY = "A".repeat(43)
+const FIXTURE_KEY = " Mapachess fixture password: café /+$#= "
 const FIXTURE_PATH = "coach/fixture.png"
 const FIXTURE_BYTES = Buffer.from("noncommercial asset integrity fixture")
 const FIXTURE_DIGEST = createHash("sha256").update(FIXTURE_BYTES).digest("hex")
@@ -81,10 +86,15 @@ describe("licensed presentation asset preparation", () => {
     ).toEqual([])
   }
 
-  const runDeploymentLauncher = async (key: string) => {
+  const runAssetLauncher = async (
+    operation: "create" | "prepare",
+    key: string | undefined,
+  ) => {
     for (const path of [
       "package.json",
       "tsconfig.json",
+      "scripts/runTypeScript.mjs",
+      "scripts/create-presentation-asset-archive.ts",
       "scripts/decrypt-assets.ts",
       "scripts/ghost-assets/presentationAssetArchive.ts",
     ]) {
@@ -100,11 +110,17 @@ describe("licensed presentation asset preparation", () => {
       join(repositoryRoot, "node_modules"),
       "junction",
     )
-    const workingDirectory = join(repositoryRoot, "apps/web")
+    const workingDirectory =
+      operation === "create" ? repositoryRoot : join(repositoryRoot, "apps/web")
     await mkdir(workingDirectory, { recursive: true })
     return executeFile(
       process.execPath,
-      ["--import", "jiti/register", "../../scripts/decrypt-assets.ts"],
+      operation === "create"
+        ? [
+            "scripts/runTypeScript.mjs",
+            "scripts/create-presentation-asset-archive.ts",
+          ]
+        : ["--import", "jiti/register", "../../scripts/decrypt-assets.ts"],
       {
         cwd: workingDirectory,
         windowsHide: true,
@@ -173,7 +189,7 @@ describe("licensed presentation asset preparation", () => {
   it("publishes through the deployment launcher without local authoring or environment files", async () => {
     await useArchiveOnly()
 
-    const result = await runDeploymentLauncher(FIXTURE_KEY)
+    const result = await runAssetLauncher("prepare", FIXTURE_KEY)
 
     expect(result.stdout).toBe("")
     expect(result.stderr).toBe("")
@@ -187,16 +203,16 @@ describe("licensed presentation asset preparation", () => {
 
   it.each([
     {
-      key: "invalid-private-fixture",
-      reason: "existing 43-character archive key",
+      key: "",
+      reason: "is required to encrypt or decrypt",
     },
-    { key: "B".repeat(43), reason: "could not authenticate" },
+    { key: "different fixture password", reason: "could not authenticate" },
   ])(
     "reports a safe actionable CLI failure for $reason",
     async ({ key, reason }) => {
       await useArchiveOnly()
 
-      await expect(runDeploymentLauncher(key)).rejects.toMatchObject({
+      await expect(runAssetLauncher("prepare", key)).rejects.toMatchObject({
         code: 1,
         stdout: "",
         stderr: expect.stringContaining(reason),
@@ -205,6 +221,72 @@ describe("licensed presentation asset preparation", () => {
       await expectExtractionCleaned()
     },
   )
+
+  it.each(["x".repeat(32), FIXTURE_KEY.repeat(2)])(
+    "replaces an archive through the creator CLI with the exact chosen password (%s)",
+    async (key) => {
+      await writeFile(archivePath, "previous noncommercial archive fixture")
+
+      const result = await runAssetLauncher("create", key)
+
+      expect(result.stdout).toBe(
+        "Created ghost_assets/presentation-assets.zip.\n",
+      )
+      expect(result.stderr).toBe("")
+      await rm(localSource, { recursive: true })
+      vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, key)
+      await prepareLicensedPresentationAssets(repositoryRoot)
+      expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(
+        FIXTURE_BYTES,
+      )
+      await expectExtractionCleaned()
+    },
+  )
+
+  it.each([
+    { key: undefined, reason: "is required to encrypt or decrypt" },
+    { key: "", reason: "is required to encrypt or decrypt" },
+    { key: "x".repeat(31), reason: "at least 32 characters" },
+  ])(
+    "preserves the existing archive when the creator rejects its key ($key)",
+    async ({ key, reason }) => {
+      const existingArchive = Buffer.from("existing archive fixture")
+      await writeFile(archivePath, existingArchive)
+
+      await expect(runAssetLauncher("create", key)).rejects.toMatchObject({
+        code: 1,
+        stdout: "",
+        stderr: expect.stringContaining(reason),
+      })
+      expect(await readFile(archivePath)).toEqual(existingArchive)
+    },
+  )
+
+  it("decrypts an existing archive without applying the creation minimum", async () => {
+    const key = " existing fixture "
+    const writer = new ZipWriter(new Uint8ArrayWriter(), {
+      password: key,
+      encryptionStrength: 3,
+      zipCrypto: false,
+      useWebWorkers: false,
+    })
+    await writer.add(FIXTURE_PATH, new Uint8ArrayReader(FIXTURE_BYTES))
+    await writeFile(archivePath, await writer.close())
+    await rm(localSource, { recursive: true })
+    vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, key.trim())
+
+    await expect(
+      prepareLicensedPresentationAssets(repositoryRoot),
+    ).rejects.toThrow()
+    await expectExtractionCleaned()
+
+    vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, key)
+    await prepareLicensedPresentationAssets(repositoryRoot)
+    expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(
+      FIXTURE_BYTES,
+    )
+    await expectExtractionCleaned()
+  })
 
   it("withholds arbitrary errors, private paths, and nested causes from build logs", () => {
     const privateDetail = "private-diagnostic-fixture"
@@ -222,7 +304,7 @@ describe("licensed presentation asset preparation", () => {
     }
   })
 
-  it.each(["", "invalid", "B".repeat(43)])(
+  it.each(["", "invalid", "different fixture password"])(
     "rejects an unusable required archive key (%s)",
     async (key) => {
       await useArchiveOnly()
@@ -244,7 +326,7 @@ describe("licensed presentation asset preparation", () => {
     await mkdir(dirname(environmentPath), { recursive: true })
     await writeFile(
       environmentPath,
-      `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE}=${FIXTURE_KEY}\n`,
+      `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE}=${JSON.stringify(FIXTURE_KEY)}\n`,
     )
 
     await prepareLicensedPresentationAssets(repositoryRoot)
