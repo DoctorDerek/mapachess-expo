@@ -1,6 +1,6 @@
 # Mapachess
 
-[![Production](https://img.shields.io/website?url=https%3A%2F%2Fmapachess-expo-web.vercel.app%2F&up_message=live&down_message=offline&label=production&logo=vercel&logoColor=white)](https://mapachess-expo-web.vercel.app/) [![Codecov](https://codecov.io/gh/DoctorDerek/mapachess-expo/graph/badge.svg)](https://app.codecov.io/gh/DoctorDerek/mapachess-expo) [![ESLint, Vitest, and XState](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml) [![Playwright](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml)
+[![Production](https://img.shields.io/website?url=https%3A%2F%2Fmapachess.com%2F&up_message=live&down_message=offline&label=production&logo=vercel&logoColor=white)](https://mapachess.com/) [![Codecov](https://codecov.io/gh/DoctorDerek/mapachess-expo/graph/badge.svg)](https://app.codecov.io/gh/DoctorDerek/mapachess-expo) [![ESLint, Vitest, and XState](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/eslint-vitest-xstate.yml) [![Playwright](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/DoctorDerek/mapachess-expo/actions/workflows/playwright.yml)
 
 [![Mobile Web Lighthouse Performance](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.performance&label=performance&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Accessibility](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.accessibility&label=accessibility&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Best Practices](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.bestPractices&label=best%20practices&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse SEO](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.seo&label=SEO&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/)
 
@@ -99,19 +99,39 @@ build-time provisioning boundary are recorded in
 
 ## Production web deployment
 
-The canonical production web origin is
-[mapachess-expo-web.vercel.app](https://mapachess-expo-web.vercel.app/). Vercel
+[Mapachess.com](https://mapachess.com/) is the custom domain configured on the
+Vercel web project. The existing
+[Vercel origin](https://mapachess-expo-web.vercel.app/) remains the configured
+target of automated Lighthouse reporting until that target is migrated. Vercel
 creates Preview deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
 and waits for each merged commit's matching Production deployment. It then
-publishes the median of five Mobile Web Lighthouse runs against the canonical
-Production URL and rejects audits that leave that origin.
+publishes the median of five Mobile Web Lighthouse runs against that configured
+Production audit URL and rejects audits that leave that origin.
 
 The published Lighthouse report and dynamic scores are available through
 [GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The application
 requires no playtest flag or `vercel.json`; each web build provisions and
 verifies the pinned same-origin Stockfish.js runtime before Next.js compiles.
 Local Vercel project state remains ignored under `.vercel/`.
+
+Licensed Battle Stage and coach artwork uses the private
+`GHOST_ASSET_KEY_MAPACHESS` secret for clean cloud builds. The project owner has
+configured the same existing key in Development, Preview, and Production on
+both Vercel and EAS. There is no public presentation-mode setting.
+
+The existing preparation helper automatically publishes verified local vendor
+files when available, otherwise decrypts the archive with the supplied key,
+otherwise uses authored public placeholders. Invalid required keyed inputs fail
+the build. Web preparation runs before application cache restoration, and the
+renderer's availability is derived from the prepared files. Successful deployment
+status alone does not prove licensed artwork shipped. See
+[licensed asset setup](ghost_assets/README.md) for source ownership, cache
+behavior, and safe verification.
+
+The current EAS hook provisions native Stockfish only. Its secret is configured,
+but native animal presentation still needs its consumer and build integration;
+secret configuration and verified native asset delivery are separate milestones.
 
 ## Rights and third-party software
 
