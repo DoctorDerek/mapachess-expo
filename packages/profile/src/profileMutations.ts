@@ -22,7 +22,7 @@ export const changeAutoHintMode = (
   Object.freeze({
     ...current,
     revision: current.revision + 1,
-    settings: Object.freeze({ autoHintMode }),
+    settings: Object.freeze({ ...current.settings, autoHintMode }),
   })
 
 export const replaceActiveMatch = (
@@ -36,7 +36,10 @@ export const replaceActiveMatch = (
     settings:
       activeMatch === null
         ? current.settings
-        : Object.freeze({ autoHintMode: activeMatch.autoHintMode }),
+        : Object.freeze({
+            ...current.settings,
+            autoHintMode: activeMatch.autoHintMode,
+          }),
   })
 
 export const createFreshRecoveryData = (
