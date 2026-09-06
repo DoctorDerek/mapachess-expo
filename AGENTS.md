@@ -59,7 +59,7 @@ Process every task through the complete Forge before claiming completion:
 - **2CHECK — Red Team:** Attack the plan for scope creep, duplication, stale assumptions, platform mismatch, unsafe asset/data handling, race conditions, and unverified package/API claims.
 - **3CODE — Execute:** Implement only the approved plan with strict types, descriptive names, and no unrelated cleanup.
 - **4CHECK — Verify:** After implementing the approved coherent feature, group behavior-focused tests and broader verification, run the required lint/format checks, inspect the exact diff, and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
-- **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks. Report the exact commands, targets, results, unknowns, and confidence level.
+- **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks within the approved task and target. Honor the infrastructure, build, upload, and release approval gates below; a generic completion checklist does not authorize additional actions. Report the exact commands, targets, results, unknowns, and confidence level.
 
 Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only for Mapachito-confirmed live 5RUN results. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
 
@@ -91,6 +91,13 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - Stage only the exact approved paths. Never use `git add .`, `git add -A`, or broad staging shortcuts.
 - Never commit GDD artifacts, Constitution files, scratch/control records, generated junk, player saves, secrets, decrypted commercial assets, or unrelated worktree changes.
 
+### Infrastructure, builds, and native QA approval
+
+- Reuse existing quality workflows, runner/coverage owners, caches, and frozen-lockfile installation. Shared CI/CD changes, new scripts, and changes to reusable scripts require a separate explicit infrastructure plan and approval, a verified pilot, an approved shared-policy amendment when needed, and selective propagation to repositories with the same demonstrated need. Do not hide infrastructure changes inside a feature task.
+- Before approved infrastructure propagation, reverify immutable action SHAs, commands, report paths, job/check names, and package compatibility. Never copy another repository's versions, thresholds, secrets, or identifiers without Mapachess-specific authority.
+- Do not launch Metro, EAS builds, Expo exports, or physical-device QA sessions unless the approved task calls for them. A requested development server must be accessible to Mapachito, not hidden in an inaccessible terminal. Deferred manual QA does not authorize weakening existing CI.
+- Credential changes, source uploads, deployment, and releases retain separate explicit authorization. Previously granted account access does not establish that a new build or upload is necessary for the current task.
+
 ## 6. Windows, PowerShell, fnm, and package evidence
 
 - Use PowerShell commands on Windows. Use `rg` and `rg --files` first for text and file discovery.
@@ -101,7 +108,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - If sandboxed PowerShell cannot see `fnm`, locate and invoke Mapachito’s installed fnm executable. Do not substitute an unverified system Node installation.
 - Use pnpm exclusively. npm and Yarn commands and lockfiles are prohibited.
 - Verify current package versions with `pnpm info <package> version` and verify framework compatibility from current official primary documentation before editing manifests.
-- Use `^MAJOR` ranges for stable packages, exact Expo-compatible versions where Expo requires them, and `^0.MINOR.PATCH` for zero-major packages. Commit resolved lockfile changes separately when that improves review clarity.
+- Use `^MAJOR` ranges for independent stable packages and `^0.MINOR.PATCH` for independent zero-major packages. Expo-coupled dependencies follow the approved SDK's compatibility contract: preserve supported exact core pins and compatible module ranges, including `~` ranges, rather than applying independent-library defaults. Inspect the installed SDK, current official compatibility guidance, native peers, and synchronized pnpm lockfile before editing manifests. A newer release or sibling repository never authorizes an unrelated SDK/package upgrade. Commit resolved lockfile changes separately when that improves review clarity.
 - Do not add Husky, lint-staged, Git hooks, hidden precommit mutation, or formatting in CI.
 
 ## 7. Forty Mapachess MQA engineering pillars
