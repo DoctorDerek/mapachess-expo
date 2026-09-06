@@ -11,11 +11,11 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "@mapachess/profile/profile-match-persistence"
+import openWebMatchRuntime, {
+  type OpenWebMatchRuntimeInput,
+} from "../gameplay/openWebMatchRuntime"
 import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import type { WebMatchSession } from "../gameplay/webMatchSessionMachine"
-import openStandardChickenRuntime, {
-  type OpenStandardChickenRuntimeInput,
-} from "./openStandardChickenRuntime"
 import resumeStandardChickenMatch, {
   buildFreshStandardChickenMatch,
   type ResumedStandardChickenMatch,
@@ -24,7 +24,7 @@ import resumeStandardChickenMatch, {
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 
 type OpenStandardChickenRuntime = (
-  input?: OpenStandardChickenRuntimeInput,
+  input?: OpenWebMatchRuntimeInput,
 ) => Promise<WebMatchRuntime>
 
 export type OpenStandardChickenMatchSessionInput = Readonly<{
@@ -159,7 +159,7 @@ const openActorSession = async ({
 }
 
 export async function openCurrentStandardChickenMatchSession({
-  openRuntime = openStandardChickenRuntime,
+  openRuntime = openWebMatchRuntime,
   profileActor,
   signal,
 }: OpenStandardChickenMatchSessionInput): Promise<WebMatchSession> {
@@ -183,7 +183,7 @@ export async function openCurrentStandardChickenMatchSession({
 }
 
 export async function openFreshStandardChickenMatchSession({
-  openRuntime = openStandardChickenRuntime,
+  openRuntime = openWebMatchRuntime,
   previousSession,
   profileActor,
   signal,

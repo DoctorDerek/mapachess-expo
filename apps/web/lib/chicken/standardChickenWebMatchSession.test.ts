@@ -5,9 +5,9 @@ import { waitFor } from "xstate"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
+import type { OpenWebMatchRuntimeInput } from "../gameplay/openWebMatchRuntime"
 import type { WebMatchRuntime } from "../gameplay/webMatchRuntime"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
-import type { OpenStandardChickenRuntimeInput } from "./openStandardChickenRuntime"
 import { buildFreshStandardChickenMatch } from "./standardChickenDurableMatch"
 import {
   selectStandardStoryPlayerColor,
@@ -74,7 +74,7 @@ const createRuntime = (seed: string) => {
 }
 
 const runtimeOpener = (runtime: WebMatchRuntime) =>
-  vi.fn(async (_input?: OpenStandardChickenRuntimeInput) => runtime)
+  vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("Standard Chicken web match session ownership", () => {
   it("persists a fresh session and closes every owned resource once", async () => {

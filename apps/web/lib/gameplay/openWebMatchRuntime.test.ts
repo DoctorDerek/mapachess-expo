@@ -10,10 +10,10 @@ import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
+import type { StandardChickenCryptography } from "../chicken/standardChickenOpponent"
+import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "../chicken/standardChickenOpponent"
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
-import openStandardChickenRuntime from "./openStandardChickenRuntime"
-import type { StandardChickenCryptography } from "./standardChickenOpponent"
-import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "./standardChickenOpponent"
+import openWebMatchRuntime from "./openWebMatchRuntime"
 
 const ENGINE_IDENTITY: StockfishUciIdentity = Object.freeze({
   author: "the Stockfish developers",
@@ -110,7 +110,7 @@ describe("Standard Chicken runtime ownership", () => {
       evaluation.session,
     ])
 
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession,
     })
@@ -152,7 +152,7 @@ describe("Standard Chicken runtime ownership", () => {
       "reopened Chicken test seed",
     )
 
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       matchSeed,
       openSession: createSessionQueue([
@@ -174,7 +174,7 @@ describe("Standard Chicken runtime ownership", () => {
     const opponent = createSession(async () => ENGINE_IDENTITY)
     const hints = createSession(async () => ENGINE_IDENTITY)
     const evaluation = createSession(async () => ENGINE_IDENTITY)
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession: createSessionQueue([
         opponent.session,
@@ -219,7 +219,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -243,7 +243,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -268,7 +268,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -299,7 +299,7 @@ describe("Standard Chicken runtime ownership", () => {
       })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession,
       }),
@@ -326,7 +326,7 @@ describe("Standard Chicken runtime ownership", () => {
       })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession,
       }),
@@ -346,7 +346,7 @@ describe("Standard Chicken runtime ownership", () => {
     })
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -381,7 +381,7 @@ describe("Standard Chicken runtime ownership", () => {
     const evaluation = createSession(async () => ENGINE_IDENTITY)
 
     await expect(
-      openStandardChickenRuntime({
+      openWebMatchRuntime({
         cryptography: createCryptography(),
         openSession: createSessionQueue([
           opponent.session,
@@ -392,7 +392,7 @@ describe("Standard Chicken runtime ownership", () => {
     ).rejects.toEqual(
       new AggregateError(
         [bootError, opponentCloseError, hintCloseError],
-        "Standard Chicken failed to open and close cleanly.",
+        "Web match failed to open and close cleanly.",
       ),
     )
   })
@@ -413,7 +413,7 @@ describe("Standard Chicken runtime ownership", () => {
       },
     )
     const evaluation = createSession(async () => ENGINE_IDENTITY)
-    const runtime = await openStandardChickenRuntime({
+    const runtime = await openWebMatchRuntime({
       cryptography: createCryptography(),
       openSession: createSessionQueue([
         opponent.session,
@@ -425,7 +425,7 @@ describe("Standard Chicken runtime ownership", () => {
     await expect(runtime.close()).rejects.toEqual(
       new AggregateError(
         [opponentCloseError, hintCloseError],
-        "Standard Chicken sessions failed to close cleanly.",
+        "Web match sessions failed to close cleanly.",
       ),
     )
   })
