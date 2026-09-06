@@ -75,7 +75,6 @@ const spriteStyle = (
     presentation.referenceGeometry,
     DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS,
   )
-  const frameTransitionCount = Math.max(1, animation.frameCount - 1)
   const reducedMotionFrameProgress =
     animation.frameCount === 1
       ? 0
@@ -93,7 +92,10 @@ const spriteStyle = (
     animationName: shouldReduceMotion
       ? undefined
       : "mapachess-battle-sprite-frames",
-    animationTimingFunction: `steps(${String(frameTransitionCount)}, end)`,
+    animationTimingFunction:
+      animation.frameCount === 1
+        ? "step-end"
+        : `steps(${String(animation.frameCount)}, jump-none)`,
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: shouldReduceMotion
       ? `${String(reducedMotionFrameProgress)}% 0`
