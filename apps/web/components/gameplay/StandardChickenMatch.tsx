@@ -25,9 +25,11 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import { STANDARD_CHICKEN_PROVISIONAL_TARGET_ELO } from "../../lib/chicken/standardChickenOpponent"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
+import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
@@ -109,6 +111,11 @@ export default function StandardChickenMatch({
   const presentation = useAcceptedMatchPresentation(
     snapshot,
     runtime.playerColor,
+  )
+  const opponent = stockfishOpponent(runtime.opponentId)
+  const opponentPresentation = resolveWebOpponentPresentation(
+    runtime.opponentId,
+    presentation.snapshot.context.currentPhase?.opponent,
   )
   const position = selectMatchPosition(snapshot)
   const timeline = selectMatchTimeline(snapshot)
@@ -230,6 +237,8 @@ export default function StandardChickenMatch({
             onParticipantAnimationCompleted={
               presentation.notifyParticipantAnimationCompleted
             }
+            opponentName={opponent.displayName}
+            opponentPresentation={opponentPresentation}
             presentationSnapshot={presentation.snapshot}
           />
           <MapachitoCoachPortrait
