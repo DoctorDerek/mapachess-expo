@@ -28,6 +28,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/match": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "chess.js": "^1"
   }
