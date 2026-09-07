@@ -122,6 +122,10 @@ const matchPresentationMachine = setup({
     input: {} as MatchPresentationMachineInput,
   },
   actions: {
+    startNextBeat: assign(({ context }) => ({
+      pendingParticipants: allParticipants,
+      phaseIndex: context.phaseIndex + 1,
+    })),
     advanceToTerminalPhase: assign(({ context }) => ({
       currentPhase: requireTerminalPhase(context.remainingPhases[0]),
       pendingParticipants: noParticipants,
@@ -182,6 +186,8 @@ const matchPresentationMachine = setup({
     }),
   },
   guards: {
+    completionFinishesCurrentBeat: ({ context, event }) =>
+      completionFinishesCurrentPhase(context, event),
     completionFinishesFinalTransientPhase: ({ context, event }) =>
       completionFinishesCurrentPhase(context, event) &&
       context.currentPhase?.kind !== "conclusion" &&
@@ -229,27 +235,62 @@ const matchPresentationMachine = setup({
     },
     idle: {},
     reacting: {
+      initial: "approach",
       on: {
-        "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": [
-          {
-            actions: "advanceToTerminalPhase",
-            guard: "completionReachesTerminalPhase",
-            target: "terminal",
+        "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": {
+          actions: "recordParticipantCompletion",
+          guard: "completionMatchesCurrentPhase",
+        },
+      },
+      states: {
+        approach: {
+          on: {
+            "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": {
+              actions: "startNextBeat",
+              guard: "completionFinishesCurrentBeat",
+              target: "strike",
+            },
           },
-          {
-            actions: "advanceToNextPhase",
-            guard: "completionFinishesPhaseWithNext",
+        },
+        strike: {
+          on: {
+            "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": {
+              actions: "startNextBeat",
+              guard: "completionFinishesCurrentBeat",
+              target: "reaction",
+            },
           },
-          {
-            actions: "resetPresentation",
-            guard: "completionFinishesFinalTransientPhase",
-            target: "idle",
+        },
+        reaction: {
+          on: {
+            "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": {
+              actions: "startNextBeat",
+              guard: "completionFinishesCurrentBeat",
+              target: "recovery",
+            },
           },
-          {
-            actions: "recordParticipantCompletion",
-            guard: "completionMatchesCurrentPhase",
+        },
+        recovery: {
+          on: {
+            "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": [
+              {
+                actions: "advanceToTerminalPhase",
+                guard: "completionReachesTerminalPhase",
+                target: "#matchPresentation.terminal",
+              },
+              {
+                actions: "advanceToNextPhase",
+                guard: "completionFinishesPhaseWithNext",
+                target: "approach",
+              },
+              {
+                actions: "resetPresentation",
+                guard: "completionFinishesFinalTransientPhase",
+                target: "#matchPresentation.idle",
+              },
+            ],
           },
-        ],
+        },
       },
     },
     terminal: {},
@@ -259,5 +300,18 @@ const matchPresentationMachine = setup({
 export type MatchPresentationMachineSnapshot = SnapshotFrom<
   typeof matchPresentationMachine
 >
+
+export type MatchPresentationBeat =
+  "idle" | "approach" | "strike" | "reaction" | "recovery" | "conclusion"
+
+export const selectMatchPresentationBeat = (
+  snapshot: MatchPresentationMachineSnapshot,
+): MatchPresentationBeat => {
+  if (snapshot.matches({ reacting: "approach" })) return "approach"
+  if (snapshot.matches({ reacting: "strike" })) return "strike"
+  if (snapshot.matches({ reacting: "reaction" })) return "reaction"
+  if (snapshot.matches({ reacting: "recovery" })) return "recovery"
+  return snapshot.matches("terminal") ? "conclusion" : "idle"
+}
 
 export default matchPresentationMachine
