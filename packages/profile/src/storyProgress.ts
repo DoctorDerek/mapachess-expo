@@ -47,8 +47,12 @@ export const STORY_PROGRESS_COPY = Object.freeze({
   defeated: "Defeated",
   unlocked: "Unlocked",
   locked: "Locked",
+  lockedOpponent: "Locked opponent",
   targetElo: "Authored Elo target",
   nextOpponent: "Next unlocked opponent",
+  completedCount: "Opponents defeated",
+  opponents: "Story opponents in ladder order",
+  challengeUnlocked: "Unlocked for both Challenge modes",
   allDefeated: "Every opponent defeated",
   replay: "Replay wins to improve your medals. Your highest medal is kept.",
   independence: "Standard and Chess960 keep separate victories and medals.",
@@ -56,6 +60,14 @@ export const STORY_PROGRESS_COPY = Object.freeze({
     "Chicken is playable now. Additional opponents and their artwork are still in development; unlocked progress is saved for them.",
   medals: Object.freeze({ bronze: "Bronze", silver: "Silver", gold: "Gold" }),
 })
+
+const completionFormatter = new Intl.NumberFormat("en", {
+  style: "percent",
+  maximumFractionDigits: 1,
+})
+
+export const formatStoryCompletion = (percent: number): string =>
+  completionFormatter.format(percent / 100)
 
 export const createInitialStoryProgress = (): StoryProgress =>
   Object.freeze({ standard: Object.freeze([]), chess960: Object.freeze([]) })

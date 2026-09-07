@@ -29,7 +29,7 @@ export const MATCH_SETUP_COPY = Object.freeze({
   provisionalDifficulty:
     "Current difficulty is provisional, not calibrated. This match does not update your Elo.",
   storyAvailability:
-    "Chicken is the first playable opponent. Ladder progression and further opponents are still in development.",
+    "Chicken is the first playable opponent. Story victories and highest medals are saved; further playable opponents are still in development.",
   challengeAvailability:
     "Chicken is currently available. Independent animal and difficulty selection will follow.",
   savingHints: "Saving your hint preference…",

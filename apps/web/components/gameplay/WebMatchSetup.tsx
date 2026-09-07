@@ -8,9 +8,11 @@ import {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import type { StoryProgress } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import StoryLadderProgress from "./StoryLadderProgress"
 
 export type WebMatchSetupProps = Readonly<{
   activityMessage: string | null
@@ -21,6 +23,7 @@ export type WebMatchSetupProps = Readonly<{
   onStart: (setup: MatchSetup) => void
   opponent: StockfishOpponentDefinition
   setup: MatchSetup
+  storyProgress: StoryProgress
 }>
 
 const LAST_CHESS960_POSITION = CHESS960_POSITION_COUNT - 1
@@ -34,6 +37,7 @@ export default function WebMatchSetup({
   onStart,
   opponent,
   setup,
+  storyProgress,
 }: WebMatchSetupProps) {
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
@@ -88,6 +92,9 @@ export default function WebMatchSetup({
       >
         {matchModeLabel({ mode: setup.mode, variant })}
       </h1>
+      {setup.mode === "story" ? (
+        <StoryLadderProgress progress={storyProgress} variant={variant} />
+      ) : null}
       <form
         onSubmit={startMatch}
         className="grid items-start gap-6 xl:grid-cols-2"
