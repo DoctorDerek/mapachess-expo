@@ -1,6 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import { useMemo } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine, {
@@ -121,9 +122,10 @@ export default function WebMatch({
     runtime.playerColor,
   )
   const opponent = stockfishOpponent(runtime.opponentId)
-  const opponentPresentation = resolveWebOpponentPresentation(
-    runtime.opponentId,
-    presentation.snapshot.context.currentPhase?.opponent,
+  const opponentReaction = presentation.snapshot.context.currentPhase?.opponent
+  const opponentPresentation = useMemo(
+    () => resolveWebOpponentPresentation(runtime.opponentId, opponentReaction),
+    [opponentReaction, runtime.opponentId],
   )
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })

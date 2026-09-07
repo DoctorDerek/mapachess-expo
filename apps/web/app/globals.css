@@ -80,13 +80,3 @@
     rotate: 368deg;
   }
 }
-
-@keyframes mapachess-battle-sprite-frames {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: 100% 0;
-  }
-}

@@ -1,3 +1,4 @@
+import type { MatchPresentationBeat } from "./matchPresentationMachine.js"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 
 export const MATCH_SPRITE_REACTION_SLOTS = [
@@ -38,6 +39,7 @@ export type SpriteAnimationDefinition<SourceId extends string> = Readonly<{
 
 export type SpriteReactionStep<AnimationId extends string> = Readonly<{
   animationIds: readonly [AnimationId, ...AnimationId[]]
+  beat: MatchPresentationBeat
   playback: SpritePlaybackMode
 }>
 
@@ -65,6 +67,7 @@ export type ResolvedSpriteStep<
 > = Readonly<{
   animation: SpriteAnimationDefinition<SourceId>
   animationId: AnimationId
+  beat: MatchPresentationBeat
   playback: SpritePlaybackMode
 }>
 
@@ -114,6 +117,7 @@ const resolveStep = <AnimationId extends string, SourceId extends string>(
     : Object.freeze({
         animation: manifest.animations[animationId],
         animationId,
+        beat: step.beat,
         playback: step.playback,
       })
 }
@@ -134,11 +138,30 @@ export default function resolveSpritePresentation<
     idleStep === undefined
       ? null
       : Object.freeze({ ...idleStep, playback: "loop" as const })
-  const resolvedSteps = manifest.reactionPlans[reactionSlot].flatMap((step) => {
-    const resolvedStep =
-      resolveStep(manifest, step, availableSourceIds) ?? idleFallback
-    return resolvedStep === null ? [] : [resolvedStep]
-  })
+  const plan = manifest.reactionPlans[reactionSlot].map((step) => ({
+    step,
+    resolved: resolveStep(manifest, step, availableSourceIds),
+  }))
+  const completeSequenceAvailable = plan.every(
+    ({ resolved }) => resolved !== null,
+  )
+  const resolvedSteps =
+    reaction.family === "victory" && !completeSequenceAvailable
+      ? idleFallback === null
+        ? []
+        : [Object.freeze({ ...idleFallback, beat: "conclusion" as const })]
+      : plan.flatMap(({ step, resolved }) => {
+          const resolvedStep =
+            resolved ??
+            (idleFallback === null
+              ? null
+              : Object.freeze({
+                  ...idleFallback,
+                  beat: step.beat,
+                  playback: step.playback,
+                }))
+          return resolvedStep === null ? [] : [resolvedStep]
+        })
   const [firstStep, ...remainingSteps] = resolvedSteps
 
   return firstStep === undefined

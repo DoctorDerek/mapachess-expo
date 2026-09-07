@@ -195,25 +195,53 @@ export const CHICKEN_SPRITE_MANIFEST = {
   sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
-      { animationIds: ["run", "walk"], playback: "once" },
+      { animationIds: ["run", "walk"], beat: "approach", playback: "once" },
       {
-        animationIds: ["attack-ground", "attack-air", "peck"],
+        animationIds: ["attack-ground", "peck"],
+        beat: "strike",
         playback: "once",
       },
+      { animationIds: ["walk", "run"], beat: "recovery", playback: "once" },
     ],
-    "capture-victim": [{ animationIds: ["hurt", "fright"], playback: "once" }],
+    "capture-victim": [
+      { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
+    ],
     "check-attacker": [
-      { animationIds: ["peck", "attack-ground"], playback: "once" },
+      { animationIds: ["walk", "run"], beat: "approach", playback: "once" },
+      {
+        animationIds: ["peck", "attack-ground"],
+        beat: "strike",
+        playback: "once",
+      },
+      { animationIds: ["walk", "run"], beat: "recovery", playback: "once" },
     ],
-    "check-victim": [{ animationIds: ["fright", "hurt"], playback: "once" }],
+    "check-victim": [
+      { animationIds: ["fright", "hurt"], beat: "reaction", playback: "once" },
+    ],
     defeat: [
-      { animationIds: ["fall", "hurt"], playback: "once" },
-      { animationIds: ["die", "sit"], playback: "once-hold-final-frame" },
+      {
+        animationIds: ["die", "sit"],
+        beat: "conclusion",
+        playback: "once-hold-final-frame",
+      },
     ],
-    idle: [{ animationIds: ["idle-blink", "idle", "sit"], playback: "loop" }],
+    idle: [
+      {
+        animationIds: ["idle-blink", "idle", "sit"],
+        beat: "idle",
+        playback: "loop",
+      },
+    ],
     victory: [
-      { animationIds: ["takeoff", "peck"], playback: "once" },
-      { animationIds: ["fly", "peck"], playback: "loop" },
+      { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
+      { animationIds: ["fly"], beat: "conclusion", playback: "once" },
+      { animationIds: ["fall"], beat: "conclusion", playback: "once" },
+      { animationIds: ["land"], beat: "conclusion", playback: "once" },
+      {
+        animationIds: ["peck", "idle-blink"],
+        beat: "conclusion",
+        playback: "loop",
+      },
     ],
   },
 } as const satisfies SpriteAssetManifest<
@@ -353,29 +381,44 @@ export const MAPACHITO_SPRITE_MANIFEST = {
   sourceFacing: "right",
   reactionPlans: {
     "capture-attacker": [
-      { animationIds: ["dash", "run"], playback: "once" },
-      { animationIds: ["attack", "bark"], playback: "once" },
+      { animationIds: ["dash", "run"], beat: "approach", playback: "once" },
+      { animationIds: ["attack", "bark"], beat: "strike", playback: "once" },
+      { animationIds: ["run", "dash"], beat: "recovery", playback: "once" },
     ],
-    "capture-victim": [{ animationIds: ["hurt", "fright"], playback: "once" }],
-    "check-attacker": [{ animationIds: ["bark", "attack"], playback: "once" }],
-    "check-victim": [{ animationIds: ["fright", "hurt"], playback: "once" }],
+    "capture-victim": [
+      { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
+    ],
+    "check-attacker": [
+      { animationIds: ["run", "dash"], beat: "approach", playback: "once" },
+      { animationIds: ["bark", "attack"], beat: "strike", playback: "once" },
+      { animationIds: ["run", "dash"], beat: "recovery", playback: "once" },
+    ],
+    "check-victim": [
+      { animationIds: ["fright", "hurt"], beat: "reaction", playback: "once" },
+    ],
     defeat: [
-      { animationIds: ["fall", "hurt"], playback: "once" },
       {
         animationIds: ["die", "sit-one"],
+        beat: "conclusion",
         playback: "once-hold-final-frame",
       },
     ],
     idle: [
       {
         animationIds: ["idle-blink", "idle", "sit-two", "sit-one", "crouch"],
+        beat: "idle",
         playback: "loop",
       },
     ],
     victory: [
-      { animationIds: ["jump", "dash"], playback: "once" },
-      { animationIds: ["land", "attack"], playback: "once" },
-      { animationIds: ["bark", "sit-two"], playback: "loop" },
+      { animationIds: ["jump"], beat: "conclusion", playback: "once" },
+      { animationIds: ["fall"], beat: "conclusion", playback: "once" },
+      { animationIds: ["land"], beat: "conclusion", playback: "once" },
+      {
+        animationIds: ["bark", "sit-two"],
+        beat: "conclusion",
+        playback: "loop",
+      },
     ],
   },
 } as const satisfies SpriteAssetManifest<

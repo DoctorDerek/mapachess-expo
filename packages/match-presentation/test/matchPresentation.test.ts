@@ -10,7 +10,10 @@ import {
   type MatchPosition,
 } from "@mapachess/match/match-position"
 import resolveCoachPortrait from "../src/coachPortrait"
-import matchPresentationMachine from "../src/matchPresentationMachine"
+import matchPresentationMachine, {
+  selectMatchPresentationBeat,
+  type MatchPresentationBeat,
+} from "../src/matchPresentationMachine"
 import deriveAcceptedMovePresentationPhases, {
   deriveConclusionPresentationPhase,
 } from "../src/matchPresentationObservation"
@@ -124,9 +127,11 @@ const testAnimation = (
 
 const orderedReactionStep = (
   playback: SpritePlaybackMode,
+  beat: MatchPresentationBeat,
 ): SpriteReactionStep<TestAnimationId> =>
   Object.freeze({
     animationIds: Object.freeze(["preferred", "fallback"] as const),
+    beat,
     playback,
   })
 
@@ -140,15 +145,25 @@ const SPRITE_MANIFEST = Object.freeze({
   }),
   reactionPlans: Object.freeze({
     idle: Object.freeze([
-      { animationIds: ["idle"], playback: "loop" },
+      { animationIds: ["idle"], beat: "idle", playback: "loop" },
     ] as const),
-    "capture-attacker": Object.freeze([orderedReactionStep("once")] as const),
-    "capture-victim": Object.freeze([orderedReactionStep("once")] as const),
-    "check-attacker": Object.freeze([orderedReactionStep("once")] as const),
-    "check-victim": Object.freeze([orderedReactionStep("once")] as const),
-    victory: Object.freeze([orderedReactionStep("loop")] as const),
+    "capture-attacker": Object.freeze([
+      orderedReactionStep("once", "strike"),
+    ] as const),
+    "capture-victim": Object.freeze([
+      orderedReactionStep("once", "reaction"),
+    ] as const),
+    "check-attacker": Object.freeze([
+      orderedReactionStep("once", "strike"),
+    ] as const),
+    "check-victim": Object.freeze([
+      orderedReactionStep("once", "reaction"),
+    ] as const),
+    victory: Object.freeze([
+      orderedReactionStep("loop", "conclusion"),
+    ] as const),
     defeat: Object.freeze([
-      orderedReactionStep("once-hold-final-frame"),
+      orderedReactionStep("once-hold-final-frame", "conclusion"),
     ] as const),
   }),
 }) satisfies SpriteAssetManifest<TestAnimationId, TestSourceId>
@@ -208,15 +223,74 @@ describe("match presentation contracts", () => {
       "opponent",
     ])
     completeParticipant(actor, "opponent")
+    expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe("strike")
+    for (const beat of ["strike", "reaction", "recovery"]) {
+      expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe(beat)
+      completeParticipant(actor, "opponent")
+      completeParticipant(actor, "player")
+    }
     expect(actor.getSnapshot().context.currentPhase).toEqual(CHECK_PHASE)
-    expect(actor.getSnapshot().context.phaseIndex).toBe(1)
+    expect(actor.getSnapshot().context.phaseIndex).toBe(4)
 
-    completeParticipant(actor, "opponent")
-    completeParticipant(actor, "player")
+    for (const beat of ["approach", "strike", "reaction", "recovery"]) {
+      expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe(beat)
+      completeParticipant(actor, "opponent")
+      completeParticipant(actor, "player")
+    }
     const completed = actor.getSnapshot()
     expect(completed.matches("terminal")).toBe(true)
     expect(completed.context.currentPhase).toEqual(PLAYER_VICTORY_PHASE)
     expect(completed.context.pendingParticipants).toEqual([])
+    actor.stop()
+  })
+
+  it.each([0, 1, 2, 3])(
+    "rejects old completions after interruption at beat %s",
+    (beatIndex) => {
+      const actor = createPresentationActor()
+      actor.send({
+        phases: [CAPTURE_PHASE],
+        type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+      })
+      for (let index = 0; index < beatIndex; index += 1) {
+        completeParticipant(actor, "player")
+        completeParticipant(actor, "opponent")
+      }
+      const previous = actor.getSnapshot().context
+      actor.send({
+        phases: [CHECK_PHASE],
+        type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+      })
+      expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe("approach")
+      actor.send({
+        participant: "player",
+        phaseIndex: previous.phaseIndex,
+        reactionSequence: previous.reactionSequence,
+        type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
+      })
+      expect(actor.getSnapshot().context.pendingParticipants).toEqual([
+        "player",
+        "opponent",
+      ])
+      actor.send({ type: "MATCH_PRESENTATION.RESET_REQUESTED" })
+      completeParticipant(actor, "player")
+      expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe("idle")
+      expect(actor.getSnapshot().context.currentPhase).toBeNull()
+      actor.stop()
+    },
+  )
+
+  it("returns to idle after the final recovery without a match conclusion", () => {
+    const actor = createPresentationActor()
+    actor.send({
+      phases: [CAPTURE_PHASE],
+      type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+    })
+    for (let index = 0; index < 4; index += 1) {
+      completeParticipant(actor, "player")
+      completeParticipant(actor, "opponent")
+    }
+    expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe("idle")
     actor.stop()
   })
 
@@ -250,8 +324,8 @@ describe("match presentation contracts", () => {
       reactionPlans: {
         ...SPRITE_MANIFEST.reactionPlans,
         "capture-attacker": [
-          { animationIds: ["preferred"], playback: "once" },
-          { animationIds: ["fallback"], playback: "once" },
+          { animationIds: ["preferred"], beat: "approach", playback: "once" },
+          { animationIds: ["fallback"], beat: "strike", playback: "once" },
         ],
       },
     } as const satisfies SpriteAssetManifest<TestAnimationId, TestSourceId>
@@ -268,8 +342,8 @@ describe("match presentation contracts", () => {
       referenceGeometry: TEST_FRAME_GEOMETRY,
       sourceFacing: "right",
       steps: [
-        { animationId: "idle", playback: "loop" },
-        { animationId: "fallback", playback: "once" },
+        { animationId: "idle", beat: "approach", playback: "once" },
+        { animationId: "fallback", beat: "strike", playback: "once" },
       ],
     })
   })
@@ -282,7 +356,7 @@ describe("match presentation contracts", () => {
     ).toMatchObject({
       kind: "sprite",
       reactionSlot: "defeat",
-      steps: [{ animationId: "idle", playback: "loop" }],
+      steps: [{ animationId: "idle", playback: "once-hold-final-frame" }],
     })
     expect(
       resolveSpritePresentation(SPRITE_MANIFEST, { family: "defeat" }, [
@@ -291,6 +365,27 @@ describe("match presentation contracts", () => {
       ]),
     ).toMatchObject({
       steps: [{ animationId: "preferred", playback: "once-hold-final-frame" }],
+    })
+  })
+
+  it("uses a complete idle fallback instead of an incomplete celebration chain", () => {
+    const manifest = {
+      ...SPRITE_MANIFEST,
+      reactionPlans: {
+        ...SPRITE_MANIFEST.reactionPlans,
+        victory: [
+          { animationIds: ["preferred"], beat: "conclusion", playback: "once" },
+          { animationIds: ["fallback"], beat: "conclusion", playback: "loop" },
+        ],
+      },
+    } as const satisfies SpriteAssetManifest<TestAnimationId, TestSourceId>
+    expect(
+      resolveSpritePresentation(manifest, { family: "victory" }, [
+        "idle-source",
+        "fallback-source",
+      ]),
+    ).toMatchObject({
+      steps: [{ animationId: "idle", beat: "conclusion", playback: "loop" }],
     })
   })
 })
