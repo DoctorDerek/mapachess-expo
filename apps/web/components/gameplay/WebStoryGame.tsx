@@ -200,7 +200,10 @@ function MatchSessionExperience({
               )
               if (variant === undefined)
                 throw new TypeError("Select a supported chess variant.")
-              actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", variant })
+              actor.send({
+                type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+                setup: { mode: "story", variant },
+              })
             }}
           >
             <div>
@@ -216,7 +219,12 @@ function MatchSessionExperience({
                     <select
                       id="story-variant"
                       name="variant"
-                      defaultValue={snapshot.context.requestedVariant}
+                      defaultValue={
+                        snapshot.context.requestedSetup.mode === "story"
+                          ? snapshot.context.requestedSetup.variant
+                          : snapshot.context.requestedSetup.challengeSetup
+                              .variant
+                      }
                       className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-orange min-h-11 rounded-lg border-2 px-3 py-2 focus-visible:outline-3"
                     >
                       <option value="standard">Standard</option>
@@ -336,11 +344,11 @@ export default function WebStoryGame({
                 signal,
               }),
             ),
-          openFreshMatch: (previousSession, variant, signal) =>
+          openFreshMatch: (previousSession, setup, signal) =>
             captureSession(
               openFreshWebMatchSession({
                 previousSession,
-                variant,
+                ...setup,
                 profileActor,
                 signal,
               }),
