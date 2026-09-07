@@ -6,6 +6,7 @@ import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine, {
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
+import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine, {
   selectCanOfferDraw,
   selectCanRedo,
@@ -25,6 +26,7 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import { matchModeLabel } from "@mapachess/match/match-setup"
 import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
   type StockfishOpponentDefinition,
@@ -40,9 +42,10 @@ import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
-export type WebStoryMatchProps = Readonly<{
+export type WebMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
+  mode: MatchMode
   playerEloAtStart: number
   runtime: WebMatchRuntime
 }>
@@ -97,12 +100,13 @@ const matchStatusText = (
   return "Your move."
 }
 
-export default function WebStoryMatch({
+export default function WebMatch({
   actor,
   evaluationActor,
+  mode,
   playerEloAtStart,
   runtime,
-}: WebStoryMatchProps) {
+}: WebMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
   const evaluationResult = useSelector(
     evaluationActor,
@@ -122,7 +126,7 @@ export default function WebStoryMatch({
     presentation.snapshot.context.currentPhase?.opponent,
   )
   const position = selectMatchPosition(snapshot)
-  const modeLabel = `${position.variant === "standard" ? "Standard" : "Chess960"} Story`
+  const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
@@ -167,8 +171,9 @@ export default function WebStoryMatch({
       >
         <div>
           <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-            Story opponent {String(opponent.storyPosition).padStart(2, "0")} /{" "}
-            {STOCKFISH_OPPONENTS.length}
+            {mode === "story"
+              ? `Story opponent ${String(opponent.storyPosition).padStart(2, "0")} / ${String(STOCKFISH_OPPONENTS.length)}`
+              : "Challenge opponent"}
           </p>
           <h1
             className="font-display mt-[0.2rem] text-[clamp(1.5rem,5vw,2.25rem)] leading-[0.95] font-black tracking-[-0.02em] uppercase"

@@ -26,8 +26,8 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import MatchModeMenu from "./MatchModeMenu"
+import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
-import WebStoryMatch from "./WebStoryMatch"
 
 const FIRST_STORY_OPPONENT = stockfishOpponent("chicken-stockfish")
 
@@ -218,10 +218,11 @@ function MatchSessionExperience({
           setup={initialSetup}
         />
       ) : snapshot.matches("active") && session !== null ? (
-        <WebStoryMatch
+        <WebMatch
           actor={session.actor}
           evaluationActor={session.evaluationActor}
           key={session.match.matchId}
+          mode={session.match.mode}
           playerEloAtStart={session.match.playerEloAtStart}
           runtime={session.runtime}
         />
