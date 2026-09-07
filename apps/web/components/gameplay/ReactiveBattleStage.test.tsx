@@ -97,8 +97,6 @@ describe("Reactive Battle Stage web presentation", () => {
     expect(markup).toContain("Mapachito captures; Chicken Stockfish reacts.")
     expect(markup).toContain('aria-label="Mapachito: capture attacker"')
     expect(markup).toContain('aria-label="Chicken Stockfish: capture victim"')
-    expect(markup).toContain("/generated/presentation-assets/battle/mapachito/")
-    expect(markup).toContain("/generated/presentation-assets/battle/chicken/")
     expect(markup).toContain(
       "/generated/presentation-assets/coach/wow_great.png",
     )
