@@ -171,15 +171,6 @@ const webMatchSessionMachineDefinition = setup({
     },
     menu: {
       initial: "choosingMode",
-      on: {
-        "WEB_MATCH_SESSION.MATCH_REQUESTED": {
-          actions: {
-            type: "rememberRequestedSetup",
-            params: ({ event }) => ({ setup: event.setup }),
-          },
-          target: "#webMatchSession.openingFreshMatch",
-        },
-      },
       states: {
         choosingMode: {
           on: {
@@ -194,6 +185,13 @@ const webMatchSessionMachineDefinition = setup({
         },
         setup: {
           on: {
+            "WEB_MATCH_SESSION.MATCH_REQUESTED": {
+              actions: {
+                type: "rememberRequestedSetup",
+                params: ({ event }) => ({ setup: event.setup }),
+              },
+              target: "#webMatchSession.openingFreshMatch",
+            },
             "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED": { target: "choosingMode" },
           },
         },
