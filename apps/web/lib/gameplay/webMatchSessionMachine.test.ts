@@ -1,14 +1,21 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
+import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import {
   createInitialMatchPosition,
+  type MatchColor,
   type MatchStartingPosition,
 } from "@mapachess/match/match-position"
-import type { MatchVariant } from "@mapachess/match/match-variant"
+import createMatchSetupForMode, {
+  MATCH_MODE_CHOICES,
+  type MatchSetup,
+} from "@mapachess/match/match-setup"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
+import { chickenMatchId } from "../chicken/chickenOpponent"
 import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
@@ -24,6 +31,8 @@ const createSession = (
     variant: "standard",
     chess960PositionId: null,
   },
+  mode: MatchMode = "story",
+  playerColor: MatchColor = "white",
 ): WebMatchSession => {
   const matchSeed = parseDeterministicRandomSeed(seed, "web session test seed")
   const runtime = Object.freeze({
@@ -38,7 +47,7 @@ const createSession = (
         throw new Error("Web session test does not request hints.")
       }),
     }),
-    matchId: `standard-story-chicken/${matchSeed}`,
+    matchId: chickenMatchId(matchSeed, startingPosition, { mode, playerColor }),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async () => {
@@ -47,7 +56,7 @@ const createSession = (
     }),
     opponentPolicyFingerprint: "web-session-test-policy",
     opponentId: "chicken-stockfish",
-    playerColor: "white",
+    playerColor,
     startingPosition,
     positionEvaluator: vi.fn(async () => {
       throw new Error("Web session test does not request evaluation.")
@@ -55,6 +64,7 @@ const createSession = (
   }) satisfies WebMatchRuntime
   const match = buildFreshWebMatch({
     autoHintMode: "auto-move-hints",
+    mode,
     playerEloAtStart: 100,
     runtime,
   })
@@ -93,103 +103,137 @@ const operations = (
 })
 
 describe("web match session machine", () => {
-  it("retains Chess960 through an opening retry and a subsequent restart", async () => {
-    const layout = parseChess960PositionId(0)
-    if (!layout.ok) throw new Error("Invalid test layout")
-    const startingPosition = {
-      variant: "chess960",
-      chess960PositionId: layout.positionId,
-    } as const
-    const fresh = createSession(
-      "00000001000000020000000300000004",
-      startingPosition,
-    )
-    const replacement = createSession(
-      "00000005000000060000000700000008",
-      startingPosition,
-    )
-    const openFreshMatch = vi
-      .fn<WebMatchSessionOperations["openFreshMatch"]>()
-      .mockRejectedValueOnce(new Error("opening interrupted"))
-      .mockResolvedValueOnce(fresh)
-      .mockResolvedValueOnce(replacement)
-    const actor = createActor(webMatchSessionMachine, {
-      input: {
-        activeMatchExists: false,
-        operations: operations({ openFreshMatch }),
-      },
-    }).start()
-    actor.send({
-      type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
-      variant: "chess960",
-    })
-    await waitFor(actor, (snapshot) => snapshot.matches("failed"))
-    actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
-    await waitFor(actor, (snapshot) => snapshot.matches("active"))
-    expect(openFreshMatch).toHaveBeenNthCalledWith(
-      1,
-      null,
-      "chess960",
-      expect.any(AbortSignal),
-    )
-    expect(openFreshMatch).toHaveBeenNthCalledWith(
-      2,
-      null,
-      "chess960",
-      expect.any(AbortSignal),
-    )
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
-    await waitFor(
-      actor,
-      (snapshot) =>
-        snapshot.matches("active") && snapshot.context.session === replacement,
-    )
-    expect(openFreshMatch).toHaveBeenNthCalledWith(
-      3,
-      fresh,
-      "chess960",
-      expect.any(AbortSignal),
-    )
-    actor.stop()
-  })
+  it.each([0, 959])(
+    "retains Challenge color and position %i through opening retry and restart",
+    async (positionId) => {
+      const layout = parseChess960PositionId(positionId)
+      if (!layout.ok) throw new Error("Invalid test layout")
+      const startingPosition = {
+        variant: "chess960",
+        chess960PositionId: layout.positionId,
+      } as const
+      const setup: MatchSetup = {
+        mode: "challenge",
+        challengeSetup: { ...startingPosition, playerColor: "black" },
+      }
+      const fresh = createSession(
+        "00000001000000020000000300000004",
+        startingPosition,
+        "challenge",
+        "black",
+      )
+      const replacement = createSession(
+        "00000005000000060000000700000008",
+        startingPosition,
+        "challenge",
+        "black",
+      )
+      const openFreshMatch = vi
+        .fn<WebMatchSessionOperations["openFreshMatch"]>()
+        .mockRejectedValueOnce(new Error("opening interrupted"))
+        .mockResolvedValueOnce(fresh)
+        .mockResolvedValueOnce(replacement)
+      const actor = createActor(webMatchSessionMachine, {
+        input: {
+          activeMatchExists: false,
+          operations: operations({ openFreshMatch }),
+        },
+      }).start()
+      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      actor.send({
+        type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+        setup,
+      })
+      await waitFor(actor, (snapshot) => snapshot.matches("failed"))
+      actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
+      await waitFor(actor, (snapshot) => snapshot.matches("active"))
+      expect(openFreshMatch).toHaveBeenNthCalledWith(
+        1,
+        null,
+        setup,
+        expect.any(AbortSignal),
+      )
+      expect(openFreshMatch).toHaveBeenNthCalledWith(
+        2,
+        null,
+        setup,
+        expect.any(AbortSignal),
+      )
+      actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+      await waitFor(
+        actor,
+        (snapshot) =>
+          snapshot.matches("active") &&
+          snapshot.context.session === replacement,
+      )
+      expect(openFreshMatch).toHaveBeenNthCalledWith(
+        3,
+        fresh,
+        setup,
+        expect.any(AbortSignal),
+      )
+      actor.stop()
+    },
+  )
 
-  it("routes a profile without an active match to the opponent menu", () => {
+  it("routes a profile without an active match to the four-mode menu", () => {
     const actor = createActor(webMatchSessionMachine, {
       input: { activeMatchExists: false, operations: operations() },
     }).start()
 
-    expect(actor.getSnapshot().matches("menu")).toBe(true)
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
     expect(selectWebMatchSession(actor.getSnapshot())).toBeNull()
     actor.stop()
   })
 
-  it("opens a selected match from the menu", async () => {
-    const freshSession = createSession("00000005000000060000000700000008")
-    const openFreshMatch = vi.fn(
-      async (
-        _previousSession: WebMatchSession | null,
-        _variant: MatchVariant,
-        _signal: AbortSignal,
-      ) => freshSession,
-    )
-    const actor = createActor(webMatchSessionMachine, {
-      input: {
-        activeMatchExists: false,
-        operations: operations({ openFreshMatch }),
-      },
-    }).start()
+  it.each(MATCH_MODE_CHOICES)(
+    "opens $title only after confirming its setup",
+    async (selection) => {
+      const setup = createMatchSetupForMode(selection, DEFAULT_CHALLENGE_SETUP)
+      const layout = parseChess960PositionId(518)
+      if (!layout.ok) throw new Error("Invalid test layout")
+      const freshSession = createSession(
+        "00000005000000060000000700000008",
+        selection.variant === "standard"
+          ? { variant: "standard", chess960PositionId: null }
+          : { variant: "chess960", chess960PositionId: layout.positionId },
+        selection.mode,
+      )
+      const openFreshMatch = vi
+        .fn<WebMatchSessionOperations["openFreshMatch"]>()
+        .mockResolvedValue(freshSession)
+      const actor = createActor(webMatchSessionMachine, {
+        input: {
+          activeMatchExists: false,
+          operations: operations({ openFreshMatch }),
+        },
+      }).start()
 
-    actor.send({
-      type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
-      variant: "standard",
-    })
-    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+      actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+      expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+      expect(openFreshMatch).not.toHaveBeenCalled()
+      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      expect(actor.getSnapshot().matches({ menu: "setup" })).toBe(true)
+      expect(openFreshMatch).not.toHaveBeenCalled()
+      actor.send({ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" })
+      expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      actor.send({
+        type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+        setup,
+      })
+      await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
-    expect(openFreshMatch).toHaveBeenCalledOnce()
-    expect(openFreshMatch.mock.calls[0]?.[0]).toBeNull()
-    expect(selectWebMatchSession(actor.getSnapshot())).toBe(freshSession)
-    actor.stop()
-  })
+      expect(openFreshMatch).toHaveBeenCalledOnce()
+      expect(openFreshMatch).toHaveBeenCalledWith(
+        null,
+        setup,
+        expect.any(AbortSignal),
+      )
+      expect(selectWebMatchSession(actor.getSnapshot())).toBe(freshSession)
+      actor.stop()
+    },
+  )
 
   it("resumes a verified active match during initial routing", async () => {
     const currentSession = createSession("00000001000000020000000300000004")
@@ -241,7 +285,7 @@ describe("web match session machine", () => {
     actor.stop()
   })
 
-  it("returns the active session to the menu", async () => {
+  it("closes the active session and returns to its setup without opening another match", async () => {
     const currentSession = createSession("00000001000000020000000300000004")
     const returnToMenu = vi.fn(async (session: WebMatchSession) => {
       await session.close()
@@ -258,7 +302,7 @@ describe("web match session machine", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
     actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
-    await waitFor(actor, (snapshot) => snapshot.matches("menu"))
+    await waitFor(actor, (snapshot) => snapshot.matches({ menu: "setup" }))
 
     expect(returnToMenu).toHaveBeenCalledWith(
       currentSession,
@@ -266,6 +310,10 @@ describe("web match session machine", () => {
     )
     expect(currentSession.close).toHaveBeenCalledOnce()
     expect(selectWebMatchSession(actor.getSnapshot())).toBeNull()
+    expect(actor.getSnapshot().context.requestedSetup).toEqual({
+      mode: "story",
+      variant: "standard",
+    })
     actor.stop()
   })
 

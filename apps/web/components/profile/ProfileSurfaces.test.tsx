@@ -81,6 +81,14 @@ describe("web player-data controls", () => {
     expect(markup).toContain("Auto Move Hints")
     expect(markup).toContain("Auto Piece Hints")
     expect(markup).toContain("No Auto Hints")
+    expect(markup).toContain("Bronze if you win after using Move Hints.")
+    expect(markup).toContain(
+      "Silver if you win with Piece Hints but no Move Hints.",
+    )
+    expect(markup).toContain("Gold if you win without using any hints.")
+    expect(markup).toContain(
+      "Changing this setting never erases earlier hint use.",
+    )
     expect(markup).toContain("changes take effect immediately")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("non-destructive preview")

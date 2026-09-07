@@ -57,6 +57,10 @@
       "types": "./src/matchVariant.ts",
       "default": "./dist/matchVariant.js"
     },
+    "./match-setup": {
+      "types": "./src/matchSetup.ts",
+      "default": "./dist/matchSetup.js"
+    },
     "./stockfish-opponent": {
       "types": "./src/stockfishOpponent.ts",
       "default": "./dist/stockfishOpponent.js"

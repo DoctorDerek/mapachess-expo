@@ -8,7 +8,9 @@ import {
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
-import type { MatchVariant } from "@mapachess/match/match-variant"
+import createMatchSetupForMode, {
+  type MatchSetup,
+} from "@mapachess/match/match-setup"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 
 export type WebMatchSession = Readonly<{
@@ -31,7 +33,7 @@ export type WebMatchSessionOperations = Readonly<{
   openCurrentMatch: (signal: AbortSignal) => Promise<WebMatchSession>
   openFreshMatch: (
     previousSession: WebMatchSession | null,
-    variant: MatchVariant,
+    setup: MatchSetup,
     signal: AbortSignal,
   ) => Promise<WebMatchSession>
   returnToMenu: (session: WebMatchSession, signal: AbortSignal) => Promise<void>
@@ -46,15 +48,17 @@ type WebMatchSessionMachineContext = Readonly<{
   activeMatchExists: boolean
   failure: WebMatchSessionFailure | null
   operations: WebMatchSessionOperations
-  requestedVariant: MatchVariant
+  requestedSetup: MatchSetup
   session: WebMatchSession | null
 }>
 
 export type WebMatchSessionMachineEvent =
   | Readonly<{
       type: "WEB_MATCH_SESSION.MATCH_REQUESTED"
-      variant: MatchVariant
+      setup: MatchSetup
     }>
+  | Readonly<{ type: "WEB_MATCH_SESSION.SETUP_REQUESTED"; setup: MatchSetup }>
+  | Readonly<{ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" }>
@@ -66,7 +70,7 @@ type OpenCurrentMatchInput = Readonly<{
 type OpenFreshMatchInput = Readonly<{
   operations: WebMatchSessionOperations
   previousSession: WebMatchSession | null
-  variant: MatchVariant
+  setup: MatchSetup
 }>
 
 type ReturnToMenuInput = Readonly<{
@@ -102,7 +106,7 @@ const webMatchSessionMachineDefinition = setup({
       ({ input, signal }) =>
         input.operations.openFreshMatch(
           input.previousSession,
-          input.variant,
+          input.setup,
           signal,
         ),
     ),
@@ -111,15 +115,24 @@ const webMatchSessionMachineDefinition = setup({
     ),
   },
   actions: {
-    rememberRequestedVariant: assign(
-      (_, params: Readonly<{ variant: MatchVariant }>) => ({
-        requestedVariant: params.variant,
+    rememberRequestedSetup: assign(
+      (_, params: Readonly<{ setup: MatchSetup }>) => ({
+        requestedSetup: params.setup,
       }),
     ),
     acceptOpenedSession: assign(
       (_, params: Readonly<{ session: WebMatchSession }>) => ({
         failure: null,
-        requestedVariant: params.session.match.startingPosition.variant,
+        requestedSetup: createMatchSetupForMode(
+          {
+            mode: params.session.match.mode,
+            variant: params.session.match.startingPosition.variant,
+          },
+          {
+            ...params.session.match.startingPosition,
+            playerColor: params.session.match.playerColor,
+          },
+        ),
         session: params.session,
       }),
     ),
@@ -146,7 +159,7 @@ const webMatchSessionMachineDefinition = setup({
     activeMatchExists: input.activeMatchExists,
     failure: null,
     operations: input.operations,
-    requestedVariant: "standard",
+    requestedSetup: { mode: "story", variant: "standard" },
     session: null,
   }),
   states: {
@@ -157,13 +170,30 @@ const webMatchSessionMachineDefinition = setup({
       ],
     },
     menu: {
-      on: {
-        "WEB_MATCH_SESSION.MATCH_REQUESTED": {
-          actions: {
-            type: "rememberRequestedVariant",
-            params: ({ event }) => ({ variant: event.variant }),
+      initial: "choosingMode",
+      states: {
+        choosingMode: {
+          on: {
+            "WEB_MATCH_SESSION.SETUP_REQUESTED": {
+              actions: {
+                type: "rememberRequestedSetup",
+                params: ({ event }) => ({ setup: event.setup }),
+              },
+              target: "setup",
+            },
           },
-          target: "openingFreshMatch",
+        },
+        setup: {
+          on: {
+            "WEB_MATCH_SESSION.MATCH_REQUESTED": {
+              actions: {
+                type: "rememberRequestedSetup",
+                params: ({ event }) => ({ setup: event.setup }),
+              },
+              target: "#webMatchSession.openingFreshMatch",
+            },
+            "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED": { target: "choosingMode" },
+          },
         },
       },
     },
@@ -198,7 +228,7 @@ const webMatchSessionMachineDefinition = setup({
         input: ({ context }) => ({
           operations: context.operations,
           previousSession: null,
-          variant: context.requestedVariant,
+          setup: context.requestedSetup,
         }),
         onDone: {
           actions: {
@@ -236,7 +266,7 @@ const webMatchSessionMachineDefinition = setup({
         input: ({ context }) => ({
           operations: context.operations,
           previousSession: requireSession(context),
-          variant: requireSession(context).match.startingPosition.variant,
+          setup: context.requestedSetup,
         }),
         onDone: {
           actions: {
@@ -267,7 +297,7 @@ const webMatchSessionMachineDefinition = setup({
         }),
         onDone: {
           actions: "clearSession",
-          target: "menu",
+          target: "menu.setup",
         },
         onError: {
           actions: {

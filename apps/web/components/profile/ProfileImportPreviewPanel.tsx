@@ -1,7 +1,7 @@
 "use client"
 
+import { autoHintModeLabel } from "@mapachess/match/auto-hint-mode"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
-import { autoHintModeLabel } from "../../lib/profile/autoHintModePresentation"
 import MapachessButton from "../presentation/MapachessButton"
 import { ProfileCard } from "./ProfileFoundation"
 
