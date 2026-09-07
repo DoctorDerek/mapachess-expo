@@ -3,6 +3,7 @@ import os from "node:os"
 import path from "node:path"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { collectLighthouseReports } from "@/scripts/lighthouse/collectLighthouseReports"
+import { getLighthouseCollectionConfiguration } from "@/scripts/lighthouse/lighthouseConfiguration"
 
 const { launchChromeAdapter, runLighthouseAdapter } = vi.hoisted(() => ({
   launchChromeAdapter: vi.fn(),
@@ -40,15 +41,15 @@ describe("collectLighthouseReports", () => {
     runLighthouseAdapter.mockResolvedValue({
       lhr: {
         categories: {},
-        finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/ready",
+        finalDisplayedUrl: "https://mapachess.com/ready",
       },
       report: "adapter-report",
     })
 
     const manifest = await collectLighthouseReports({
+      ...getLighthouseCollectionConfiguration({}),
       numberOfRuns: 1,
       outputDirectory,
-      targetUrl: "https://mapachess-expo-web.vercel.app/",
     })
 
     expect(launchChromeAdapter).toHaveBeenCalledWith({
@@ -56,7 +57,7 @@ describe("collectLighthouseReports", () => {
       userDataDir: expect.stringContaining("mapachess-lighthouse-"),
     })
     expect(runLighthouseAdapter).toHaveBeenCalledWith(
-      "https://mapachess-expo-web.vercel.app/",
+      "https://mapachess.com/",
       expect.objectContaining({ port: 9222 }),
     )
     expect(killChrome).toHaveBeenCalledOnce()
@@ -75,7 +76,7 @@ describe("collectLighthouseReports", () => {
       collectLighthouseReports({
         numberOfRuns: 1,
         outputDirectory: createTemporaryDirectory(),
-        targetUrl: "https://mapachess-expo-web.vercel.app/",
+        targetUrl: "https://mapachess.com/",
       }),
     ).rejects.toThrow("run 1 did not return a result")
     expect(killChrome).toHaveBeenCalledOnce()
@@ -91,7 +92,7 @@ describe("collectLighthouseReports", () => {
       collectLighthouseReports({
         numberOfRuns: 1,
         outputDirectory: createTemporaryDirectory(),
-        targetUrl: "https://mapachess-expo-web.vercel.app/",
+        targetUrl: "https://mapachess.com/",
       }),
     ).rejects.toThrow("invalid HTML report")
     expect(killChrome).toHaveBeenCalledOnce()
@@ -108,14 +109,14 @@ describe("collectLighthouseReports", () => {
       .fn()
       .mockResolvedValueOnce({
         lighthouseResult: {
-          finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/first",
+          finalDisplayedUrl: "https://mapachess.com/first",
           run: 1,
         },
         report: "first-report",
       })
       .mockResolvedValueOnce({
         lighthouseResult: {
-          finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/second",
+          finalDisplayedUrl: "https://mapachess.com/second",
           run: 2,
         },
         report: "second-report",
@@ -125,7 +126,7 @@ describe("collectLighthouseReports", () => {
       {
         numberOfRuns: 2,
         outputDirectory,
-        targetUrl: "https://mapachess-expo-web.vercel.app/",
+        targetUrl: "https://mapachess.com/",
       },
       { launchChrome, runLighthouse },
     )
@@ -135,22 +136,13 @@ describe("collectLighthouseReports", () => {
       expect.stringContaining("mapachess-lighthouse-"),
     )
     expect(runLighthouse).toHaveBeenCalledTimes(2)
-    expect(runLighthouse).toHaveBeenNthCalledWith(
-      1,
-      "https://mapachess-expo-web.vercel.app/",
-      {
-        formFactor: "mobile",
-        logLevel: "info",
-        onlyCategories: [
-          "performance",
-          "accessibility",
-          "best-practices",
-          "seo",
-        ],
-        output: "html",
-        port: 9222,
-      },
-    )
+    expect(runLighthouse).toHaveBeenNthCalledWith(1, "https://mapachess.com/", {
+      formFactor: "mobile",
+      logLevel: "info",
+      onlyCategories: ["performance", "accessibility", "best-practices", "seo"],
+      output: "html",
+      port: 9222,
+    })
     expect(killChrome).toHaveBeenCalledOnce()
     expect(manifest).toHaveLength(2)
     expect(
@@ -164,36 +156,43 @@ describe("collectLighthouseReports", () => {
     expect(
       JSON.parse(fs.readFileSync(manifest[1]?.jsonPath ?? "", "utf8")),
     ).toEqual({
-      finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/second",
+      finalDisplayedUrl: "https://mapachess.com/second",
       run: 2,
     })
   })
 
-  it("rejects a Lighthouse run that leaves the requested origin", async () => {
-    const killChrome = vi.fn(async () => undefined)
+  it.each([
+    "https://vercel.com/login",
+    "https://mapachess-expo-web.vercel.app/",
+    "https://mapachess-expo-preview.vercel.app/",
+  ])(
+    "rejects a noncanonical Lighthouse destination: %s",
+    async (finalDisplayedUrl) => {
+      const killChrome = vi.fn(async () => undefined)
 
-    await expect(
-      collectLighthouseReports(
-        {
-          numberOfRuns: 1,
-          outputDirectory: createTemporaryDirectory(),
-          targetUrl: "https://mapachess-expo-web.vercel.app/",
-        },
-        {
-          launchChrome: async () => ({ kill: killChrome, port: 9222 }),
-          runLighthouse: async () => ({
-            lighthouseResult: {
-              finalDisplayedUrl: "https://vercel.com/login",
-            },
-            report: "authentication-report",
-          }),
-        },
-      ),
-    ).rejects.toThrow(
-      "left the target origin: expected https://mapachess-expo-web.vercel.app, received https://vercel.com",
-    )
-    expect(killChrome).toHaveBeenCalledOnce()
-  })
+      await expect(
+        collectLighthouseReports(
+          {
+            numberOfRuns: 1,
+            outputDirectory: createTemporaryDirectory(),
+            targetUrl: "https://mapachess.com/",
+          },
+          {
+            launchChrome: async () => ({ kill: killChrome, port: 9222 }),
+            runLighthouse: async () => ({
+              lighthouseResult: {
+                finalDisplayedUrl,
+              },
+              report: "authentication-report",
+            }),
+          },
+        ),
+      ).rejects.toThrow(
+        `left the target origin: expected https://mapachess.com, received ${new URL(finalDisplayedUrl).origin}`,
+      )
+      expect(killChrome).toHaveBeenCalledOnce()
+    },
+  )
 
   it.each([undefined, "not a URL"])(
     "rejects the invalid final URL %s",
@@ -205,7 +204,7 @@ describe("collectLighthouseReports", () => {
           {
             numberOfRuns: 1,
             outputDirectory: createTemporaryDirectory(),
-            targetUrl: "https://mapachess-expo-web.vercel.app/",
+            targetUrl: "https://mapachess.com/",
           },
           {
             launchChrome: async () => ({ kill: killChrome, port: 9222 }),
@@ -228,7 +227,7 @@ describe("collectLighthouseReports", () => {
         {
           numberOfRuns: 1,
           outputDirectory: createTemporaryDirectory(),
-          targetUrl: "https://mapachess-expo-web.vercel.app/",
+          targetUrl: "https://mapachess.com/",
         },
         {
           launchChrome: async () => ({ kill: killChrome, port: 9222 }),
@@ -256,14 +255,14 @@ describe("collectLighthouseReports", () => {
         {
           numberOfRuns: 1,
           outputDirectory: createTemporaryDirectory(),
-          targetUrl: "https://mapachess-expo-web.vercel.app/",
+          targetUrl: "https://mapachess.com/",
         },
         {
           launchChrome: async () => ({ kill: killChrome, port: 9222 }),
           runLighthouse: async () => ({
             lighthouseResult: {
               categories: {},
-              finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/",
+              finalDisplayedUrl: "https://mapachess.com/",
             },
             report: "completed-report",
           }),
@@ -294,14 +293,14 @@ describe("collectLighthouseReports", () => {
         {
           numberOfRuns: 1,
           outputDirectory: createTemporaryDirectory(),
-          targetUrl: "https://mapachess-expo-web.vercel.app/",
+          targetUrl: "https://mapachess.com/",
         },
         {
           launchChrome: async () => ({ kill: killChrome, port: 9222 }),
           runLighthouse: async () => ({
             lighthouseResult: {
               categories: {},
-              finalDisplayedUrl: "https://mapachess-expo-web.vercel.app/",
+              finalDisplayedUrl: "https://mapachess.com/",
             },
             report: "completed-report",
           }),

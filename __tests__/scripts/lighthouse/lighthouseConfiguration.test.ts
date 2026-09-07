@@ -6,7 +6,7 @@ describe("Lighthouse configuration", () => {
     expect(getLighthouseCollectionConfiguration({})).toEqual({
       numberOfRuns: 5,
       outputDirectory: "./lighthouse-results",
-      targetUrl: "https://mapachess-expo-web.vercel.app/",
+      targetUrl: "https://mapachess.com/",
     })
   })
 
