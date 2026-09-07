@@ -1,34 +1,27 @@
 "use client"
 
-import { motion, useReducedMotion } from "motion/react"
-import {
-  useEffect,
-  useRef,
-  useState,
-  type AnimationEvent,
-  type CSSProperties,
-} from "react"
+import { animate } from "motion"
+import { useReducedMotion } from "motion/react"
+import { useEffect, useEffectEvent, useRef, useState, type Ref } from "react"
+import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import type {
   ResolvedSpritePresentation,
   SpriteFacing,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
-import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
+import {
+  battleSpriteAnchorStyle,
+  battleSpriteFrameKeyframes,
+  showBattleSpriteFrame,
+} from "../../lib/presentation/battleSpriteFrames"
+import createBattleSpriteImages from "../../lib/presentation/battleSpriteImages"
 
-const AUTHORED_FALLBACK_ANIMATION_SECONDS = 0.36
-const ATTACKER_TRAVEL_PIXELS_PER_STEP = 24
-const VICTIM_RECOIL_PIXELS = 10
-const MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS = 60
-const DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS = 80
-const SPRITE_ANIMATION_NAME = "mapachess-battle-sprite-frames"
-
-type BattleSpriteStyle = CSSProperties &
-  Readonly<{
-    "--sprite-mobile-scale": number
-    "--sprite-desktop-scale": number
-  }>
+const FALLBACK_MOVEMENT_SECONDS = 0.36
 
 export type BattleFighterProps = Readonly<{
+  anchorRef: Ref<HTMLDivElement>
+  beat: MatchPresentationBeat
+  contactDistance: number
   displayName: string
   facing: SpriteFacing
   onAnimationCompleted: (
@@ -43,76 +36,10 @@ export type BattleFighterProps = Readonly<{
   shouldReportCompletion: boolean
 }>
 
-const reactionMovementPixels = (
-  participant: MatchPresentationParticipant,
-  reactionSlot: BattleFighterProps["presentation"]["reactionSlot"],
-  stepIndex: number,
-): number => {
-  const directionTowardCenter = participant === "player" ? 1 : -1
-  if (reactionSlot.endsWith("attacker")) {
-    return (
-      directionTowardCenter * ATTACKER_TRAVEL_PIXELS_PER_STEP * (stepIndex + 1)
-    )
-  }
-  return reactionSlot.endsWith("victim")
-    ? -directionTowardCenter * VICTIM_RECOIL_PIXELS
-    : 0
-}
-
-const spriteStyle = (
-  presentation: Extract<BattleFighterProps["presentation"], { kind: "sprite" }>,
-  stepIndex: number,
-  shouldReduceMotion: boolean,
-): BattleSpriteStyle => {
-  const step = shouldReduceMotion
-    ? presentation.steps.at(-1)
-    : presentation.steps[stepIndex]
-  if (step === undefined) {
-    throw new Error("Battle fighter has no resolved sprite step.")
-  }
-
-  const { animation, playback } = step
-  const geometry = createSpritePresentationGeometry(
-    animation.geometry,
-    presentation.referenceGeometry,
-    MOBILE_SPRITE_VISIBLE_HEIGHT_PIXELS,
-  )
-  const desktopGeometry = createSpritePresentationGeometry(
-    animation.geometry,
-    presentation.referenceGeometry,
-    DESKTOP_SPRITE_VISIBLE_HEIGHT_PIXELS,
-  )
-  const reducedMotionFrameProgress =
-    animation.frameCount === 1
-      ? 0
-      : (animation.reducedMotionFrameIndex / (animation.frameCount - 1)) * 100
-
-  return {
-    "--sprite-mobile-scale": geometry.integerScale,
-    "--sprite-desktop-scale": desktopGeometry.integerScale,
-    animationDuration: `${String(
-      (animation.frameCount * animation.frameDurationMilliseconds) / 1000,
-    )}s`,
-    animationFillMode: "forwards",
-    animationIterationCount: playback === "loop" ? "infinite" : 1,
-    animationName: shouldReduceMotion ? undefined : SPRITE_ANIMATION_NAME,
-    animationTimingFunction:
-      animation.frameCount === 1
-        ? "step-end"
-        : `steps(${String(animation.frameCount)}, jump-none)`,
-    backgroundImage: `url("${animation.sourceId}")`,
-    backgroundPosition: shouldReduceMotion
-      ? `${String(reducedMotionFrameProgress)}% 0`
-      : "0 0",
-    backgroundSize: `${String(animation.frameCount * 100)}% 100%`,
-    height: `calc(${String(geometry.frameHeight)}px * var(--sprite-scale))`,
-    left: `calc(${String(geometry.frameOffsetX)}px * var(--sprite-scale))`,
-    top: `calc(${String(geometry.frameOffsetY)}px * var(--sprite-scale))`,
-    width: `calc(${String(geometry.frameWidth)}px * var(--sprite-scale))`,
-  }
-}
-
 export default function BattleFighter({
+  anchorRef,
+  beat,
+  contactDistance,
   displayName,
   facing,
   onAnimationCompleted,
@@ -123,130 +50,198 @@ export default function BattleFighter({
   shouldReportCompletion,
 }: BattleFighterProps) {
   const shouldReduceMotion = useReducedMotion() === true
-  const [stepIndex, setStepIndex] = useState(0)
-  const renderedStepIndex = shouldReduceMotion
-    ? Math.max(
-        0,
-        presentation.kind === "sprite" ? presentation.steps.length - 1 : 0,
-      )
-    : stepIndex
-  const hasNextStep =
-    presentation.kind === "sprite" &&
-    !shouldReduceMotion &&
-    renderedStepIndex < presentation.steps.length - 1
-  const completionIdentity = `${String(reactionSequence)}:${String(
-    phaseIndex,
-  )}:${String(renderedStepIndex)}`
-  const completedIdentity = useRef<string | null>(null)
-  const movementPixels = reactionMovementPixels(
-    participant,
-    presentation.reactionSlot,
-    renderedStepIndex,
+  const displayedFacing =
+    beat === "recovery" && presentation.reactionSlot.endsWith("attacker")
+      ? facing === "left"
+        ? "right"
+        : "left"
+      : facing
+  const spriteRef = useRef<HTMLSpanElement>(null)
+  const travelerRef = useRef<HTMLDivElement>(null)
+  const visibleSource = useRef<string | null>(null)
+  const settledTravelTarget = useRef<number | null>(0)
+  const [images] = useState(() => createBattleSpriteImages())
+  const [hasVisibleSprite, setHasVisibleSprite] = useState(false)
+  const reportCompletion = useEffectEvent(
+    (completedPhase: number, completedSequence: number) => {
+      if (shouldReportCompletion) {
+        onAnimationCompleted(participant, completedPhase, completedSequence)
+      }
+    },
   )
 
-  const completeCurrentAnimation = (): void => {
-    if (completedIdentity.current === completionIdentity) return
-    completedIdentity.current = completionIdentity
-
-    if (hasNextStep) {
-      setStepIndex((currentStepIndex) =>
-        currentStepIndex === renderedStepIndex
-          ? currentStepIndex + 1
-          : currentStepIndex,
-      )
-    } else if (shouldReportCompletion) {
-      onAnimationCompleted(participant, phaseIndex, reactionSequence)
-    }
-  }
-
-  const completeSpriteAnimation = (
-    event: AnimationEvent<HTMLSpanElement>,
-  ): void => {
-    if (
-      event.target === event.currentTarget &&
-      event.animationName === SPRITE_ANIMATION_NAME &&
-      !shouldReduceMotion
-    ) {
-      completeCurrentAnimation()
-    }
-  }
+  useEffect(() => () => images.retain([]), [images])
 
   useEffect(() => {
-    if (shouldReduceMotion) {
-      if (stepIndex !== renderedStepIndex) {
-        setStepIndex(renderedStepIndex)
+    const sprite = spriteRef.current
+    const traveler = travelerRef.current
+    if (sprite === null || traveler === null) return
+    let cancelled = false
+    let frames: Animation | null = null
+    let movement: ReturnType<typeof animate> | null = null
+    const isTransient = beat !== "idle" && beat !== "conclusion"
+    const holdFrame = (): void => {
+      if (frames === null) return
+      sprite.style.backgroundPosition =
+        getComputedStyle(sprite).backgroundPosition
+      frames.cancel()
+      frames = null
+    }
+    const towardOpponent = participant === "player" ? 1 : -1
+    const isAttacker = presentation.reactionSlot.endsWith("attacker")
+    const isVictim = presentation.reactionSlot.endsWith("victim")
+    const targetX = shouldReduceMotion
+      ? 0
+      : isAttacker &&
+          (beat === "approach" || beat === "strike" || beat === "reaction")
+        ? towardOpponent * contactDistance
+        : isVictim && beat === "reaction"
+          ? -towardOpponent * Math.min(contactDistance / 4, 10)
+          : 0
+    const allSteps = presentation.kind === "sprite" ? presentation.steps : []
+    const steps = allSteps.filter((step) => step.beat === beat)
+    const sources = allSteps.map((step) => step.animation.sourceId)
+    images.retain(
+      visibleSource.current === null
+        ? sources
+        : [...sources, visibleSource.current],
+    )
+    const prepared = images.prepare(sources)
+
+    const move = async (duration: number): Promise<void> => {
+      if (cancelled || settledTravelTarget.current === targetX) return
+      settledTravelTarget.current = null
+      movement = animate(
+        traveler,
+        { x: targetX },
+        {
+          duration: shouldReduceMotion ? 0 : duration,
+          ease: "linear",
+        },
+      )
+      await movement
+      if (!cancelled) settledTravelTarget.current = targetX
+    }
+
+    const play = async (): Promise<void> => {
+      if (document.visibilityState === "hidden" && isTransient) {
+        reportCompletion(phaseIndex, reactionSequence)
+        return
       }
-      if (shouldReportCompletion) {
-        completeCurrentAnimation()
+      if (steps.length === 0) {
+        await move(FALLBACK_MOVEMENT_SECONDS)
+      } else if (await prepared) {
+        for (const step of shouldReduceMotion ? steps.slice(-1) : steps) {
+          if (cancelled) return
+          const { animation, playback } = step
+          showBattleSpriteFrame(sprite, step, shouldReduceMotion)
+          visibleSource.current = animation.sourceId
+          setHasVisibleSprite(true)
+          const duration =
+            animation.frameCount * animation.frameDurationMilliseconds
+          const travel = move(duration / 1000)
+          if (shouldReduceMotion) {
+            await travel
+            continue
+          }
+          frames = sprite.animate(
+            battleSpriteFrameKeyframes(animation.frameCount),
+            {
+              duration,
+              fill: "forwards",
+              iterations: playback === "loop" ? Infinity : 1,
+            },
+          )
+          if (document.visibilityState === "hidden") {
+            frames.pause()
+            movement?.pause()
+          }
+          await Promise.all([frames.finished, travel])
+          if (cancelled) return
+          sprite.style.backgroundPosition = "100% 0"
+          frames.cancel()
+          frames = null
+        }
+      }
+      if (!cancelled) reportCompletion(phaseIndex, reactionSequence)
+    }
+
+    const handleVisibility = (): void => {
+      if (document.visibilityState === "hidden") {
+        if (isTransient) {
+          cancelled = true
+          holdFrame()
+          movement?.stop()
+          reportCompletion(phaseIndex, reactionSequence)
+        } else {
+          frames?.pause()
+          movement?.pause()
+        }
+      } else {
+        frames?.play()
+        movement?.play()
       }
     }
-  })
+    document.addEventListener("visibilitychange", handleVisibility)
+    void play().catch(() => {
+      if (!cancelled) reportCompletion(phaseIndex, reactionSequence)
+    })
 
-  const animationDurationSeconds =
-    presentation.kind === "sprite"
-      ? (() => {
-          const step = presentation.steps[renderedStepIndex]
-          if (step === undefined) {
-            throw new Error("Battle fighter has no active animation step.")
-          }
-          return (
-            (step.animation.frameCount *
-              step.animation.frameDurationMilliseconds) /
-            1000
-          )
-        })()
-      : AUTHORED_FALLBACK_ANIMATION_SECONDS
+    return () => {
+      cancelled = true
+      holdFrame()
+      movement?.stop()
+      document.removeEventListener("visibilitychange", handleVisibility)
+    }
+  }, [
+    beat,
+    contactDistance,
+    images,
+    participant,
+    phaseIndex,
+    presentation,
+    reactionSequence,
+    shouldReduceMotion,
+  ])
 
   return (
-    <div className="relative z-2 grid min-w-0 justify-items-center">
-      <motion.div
-        animate={{ x: shouldReduceMotion ? 0 : movementPixels }}
+    <div className="relative z-2 row-span-2 grid min-w-0 grid-rows-subgrid justify-items-center">
+      <div
+        ref={anchorRef}
         aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
-        className="grid h-34 w-full [place-items:end_center]"
-        initial={{ x: 0 }}
+        className="relative flex h-32 w-18 items-end justify-center [--sprite-scale:var(--sprite-mobile-scale)] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
         role="img"
-        transition={{
-          duration: animationDurationSeconds,
-          ease: "easeInOut",
-        }}
-        {...(presentation.kind === "sprite" ||
-        shouldReduceMotion ||
-        !shouldReportCompletion
-          ? {}
-          : { onAnimationComplete: completeCurrentAnimation })}
+        style={
+          presentation.kind === "sprite"
+            ? battleSpriteAnchorStyle(presentation)
+            : undefined
+        }
       >
-        {presentation.kind === "sprite" ? (
+        <div
+          ref={travelerRef}
+          className="relative grid size-0 place-items-end"
+        >
           <span
             aria-hidden="true"
-            className={`relative block size-0 ${facing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+            className={`relative block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
           >
             <span
-              className="drop-shadow-mapachito-charcoal absolute block bg-no-repeat drop-shadow-[0.18rem_0.18rem_0] [--sprite-scale:var(--sprite-mobile-scale)] [animation-direction:normal] [image-rendering:pixelated] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
-              key={`${completionIdentity}:${String(shouldReduceMotion)}`}
-              onAnimationEnd={completeSpriteAnimation}
-              onAnimationIteration={
-                hasNextStep || shouldReportCompletion
-                  ? completeSpriteAnimation
-                  : undefined
-              }
-              style={spriteStyle(
-                presentation,
-                renderedStepIndex,
-                shouldReduceMotion,
-              )}
+              ref={spriteRef}
+              className="absolute block bg-no-repeat [image-rendering:pixelated]"
             />
           </span>
-        ) : (
-          <span
-            aria-hidden="true"
-            className={`border-mapachito-charcoal font-display text-mapachito-charcoal shadow-mapachito-charcoal grid size-18 place-items-center border-[0.35rem] text-[2.6rem] font-black shadow-[0.3rem_0.3rem_0] ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
-          >
-            {participant === "player" ? "M" : "C"}
-          </span>
-        )}
-      </motion.div>
+          {!hasVisibleSprite ? (
+            <span
+              aria-hidden="true"
+              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-0 grid size-18 -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
+            >
+              {displayName.slice(0, 1)}
+            </span>
+          ) : null}
+        </div>
+      </div>
       <span
-        className={`border-mapachito-charcoal text-mapachito-white z-1 mt-[0.45rem] max-w-full truncate border-2 px-[0.35rem] py-[0.2rem] text-center font-mono text-[0.65rem] font-black tracking-[0.04em] uppercase [text-shadow:2px_2px_0_var(--color-mapachito-charcoal)] forced-colors:border-[CanvasText] forced-colors:shadow-none ${participant === "player" ? "bg-mapachito-violet" : "bg-mapachito-raspberry"}`}
+        className={`border-mapachito-charcoal text-mapachito-white z-1 mt-2 max-w-full border-2 px-2 py-1 text-center font-mono text-xs font-bold [overflow-wrap:anywhere] forced-colors:border-[CanvasText] ${participant === "player" ? "bg-mapachito-violet" : "bg-mapachito-raspberry"}`}
       >
         {displayName}
       </span>
