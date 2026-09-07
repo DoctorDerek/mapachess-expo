@@ -8,12 +8,6 @@ export type SpritePresentationGeometry = Readonly<{
   integerScale: number
 }>
 
-export const battleContactDistancePixels = (
-  leftCombatantRightEdge: number,
-  rightCombatantLeftEdge: number,
-): number =>
-  Math.max(0, Math.round(rightCombatantLeftEdge - leftCombatantRightEdge))
-
 export default function createSpritePresentationGeometry(
   geometry: SpriteFrameGeometry,
   referenceGeometry: SpriteFrameGeometry,

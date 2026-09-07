@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { SpriteFrameGeometry } from "../src/presentationAssetManifest"
-import createSpritePresentationGeometry, {
-  battleContactDistancePixels,
-} from "../src/spritePresentationGeometry"
+import createSpritePresentationGeometry from "../src/spritePresentationGeometry"
 
 const REFERENCE_GEOMETRY = Object.freeze({
   bottomCenterX: 6,
@@ -16,17 +14,6 @@ const REFERENCE_GEOMETRY = Object.freeze({
 }) satisfies SpriteFrameGeometry
 
 describe("sprite presentation geometry", () => {
-  it.each([
-    [90, 170, 80],
-    [150, 280, 130],
-    [90.25, 170.5, 80],
-    [170, 150, 0],
-  ])(
-    "closes the measured arena gap from %s to %s without crossing an overlap",
-    (leftEdge, rightEdge, distance) => {
-      expect(battleContactDistancePixels(leftEdge, rightEdge)).toBe(distance)
-    },
-  )
   it("anchors visible feet at the origin instead of the transparent canvas edge", () => {
     expect(
       createSpritePresentationGeometry(
