@@ -23,6 +23,7 @@ describe("Mapachess player data", () => {
       revision: 0,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      storyProgress: { standard: [], chess960: [] },
       settings: {
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
