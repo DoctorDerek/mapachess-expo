@@ -2,6 +2,9 @@ import {
   AUTO_HINT_MODES,
   autoHintModeFromLegacyEnabled,
 } from "@mapachess/match/auto-hint-mode"
+import parseChallengeSetup, {
+  DEFAULT_CHALLENGE_SETUP,
+} from "@mapachess/match/challenge-setup"
 import {
   failData,
   PlayerDataDecodeProblem,
@@ -24,6 +27,7 @@ import {
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
+  THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
   type MapachessPlayerData,
   type MapachessPlayerDataV1,
   type PlayerEloRatings,
@@ -39,6 +43,7 @@ export type PlayerDataSource = Readonly<{
   canonical: string
   schemaVersion:
     | typeof LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -89,15 +94,36 @@ const canonicalLegacyPlayerData = (data: MapachessPlayerDataV1): string =>
       : canonicalLegacyActiveMatch(data.activeMatch),
   ])
 
-export const canonicalPlayerData = (data: MapachessPlayerData): string =>
-  JSON.stringify([
+const canonicalModernPlayerData = (
+  data: MapachessPlayerData,
+  sourceSchemaVersion:
+    | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+    | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+): string => {
+  const fields: readonly unknown[] = [
     data.schema,
-    data.schemaVersion,
+    sourceSchemaVersion,
     data.revision,
     data.settings.autoHintMode,
     PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
     data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
-  ])
+  ]
+  return JSON.stringify(
+    sourceSchemaVersion === THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+      ? fields
+      : [
+          ...fields,
+          [
+            data.settings.challengeSetup.variant,
+            data.settings.challengeSetup.playerColor,
+            data.settings.challengeSetup.chess960PositionId,
+          ],
+        ],
+  )
+}
+
+export const canonicalPlayerData = (data: MapachessPlayerData): string =>
+  canonicalModernPlayerData(data, MAPACHESS_PLAYER_DATA_SCHEMA_VERSION)
 
 const decodeLegacyPlayerData = (
   object: JsonObject,
@@ -151,6 +177,7 @@ const decodeLegacyPlayerData = (
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
       settings: Object.freeze({
+        challengeSetup: DEFAULT_CHALLENGE_SETUP,
         autoHintMode: autoHintModeFromLegacyEnabled(
           legacyData.settings.autoHintsEnabled,
         ),
@@ -163,8 +190,11 @@ const decodeLegacyPlayerData = (
   })
 }
 
-const decodeCurrentPlayerData = (
+const decodeModernPlayerData = (
   object: JsonObject,
+  sourceSchemaVersion:
+    | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+    | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
     object,
@@ -179,7 +209,19 @@ const decodeCurrentPlayerData = (
     "$",
   )
   const settings = requireObject(object.settings, "$.settings")
-  requireExactKeys(settings, ["autoHintMode"], "$.settings")
+  requireExactKeys(
+    settings,
+    sourceSchemaVersion === THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+      ? ["autoHintMode"]
+      : ["autoHintMode", "challengeSetup"],
+    "$.settings",
+  )
+  const challengeSetup = parseChallengeSetup(
+    sourceSchemaVersion === THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+      ? DEFAULT_CHALLENGE_SETUP
+      : settings.challengeSetup,
+  )
+  if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
   const data: MapachessPlayerData = Object.freeze({
     activeMatch:
       object.activeMatch === null
@@ -190,6 +232,7 @@ const decodeCurrentPlayerData = (
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     settings: Object.freeze({
+      challengeSetup: challengeSetup.setup,
       autoHintMode: requireEnumValue(
         settings.autoHintMode,
         AUTO_HINT_MODES,
@@ -201,8 +244,8 @@ const decodeCurrentPlayerData = (
   return Object.freeze({
     data,
     source: Object.freeze({
-      canonical: canonicalPlayerData(data),
-      schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      canonical: canonicalModernPlayerData(data, sourceSchemaVersion),
+      schemaVersion: sourceSchemaVersion,
     }),
   })
 }
@@ -226,8 +269,10 @@ export const decodeMapachessPlayerDataWithSource = (
     const decoded =
       object.schemaVersion === LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
         ? decodeLegacyPlayerData(object)
-        : object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
-          ? decodeCurrentPlayerData(object)
+        : object.schemaVersion ===
+              THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION ||
+            object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+          ? decodeModernPlayerData(object, object.schemaVersion)
           : failData("$.schemaVersion")
     return { ...decoded, ok: true }
   } catch (error) {

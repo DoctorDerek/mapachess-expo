@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
-import createInitialMapachessPlayerData from "../src/playerData.js"
+import createInitialMapachessPlayerData, {
+  MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+} from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 import {
   createMapachessPortableBackup,
@@ -8,35 +10,36 @@ import {
   MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS,
 } from "../src/portableBackup.js"
 import portableActiveChickenV1 from "./fixtures/portableActiveChickenV1.json"
+import portableActiveChickenV2 from "./fixtures/portableActiveChickenV2.json"
 
 const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
 
 describe("Mapachess portable backups", () => {
-  it("accepts the synthetic cross-platform active-match fixture", async () => {
-    await expect(
-      decodeMapachessPortableBackup(
-        JSON.stringify(portableActiveChickenV1),
-        sha256,
-      ),
-    ).resolves.toMatchObject({
-      backup: {
-        payload: {
-          activeMatch: {
-            autoHintMode: "auto-move-hints",
-            cursor: 1,
-            moveHintsUsed: true,
-            moveIds: ["e2e4", "e7e5"],
-            pieceHintsUsed: true,
+  it.each([portableActiveChickenV1, portableActiveChickenV2])(
+    "accepts the synthetic cross-platform active-match fixture",
+    async (fixture) => {
+      await expect(
+        decodeMapachessPortableBackup(JSON.stringify(fixture), sha256),
+      ).resolves.toMatchObject({
+        backup: {
+          payload: {
+            activeMatch: {
+              autoHintMode: "auto-move-hints",
+              cursor: 1,
+              moveHintsUsed: true,
+              moveIds: ["e2e4", "e7e5"],
+              pieceHintsUsed: true,
+            },
+            ratings: fixture.payload.ratings,
+            schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+            settings: { autoHintMode: "no-auto-hints" },
           },
-          ratings: portableActiveChickenV1.payload.ratings,
-          schemaVersion: 2,
-          settings: { autoHintMode: "no-auto-hints" },
         },
-      },
-      ok: true,
-    })
-  })
+        ok: true,
+      })
+    },
+  )
 
   it.each([
     [
@@ -109,7 +112,7 @@ describe("Mapachess portable backups", () => {
           payloadHash: expect.stringMatching(/^[0-9a-f]{64}$/u),
         },
         payload: playerData,
-        saveSchemaVersion: 2,
+        saveSchemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
       },
       ok: true,
     })
@@ -231,11 +234,11 @@ describe("Mapachess player-data decoding", () => {
     expect(
       decodeMapachessPlayerData({
         ...createInitialMapachessPlayerData(),
-        schemaVersion: 3,
+        schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION + 1,
       }),
     ).toEqual({
       issue: {
-        receivedVersion: 3,
+        receivedVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION + 1,
         type: "PROFILE.SCHEMA_VERSION_UNSUPPORTED",
       },
       ok: false,

@@ -1,4 +1,5 @@
 import type { ActorRefFrom } from "xstate"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type {
   MatchPersistence,
@@ -22,6 +23,7 @@ export type ProfileMatchPersistenceBridgeInput = Readonly<{
 export type PersistProfileActiveMatchInput = Readonly<{
   actor: ProfileActor
   candidate: DurableMatchRecord | null
+  challengeSetup?: ChallengeSetup
   expectedActiveMatch: DurableMatchRecord | null
   signal: AbortSignal
 }>
@@ -47,6 +49,7 @@ const activeMatchChanged = (): Error =>
 export const persistProfileActiveMatch = ({
   actor,
   candidate,
+  challengeSetup,
   expectedActiveMatch,
   signal,
 }: PersistProfileActiveMatchInput): Promise<void> => {
@@ -72,7 +75,17 @@ export const persistProfileActiveMatch = ({
     const inspect = (snapshot: ProfileMachineSnapshot): void => {
       if (settled) return
       const playerData = selectCurrentPlayerData(snapshot)
-      if (activeMatchesEqual(playerData?.activeMatch ?? null, candidate)) {
+      if (
+        playerData !== null &&
+        activeMatchesEqual(playerData.activeMatch, candidate) &&
+        (challengeSetup === undefined ||
+          (playerData.settings.challengeSetup.variant ===
+            challengeSetup.variant &&
+            playerData.settings.challengeSetup.playerColor ===
+              challengeSetup.playerColor &&
+            playerData.settings.challengeSetup.chess960PositionId ===
+              challengeSetup.chess960PositionId))
+      ) {
         settle("accepted")
         return
       }
@@ -88,6 +101,7 @@ export const persistProfileActiveMatch = ({
       writeRequested = true
       actor.send({
         activeMatch: candidate,
+        ...(challengeSetup === undefined ? {} : { challengeSetup }),
         type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED",
       })
     }

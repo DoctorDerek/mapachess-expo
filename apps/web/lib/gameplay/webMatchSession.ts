@@ -3,6 +3,7 @@ import bindMatchPositionEvaluation, {
   type MatchPositionEvaluationBinding,
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import type { MatchVariant } from "@mapachess/match/match-variant"
@@ -15,12 +16,12 @@ import ProfileMatchPersistenceBridge, {
 import openWebMatchRuntime, {
   type OpenWebMatchRuntimeInput,
 } from "./openWebMatchRuntime"
+import resumeWebMatch, {
+  buildFreshWebMatch,
+  type ResumedWebMatch,
+} from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import type { WebMatchSession } from "./webMatchSessionMachine"
-import resumeWebStoryMatch, {
-  buildFreshWebStoryMatch,
-  type ResumedWebStoryMatch,
-} from "./webStoryDurableMatch"
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 
@@ -28,19 +29,22 @@ type OpenWebMatchRuntime = (
   input?: OpenWebMatchRuntimeInput,
 ) => Promise<WebMatchRuntime>
 
-export type OpenWebStoryMatchSessionInput = Readonly<{
+export type OpenWebMatchSessionInput = Readonly<{
   openRuntime?: OpenWebMatchRuntime
   profileActor: ProfileActor
   signal: AbortSignal
 }>
 
-export type OpenFreshWebStoryMatchSessionInput = OpenWebStoryMatchSessionInput &
+export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
   Readonly<{
     previousSession: WebMatchSession | null
-    variant: MatchVariant
-  }>
+  }> &
+  (
+    | Readonly<{ mode?: "story"; variant: MatchVariant }>
+    | Readonly<{ mode: "challenge"; challengeSetup: ChallengeSetup }>
+  )
 
-export type ReturnWebStoryMatchSessionToMenuInput = Readonly<{
+export type ReturnWebMatchSessionToMenuInput = Readonly<{
   profileActor: ProfileActor
   session: WebMatchSession
   signal: AbortSignal
@@ -75,7 +79,7 @@ const closeRuntimeAfterFailure = async (
 type OpenActorSessionInput = Readonly<{
   match: DurableMatchRecord
   profileActor: ProfileActor
-  resumedMatch: ResumedWebStoryMatch
+  resumedMatch: ResumedWebMatch
   runtime: WebMatchRuntime
   signal: AbortSignal
 }>
@@ -159,18 +163,21 @@ const openActorSession = async ({
   }
 }
 
-export async function openCurrentWebStoryMatchSession({
+export async function openCurrentWebMatchSession({
   openRuntime = openWebMatchRuntime,
   profileActor,
   signal,
-}: OpenWebStoryMatchSessionInput): Promise<WebMatchSession> {
+}: OpenWebMatchSessionInput): Promise<WebMatchSession> {
   const activeMatch = requirePlayerData(profileActor).activeMatch
   if (activeMatch === null) {
     throw new Error("The player profile has no active match to resume.")
   }
 
-  const resumedMatch = resumeWebStoryMatch(activeMatch)
+  const resumedMatch = resumeWebMatch(activeMatch)
   const runtime = await openRuntime({
+    ...(activeMatch.mode === "challenge"
+      ? { mode: "challenge" as const, playerColor: activeMatch.playerColor }
+      : {}),
     matchSeed: resumedMatch.matchSeed,
     setup: activeMatch.startingPosition,
     signal,
@@ -184,13 +191,15 @@ export async function openCurrentWebStoryMatchSession({
   })
 }
 
-export async function openFreshWebStoryMatchSession({
-  openRuntime = openWebMatchRuntime,
-  previousSession,
-  profileActor,
-  signal,
-  variant,
-}: OpenFreshWebStoryMatchSessionInput): Promise<WebMatchSession> {
+export async function openFreshWebMatchSession(
+  input: OpenFreshWebMatchSessionInput,
+): Promise<WebMatchSession> {
+  const {
+    openRuntime = openWebMatchRuntime,
+    previousSession,
+    profileActor,
+    signal,
+  } = input
   await previousSession?.close()
 
   const playerData = requirePlayerData(profileActor)
@@ -200,7 +209,7 @@ export async function openFreshWebStoryMatchSession({
     (previousSession === null ||
       activeMatch.matchId !== previousSession.match.matchId)
   ) {
-    return openCurrentWebStoryMatchSession({
+    return openCurrentWebMatchSession({
       openRuntime,
       profileActor,
       signal,
@@ -210,25 +219,56 @@ export async function openFreshWebStoryMatchSession({
     throw new Error("The match selected for restart is no longer active.")
   }
 
-  const setup =
+  const challengeSetup =
+    previousSession === null && input.mode === "challenge"
+      ? input.challengeSetup
+      : undefined
+  const playerColor =
+    previousSession?.match.mode === "challenge"
+      ? previousSession.match.playerColor
+      : challengeSetup?.playerColor
+  const variant =
+    input.mode === "challenge" ? input.challengeSetup.variant : input.variant
+  const setup: OpenWebMatchRuntimeInput["setup"] =
     previousSession?.match.startingPosition ??
-    (variant === "standard"
-      ? { variant, chess960PositionId: null }
-      : { variant })
-  const runtime = await openRuntime({ setup, signal })
-  const freshMatch = buildFreshWebStoryMatch({
+    (challengeSetup?.variant === "chess960" &&
+    challengeSetup.chess960PositionId !== null
+      ? {
+          variant: "chess960",
+          chess960PositionId: challengeSetup.chess960PositionId,
+        }
+      : variant === "standard"
+        ? { variant, chess960PositionId: null }
+        : { variant })
+  const runtime = await openRuntime({
+    ...(playerColor === undefined
+      ? {}
+      : { mode: "challenge" as const, playerColor }),
+    setup,
+    signal,
+  })
+  const mode = playerColor === undefined ? "story" : "challenge"
+  const freshMatch = buildFreshWebMatch({
     autoHintMode: playerData.settings.autoHintMode,
+    mode,
     playerEloAtStart:
       runtime.startingPosition.variant === "standard"
-        ? playerData.ratings.standardStory
-        : playerData.ratings.chess960Story,
+        ? mode === "story"
+          ? playerData.ratings.standardStory
+          : playerData.ratings.standardChallenge
+        : mode === "story"
+          ? playerData.ratings.chess960Story
+          : playerData.ratings.chess960Challenge,
     runtime,
   })
 
+  let resumedMatch: ResumedWebMatch
   try {
+    resumedMatch = resumeWebMatch(freshMatch)
     await persistProfileActiveMatch({
       actor: profileActor,
       candidate: freshMatch,
+      ...(challengeSetup === undefined ? {} : { challengeSetup }),
       expectedActiveMatch: activeMatch,
       signal,
     })
@@ -239,17 +279,17 @@ export async function openFreshWebStoryMatchSession({
   return openActorSession({
     match: freshMatch,
     profileActor,
-    resumedMatch: resumeWebStoryMatch(freshMatch),
+    resumedMatch,
     runtime,
     signal,
   })
 }
 
-export async function returnWebStoryMatchSessionToMenu({
+export async function returnWebMatchSessionToMenu({
   profileActor,
   session,
   signal,
-}: ReturnWebStoryMatchSessionToMenuInput): Promise<void> {
+}: ReturnWebMatchSessionToMenuInput): Promise<void> {
   await session.close()
 
   const activeMatch = requirePlayerData(profileActor).activeMatch

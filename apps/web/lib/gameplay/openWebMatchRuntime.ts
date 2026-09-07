@@ -6,7 +6,10 @@ import {
   CHESS960_POSITION_COUNT,
   parseChess960PositionId,
 } from "@mapachess/match/chess960-position"
-import type { MatchStartingPosition } from "@mapachess/match/match-position"
+import type {
+  MatchColor,
+  MatchStartingPosition,
+} from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import {
   createDeterministicRandom,
@@ -53,7 +56,11 @@ export type OpenWebMatchRuntimeInput = Readonly<{
     | MatchStartingPosition
     | Readonly<{ variant: "chess960"; chess960PositionId?: never }>
   signal?: AbortSignal
-}>
+}> &
+  (
+    | Readonly<{ mode?: "story"; playerColor?: never }>
+    | Readonly<{ mode: "challenge"; playerColor: MatchColor }>
+  )
 
 const closeOwnedSessions = async (
   sessions: readonly StockfishUciSession[],
@@ -164,7 +171,13 @@ export default async function openWebMatchRuntime(
     close: () => closeOwnedSessions(sessions),
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
-    matchId: chickenMatchId(matchSeed, startingPosition),
+    matchId: chickenMatchId(
+      matchSeed,
+      startingPosition,
+      input.mode === "challenge"
+        ? { mode: "challenge", playerColor: input.playerColor }
+        : { mode: "story" },
+    ),
     matchSeed,
     opponent: createChickenOpponent(
       opponentSession,
@@ -176,7 +189,10 @@ export default async function openWebMatchRuntime(
     opponentPolicyFingerprint: chickenPolicyFingerprint(
       startingPosition.variant,
     ),
-    playerColor: selectStoryPlayerColor(matchSeed),
+    playerColor:
+      input.mode === "challenge"
+        ? input.playerColor
+        : selectStoryPlayerColor(matchSeed),
     startingPosition,
     positionEvaluator: (request, signal) =>
       evaluatePositionWithStockfish(evaluationSession, request, signal),

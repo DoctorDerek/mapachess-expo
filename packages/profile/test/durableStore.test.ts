@@ -17,7 +17,7 @@ const revisePlayerData = (
   Object.freeze({
     ...data,
     revision: data.revision + 1,
-    settings: Object.freeze({ autoHintMode }),
+    settings: Object.freeze({ ...data.settings, autoHintMode }),
   })
 
 const requireCurrentData = (

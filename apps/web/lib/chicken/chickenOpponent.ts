@@ -3,7 +3,10 @@ import type {
   MatchOpponentRequest,
 } from "@mapachess/match/match-machine"
 import type { LegalMatchMove } from "@mapachess/match/match-move"
-import type { MatchStartingPosition } from "@mapachess/match/match-position"
+import type {
+  MatchColor,
+  MatchStartingPosition,
+} from "@mapachess/match/match-position"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
   StockfishOperationAbortedError,
@@ -95,7 +98,17 @@ export function chickenMatchId(
     variant: "standard",
     chess960PositionId: null,
   },
+  selection:
+    | Readonly<{ mode: "story" }>
+    | Readonly<{ mode: "challenge"; playerColor: MatchColor }> = {
+    mode: "story",
+  },
 ): string {
+  if (selection.mode === "challenge") {
+    return startingPosition.variant === "standard"
+      ? `standard-challenge-chicken/${selection.playerColor}/${matchSeed}`
+      : `chess960-challenge-chicken/${String(startingPosition.chess960PositionId)}/${selection.playerColor}/${matchSeed}`
+  }
   return startingPosition.variant === "standard"
     ? `standard-story-chicken/${matchSeed}`
     : `chess960-story-chicken/${String(startingPosition.chess960PositionId)}/${matchSeed}`

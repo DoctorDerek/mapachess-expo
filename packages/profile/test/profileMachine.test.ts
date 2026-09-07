@@ -172,7 +172,10 @@ describe("XState durable profile orchestration", () => {
     const missing = await externalStore.load()
     const externalCandidate = Object.freeze({
       ...createInitialMapachessPlayerData(),
-      settings: Object.freeze({ autoHintMode: "no-auto-hints" }),
+      settings: Object.freeze({
+        ...createInitialMapachessPlayerData().settings,
+        autoHintMode: "no-auto-hints",
+      }),
     })
     const externalWrite = await externalStore.commitCurrent(
       missing,

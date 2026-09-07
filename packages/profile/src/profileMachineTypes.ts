@@ -1,4 +1,5 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type {
   DurablePlayerDataStore,
@@ -51,6 +52,7 @@ export type ProfileMachineContext = Readonly<{
 export type ProfileMachineEvent =
   | Readonly<{
       activeMatch: DurableMatchRecord | null
+      challengeSetup?: ChallengeSetup
       type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED"
     }>
   | Readonly<{

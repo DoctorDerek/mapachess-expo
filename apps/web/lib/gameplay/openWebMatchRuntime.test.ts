@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { POSITION_EVALUATION_NODE_LIMIT } from "@mapachess/evaluation/position-evaluator"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type {
   StockfishEngineConfiguration,
@@ -11,7 +12,10 @@ import type {
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
 import type { ChickenCryptography } from "../chicken/chickenOpponent"
-import { STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT } from "../chicken/chickenOpponent"
+import {
+  chickenMatchId,
+  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+} from "../chicken/chickenOpponent"
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openWebMatchRuntime from "./openWebMatchRuntime"
 
@@ -99,24 +103,56 @@ const createSessionQueue = (sessions: readonly StockfishUciSession[]) => {
   )
 }
 
+const openFixture = async (
+  input: Parameters<typeof openWebMatchRuntime>[0],
+) => {
+  const sessions = [0, 1, 2].map(() =>
+    createSession(async () => ENGINE_IDENTITY),
+  )
+  const openSession = createSessionQueue(sessions.map((entry) => entry.session))
+  const runtime = await openWebMatchRuntime({
+    ...input,
+    cryptography: createCryptography(),
+    openSession,
+  })
+  return { runtime, openSession }
+}
 describe("web match runtime ownership", () => {
-  it("configures all three Chess960 workers and retains an explicit restart layout", async () => {
-    const openFixture = async (
-      input: Parameters<typeof openWebMatchRuntime>[0],
-    ) => {
-      const sessions = [0, 1, 2].map(() =>
-        createSession(async () => ENGINE_IDENTITY),
-      )
-      const openSession = createSessionQueue(
-        sessions.map((entry) => entry.session),
-      )
-      const runtime = await openWebMatchRuntime({
-        ...input,
-        cryptography: createCryptography(),
-        openSession,
+  it.each(["white", "black"] as const)(
+    "honors chosen %s with an explicit Chess960 Challenge layout in all three engine sessions",
+    async (playerColor) => {
+      const parsed = parseChess960PositionId(959)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const startingPosition = {
+        variant: "chess960",
+        chess960PositionId: parsed.positionId,
+      } as const
+      const selection = { mode: "challenge", playerColor } as const
+      const opened = await openFixture({
+        ...selection,
+        setup: startingPosition,
       })
-      return { runtime, openSession }
-    }
+      try {
+        expect(opened.runtime.playerColor).toBe(playerColor)
+        expect(opened.runtime.startingPosition).toEqual(startingPosition)
+        expect(opened.runtime.matchId).toBe(
+          chickenMatchId(opened.runtime.matchSeed, startingPosition, selection),
+        )
+        expect(opened.runtime.matchId).not.toBe(
+          chickenMatchId(opened.runtime.matchSeed, startingPosition),
+        )
+        expect(
+          opened.openSession.mock.calls.map(
+            ([configuration]) => configuration.variant,
+          ),
+        ).toEqual(["chess960", "chess960", "chess960"])
+      } finally {
+        await opened.runtime.close()
+      }
+    },
+  )
+
+  it("configures all three Chess960 workers and retains an explicit restart layout", async () => {
     const first = await openFixture({ setup: { variant: "chess960" } })
     const secondSeed = parseDeterministicRandomSeed(
       "ffffffffffffffffffffffffffffffff",

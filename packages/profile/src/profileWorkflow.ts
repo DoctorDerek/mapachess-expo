@@ -1,3 +1,4 @@
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import {
   durableStoreSnapshotsEqual,
@@ -85,11 +86,16 @@ const pendingWrite = (
 export const prepareActiveMatchPending = (
   context: ProfileMachineContext,
   activeMatch: DurableMatchRecord | null,
+  challengeSetup?: ChallengeSetup,
 ): PendingProfileWrite => {
   const loaded = requireLoaded(context)
   return pendingWrite(
     loaded,
-    replaceActiveMatch(requireCurrentPlayerData(context), activeMatch),
+    replaceActiveMatch(
+      requireCurrentPlayerData(context),
+      activeMatch,
+      challengeSetup,
+    ),
     "commit",
   )
 }

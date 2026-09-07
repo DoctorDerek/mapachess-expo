@@ -2,11 +2,16 @@ import {
   DEFAULT_AUTO_HINT_MODE,
   type AutoHintMode,
 } from "@mapachess/match/auto-hint-mode"
+import {
+  DEFAULT_CHALLENGE_SETUP,
+  type ChallengeSetup,
+} from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 
 export const MAPACHESS_PLAYER_DATA_SCHEMA = "mapachess-player-data" as const
 export const LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 2 as const
+export const THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION = 2 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 3 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -38,13 +43,23 @@ export type MapachessPlayerDataV2 = Readonly<{
   ratings: PlayerEloRatings
   revision: number
   schema: typeof MAPACHESS_PLAYER_DATA_SCHEMA
-  schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+  schemaVersion: typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
   settings: Readonly<{
     autoHintMode: AutoHintMode
   }>
 }>
 
-export type MapachessPlayerData = MapachessPlayerDataV2
+export type MapachessPlayerDataV3 = Readonly<
+  Omit<MapachessPlayerDataV2, "schemaVersion" | "settings"> & {
+    schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    settings: Readonly<{
+      autoHintMode: AutoHintMode
+      challengeSetup: ChallengeSetup
+    }>
+  }
+>
+
+export type MapachessPlayerData = MapachessPlayerDataV3
 
 export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
   Object.freeze({
@@ -61,6 +76,9 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
     revision: 0,
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-    settings: Object.freeze({ autoHintMode: DEFAULT_AUTO_HINT_MODE }),
+    settings: Object.freeze({
+      autoHintMode: DEFAULT_AUTO_HINT_MODE,
+      challengeSetup: DEFAULT_CHALLENGE_SETUP,
+    }),
   })
 }

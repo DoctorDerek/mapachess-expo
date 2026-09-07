@@ -3,6 +3,7 @@ import reconstructDurableMatch from "@mapachess/match/durable-match-reconstructi
 import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
+  type MatchMode,
 } from "@mapachess/match/durable-match-record"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
@@ -14,13 +15,14 @@ import {
 } from "../chicken/chickenOpponent"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 
-export type ResumedWebStoryMatch = Readonly<{
+export type ResumedWebMatch = Readonly<{
   matchSeed: WebMatchRuntime["matchSeed"]
   timeline: MatchTimeline
 }>
 
-export type FreshWebStoryMatchInput = Readonly<{
+export type FreshWebMatchInput = Readonly<{
   autoHintMode: AutoHintMode
+  mode?: MatchMode
   playerEloAtStart: number
   runtime: Pick<
     WebMatchRuntime,
@@ -33,8 +35,8 @@ export type FreshWebStoryMatchInput = Readonly<{
   >
 }>
 
-export function buildFreshWebStoryMatch(
-  input: FreshWebStoryMatchInput,
+export function buildFreshWebMatch(
+  input: FreshWebMatchInput,
 ): DurableMatchRecord {
   const initialPosition = createInitialMatchPosition(
     input.runtime.startingPosition,
@@ -46,7 +48,7 @@ export function buildFreshWebStoryMatch(
     cursor: 0,
     matchId: input.runtime.matchId,
     matchSeed: input.runtime.matchSeed,
-    mode: "story",
+    mode: input.mode ?? "story",
     moveHintsUsed: false,
     moveIds: Object.freeze([]),
     opponentId: input.runtime.opponentId,
@@ -60,11 +62,11 @@ export function buildFreshWebStoryMatch(
   })
 }
 
-export default function resumeWebStoryMatch(
+export default function resumeWebMatch(
   record: DurableMatchRecord,
-): ResumedWebStoryMatch {
-  if (record.mode !== "story" || record.opponentId !== "chicken-stockfish") {
-    throw new TypeError("Saved match is not an implemented Story opponent.")
+): ResumedWebMatch {
+  if (record.opponentId !== "chicken-stockfish") {
+    throw new TypeError("Saved match does not use an implemented opponent.")
   }
   if (
     record.opponentPolicyFingerprint !==
@@ -78,8 +80,13 @@ export default function resumeWebStoryMatch(
     "Saved Chicken match seed",
   )
   if (
-    record.matchId !== chickenMatchId(matchSeed, record.startingPosition) ||
-    record.playerColor !== selectStoryPlayerColor(matchSeed)
+    record.matchId !==
+      chickenMatchId(matchSeed, record.startingPosition, {
+        mode: record.mode,
+        playerColor: record.playerColor,
+      }) ||
+    (record.mode === "story" &&
+      record.playerColor !== selectStoryPlayerColor(matchSeed))
   ) {
     throw new TypeError("Saved Chicken identity does not match its seed.")
   }

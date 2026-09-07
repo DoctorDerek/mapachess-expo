@@ -1,25 +1,27 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
-test("enters Standard Story through the ordinary application route", async ({
+const expectStoryMenu = async (page: Page): Promise<void> => {
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Story", exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Play Chicken Stockfish", exact: true }),
+  ).toBeVisible()
+}
+
+test("shows the current Story menu through the ordinary application route", async ({
   page,
 }) => {
   await page.goto("/")
 
   await expect(page).toHaveTitle("Mapachess")
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Start with Auto-Hints?" }),
-  ).toBeVisible()
-  await expect(page.getByText("Before your first game")).toBeVisible()
-  await page.getByRole("button", { name: "Turn Auto-Hints Off" }).click()
-
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Standard Story" }),
-  ).toBeVisible()
+  await expectStoryMenu(page)
+  const variant = page.getByRole("combobox", { name: "Variant", exact: true })
+  await expect(variant).toHaveValue("standard")
+  await variant.selectOption("chess960")
+  await expect(variant).toHaveValue("chess960")
   await expect(page.getByText("Story opponent 1 of 23")).toBeVisible()
-  await expect(
-    page.getByRole("button", { name: "Play Chicken Stockfish" }),
-  ).toBeVisible()
 })
 
 test("does not retain the former private playtest route", async ({ page }) => {
@@ -39,7 +41,7 @@ test("loads the app icon without browser console errors", async ({
   })
 
   await page.goto("/")
-  await page.waitForLoadState("networkidle")
+  await expectStoryMenu(page)
 
   const iconHref = await page
     .locator('link[rel="icon"]')
@@ -60,21 +62,25 @@ test("has no serious or critical accessibility violations", async ({
   page,
 }) => {
   await page.goto("/")
-
-  const firstRunResults = await new AxeBuilder({ page }).analyze()
-  const firstRunViolations = firstRunResults.violations.filter(
-    ({ impact }) => impact === "serious" || impact === "critical",
-  )
-  expect(firstRunViolations).toEqual([])
-
-  await page.getByRole("button", { name: "Turn Auto-Hints Off" }).click()
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Standard Story" }),
-  ).toBeVisible()
+  await expectStoryMenu(page)
   const menuResults = await new AxeBuilder({ page }).analyze()
   const menuViolations = menuResults.violations.filter(
     ({ impact }) => impact === "serious" || impact === "critical",
   )
 
   expect(menuViolations).toEqual([])
+
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await expect(
+    page.getByRole("heading", {
+      level: 2,
+      name: "Settings & Player Data",
+      exact: true,
+    }),
+  ).toBeVisible()
+  const settingsResults = await new AxeBuilder({ page }).analyze()
+  const settingsViolations = settingsResults.violations.filter(
+    ({ impact }) => impact === "serious" || impact === "critical",
+  )
+  expect(settingsViolations).toEqual([])
 })

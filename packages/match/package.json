@@ -13,6 +13,10 @@
       "types": "./src/betterHints.ts",
       "default": "./dist/betterHints.js"
     },
+    "./challenge-setup": {
+      "types": "./src/challengeSetup.ts",
+      "default": "./dist/challengeSetup.js"
+    },
     "./chess960-position": {
       "types": "./src/chess960Position.ts",
       "default": "./dist/chess960Position.js"

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createActor, waitFor } from "xstate"
+import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
@@ -70,6 +71,68 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("commits Challenge setup with its match and preserves it through hint changes and exit", async () => {
+    const actor = await openProfile()
+    const initial = selectCurrentPlayerData(actor.getSnapshot())
+    if (initial === null) throw new Error("Profile must be ready")
+    const challengeSetup: ChallengeSetup = {
+      variant: "standard",
+      playerColor: "black",
+      chess960PositionId: null,
+    }
+    const match: DurableMatchRecord = {
+      ...durableMatch(),
+      mode: "challenge",
+      playerColor: "black",
+    }
+    const signal = new AbortController().signal
+    await persistProfileActiveMatch({
+      actor,
+      candidate: match,
+      challengeSetup,
+      expectedActiveMatch: null,
+      signal,
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual({
+      ...initial,
+      activeMatch: match,
+      revision: initial.revision + 1,
+      settings: { ...initial.settings, challengeSetup },
+    })
+
+    const updated: DurableMatchRecord = {
+      ...match,
+      autoHintMode: "auto-piece-hints",
+    }
+    await persistProfileActiveMatch({
+      actor,
+      candidate: updated,
+      expectedActiveMatch: match,
+      signal,
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
+      autoHintMode: "auto-piece-hints",
+      challengeSetup,
+    })
+    await persistProfileActiveMatch({
+      actor,
+      candidate: null,
+      expectedActiveMatch: updated,
+      signal,
+    })
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
+      activeMatch: null,
+      ratings: initial.ratings,
+      settings: { autoHintMode: "no-auto-hints", challengeSetup },
+    })
+    actor.stop()
+  })
+
   it("atomically replaces and clears the active match", async () => {
     const actor = await openProfile()
     const initialMatch = durableMatch()
@@ -286,6 +349,7 @@ describe("profile-owned match persistence bridge", () => {
       type: "PROFILE.AUTO_HINT_MODE_CHANGED",
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
+      ...createInitialMapachessPlayerData().settings,
       autoHintMode: "auto-move-hints",
     })
     const persistence = bridge.persist(
