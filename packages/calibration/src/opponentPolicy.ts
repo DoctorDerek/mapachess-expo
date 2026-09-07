@@ -20,6 +20,8 @@ export const CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION =
   OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION
 export const CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION =
   "chess.js@1.4.0/uci-lexicographic/v1" as const
+export const CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION =
+  "mapachess-match/chessops@0.15.1/uci-lexicographic/v1" as const
 
 const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/

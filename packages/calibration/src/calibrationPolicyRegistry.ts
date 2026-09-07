@@ -7,6 +7,7 @@ import {
   CALIBRATION_SEED_DERIVATION_VERSION,
 } from "./deterministicRandom.js"
 import fingerprintOpponentPolicy, {
+  CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_COMMAND_PROTOCOL_VERSION,
   CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
@@ -20,12 +21,6 @@ export type CalibrationPolicyMap = ReadonlyMap<
 >
 
 function validateExecutablePolicy(policy: OpponentPolicy): void {
-  if (policy.variant !== "standard") {
-    throw new TypeError(
-      "Chess960 calibration execution is unavailable until a validated Chess960 rules owner exists.",
-    )
-  }
-
   if (policy.search.threads !== 1) {
     throw new TypeError("Calibration policies must use exactly one thread.")
   }
@@ -54,7 +49,9 @@ function validateExecutablePolicy(policy: OpponentPolicy): void {
 
   if (
     policy.moveSelection.legalMoveGeneratorVersion !==
-    CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
+    (policy.variant === "standard"
+      ? CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
+      : CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION)
   ) {
     throw new TypeError("Unsupported calibration legal-move generator version.")
   }

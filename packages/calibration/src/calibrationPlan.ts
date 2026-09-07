@@ -1,4 +1,9 @@
 import { createHash } from "node:crypto"
+import {
+  parseChess960PositionId,
+  type Chess960PositionId,
+} from "@mapachess/match/chess960-position"
+import { reconstructMatchPosition } from "@mapachess/match/match-position"
 import createDeterministicRandom, {
   deriveCalibrationSeed,
   parseCalibrationRootSeed,
@@ -36,6 +41,7 @@ export type CalibrationPlanId = `sha256:${string}` & {
 export type CalibrationOpening = Readonly<{
   fen: string
   id: string
+  chess960PositionId?: Chess960PositionId
 }>
 
 export type CalibrationEdge = Readonly<{
@@ -63,17 +69,21 @@ export type CalibrationSeat = Readonly<{
   randomSeed: CalibrationSeed
 }>
 
-export type CalibrationGame = Readonly<{
-  edgeId: string
-  fen: string
-  gameId: CalibrationGameId
-  gameInPair: 1 | 2
-  openingId: string
-  pairId: CalibrationPairId
-  variant: CalibrationVariant
-  black: CalibrationSeat
-  white: CalibrationSeat
-}>
+type CalibrationGamePosition =
+  | Readonly<{ variant: "standard"; chess960PositionId?: never }>
+  | Readonly<{ variant: "chess960"; chess960PositionId: Chess960PositionId }>
+
+export type CalibrationGame = CalibrationGamePosition &
+  Readonly<{
+    edgeId: string
+    fen: string
+    gameId: CalibrationGameId
+    gameInPair: 1 | 2
+    openingId: string
+    pairId: CalibrationPairId
+    black: CalibrationSeat
+    white: CalibrationSeat
+  }>
 
 export type CalibrationPlan = Readonly<{
   schemaVersion: typeof CALIBRATION_PLAN_SCHEMA_VERSION
@@ -177,7 +187,32 @@ function normalizeInput(input: CalibrationPlanInput): NormalizedInput {
       }
 
       openingIds.add(opening.id)
-      return { id: opening.id, fen: opening.fen }
+      if (input.variant === "standard") {
+        if (opening.chess960PositionId !== undefined) {
+          throw new TypeError(
+            "Standard openings cannot have a Chess960 position number.",
+          )
+        }
+        return { id: opening.id, fen: opening.fen }
+      }
+      const parsed = parseChess960PositionId(opening.chess960PositionId)
+      if (!parsed.ok) {
+        throw new TypeError(
+          "Chess960 openings require a valid position number.",
+        )
+      }
+      const reconstructed = reconstructMatchPosition(
+        { variant: "chess960", chess960PositionId: parsed.positionId },
+        opening.fen,
+      )
+      if (!reconstructed.ok) {
+        throw new TypeError("Chess960 opening FEN is invalid.")
+      }
+      return {
+        id: opening.id,
+        fen: reconstructed.position.fen,
+        chess960PositionId: parsed.positionId,
+      }
     })
     .sort((left, right) => compareText(left.id, right.id))
 
@@ -260,6 +295,9 @@ function serializeNormalizedInput(input: NormalizedInput): string {
     openings: input.openings.map((opening) => ({
       id: opening.id,
       fen: opening.fen,
+      ...(opening.chess960PositionId === undefined
+        ? {}
+        : { chess960PositionId: opening.chess960PositionId }),
     })),
     edges: input.edges.map((edge) => ({
       id: edge.id,
@@ -337,12 +375,19 @@ function createGames(
       const firstPolicyStartsWhite = orientationRandom.nextIndex(2) === 0
       const firstSeat = createSeat(pair.edge.firstPolicy, firstSeed)
       const secondSeat = createSeat(pair.edge.secondPolicy, secondSeed)
+      const startingPosition: CalibrationGamePosition =
+        input.variant === "standard"
+          ? { variant: "standard" }
+          : {
+              variant: "chess960",
+              chess960PositionId: requireChess960PositionNumber(pair.opening),
+            }
       const common = {
         edgeId: pair.edge.id,
         fen: pair.opening.fen,
         openingId: pair.opening.id,
         pairId: pair.pairId,
-        variant: input.variant,
+        ...startingPosition,
       }
 
       return [
@@ -363,6 +408,17 @@ function createGames(
       ]
     },
   )
+}
+
+function requireChess960PositionNumber(
+  opening: CalibrationOpening,
+): Chess960PositionId {
+  if (opening.chess960PositionId === undefined) {
+    throw new Error(
+      "Normalized Chess960 opening is missing its position number.",
+    )
+  }
+  return opening.chess960PositionId
 }
 
 export default function createCalibrationPlan(

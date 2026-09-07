@@ -1,4 +1,3 @@
-import { Chess, type Move } from "chess.js"
 import type {
   StockfishEngineSearchResult,
   StockfishEngineSession,
@@ -7,6 +6,9 @@ import {
   selectOpponentMoveSource,
   selectUniformRandomLegalMove,
 } from "@mapachess/stockfish/opponent-move-selection"
+import createCalibrationChessPosition, {
+  type CalibrationChessPosition,
+} from "./calibrationChessPosition.js"
 import {
   CalibrationExecutionAbortedError,
   type CalibrationColor,
@@ -56,46 +58,9 @@ function throwIfAborted(signal: AbortSignal | undefined): void {
   }
 }
 
-function uciMove(move: Move): string {
-  return `${move.from}${move.to}${move.promotion ?? ""}`
-}
-
-function legalUciMoves(chess: Chess): readonly string[] {
-  return chess.moves({ verbose: true }).map(uciMove).sort()
-}
-
-function applyUciMove(chess: Chess, move: string): void {
-  chess.move({
-    from: move.slice(0, 2),
-    to: move.slice(2, 4),
-    ...(move.length === 5 ? { promotion: move.slice(4) } : {}),
-  })
-}
-
-function classifyTermination(
-  chess: Chess,
-): CalibrationCompletedTermination | undefined {
-  if (chess.isCheckmate()) {
-    return {
-      kind: "checkmate",
-      winner: chess.turn() === "w" ? "black" : "white",
-    }
-  }
-  if (chess.isStalemate()) return { kind: "stalemate" }
-  if (chess.isThreefoldRepetition()) return { kind: "threefold-repetition" }
-  if (chess.isDrawByFiftyMoves()) return { kind: "fifty-move-rule" }
-  if (chess.isInsufficientMaterial()) return { kind: "insufficient-material" }
-
-  if (chess.isGameOver()) {
-    throw new Error("chess.js reported an unclassified terminal position.")
-  }
-
-  return undefined
-}
-
 function completedResult(
   game: CalibrationGame,
-  chess: Chess,
+  chess: CalibrationChessPosition,
   moves: readonly CalibrationMoveRecord[],
   termination: CalibrationCompletedTermination,
 ): CompletedCalibrationGameResult {
@@ -124,7 +89,7 @@ async function closeEngines(
 async function executePlies(
   input: CalibrationGameExecutionInput,
   policies: CalibrationPolicyMap,
-  chess: Chess,
+  chess: CalibrationChessPosition,
   whiteEngine: StockfishEngineSession,
   blackEngine: StockfishEngineSession,
 ): Promise<CalibrationGameResult> {
@@ -148,9 +113,9 @@ async function executePlies(
 
   for (let ply = 1; ply <= input.maxPlies; ply++) {
     throwIfAborted(input.signal)
-    const color: CalibrationColor = chess.turn() === "w" ? "white" : "black"
+    const color: CalibrationColor = chess.turn()
     const policy = policyByColor[color]
-    const legalMoves = legalUciMoves(chess)
+    const legalMoves = chess.legalMoves()
 
     if (legalMoves.length === 0) {
       throw new Error(
@@ -193,8 +158,9 @@ async function executePlies(
       source = "stockfish"
     }
 
+    throwIfAborted(input.signal)
     const fenBefore = chess.fen()
-    applyUciMove(chess, selectedMove)
+    chess.play(selectedMove)
     moves.push({
       ply,
       color,
@@ -209,7 +175,7 @@ async function executePlies(
       ...(search === undefined ? {} : { search }),
     })
 
-    const termination = classifyTermination(chess)
+    const termination = chess.termination()
     if (termination !== undefined) {
       return completedResult(input.game, chess, moves, termination)
     }
@@ -229,7 +195,7 @@ async function executePlies(
 async function playGame(
   input: CalibrationGameExecutionInput,
   policies: CalibrationPolicyMap,
-  chess: Chess,
+  chess: CalibrationChessPosition,
 ): Promise<CalibrationGameResult> {
   const whitePolicy = requireCalibrationPolicy(
     policies,
@@ -314,12 +280,6 @@ export default async function executeCalibrationGame(
 ): Promise<CalibrationGameResult> {
   assertPositiveSafeInteger(input.maxPlies, "maxPlies")
 
-  if (input.game.variant !== "standard") {
-    throw new TypeError(
-      "Chess960 calibration execution is unavailable until a validated Chess960 rules owner exists.",
-    )
-  }
-
   if (
     input.game.white.policyFingerprint === input.game.black.policyFingerprint
   ) {
@@ -330,8 +290,21 @@ export default async function executeCalibrationGame(
 
   throwIfAborted(input.signal)
   const policies = indexCalibrationPolicies(input.policies)
-  const chess = new Chess(input.game.fen)
-  const initialTermination = classifyTermination(chess)
+  for (const color of ["white", "black"] as const) {
+    if (
+      requireCalibrationPolicy(
+        policies,
+        input.game[color].policyFingerprint,
+        color,
+      ).variant !== input.game.variant
+    ) {
+      throw new TypeError(
+        "Calibration game and seat policy variants must match.",
+      )
+    }
+  }
+  const chess = createCalibrationChessPosition(input.game)
+  const initialTermination = chess.termination()
 
   if (initialTermination !== undefined) {
     return completedResult(input.game, chess, [], initialTermination)
@@ -364,6 +337,7 @@ function orderedPair(
     first.openingId !== second.openingId ||
     first.edgeId !== second.edgeId ||
     first.variant !== second.variant ||
+    first.chess960PositionId !== second.chess960PositionId ||
     first.white.policyFingerprint !== second.black.policyFingerprint ||
     first.black.policyFingerprint !== second.white.policyFingerprint ||
     first.white.randomSeed !== second.black.randomSeed ||
