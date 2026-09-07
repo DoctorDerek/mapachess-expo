@@ -7,11 +7,16 @@ import {
   type ChallengeSetup,
 } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import {
+  createInitialStoryProgress,
+  type StoryProgress,
+} from "./storyProgress.js"
 
 export const MAPACHESS_PLAYER_DATA_SCHEMA = "mapachess-player-data" as const
 export const LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
 export const THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION = 2 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 3 as const
+export const CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION = 3 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 4 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -51,7 +56,7 @@ export type MapachessPlayerDataV2 = Readonly<{
 
 export type MapachessPlayerDataV3 = Readonly<
   Omit<MapachessPlayerDataV2, "schemaVersion" | "settings"> & {
-    schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    schemaVersion: typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     settings: Readonly<{
       autoHintMode: AutoHintMode
       challengeSetup: ChallengeSetup
@@ -59,7 +64,14 @@ export type MapachessPlayerDataV3 = Readonly<
   }
 >
 
-export type MapachessPlayerData = MapachessPlayerDataV3
+export type MapachessPlayerDataV4 = Readonly<
+  Omit<MapachessPlayerDataV3, "schemaVersion"> & {
+    schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    storyProgress: StoryProgress
+  }
+>
+
+export type MapachessPlayerData = MapachessPlayerDataV4
 
 export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
   Object.freeze({
@@ -76,6 +88,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
     revision: 0,
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    storyProgress: createInitialStoryProgress(),
     settings: Object.freeze({
       autoHintMode: DEFAULT_AUTO_HINT_MODE,
       challengeSetup: DEFAULT_CHALLENGE_SETUP,

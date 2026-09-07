@@ -6,6 +6,7 @@ import { requiredRecoveryRevision } from "./durableStore.js"
 import createInitialMapachessPlayerData, {
   type MapachessPlayerData,
 } from "./playerData.js"
+import applyStoryMatchResult from "./storyProgress.js"
 
 const freezePlayerData = (
   data: MapachessPlayerData,
@@ -46,6 +47,10 @@ export const replaceActiveMatch = (
   return Object.freeze({
     ...current,
     activeMatch,
+    storyProgress: applyStoryMatchResult(
+      applyStoryMatchResult(current.storyProgress, current.activeMatch),
+      activeMatch,
+    ),
     revision: current.revision + 1,
     settings:
       activeMatch === null
