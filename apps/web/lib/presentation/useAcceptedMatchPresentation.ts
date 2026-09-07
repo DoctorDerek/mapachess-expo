@@ -104,14 +104,14 @@ export default function useAcceptedMatchPresentation(
       if (transition === undefined) {
         throw new Error("Accepted presentation move has no transition.")
       }
-      requestPresentationPhases(
-        presentationActor,
-        deriveAcceptedMovePresentationPhases({
-          conclusion: current.conclusion,
-          playerColor,
-          transition,
-        }),
-      )
+      const phases = deriveAcceptedMovePresentationPhases({
+        conclusion: current.conclusion,
+        playerColor,
+        transition,
+      })
+      if (phases.length > 0 || current.conclusion !== null) {
+        requestPresentationPhases(presentationActor, phases)
+      }
     } else if (transitionsChanged || cursorChanged) {
       presentationActor.send({
         type: "MATCH_PRESENTATION.RESET_REQUESTED",
