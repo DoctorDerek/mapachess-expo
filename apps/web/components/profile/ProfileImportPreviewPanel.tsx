@@ -2,6 +2,11 @@
 
 import { autoHintModeLabel } from "@mapachess/match/auto-hint-mode"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import {
+  formatStoryCompletion,
+  selectStoryCompletion,
+  STORY_PROGRESS_COPY,
+} from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
 import { ProfileCard } from "./ProfileFoundation"
 
@@ -17,6 +22,7 @@ export default function ProfileImportPreviewPanel({
   onConfirm,
 }: ProfileImportPreviewPanelProps) {
   const data = backup.payload
+  const completion = selectStoryCompletion(data.storyProgress)
 
   return (
     <div className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
@@ -57,6 +63,18 @@ export default function ProfileImportPreviewPanel({
           <dd className="text-right">{data.ratings.chess960Story}</dd>
           <dt>Chess960 Challenge Elo</dt>
           <dd className="text-right">{data.ratings.chess960Challenge}</dd>
+          <dt>{STORY_PROGRESS_COPY.standard}</dt>
+          <dd className="text-right">
+            {formatStoryCompletion(completion.standard)}
+          </dd>
+          <dt>{STORY_PROGRESS_COPY.chess960}</dt>
+          <dd className="text-right">
+            {formatStoryCompletion(completion.chess960)}
+          </dd>
+          <dt>{STORY_PROGRESS_COPY.overall}</dt>
+          <dd className="text-right">
+            {formatStoryCompletion(completion.overall)}
+          </dd>
         </dl>
 
         <div className="mt-7 flex flex-wrap gap-3">
