@@ -2,35 +2,14 @@
 
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
-import { AUTO_HINT_MODE_LABELS } from "../../lib/profile/autoHintModePresentation"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
+import AutoHintModeChoices from "./AutoHintModeChoices"
 import {
   ImportBackupButton,
   importIssueMessage,
   ProfileCard,
 } from "./ProfileFoundation"
-
-const AUTO_HINT_OPTIONS = [
-  {
-    description:
-      "Show the three Piece Hints and their three Move Hints automatically.",
-    mode: "auto-move-hints",
-  },
-  {
-    description:
-      "Show the three Piece Hints automatically, then leave Move Hints in your control.",
-    mode: "auto-piece-hints",
-  },
-  {
-    description:
-      "Wait until you request Piece Hints or Move Hints during the match.",
-    mode: "no-auto-hints",
-  },
-] as const satisfies readonly Readonly<{
-  description: string
-  mode: AutoHintMode
-}>[]
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
@@ -82,42 +61,18 @@ export default function ProfileSettingsPanel({
           </MapachessButton>
         </div>
 
-        <fieldset className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-8 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 inset-shadow-[0.5rem_0_0]">
-          <legend className="text-mapachito-charcoal px-2 font-black">
-            Better Hints
-          </legend>
+        <div className="mt-8">
           <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
             Choose how Better Hints appear automatically. During a match,
             changes take effect immediately and become the default for future
             matches. Every Better Hint remains available manually.
           </p>
-          <div className="grid gap-3">
-            {AUTO_HINT_OPTIONS.map(({ description, mode }) => (
-              <label
-                className="flex min-h-12 cursor-pointer items-start gap-4"
-                key={mode}
-              >
-                <input
-                  checked={autoHintMode === mode}
-                  className="accent-mapachito-violet mt-1 size-[1.35rem]"
-                  disabled={busy}
-                  name="auto-hint-mode"
-                  onChange={() => onAutoHintModeChanged(mode)}
-                  type="radio"
-                  value={mode}
-                />
-                <span>
-                  <span className="text-mapachito-charcoal block font-black">
-                    {AUTO_HINT_MODE_LABELS[mode]}
-                  </span>
-                  <span className="text-mapachito-charcoal mt-1 block text-sm leading-[1.55] font-semibold opacity-76">
-                    {description}
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+          <AutoHintModeChoices
+            autoHintMode={autoHintMode}
+            disabled={busy}
+            onAutoHintModeChanged={onAutoHintModeChanged}
+          />
+        </div>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">
           <h2
