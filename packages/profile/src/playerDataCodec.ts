@@ -23,6 +23,7 @@ import {
   decodeDurableMatch,
 } from "./durableMatchCodec.js"
 import {
+  CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -32,6 +33,13 @@ import {
   type MapachessPlayerDataV1,
   type PlayerEloRatings,
 } from "./playerData.js"
+import applyStoryMatchResult, {
+  createInitialStoryProgress,
+} from "./storyProgress.js"
+import decodeStoryProgress, {
+  canonicalStoryProgress,
+  requireRecordedStoryResult,
+} from "./storyProgressCodec.js"
 
 export type { PlayerDataDecodeIssue } from "./decodePrimitives.js"
 
@@ -44,6 +52,7 @@ export type PlayerDataSource = Readonly<{
   schemaVersion:
     | typeof LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+    | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -98,6 +107,7 @@ const canonicalModernPlayerData = (
   data: MapachessPlayerData,
   sourceSchemaVersion:
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+    | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): string => {
   const fields: readonly unknown[] = [
@@ -118,6 +128,9 @@ const canonicalModernPlayerData = (
             data.settings.challengeSetup.playerColor,
             data.settings.challengeSetup.chess960PositionId,
           ],
+          ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+            ? [canonicalStoryProgress(data.storyProgress)]
+            : []),
         ],
   )
 }
@@ -176,6 +189,10 @@ const decodeLegacyPlayerData = (
       revision: legacyData.revision,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      storyProgress: applyStoryMatchResult(
+        createInitialStoryProgress(),
+        activeMatch,
+      ),
       settings: Object.freeze({
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
         autoHintMode: autoHintModeFromLegacyEnabled(
@@ -194,6 +211,7 @@ const decodeModernPlayerData = (
   object: JsonObject,
   sourceSchemaVersion:
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
+    | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -205,6 +223,9 @@ const decodeModernPlayerData = (
       "schema",
       "schemaVersion",
       "settings",
+      ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        ? ["storyProgress"]
+        : []),
     ],
     "$",
   )
@@ -222,15 +243,22 @@ const decodeModernPlayerData = (
       : settings.challengeSetup,
   )
   if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
+  const activeMatch =
+    object.activeMatch === null
+      ? null
+      : decodeDurableMatch(object.activeMatch, "$.activeMatch")
+  const storyProgress =
+    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? decodeStoryProgress(object.storyProgress, "$.storyProgress")
+      : applyStoryMatchResult(createInitialStoryProgress(), activeMatch)
+  requireRecordedStoryResult(storyProgress, activeMatch)
   const data: MapachessPlayerData = Object.freeze({
-    activeMatch:
-      object.activeMatch === null
-        ? null
-        : decodeDurableMatch(object.activeMatch, "$.activeMatch"),
+    activeMatch,
     ratings: decodePlayerEloRatings(object.ratings, "$.ratings"),
     revision: requireSafeRevision(object.revision, "$.revision"),
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    storyProgress,
     settings: Object.freeze({
       challengeSetup: challengeSetup.setup,
       autoHintMode: requireEnumValue(
@@ -271,6 +299,8 @@ export const decodeMapachessPlayerDataWithSource = (
         ? decodeLegacyPlayerData(object)
         : object.schemaVersion ===
               THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION ||
+            object.schemaVersion ===
+              CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION ||
             object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
           ? decodeModernPlayerData(object, object.schemaVersion)
           : failData("$.schemaVersion")

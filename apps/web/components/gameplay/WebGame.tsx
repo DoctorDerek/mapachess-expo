@@ -216,6 +216,7 @@ function MatchSessionExperience({
           }}
           opponent={FIRST_STORY_OPPONENT}
           setup={initialSetup}
+          storyProgress={playerData.storyProgress}
         />
       ) : snapshot.matches("active") && session !== null ? (
         <WebMatch

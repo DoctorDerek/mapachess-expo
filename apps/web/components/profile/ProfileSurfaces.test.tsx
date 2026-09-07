@@ -108,6 +108,9 @@ describe("web player-data controls", () => {
     expect(markup).toContain('autofocus=""')
     expect(markup).toContain("Replace Local Player Data")
     expect(markup).toContain("Standard Story Elo")
+    expect(markup).toContain("Standard Story completion")
+    expect(markup).toContain("Chess960 Story completion")
+    expect(markup).toContain("Overall Story completion")
   })
 
   it("keeps retry and export visible after a failed verified write", () => {
