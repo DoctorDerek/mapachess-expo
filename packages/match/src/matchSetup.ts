@@ -11,6 +11,33 @@ export type MatchModeSelection = Readonly<{
   variant: MatchVariant
 }>
 
+export const MATCH_SETUP_COPY = Object.freeze({
+  menuTitle: "Choose your game",
+  menuDescription: "Play your way. Better Hints are always within reach.",
+  allModes: "All game modes",
+  opponent: "Opponent",
+  color: "Play as",
+  white: "White",
+  black: "Black",
+  randomColor: "Your side is chosen at random when the match starts.",
+  position: "Chess960 starting position",
+  randomPosition: "Random position",
+  numberedPosition: "Choose a position number",
+  positionNumber: "Position number",
+  invalidSetup: "Choose White or Black and a valid Chess960 position number.",
+  untimed: "Untimed",
+  provisionalDifficulty:
+    "Current difficulty is provisional, not calibrated. This match does not update your Elo.",
+  storyAvailability:
+    "Chicken is the first playable opponent. Ladder progression and further opponents are still in development.",
+  challengeAvailability:
+    "Chicken is currently available. Independent animal and difficulty selection will follow.",
+  savingHints: "Saving your hint preference…",
+  profileUnavailable:
+    "Finish the open Settings or player-data action before starting a match.",
+  startMatch: "Start match",
+})
+
 const MATCH_MODE_PRESENTATION = {
   standard: {
     story: {
