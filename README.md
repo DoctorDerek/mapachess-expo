@@ -99,15 +99,15 @@ build-time provisioning boundary are recorded in
 
 ## Production web deployment
 
-[Mapachess.com](https://mapachess.com/) is the custom domain configured on the
-Vercel web project. The existing
-[Vercel origin](https://mapachess-expo-web.vercel.app/) remains the configured
-target of automated Lighthouse reporting until that target is migrated. Vercel
-creates Preview deployments for pull requests and Production deployments from
+[Mapachess.com](https://mapachess.com/) is the canonical Production domain and
+the target of automated Lighthouse reporting. Vercel creates Preview
+deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
 and waits for each merged commit's matching Production deployment. It then
-publishes the median of five Mobile Web Lighthouse runs against that configured
-Production audit URL and rejects audits that leave that origin.
+publishes the run with the median Performance score from five standard mobile
+Lighthouse runs against Mapachess.com and rejects audits that leave that
+origin. The generated Vercel deployment URL verifies readiness of the matching
+commit; it is not the measurement target.
 
 The published Lighthouse report and dynamic scores are available through
 [GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The application

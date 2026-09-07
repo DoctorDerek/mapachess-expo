@@ -17,7 +17,7 @@ export const LIGHTHOUSE_CATEGORIES = [
   "seo",
 ]
 
-const PRODUCTION_URL = "https://mapachess-expo-web.vercel.app/"
+const PRODUCTION_URL = "https://mapachess.com/"
 const PRODUCTION_RUN_COUNT = 5
 const DEFAULT_OUTPUT_DIRECTORY = "./lighthouse-results"
 
