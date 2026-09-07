@@ -12,6 +12,70 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it("provides each fighter's authored width and the opposing responsive widths", () => {
+    const player = resolveSpritePresentation(
+      MAPACHITO_SPRITE_MANIFEST,
+      { family: "idle" },
+      Object.values(MAPACHITO_SPRITE_SOURCES),
+    )
+    const opponent = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "idle" },
+      Object.values(CHICKEN_SPRITE_SOURCES),
+    )
+
+    expect(battleSpriteAnchorStyle(player, opponent)).toEqual({
+      "--sprite-mobile-scale": 3,
+      "--sprite-desktop-scale": 4,
+      "--sprite-visible-width": "29px",
+      "--opponent-mobile-width": "calc(17px * 3)",
+      "--opponent-desktop-width": "calc(17px * 4)",
+    })
+    expect(battleSpriteAnchorStyle(opponent, player)).toEqual({
+      "--sprite-mobile-scale": 3,
+      "--sprite-desktop-scale": 4,
+      "--sprite-visible-width": "17px",
+      "--opponent-mobile-width": "calc(29px * 3)",
+      "--opponent-desktop-width": "calc(29px * 4)",
+    })
+  })
+
+  it("leaves public-clone fallback size under CSS ownership", () => {
+    const fallback = {
+      kind: "authored-fallback",
+      reactionSlot: "idle",
+    } as const
+
+    expect(battleSpriteAnchorStyle(fallback, fallback)).toEqual({
+      "--sprite-mobile-scale": 1,
+      "--sprite-desktop-scale": 1,
+      "--sprite-visible-width": "var(--battle-fallback-size)",
+      "--opponent-mobile-width": "calc(var(--battle-fallback-size) * 1)",
+      "--opponent-desktop-width": "calc(var(--battle-fallback-size) * 1)",
+    })
+  })
+
+  it("keeps fallback and licensed fighter dimensions independent", () => {
+    const sprite = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "idle" },
+      Object.values(CHICKEN_SPRITE_SOURCES),
+    )
+    const fallback = {
+      kind: "authored-fallback",
+      reactionSlot: "idle",
+    } as const
+
+    expect(battleSpriteAnchorStyle(sprite, fallback)).toMatchObject({
+      "--sprite-visible-width": "17px",
+      "--opponent-mobile-width": "calc(var(--battle-fallback-size) * 1)",
+    })
+    expect(battleSpriteAnchorStyle(fallback, sprite)).toMatchObject({
+      "--sprite-visible-width": "var(--battle-fallback-size)",
+      "--opponent-mobile-width": "calc(17px * 3)",
+    })
+  })
+
   it.each([1, 2, 7, 24])(
     "gives all %s frames an equal interval without addressing a frame beyond the strip",
     (count) => {
@@ -66,7 +130,7 @@ describe("battle frame and clip contracts", () => {
       ])
       expect(victim.steps.map((step) => step.beat)).toEqual(["reaction"])
       expect(
-        battleSpriteAnchorStyle(attacker)["--sprite-mobile-scale"],
+        battleSpriteAnchorStyle(attacker, victim)["--sprite-mobile-scale"],
       ).toBeGreaterThanOrEqual(1)
     },
   )

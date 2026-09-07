@@ -2,7 +2,7 @@
 
 import { animate } from "motion"
 import { useReducedMotion } from "motion/react"
-import { useEffect, useEffectEvent, useRef, useState, type Ref } from "react"
+import { useEffect, useEffectEvent, useRef, useState } from "react"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import type {
@@ -19,9 +19,7 @@ import createBattleSpriteImages from "../../lib/presentation/battleSpriteImages"
 const FALLBACK_MOVEMENT_SECONDS = 0.36
 
 export type BattleFighterProps = Readonly<{
-  anchorRef: Ref<HTMLDivElement>
   beat: MatchPresentationBeat
-  contactDistance: number
   displayName: string
   facing: SpriteFacing
   onAnimationCompleted: (
@@ -29,6 +27,7 @@ export type BattleFighterProps = Readonly<{
     phaseIndex: number,
     reactionSequence: number,
   ) => void
+  opposingPresentation: ResolvedSpritePresentation<string, string>
   participant: MatchPresentationParticipant
   phaseIndex: number
   presentation: ResolvedSpritePresentation<string, string>
@@ -37,12 +36,11 @@ export type BattleFighterProps = Readonly<{
 }>
 
 export default function BattleFighter({
-  anchorRef,
   beat,
-  contactDistance,
   displayName,
   facing,
   onAnimationCompleted,
+  opposingPresentation,
   participant,
   phaseIndex,
   presentation,
@@ -59,7 +57,9 @@ export default function BattleFighter({
   const spriteRef = useRef<HTMLSpanElement>(null)
   const travelerRef = useRef<HTMLDivElement>(null)
   const visibleSource = useRef<string | null>(null)
-  const settledTravelTarget = useRef<number | null>(0)
+  const settledTravelTarget = useRef<"home" | "contact" | "recoil" | null>(
+    "home",
+  )
   const [images] = useState(() => createBattleSpriteImages())
   const [hasVisibleSprite, setHasVisibleSprite] = useState(false)
   const reportCompletion = useEffectEvent(
@@ -87,17 +87,16 @@ export default function BattleFighter({
       frames.cancel()
       frames = null
     }
-    const towardOpponent = participant === "player" ? 1 : -1
     const isAttacker = presentation.reactionSlot.endsWith("attacker")
     const isVictim = presentation.reactionSlot.endsWith("victim")
-    const targetX = shouldReduceMotion
-      ? 0
+    const travelTarget = shouldReduceMotion
+      ? "home"
       : isAttacker &&
           (beat === "approach" || beat === "strike" || beat === "reaction")
-        ? towardOpponent * contactDistance
+        ? "contact"
         : isVictim && beat === "reaction"
-          ? -towardOpponent * Math.min(contactDistance / 4, 10)
-          : 0
+          ? "recoil"
+          : "home"
     const allSteps = presentation.kind === "sprite" ? presentation.steps : []
     const steps = allSteps.filter((step) => step.beat === beat)
     const sources = allSteps.map((step) => step.animation.sourceId)
@@ -109,18 +108,21 @@ export default function BattleFighter({
     const prepared = images.prepare(sources)
 
     const move = async (duration: number): Promise<void> => {
-      if (cancelled || settledTravelTarget.current === targetX) return
+      if (cancelled || settledTravelTarget.current === travelTarget) return
       settledTravelTarget.current = null
       movement = animate(
         traveler,
-        { x: targetX },
+        {
+          "--battle-advance": travelTarget === "contact" ? 1 : 0,
+          "--battle-recoil": travelTarget === "recoil" ? 1 : 0,
+        },
         {
           duration: shouldReduceMotion ? 0 : duration,
           ease: "linear",
         },
       )
       await movement
-      if (!cancelled) settledTravelTarget.current = targetX
+      if (!cancelled) settledTravelTarget.current = travelTarget
     }
 
     const play = async (): Promise<void> => {
@@ -195,7 +197,6 @@ export default function BattleFighter({
     }
   }, [
     beat,
-    contactDistance,
     images,
     participant,
     phaseIndex,
@@ -207,20 +208,18 @@ export default function BattleFighter({
   return (
     <div className="relative z-2 row-span-2 grid min-w-0 grid-rows-subgrid justify-items-center">
       <div
-        ref={anchorRef}
         aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
-        className="relative flex h-32 w-18 items-end justify-center [--sprite-scale:var(--sprite-mobile-scale)] xl:[--sprite-scale:var(--sprite-desktop-scale)]"
+        className={`relative flex h-32 w-full items-end justify-center [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-direction:1]" : "[--battle-direction:-1]"}`}
         role="img"
-        style={
-          presentation.kind === "sprite"
-            ? battleSpriteAnchorStyle(presentation)
-            : undefined
-        }
+        style={battleSpriteAnchorStyle(presentation, opposingPresentation)}
       >
-        <div ref={travelerRef} className="relative grid size-0 place-items-end">
+        <div
+          ref={travelerRef}
+          className="relative h-0 w-full translate-x-[calc(var(--battle-direction)*(var(--battle-advance)*var(--battle-contact-distance)_-_var(--battle-recoil)*min(10px,var(--battle-contact-distance)/4)))] [--battle-advance:0] [--battle-contact-distance:max(0px,calc(100%_+_var(--battle-gap)_-_(var(--sprite-visible-width)*var(--sprite-scale)_+_var(--opponent-width))/2))] [--battle-recoil:0]"
+        >
           <span
             aria-hidden="true"
-            className={`relative block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+            className={`relative left-1/2 block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
           >
             <span
               ref={spriteRef}
@@ -230,7 +229,7 @@ export default function BattleFighter({
           {!hasVisibleSprite ? (
             <span
               aria-hidden="true"
-              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-0 grid size-18 -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
+              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-1/2 grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
             >
               {displayName.slice(0, 1)}
             </span>

@@ -5,35 +5,55 @@ import type {
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
 
-export type BattleSpritePresentation = Extract<
-  ResolvedSpritePresentation<string, string>,
-  { kind: "sprite" }
->
 export type BattleSpriteStep = ResolvedSpriteStep<string, string>
 
 const MOBILE_VISIBLE_HEIGHT_PIXELS = 60
 const DESKTOP_VISIBLE_HEIGHT_PIXELS = 80
 
-export const battleSpriteAnchorStyle = (
-  presentation: BattleSpritePresentation,
-): CSSProperties &
-  Readonly<{
-    "--sprite-mobile-scale": number
-    "--sprite-desktop-scale": number
-  }> => {
+const responsiveSpriteGeometry = (
+  presentation: ResolvedSpritePresentation<string, string>,
+) => {
+  if (presentation.kind !== "sprite")
+    return {
+      desktopScale: 1,
+      mobileScale: 1,
+      visibleWidth: "var(--battle-fallback-size)",
+    }
   const { referenceGeometry } = presentation
   return {
-    "--sprite-mobile-scale": createSpritePresentationGeometry(
+    mobileScale: createSpritePresentationGeometry(
       referenceGeometry,
       referenceGeometry,
       MOBILE_VISIBLE_HEIGHT_PIXELS,
     ).integerScale,
-    "--sprite-desktop-scale": createSpritePresentationGeometry(
+    desktopScale: createSpritePresentationGeometry(
       referenceGeometry,
       referenceGeometry,
       DESKTOP_VISIBLE_HEIGHT_PIXELS,
     ).integerScale,
-    width: `calc(${referenceGeometry.visibleWidth}px * var(--sprite-scale))`,
+    visibleWidth: `${referenceGeometry.visibleWidth}px`,
+  }
+}
+
+export const battleSpriteAnchorStyle = (
+  presentation: ResolvedSpritePresentation<string, string>,
+  opposingPresentation: ResolvedSpritePresentation<string, string>,
+): CSSProperties &
+  Readonly<{
+    "--sprite-mobile-scale": number
+    "--sprite-desktop-scale": number
+    "--sprite-visible-width": string
+    "--opponent-mobile-width": string
+    "--opponent-desktop-width": string
+  }> => {
+  const sprite = responsiveSpriteGeometry(presentation)
+  const opponent = responsiveSpriteGeometry(opposingPresentation)
+  return {
+    "--sprite-mobile-scale": sprite.mobileScale,
+    "--sprite-desktop-scale": sprite.desktopScale,
+    "--sprite-visible-width": sprite.visibleWidth,
+    "--opponent-mobile-width": `calc(${opponent.visibleWidth} * ${opponent.mobileScale})`,
+    "--opponent-desktop-width": `calc(${opponent.visibleWidth} * ${opponent.desktopScale})`,
   }
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo } from "react"
 import {
   selectMatchPresentationBeat,
   type MatchPresentationMachineSnapshot,
@@ -13,7 +13,6 @@ import type {
 import resolveSpritePresentation, {
   type ResolvedSpritePresentation,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
-import { battleContactDistancePixels } from "@mapachess/match-presentation/sprite-presentation-geometry"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import {
   AVAILABLE_MAPACHITO_SPRITE_SOURCES,
@@ -90,27 +89,7 @@ export default function ReactiveBattleStage({
       ),
     [playerReaction],
   )
-  const playerAnchor = useRef<HTMLDivElement>(null)
-  const opponentAnchor = useRef<HTMLDivElement>(null)
-  const [contactDistance, setContactDistance] = useState(0)
   const beat = selectMatchPresentationBeat(presentationSnapshot)
-  useEffect(() => {
-    const player = playerAnchor.current
-    const opponent = opponentAnchor.current
-    if (player === null || opponent === null) return
-    const measure = (): void => {
-      const first = player.getBoundingClientRect()
-      const second = opponent.getBoundingClientRect()
-      setContactDistance(battleContactDistancePixels(first.right, second.left))
-    }
-    const observer = new ResizeObserver(measure)
-    observer.observe(player)
-    observer.observe(opponent)
-    if (player.parentElement?.parentElement)
-      observer.observe(player.parentElement.parentElement)
-    measure()
-    return () => observer.disconnect()
-  }, [])
   const isReacting = presentationSnapshot.matches("reacting")
 
   return (
@@ -131,14 +110,13 @@ export default function ReactiveBattleStage({
         {stageAnnouncement(currentPhase, opponentName)}
       </p>
 
-      <div className="bg-mapachito-blue before:border-mapachito-charcoal before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 grid-rows-[8rem_auto] gap-x-8 overflow-hidden px-4 pt-4 pb-3 before:absolute before:inset-x-0 before:top-36 before:bottom-0 before:border-t-4 forced-colors:before:hidden">
+      <div className="bg-mapachito-blue before:border-mapachito-charcoal before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 grid-rows-[8rem_auto] gap-x-(--battle-gap) overflow-hidden px-4 pt-4 pb-3 [--battle-fallback-size:--spacing(18)] [--battle-gap:--spacing(8)] before:absolute before:inset-x-0 before:top-36 before:bottom-0 before:border-t-4 forced-colors:before:hidden">
         <BattleFighter
-          anchorRef={playerAnchor}
           beat={beat}
-          contactDistance={contactDistance}
           displayName="Mapachito"
           facing="right"
           onAnimationCompleted={onParticipantAnimationCompleted}
+          opposingPresentation={opponentPresentation}
           participant="player"
           phaseIndex={phaseIndex}
           presentation={playerPresentation}
@@ -149,12 +127,11 @@ export default function ReactiveBattleStage({
         />
 
         <BattleFighter
-          anchorRef={opponentAnchor}
           beat={beat}
-          contactDistance={contactDistance}
           displayName={opponentName}
           facing="left"
           onAnimationCompleted={onParticipantAnimationCompleted}
+          opposingPresentation={playerPresentation}
           participant="opponent"
           phaseIndex={phaseIndex}
           presentation={opponentPresentation}
