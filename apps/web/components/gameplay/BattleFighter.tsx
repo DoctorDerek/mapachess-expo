@@ -128,9 +128,9 @@ export default function BattleFighter({
         reportCompletion(phaseIndex, reactionSequence)
         return
       }
-      if (steps.length === 0) {
+      if (steps.length === 0 || !(await prepared)) {
         await move(FALLBACK_MOVEMENT_SECONDS)
-      } else if (await prepared) {
+      } else {
         for (const step of shouldReduceMotion ? steps.slice(-1) : steps) {
           if (cancelled) return
           const { animation, playback } = step
@@ -217,10 +217,7 @@ export default function BattleFighter({
             : undefined
         }
       >
-        <div
-          ref={travelerRef}
-          className="relative grid size-0 place-items-end"
-        >
+        <div ref={travelerRef} className="relative grid size-0 place-items-end">
           <span
             aria-hidden="true"
             className={`relative block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
