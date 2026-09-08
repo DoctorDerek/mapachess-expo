@@ -52,7 +52,7 @@ export type CalibrationSmokeEvidenceSummary = Readonly<{
   scoredPairCount: number
   storedGameCount: number
   unterminatedGameCount: number
-  variant: "standard"
+  variant: CalibrationPlan["variant"]
 }>
 
 type MutablePolicyScore = {
@@ -251,12 +251,6 @@ export default async function summarizeCalibrationSmokeEvidence(
   input: SummarizeCalibrationSmokeEvidenceInput,
 ): Promise<CalibrationSmokeEvidenceSummary> {
   assertPositiveSafeInteger(input.maxPlies, "maxPlies")
-  if (input.plan.variant !== "standard") {
-    throw new TypeError(
-      "Smoke evidence summaries currently support Standard only.",
-    )
-  }
-
   const scores = indexPolicyScores(input.plan)
   const edges = indexEdgeSummaries(input.plan)
   const storedMarkers = new Map<
@@ -313,7 +307,7 @@ export default async function summarizeCalibrationSmokeEvidence(
   const finalizedEdgeSummaries = finalizedEdges(edges)
   return {
     planId: input.plan.planId,
-    variant: "standard",
+    variant: input.plan.variant,
     maxPlies: input.maxPlies,
     scheduledGameCount: input.plan.games.length,
     storedGameCount: finalizedEdgeSummaries.reduce(
