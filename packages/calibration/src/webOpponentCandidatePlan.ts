@@ -43,10 +43,10 @@ export const WEB_OPPONENT_CANDIDATE_PROBABILITIES = [
 export const WEB_OPPONENT_CANDIDATE_PAIRS_PER_EDGE = 20 as const
 const CHESS960_OPENING_COUNT = 10
 const EXPERIMENT_SEED = 42
-const ANCHOR_ELO = 1320
+export const WEB_OPPONENT_REFERENCE_ELO = 1320
 const SECOND_REFERENCE_ELO = 1600
 
-function candidatePolicy(
+export function createWebOpponentCalibrationPolicy(
   variant: CalibrationVariant,
   strength: UciStrength,
   randomMoveProbabilityBasisPoints: number,
@@ -111,32 +111,32 @@ function chess960Openings(): readonly CalibrationOpening[] {
   })
 }
 
-export default function createWebOpponentCandidatePlan(
+export function createWebOpponentComparisonPlan(
   variant: CalibrationVariant,
-): Readonly<{ plan: CalibrationPlan; anchor: RunBayesEloInput["anchor"] }> {
-  const anchor = candidatePolicy(
-    variant,
-    { kind: "uci-elo", elo: ANCHOR_ELO },
-    0,
-  )
+  randomMoveProbabilities: readonly number[],
+  referenceElos: readonly number[],
+): CalibrationPlan {
   const orderedPolicies = [
-    ...WEB_OPPONENT_CANDIDATE_PROBABILITIES.map((probability) => ({
+    ...randomMoveProbabilities.map((probability) => ({
       id: `web-random-${String(probability).padStart(5, "0")}`,
-      policy: candidatePolicy(variant, { kind: "full-strength" }, probability),
-    })),
-    { id: `reference-${String(ANCHOR_ELO)}`, policy: anchor },
-    {
-      id: `reference-${String(SECOND_REFERENCE_ELO)}`,
-      policy: candidatePolicy(
+      policy: createWebOpponentCalibrationPolicy(
         variant,
-        { kind: "uci-elo", elo: SECOND_REFERENCE_ELO },
+        { kind: "full-strength" },
+        probability,
+      ),
+    })),
+    ...referenceElos.map((elo) => ({
+      id: `reference-${String(elo)}`,
+      policy: createWebOpponentCalibrationPolicy(
+        variant,
+        { kind: "uci-elo", elo },
         0,
       ),
-    },
+    })),
   ]
   const openings =
     variant === "standard" ? STANDARD_CHICKEN_OPENINGS : chess960Openings()
-  const plan = createCalibrationPlan({
+  return createCalibrationPlan({
     schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
     variant,
     seed: EXPERIMENT_SEED,
@@ -154,11 +154,32 @@ export default function createWebOpponentCandidatePlan(
       }
     }),
   })
+}
+
+export function createWebOpponentReferenceAnchor(
+  variant: CalibrationVariant,
+): RunBayesEloInput["anchor"] {
   return {
-    plan,
-    anchor: {
-      elo: ANCHOR_ELO,
-      policyFingerprint: fingerprintOpponentPolicy(anchor),
-    },
+    elo: WEB_OPPONENT_REFERENCE_ELO,
+    policyFingerprint: fingerprintOpponentPolicy(
+      createWebOpponentCalibrationPolicy(
+        variant,
+        { kind: "uci-elo", elo: WEB_OPPONENT_REFERENCE_ELO },
+        0,
+      ),
+    ),
+  }
+}
+
+export default function createWebOpponentCandidatePlan(
+  variant: CalibrationVariant,
+): Readonly<{ plan: CalibrationPlan; anchor: RunBayesEloInput["anchor"] }> {
+  return {
+    plan: createWebOpponentComparisonPlan(
+      variant,
+      WEB_OPPONENT_CANDIDATE_PROBABILITIES,
+      [WEB_OPPONENT_REFERENCE_ELO, SECOND_REFERENCE_ELO],
+    ),
+    anchor: createWebOpponentReferenceAnchor(variant),
   }
 }
