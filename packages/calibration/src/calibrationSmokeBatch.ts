@@ -69,10 +69,8 @@ export default async function executeCalibrationSmokeBatch(
 ): Promise<CalibrationSmokeBatchResult> {
   assertPositiveSafeInteger(input.maximumNewGames, "maximumNewGames")
   assertPositiveSafeInteger(input.maxPlies, "maxPlies")
-  if (input.plan.variant !== "standard") {
-    throw new TypeError(
-      "Smoke-batch execution currently supports Standard only.",
-    )
+  if (input.plan.games.some((game) => game.variant !== input.plan.variant)) {
+    throw new TypeError("Calibration games must use their plan variant.")
   }
 
   throwIfAborted(input.signal)

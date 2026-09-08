@@ -6,6 +6,7 @@ import provisionStockfish18, {
 import { createProvisionedStockfishProcessAdapter } from "@mapachess/stockfish/uci-process-adapter"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch.js"
 import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary.js"
+import chess960CalibrationSmokePlan from "./chess960CalibrationSmokePlan.js"
 import standardCalibrationSmokePlan from "./standardCalibrationSmokePlan.js"
 
 const DEFAULT_MAXIMUM_NEW_GAMES = 2
@@ -30,6 +31,7 @@ async function runCalibrationSmokeCommand(): Promise<void> {
     allowPositionals: false,
     strict: true,
     options: {
+      variant: { type: "string", default: "standard" },
       "evidence-root": { type: "string" },
       "maximum-new-games": {
         type: "string",
@@ -45,10 +47,17 @@ async function runCalibrationSmokeCommand(): Promise<void> {
       },
     },
   })
+  if (values.variant !== "standard" && values.variant !== "chess960") {
+    throw new TypeError('variant must be "standard" or "chess960".')
+  }
+  const plan =
+    values.variant === "standard"
+      ? standardCalibrationSmokePlan
+      : chess960CalibrationSmokePlan
   const workspaceRoot = resolve(values["workspace-root"])
   const evidenceRoot = resolve(
     workspaceRoot,
-    values["evidence-root"] ?? ".calibration/standard-smoke",
+    values["evidence-root"] ?? `.calibration/${values.variant}-smoke`,
   )
   const maximumNewGames = positiveSafeInteger(
     values["maximum-new-games"],
@@ -63,7 +72,7 @@ async function runCalibrationSmokeCommand(): Promise<void> {
   try {
     const batch = await executeCalibrationSmokeBatch({
       rootDirectory: evidenceRoot,
-      plan: standardCalibrationSmokePlan,
+      plan,
       maxPlies,
       maximumNewGames,
       signal: abortController.signal,
@@ -77,7 +86,7 @@ async function runCalibrationSmokeCommand(): Promise<void> {
     })
     const summary = await summarizeCalibrationSmokeEvidence({
       rootDirectory: evidenceRoot,
-      plan: standardCalibrationSmokePlan,
+      plan,
       maxPlies,
     })
     process.stdout.write(

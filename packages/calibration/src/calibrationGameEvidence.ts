@@ -1,4 +1,5 @@
 import { Chess } from "chess.js"
+import createCalibrationChessPosition from "./calibrationChessPosition.js"
 import type {
   CalibrationGameResult,
   CompletedCalibrationGameResult,
@@ -164,6 +165,85 @@ export function completedCalibrationResultTag(
   return result.termination.winner === "white" ? "1-0" : "0-1"
 }
 
+function calibrationPgnHeaders(
+  evidence: CalibrationGameEvidence,
+  result: CompletedCalibrationGameResult,
+): readonly (readonly [string, string])[] {
+  return [
+    ["Event", `Mapachess calibration: ${evidence.game.edgeId}`],
+    ["Site", "Local"],
+    ["Date", "????.??.??"],
+    ["Round", String(evidence.game.gameInPair)],
+    ["White", evidence.game.white.policyFingerprint],
+    ["Black", evidence.game.black.policyFingerprint],
+    ["Result", completedCalibrationResultTag(result)],
+    ["MapachessPlan", evidence.planId],
+    ["MapachessPair", evidence.game.pairId],
+    ["MapachessGame", evidence.game.gameId],
+    ["MapachessOpening", evidence.game.openingId],
+    ["MapachessWhiteSeed", String(evidence.game.white.randomSeed)],
+    ["MapachessBlackSeed", String(evidence.game.black.randomSeed)],
+    ["MapachessTermination", result.termination.kind],
+  ]
+}
+
+function escapePgnHeader(value: string): string {
+  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')
+}
+
+function serializeChess960Pgn(
+  evidence: CalibrationGameEvidence,
+  game: Extract<CalibrationGame, { variant: "chess960" }>,
+  result: CompletedCalibrationGameResult,
+): string {
+  const position = createCalibrationChessPosition(game)
+  const movetext: string[] = []
+  for (const [index, move] of result.moves.entries()) {
+    if (position.fen() !== move.fenBefore || position.turn() !== move.color) {
+      throw new TypeError(
+        "Calibration PGN replay does not match the recorded move.",
+      )
+    }
+    const moveNumber = position.fen().split(" ")[5]
+    if (move.color === "white") movetext.push(`${moveNumber}.`)
+    else if (index === 0) movetext.push(`${moveNumber}...`)
+    movetext.push(position.play(move.uci))
+    if (position.fen() !== move.fenAfter) {
+      throw new TypeError(
+        "Calibration PGN replay does not match the recorded move FEN.",
+      )
+    }
+  }
+  if (position.fen() !== result.finalFen) {
+    throw new TypeError(
+      "Calibration PGN replay does not reach the recorded final FEN.",
+    )
+  }
+  const termination = position.termination()
+  if (
+    termination?.kind !== result.termination.kind ||
+    (termination.kind === "checkmate" &&
+      result.termination.kind === "checkmate" &&
+      termination.winner !== result.termination.winner)
+  ) {
+    throw new TypeError(
+      "Calibration PGN replay does not match the recorded termination.",
+    )
+  }
+  const headers: readonly (readonly [string, string])[] = [
+    ...calibrationPgnHeaders(evidence, result),
+    ["Variant", "Chess960"],
+    ["SetUp", "1"],
+    ["FEN", game.fen],
+    ["MapachessChess960Position", String(game.chess960PositionId)],
+  ]
+  const serializedHeaders = headers.map(
+    ([name, value]) => `[${name} "${escapePgnHeader(value)}"]`,
+  )
+  movetext.push(completedCalibrationResultTag(result))
+  return `${serializedHeaders.join("\n")}\n\n${movetext.join(" ")}\n`
+}
+
 export function serializeCalibrationGamePgn(
   evidence: CalibrationGameEvidence,
 ): string {
@@ -174,22 +254,13 @@ export function serializeCalibrationGamePgn(
   }
 
   const result = evidence.result
-  const resultTag = completedCalibrationResultTag(result)
+  if (evidence.game.variant === "chess960") {
+    return serializeChess960Pgn(evidence, evidence.game, result)
+  }
   const chess = new Chess(evidence.game.fen)
-  chess.setHeader("Event", `Mapachess calibration: ${evidence.game.edgeId}`)
-  chess.setHeader("Site", "Local")
-  chess.setHeader("Date", "????.??.??")
-  chess.setHeader("Round", String(evidence.game.gameInPair))
-  chess.setHeader("White", evidence.game.white.policyFingerprint)
-  chess.setHeader("Black", evidence.game.black.policyFingerprint)
-  chess.setHeader("Result", resultTag)
-  chess.setHeader("MapachessPlan", evidence.planId)
-  chess.setHeader("MapachessPair", evidence.game.pairId)
-  chess.setHeader("MapachessGame", evidence.game.gameId)
-  chess.setHeader("MapachessOpening", evidence.game.openingId)
-  chess.setHeader("MapachessWhiteSeed", String(evidence.game.white.randomSeed))
-  chess.setHeader("MapachessBlackSeed", String(evidence.game.black.randomSeed))
-  chess.setHeader("MapachessTermination", result.termination.kind)
+  for (const [name, value] of calibrationPgnHeaders(evidence, result)) {
+    chess.setHeader(name, value)
+  }
 
   if (evidence.game.fen !== STANDARD_START_FEN) {
     chess.setHeader("SetUp", "1")

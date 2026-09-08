@@ -1,8 +1,17 @@
 import { Chess } from "chess.js"
+import {
+  createChess960InitialFen,
+  parseChess960PositionId,
+  type Chess960PositionId,
+} from "@mapachess/match/chess960-position"
 import { STOCKFISH_18_BUILD_IDENTITY } from "@mapachess/stockfish/build-identity"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
+import createCalibrationChessPosition from "../src/calibrationChessPosition.js"
 import createCalibrationGameEvidence from "../src/calibrationGameEvidence.js"
-import type { CalibrationGameResult } from "../src/calibrationGameTypes.js"
+import type {
+  CalibrationGameResult,
+  CalibrationMoveRecord,
+} from "../src/calibrationGameTypes.js"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
   type CalibrationPlan,
@@ -18,9 +27,81 @@ import {
   OPPONENT_POLICY_SCHEMA_VERSION,
   type OpponentPolicy,
 } from "../src/opponentPolicy.js"
+import { calibrationSmokePolicy } from "../src/standardCalibrationSmokePlan.js"
 
 export const STALEMATE_FEN = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
 export const MATE_IN_ONE_FEN = "7k/8/5KQ1/8/8/8/8/8 w - - 0 1"
+
+export function chess960PositionIdFixture(value = 0): Chess960PositionId {
+  const parsed = parseChess960PositionId(value)
+  if (!parsed.ok) throw new Error("Invalid Chess960 fixture position number.")
+  return parsed.positionId
+}
+
+export function chess960PlanFixture(
+  fen = createChess960InitialFen(chess960PositionIdFixture()),
+  positionNumber = 0,
+): CalibrationPlan {
+  return createCalibrationPlan({
+    schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
+    seed: 42,
+    variant: "chess960",
+    openings: [
+      {
+        id: "fixture-opening",
+        fen,
+        chess960PositionId: chess960PositionIdFixture(positionNumber),
+      },
+    ],
+    edges: [
+      {
+        id: "fixture-edge",
+        pairsPerOpening: 1,
+        policyA: calibrationSmokePolicy(1_000, "chess960"),
+        policyB: calibrationSmokePolicy(2_000, "chess960"),
+      },
+    ],
+  })
+}
+
+export function completedChess960EvidenceFixture(
+  fen: string,
+  moves: readonly string[],
+) {
+  const plan = chess960PlanFixture(fen)
+  const game = plan.games[0]
+  if (game === undefined) throw new Error("Fixture game is missing.")
+  const position = createCalibrationChessPosition(game)
+  const records = moves.map((uci, index): CalibrationMoveRecord => {
+    const color = position.turn()
+    const fenBefore = position.fen()
+    position.play(uci)
+    return {
+      ply: index + 1,
+      color,
+      uci,
+      source: "stockfish",
+      policyFingerprint: game[color].policyFingerprint,
+      fenBefore,
+      fenAfter: position.fen(),
+    }
+  })
+  const termination = position.termination()
+  if (termination === undefined)
+    throw new Error("Fixture must complete legally.")
+  return createCalibrationGameEvidence({
+    plan,
+    maxPlies: Math.max(1, records.length),
+    result: {
+      status: "completed",
+      gameId: game.gameId,
+      pairId: game.pairId,
+      finalFen: position.fen(),
+      moves: records,
+      termination,
+    },
+  })
+}
 
 export function standardPolicyFixture(nodeLimit: number): OpponentPolicy {
   return {

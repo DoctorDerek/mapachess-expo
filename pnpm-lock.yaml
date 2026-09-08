@@ -226,6 +226,9 @@ importers:
 
   packages/calibration:
     dependencies:
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
       '@mapachess/stockfish':
         specifier: workspace:*
         version: link:../stockfish

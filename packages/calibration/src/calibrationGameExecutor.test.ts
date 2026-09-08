@@ -8,7 +8,12 @@ import {
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
+import {
+  chess960PlanFixture,
+  chess960PositionIdFixture,
+} from "../test/calibrationFixtures"
 import executeCalibrationGame, {
+  CalibrationExecutionAbortedError,
   executeCalibrationPair,
   type OpenCalibrationEngine,
 } from "./calibrationGameExecutor"
@@ -21,6 +26,7 @@ import {
   CALIBRATION_SEED_DERIVATION_VERSION,
 } from "./deterministicRandom"
 import {
+  CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_COMMAND_PROTOCOL_VERSION,
   CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
@@ -56,7 +62,10 @@ function createPolicy(
       kind: "best-or-uniform-random-legal",
       randomMoveProbabilityBasisPoints,
       algorithmVersion: CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
-      legalMoveGeneratorVersion: CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
+      legalMoveGeneratorVersion:
+        variant === "standard"
+          ? CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
+          : CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
     },
     randomness: {
       algorithmVersion: CALIBRATION_RANDOM_ALGORITHM_VERSION,
@@ -79,7 +88,15 @@ function createPlan(
     schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
     seed: 42,
     variant,
-    openings: [{ id: "fixture", fen }],
+    openings: [
+      {
+        id: "fixture",
+        fen,
+        ...(variant === "chess960"
+          ? { chess960PositionId: chess960PositionIdFixture() }
+          : {}),
+      },
+    ],
     edges: [
       {
         id: "fixture-edge",
@@ -140,86 +157,95 @@ function openFakeEngine(
   }
 }
 
-describe("Standard calibration game execution", () => {
-  it("executes and closes both games in a color-reversed mate-in-one pair", async () => {
-    const plan = createPlan(MATE_IN_ONE_FEN)
-    const engines: FakeEngine[] = []
-    const pair = await executeCalibrationPair({
-      games: plan.games,
-      policies: plan.policies,
-      maxPlies: 10,
-      openEngine: openFakeEngine("g6g7", engines),
-    })
-
-    expect(pair.games).toHaveLength(2)
-    expect(pair.games.map((game) => game.status)).toEqual([
-      "completed",
-      "completed",
-    ])
-    expect(
-      pair.games.map((game) =>
-        game.status === "completed" ? game.termination : undefined,
-      ),
-    ).toEqual([
-      { kind: "checkmate", winner: "white" },
-      { kind: "checkmate", winner: "white" },
-    ])
-    expect(pair.games.map((game) => game.moves[0]?.uci)).toEqual([
-      "g6g7",
-      "g6g7",
-    ])
-    expect(engines).toHaveLength(4)
-    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
-  })
-
-  it("replays a seeded uniform legal move without asking Stockfish", async () => {
-    const plan = createPlan(STANDARD_START_FEN, 10_000)
-    const firstEngines: FakeEngine[] = []
-    const secondEngines: FakeEngine[] = []
-    const game = plan.games[0]
-    expect(game).toBeDefined()
-    if (game === undefined) return
-
-    const first = await executeCalibrationGame({
-      game,
-      policies: plan.policies,
-      maxPlies: 1,
-      openEngine: openFakeEngine(null, firstEngines),
-    })
-    const second = await executeCalibrationGame({
-      game,
-      policies: plan.policies,
-      maxPlies: 1,
-      openEngine: openFakeEngine(null, secondEngines),
-    })
-
-    expect(first).toEqual(second)
-    expect(first.status).toBe("unterminated")
-    expect(first.moves[0]?.source).toBe("uniform-random-legal")
-    expect(
-      [...firstEngines, ...secondEngines].every(
-        (engine) => engine.searches.length === 0,
-      ),
-    ).toBe(true)
-  })
-
-  it("rejects an illegal engine move and still closes both seats", async () => {
-    const plan = createPlan(MATE_IN_ONE_FEN)
-    const engines: FakeEngine[] = []
-    const game = plan.games[0]
-    expect(game).toBeDefined()
-    if (game === undefined) return
-
-    await expect(
-      executeCalibrationGame({
-        game,
+describe("calibration game execution", () => {
+  it.each(["standard", "chess960"] as const)(
+    "executes and closes a color-reversed %s mate-in-one pair",
+    async (variant) => {
+      const plan = createPlan(MATE_IN_ONE_FEN, 0, variant)
+      const engines: FakeEngine[] = []
+      const pair = await executeCalibrationPair({
+        games: plan.games,
         policies: plan.policies,
         maxPlies: 10,
-        openEngine: openFakeEngine("a1a8", engines),
-      }),
-    ).rejects.toThrow("Stockfish returned an illegal move")
-    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
-  })
+        openEngine: openFakeEngine("g6g7", engines),
+      })
+
+      expect(pair.games).toHaveLength(2)
+      expect(pair.games.map((game) => game.status)).toEqual([
+        "completed",
+        "completed",
+      ])
+      expect(
+        pair.games.map((game) =>
+          game.status === "completed" ? game.termination : undefined,
+        ),
+      ).toEqual([
+        { kind: "checkmate", winner: "white" },
+        { kind: "checkmate", winner: "white" },
+      ])
+      expect(pair.games.map((game) => game.moves[0]?.uci)).toEqual([
+        "g6g7",
+        "g6g7",
+      ])
+      expect(engines).toHaveLength(4)
+      expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+    },
+  )
+
+  it.each(["standard", "chess960"] as const)(
+    "replays a seeded %s legal move without asking Stockfish",
+    async (variant) => {
+      const plan = createPlan(STANDARD_START_FEN, 10_000, variant)
+      const firstEngines: FakeEngine[] = []
+      const secondEngines: FakeEngine[] = []
+      const game = plan.games[0]
+      expect(game).toBeDefined()
+      if (game === undefined) return
+
+      const first = await executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: openFakeEngine(null, firstEngines),
+      })
+      const second = await executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: openFakeEngine(null, secondEngines),
+      })
+
+      expect(first).toEqual(second)
+      expect(first.status).toBe("unterminated")
+      expect(first.moves[0]?.source).toBe("uniform-random-legal")
+      expect(
+        [...firstEngines, ...secondEngines].every(
+          (engine) => engine.searches.length === 0,
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it.each(["standard", "chess960"] as const)(
+    "rejects an illegal %s engine move and still closes both seats",
+    async (variant) => {
+      const plan = createPlan(MATE_IN_ONE_FEN, 0, variant)
+      const engines: FakeEngine[] = []
+      const game = plan.games[0]
+      expect(game).toBeDefined()
+      if (game === undefined) return
+
+      await expect(
+        executeCalibrationGame({
+          game,
+          policies: plan.policies,
+          maxPlies: 10,
+          openEngine: openFakeEngine("a1a8", engines),
+        }),
+      ).rejects.toThrow("Stockfish returned an illegal move")
+      expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+    },
+  )
 
   it("classifies an initially terminal Standard position without engines", async () => {
     const plan = createPlan("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
@@ -246,12 +272,8 @@ describe("Standard calibration game execution", () => {
     expect(openEngineCalls).toBe(0)
   })
 
-  it("rejects Chess960 before creating an engine", async () => {
-    const plan = createPlan(
-      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1",
-      0,
-      "chess960",
-    )
+  it("rejects mismatched game and policy variants before creating an engine", async () => {
+    const plan = createPlan(STANDARD_START_FEN)
     const game = plan.games[0]
     let openEngineCalls = 0
     expect(game).toBeDefined()
@@ -259,7 +281,11 @@ describe("Standard calibration game execution", () => {
 
     await expect(
       executeCalibrationGame({
-        game,
+        game: {
+          ...game,
+          variant: "chess960",
+          chess960PositionId: chess960PositionIdFixture(518),
+        },
         policies: plan.policies,
         maxPlies: 10,
         openEngine: () => {
@@ -267,8 +293,82 @@ describe("Standard calibration game execution", () => {
           return new FakeEngine(null)
         },
       }),
-    ).rejects.toThrow("Chess960 calibration execution is unavailable")
+    ).rejects.toThrow("game and seat policy variants must match")
     expect(openEngineCalls).toBe(0)
+  })
+
+  it("configures Chess960 seats and applies king-to-rook castling", async () => {
+    const plan = chess960PlanFixture("4k3/8/8/8/8/8/8/R4KR1 w GA - 0 1")
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("Fixture game is missing.")
+    const engines: FakeEngine[] = []
+    const result = await executeCalibrationGame({
+      game,
+      policies: plan.policies,
+      maxPlies: 1,
+      openEngine: (input) => {
+        expect(input.configuration.variant).toBe("chess960")
+        return openFakeEngine("f1g1", engines)(input)
+      },
+    })
+    expect(result).toMatchObject({
+      status: "unterminated",
+      termination: "max-plies",
+      finalFen: "4k3/8/8/8/8/8/8/R4RK1 b - - 1 1",
+    })
+    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+  })
+
+  it("rejects cancellation after an engine reply and closes both Chess960 seats", async () => {
+    const plan = chess960PlanFixture(MATE_IN_ONE_FEN)
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("Fixture game is missing.")
+    const controller = new AbortController()
+    const engines: FakeEngine[] = []
+    await expect(
+      executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        signal: controller.signal,
+        openEngine: () => {
+          const engine = new FakeEngine("g6g7")
+          engines.push(engine)
+          return {
+            boot: () => engine.boot(),
+            close: () => engine.close(),
+            state: () => engine.state(),
+            search: async (request) => {
+              const result = await engine.search(request)
+              controller.abort()
+              return result
+            },
+          }
+        },
+      }),
+    ).rejects.toBeInstanceOf(CalibrationExecutionAbortedError)
+    expect(engines).toHaveLength(2)
+    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+  })
+
+  it("rejects different Chess960 position numbers in a purported pair", async () => {
+    const plan = chess960PlanFixture()
+    const [first, second] = plan.games
+    if (first === undefined || second?.variant !== "chess960")
+      throw new Error("Fixture pair is missing.")
+    await expect(
+      executeCalibrationPair({
+        games: [
+          first,
+          { ...second, chess960PositionId: chess960PositionIdFixture(1) },
+        ],
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: () => {
+          throw new Error("Invalid pair must not open engines.")
+        },
+      }),
+    ).rejects.toThrow("must preserve the same start")
   })
 
   it("rejects a tampered policy record before creating an engine", async () => {
