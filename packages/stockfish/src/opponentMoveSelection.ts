@@ -3,6 +3,8 @@ export const DETERMINISTIC_RANDOM_ALGORITHM_VERSION =
 export const OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION =
   "best-or-uniform-random-legal/v1" as const
 export const OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE = 10_000 as const
+export const OPPONENT_POSITION_SEED_DERIVATION_VERSION =
+  "mapachess-web-sha256-position-state/v1" as const
 
 const UINT32_RANGE = 0x1_0000_0000
 const DETERMINISTIC_RANDOM_SEED_PATTERN = /^[0-9a-f]{32}$/
@@ -20,6 +22,29 @@ export type DeterministicRandom = Readonly<{
 }>
 
 export type OpponentMoveSelectionSource = "stockfish" | "uniform-random-legal"
+
+export type OpponentSeedDigest = (
+  input: Uint8Array<ArrayBuffer>,
+) => Promise<ArrayBuffer>
+
+export async function deriveOpponentPositionSeed(
+  matchSeed: DeterministicRandomSeed,
+  requestId: string,
+  digest: OpponentSeedDigest,
+): Promise<DeterministicRandomSeed> {
+  const canonicalInput = JSON.stringify([
+    OPPONENT_POSITION_SEED_DERIVATION_VERSION,
+    matchSeed,
+    requestId,
+  ])
+  const bytes = new Uint8Array(
+    await digest(new TextEncoder().encode(canonicalInput)),
+  )
+  const seed = [...bytes.slice(0, 16)]
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("")
+  return parseDeterministicRandomSeed(seed, "opponent position seed")
+}
 
 export function parseDeterministicRandomSeed(
   value: unknown,

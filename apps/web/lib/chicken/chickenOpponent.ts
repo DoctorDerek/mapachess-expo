@@ -14,6 +14,8 @@ import {
 } from "@mapachess/stockfish/engine-session"
 import {
   createDeterministicRandom,
+  deriveOpponentPositionSeed,
+  OPPONENT_POSITION_SEED_DERIVATION_VERSION,
   parseDeterministicRandomSeed,
   selectOpponentMoveSource,
   selectUniformRandomLegalMove,
@@ -28,7 +30,7 @@ export const CHICKEN_NODE_LIMIT = 10_000 as const
 export const CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
 export const CHICKEN_PROVISIONAL_TARGET_ELO = 100 as const
 export const CHICKEN_WEB_SEED_DERIVATION_VERSION =
-  "mapachess-web-sha256-position-state/v1" as const
+  OPPONENT_POSITION_SEED_DERIVATION_VERSION
 export const STANDARD_CHICKEN_WEB_POLICY_VERSION =
   "mapachess-standard-chicken-web-policy/v1" as const
 const CHICKEN_WEB_POLICY_ENGINE_FINGERPRINT = [
@@ -55,19 +57,11 @@ export type ChickenCryptography = Readonly<{
   subtle: Pick<SubtleCrypto, "digest">
 }>
 
-const textEncoder = new TextEncoder()
-
 const throwIfSelectionAborted = (signal: AbortSignal): void => {
   if (signal.aborted) {
     throw new StockfishOperationAbortedError("opponent move selection")
   }
 }
-
-const hexadecimalByte = (value: number): string =>
-  value.toString(16).padStart(2, "0")
-
-const first128BitsAsHexadecimal = (digest: ArrayBuffer): string =>
-  [...new Uint8Array(digest).slice(0, 16)].map(hexadecimalByte).join("")
 
 const compareLegalMovesByUci = (
   left: LegalMatchMove,
@@ -114,30 +108,6 @@ export function chickenMatchId(
     : `chess960-story-chicken/${String(startingPosition.chess960PositionId)}/${matchSeed}`
 }
 
-async function deriveOpponentPositionSeed(
-  cryptography: ChickenCryptography,
-  matchSeed: DeterministicRandomSeed,
-  request: MatchOpponentRequest,
-  signal: AbortSignal,
-): Promise<DeterministicRandomSeed> {
-  throwIfSelectionAborted(signal)
-  const canonicalInput = JSON.stringify([
-    CHICKEN_WEB_SEED_DERIVATION_VERSION,
-    matchSeed,
-    request.requestId,
-  ])
-  const digest = await cryptography.subtle.digest(
-    "SHA-256",
-    textEncoder.encode(canonicalInput),
-  )
-  throwIfSelectionAborted(signal)
-
-  return parseDeterministicRandomSeed(
-    first128BitsAsHexadecimal(digest),
-    "Chicken position seed",
-  )
-}
-
 const requireVariantPosition = (
   request: MatchOpponentRequest,
   variant: MatchVariant,
@@ -159,14 +129,15 @@ export default function createChickenOpponent(
   return Object.freeze({
     selectMove: async (request, signal) => {
       requireVariantPosition(request, variant)
+      throwIfSelectionAborted(signal)
       const random = createDeterministicRandom(
         await deriveOpponentPositionSeed(
-          cryptography,
           matchSeed,
-          request,
-          signal,
+          request.requestId,
+          (bytes) => cryptography.subtle.digest("SHA-256", bytes),
         ),
       )
+      throwIfSelectionAborted(signal)
       const legalMoves = Object.freeze(
         [...request.legalMoves].sort(compareLegalMovesByUci),
       )
