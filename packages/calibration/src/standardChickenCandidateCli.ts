@@ -1,22 +1,28 @@
-import { mkdir, writeFile } from "node:fs/promises"
+import { access, mkdir, writeFile } from "node:fs/promises"
 import { join, resolve } from "node:path"
 import { parseArgs } from "node:util"
 import provisionStockfish18, {
+  resolveStockfishInstallPaths,
   type ProvisionedStockfish,
 } from "@mapachess/stockfish/provision"
 import { createProvisionedStockfishProcessAdapter } from "@mapachess/stockfish/uci-process-adapter"
 import createBayesEloInput from "./bayesEloInput.js"
-import provisionBayesElo from "./bayesEloProvision.js"
+import provisionBayesElo, {
+  resolveBayesEloInstallPaths,
+} from "./bayesEloProvision.js"
 import runBayesElo from "./bayesEloRunner.js"
 import { resolveCalibrationEvidencePaths } from "./calibrationEvidenceStore.js"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch.js"
 import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary.js"
+import fingerprintOpponentPolicy from "./opponentPolicy.js"
 import standardChickenCandidatePlan, {
   STANDARD_CHICKEN_ANCHOR,
   STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
   STANDARD_CHICKEN_MAX_PLIES,
 } from "./standardChickenCandidatePlan.js"
 import createStandardChickenShortlist from "./standardChickenShortlist.js"
+import createWebOpponentCandidatePlan from "./webOpponentCandidatePlan.js"
+import openWebStockfishCalibrationSession from "./webStockfishCalibrationSession.js"
 
 const CANDIDATE_REPORT_SCHEMA_VERSION = 1 as const
 const COMPLETED_PAIRS_FILE_NAME = "completed-pairs.pgn"
@@ -46,7 +52,7 @@ function gamesForPairs(pairCount: number): number {
   return gameCount
 }
 
-async function runStandardChickenCandidateCommand(): Promise<void> {
+async function runCandidateCalibrationCommand(): Promise<void> {
   const processArguments = process.argv.slice(2)
   const { values } = parseArgs({
     args:
@@ -56,6 +62,8 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
     allowPositionals: false,
     strict: true,
     options: {
+      profile: { type: "string", default: "standard-chicken" },
+      variant: { type: "string", default: "standard" },
       "evidence-root": { type: "string" },
       "maximum-new-pairs": {
         type: "string",
@@ -67,10 +75,38 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
       },
     },
   })
+  const variant = values.variant
+  if (variant !== "standard" && variant !== "chess960") {
+    throw new TypeError("variant must be standard or chess960.")
+  }
+  if (
+    values.profile !== "standard-chicken" &&
+    values.profile !== "web-low-elo"
+  ) {
+    throw new TypeError("profile must be standard-chicken or web-low-elo.")
+  }
+  if (values.profile === "standard-chicken" && variant !== "standard") {
+    throw new TypeError(
+      "The historical Chicken experiment supports Standard only; use the web-low-elo profile for Chess960.",
+    )
+  }
+  const webExperiment =
+    values.profile === "web-low-elo"
+      ? createWebOpponentCandidatePlan(variant)
+      : undefined
+  const plan = webExperiment?.plan ?? standardChickenCandidatePlan
+  const anchor = webExperiment?.anchor ?? STANDARD_CHICKEN_ANCHOR
   const workspaceRoot = resolve(values["workspace-root"])
+  if (webExperiment !== undefined) {
+    await access(resolveStockfishInstallPaths(workspaceRoot).executablePath)
+    await access(resolveBayesEloInstallPaths(workspaceRoot).executablePath)
+  }
   const evidenceRoot = resolve(
     workspaceRoot,
-    values["evidence-root"] ?? STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
+    values["evidence-root"] ??
+      (webExperiment === undefined
+        ? STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT
+        : `.calibration/web-low-strength-${variant}-${String(STANDARD_CHICKEN_MAX_PLIES)}-plies`),
   )
   const maximumNewPairs = positiveSafeInteger(
     values["maximum-new-pairs"],
@@ -84,26 +120,41 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
   try {
     const batch = await executeCalibrationSmokeBatch({
       rootDirectory: evidenceRoot,
-      plan: standardChickenCandidatePlan,
+      plan,
       maxPlies: STANDARD_CHICKEN_MAX_PLIES,
       maximumNewGames: gamesForPairs(maximumNewPairs),
       signal: abortController.signal,
-      openEngine: async ({ configuration }) => {
+      openEngine: async ({ configuration, policy }) => {
+        if ("kind" in policy.engine) {
+          return openWebStockfishCalibrationSession(
+            workspaceRoot,
+            configuration,
+          )
+        }
         provisionedStockfish ??= provisionStockfish18(workspaceRoot)
+        const provisioned = await provisionedStockfish
+        if (
+          fingerprintOpponentPolicy(policy) !==
+          fingerprintOpponentPolicy({ ...policy, engine: provisioned.identity })
+        ) {
+          throw new Error(
+            "The calibration reference engine does not match its recorded policy.",
+          )
+        }
         return createProvisionedStockfishProcessAdapter(
-          await provisionedStockfish,
+          provisioned,
           configuration,
         )
       },
     })
     const summary = await summarizeCalibrationSmokeEvidence({
       rootDirectory: evidenceRoot,
-      plan: standardChickenCandidatePlan,
+      plan,
       maxPlies: STANDARD_CHICKEN_MAX_PLIES,
     })
     const bayesEloInput = await createBayesEloInput({
       rootDirectory: evidenceRoot,
-      plan: standardChickenCandidatePlan,
+      plan,
       maxPlies: STANDARD_CHICKEN_MAX_PLIES,
     })
     const ratingEvidence =
@@ -112,24 +163,24 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
         ? null
         : await runBayesElo({
             input: bayesEloInput,
-            anchor: STANDARD_CHICKEN_ANCHOR,
+            anchor,
             provisioned: await provisionBayesElo(workspaceRoot),
             signal: abortController.signal,
           })
-    const shortlist = createStandardChickenShortlist({
-      summary,
-      ratings: ratingEvidence?.ratings ?? [],
-    })
-    const [firstGame] = standardChickenCandidatePlan.games
+    const shortlist =
+      webExperiment === undefined
+        ? createStandardChickenShortlist({
+            summary,
+            ratings: ratingEvidence?.ratings ?? [],
+          })
+        : null
+    const [firstGame] = plan.games
     if (firstGame === undefined) {
-      throw new Error("Standard Chicken candidate plan has no games.")
+      throw new Error("The calibration candidate plan has no games.")
     }
     const artifactDirectory = join(
-      resolveCalibrationEvidencePaths(
-        evidenceRoot,
-        standardChickenCandidatePlan,
-        firstGame,
-      ).planDirectory,
+      resolveCalibrationEvidencePaths(evidenceRoot, plan, firstGame)
+        .planDirectory,
       "candidate-sweep",
     )
     const completedPairsPath = join(
@@ -140,7 +191,17 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
     const { pgn, ...bayesEloInputEvidence } = bayesEloInput
     const report = {
       schemaVersion: CANDIDATE_REPORT_SCHEMA_VERSION,
-      planId: standardChickenCandidatePlan.planId,
+      planId: plan.planId,
+      ...(webExperiment === undefined
+        ? {}
+        : {
+            profile: values.profile,
+            execution: {
+              node: process.versions.node,
+              platform: process.platform,
+              architecture: process.arch,
+            },
+          }),
       maxPlies: STANDARD_CHICKEN_MAX_PLIES,
       maximumNewPairs,
       batch,
@@ -158,7 +219,7 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
         {
           evidenceRoot,
           artifacts: { completedPairsPath, reportPath },
-          planId: standardChickenCandidatePlan.planId,
+          planId: plan.planId,
           batch: {
             executedGameCount: batch.executedGameIds.length,
             previouslyStoredGameCount: batch.previouslyStoredGameIds.length,
@@ -187,11 +248,9 @@ async function runStandardChickenCandidateCommand(): Promise<void> {
 }
 
 try {
-  await runStandardChickenCandidateCommand()
+  await runCandidateCalibrationCommand()
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
-  process.stderr.write(
-    `Standard Chicken candidate command failed: ${message}\n`,
-  )
+  process.stderr.write(`Calibration candidate command failed: ${message}\n`)
   process.exitCode = 1
 }
