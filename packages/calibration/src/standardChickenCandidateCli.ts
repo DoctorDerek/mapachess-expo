@@ -14,7 +14,9 @@ import runBayesElo from "./bayesEloRunner.js"
 import { resolveCalibrationEvidencePaths } from "./calibrationEvidenceStore.js"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch.js"
 import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary.js"
-import fingerprintOpponentPolicy from "./opponentPolicy.js"
+import fingerprintOpponentPolicy, {
+  type CalibrationVariant,
+} from "./opponentPolicy.js"
 import standardChickenCandidatePlan, {
   STANDARD_CHICKEN_ANCHOR,
   STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT,
@@ -22,6 +24,9 @@ import standardChickenCandidatePlan, {
 } from "./standardChickenCandidatePlan.js"
 import createStandardChickenShortlist from "./standardChickenShortlist.js"
 import createWebOpponentCandidatePlan from "./webOpponentCandidatePlan.js"
+import createWebOpponentLadderPlan, {
+  createWebOpponentWeakEndPlan,
+} from "./webOpponentLadderPlan.js"
 import openWebStockfishCalibrationSession from "./webStockfishCalibrationSession.js"
 
 const CANDIDATE_REPORT_SCHEMA_VERSION = 1 as const
@@ -29,6 +34,25 @@ const COMPLETED_PAIRS_FILE_NAME = "completed-pairs.pgn"
 const DEFAULT_MAXIMUM_NEW_PAIRS = 1
 const DEFAULT_WORKSPACE_ROOT = resolve(import.meta.dirname, "../../..")
 const REPORT_FILE_NAME = "candidate-report.json"
+
+type CandidateProfile =
+  "standard-chicken" | "web-low-elo" | "web-weak-end" | "web-ladder"
+
+function selectWebExperiment(
+  profile: CandidateProfile,
+  variant: CalibrationVariant,
+) {
+  switch (profile) {
+    case "standard-chicken":
+      return undefined
+    case "web-low-elo":
+      return createWebOpponentCandidatePlan(variant)
+    case "web-weak-end":
+      return createWebOpponentWeakEndPlan(variant)
+    case "web-ladder":
+      return createWebOpponentLadderPlan(variant)
+  }
+}
 
 function positiveSafeInteger(value: string, label: string): number {
   if (!/^[1-9][0-9]*$/.test(value)) {
@@ -81,19 +105,20 @@ async function runCandidateCalibrationCommand(): Promise<void> {
   }
   if (
     values.profile !== "standard-chicken" &&
-    values.profile !== "web-low-elo"
+    values.profile !== "web-low-elo" &&
+    values.profile !== "web-weak-end" &&
+    values.profile !== "web-ladder"
   ) {
-    throw new TypeError("profile must be standard-chicken or web-low-elo.")
+    throw new TypeError(
+      "profile must be standard-chicken, web-low-elo, web-weak-end or web-ladder.",
+    )
   }
   if (values.profile === "standard-chicken" && variant !== "standard") {
     throw new TypeError(
       "The historical Chicken experiment supports Standard only; use the web-low-elo profile for Chess960.",
     )
   }
-  const webExperiment =
-    values.profile === "web-low-elo"
-      ? createWebOpponentCandidatePlan(variant)
-      : undefined
+  const webExperiment = selectWebExperiment(values.profile, variant)
   const plan = webExperiment?.plan ?? standardChickenCandidatePlan
   const anchor = webExperiment?.anchor ?? STANDARD_CHICKEN_ANCHOR
   const workspaceRoot = resolve(values["workspace-root"])
@@ -106,7 +131,7 @@ async function runCandidateCalibrationCommand(): Promise<void> {
     values["evidence-root"] ??
       (webExperiment === undefined
         ? STANDARD_CHICKEN_DEFAULT_EVIDENCE_ROOT
-        : `.calibration/web-low-strength-${variant}-${String(STANDARD_CHICKEN_MAX_PLIES)}-plies`),
+        : `.calibration/${values.profile === "web-low-elo" ? "web-low-strength" : values.profile}-${variant}-${String(STANDARD_CHICKEN_MAX_PLIES)}-plies`),
   )
   const maximumNewPairs = positiveSafeInteger(
     values["maximum-new-pairs"],
@@ -196,6 +221,9 @@ async function runCandidateCalibrationCommand(): Promise<void> {
         ? {}
         : {
             profile: values.profile,
+            ...("anchorProvenance" in webExperiment
+              ? { anchorProvenance: webExperiment.anchorProvenance }
+              : {}),
             execution: {
               node: process.versions.node,
               platform: process.platform,
