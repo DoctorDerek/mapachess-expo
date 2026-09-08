@@ -9,6 +9,7 @@ import type {
   CalibrationPlan,
   CalibrationPolicyRecord,
 } from "./calibrationPlan.js"
+import { CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION } from "./opponentPolicy.js"
 
 export const CALIBRATION_GAME_EVIDENCE_SCHEMA_VERSION = 1 as const
 
@@ -191,12 +192,15 @@ function escapePgnHeader(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')
 }
 
-function serializeChess960Pgn(
+function serializeCanonicalPgn(
   evidence: CalibrationGameEvidence,
-  game: Extract<CalibrationGame, { variant: "chess960" }>,
+  game: CalibrationGame,
   result: CompletedCalibrationGameResult,
 ): string {
-  const position = createCalibrationChessPosition(game)
+  const position = createCalibrationChessPosition(
+    game,
+    CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+  )
   const movetext: string[] = []
   for (const [index, move] of result.moves.entries()) {
     if (position.fen() !== move.fenBefore || position.turn() !== move.color) {
@@ -232,10 +236,19 @@ function serializeChess960Pgn(
   }
   const headers: readonly (readonly [string, string])[] = [
     ...calibrationPgnHeaders(evidence, result),
-    ["Variant", "Chess960"],
-    ["SetUp", "1"],
-    ["FEN", game.fen],
-    ["MapachessChess960Position", String(game.chess960PositionId)],
+    ...(game.variant === "chess960"
+      ? ([
+          ["Variant", "Chess960"],
+          ["SetUp", "1"],
+          ["FEN", game.fen],
+          ["MapachessChess960Position", String(game.chess960PositionId)],
+        ] as const)
+      : game.fen === STANDARD_START_FEN
+        ? []
+        : ([
+            ["SetUp", "1"],
+            ["FEN", game.fen],
+          ] as const)),
   ]
   const serializedHeaders = headers.map(
     ([name, value]) => `[${name} "${escapePgnHeader(value)}"]`,
@@ -254,8 +267,12 @@ export function serializeCalibrationGamePgn(
   }
 
   const result = evidence.result
-  if (evidence.game.variant === "chess960") {
-    return serializeChess960Pgn(evidence, evidence.game, result)
+  if (
+    evidence.game.variant === "chess960" ||
+    evidence.policies.white.policy.moveSelection.legalMoveGeneratorVersion ===
+      CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION
+  ) {
+    return serializeCanonicalPgn(evidence, evidence.game, result)
   }
   const chess = new Chess(evidence.game.fen)
   for (const [name, value] of calibrationPgnHeaders(evidence, result)) {

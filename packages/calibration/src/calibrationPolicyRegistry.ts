@@ -1,4 +1,5 @@
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
+import { OPPONENT_POSITION_SEED_DERIVATION_VERSION } from "@mapachess/stockfish/opponent-move-selection"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
 import type { CalibrationColor } from "./calibrationGameTypes.js"
 import type { CalibrationPolicyRecord } from "./calibrationPlan.js"
@@ -7,10 +8,13 @@ import {
   CALIBRATION_SEED_DERIVATION_VERSION,
 } from "./deterministicRandom.js"
 import fingerprintOpponentPolicy, {
+  CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_COMMAND_PROTOCOL_VERSION,
   CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
+  WEB_CALIBRATION_ADAPTER_VERSION,
+  WEB_CALIBRATION_ENGINE_IDENTITY,
   type OpponentPolicy,
   type OpponentPolicyFingerprint,
 } from "./opponentPolicy.js"
@@ -49,9 +53,12 @@ function validateExecutablePolicy(policy: OpponentPolicy): void {
 
   if (
     policy.moveSelection.legalMoveGeneratorVersion !==
-    (policy.variant === "standard"
-      ? CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
-      : CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION)
+      CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION &&
+    !(
+      policy.variant === "standard" &&
+      policy.moveSelection.legalMoveGeneratorVersion ===
+        CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
+    )
   ) {
     throw new TypeError("Unsupported calibration legal-move generator version.")
   }
@@ -59,13 +66,32 @@ function validateExecutablePolicy(policy: OpponentPolicy): void {
   if (
     policy.randomness.algorithmVersion !==
       CALIBRATION_RANDOM_ALGORITHM_VERSION ||
-    policy.randomness.seedDerivationVersion !==
-      CALIBRATION_SEED_DERIVATION_VERSION
+    (policy.randomness.seedDerivationVersion !==
+      CALIBRATION_SEED_DERIVATION_VERSION &&
+      policy.randomness.seedDerivationVersion !==
+        OPPONENT_POSITION_SEED_DERIVATION_VERSION)
   ) {
     throw new TypeError("Unsupported calibration randomness version.")
   }
 
-  if (policy.runtime.adapterVersion !== STOCKFISH_PROCESS_ADAPTER_VERSION) {
+  if ("kind" in policy.engine) {
+    if (
+      policy.runtime.adapterVersion !== WEB_CALIBRATION_ADAPTER_VERSION ||
+      policy.randomness.seedDerivationVersion !==
+        OPPONENT_POSITION_SEED_DERIVATION_VERSION ||
+      policy.moveSelection.legalMoveGeneratorVersion !==
+        CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION ||
+      fingerprintOpponentPolicy(policy) !==
+        fingerprintOpponentPolicy({
+          ...policy,
+          engine: WEB_CALIBRATION_ENGINE_IDENTITY,
+        })
+    ) {
+      throw new TypeError("Unsupported web Stockfish calibration policy.")
+    }
+  } else if (
+    policy.runtime.adapterVersion !== STOCKFISH_PROCESS_ADAPTER_VERSION
+  ) {
     throw new TypeError("Unsupported Stockfish process adapter version.")
   }
 }

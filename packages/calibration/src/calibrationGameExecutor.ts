@@ -1,8 +1,11 @@
+import { webcrypto } from "node:crypto"
 import type {
   StockfishEngineSearchResult,
   StockfishEngineSession,
 } from "@mapachess/stockfish/engine-session"
 import {
+  deriveOpponentPositionSeed,
+  OPPONENT_POSITION_SEED_DERIVATION_VERSION,
   selectOpponentMoveSource,
   selectUniformRandomLegalMove,
 } from "@mapachess/stockfish/opponent-move-selection"
@@ -123,7 +126,22 @@ async function executePlies(
       )
     }
 
-    const random = randomByColor[color]
+    const positionSeeded =
+      policy.randomness.seedDerivationVersion ===
+      OPPONENT_POSITION_SEED_DERIVATION_VERSION
+    const requestId = positionSeeded
+      ? `${input.game.gameId}/opponent/ply/${String(ply)}/fen/${chess.fen()}`
+      : `${input.game.gameId}/ply/${ply}/${color}`
+    const random = positionSeeded
+      ? createDeterministicRandom(
+          await deriveOpponentPositionSeed(
+            input.game[color].randomSeed,
+            requestId,
+            (bytes) => webcrypto.subtle.digest("SHA-256", bytes),
+          ),
+        )
+      : randomByColor[color]
+    throwIfAborted(input.signal)
     const moveSource = selectOpponentMoveSource(
       random,
       policy.moveSelection.randomMoveProbabilityBasisPoints,
@@ -138,7 +156,7 @@ async function executePlies(
     } else {
       search = await engineByColor[color].search(
         {
-          requestId: `${input.game.gameId}/ply/${ply}/${color}`,
+          requestId,
           nodeLimit: policy.search.nodeLimit,
           position: {
             fen: input.game.fen,
@@ -148,6 +166,9 @@ async function executePlies(
         input.signal,
       )
 
+      if (search.requestId !== requestId) {
+        throw new Error("Stockfish returned a stale calibration response.")
+      }
       if (search.bestMove === null || !legalMoves.includes(search.bestMove)) {
         throw new Error(
           `Stockfish returned an illegal move for ${input.game.gameId}: ${search.bestMove ?? "<none>"}.`,
@@ -303,7 +324,22 @@ export default async function executeCalibrationGame(
       )
     }
   }
-  const chess = createCalibrationChessPosition(input.game)
+  const whiteRules = requireCalibrationPolicy(
+    policies,
+    input.game.white.policyFingerprint,
+    "white",
+  ).moveSelection.legalMoveGeneratorVersion
+  const blackRules = requireCalibrationPolicy(
+    policies,
+    input.game.black.policyFingerprint,
+    "black",
+  ).moveSelection.legalMoveGeneratorVersion
+  if (whiteRules !== blackRules) {
+    throw new TypeError(
+      "Calibration seats must use the same canonical chess rules.",
+    )
+  }
+  const chess = createCalibrationChessPosition(input.game, whiteRules)
   const initialTermination = chess.termination()
 
   if (initialTermination !== undefined) {
