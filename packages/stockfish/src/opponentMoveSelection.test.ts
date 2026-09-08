@@ -1,6 +1,8 @@
+import { webcrypto } from "node:crypto"
 import { describe, expect, it } from "vitest"
 import {
   createDeterministicRandom,
+  deriveOpponentPositionSeed,
   DETERMINISTIC_RANDOM_ALGORITHM_VERSION,
   OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION,
   OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE,
@@ -12,6 +14,19 @@ import {
 const KNOWN_SEED = "00000001000000020000000300000004"
 
 describe("deterministic opponent move selection", () => {
+  it("preserves the shipped position seed and distinguishes subsequent positions", async () => {
+    const seed = parseDeterministicRandomSeed(KNOWN_SEED)
+    const digest = (bytes: Uint8Array<ArrayBuffer>) =>
+      webcrypto.subtle.digest("SHA-256", bytes)
+    const requestId = "fixture/opponent/ply/0/fen/start"
+    expect(await deriveOpponentPositionSeed(seed, requestId, digest)).toBe(
+      "4cefa9645f80d02e027b529a82d3baa3",
+    )
+    expect(
+      await deriveOpponentPositionSeed(seed, `${requestId}/next`, digest),
+    ).not.toBe("4cefa9645f80d02e027b529a82d3baa3")
+  })
+
   it("replays the established unsigned xoshiro sequence", () => {
     const random = createDeterministicRandom(
       parseDeterministicRandomSeed(KNOWN_SEED),
