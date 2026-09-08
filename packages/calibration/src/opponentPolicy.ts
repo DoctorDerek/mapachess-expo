@@ -10,6 +10,11 @@ import {
   OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION,
   OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE,
 } from "@mapachess/stockfish/opponent-move-selection"
+import type { StockfishUciExpectation } from "@mapachess/stockfish/uci-session"
+import {
+  STOCKFISH_18_WEB_RUNTIME_IDENTITY,
+  type StockfishWebRuntimeArtifact,
+} from "@mapachess/stockfish/web-runtime-identity"
 
 export const OPPONENT_POLICY_SCHEMA_VERSION = 2 as const
 export const RANDOM_MOVE_PROBABILITY_SCALE =
@@ -22,6 +27,24 @@ export const CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION =
   "chess.js@1.4.0/uci-lexicographic/v1" as const
 export const CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION =
   "mapachess-match/chessops@0.15.1/uci-lexicographic/v1" as const
+export const CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION =
+  CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION
+export const WEB_CALIBRATION_ADAPTER_VERSION =
+  "stockfish-lite-wasm-node-uci/v1" as const
+
+export type WebCalibrationEngineIdentity = Readonly<{
+  kind: "web-wasm"
+  releaseTag: string
+  stockfishJsSourceRevision: string
+  upstreamStockfishSourceRevision: string
+  artifacts: readonly StockfishWebRuntimeArtifact[]
+  uciExpectation: StockfishUciExpectation
+}>
+
+export const WEB_CALIBRATION_ENGINE_IDENTITY = {
+  kind: "web-wasm",
+  ...STOCKFISH_18_WEB_RUNTIME_IDENTITY,
+} as const satisfies WebCalibrationEngineIdentity
 
 const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
@@ -44,7 +67,7 @@ export type OpeningBookPolicy = Readonly<{ kind: "disabled" }>
 export type OpponentPolicy = Readonly<{
   schemaVersion: typeof OPPONENT_POLICY_SCHEMA_VERSION
   variant: CalibrationVariant
-  engine: StockfishBuildIdentity
+  engine: StockfishBuildIdentity | WebCalibrationEngineIdentity
   moveSelection: Readonly<{
     algorithmVersion: string
     kind: "best-or-uniform-random-legal"
@@ -108,6 +131,100 @@ function assertBoolean(value: boolean, label: string): void {
   }
 }
 
+function serializeEngineIdentity(engine: OpponentPolicy["engine"]) {
+  if ("kind" in engine) {
+    if (engine.kind !== "web-wasm") {
+      throw new TypeError("Unsupported calibration engine kind.")
+    }
+    assertStableText(engine.releaseTag, "engine.releaseTag")
+    assertStableText(
+      engine.stockfishJsSourceRevision,
+      "engine.stockfishJsSourceRevision",
+    )
+    assertStableText(
+      engine.upstreamStockfishSourceRevision,
+      "engine.upstreamStockfishSourceRevision",
+    )
+    assertStableText(engine.uciExpectation.name, "engine.uciExpectation.name")
+    assertStableText(
+      engine.uciExpectation.networkDefaults.big,
+      "engine.networkDefaults.big",
+    )
+    assertStableText(
+      engine.uciExpectation.networkDefaults.small,
+      "engine.networkDefaults.small",
+    )
+    assertBoolean(
+      engine.uciExpectation.requiresSyzygyPath,
+      "engine.requiresSyzygyPath",
+    )
+    if (
+      engine.artifacts.length !==
+      STOCKFISH_18_WEB_RUNTIME_IDENTITY.artifacts.length
+    ) {
+      throw new TypeError(
+        "Web calibration requires the loader and WASM identities.",
+      )
+    }
+    const artifacts = engine.artifacts
+      .toSorted((left, right) =>
+        left.fileName < right.fileName
+          ? -1
+          : left.fileName > right.fileName
+            ? 1
+            : 0,
+      )
+      .map((artifact) => {
+        assertStableText(artifact.fileName, "engine.artifact.fileName")
+        assertPositiveSafeInteger(
+          artifact.byteLength,
+          "engine.artifact.byteLength",
+        )
+        parseSha256Hex(artifact.sha256, "engine.artifact.sha256")
+        return {
+          fileName: artifact.fileName,
+          byteLength: artifact.byteLength,
+          sha256: artifact.sha256,
+        }
+      })
+    return {
+      kind: engine.kind,
+      releaseTag: engine.releaseTag,
+      stockfishJsSourceRevision: engine.stockfishJsSourceRevision,
+      upstreamStockfishSourceRevision: engine.upstreamStockfishSourceRevision,
+      artifacts,
+      uciExpectation: {
+        name: engine.uciExpectation.name,
+        networkDefaults: {
+          big: engine.uciExpectation.networkDefaults.big,
+          small: engine.uciExpectation.networkDefaults.small,
+        },
+        requiresSyzygyPath: engine.uciExpectation.requiresSyzygyPath,
+      },
+    }
+  }
+
+  validateStockfishBuildIdentity(engine)
+  return {
+    name: engine.name,
+    version: engine.version,
+    releaseTag: engine.releaseTag,
+    sourceRevision: engine.sourceRevision,
+    archiveSha256: engine.archiveSha256,
+    executableSha256: engine.executableSha256,
+    networks: {
+      big: {
+        fileName: engine.networks.big.fileName,
+        sha256: engine.networks.big.sha256,
+      },
+      small: {
+        fileName: engine.networks.small.fileName,
+        sha256: engine.networks.small.sha256,
+      },
+    },
+  }
+}
+
 export function validateOpponentPolicy(policy: OpponentPolicy): void {
   if (policy.schemaVersion !== OPPONENT_POLICY_SCHEMA_VERSION) {
     throw new TypeError(
@@ -119,7 +236,7 @@ export function validateOpponentPolicy(policy: OpponentPolicy): void {
     throw new TypeError('variant must be "standard" or "chess960".')
   }
 
-  validateStockfishBuildIdentity(policy.engine)
+  serializeEngineIdentity(policy.engine)
 
   if (policy.search.strength.kind === "uci-elo") {
     assertPositiveSafeInteger(policy.search.strength.elo, "search.strength.elo")
@@ -191,24 +308,7 @@ export function serializeOpponentPolicy(policy: OpponentPolicy): string {
     namespace: POLICY_FINGERPRINT_NAMESPACE,
     schemaVersion: policy.schemaVersion,
     variant: policy.variant,
-    engine: {
-      name: policy.engine.name,
-      version: policy.engine.version,
-      releaseTag: policy.engine.releaseTag,
-      sourceRevision: policy.engine.sourceRevision,
-      archiveSha256: policy.engine.archiveSha256,
-      executableSha256: policy.engine.executableSha256,
-      networks: {
-        big: {
-          fileName: policy.engine.networks.big.fileName,
-          sha256: policy.engine.networks.big.sha256,
-        },
-        small: {
-          fileName: policy.engine.networks.small.fileName,
-          sha256: policy.engine.networks.small.sha256,
-        },
-      },
-    },
+    engine: serializeEngineIdentity(policy.engine),
     search: {
       strength,
       nodeLimit: policy.search.nodeLimit,
