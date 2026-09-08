@@ -1,6 +1,8 @@
 import { Chess } from "chess.js"
 import { describe, expect, it } from "vitest"
 import {
+  completedChess960EvidenceFixture,
+  MATE_IN_ONE_FEN,
   mateInOneEvidenceFixture,
   stalemateResultFixture,
   standardPlanFixture,
@@ -21,6 +23,57 @@ function createFixture(seed = 42): Readonly<{
 }
 
 describe("calibration game evidence", () => {
+  it("exports Chess960 castling and a completed repetition with explicit variant metadata", () => {
+    const evidence = completedChess960EvidenceFixture(
+      "4k1n1/8/8/8/8/8/8/R4KR1 w GA - 0 1",
+      ["f1g1", "g8f6", "g1h1", "f6g8", "h1g1", "g8f6", "g1h1", "f6g8", "h1g1"],
+    )
+    const pgn = serializeCalibrationGamePgn(evidence)
+    expect(pgn).toContain('[Variant "Chess960"]')
+    expect(pgn).toContain('[MapachessChess960Position "0"]')
+    expect(pgn).toContain(`[FEN "${evidence.game.fen}"]`)
+    expect(pgn).toContain('[MapachessTermination "threefold-repetition"]')
+    expect(pgn).toMatch(
+      /1\. O-O Nf6 2\. Kh1 Ng8 3\. Kg1 Nf6 4\. Kh1 Ng8 5\. Kg1 1\/2-1\/2\n$/,
+    )
+    expect(evidence.result.finalFen).toBe("4k1n1/8/8/8/8/8/8/R4RK1 b - - 9 5")
+  })
+
+  it("numbers a Chess960 game starting with Black at its recorded full move", () => {
+    const evidence = completedChess960EvidenceFixture(
+      "8/8/8/8/8/5kq1/8/7K b - - 0 7",
+      ["g3g2"],
+    )
+    expect(serializeCalibrationGamePgn(evidence)).toMatch(/7\.\.\. Qg2# 0-1\n$/)
+  })
+
+  it("rejects a Chess960 PGN with a false final position or termination", () => {
+    const evidence = completedChess960EvidenceFixture(MATE_IN_ONE_FEN, ["g6g7"])
+    expect(() =>
+      serializeCalibrationGamePgn({
+        ...evidence,
+        result: { ...evidence.result, finalFen: evidence.game.fen },
+      }),
+    ).toThrow("recorded final FEN")
+    expect(() =>
+      serializeCalibrationGamePgn({
+        ...evidence,
+        result: {
+          ...evidence.result,
+          status: "completed",
+          termination: { kind: "stalemate" },
+        },
+      }),
+    ).toThrow("recorded termination")
+    const [move] = evidence.result.moves
+    if (move === undefined) throw new Error("Fixture move is missing.")
+    expect(() =>
+      serializeCalibrationGamePgn({
+        ...evidence,
+        result: { ...evidence.result, moves: [{ ...move, color: "black" }] },
+      }),
+    ).toThrow("recorded move")
+  })
   it("captures the exact plan, policies, bound, and result", () => {
     const fixture = createFixture()
     const evidence = createCalibrationGameEvidence({

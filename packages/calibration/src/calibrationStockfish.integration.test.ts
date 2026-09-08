@@ -10,10 +10,13 @@ import {
   createProvisionedStockfishProcessAdapter,
   STOCKFISH_PROCESS_ADAPTER_VERSION,
 } from "@mapachess/stockfish/uci-process-adapter"
+import { chess960PlanFixture } from "../test/calibrationFixtures"
+import createCalibrationChessPosition from "./calibrationChessPosition"
 import { executeCalibrationPair } from "./calibrationGameExecutor"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
 } from "./calibrationPlan"
+import { stockfishConfigurationFromPolicy } from "./calibrationPolicyRegistry"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch"
 import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary"
 import {
@@ -74,6 +77,40 @@ function createPolicy(nodeLimit: number): OpponentPolicy {
 }
 
 describe("pinned Stockfish calibration integration", () => {
+  it.each([
+    ["R4KR1", "GA", "f1g1"],
+    ["R5KR", "HA", "g1h1"],
+  ])(
+    "accepts the Chess960 castling history from %s",
+    async (rank, rights, castle) => {
+      const plan = chess960PlanFixture(
+        `4k3/8/8/8/8/8/8/${rank} w ${rights} - 0 1`,
+      )
+      const game = plan.games[0]
+      const record = plan.policies[0]
+      if (game === undefined || record === undefined)
+        throw new Error("Smoke fixture is incomplete.")
+      const position = createCalibrationChessPosition(game)
+      position.play(castle)
+      const adapter = createProvisionedStockfishProcessAdapter(
+        provisioned,
+        stockfishConfigurationFromPolicy(record.policy),
+      )
+      try {
+        await adapter.boot()
+        const reply = await adapter.search({
+          requestId: `chess960-castling/${castle}`,
+          nodeLimit: 1_000,
+          position: { fen: game.fen, moves: [castle] },
+        })
+        expect(position.legalMoves()).toContain(reply.bestMove)
+        expect(reply.requestId).toBe(`chess960-castling/${castle}`)
+      } finally {
+        await adapter.close()
+      }
+      expect(adapter.state()).toBe("closed")
+    },
+  )
   it("returns an owned legal move from the stochastic UCI_Elo anchor", async () => {
     const chess = new Chess(STANDARD_START_FEN)
     const legalMoves = chess.moves({ verbose: true }).map((move) => move.lan)

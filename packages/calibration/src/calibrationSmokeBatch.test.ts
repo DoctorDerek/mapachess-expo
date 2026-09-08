@@ -2,10 +2,15 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
-import { standardPlanFixture } from "../test/calibrationFixtures"
+import {
+  chess960PlanFixture,
+  STALEMATE_FEN,
+  standardPlanFixture,
+} from "../test/calibrationFixtures"
 import { CalibrationExecutionAbortedError } from "./calibrationGameExecutor"
 import type { OpenCalibrationEngine } from "./calibrationGameTypes"
 import executeCalibrationSmokeBatch from "./calibrationSmokeBatch"
+import summarizeCalibrationSmokeEvidence from "./calibrationSmokeSummary"
 
 const temporaryRoots: string[] = []
 
@@ -27,51 +32,70 @@ afterEach(async () => {
 })
 
 describe("calibration smoke-batch execution", () => {
-  it("executes only the requested missing games across resumptions", async () => {
-    const rootDirectory = await temporaryEvidenceRoot()
-    const plan = standardPlanFixture()
-    const firstGame = plan.games[0]
-    const secondGame = plan.games[1]
-    if (firstGame === undefined || secondGame === undefined) {
-      throw new Error("Smoke-batch fixture pair is incomplete.")
-    }
-    const unexpectedEngine: OpenCalibrationEngine = () => {
-      throw new Error("A terminal fixture must not open Stockfish.")
-    }
-    const input = {
-      rootDirectory,
-      plan,
-      maxPlies: 10,
-      maximumNewGames: 1,
-      openEngine: unexpectedEngine,
-    }
+  it.each(["standard", "chess960"] as const)(
+    "executes only missing %s games across resumptions",
+    async (variant) => {
+      const rootDirectory = await temporaryEvidenceRoot()
+      const plan =
+        variant === "standard"
+          ? standardPlanFixture()
+          : chess960PlanFixture(STALEMATE_FEN)
+      const firstGame = plan.games[0]
+      const secondGame = plan.games[1]
+      if (firstGame === undefined || secondGame === undefined) {
+        throw new Error("Smoke-batch fixture pair is incomplete.")
+      }
+      const unexpectedEngine: OpenCalibrationEngine = () => {
+        throw new Error("A terminal fixture must not open Stockfish.")
+      }
+      const input = {
+        rootDirectory,
+        plan,
+        maxPlies: 10,
+        maximumNewGames: 1,
+        openEngine: unexpectedEngine,
+      }
 
-    const first = await executeCalibrationSmokeBatch(input)
-    expect(first).toEqual({
-      planId: plan.planId,
-      previouslyStoredGameIds: [],
-      executedGameIds: [firstGame.gameId],
-      remainingGameIds: [secondGame.gameId],
-    })
+      const first = await executeCalibrationSmokeBatch(input)
+      expect(first).toEqual({
+        planId: plan.planId,
+        previouslyStoredGameIds: [],
+        executedGameIds: [firstGame.gameId],
+        remainingGameIds: [secondGame.gameId],
+      })
 
-    const second = await executeCalibrationSmokeBatch(input)
-    expect(second).toEqual({
-      planId: plan.planId,
-      previouslyStoredGameIds: [firstGame.gameId],
-      executedGameIds: [secondGame.gameId],
-      remainingGameIds: [],
-    })
+      const second = await executeCalibrationSmokeBatch(input)
+      expect(second).toEqual({
+        planId: plan.planId,
+        previouslyStoredGameIds: [firstGame.gameId],
+        executedGameIds: [secondGame.gameId],
+        remainingGameIds: [],
+      })
 
-    const third = await executeCalibrationSmokeBatch(input)
-    expect(third).toEqual({
-      planId: plan.planId,
-      previouslyStoredGameIds: plan.games.map((game) => game.gameId),
-      executedGameIds: [],
-      remainingGameIds: [],
-    })
-  })
+      const third = await executeCalibrationSmokeBatch(input)
+      expect(third).toEqual({
+        planId: plan.planId,
+        previouslyStoredGameIds: plan.games.map((game) => game.gameId),
+        executedGameIds: [],
+        remainingGameIds: [],
+      })
+      expect(
+        await summarizeCalibrationSmokeEvidence({
+          rootDirectory,
+          plan,
+          maxPlies: 10,
+        }),
+      ).toMatchObject({
+        variant,
+        completedGameCount: 2,
+        scoredPairCount: 1,
+        unterminatedGameCount: 0,
+        connectivity: { isConnected: true },
+      })
+    },
+  )
 
-  it("rejects invalid bounds and Chess960 before opening an engine", async () => {
+  it("rejects invalid bounds and mixed variants before opening an engine", async () => {
     const rootDirectory = await temporaryEvidenceRoot()
     const plan = standardPlanFixture()
     let openEngineCalls = 0
@@ -95,7 +119,7 @@ describe("calibration smoke-batch execution", () => {
         ...input,
         plan: { ...plan, variant: "chess960" },
       }),
-    ).rejects.toThrow("currently supports Standard only")
+    ).rejects.toThrow("games must use their plan variant")
     expect(openEngineCalls).toBe(0)
   })
 
