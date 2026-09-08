@@ -2,7 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
-import { standardPlanFixture } from "../test/calibrationFixtures"
+import {
+  chess960PlanFixture,
+  STALEMATE_FEN,
+  standardPlanFixture,
+} from "../test/calibrationFixtures"
 import createBayesEloInput, {
   type BayesEloPolicyAliasRecord,
 } from "./bayesEloInput"
@@ -29,12 +33,15 @@ const unexpectedEngine = () => {
   throw new Error("A terminal fixture must not open Stockfish.")
 }
 
-async function completedInput() {
+async function completedInput(variant: "standard" | "chess960" = "standard") {
   const rootDirectory = await mkdtemp(
     join(tmpdir(), "mapachess-bayeselo-rating-evidence-"),
   )
   temporaryRoots.push(rootDirectory)
-  const plan = standardPlanFixture()
+  const plan =
+    variant === "standard"
+      ? standardPlanFixture()
+      : chess960PlanFixture(STALEMATE_FEN)
   await executeCalibrationSmokeBatch({
     rootDirectory,
     plan,
@@ -95,8 +102,8 @@ ResultSet-EloRating>ResultSet>`
 }
 
 describe("BayesElo rating evidence", () => {
-  it("parses observed ratings, asymmetric intervals, and likelihoods", async () => {
-    const input = await completedInput()
+  it.each(["standard", "chess960"] as const)("parses %s", async (variant) => {
+    const input = await completedInput(variant)
     const first = input.policyAliases[0]
     const second = input.policyAliases[1]
     if (first === undefined || second === undefined) {
@@ -116,6 +123,7 @@ describe("BayesElo rating evidence", () => {
     })
 
     expect(evidence).toMatchObject({
+      variant,
       bridgeOffset,
       observedVersion: "0056",
       completedGameCount: 2,

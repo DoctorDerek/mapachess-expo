@@ -9,6 +9,7 @@ import type {
   CalibrationCompletedTermination,
 } from "./calibrationGameTypes.js"
 import type { CalibrationGame } from "./calibrationPlan.js"
+import { CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION } from "./opponentPolicy.js"
 
 export type CalibrationChessPosition = Readonly<{
   fen: () => string
@@ -61,18 +62,15 @@ function repetitionKey(fen: string): string {
   return fen.split(" ").slice(0, 4).join(" ")
 }
 
-function chess960Position(
-  game: Extract<CalibrationGame, { variant: "chess960" }>,
-): CalibrationChessPosition {
+function canonicalPosition(game: CalibrationGame): CalibrationChessPosition {
   const initial = reconstructMatchPosition(
-    {
-      variant: "chess960",
-      chess960PositionId: game.chess960PositionId,
-    },
+    game.variant === "chess960"
+      ? { variant: game.variant, chess960PositionId: game.chess960PositionId }
+      : { variant: game.variant, chess960PositionId: null },
     game.fen,
   )
   if (!initial.ok) {
-    throw new TypeError("Calibration Chess960 position is invalid.")
+    throw new TypeError("Canonical calibration position is invalid.")
   }
   let position = initial.position
   const repetitions = new Map([[repetitionKey(position.fen), 1]])
@@ -89,7 +87,7 @@ function chess960Position(
         (candidate) => candidate.uci === uci,
       )
       if (move === undefined) {
-        throw new TypeError("Calibration Chess960 move is illegal: " + uci)
+        throw new TypeError("Canonical calibration move is illegal: " + uci)
       }
       const applied = applyMatchMove(position, move.id)
       if (!applied.ok) {
@@ -121,8 +119,11 @@ function chess960Position(
 
 export default function createCalibrationChessPosition(
   game: CalibrationGame,
+  legalMoveGeneratorVersion?: string,
 ): CalibrationChessPosition {
-  return game.variant === "standard"
+  return game.variant === "standard" &&
+    legalMoveGeneratorVersion !==
+      CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION
     ? standardPosition(game.fen)
-    : chess960Position(game)
+    : canonicalPosition(game)
 }

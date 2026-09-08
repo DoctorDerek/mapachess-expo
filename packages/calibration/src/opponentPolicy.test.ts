@@ -3,6 +3,7 @@ import fingerprintOpponentPolicy, {
   OPPONENT_POLICY_SCHEMA_VERSION,
   parseSha256Hex,
   serializeOpponentPolicy,
+  WEB_CALIBRATION_ENGINE_IDENTITY,
   type OpponentPolicy,
 } from "./opponentPolicy"
 
@@ -11,7 +12,7 @@ const HASH_B = parseSha256Hex("b".repeat(64))
 const HASH_C = parseSha256Hex("c".repeat(64))
 const HASH_D = parseSha256Hex("d".repeat(64))
 
-const BASE_POLICY: OpponentPolicy = {
+const BASE_POLICY = {
   schemaVersion: OPPONENT_POLICY_SCHEMA_VERSION,
   variant: "standard",
   engine: {
@@ -51,13 +52,46 @@ const BASE_POLICY: OpponentPolicy = {
     target: "node-wasm-x64",
     adapterVersion: "stockfish-adapter/v1",
   },
-}
+} satisfies OpponentPolicy
 
 function policyWith(overrides: object): OpponentPolicy {
   return { ...BASE_POLICY, ...overrides } as OpponentPolicy
 }
 
 describe("opponent policy fingerprint", () => {
+  it("identifies web artifacts independently of historical native builds", () => {
+    const policy: OpponentPolicy = {
+      ...BASE_POLICY,
+      engine: WEB_CALIBRATION_ENGINE_IDENTITY,
+    }
+    const fingerprint = fingerprintOpponentPolicy(policy)
+    expect(fingerprint).not.toBe(fingerprintOpponentPolicy(BASE_POLICY))
+    expect(
+      fingerprintOpponentPolicy({
+        ...policy,
+        engine: {
+          ...WEB_CALIBRATION_ENGINE_IDENTITY,
+          artifacts: [...WEB_CALIBRATION_ENGINE_IDENTITY.artifacts].reverse(),
+        },
+      }),
+    ).toBe(fingerprint)
+    expect(
+      fingerprintOpponentPolicy({
+        ...policy,
+        engine: {
+          ...WEB_CALIBRATION_ENGINE_IDENTITY,
+          artifacts: WEB_CALIBRATION_ENGINE_IDENTITY.artifacts.map(
+            (artifact) => ({
+              ...artifact,
+              sha256: HASH_A,
+            }),
+          ),
+        },
+      }),
+    ).not.toBe(fingerprint)
+    expect(serializeOpponentPolicy(policy)).not.toContain("executableSha256")
+  })
+
   it("serializes and fingerprints the same policy deterministically", () => {
     const equivalentPolicy: OpponentPolicy = {
       runtime: {

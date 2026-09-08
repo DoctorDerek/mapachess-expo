@@ -33,7 +33,7 @@ export type BayesEloInput = Readonly<{
   planId: CalibrationPlan["planId"]
   policyAliases: readonly BayesEloPolicyAliasRecord[]
   scheduledPairCount: number
-  variant: "standard"
+  variant: CalibrationPlan["variant"]
 }>
 
 export type CreateBayesEloInputInput = Readonly<{
@@ -86,6 +86,30 @@ function rewritePgnPlayerNames(
   game: CalibrationGame,
   aliases: ReadonlyMap<OpponentPolicyFingerprint, BayesEloPolicyAlias>,
 ): string {
+  if (game.variant === "chess960") {
+    const lines = pgn.split("\n")
+    for (const [name, seat] of [
+      ["White", game.white],
+      ["Black", game.black],
+    ] as const) {
+      const headers = lines.flatMap((line, index) =>
+        line.startsWith(`[${name} `) ? [index] : [],
+      )
+      const [index] = headers
+      if (
+        headers.length !== 1 ||
+        index === undefined ||
+        lines[index] !== `[${name} "${seat.policyFingerprint}"]`
+      ) {
+        throw new TypeError(
+          `Stored calibration PGN player identities do not match ${game.gameId}.`,
+        )
+      }
+      lines[index] =
+        `[${name} "${requireAlias(aliases, seat.policyFingerprint)}"]`
+    }
+    return lines.join("\n")
+  }
   const chess = new Chess()
   chess.loadPgn(pgn, { strict: true })
   const headers = chess.getHeaders()
@@ -108,10 +132,6 @@ export default async function createBayesEloInput(
   input: CreateBayesEloInputInput,
 ): Promise<BayesEloInput> {
   assertPositiveSafeInteger(input.maxPlies, "maxPlies")
-  if (input.plan.variant !== "standard") {
-    throw new TypeError("BayesElo input currently supports Standard only.")
-  }
-
   const policyAliases = createPolicyAliases(input.plan)
   const aliasByFingerprint = new Map(
     policyAliases.map(({ alias, policyFingerprint }) => [
@@ -176,7 +196,7 @@ export default async function createBayesEloInput(
   return {
     schemaVersion: BAYES_ELO_INPUT_SCHEMA_VERSION,
     planId: input.plan.planId,
-    variant: "standard",
+    variant: input.plan.variant,
     maxPlies: input.maxPlies,
     scheduledPairCount: pairs.length,
     completedPairCount: completedPairIds.length,

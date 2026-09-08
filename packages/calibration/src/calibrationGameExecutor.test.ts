@@ -7,6 +7,7 @@ import {
   type StockfishEngineSessionState,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
+import { OPPONENT_POSITION_SEED_DERIVATION_VERSION } from "@mapachess/stockfish/opponent-move-selection"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
 import {
   chess960PlanFixture,
@@ -26,11 +27,14 @@ import {
   CALIBRATION_SEED_DERIVATION_VERSION,
 } from "./deterministicRandom"
 import {
+  CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_COMMAND_PROTOCOL_VERSION,
   CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
   OPPONENT_POLICY_SCHEMA_VERSION,
+  WEB_CALIBRATION_ADAPTER_VERSION,
+  WEB_CALIBRATION_ENGINE_IDENTITY,
   type CalibrationVariant,
   type OpponentPolicy,
 } from "./opponentPolicy"
@@ -83,7 +87,35 @@ function createPlan(
   fen: string,
   randomMoveProbabilityBasisPoints = 0,
   variant: CalibrationVariant = "standard",
+  webPolicy = false,
 ): CalibrationPlan {
+  function seatPolicy(
+    strength: OpponentPolicy["search"]["strength"],
+  ): OpponentPolicy {
+    const policy = createPolicy(
+      strength,
+      randomMoveProbabilityBasisPoints,
+      variant,
+    )
+    if (!webPolicy) return policy
+    return {
+      ...policy,
+      engine: WEB_CALIBRATION_ENGINE_IDENTITY,
+      moveSelection: {
+        ...policy.moveSelection,
+        legalMoveGeneratorVersion:
+          CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+      },
+      randomness: {
+        ...policy.randomness,
+        seedDerivationVersion: OPPONENT_POSITION_SEED_DERIVATION_VERSION,
+      },
+      runtime: {
+        target: "web-lite-wasm-node",
+        adapterVersion: WEB_CALIBRATION_ADAPTER_VERSION,
+      },
+    }
+  }
   return createCalibrationPlan({
     schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
     seed: 42,
@@ -101,16 +133,8 @@ function createPlan(
       {
         id: "fixture-edge",
         pairsPerOpening: 1,
-        policyA: createPolicy(
-          { kind: "full-strength" },
-          randomMoveProbabilityBasisPoints,
-          variant,
-        ),
-        policyB: createPolicy(
-          { kind: "uci-elo", elo: 1320 },
-          randomMoveProbabilityBasisPoints,
-          variant,
-        ),
+        policyA: seatPolicy({ kind: "full-strength" }),
+        policyB: seatPolicy({ kind: "uci-elo", elo: 1320 }),
       },
     ],
   })
@@ -159,6 +183,57 @@ function openFakeEngine(
 
 describe("calibration game execution", () => {
   it.each(["standard", "chess960"] as const)(
+    "uses position-owned request identities for a web-policy %s game",
+    async (variant) => {
+      const plan = createPlan(MATE_IN_ONE_FEN, 0, variant, true)
+      const game = plan.games[0]
+      if (game === undefined) throw new Error("Fixture game is missing.")
+      const engines: FakeEngine[] = []
+      const result = await executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 2,
+        openEngine: openFakeEngine("g6g7", engines),
+      })
+      expect(result.status).toBe("completed")
+      expect(
+        engines
+          .flatMap((engine) => engine.searches)
+          .map((request) => request.requestId),
+      ).toEqual([`${game.gameId}/opponent/ply/1/fen/${MATE_IN_ONE_FEN}`])
+      expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+    },
+  )
+
+  it("rejects a stale engine response while closing the web-policy sessions", async () => {
+    const plan = createPlan(MATE_IN_ONE_FEN, 0, "standard", true)
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("Fixture game is missing.")
+    const engines: FakeEngine[] = []
+    await expect(
+      executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 2,
+        openEngine: () => {
+          const engine = new FakeEngine("g6g7")
+          engines.push(engine)
+          return {
+            boot: () => engine.boot(),
+            close: () => engine.close(),
+            state: () => engine.state(),
+            search: async (request) => ({
+              ...(await engine.search(request)),
+              requestId: "stale",
+            }),
+          }
+        },
+      }),
+    ).rejects.toThrow("stale")
+    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+  })
+
+  it.each(["standard", "chess960"] as const)(
     "executes and closes a color-reversed %s mate-in-one pair",
     async (variant) => {
       const plan = createPlan(MATE_IN_ONE_FEN, 0, variant)
@@ -192,10 +267,15 @@ describe("calibration game execution", () => {
     },
   )
 
-  it.each(["standard", "chess960"] as const)(
-    "replays a seeded %s legal move without asking Stockfish",
-    async (variant) => {
-      const plan = createPlan(STANDARD_START_FEN, 10_000, variant)
+  it.each([
+    ["standard", false],
+    ["chess960", false],
+    ["standard", true],
+    ["chess960", true],
+  ] as const)(
+    "replays a seeded %s legal move without Stockfish with web policy %s",
+    async (variant, webPolicy) => {
+      const plan = createPlan(STANDARD_START_FEN, 10_000, variant, webPolicy)
       const firstEngines: FakeEngine[] = []
       const secondEngines: FakeEngine[] = []
       const game = plan.games[0]

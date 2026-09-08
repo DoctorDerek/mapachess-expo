@@ -9,8 +9,9 @@ const MAX_STDERR_CHARACTERS = 4_096
 
 export default function createNodeUciTransport(
   executablePath: string,
+  arguments_: readonly string[] = [],
 ): StockfishUciTransport {
-  const child = spawn(executablePath, [], {
+  const child = spawn(executablePath, arguments_, {
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   })

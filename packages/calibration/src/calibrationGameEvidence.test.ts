@@ -13,6 +13,10 @@ import createCalibrationGameEvidence, {
   serializeCalibrationGamePgn,
   type CalibrationGameEvidence,
 } from "./calibrationGameEvidence"
+import createCalibrationPlan, {
+  CALIBRATION_PLAN_SCHEMA_VERSION,
+} from "./calibrationPlan"
+import { CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION } from "./opponentPolicy"
 
 function createFixture(seed = 42): Readonly<{
   plan: ReturnType<typeof standardPlanFixture>
@@ -23,6 +27,54 @@ function createFixture(seed = 42): Readonly<{
 }
 
 describe("calibration game evidence", () => {
+  it("replays canonical Standard evidence and rejects a false recorded final FEN", () => {
+    const fixture = mateInOneEvidenceFixture()
+    const policies = fixture.plan.policies.map(({ policy }) => ({
+      ...policy,
+      moveSelection: {
+        ...policy.moveSelection,
+        legalMoveGeneratorVersion:
+          CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+      },
+    }))
+    const [policyA, policyB] = policies
+    if (policyA === undefined || policyB === undefined)
+      throw new Error("Fixture policies missing.")
+    const plan = createCalibrationPlan({
+      schemaVersion: CALIBRATION_PLAN_SCHEMA_VERSION,
+      seed: 42,
+      variant: "standard",
+      openings: [{ id: "canonical-mate", fen: MATE_IN_ONE_FEN }],
+      edges: [{ id: "canonical", pairsPerOpening: 1, policyA, policyB }],
+    })
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("Fixture game missing.")
+    const evidence = createCalibrationGameEvidence({
+      plan,
+      maxPlies: 10,
+      result: {
+        ...fixture.evidence.result,
+        gameId: game.gameId,
+        pairId: game.pairId,
+        moves: fixture.evidence.result.moves.map((move) => ({
+          ...move,
+          policyFingerprint: game[move.color].policyFingerprint,
+        })),
+      },
+    })
+    const pgn = serializeCalibrationGamePgn(evidence)
+    const replay = new Chess()
+    replay.loadPgn(pgn, { strict: true })
+    expect(replay.fen()).toBe(evidence.result.finalFen)
+    expect(pgn).not.toContain('[Variant "Chess960"]')
+    expect(() =>
+      serializeCalibrationGamePgn({
+        ...evidence,
+        result: { ...evidence.result, finalFen: game.fen },
+      }),
+    ).toThrow("recorded final FEN")
+  })
+
   it("exports Chess960 castling and a completed repetition with explicit variant metadata", () => {
     const evidence = completedChess960EvidenceFixture(
       "4k1n1/8/8/8/8/8/8/R4KR1 w GA - 0 1",

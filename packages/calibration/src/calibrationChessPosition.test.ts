@@ -3,8 +3,10 @@ import {
   chess960PlanFixture,
   MATE_IN_ONE_FEN,
   STALEMATE_FEN,
+  standardPlanFixture,
 } from "../test/calibrationFixtures"
 import createCalibrationChessPosition from "./calibrationChessPosition"
+import { CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION } from "./opponentPolicy"
 
 function positionFromFen(fen: string) {
   const game = chess960PlanFixture(fen).games[0]
@@ -13,6 +15,20 @@ function positionFromFen(fen: string) {
 }
 
 describe("canonical Chess960 calibration positions", () => {
+  it("uses canonical Standard rules without changing historical castling notation", () => {
+    const game = standardPlanFixture("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1")
+      .games[0]
+    if (game === undefined) throw new Error("Fixture game is missing.")
+    const canonical = createCalibrationChessPosition(
+      game,
+      CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+    )
+    const legacy = createCalibrationChessPosition(game)
+    expect(canonical.legalMoves()).toEqual(legacy.legalMoves())
+    expect(canonical.play("e1g1")).toBe(legacy.play("e1g1"))
+    expect(canonical.fen()).toBe(legacy.fen())
+  })
+
   it.each([
     ["king and rook swap", "R4KR1", "GA", "f1g1"],
     ["king remains on g1", "R5KR", "HA", "g1h1"],

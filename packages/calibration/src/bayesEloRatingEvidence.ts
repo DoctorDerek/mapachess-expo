@@ -57,7 +57,7 @@ export type BayesEloRatingEvidence = Readonly<{
     stdout: string
     stdoutSha256: string
   }>
-  variant: "standard"
+  variant: BayesEloInput["variant"]
 }>
 
 export type ParseBayesEloRatingEvidenceInput = Readonly<{
@@ -407,7 +407,7 @@ export default function parseBayesEloRatingEvidence(
     tool: BAYES_ELO_EXECUTABLE_IDENTITY,
     observedVersion: BAYES_ELO_EXECUTABLE_IDENTITY.version,
     planId: input.input.planId,
-    variant: "standard",
+    variant: input.input.variant,
     inputSha256: input.input.inputSha256,
     pgnSha256: input.input.pgnSha256,
     completedPairCount: input.input.completedPairCount,

@@ -31,6 +31,7 @@ import {
   type OpponentPolicy,
 } from "./opponentPolicy"
 import standardCalibrationSmokePlan from "./standardCalibrationSmokePlan"
+import openWebStockfishCalibrationSession from "./webStockfishCalibrationSession"
 
 const WORKSPACE_ROOT = resolve(import.meta.dirname, "../../..")
 const STANDARD_START_FEN =
@@ -77,6 +78,33 @@ function createPolicy(nodeLimit: number): OpponentPolicy {
 }
 
 describe("pinned Stockfish calibration integration", () => {
+  it.each(["standard", "chess960"] as const)(
+    "executes the pinned web WASM in %s and closes its owned process",
+    async (variant) => {
+      const session = await openWebStockfishCalibrationSession(WORKSPACE_ROOT, {
+        variant,
+        strength: { kind: "full-strength" },
+        threads: 1,
+        hashMegabytes: 16,
+        multiPv: 1,
+        ponder: false,
+      })
+      try {
+        expect((await session.boot()).name).toBe("Stockfish 18 Lite WASM")
+        const result = await session.search({
+          requestId: `web-wasm/${variant}`,
+          nodeLimit: 1000,
+          position: { fen: MATE_IN_ONE_FEN, moves: [] },
+        })
+        expect(result.requestId).toBe(`web-wasm/${variant}`)
+        expect(result.bestMove).toBe("g6g7")
+      } finally {
+        await session.close()
+      }
+      expect(session.state()).toBe("closed")
+    },
+  )
+
   it.each([
     ["R4KR1", "GA", "f1g1"],
     ["R5KR", "HA", "g1h1"],
