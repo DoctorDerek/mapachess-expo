@@ -11,20 +11,25 @@ import {
   CALIBRATION_SEED_DERIVATION_VERSION,
 } from "./deterministicRandom.js"
 import {
+  CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_COMMAND_PROTOCOL_VERSION,
   CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
   CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
   OPPONENT_POLICY_SCHEMA_VERSION,
+  type CalibrationVariant,
   type OpponentPolicy,
 } from "./opponentPolicy.js"
 
 const STANDARD_START_FEN =
   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-function standardSmokePolicy(nodeLimit: number): OpponentPolicy {
+export function calibrationSmokePolicy(
+  nodeLimit: number,
+  variant: CalibrationVariant = "standard",
+): OpponentPolicy {
   return {
     schemaVersion: OPPONENT_POLICY_SCHEMA_VERSION,
-    variant: "standard",
+    variant,
     engine: STOCKFISH_18_BUILD_IDENTITY,
     search: {
       strength: { kind: "full-strength" },
@@ -40,7 +45,10 @@ function standardSmokePolicy(nodeLimit: number): OpponentPolicy {
       kind: "best-or-uniform-random-legal",
       randomMoveProbabilityBasisPoints: 0,
       algorithmVersion: CALIBRATION_MOVE_SELECTION_ALGORITHM_VERSION,
-      legalMoveGeneratorVersion: CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION,
+      legalMoveGeneratorVersion:
+        variant === "standard"
+          ? CALIBRATION_LEGAL_MOVE_GENERATOR_VERSION
+          : CALIBRATION_CHESS960_LEGAL_MOVE_GENERATOR_VERSION,
     },
     randomness: {
       algorithmVersion: CALIBRATION_RANDOM_ALGORITHM_VERSION,
@@ -63,8 +71,8 @@ const standardCalibrationSmokePlan = createCalibrationPlan({
     {
       id: "nodes-1000-vs-2000",
       pairsPerOpening: 1,
-      policyA: standardSmokePolicy(1_000),
-      policyB: standardSmokePolicy(2_000),
+      policyA: calibrationSmokePolicy(1_000),
+      policyB: calibrationSmokePolicy(2_000),
     },
   ],
 })
