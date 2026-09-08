@@ -5,6 +5,15 @@ import { CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION } from "./opponentPo
 import createWebOpponentCandidatePlan from "./webOpponentCandidatePlan"
 
 describe("bounded web opponent calibration plans", () => {
+  it("preserves the identities of both completed original experiments", () => {
+    expect(createWebOpponentCandidatePlan("standard").plan.planId).toBe(
+      "sha256:02b2601da44d7205cb67dfee9a135fd7c22ba298ffe8c32b162702739997ff69",
+    )
+    expect(createWebOpponentCandidatePlan("chess960").plan.planId).toBe(
+      "sha256:78033019989c058e2b3cfdecd225f5d2c093aa46930aa6ae01ded20a0ab017bf",
+    )
+  })
+
   it.each(["standard", "chess960"] as const)(
     "retains reproducible paired conditions for %s",
     (variant) => {
