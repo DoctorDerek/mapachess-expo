@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest"
+import {
+  chess960PlanFixture,
+  chess960PositionIdFixture,
+} from "../test/calibrationFixtures"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
   type CalibrationEdge,
@@ -217,6 +221,7 @@ describe("calibration plan", () => {
       openings: [
         {
           id: "chess960-518",
+          chess960PositionId: chess960PositionIdFixture(518),
           fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1",
         },
       ],
@@ -231,8 +236,46 @@ describe("calibration plan", () => {
 
     expect(chess960Plan.variant).toBe("chess960")
     expect(chess960Plan.games).toHaveLength(4)
+    expect(
+      chess960Plan.games.every((game) => game.chess960PositionId === 518),
+    ).toBe(true)
     expect(chess960Plan.planId).not.toBe(
       createCalibrationPlan(BASE_INPUT).planId,
+    )
+  })
+
+  it("includes Chess960 position numbers in plan, pair, and seat-seed identities", () => {
+    const fen = "4k3/8/8/8/8/8/8/R3K3 w - - 0 1"
+    const first = chess960PlanFixture(fen, 0)
+    const same = chess960PlanFixture(fen, 0)
+    const other = chess960PlanFixture(fen, 1)
+    expect(first).toEqual(same)
+    expect(first.planId).not.toBe(other.planId)
+    expect(first.games[0]?.pairId).not.toBe(other.games[0]?.pairId)
+    expect(first.games[0]?.white.randomSeed).not.toBe(
+      other.games[0]?.white.randomSeed,
+    )
+    expect(first.games[0]?.white).toEqual(first.games[1]?.black)
+    expect(first.games[0]?.black).toEqual(first.games[1]?.white)
+  })
+
+  it("rejects missing Chess960 metadata and metadata on Standard openings", () => {
+    expect(() =>
+      createCalibrationPlan({
+        ...BASE_INPUT,
+        variant: "chess960",
+      }),
+    ).toThrow("require a valid position number")
+    expect(() =>
+      createCalibrationPlan({
+        ...BASE_INPUT,
+        openings: [
+          { ...OPENING_A, chess960PositionId: chess960PositionIdFixture() },
+        ],
+      }),
+    ).toThrow("Standard openings cannot have")
+    expect(() => chess960PlanFixture("invalid FEN")).toThrow(
+      "opening FEN is invalid",
     )
   })
 
