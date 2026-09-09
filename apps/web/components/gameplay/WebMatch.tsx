@@ -187,9 +187,7 @@ export default function WebMatch({
           <div>
             <dt>Elo target</dt>
             <dd>
-              {runtime.opponentTargetElo === null
-                ? MATCH_SETUP_COPY.legacyDifficulty
-                : `${String(runtime.opponentTargetElo)} · ${MATCH_SETUP_COPY.provisional}`}
+              {runtime.opponentTargetElo} · {MATCH_SETUP_COPY.provisional}
             </dd>
           </div>
           <div>

@@ -134,7 +134,6 @@ export default async function openWebMatchRuntime(
       : await resolveWebOpponentPolicy(
           opponentId,
           setup.variant,
-          input.opponentPolicyFingerprint,
           cryptography.subtle,
         )
   input.signal?.throwIfAborted()

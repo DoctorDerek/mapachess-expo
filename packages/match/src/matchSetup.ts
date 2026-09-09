@@ -35,7 +35,6 @@ export const MATCH_SETUP_COPY = Object.freeze({
   invalidSetup: "Choose White or Black and a valid Chess960 position number.",
   untimed: "Untimed",
   provisional: "Provisional",
-  legacyDifficulty: "Legacy difficulty · Unrated",
   provisionalDifficulty:
     "Opponent settings are provisional. Authored Elo targets are not certified ratings, and this match does not update your Elo.",
   storyAvailability:

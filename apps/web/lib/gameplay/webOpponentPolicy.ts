@@ -26,7 +26,7 @@ export type WebOpponentPolicy = Readonly<{
   opponentId: StockfishOpponentId
   randomMoveProbabilityBasisPoints: number
   variant: MatchVariant
-  targetElo: number | null
+  targetElo: number
 }>
 
 const webChallengePresets = (
@@ -45,41 +45,11 @@ export const webChallengeDifficultyTargets = (
 ): readonly number[] =>
   webChallengePresets(variant).map(({ targetElo }) => targetElo)
 
-const LEGACY_CHICKEN_PARAMETERS = Object.freeze({
-  nodeLimit: 10_000,
-  randomMoveProbabilityBasisPoints: 8_000,
-})
-
-export function legacyChickenWebPolicy(
-  variant: MatchVariant,
-): WebOpponentPolicy {
-  return Object.freeze({
-    fingerprint: [
-      `mapachess-${variant}-chicken-web-policy/v1`,
-      `stockfish-js-source/${STOCKFISH_18_WEB_SOURCE_REVISION}`,
-      `wasm-sha256/${STOCKFISH_18_WEB_WASM_ARTIFACT.sha256}`,
-      `nodes/${String(LEGACY_CHICKEN_PARAMETERS.nodeLimit)}`,
-      `random-basis-points/${String(LEGACY_CHICKEN_PARAMETERS.randomMoveProbabilityBasisPoints)}`,
-      OPPONENT_POSITION_SEED_DERIVATION_VERSION,
-    ].join("|"),
-    ...LEGACY_CHICKEN_PARAMETERS,
-    opponentId: "chicken-stockfish",
-    variant,
-    targetElo: null,
-  })
-}
-
 export default async function resolveWebOpponentPolicy(
   opponentId: StockfishOpponentId,
   variant: MatchVariant,
-  savedFingerprint?: string,
   subtleCrypto: Sha256SubtleCrypto = globalThis.crypto.subtle,
 ): Promise<WebOpponentPolicy> {
-  if (opponentId === "chicken-stockfish" && savedFingerprint !== undefined) {
-    const legacy = legacyChickenWebPolicy(variant)
-    if (savedFingerprint === legacy.fingerprint) return legacy
-  }
-
   const opponent = stockfishOpponent(opponentId)
   const randomMoveProbabilityBasisPoints =
     PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS[variant][
@@ -89,7 +59,7 @@ export default async function resolveWebOpponentPolicy(
     throw new TypeError("This opponent has no measured web policy.")
   }
 
-  const policy = await createWebPolicy(
+  return createWebPolicy(
     opponentId,
     variant,
     opponent.storyTargetElo,
@@ -97,13 +67,6 @@ export default async function resolveWebOpponentPolicy(
     ["mapachess-provisional-web-ladder-policy/v1", variant, opponentId],
     subtleCrypto,
   )
-  if (
-    savedFingerprint !== undefined &&
-    savedFingerprint !== policy.fingerprint
-  ) {
-    throw new TypeError("Saved opponent policy does not match this runtime.")
-  }
-  return policy
 }
 
 async function createWebPolicy(
@@ -151,14 +114,7 @@ export async function resolveWebChallengePolicy(
   subtleCrypto: Sha256SubtleCrypto = globalThis.crypto.subtle,
 ): Promise<WebOpponentPolicy> {
   const presets = webChallengePresets(variant)
-  if (
-    difficultyTargetElo !== undefined &&
-    !presets.some(({ targetElo }) => targetElo === difficultyTargetElo)
-  ) {
-    throw new TypeError(
-      "This Challenge difficulty has no supported web preset.",
-    )
-  }
+  let defaultPolicy: WebOpponentPolicy | undefined
   for (const { targetElo: target, randomBasisPoints } of presets) {
     if (difficultyTargetElo !== undefined && target !== difficultyTargetElo)
       continue
@@ -174,26 +130,18 @@ export async function resolveWebChallengePolicy(
       ],
       subtleCrypto,
     )
+    defaultPolicy ??= policy
     if (
+      difficultyTargetElo !== undefined ||
       savedFingerprint === undefined ||
       policy.fingerprint === savedFingerprint
     )
       return policy
   }
-  // Compatibility: retained pre-independent Challenge matches used Story or legacy Chicken identities.
-  const legacy = await resolveWebOpponentPolicy(
-    opponentId,
-    variant,
-    savedFingerprint,
-    subtleCrypto,
-  )
-  if (
-    difficultyTargetElo !== undefined &&
-    legacy.targetElo !== difficultyTargetElo
-  ) {
+  if (defaultPolicy === undefined) {
     throw new TypeError(
-      "Saved Challenge difficulty does not match the selected preset.",
+      "This Challenge difficulty has no supported web preset.",
     )
   }
-  return legacy
+  return defaultPolicy
 }
