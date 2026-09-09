@@ -5,10 +5,10 @@ import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 import { parseSha256Hex } from "@mapachess/stockfish/build-identity"
 import {
-  STOCKFISH_18_NATIVE_BUILD_MANIFEST,
+  STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST,
   type StockfishNativeBuildManifest,
 } from "./nativeBuildIdentity"
-import { provisionStockfishNativeNetworks } from "./provision"
+import { provisionStockfishNativeNetwork } from "./provision"
 
 const temporaryDirectories: string[] = []
 
@@ -31,23 +31,16 @@ function networkIdentity(bytes: Uint8Array) {
 }
 
 function fixtureManifest(
-  bigBytes: Uint8Array,
-  smallBytes: Uint8Array,
+  networkBytes: Uint8Array,
 ): StockfishNativeBuildManifest {
   return {
-    schemaVersion: 1,
-    releaseTag: "fixture",
+    schemaVersion: 2,
+    inputId: "fixture",
     sourceRevision: "a".repeat(40),
     sourceSnapshotSha256: parseSha256Hex("b".repeat(64)),
-    networks: {
-      big: {
-        ...networkIdentity(bigBytes),
-        urls: ["https://example.invalid/big"],
-      },
-      small: {
-        ...networkIdentity(smallBytes),
-        urls: ["https://example.invalid/small"],
-      },
+    network: {
+      ...networkIdentity(networkBytes),
+      urls: ["https://example.invalid/network"],
     },
   }
 }
@@ -59,43 +52,36 @@ async function temporaryPackageRoot(): Promise<string> {
 }
 
 describe("native Stockfish input provisioning", () => {
-  it("pins official HTTPS sources for both release networks", () => {
-    for (const artifact of Object.values(
-      STOCKFISH_18_NATIVE_BUILD_MANIFEST.networks,
-    )) {
-      expect(artifact.urls).toHaveLength(2)
-      expect(artifact.urls.every((url) => url.startsWith("https://"))).toBe(
-        true,
-      )
-    }
+  it("pins official HTTPS sources for the Lite network", () => {
+    const artifact = STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST.network
+    expect(artifact.urls).toHaveLength(2)
+    expect(artifact.urls.every((url) => url.startsWith("https://"))).toBe(true)
   })
 
   it("promotes verified downloads atomically and reuses them", async () => {
     const packageRoot = await temporaryPackageRoot()
-    const bigBytes = Buffer.from("fixture-big-network")
-    const smallBytes = Buffer.from("fixture-small-network")
-    const manifest = fixtureManifest(bigBytes, smallBytes)
+    const networkBytes = Buffer.from("fixture-network")
+    const manifest = fixtureManifest(networkBytes)
     let downloadCount = 0
-    const download = async (url: string): Promise<Uint8Array> => {
+    const download = async (): Promise<Uint8Array> => {
       downloadCount += 1
-      return url.endsWith("/big") ? bigBytes : smallBytes
+      return networkBytes
     }
 
-    const first = await provisionStockfishNativeNetworks({
+    const first = await provisionStockfishNativeNetwork({
       packageRoot,
       manifest,
       download,
     })
-    const second = await provisionStockfishNativeNetworks({
+    const second = await provisionStockfishNativeNetwork({
       packageRoot,
       manifest,
       download,
     })
 
     expect(second).toEqual(first)
-    expect(downloadCount).toBe(2)
-    await expect(readFile(first.networks.big)).resolves.toEqual(bigBytes)
-    await expect(readFile(first.networks.small)).resolves.toEqual(smallBytes)
+    expect(downloadCount).toBe(1)
+    await expect(readFile(first.networkPath)).resolves.toEqual(networkBytes)
     await expect(readFile(first.markerPath, "utf8")).resolves.toBe(
       `${JSON.stringify(manifest, null, 2)}\n`,
     )
@@ -103,12 +89,11 @@ describe("native Stockfish input provisioning", () => {
 
   it("rejects digest mismatches without promoting partial inputs", async () => {
     const packageRoot = await temporaryPackageRoot()
-    const bigBytes = Buffer.from("fixture-big-network")
-    const smallBytes = Buffer.from("fixture-small-network")
-    const manifest = fixtureManifest(bigBytes, smallBytes)
+    const networkBytes = Buffer.from("fixture-network")
+    const manifest = fixtureManifest(networkBytes)
 
     await expect(
-      provisionStockfishNativeNetworks({
+      provisionStockfishNativeNetwork({
         packageRoot,
         manifest,
         download: async () => Buffer.from("corrupt"),
@@ -123,44 +108,40 @@ describe("native Stockfish input provisioning", () => {
 
   it("rejects a corrupted installed network before redownloading", async () => {
     const packageRoot = await temporaryPackageRoot()
-    const bigBytes = Buffer.from("fixture-big-network")
-    const smallBytes = Buffer.from("fixture-small-network")
-    const manifest = fixtureManifest(bigBytes, smallBytes)
-    const first = await provisionStockfishNativeNetworks({
+    const networkBytes = Buffer.from("fixture-network")
+    const manifest = fixtureManifest(networkBytes)
+    const first = await provisionStockfishNativeNetwork({
       packageRoot,
       manifest,
-      download: async (url) => (url.endsWith("/big") ? bigBytes : smallBytes),
+      download: async () => networkBytes,
     })
-    await writeFile(first.networks.big, "tampered")
+    await writeFile(first.networkPath, "tampered")
     let downloadCount = 0
 
     await expect(
-      provisionStockfishNativeNetworks({
+      provisionStockfishNativeNetwork({
         packageRoot,
         manifest,
         download: async () => {
           downloadCount += 1
-          return bigBytes
+          return networkBytes
         },
       }),
-    ).rejects.toThrow("big-network SHA-256 mismatch")
+    ).rejects.toThrow("network SHA-256 mismatch")
     expect(downloadCount).toBe(0)
   })
 
   it("rejects a network filename that can escape its owner", async () => {
     const packageRoot = await temporaryPackageRoot()
     const bytes = Buffer.from("fixture-network")
-    const manifest = fixtureManifest(bytes, Buffer.from("second-network"))
+    const manifest = fixtureManifest(bytes)
     const unsafeManifest = {
       ...manifest,
-      networks: {
-        ...manifest.networks,
-        big: { ...manifest.networks.big, fileName: "../escape.nnue" },
-      },
+      network: { ...manifest.network, fileName: "../escape.nnue" },
     }
 
     await expect(
-      provisionStockfishNativeNetworks({
+      provisionStockfishNativeNetwork({
         packageRoot,
         manifest: unsafeManifest,
         download: async () => bytes,
@@ -168,18 +149,18 @@ describe("native Stockfish input provisioning", () => {
     ).rejects.toThrow("fileName does not match its SHA-256")
   })
 
-  it("rejects a release tag that can escape network storage", async () => {
+  it("rejects an input identity that can escape network storage", async () => {
     const packageRoot = await temporaryPackageRoot()
     const bytes = Buffer.from("fixture-network")
-    const manifest = fixtureManifest(bytes, Buffer.from("second-network"))
-    const unsafeManifest = { ...manifest, releaseTag: "../escape" }
+    const manifest = fixtureManifest(bytes)
+    const unsafeManifest = { ...manifest, inputId: "../escape" }
 
     await expect(
-      provisionStockfishNativeNetworks({
+      provisionStockfishNativeNetwork({
         packageRoot,
         manifest: unsafeManifest,
         download: async () => bytes,
       }),
-    ).rejects.toThrow("releaseTag must be a safe path segment")
+    ).rejects.toThrow("inputId must be a safe path segment")
   })
 })

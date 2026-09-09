@@ -4,14 +4,10 @@ project(MapachessStockfish)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(STOCKFISH_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/stockfish/src")
-set(STOCKFISH_NETWORK_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../.stockfish-networks/sf_18")
+set(STOCKFISH_NETWORK_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../.stockfish-networks/stockfish-18-lite")
 
-if(NOT EXISTS "${STOCKFISH_NETWORK_DIRECTORY}/nn-c288c895ea92.nnue")
-  message(FATAL_ERROR "The pinned Stockfish big network has not been provisioned.")
-endif()
-
-if(NOT EXISTS "${STOCKFISH_NETWORK_DIRECTORY}/nn-37f18f62d772.nnue")
-  message(FATAL_ERROR "The pinned Stockfish small network has not been provisioned.")
+if(NOT EXISTS "${STOCKFISH_NETWORK_DIRECTORY}/nn-9067e33176e8.nnue")
+  message(FATAL_ERROR "The pinned Stockfish Lite network has not been provisioned.")
 endif()
 
 set(STOCKFISH_SOURCES
@@ -31,7 +27,6 @@ set(STOCKFISH_SOURCES
     "${STOCKFISH_SOURCE_DIRECTORY}/position.cpp"
     "${STOCKFISH_SOURCE_DIRECTORY}/score.cpp"
     "${STOCKFISH_SOURCE_DIRECTORY}/search.cpp"
-    "${STOCKFISH_SOURCE_DIRECTORY}/syzygy/tbprobe.cpp"
     "${STOCKFISH_SOURCE_DIRECTORY}/thread.cpp"
     "${STOCKFISH_SOURCE_DIRECTORY}/timeman.cpp"
     "${STOCKFISH_SOURCE_DIRECTORY}/tt.cpp"
