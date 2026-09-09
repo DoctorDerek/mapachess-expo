@@ -31,7 +31,9 @@ import createWebOpponent, {
   webMatchId,
   type WebOpponentCryptography,
 } from "./webOpponent"
-import resolveWebOpponentPolicy from "./webOpponentPolicy"
+import resolveWebOpponentPolicy, {
+  resolveWebChallengePolicy,
+} from "./webOpponentPolicy"
 
 const SINGLE_PV_ENGINE_CONFIGURATION: StockfishEngineConfiguration =
   Object.freeze({
@@ -58,8 +60,16 @@ export type OpenWebMatchRuntimeInput = Readonly<{
   signal?: AbortSignal
 }> &
   (
-    | Readonly<{ mode?: "story"; playerColor?: never }>
-    | Readonly<{ mode: "challenge"; playerColor: MatchColor }>
+    | Readonly<{
+        mode?: "story"
+        playerColor?: never
+        difficultyTargetElo?: never
+      }>
+    | Readonly<{
+        mode: "challenge"
+        playerColor: MatchColor
+        difficultyTargetElo?: number
+      }>
   )
 
 const closeOwnedSessions = async (
@@ -112,12 +122,21 @@ export default async function openWebMatchRuntime(
   }
   const cryptography = input.cryptography ?? globalThis.crypto
   const opponentId = input.opponentId ?? "chicken-stockfish"
-  const policy = await resolveWebOpponentPolicy(
-    opponentId,
-    setup.variant,
-    input.opponentPolicyFingerprint,
-    cryptography.subtle,
-  )
+  const policy =
+    input.mode === "challenge"
+      ? await resolveWebChallengePolicy(
+          opponentId,
+          setup.variant,
+          input.difficultyTargetElo,
+          input.opponentPolicyFingerprint,
+          cryptography.subtle,
+        )
+      : await resolveWebOpponentPolicy(
+          opponentId,
+          setup.variant,
+          input.opponentPolicyFingerprint,
+          cryptography.subtle,
+        )
   input.signal?.throwIfAborted()
   const matchSeed = input.matchSeed ?? generateWebMatchSeed(cryptography)
   let startingPosition: MatchStartingPosition
@@ -196,6 +215,7 @@ export default async function openWebMatchRuntime(
     ),
     opponentId,
     opponentPolicyFingerprint: policy.fingerprint,
+    opponentTargetElo: policy.targetElo,
     playerColor:
       input.mode === "challenge"
         ? input.playerColor

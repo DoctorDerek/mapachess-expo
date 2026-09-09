@@ -10,7 +10,9 @@ import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
-import resolveWebOpponentPolicy from "./webOpponentPolicy"
+import resolveWebOpponentPolicy, {
+  resolveWebChallengePolicy,
+} from "./webOpponentPolicy"
 
 export type ResumedWebMatch = Readonly<{
   matchSeed: WebMatchRuntime["matchSeed"]
@@ -62,11 +64,19 @@ export function buildFreshWebMatch(
 export default async function resumeWebMatch(
   record: DurableMatchRecord,
 ): Promise<ResumedWebMatch> {
-  await resolveWebOpponentPolicy(
-    record.opponentId,
-    record.startingPosition.variant,
-    record.opponentPolicyFingerprint,
-  )
+  if (record.mode === "challenge")
+    await resolveWebChallengePolicy(
+      record.opponentId,
+      record.startingPosition.variant,
+      undefined,
+      record.opponentPolicyFingerprint,
+    )
+  else
+    await resolveWebOpponentPolicy(
+      record.opponentId,
+      record.startingPosition.variant,
+      record.opponentPolicyFingerprint,
+    )
 
   const matchSeed = parseDeterministicRandomSeed(
     record.matchSeed,
