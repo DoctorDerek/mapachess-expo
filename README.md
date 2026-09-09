@@ -17,10 +17,14 @@ pre-production. Its defining design combines:
 - Standard and Chess960 across Story and Challenge, with four separately tracked
   player Elo ratings.
 
-The current web development build exposes the first Standard Story opponent
-through the normal application route. Chicken Stockfish's 100-Elo target is
-explicitly provisional and unrated until calibration evidence and human
-playtesting support promotion.
+The current web development build offers ten Story opponents, Chicken through
+Raccoon, in both Standard and Chess960. Win to unlock the next animal, or replay
+earlier opponents to improve your medal. Each variant retains its own victories
+and best medals, and active matches save locally for reload and restart.
+The authored 100–1000 Elo targets remain provisional and unrated; these matches
+do not update player Elo. Challenge currently offers Chicken with side and
+Chess960-position selection. Independent Challenge animal/difficulty controls,
+XP/Levels, and achievements remain in development.
 
 ## Current repository
 
@@ -31,9 +35,9 @@ The implemented foundation currently provides:
   Windows UCI process adapter.
 - Deterministic, resumable, color-reversed calibration matches with preserved
   evidence and local BayesElo rating analysis.
-- An evidence-ranked provisional Standard Chicken shortlist without automatic
-  policy promotion or a public rating claim.
-- A durable Standard Story browser match with exact Better Hints, evaluation,
+- Measured provisional Standard and Chess960 opponent policies using the pinned
+  web Lite WASM artifacts, without automatic rating promotion.
+- Durable Standard and Chess960 browser matches with exact Better Hints, evaluation,
   Undo/Redo, Resign, Offer Draw, reload recovery, Restart Match, and Return to
   Menu.
 - Advisory ESLint, blocking TypeScript and tests, measured coverage reporting,
