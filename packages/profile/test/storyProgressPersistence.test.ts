@@ -34,7 +34,14 @@ describe("Story progress in durable profiles", () => {
       revision: 42,
       schema: current.schema,
       schemaVersion: 3,
-      settings: current.settings,
+      settings: {
+        autoHintMode: current.settings.autoHintMode,
+        challengeSetup: {
+          variant: "standard",
+          playerColor: "white",
+          chess960PositionId: null,
+        },
+      },
     }
     const canonicalV3 = JSON.stringify([
       legacy.schema,

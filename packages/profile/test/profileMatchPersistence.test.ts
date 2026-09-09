@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { createActor, waitFor } from "xstate"
-import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
+import {
+  DEFAULT_CHALLENGE_SETUP,
+  type ChallengeSetup,
+} from "@mapachess/match/challenge-setup"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
@@ -15,6 +18,7 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "../src/profileMatchPersistence.js"
+import { replaceActiveMatch } from "../src/profileMutations.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 const initialPosition = createInitialMatchPosition({
@@ -71,11 +75,46 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("does not accept an unchanged match as acknowledgement of a different difficulty preference", async () => {
+    const actor = await openProfile()
+    const match: DurableMatchRecord = { ...durableMatch(), mode: "challenge" }
+    const signal = new AbortController().signal
+    await persistProfileActiveMatch({
+      actor,
+      candidate: match,
+      expectedActiveMatch: null,
+      challengeSetup: DEFAULT_CHALLENGE_SETUP,
+      signal,
+    })
+    const before = selectCurrentPlayerData(actor.getSnapshot())
+    const setup = { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1000 }
+    await persistProfileActiveMatch({
+      actor,
+      candidate: match,
+      expectedActiveMatch: match,
+      challengeSetup: setup,
+      signal,
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
+      revision: (before?.revision ?? 0) + 1,
+      settings: { challengeSetup: setup },
+      activeMatch: match,
+    })
+    expect(() =>
+      replaceActiveMatch(createInitialMapachessPlayerData(), match, {
+        ...setup,
+        opponentId: "bunny-stockfish",
+      }),
+    ).toThrow("Challenge setup must describe")
+    actor.stop()
+  })
   it("commits Challenge setup with its match and preserves it through hint changes and exit", async () => {
     const actor = await openProfile()
     const initial = selectCurrentPlayerData(actor.getSnapshot())
     if (initial === null) throw new Error("Profile must be ready")
     const challengeSetup: ChallengeSetup = {
+      ...DEFAULT_CHALLENGE_SETUP,
+      difficultyTargetElo: 1000,
       variant: "standard",
       playerColor: "black",
       chess960PositionId: null,

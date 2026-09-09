@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { describe, expect, it } from "vitest"
+import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialMapachessPlayerData, {
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 } from "../src/playerData.js"
@@ -9,6 +10,7 @@ import {
   decodeMapachessPortableBackup,
   MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS,
 } from "../src/portableBackup.js"
+import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
 import portableActiveChickenV1 from "./fixtures/portableActiveChickenV1.json"
 import portableActiveChickenV2 from "./fixtures/portableActiveChickenV2.json"
 
@@ -16,6 +18,151 @@ const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
 
 describe("Mapachess portable backups", () => {
+  it.each([3, 4])(
+    "verifies original v%i checksums before migrating remembered Challenge selections",
+    async (version) => {
+      const match = {
+        ...portableActiveChickenV2.payload.activeMatch,
+        mode: "challenge",
+      }
+      const legacySetup = {
+        variant: "chess960",
+        playerColor: "black",
+        chess960PositionId: 959,
+      }
+      const storyProgress = {
+        standard: [{ opponentId: "chicken-stockfish", highestMedal: "gold" }],
+        chess960: [],
+      }
+      const payload = {
+        ...portableActiveChickenV2.payload,
+        activeMatch: match,
+        schemaVersion: version,
+        settings: {
+          autoHintMode: "no-auto-hints",
+          challengeSetup: legacySetup,
+        },
+        ...(version === 4 ? { storyProgress } : {}),
+      }
+      const originalCanonical = JSON.stringify([
+        "mapachess-player-data",
+        version,
+        42,
+        "no-auto-hints",
+        [314.25, 511, 712.5, 913],
+        [
+          3,
+          match.matchId,
+          match.matchSeed,
+          "challenge",
+          match.opponentId,
+          match.opponentPolicyFingerprint,
+          "white",
+          100,
+          ["standard", null],
+          "untimed",
+          "auto-move-hints",
+          ["e2e4", "e7e5"],
+          1,
+          match.currentFen,
+          true,
+          true,
+          null,
+        ],
+        ["chess960", "black", 959],
+        ...(version === 4 ? [[[["chicken-stockfish", "gold"]], []]] : []),
+      ])
+      const payloadHash = await sha256(originalCanonical)
+      const backup = {
+        ...portableActiveChickenV2,
+        payload,
+        saveSchemaVersion: version,
+        integrity: { algorithm: "SHA-256", payloadHash },
+      }
+      const decoded = await decodeMapachessPortableBackup(
+        JSON.stringify(backup),
+        sha256,
+      )
+      expect(decoded.ok).toBe(true)
+      if (!decoded.ok) throw new Error("Historical backup must decode")
+      expect(decoded.backup.payload).toMatchObject({
+        schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+        activeMatch: match,
+        ratings: payload.ratings,
+        settings: {
+          challengeSetup: { ...DEFAULT_CHALLENGE_SETUP, ...legacySetup },
+        },
+        storyProgress:
+          version === 4 ? storyProgress : { standard: [], chess960: [] },
+      })
+      const stored = {
+        format: "mapachess-stored-player-data",
+        formatVersion: 1,
+        saveSchemaVersion: version,
+        payload,
+        integrity: { algorithm: "SHA-256", payloadHash },
+      }
+      await expect(
+        decodeStoredPlayerData(JSON.stringify(stored), sha256),
+      ).resolves.toMatchObject({ ok: true, data: decoded.backup.payload })
+      await expect(
+        decodeMapachessPortableBackup(
+          JSON.stringify({
+            ...backup,
+            payload: {
+              ...payload,
+              settings: {
+                ...payload.settings,
+                challengeSetup: { ...legacySetup, playerColor: "white" },
+              },
+            },
+          }),
+          sha256,
+        ),
+      ).resolves.toMatchObject({
+        ok: false,
+        issue: { type: "PROFILE.BACKUP_INTEGRITY_MISMATCH" },
+      })
+    },
+  )
+
+  it("round-trips independent Challenge preferences and includes both choices in integrity", async () => {
+    const initial = createInitialMapachessPlayerData()
+    const playerData = {
+      ...initial,
+      settings: {
+        ...initial.settings,
+        challengeSetup: {
+          ...DEFAULT_CHALLENGE_SETUP,
+          opponentId: "raccoon-stockfish" as const,
+          difficultyTargetElo: 200,
+        },
+      },
+    }
+    const encoded = await createMapachessPortableBackup({
+      applicationVersion: "test",
+      gddRevision: "test",
+      playerData,
+      sha256,
+    })
+    await expect(
+      decodeMapachessPortableBackup(encoded, sha256),
+    ).resolves.toMatchObject({ ok: true, backup: { payload: playerData } })
+    for (const tampered of [
+      encoded.replace('"raccoon-stockfish"', '"chicken-stockfish"'),
+      encoded.replace(
+        '"difficultyTargetElo": 200',
+        '"difficultyTargetElo": 1000',
+      ),
+    ]) {
+      await expect(
+        decodeMapachessPortableBackup(tampered, sha256),
+      ).resolves.toMatchObject({
+        ok: false,
+        issue: { type: "PROFILE.BACKUP_INTEGRITY_MISMATCH" },
+      })
+    }
+  })
   it.each([portableActiveChickenV1, portableActiveChickenV2])(
     "accepts the synthetic cross-platform active-match fixture",
     async (fixture) => {
