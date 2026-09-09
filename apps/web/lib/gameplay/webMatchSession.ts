@@ -184,7 +184,7 @@ export async function openCurrentWebMatchSession({
     throw new Error("The player profile has no active match to resume.")
   }
 
-  const resumedMatch = await resumeWebMatch(activeMatch)
+  const resumedMatch = resumeWebMatch(activeMatch)
   const runtime = await openRuntime({
     ...(activeMatch.mode === "challenge"
       ? { mode: "challenge" as const, playerColor: activeMatch.playerColor }
@@ -195,8 +195,27 @@ export async function openCurrentWebMatchSession({
     setup: activeMatch.startingPosition,
     signal,
   })
+  let match = activeMatch
+  if (
+    activeMatch.opponentPolicyFingerprint !== runtime.opponentPolicyFingerprint
+  ) {
+    match = Object.freeze({
+      ...activeMatch,
+      opponentPolicyFingerprint: runtime.opponentPolicyFingerprint,
+    })
+    try {
+      await persistProfileActiveMatch({
+        actor: profileActor,
+        candidate: match,
+        expectedActiveMatch: activeMatch,
+        signal,
+      })
+    } catch (error) {
+      return closeRuntimeAfterFailure(runtime, error)
+    }
+  }
   return openActorSession({
-    match: activeMatch,
+    match,
     profileActor,
     resumedMatch,
     runtime,
@@ -299,7 +318,7 @@ export async function openFreshWebMatchSession(
 
   let resumedMatch: ResumedWebMatch
   try {
-    resumedMatch = await resumeWebMatch(freshMatch)
+    resumedMatch = resumeWebMatch(freshMatch)
     await persistProfileActiveMatch({
       actor: profileActor,
       candidate: freshMatch,
