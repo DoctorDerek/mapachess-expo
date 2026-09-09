@@ -11,13 +11,13 @@ import type {
   StockfishUciIdentity,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
-import type { ChickenCryptography } from "../chicken/chickenOpponent"
-import {
-  chickenMatchId,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-} from "../chicken/chickenOpponent"
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openWebMatchRuntime from "./openWebMatchRuntime"
+import type { WebOpponentCryptography } from "./webOpponent"
+import { webMatchId } from "./webOpponent"
+import resolveWebOpponentPolicy, {
+  legacyChickenWebPolicy,
+} from "./webOpponentPolicy"
 
 const ENGINE_IDENTITY: StockfishUciIdentity = Object.freeze({
   author: "the Stockfish developers",
@@ -43,7 +43,7 @@ const HINT_CONFIGURATION: StockfishEngineConfiguration = Object.freeze({
   variant: "standard",
 })
 
-const createCryptography = (): ChickenCryptography => {
+const createCryptography = (): WebOpponentCryptography => {
   const getRandomValues = <Value extends ArrayBufferView<ArrayBuffer> | null>(
     array: Value,
   ): Value => {
@@ -118,6 +118,59 @@ const openFixture = async (
   return { runtime, openSession }
 }
 describe("web match runtime ownership", () => {
+  it.each(["standard", "chess960"] as const)(
+    "uses measured %s defaults while preserving an explicitly saved legacy policy",
+    async (variant) => {
+      const parsed = parseChess960PositionId(959)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const setup =
+        variant === "standard"
+          ? ({ variant, chess960PositionId: null } as const)
+          : ({ variant, chess960PositionId: parsed.positionId } as const)
+      const fresh = await openFixture({ setup })
+      try {
+        const legacy = legacyChickenWebPolicy(variant)
+        const resumed = await openFixture({
+          setup,
+          matchSeed: fresh.runtime.matchSeed,
+          opponentId: "chicken-stockfish",
+          opponentPolicyFingerprint: legacy.fingerprint,
+        })
+        try {
+          expect(fresh.runtime.opponentPolicyFingerprint).toBe(
+            (await resolveWebOpponentPolicy("chicken-stockfish", variant))
+              .fingerprint,
+          )
+          expect(fresh.runtime.opponentPolicyFingerprint).not.toBe(
+            legacy.fingerprint,
+          )
+          expect(resumed.runtime.opponentPolicyFingerprint).toBe(
+            legacy.fingerprint,
+          )
+          expect(resumed.runtime.matchId).toBe(fresh.runtime.matchId)
+          expect(resumed.runtime.playerColor).toBe(fresh.runtime.playerColor)
+          expect(resumed.runtime.startingPosition).toEqual(setup)
+        } finally {
+          await resumed.runtime.close()
+        }
+      } finally {
+        await fresh.runtime.close()
+      }
+    },
+  )
+
+  it("rejects an unknown saved policy before allocating any engine workers", async () => {
+    const openSession = createSessionQueue([])
+    await expect(
+      openWebMatchRuntime({
+        cryptography: createCryptography(),
+        openSession,
+        opponentPolicyFingerprint: "unsupported-policy",
+      }),
+    ).rejects.toThrow("Saved opponent policy")
+    expect(openSession).not.toHaveBeenCalled()
+  })
+
   it.each(["white", "black"] as const)(
     "honors chosen %s with an explicit Chess960 Challenge layout in all three engine sessions",
     async (playerColor) => {
@@ -136,10 +189,10 @@ describe("web match runtime ownership", () => {
         expect(opened.runtime.playerColor).toBe(playerColor)
         expect(opened.runtime.startingPosition).toEqual(startingPosition)
         expect(opened.runtime.matchId).toBe(
-          chickenMatchId(opened.runtime.matchSeed, startingPosition, selection),
+          webMatchId(opened.runtime.matchSeed, startingPosition, selection),
         )
         expect(opened.runtime.matchId).not.toBe(
-          chickenMatchId(opened.runtime.matchSeed, startingPosition),
+          webMatchId(opened.runtime.matchSeed, startingPosition),
         )
         expect(
           opened.openSession.mock.calls.map(
@@ -197,7 +250,8 @@ describe("web match runtime ownership", () => {
       expect(resumed.runtime.matchId).toBe(first.runtime.matchId)
       expect(resumed.runtime.playerColor).toBe(first.runtime.playerColor)
       expect(first.runtime.opponentPolicyFingerprint).not.toBe(
-        STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+        (await resolveWebOpponentPolicy("chicken-stockfish", "standard"))
+          .fingerprint,
       )
     } finally {
       await Promise.all(
@@ -240,7 +294,9 @@ describe("web match runtime ownership", () => {
       matchId: "standard-story-chicken/00000001000000020000000300000004",
       matchSeed: "00000001000000020000000300000004",
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+      opponentPolicyFingerprint: (
+        await resolveWebOpponentPolicy("chicken-stockfish", "standard")
+      ).fingerprint,
       playerColor: "white",
     })
     expect(runtime.hintAnalyst.analyze).toEqual(expect.any(Function))

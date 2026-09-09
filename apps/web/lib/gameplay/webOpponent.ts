@@ -8,6 +8,7 @@ import type {
   MatchStartingPosition,
 } from "@mapachess/match/match-position"
 import type { MatchVariant } from "@mapachess/match/match-variant"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
@@ -15,44 +16,14 @@ import {
 import {
   createDeterministicRandom,
   deriveOpponentPositionSeed,
-  OPPONENT_POSITION_SEED_DERIVATION_VERSION,
   parseDeterministicRandomSeed,
   selectOpponentMoveSource,
   selectUniformRandomLegalMove,
   type DeterministicRandomSeed,
 } from "@mapachess/stockfish/opponent-move-selection"
-import {
-  STOCKFISH_18_WEB_SOURCE_REVISION,
-  STOCKFISH_18_WEB_WASM_ARTIFACT,
-} from "@mapachess/stockfish/web-runtime-identity"
+import type { WebOpponentPolicy } from "./webOpponentPolicy"
 
-export const CHICKEN_NODE_LIMIT = 10_000 as const
-export const CHICKEN_RANDOM_MOVE_BASIS_POINTS = 8_000 as const
-export const CHICKEN_PROVISIONAL_TARGET_ELO = 100 as const
-export const CHICKEN_WEB_SEED_DERIVATION_VERSION =
-  OPPONENT_POSITION_SEED_DERIVATION_VERSION
-export const STANDARD_CHICKEN_WEB_POLICY_VERSION =
-  "mapachess-standard-chicken-web-policy/v1" as const
-const CHICKEN_WEB_POLICY_ENGINE_FINGERPRINT = [
-  `stockfish-js-source/${STOCKFISH_18_WEB_SOURCE_REVISION}`,
-  `wasm-sha256/${STOCKFISH_18_WEB_WASM_ARTIFACT.sha256}`,
-  `nodes/${String(CHICKEN_NODE_LIMIT)}`,
-  `random-basis-points/${String(CHICKEN_RANDOM_MOVE_BASIS_POINTS)}`,
-  CHICKEN_WEB_SEED_DERIVATION_VERSION,
-].join("|")
-
-export function chickenPolicyFingerprint(variant: MatchVariant): string {
-  const version =
-    variant === "standard"
-      ? STANDARD_CHICKEN_WEB_POLICY_VERSION
-      : "mapachess-chess960-chicken-web-policy/v1"
-  return `${version}|${CHICKEN_WEB_POLICY_ENGINE_FINGERPRINT}`
-}
-
-export const STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT =
-  chickenPolicyFingerprint("standard")
-
-export type ChickenCryptography = Readonly<{
+export type WebOpponentCryptography = Readonly<{
   getRandomValues: Crypto["getRandomValues"]
   subtle: Pick<SubtleCrypto, "digest">
 }>
@@ -68,15 +39,15 @@ const compareLegalMovesByUci = (
   right: LegalMatchMove,
 ): number => (left.uci < right.uci ? -1 : left.uci > right.uci ? 1 : 0)
 
-export function generateChickenMatchSeed(
-  cryptography: ChickenCryptography,
+export function generateWebMatchSeed(
+  cryptography: WebOpponentCryptography,
 ): DeterministicRandomSeed {
   const words = cryptography.getRandomValues(new Uint32Array(4))
   const seed = [...words]
     .map((word) => word.toString(16).padStart(8, "0"))
     .join("")
 
-  return parseDeterministicRandomSeed(seed, "Chicken match seed")
+  return parseDeterministicRandomSeed(seed, "Web match seed")
 }
 
 export function selectStoryPlayerColor(
@@ -86,7 +57,7 @@ export function selectStoryPlayerColor(
   return random.nextIndex(2) === 0 ? "white" : "black"
 }
 
-export function chickenMatchId(
+export function webMatchId(
   matchSeed: DeterministicRandomSeed,
   startingPosition: MatchStartingPosition = {
     variant: "standard",
@@ -97,15 +68,17 @@ export function chickenMatchId(
     | Readonly<{ mode: "challenge"; playerColor: MatchColor }> = {
     mode: "story",
   },
+  opponentId: StockfishOpponentId = "chicken-stockfish",
 ): string {
+  const animalId = opponentId.replace(/-stockfish$/, "")
   if (selection.mode === "challenge") {
     return startingPosition.variant === "standard"
-      ? `standard-challenge-chicken/${selection.playerColor}/${matchSeed}`
-      : `chess960-challenge-chicken/${String(startingPosition.chess960PositionId)}/${selection.playerColor}/${matchSeed}`
+      ? `standard-challenge-${animalId}/${selection.playerColor}/${matchSeed}`
+      : `chess960-challenge-${animalId}/${String(startingPosition.chess960PositionId)}/${selection.playerColor}/${matchSeed}`
   }
   return startingPosition.variant === "standard"
-    ? `standard-story-chicken/${matchSeed}`
-    : `chess960-story-chicken/${String(startingPosition.chess960PositionId)}/${matchSeed}`
+    ? `standard-story-${animalId}/${matchSeed}`
+    : `chess960-story-${animalId}/${String(startingPosition.chess960PositionId)}/${matchSeed}`
 }
 
 const requireVariantPosition = (
@@ -116,19 +89,19 @@ const requireVariantPosition = (
     request.initialPosition.variant !== variant ||
     request.position.variant !== variant
   ) {
-    throw new TypeError("Chicken received a position for a different variant.")
+    throw new TypeError("Opponent received a position for a different variant.")
   }
 }
 
-export default function createChickenOpponent(
+export default function createWebOpponent(
   session: StockfishEngineSession,
-  cryptography: ChickenCryptography,
+  cryptography: WebOpponentCryptography,
   matchSeed: DeterministicRandomSeed,
-  variant: MatchVariant = "standard",
+  policy: WebOpponentPolicy,
 ): MatchOpponent {
   return Object.freeze({
     selectMove: async (request, signal) => {
-      requireVariantPosition(request, variant)
+      requireVariantPosition(request, policy.variant)
       throwIfSelectionAborted(signal)
       const random = createDeterministicRandom(
         await deriveOpponentPositionSeed(
@@ -143,7 +116,7 @@ export default function createChickenOpponent(
       )
       const source = selectOpponentMoveSource(
         random,
-        CHICKEN_RANDOM_MOVE_BASIS_POINTS,
+        policy.randomMoveProbabilityBasisPoints,
       )
 
       if (source === "uniform-random-legal") {
@@ -152,7 +125,7 @@ export default function createChickenOpponent(
 
       const result = await session.search(
         {
-          nodeLimit: CHICKEN_NODE_LIMIT,
+          nodeLimit: policy.nodeLimit,
           position: {
             fen: request.initialPosition.fen,
             moves: request.acceptedMoves.map((move) => move.uci),

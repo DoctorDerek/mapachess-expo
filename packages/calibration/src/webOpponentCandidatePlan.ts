@@ -9,6 +9,10 @@ import {
 } from "@mapachess/stockfish/build-identity"
 import { OPPONENT_POSITION_SEED_DERIVATION_VERSION } from "@mapachess/stockfish/opponent-move-selection"
 import { STOCKFISH_PROCESS_ADAPTER_VERSION } from "@mapachess/stockfish/uci-process-adapter"
+import {
+  WEB_OPPONENT_ENGINE_CONFIGURATION,
+  WEB_OPPONENT_NODE_LIMIT,
+} from "@mapachess/stockfish/web-opponent-policy"
 import type { RunBayesEloInput } from "./bayesEloRunner.js"
 import createCalibrationPlan, {
   CALIBRATION_PLAN_SCHEMA_VERSION,
@@ -32,10 +36,7 @@ import fingerprintOpponentPolicy, {
   type OpponentPolicy,
   type UciStrength,
 } from "./opponentPolicy.js"
-import {
-  STANDARD_CHICKEN_NODE_LIMIT,
-  STANDARD_CHICKEN_OPENINGS,
-} from "./standardChickenCandidatePlan.js"
+import { STANDARD_CHICKEN_OPENINGS } from "./standardChickenCandidatePlan.js"
 
 export const WEB_OPPONENT_CANDIDATE_PROBABILITIES = [
   8_000, 6_500, 5_000, 4_000,
@@ -59,12 +60,9 @@ export function createWebOpponentCalibrationPolicy(
       ? STOCKFISH_18_BUILD_IDENTITY
       : WEB_CALIBRATION_ENGINE_IDENTITY,
     search: {
+      ...WEB_OPPONENT_ENGINE_CONFIGURATION,
       strength,
-      nodeLimit: STANDARD_CHICKEN_NODE_LIMIT,
-      threads: 1,
-      hashMegabytes: 16,
-      multiPv: 1,
-      ponder: false,
+      nodeLimit: WEB_OPPONENT_NODE_LIMIT,
       commandProtocolVersion: CALIBRATION_COMMAND_PROTOCOL_VERSION,
       tablebases: { kind: "disabled" },
     },

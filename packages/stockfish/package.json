@@ -33,6 +33,10 @@
       "types": "./src/uciSession.ts",
       "default": "./dist/uciSession.js"
     },
+    "./web-opponent-policy": {
+      "types": "./src/webOpponentPolicy.ts",
+      "default": "./dist/webOpponentPolicy.js"
+    },
     "./web-runtime-identity": {
       "types": "./src/webRuntimeIdentity.ts",
       "default": "./dist/webRuntimeIdentity.js"

@@ -10,11 +10,6 @@ import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import {
-  chickenMatchId,
-  chickenPolicyFingerprint,
-  selectStoryPlayerColor,
-} from "../chicken/chickenOpponent"
 import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
 import webSha256 from "../profile/webSha256"
@@ -26,6 +21,10 @@ import {
   openFreshWebMatchSession,
   returnWebMatchSessionToMenu,
 } from "./webMatchSession"
+import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+import resolveWebOpponentPolicy, {
+  legacyChickenWebPolicy,
+} from "./webOpponentPolicy"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
@@ -67,9 +66,11 @@ const createRuntime = (
     variant: "standard",
     chess960PositionId: null,
   },
-  selection: NonNullable<Parameters<typeof chickenMatchId>[2]> = {
+  selection: NonNullable<Parameters<typeof webMatchId>[2]> = {
     mode: "story",
   },
+  policyFingerprint = legacyChickenWebPolicy(startingPosition.variant)
+    .fingerprint,
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -85,7 +86,7 @@ const createRuntime = (
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: chickenMatchId(matchSeed, startingPosition, selection),
+    matchId: webMatchId(matchSeed, startingPosition, selection),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -96,9 +97,7 @@ const createRuntime = (
         return move.id
       }),
     }),
-    opponentPolicyFingerprint: chickenPolicyFingerprint(
-      startingPosition.variant,
-    ),
+    opponentPolicyFingerprint: policyFingerprint,
     opponentId: "chicken-stockfish",
     playerColor:
       selection.mode === "challenge"
@@ -121,6 +120,128 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it.each([
+    ["standard", "legacy"],
+    ["standard", "measured"],
+    ["chess960", "legacy"],
+    ["chess960", "measured"],
+  ] as const)(
+    "retains the exact %s %s policy through durable reload and restart",
+    async (variant, generation) => {
+      const parsed = parseChess960PositionId(959)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const startingPosition: MatchStartingPosition =
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: parsed.positionId }
+      const policy =
+        generation === "legacy"
+          ? legacyChickenWebPolicy(variant)
+          : await resolveWebOpponentPolicy("chicken-stockfish", variant)
+      const indexedDb = new IDBFactory()
+      const profile = await openProfileRuntime(725, indexedDb)
+      const ratings = selectCurrentPlayerData(
+        profile.actor.getSnapshot(),
+      )?.ratings
+      const initialRuntime = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const first = await openFreshWebMatchSession({
+        variant,
+        previousSession: null,
+        openRuntime: runtimeOpener(initialRuntime.runtime),
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      })
+      await first.close()
+      await profile.close()
+
+      const reloaded = await openProfileRuntime(undefined, indexedDb)
+      const resumedRuntime = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const resumeOpener = runtimeOpener(resumedRuntime.runtime)
+      const resumed = await openCurrentWebMatchSession({
+        openRuntime: resumeOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(resumeOpener).toHaveBeenCalledWith({
+        matchSeed: FIRST_MATCH_SEED,
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: policy.fingerprint,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(resumed.match).toEqual(first.match)
+      const restartRuntime = createRuntime(
+        SECOND_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const restartOpener = runtimeOpener(restartRuntime.runtime)
+      const restarted = await openFreshWebMatchSession({
+        variant,
+        previousSession: resumed,
+        openRuntime: restartOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(restartOpener).toHaveBeenCalledWith({
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: policy.fingerprint,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(restarted.match.opponentPolicyFingerprint).toBe(policy.fingerprint)
+      expect(restarted.match.matchSeed).toBe(SECOND_MATCH_SEED)
+      expect(restarted.match.matchId).not.toBe(first.match.matchId)
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.ratings,
+      ).toEqual(ratings)
+      await restarted.close()
+      await reloaded.close()
+    },
+  )
+
+  it("preserves a save with an unsupported policy without opening workers or replacing player data", async () => {
+    const profile = await openProfileRuntime()
+    const engine = createRuntime(FIRST_MATCH_SEED)
+    const candidate = buildFreshWebMatch({
+      autoHintMode: "no-auto-hints",
+      playerEloAtStart: 100,
+      runtime: {
+        ...engine.runtime,
+        opponentPolicyFingerprint: "unsupported-policy",
+      },
+    })
+    await persistProfileActiveMatch({
+      actor: profile.actor,
+      candidate,
+      expectedActiveMatch: null,
+      signal: new AbortController().signal,
+    })
+    const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+    const openRuntime = runtimeOpener(engine.runtime)
+    await expect(
+      openCurrentWebMatchSession({
+        openRuntime,
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toThrow("Saved opponent policy")
+    expect(openRuntime).not.toHaveBeenCalled()
+    expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(before)
+    await profile.close()
+  })
+
   it.each(["standard", "chess960"] as const)(
     "persists and reloads %s Challenge with chosen Black and its independent rating",
     async (variant) => {
@@ -184,6 +305,10 @@ describe("web match session ownership", () => {
         matchSeed: FIRST_MATCH_SEED,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: legacyChickenWebPolicy(
+          startingPosition.variant,
+        ).fingerprint,
       })
       expect(resumed.match).toEqual(saved?.activeMatch)
       const restartOpener = runtimeOpener(
@@ -201,6 +326,10 @@ describe("web match session ownership", () => {
         ...selection,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: legacyChickenWebPolicy(
+          startingPosition.variant,
+        ).fingerprint,
       })
       expect(restarted.match).toMatchObject({
         mode: "challenge",
@@ -348,6 +477,10 @@ describe("web match session ownership", () => {
       matchSeed: FIRST_MATCH_SEED,
       setup: startingPosition,
       signal: expect.any(AbortSignal),
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy(
+        startingPosition.variant,
+      ).fingerprint,
     })
     expect(resumed.match).toEqual(first.match)
     const restartOpener = runtimeOpener(
@@ -363,6 +496,10 @@ describe("web match session ownership", () => {
     expect(restartOpener).toHaveBeenCalledWith({
       setup: startingPosition,
       signal: expect.any(AbortSignal),
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy(
+        startingPosition.variant,
+      ).fingerprint,
     })
     expect(restarted.match.startingPosition).toEqual(
       first.match.startingPosition,
@@ -456,6 +593,8 @@ describe("web match session ownership", () => {
       matchSeed: FIRST_MATCH_SEED,
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
     })
     expect(resumedSession.match).toEqual(initialSession.match)
     await resumedSession.close()
@@ -525,6 +664,8 @@ describe("web match session ownership", () => {
       matchSeed: SECOND_MATCH_SEED,
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
     })
     expect(resumedSession.match).toEqual(acceptedMatch)
     await resumedSession.close()

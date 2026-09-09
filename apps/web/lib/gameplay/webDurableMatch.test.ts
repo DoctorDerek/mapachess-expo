@@ -19,16 +19,12 @@ import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
-  chickenMatchId,
-  chickenPolicyFingerprint,
-  selectStoryPlayerColor,
-  STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
-} from "../chicken/chickenOpponent"
-import {
   buildFreshWebMatch,
   default as resumeWebMatch,
   type FreshWebMatchInput,
 } from "./webDurableMatch"
+import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+import { legacyChickenWebPolicy } from "./webOpponentPolicy"
 
 const matchSeed = parseDeterministicRandomSeed(
   "00000001000000020000000300000004",
@@ -36,10 +32,10 @@ const matchSeed = parseDeterministicRandomSeed(
 )
 
 const runtime = Object.freeze({
-  matchId: chickenMatchId(matchSeed),
+  matchId: webMatchId(matchSeed),
   matchSeed,
   opponentId: "chicken-stockfish",
-  opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+  opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
   playerColor: selectStoryPlayerColor(matchSeed),
   startingPosition: { variant: "standard", chess960PositionId: null } as const,
 }) satisfies FreshWebMatchInput["runtime"]
@@ -53,7 +49,7 @@ const requireMoveId = (uci: string) => {
 describe("web durable match mapping", () => {
   it.each(["white", "black"] as const)(
     "round-trips Challenge identities for chosen %s without accepting Story or opposite-color identities",
-    (playerColor) => {
+    async (playerColor) => {
       const parsed = parseChess960PositionId(959)
       if (!parsed.ok) throw new Error("Invalid test layout")
       const positions: readonly MatchStartingPosition[] = [
@@ -70,10 +66,10 @@ describe("web durable match mapping", () => {
             ...runtime,
             playerColor,
             startingPosition,
-            matchId: chickenMatchId(matchSeed, startingPosition, selection),
-            opponentPolicyFingerprint: chickenPolicyFingerprint(
+            matchId: webMatchId(matchSeed, startingPosition, selection),
+            opponentPolicyFingerprint: legacyChickenWebPolicy(
               startingPosition.variant,
-            ),
+            ).fingerprint,
           },
         })
         const decoded = decodeMapachessPlayerData({
@@ -83,25 +79,25 @@ describe("web durable match mapping", () => {
         if (!decoded.ok || decoded.data.activeMatch === null)
           throw new Error("Challenge save must decode")
         expect(decoded.data.activeMatch).toEqual(fresh)
-        expect(resumeWebMatch(decoded.data.activeMatch).matchSeed).toBe(
+        expect((await resumeWebMatch(decoded.data.activeMatch)).matchSeed).toBe(
           matchSeed,
         )
-        expect(() => resumeWebMatch({ ...fresh, mode: "story" })).toThrow(
-          "identity does not match",
-        )
-        expect(() =>
+        await expect(
+          resumeWebMatch({ ...fresh, mode: "story" }),
+        ).rejects.toThrow("identity does not match")
+        await expect(
           resumeWebMatch({
             ...fresh,
             playerColor: playerColor === "white" ? "black" : "white",
           }),
-        ).toThrow("identity does not match")
+        ).rejects.toThrow("identity does not match")
       }
     },
   )
 
   it.each([0, 959])(
     "round-trips Chess960 layout %i, its seed, and undone history",
-    (layout) => {
+    async (layout) => {
       const parsed = parseChess960PositionId(layout)
       if (!parsed.ok) throw new Error("Invalid test layout")
       const startingPosition = {
@@ -114,8 +110,9 @@ describe("web durable match mapping", () => {
         runtime: {
           ...runtime,
           startingPosition,
-          matchId: chickenMatchId(matchSeed, startingPosition),
-          opponentPolicyFingerprint: chickenPolicyFingerprint("chess960"),
+          matchId: webMatchId(matchSeed, startingPosition),
+          opponentPolicyFingerprint:
+            legacyChickenWebPolicy("chess960").fingerprint,
         },
       })
       const saved = {
@@ -132,21 +129,22 @@ describe("web durable match mapping", () => {
       const decoded = decodeMapachessPlayerData(imported)
       if (!decoded.ok || decoded.data.activeMatch === null)
         throw new Error("Chess960 profile must decode")
-      const resumed = resumeWebMatch(decoded.data.activeMatch)
+      const resumed = await resumeWebMatch(decoded.data.activeMatch)
       expect(resumed.timeline.cursor).toBe(0)
       expect(resumed.timeline.transitions).toHaveLength(2)
       expect(resumed.matchSeed).toBe(matchSeed)
       expect(currentMatchPosition(resumed.timeline).fen).toBe(fresh.currentFen)
       expect(decoded.data.activeMatch).toEqual(saved)
-      expect(() =>
+      await expect(
         resumeWebMatch({
           ...saved,
-          opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+          opponentPolicyFingerprint:
+            legacyChickenWebPolicy("standard").fingerprint,
         }),
-      ).toThrow("policy does not match")
-      expect(() =>
-        resumeWebMatch({ ...saved, matchId: chickenMatchId(matchSeed) }),
-      ).toThrow("identity does not match")
+      ).rejects.toThrow("policy does not match")
+      await expect(
+        resumeWebMatch({ ...saved, matchId: webMatchId(matchSeed) }),
+      ).rejects.toThrow("identity does not match")
     },
   )
 
@@ -166,7 +164,7 @@ describe("web durable match mapping", () => {
       moveHintsUsed: false,
       moveIds: [],
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT,
+      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
       pieceHintsUsed: false,
       playerColor: runtime.playerColor,
       playerEloAtStart: 100,
@@ -179,7 +177,7 @@ describe("web durable match mapping", () => {
     )
   })
 
-  it("reconstructs the full branch while retaining the saved cursor", () => {
+  it("reconstructs the full branch while retaining the saved cursor", async () => {
     const fresh = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
@@ -202,29 +200,29 @@ describe("web durable match mapping", () => {
       pieceHintsUsed: true,
     })
 
-    const resumed = resumeWebMatch(saved)
+    const resumed = await resumeWebMatch(saved)
     expect(resumed.matchSeed).toBe(matchSeed)
     expect(resumed.timeline.cursor).toBe(0)
     expect(resumed.timeline.transitions).toHaveLength(2)
     expect(currentMatchPosition(resumed.timeline).fen).toBe(fresh.currentFen)
   })
 
-  it("rejects a saved match from another Chicken policy", () => {
+  it("rejects a saved match from another Chicken policy", async () => {
     const fresh = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })
 
-    expect(() =>
+    await expect(
       resumeWebMatch({
         ...fresh,
-        opponentPolicyFingerprint: `${STANDARD_CHICKEN_WEB_POLICY_FINGERPRINT}/changed`,
+        opponentPolicyFingerprint: `${legacyChickenWebPolicy("standard").fingerprint}/changed`,
       }),
-    ).toThrow("Saved Chicken policy does not match")
+    ).rejects.toThrow("Saved opponent policy does not match")
   })
 
-  it("round-trips the implemented identity but rejects catalog-only opponents", () => {
+  it("round-trips the implemented identity but rejects catalog-only opponents", async () => {
     const record = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
@@ -240,8 +238,8 @@ describe("web durable match mapping", () => {
     if (!decoded.ok || decoded.data.activeMatch === null) {
       throw new Error("The implemented Chicken match must round-trip.")
     }
-    expect(resumeWebMatch(decoded.data.activeMatch)).toEqual(
-      resumeWebMatch(record),
+    expect(await resumeWebMatch(decoded.data.activeMatch)).toEqual(
+      await resumeWebMatch(record),
     )
     expect(
       decodeMapachessPlayerData({
