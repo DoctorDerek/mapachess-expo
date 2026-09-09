@@ -1,6 +1,8 @@
 import type { MatchPresentationBeat } from "./matchPresentationMachine.js"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 
+export const PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS = 100
+
 export const MATCH_SPRITE_REACTION_SLOTS = [
   "idle",
   "capture-attacker",
