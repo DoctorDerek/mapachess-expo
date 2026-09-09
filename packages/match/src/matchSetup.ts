@@ -32,15 +32,19 @@ export const MATCH_SETUP_COPY = Object.freeze({
   randomPosition: "Random position",
   numberedPosition: "Choose a position number",
   positionNumber: "Position number",
-  invalidSetup: "Choose White or Black and a valid Chess960 position number.",
-  untimed: "Untimed",
+  invalidSetup:
+    "Choose an available animal, difficulty, side, and valid starting position.",
+  difficulty: "Difficulty · provisional Elo target",
   provisional: "Provisional",
+  unavailableSelection:
+    "This selection is not available. Choose an earned animal and supported difficulty.",
+  untimed: "Untimed",
   provisionalDifficulty:
     "Opponent settings are provisional. Authored Elo targets are not certified ratings, and this match does not update your Elo.",
   storyAvailability:
     "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:
-    "Chicken is currently available. Independent animal and difficulty selection will follow.",
+    "Choose any animal you have defeated in either Story ladder. Chicken is always available. Animal appearance does not change difficulty.",
   savingHints: "Saving your hint preference…",
   profileUnavailable:
     "Finish the open Settings or player-data action before starting a match.",
@@ -114,6 +118,8 @@ export default function createMatchSetupForMode(
   return Object.freeze({
     mode,
     challengeSetup: Object.freeze({
+      opponentId: rememberedChallenge.opponentId,
+      difficultyTargetElo: rememberedChallenge.difficultyTargetElo,
       playerColor: rememberedChallenge.playerColor,
       ...(variant === "standard"
         ? { variant, chess960PositionId: null }
