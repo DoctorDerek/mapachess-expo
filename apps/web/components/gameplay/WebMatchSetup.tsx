@@ -7,8 +7,12 @@ import {
   matchModeLabel,
   type MatchSetup,
 } from "@mapachess/match/match-setup"
-import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
-import type { StoryProgress } from "@mapachess/profile/story-progress"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import {
+  canPlayStoryOpponent,
+  selectDefaultStoryOpponent,
+  type StoryProgress,
+} from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
@@ -21,7 +25,6 @@ export type WebMatchSetupProps = Readonly<{
   onAutoHintModeChanged: (mode: AutoHintMode) => void
   onBack: () => void
   onStart: (setup: MatchSetup) => void
-  opponent: StockfishOpponentDefinition
   setup: MatchSetup
   storyProgress: StoryProgress
 }>
@@ -35,7 +38,6 @@ export default function WebMatchSetup({
   onAutoHintModeChanged,
   onBack,
   onStart,
-  opponent,
   setup,
   storyProgress,
 }: WebMatchSetupProps) {
@@ -46,6 +48,15 @@ export default function WebMatchSetup({
     challenge?.variant === "chess960" && challenge.chess960PositionId !== null,
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
+  const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
+    setup.mode === "story"
+      ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
+      : ("chicken-stockfish" as const),
+  )
+  const opponent = stockfishOpponent(selectedOpponentId)
+  const selectionAvailable =
+    setup.mode === "challenge" ||
+    canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus()
@@ -53,9 +64,9 @@ export default function WebMatchSetup({
 
   const startMatch = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (disabled) return
+    if (disabled || !selectionAvailable) return
     if (setup.mode === "story") {
-      onStart(setup)
+      onStart({ ...setup, opponentId: selectedOpponentId })
       return
     }
     const formData = new FormData(event.currentTarget)
@@ -93,7 +104,15 @@ export default function WebMatchSetup({
         {matchModeLabel({ mode: setup.mode, variant })}
       </h1>
       {setup.mode === "story" ? (
-        <StoryLadderProgress progress={storyProgress} variant={variant} />
+        <StoryLadderProgress
+          progress={storyProgress}
+          variant={variant}
+          selection={{
+            disabled,
+            opponentId: selectedOpponentId,
+            onSelected: setSelectedOpponentId,
+          }}
+        />
       ) : null}
       <form
         onSubmit={startMatch}
@@ -217,7 +236,10 @@ export default function WebMatchSetup({
           {activityMessage === null ? null : (
             <MapachessNotice role="status">{activityMessage}</MapachessNotice>
           )}
-          <MapachessButton disabled={disabled} type="submit">
+          <MapachessButton
+            disabled={disabled || !selectionAvailable}
+            type="submit"
+          >
             {MATCH_SETUP_COPY.startMatch}
           </MapachessButton>
         </div>

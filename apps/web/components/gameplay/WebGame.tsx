@@ -6,11 +6,11 @@ import { createActor, type ActorRefFrom } from "xstate"
 import createMatchSetupForMode, {
   MATCH_SETUP_COPY,
 } from "@mapachess/match/match-setup"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
+import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import {
   openCurrentWebMatchSession,
   openFreshWebMatchSession,
@@ -28,8 +28,6 @@ import MapachessWordmark from "../presentation/MapachessWordmark"
 import MatchModeMenu from "./MatchModeMenu"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
-
-const FIRST_STORY_OPPONENT = stockfishOpponent("chicken-stockfish")
 
 type WebMatchSessionActor = ActorRefFrom<typeof webMatchSessionMachine>
 
@@ -145,6 +143,9 @@ function MatchSessionExperience({
   const initialSetup = createMatchSetupForMode(
     { mode: requestedSetup.mode, variant },
     playerData.settings.challengeSetup,
+    requestedSetup.mode === "story"
+      ? selectDefaultStoryOpponent(playerData.storyProgress, variant)
+      : undefined,
   )
   const setupActivity =
     profileSnapshot.matches("persisting") ||
@@ -190,6 +191,10 @@ function MatchSessionExperience({
               setup: createMatchSetupForMode(
                 selection,
                 playerData.settings.challengeSetup,
+                selectDefaultStoryOpponent(
+                  playerData.storyProgress,
+                  selection.variant,
+                ),
               ),
             })
           }}
@@ -214,7 +219,6 @@ function MatchSessionExperience({
               return
             actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
           }}
-          opponent={FIRST_STORY_OPPONENT}
           setup={initialSetup}
           storyProgress={playerData.storyProgress}
         />

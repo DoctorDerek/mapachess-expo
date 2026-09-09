@@ -1,6 +1,11 @@
 import { useId } from "react"
+import {
+  isImplementedDurableOpponent,
+  type ImplementedDurableOpponentId,
+} from "@mapachess/match/durable-match-record"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
+  canPlayStoryOpponent,
   formatStoryCompletion,
   selectChallengeUnlockedOpponents,
   selectStoryCompletion,
@@ -8,15 +13,22 @@ import {
   STORY_PROGRESS_COPY,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type StoryLadderProgressProps = Readonly<{
   progress: StoryProgress
   variant: MatchVariant
+  selection?: Readonly<{
+    disabled: boolean
+    opponentId: ImplementedDurableOpponentId
+    onSelected: (opponentId: ImplementedDurableOpponentId) => void
+  }>
 }>
 
 export default function StoryLadderProgress({
   progress,
   variant,
+  selection,
 }: StoryLadderProgressProps) {
   const headingId = useId()
   const ladder = selectStoryLadder(progress, variant)
@@ -68,42 +80,66 @@ export default function StoryLadderProgress({
         className="border-mapachito-charcoal/30 focus-visible:outline-mapachito-violet mt-5 grid max-h-80 gap-2 overflow-y-auto rounded-lg border-2 p-3 focus-visible:outline-3 focus-visible:outline-offset-4"
         tabIndex={0}
       >
-        {ladder.map(({ opponent, highestMedal, status }) => (
-          <li
-            className="border-mapachito-charcoal/30 flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b py-3 last:border-b-0"
-            key={opponent.id}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <span
-                aria-hidden="true"
-                className="border-mapachito-charcoal grid size-10 shrink-0 place-items-center rounded-full border-2 font-mono font-bold"
-              >
-                {opponent.storyPosition}
-              </span>
-              <div>
-                <p className="font-display font-black">
-                  {status === "locked"
-                    ? `${STORY_PROGRESS_COPY.lockedOpponent} ${String(opponent.storyPosition)}`
-                    : opponent.displayName}
+        {ladder.map(({ opponent, highestMedal, status }) => {
+          const playable = canPlayStoryOpponent(progress, variant, opponent.id)
+          const Row = selection !== undefined && playable ? "label" : "div"
+          return (
+            <li key={opponent.id}>
+              <Row className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet flex min-h-24 flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-[input]:cursor-pointer">
+                <div className="flex min-w-0 items-center gap-3">
+                  {selection !== undefined && playable ? (
+                    <input
+                      type="radio"
+                      name={headingId}
+                      checked={selection.opponentId === opponent.id}
+                      disabled={selection.disabled}
+                      onChange={() => {
+                        if (
+                          !selection.disabled &&
+                          canPlayStoryOpponent(progress, variant, opponent.id)
+                        )
+                          selection.onSelected(opponent.id)
+                      }}
+                      value={opponent.id}
+                      className="accent-mapachito-violet size-5 shrink-0"
+                    />
+                  ) : null}
+                  <StoryOpponentPortrait
+                    opponent={opponent}
+                    locked={status === "locked"}
+                  />
+                  <div>
+                    <p className="font-display font-black">
+                      {status === "locked"
+                        ? `${STORY_PROGRESS_COPY.lockedOpponent} ${String(opponent.storyPosition)}`
+                        : opponent.displayName}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {STORY_PROGRESS_COPY.targetElo}: {opponent.storyTargetElo}
+                    </p>
+                    {status !== "locked" &&
+                    !isImplementedDurableOpponent(opponent.id) ? (
+                      <p className="mt-1 text-xs font-bold">
+                        {STORY_PROGRESS_COPY.inDevelopment}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                <p
+                  className={
+                    status === "locked"
+                      ? "border-mapachito-charcoal rounded border-2 border-dashed px-3 py-1 text-sm font-bold"
+                      : "border-mapachito-violet text-mapachito-violet rounded border-2 px-3 py-1 text-sm font-black"
+                  }
+                >
+                  {highestMedal === null
+                    ? STORY_PROGRESS_COPY[status]
+                    : `${STORY_PROGRESS_COPY.defeated} · ${STORY_PROGRESS_COPY.medals[highestMedal]}`}
                 </p>
-                <p className="mt-1 text-xs">
-                  {STORY_PROGRESS_COPY.targetElo}: {opponent.storyTargetElo}
-                </p>
-              </div>
-            </div>
-            <p
-              className={
-                status === "locked"
-                  ? "border-mapachito-charcoal rounded border-2 border-dashed px-3 py-1 text-sm font-bold"
-                  : "border-mapachito-violet text-mapachito-violet rounded border-2 px-3 py-1 text-sm font-black"
-              }
-            >
-              {highestMedal === null
-                ? STORY_PROGRESS_COPY[status]
-                : `${STORY_PROGRESS_COPY.defeated} · ${STORY_PROGRESS_COPY.medals[highestMedal]}`}
-            </p>
-          </li>
-        ))}
+              </Row>
+            </li>
+          )
+        })}
       </ol>
       <p className="mt-3 text-sm">{STORY_PROGRESS_COPY.replay}</p>
       <p className="mt-2 text-sm leading-relaxed">
