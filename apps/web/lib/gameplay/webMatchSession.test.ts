@@ -40,6 +40,7 @@ import {
 import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
   legacyChickenWebPolicy,
+  resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
@@ -88,6 +89,7 @@ const createRuntime = (
   policyFingerprint = legacyChickenWebPolicy(startingPosition.variant)
     .fingerprint,
   opponentId: ImplementedDurableOpponentId = "chicken-stockfish",
+  opponentTargetElo: number | null = null,
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -115,6 +117,7 @@ const createRuntime = (
       }),
     }),
     opponentPolicyFingerprint: policyFingerprint,
+    opponentTargetElo,
     opponentId,
     playerColor:
       selection.mode === "challenge"
@@ -437,9 +440,22 @@ describe("web match session ownership", () => {
     await profile.close()
   })
 
-  it.each(["standard", "chess960"] as const)(
-    "persists and reloads %s Challenge with chosen Black and its independent rating",
-    async (variant) => {
+  it.each(
+    (["standard", "chess960"] as const).flatMap((variant) =>
+      (["legacy", "ladder", "challenge"] as const).map((generation) => ({
+        variant,
+        generation,
+      })),
+    ),
+  )(
+    "persists, reloads and restarts $variant Challenge with its exact $generation policy and chosen Black",
+    async ({ variant, generation }) => {
+      const policy =
+        generation === "legacy"
+          ? legacyChickenWebPolicy(variant)
+          : generation === "ladder"
+            ? await resolveWebOpponentPolicy("chicken-stockfish", variant)
+            : await resolveWebChallengePolicy("chicken-stockfish", variant)
       const layout = parseChess960PositionId(959)
       if (!layout.ok) throw new Error("Invalid test layout")
       const startingPosition: MatchStartingPosition =
@@ -457,6 +473,9 @@ describe("web match session ownership", () => {
         FIRST_MATCH_SEED,
         startingPosition,
         selection,
+        policy.fingerprint,
+        "chicken-stockfish",
+        policy.targetElo,
       )
       const opener = runtimeOpener(engine.runtime)
       const first = await openFreshWebMatchSession({
@@ -475,6 +494,7 @@ describe("web match session ownership", () => {
       })
       expect(first.match).toMatchObject({
         mode: "challenge",
+        opponentPolicyFingerprint: policy.fingerprint,
         playerColor: "black",
         playerEloAtStart: variant === "standard" ? 600 : 800,
       })
@@ -489,7 +509,14 @@ describe("web match session ownership", () => {
         saved,
       )
       const resumeOpener = runtimeOpener(
-        createRuntime(FIRST_MATCH_SEED, startingPosition, selection).runtime,
+        createRuntime(
+          FIRST_MATCH_SEED,
+          startingPosition,
+          selection,
+          policy.fingerprint,
+          "chicken-stockfish",
+          policy.targetElo,
+        ).runtime,
       )
       const resumed = await openCurrentWebMatchSession({
         openRuntime: resumeOpener,
@@ -502,13 +529,19 @@ describe("web match session ownership", () => {
         setup: startingPosition,
         signal: expect.any(AbortSignal),
         opponentId: "chicken-stockfish",
-        opponentPolicyFingerprint: legacyChickenWebPolicy(
-          startingPosition.variant,
-        ).fingerprint,
+        opponentPolicyFingerprint: policy.fingerprint,
       })
       expect(resumed.match).toEqual(saved?.activeMatch)
+      expect(resumed.runtime.opponentTargetElo).toBe(policy.targetElo)
       const restartOpener = runtimeOpener(
-        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+        createRuntime(
+          SECOND_MATCH_SEED,
+          startingPosition,
+          selection,
+          policy.fingerprint,
+          "chicken-stockfish",
+          policy.targetElo,
+        ).runtime,
       )
       const restarted = await openFreshWebMatchSession({
         mode: "challenge",
@@ -523,16 +556,16 @@ describe("web match session ownership", () => {
         setup: startingPosition,
         signal: expect.any(AbortSignal),
         opponentId: "chicken-stockfish",
-        opponentPolicyFingerprint: legacyChickenWebPolicy(
-          startingPosition.variant,
-        ).fingerprint,
+        opponentPolicyFingerprint: policy.fingerprint,
       })
       expect(restarted.match).toMatchObject({
         mode: "challenge",
+        opponentPolicyFingerprint: policy.fingerprint,
         playerColor: "black",
         matchSeed: SECOND_MATCH_SEED,
         startingPosition,
       })
+      expect(restarted.runtime.opponentTargetElo).toBe(policy.targetElo)
       expect(
         selectCurrentPlayerData(reloaded.actor.getSnapshot())?.ratings,
       ).toEqual(saved?.ratings)

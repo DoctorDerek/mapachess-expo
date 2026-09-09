@@ -2,9 +2,90 @@ import { describe, expect, it } from "vitest"
 import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPolicy, {
   legacyChickenWebPolicy,
+  resolveWebChallengePolicy,
+  webChallengeDifficultyTargets,
 } from "./webOpponentPolicy"
 
 describe("versioned web opponent policies", () => {
+  it.each(["standard", "chess960"] as const)(
+    "separates %s animal identity from every supported Challenge preset",
+    async (variant) => {
+      expect(webChallengeDifficultyTargets(variant)).toEqual([
+        100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
+      ])
+      for (const target of webChallengeDifficultyTargets(variant)) {
+        const chicken = await resolveWebChallengePolicy(
+          "chicken-stockfish",
+          variant,
+          target,
+        )
+        const raccoon = await resolveWebChallengePolicy(
+          "raccoon-stockfish",
+          variant,
+          target,
+        )
+        expect(raccoon).toEqual({ ...chicken, opponentId: "raccoon-stockfish" })
+        expect(raccoon.targetElo).toBe(target)
+        expect(
+          await resolveWebChallengePolicy(
+            "raccoon-stockfish",
+            variant,
+            undefined,
+            raccoon.fingerprint,
+          ),
+        ).toEqual(raccoon)
+        await expect(
+          resolveWebChallengePolicy(
+            "raccoon-stockfish",
+            variant,
+            target === 100 ? 1000 : 100,
+            raccoon.fingerprint,
+          ),
+        ).rejects.toThrow("Saved opponent policy")
+        await expect(
+          resolveWebChallengePolicy(
+            "raccoon-stockfish",
+            variant === "standard" ? "chess960" : "standard",
+            undefined,
+            raccoon.fingerprint,
+          ),
+        ).rejects.toThrow("Saved opponent policy")
+      }
+      const previous = await resolveWebOpponentPolicy(
+        "chicken-stockfish",
+        variant,
+      )
+      expect(
+        await resolveWebChallengePolicy(
+          "chicken-stockfish",
+          variant,
+          undefined,
+          previous.fingerprint,
+        ),
+      ).toEqual(previous)
+      const legacy = legacyChickenWebPolicy(variant)
+      expect(
+        await resolveWebChallengePolicy(
+          "chicken-stockfish",
+          variant,
+          undefined,
+          legacy.fingerprint,
+        ),
+      ).toEqual(legacy)
+      expect(legacy.targetElo).toBeNull()
+      await expect(
+        resolveWebChallengePolicy("chicken-stockfish", variant, 1100),
+      ).rejects.toThrow("no supported web preset")
+      await expect(
+        resolveWebChallengePolicy(
+          "chicken-stockfish",
+          variant,
+          undefined,
+          "unknown",
+        ),
+      ).rejects.toThrow("Saved opponent policy")
+    },
+  )
   it.each([
     ["standard", [9150, 8200, 7350, 6550, 6150, 5800, 5400, 5050, 4450, 3850]],
     ["chess960", [9300, 8700, 8100, 7400, 6650, 6000, 5350, 4800, 4300, 3800]],
