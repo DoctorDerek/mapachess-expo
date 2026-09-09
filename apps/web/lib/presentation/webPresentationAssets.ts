@@ -1,13 +1,13 @@
 import { COACH_PORTRAITS } from "@mapachess/match-presentation/coach-portrait"
 import type { CoachPortraitLabel } from "@mapachess/match-presentation/coach-portrait"
-import type {
-  SpriteAnimationDefinition,
-  SpriteAssetManifest,
-  SpriteFrameGeometry,
+import {
+  PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+  type SpriteAnimationDefinition,
+  type SpriteAssetManifest,
+  type SpriteFrameGeometry,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 
 const PRESENTATION_ASSET_ROOT = "/generated/presentation-assets"
-const PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS = 100
 
 const CHICKEN_REFERENCE_GEOMETRY = Object.freeze({
   bottomCenterX: 18.5,
@@ -34,7 +34,7 @@ const MAPACHITO_REFERENCE_GEOMETRY = Object.freeze({
 export const LICENSED_PRESENTATION_ASSETS_ENABLED =
   process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS === "true"
 
-const presentationAssetSource = <RelativePath extends string>(
+export const presentationAssetSource = <RelativePath extends string>(
   relativePath: RelativePath,
 ): `${typeof PRESENTATION_ASSET_ROOT}/${RelativePath}` =>
   `${PRESENTATION_ASSET_ROOT}/${relativePath}`

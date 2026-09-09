@@ -4,7 +4,10 @@ import bindMatchPositionEvaluation, {
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
-import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import type {
+  DurableMatchRecord,
+  ImplementedDurableOpponentId,
+} from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
@@ -13,6 +16,10 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "@mapachess/profile/profile-match-persistence"
+import {
+  canPlayStoryOpponent,
+  selectDefaultStoryOpponent,
+} from "@mapachess/profile/story-progress"
 import openWebMatchRuntime, {
   type OpenWebMatchRuntimeInput,
 } from "./openWebMatchRuntime"
@@ -40,7 +47,11 @@ export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
     previousSession: WebMatchSession | null
   }> &
   (
-    | Readonly<{ mode?: "story"; variant: MatchVariant }>
+    | Readonly<{
+        mode?: "story"
+        variant: MatchVariant
+        opponentId?: ImplementedDurableOpponentId
+      }>
     | Readonly<{ mode: "challenge"; challengeSetup: ChallengeSetup }>
   )
 
@@ -231,6 +242,21 @@ export async function openFreshWebMatchSession(
       : challengeSetup?.playerColor
   const variant =
     input.mode === "challenge" ? input.challengeSetup.variant : input.variant
+  const opponentId =
+    previousSession?.match.opponentId ??
+    (input.mode === "challenge"
+      ? "chicken-stockfish"
+      : (input.opponentId ??
+        selectDefaultStoryOpponent(playerData.storyProgress, variant)))
+  if (
+    previousSession === null &&
+    input.mode !== "challenge" &&
+    !canPlayStoryOpponent(playerData.storyProgress, variant, opponentId)
+  ) {
+    throw new Error(
+      "The selected Story opponent is not unlocked in this variant.",
+    )
+  }
   const setup: OpenWebMatchRuntimeInput["setup"] =
     previousSession?.match.startingPosition ??
     (challengeSetup?.variant === "chess960" &&
@@ -243,13 +269,13 @@ export async function openFreshWebMatchSession(
         ? { variant, chess960PositionId: null }
         : { variant })
   const runtime = await openRuntime({
+    opponentId,
     ...(playerColor === undefined
       ? {}
       : { mode: "challenge" as const, playerColor }),
     ...(previousSession === null
       ? {}
       : {
-          opponentId: previousSession.match.opponentId,
           opponentPolicyFingerprint:
             previousSession.match.opponentPolicyFingerprint,
         }),

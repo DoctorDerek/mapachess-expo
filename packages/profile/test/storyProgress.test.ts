@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest"
+import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import applyStoryMatchResult, {
+  canPlayStoryOpponent,
   createInitialStoryProgress,
   formatStoryCompletion,
   selectChallengeUnlockedOpponents,
+  selectDefaultStoryOpponent,
   selectStoryCompletion,
   selectStoryLadder,
 } from "../src/storyProgress.js"
@@ -11,6 +14,60 @@ import decodeStoryProgress from "../src/storyProgressCodec.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 describe("earned Story progression", () => {
+  it.each(["standard", "chess960"] as const)(
+    "offers ten earned %s opponents without unlocking the other ladder or future animals",
+    (variant) => {
+      let progress = createInitialStoryProgress()
+      const other = variant === "standard" ? "chess960" : "standard"
+      for (const [
+        index,
+        opponentId,
+      ] of IMPLEMENTED_DURABLE_OPPONENT_IDS.entries()) {
+        expect(selectDefaultStoryOpponent(progress, variant)).toBe(opponentId)
+        expect(canPlayStoryOpponent(progress, variant, opponentId)).toBe(true)
+        expect(canPlayStoryOpponent(progress, other, opponentId)).toBe(
+          index === 0,
+        )
+        const win = { ...completedStoryMatch(variant), opponentId }
+        progress = applyStoryMatchResult(progress, {
+          ...win,
+          pieceHintsUsed: true,
+          moveHintsUsed: true,
+        })
+        progress = applyStoryMatchResult(progress, {
+          ...win,
+          pieceHintsUsed: true,
+        })
+        progress = applyStoryMatchResult(progress, win)
+        const replay = applyStoryMatchResult(progress, {
+          ...win,
+          pieceHintsUsed: true,
+          moveHintsUsed: true,
+        })
+        expect(replay).toBe(progress)
+        expect(progress[variant][index]).toEqual({
+          opponentId,
+          highestMedal: "gold",
+        })
+        expect(
+          decodeStoryProgress(
+            JSON.parse(JSON.stringify(progress)),
+            "$.storyProgress",
+          ),
+        ).toEqual(progress)
+      }
+      expect(progress[variant]).toHaveLength(10)
+      expect(progress[other]).toEqual([])
+      expect(selectDefaultStoryOpponent(progress, variant)).toBe(
+        "raccoon-stockfish",
+      )
+      expect(canPlayStoryOpponent(progress, variant, "axolotl-stockfish")).toBe(
+        false,
+      )
+      expect(selectStoryCompletion(progress)[variant]).toBe(1000 / 23)
+    },
+  )
+
   it("unlocks only Chicken at first without counting availability as completion", () => {
     const progress = createInitialStoryProgress()
     expect(selectStoryCompletion(progress)).toEqual({

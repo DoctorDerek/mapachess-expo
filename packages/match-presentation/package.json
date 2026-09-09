@@ -29,6 +29,10 @@
       "types": "./src/presentationAssetManifest.ts",
       "default": "./dist/presentationAssetManifest.js"
     },
+    "./story-animal-sprites": {
+      "types": "./src/storyAnimalSprites.ts",
+      "default": "./dist/storyAnimalSprites.js"
+    },
     "./sprite-presentation-geometry": {
       "types": "./src/spritePresentationGeometry.ts",
       "default": "./dist/spritePresentationGeometry.js"

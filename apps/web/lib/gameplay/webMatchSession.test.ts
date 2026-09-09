@@ -4,11 +4,27 @@ import { describe, expect, it, vi } from "vitest"
 import { waitFor } from "xstate"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
-import type { MatchStartingPosition } from "@mapachess/match/match-position"
+import {
+  IMPLEMENTED_DURABLE_OPPONENT_IDS,
+  type DurableMatchRecord,
+  type ImplementedDurableOpponentId,
+} from "@mapachess/match/durable-match-record"
+import { deriveRetainedBranchConclusion } from "@mapachess/match/match-conclusion"
+import { parseMatchMoveId } from "@mapachess/match/match-move"
+import {
+  createInitialMatchPosition,
+  type MatchStartingPosition,
+} from "@mapachess/match/match-position"
+import {
+  applyMatchTimelineMove,
+  createMatchTimeline,
+  currentMatchPosition,
+} from "@mapachess/match/match-timeline"
 import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
+import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
@@ -71,6 +87,7 @@ const createRuntime = (
   },
   policyFingerprint = legacyChickenWebPolicy(startingPosition.variant)
     .fingerprint,
+  opponentId: ImplementedDurableOpponentId = "chicken-stockfish",
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -86,7 +103,7 @@ const createRuntime = (
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: webMatchId(matchSeed, startingPosition, selection),
+    matchId: webMatchId(matchSeed, startingPosition, selection, opponentId),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -98,7 +115,7 @@ const createRuntime = (
       }),
     }),
     opponentPolicyFingerprint: policyFingerprint,
-    opponentId: "chicken-stockfish",
+    opponentId,
     playerColor:
       selection.mode === "challenge"
         ? selection.playerColor
@@ -120,6 +137,184 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it.each(["standard", "chess960"] as const)(
+    "saves, reloads and restarts all ten earned %s opponents without losing medals or the other ladder",
+    async (variant) => {
+      const parsed = parseChess960PositionId(518)
+      if (!parsed.ok) throw new Error("Orthodox Chess960 fixture must parse")
+      const startingPosition: MatchStartingPosition =
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: parsed.positionId }
+      const indexedDb = new IDBFactory()
+      let profile = await openProfileRuntime(725, indexedDb)
+      const initialRatings = selectCurrentPlayerData(
+        profile.actor.getSnapshot(),
+      )?.ratings
+      for (const [
+        index,
+        opponentId,
+      ] of IMPLEMENTED_DURABLE_OPPONENT_IDS.entries()) {
+        const policy = await resolveWebOpponentPolicy(opponentId, variant)
+        const engine = createRuntime(
+          FIRST_MATCH_SEED,
+          startingPosition,
+          { mode: "story" },
+          policy.fingerprint,
+          opponentId,
+        )
+        const opener = runtimeOpener(engine.runtime)
+        const first = await openFreshWebMatchSession({
+          mode: "story",
+          variant,
+          opponentId,
+          previousSession: null,
+          openRuntime: opener,
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
+        })
+        expect(opener).toHaveBeenCalledWith(
+          expect.objectContaining({ opponentId }),
+        )
+        await first.close()
+        await waitFor(profile.actor, (snapshot) => snapshot.matches("ready"))
+        const saved = selectCurrentPlayerData(profile.actor.getSnapshot())
+        expect(saved?.activeMatch).toMatchObject({
+          opponentId,
+          opponentPolicyFingerprint: policy.fingerprint,
+        })
+        await profile.close()
+        profile = await openProfileRuntime(undefined, indexedDb)
+        expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+          saved,
+        )
+        const resumed = await openCurrentWebMatchSession({
+          openRuntime: runtimeOpener(engine.runtime),
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
+        })
+        const replacement = createRuntime(
+          SECOND_MATCH_SEED,
+          startingPosition,
+          { mode: "story" },
+          policy.fingerprint,
+          opponentId,
+        )
+        const restartOpener = runtimeOpener(replacement.runtime)
+        const restarted = await openFreshWebMatchSession({
+          mode: "story",
+          variant,
+          opponentId: "chicken-stockfish",
+          previousSession: resumed,
+          openRuntime: restartOpener,
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
+        })
+        expect(restartOpener).toHaveBeenCalledWith(
+          expect.objectContaining({
+            opponentId,
+            opponentPolicyFingerprint: policy.fingerprint,
+          }),
+        )
+        expect(restarted.match.matchSeed).toBe(SECOND_MATCH_SEED)
+        await restarted.close()
+        await waitFor(profile.actor, (snapshot) => snapshot.matches("ready"))
+
+        let timeline = createMatchTimeline(
+          createInitialMatchPosition(startingPosition),
+        )
+        const moves =
+          restarted.match.playerColor === "black"
+            ? ["f2f3", "e7e5", "g2g4", "d8h4"]
+            : ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6", "h5f7"]
+        for (const uci of moves) {
+          const parsedMove = parseMatchMoveId(uci)
+          if (!parsedMove.ok) throw new Error("Invalid fixture move")
+          const applied = applyMatchTimelineMove(timeline, parsedMove.moveId)
+          if (!applied.ok) throw new Error("Invalid fixture timeline")
+          timeline = applied.timeline
+        }
+        const conclusion = deriveRetainedBranchConclusion(timeline)
+        expect(conclusion).toMatchObject({
+          type: "checkmate",
+          winner: restarted.match.playerColor,
+        })
+        const completed: DurableMatchRecord = {
+          ...restarted.match,
+          conclusion,
+          currentFen: currentMatchPosition(timeline).fen,
+          cursor: timeline.cursor,
+          moveIds: timeline.transitions.map(({ move }) => move.id),
+          pieceHintsUsed: index % 3 !== 2,
+          moveHintsUsed: index % 3 === 0,
+        }
+        const activeMatch = selectCurrentPlayerData(
+          profile.actor.getSnapshot(),
+        )?.activeMatch
+        if (activeMatch === undefined)
+          throw new Error("Profile must remain loaded")
+        await persistProfileActiveMatch({
+          actor: profile.actor,
+          candidate: completed,
+          expectedActiveMatch: activeMatch,
+          signal: new AbortController().signal,
+        })
+        const progress = selectCurrentPlayerData(
+          profile.actor.getSnapshot(),
+        )?.storyProgress
+        expect(progress?.[variant][index]).toEqual({
+          opponentId,
+          highestMedal:
+            index % 3 === 0 ? "bronze" : index % 3 === 1 ? "silver" : "gold",
+        })
+        expect(
+          progress?.[variant === "standard" ? "chess960" : "standard"],
+        ).toEqual([])
+        await returnWebMatchSessionToMenu({
+          session: restarted,
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
+        })
+        await profile.close()
+        profile = await openProfileRuntime(undefined, indexedDb)
+        const reloaded = selectCurrentPlayerData(profile.actor.getSnapshot())
+        expect(reloaded?.storyProgress).toEqual(progress)
+        expect(reloaded?.ratings).toEqual(initialRatings)
+        if (progress === undefined)
+          throw new Error("Story progress must remain available")
+        expect(selectDefaultStoryOpponent(progress, variant)).toBe(
+          IMPLEMENTED_DURABLE_OPPONENT_IDS[Math.min(index + 1, 9)],
+        )
+      }
+      await profile.close()
+    },
+  )
+
+  it.each(["standard", "chess960"] as const)(
+    "rejects a locked %s opponent before opening any engine or changing a save",
+    async (variant) => {
+      const profile = await openProfileRuntime()
+      const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+      const openRuntime = runtimeOpener(createRuntime(FIRST_MATCH_SEED).runtime)
+      await expect(
+        openFreshWebMatchSession({
+          mode: "story",
+          variant,
+          opponentId: "bunny-stockfish",
+          previousSession: null,
+          openRuntime,
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
+        }),
+      ).rejects.toThrow("not unlocked")
+      expect(openRuntime).not.toHaveBeenCalled()
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        before,
+      )
+      await profile.close()
+    },
+  )
+
   it.each([
     ["standard", "legacy"],
     ["standard", "measured"],
@@ -274,6 +469,7 @@ describe("web match session ownership", () => {
       })
       expect(opener).toHaveBeenCalledWith({
         ...selection,
+        opponentId: "chicken-stockfish",
         setup: startingPosition,
         signal: expect.any(AbortSignal),
       })
@@ -372,6 +568,7 @@ describe("web match session ownership", () => {
     })
     expect(opener).toHaveBeenCalledWith({
       ...selection,
+      opponentId: "chicken-stockfish",
       setup: { variant: "chess960" },
       signal: expect.any(AbortSignal),
     })
@@ -460,6 +657,7 @@ describe("web match session ownership", () => {
       signal: new AbortController().signal,
     })
     expect(freshOpener).toHaveBeenCalledWith({
+      opponentId: "chicken-stockfish",
       setup: { variant: "chess960" },
       signal: expect.any(AbortSignal),
     })

@@ -246,7 +246,7 @@ describe("web durable match mapping", () => {
         ...playerData,
         activeMatch: {
           ...record,
-          opponentId: stockfishOpponent("bunny-stockfish").id,
+          opponentId: stockfishOpponent("axolotl-stockfish").id,
         },
       }),
     ).toEqual({

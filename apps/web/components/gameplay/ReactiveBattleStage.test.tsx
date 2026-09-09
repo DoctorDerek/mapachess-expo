@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { createElement, Fragment, type ComponentPropsWithoutRef } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { afterAll, describe, expect, it, vi } from "vitest"
@@ -5,6 +7,8 @@ import { createActor } from "xstate"
 import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationPhase } from "@mapachess/match-presentation/match-reaction"
 import { matchSpriteReactionSlot } from "@mapachess/match-presentation/presentation-asset-manifest"
+import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
+import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
@@ -64,6 +68,106 @@ afterAll(() => {
 })
 
 describe("Reactive Battle Stage web presentation", () => {
+  it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
+    "resolves licensed %s reactions through the existing fighter contract",
+    (opponentId) => {
+      for (const reaction of [
+        { family: "idle" },
+        { family: "capture", role: "attacker" },
+        { family: "capture", role: "victim" },
+        { family: "check", role: "attacker" },
+        { family: "check", role: "victim" },
+        { family: "victory" },
+        { family: "defeat" },
+      ] as const) {
+        const presentation = resolveWebOpponentPresentation(
+          opponentId,
+          reaction,
+        )
+        expect(presentation.kind).toBe("sprite")
+        if (presentation.kind !== "sprite")
+          throw new Error("Licensed sprite expected")
+        for (const { animation } of presentation.steps) {
+          expect(animation.sourceId).toMatch(
+            /^\/generated\/presentation-assets\/battle\//,
+          )
+          expect(animation.reducedMotionFrameIndex).toBeGreaterThanOrEqual(0)
+          expect(animation.reducedMotionFrameIndex).toBeLessThan(
+            animation.frameCount,
+          )
+          expect(animation.geometry.bottomY).toBe(
+            presentation.referenceGeometry.bottomY,
+          )
+          expect(
+            animation.geometry.visibleX + animation.geometry.visibleWidth,
+          ).toBeLessThanOrEqual(animation.geometry.frameWidth)
+          expect(
+            animation.geometry.visibleY + animation.geometry.visibleHeight,
+          ).toBeLessThanOrEqual(animation.geometry.frameHeight)
+        }
+        if (reaction.family === "capture" && reaction.role === "attacker")
+          expect(presentation.steps.map(({ beat }) => beat)).toEqual([
+            "approach",
+            "strike",
+            "recovery",
+          ])
+        if (reaction.family === "defeat")
+          expect(presentation.steps.at(-1)?.playback).toBe(
+            "once-hold-final-frame",
+          )
+        if (reaction.family === "victory") {
+          expect(presentation.steps.at(-1)?.playback).toBe("loop")
+          expect(
+            presentation.steps
+              .slice(0, -1)
+              .every(({ playback }) => playback === "once"),
+          ).toBe(true)
+        }
+      }
+    },
+  )
+
+  it("includes every added source clip in the protected manifest without bundling a second Raccoon", () => {
+    const archiveManifest = readFileSync(
+      fileURLToPath(
+        new URL(
+          "../../../../ghost_assets/presentation-assets.manifest.json",
+          import.meta.url,
+        ),
+      ),
+      "utf8",
+    )
+    let clipCount = 0
+    for (const sprite of Object.values(STORY_ANIMAL_SPRITES)) {
+      for (const clip of Object.values(sprite.animations)) {
+        expect(archiveManifest).toContain(JSON.stringify(clip.sourceId))
+        clipCount += 1
+      }
+    }
+    expect(clipCount).toBe(140)
+    expect(archiveManifest).not.toContain("battle/raccoon/")
+    const raccoon = resolveWebOpponentPresentation("raccoon-stockfish")
+    if (raccoon.kind !== "sprite") throw new Error("Raccoon sprite expected")
+    expect(raccoon.steps[0].animation.sourceId).toContain("battle/mapachito/")
+  })
+
+  it("preserves intentional public-clone fallback for every playable opponent", async () => {
+    vi.stubEnv("MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS", "false")
+    vi.resetModules()
+    try {
+      const { default: resolveWithoutAssets } =
+        await import("../../lib/presentation/webOpponentPresentation")
+      for (const opponentId of IMPLEMENTED_DURABLE_OPPONENT_IDS)
+        expect(resolveWithoutAssets(opponentId)).toEqual({
+          kind: "authored-fallback",
+          reactionSlot: "idle",
+        })
+    } finally {
+      vi.unstubAllEnvs()
+      vi.resetModules()
+    }
+  })
+
   it("keeps factual Stage and coach meaning when motion is reduced", () => {
     const actor = createActor(matchPresentationMachine, {
       input: { initialConclusionPhase: null },
