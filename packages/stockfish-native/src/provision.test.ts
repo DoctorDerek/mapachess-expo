@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto"
-import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises"
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
@@ -8,7 +15,9 @@ import {
   STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST,
   type StockfishNativeBuildManifest,
 } from "./nativeBuildIdentity"
-import { provisionStockfishNativeNetwork } from "./provision"
+import provisionStockfishNativeInputs, {
+  provisionStockfishNativeNetwork,
+} from "./provision"
 
 const temporaryDirectories: string[] = []
 
@@ -104,6 +113,39 @@ describe("native Stockfish input provisioning", () => {
       join(packageRoot, ".stockfish-networks"),
     )
     expect(storageEntries).toEqual([])
+  })
+
+  it("rejects a changed source identity before reusing installed inputs", async () => {
+    const packageRoot = await temporaryPackageRoot()
+    const bytes = Buffer.from("fixture-network")
+    const manifest = fixtureManifest(bytes)
+    let downloadCount = 0
+    const download = async (): Promise<Uint8Array> => {
+      downloadCount += 1
+      return bytes
+    }
+    await provisionStockfishNativeNetwork({ packageRoot, manifest, download })
+
+    await expect(
+      provisionStockfishNativeNetwork({
+        packageRoot,
+        manifest: { ...manifest, sourceRevision: "c".repeat(40) },
+        download,
+      }),
+    ).rejects.toThrow("network marker does not match the pin")
+    expect(downloadCount).toBe(1)
+  })
+
+  it("rejects an altered source snapshot before preparing network storage", async () => {
+    const packageRoot = await temporaryPackageRoot()
+    await mkdir(join(packageRoot, "third_party", "stockfish"), {
+      recursive: true,
+    })
+
+    await expect(provisionStockfishNativeInputs(packageRoot)).rejects.toThrow(
+      "source snapshot SHA-256 mismatch",
+    )
+    expect(await readdir(packageRoot)).toEqual(["third_party"])
   })
 
   it("rejects a corrupted installed network before redownloading", async () => {
