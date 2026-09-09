@@ -1,4 +1,9 @@
-import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import {
+  IMPLEMENTED_DURABLE_OPPONENT_IDS,
+  isImplementedDurableOpponent,
+  type DurableMatchRecord,
+  type ImplementedDurableOpponentId,
+} from "@mapachess/match/durable-match-record"
 import {
   MATCH_VARIANTS,
   type MatchVariant,
@@ -57,7 +62,8 @@ export const STORY_PROGRESS_COPY = Object.freeze({
   replay: "Replay wins to improve your medals. Your highest medal is kept.",
   independence: "Standard and Chess960 keep separate victories and medals.",
   availability:
-    "Chicken is playable now. Additional opponents and their artwork are still in development; unlocked progress is saved for them.",
+    "Play through Raccoon now. Later opponents remain in development; earned progress is saved for them.",
+  inDevelopment: "In development",
   medals: Object.freeze({ bronze: "Bronze", silver: "Silver", gold: "Gold" }),
 })
 
@@ -71,6 +77,26 @@ export const formatStoryCompletion = (percent: number): string =>
 
 export const createInitialStoryProgress = (): StoryProgress =>
   Object.freeze({ standard: Object.freeze([]), chess960: Object.freeze([]) })
+
+export const canPlayStoryOpponent = (
+  progress: StoryProgress,
+  variant: MatchVariant,
+  opponentId: StockfishOpponentId,
+): opponentId is ImplementedDurableOpponentId =>
+  isImplementedDurableOpponent(opponentId) &&
+  stockfishOpponent(opponentId).storyPosition <= progress[variant].length + 1
+
+export const selectDefaultStoryOpponent = (
+  progress: StoryProgress,
+  variant: MatchVariant,
+): ImplementedDurableOpponentId =>
+  IMPLEMENTED_DURABLE_OPPONENT_IDS.reduce<ImplementedDurableOpponentId>(
+    (selected, opponentId) =>
+      canPlayStoryOpponent(progress, variant, opponentId)
+        ? opponentId
+        : selected,
+    IMPLEMENTED_DURABLE_OPPONENT_IDS[0],
+  )
 
 export const storyVictoryMedal = (
   match: StoryMatchResult,

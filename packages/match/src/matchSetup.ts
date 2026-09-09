@@ -1,9 +1,17 @@
 import type { ChallengeSetup } from "./challengeSetup.js"
-import { MATCH_MODES, type MatchMode } from "./durableMatchRecord.js"
+import {
+  MATCH_MODES,
+  type ImplementedDurableOpponentId,
+  type MatchMode,
+} from "./durableMatchRecord.js"
 import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
 
 export type MatchSetup =
-  | Readonly<{ mode: "story"; variant: MatchVariant }>
+  | Readonly<{
+      mode: "story"
+      variant: MatchVariant
+      opponentId?: ImplementedDurableOpponentId
+    }>
   | Readonly<{ mode: "challenge"; challengeSetup: ChallengeSetup }>
 
 export type MatchModeSelection = Readonly<{
@@ -27,9 +35,9 @@ export const MATCH_SETUP_COPY = Object.freeze({
   invalidSetup: "Choose White or Black and a valid Chess960 position number.",
   untimed: "Untimed",
   provisionalDifficulty:
-    "Current difficulty is provisional, not calibrated. This match does not update your Elo.",
+    "Opponent settings are provisional. Authored Elo targets are not certified ratings, and this match does not update your Elo.",
   storyAvailability:
-    "Chicken is the first playable opponent. Story victories and highest medals are saved; further playable opponents are still in development.",
+    "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:
     "Chicken is currently available. Independent animal and difficulty selection will follow.",
   savingHints: "Saving your hint preference…",
@@ -94,8 +102,14 @@ export const matchModeLabel = ({ mode, variant }: MatchModeSelection): string =>
 export default function createMatchSetupForMode(
   { mode, variant }: MatchModeSelection,
   rememberedChallenge: ChallengeSetup,
+  storyOpponentId?: ImplementedDurableOpponentId,
 ): MatchSetup {
-  if (mode === "story") return Object.freeze({ mode, variant })
+  if (mode === "story")
+    return Object.freeze({
+      mode,
+      variant,
+      ...(storyOpponentId === undefined ? {} : { opponentId: storyOpponentId }),
+    })
   return Object.freeze({
     mode,
     challengeSetup: Object.freeze({
