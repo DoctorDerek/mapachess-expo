@@ -4,6 +4,7 @@ import {
 } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup, {
   DEFAULT_CHALLENGE_SETUP,
+  parseChallengePositionSetup,
 } from "@mapachess/match/challenge-setup"
 import {
   failData,
@@ -28,6 +29,7 @@ import {
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
+  STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
   type MapachessPlayerData,
   type MapachessPlayerDataV1,
@@ -53,6 +55,7 @@ export type PlayerDataSource = Readonly<{
     | typeof LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
+    | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -108,6 +111,7 @@ const canonicalModernPlayerData = (
   sourceSchemaVersion:
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
+    | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): string => {
   const fields: readonly unknown[] = [
@@ -127,8 +131,14 @@ const canonicalModernPlayerData = (
             data.settings.challengeSetup.variant,
             data.settings.challengeSetup.playerColor,
             data.settings.challengeSetup.chess960PositionId,
+            ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+              ? [
+                  data.settings.challengeSetup.opponentId,
+                  data.settings.challengeSetup.difficultyTargetElo,
+                ]
+              : []),
           ],
-          ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+          ...(sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
             ? [canonicalStoryProgress(data.storyProgress)]
             : []),
         ],
@@ -212,6 +222,7 @@ const decodeModernPlayerData = (
   sourceSchemaVersion:
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
+    | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -223,7 +234,7 @@ const decodeModernPlayerData = (
       "schema",
       "schemaVersion",
       "settings",
-      ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ...(sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
         ? ["storyProgress"]
         : []),
     ],
@@ -237,18 +248,19 @@ const decodeModernPlayerData = (
       : ["autoHintMode", "challengeSetup"],
     "$.settings",
   )
-  const challengeSetup = parseChallengeSetup(
+  const challengeSetup =
     sourceSchemaVersion === THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
-      ? DEFAULT_CHALLENGE_SETUP
-      : settings.challengeSetup,
-  )
+      ? { ok: true as const, setup: DEFAULT_CHALLENGE_SETUP }
+      : sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        ? parseChallengeSetup(settings.challengeSetup)
+        : parseChallengePositionSetup(settings.challengeSetup)
   if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
   const activeMatch =
     object.activeMatch === null
       ? null
       : decodeDurableMatch(object.activeMatch, "$.activeMatch")
   const storyProgress =
-    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
       ? decodeStoryProgress(object.storyProgress, "$.storyProgress")
       : applyStoryMatchResult(createInitialStoryProgress(), activeMatch)
   requireRecordedStoryResult(storyProgress, activeMatch)
@@ -260,7 +272,10 @@ const decodeModernPlayerData = (
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     storyProgress,
     settings: Object.freeze({
-      challengeSetup: challengeSetup.setup,
+      challengeSetup: Object.freeze({
+        ...DEFAULT_CHALLENGE_SETUP,
+        ...challengeSetup.setup,
+      }),
       autoHintMode: requireEnumValue(
         settings.autoHintMode,
         AUTO_HINT_MODES,
@@ -301,6 +316,8 @@ export const decodeMapachessPlayerDataWithSource = (
               THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION ||
             object.schemaVersion ===
               CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION ||
+            object.schemaVersion ===
+              STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION ||
             object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
           ? decodeModernPlayerData(object, object.schemaVersion)
           : failData("$.schemaVersion")

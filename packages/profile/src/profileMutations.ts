@@ -35,6 +35,7 @@ export const replaceActiveMatch = (
   if (
     challengeSetup !== undefined &&
     (activeMatch?.mode !== "challenge" ||
+      activeMatch.opponentId !== challengeSetup.opponentId ||
       activeMatch.playerColor !== challengeSetup.playerColor ||
       activeMatch.startingPosition.variant !== challengeSetup.variant ||
       (challengeSetup.chess960PositionId !== null &&

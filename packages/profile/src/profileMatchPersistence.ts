@@ -81,6 +81,10 @@ export const persistProfileActiveMatch = ({
         (challengeSetup === undefined ||
           (playerData.settings.challengeSetup.variant ===
             challengeSetup.variant &&
+            playerData.settings.challengeSetup.opponentId ===
+              challengeSetup.opponentId &&
+            playerData.settings.challengeSetup.difficultyTargetElo ===
+              challengeSetup.difficultyTargetElo &&
             playerData.settings.challengeSetup.playerColor ===
               challengeSetup.playerColor &&
             playerData.settings.challengeSetup.chess960PositionId ===
