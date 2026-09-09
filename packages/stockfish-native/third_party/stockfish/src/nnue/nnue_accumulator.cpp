@@ -142,7 +142,11 @@ template<IndexType Dimensions>
 void AccumulatorStack::evaluate(const Position&                       pos,
                                 const FeatureTransformer<Dimensions>& featureTransformer,
                                 AccumulatorCaches::Cache<Dimensions>& cache) noexcept {
+#if !defined(__LITE_NET__)
     constexpr bool UseThreats = (Dimensions == TransformedFeatureDimensionsBig);
+#else
+    constexpr bool UseThreats = false;
+#endif
 
     evaluate_side<PSQFeatureSet>(WHITE, pos, featureTransformer, cache);
 

@@ -36,11 +36,11 @@
 #include <utility>
 #include <variant>
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__linux__) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
     #include "shm_linux.h"
 #endif
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
     #include <limits.h>
     #define SF_MAX_SEM_NAME_LEN NAME_MAX
 #endif
@@ -407,7 +407,7 @@ class SharedMemoryBackend {
     std::string last_error_message;
 };
 
-#elif defined(__linux__) && !defined(__ANDROID__)
+#elif defined(__linux__) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 
 template<typename T>
 class SharedMemoryBackend {

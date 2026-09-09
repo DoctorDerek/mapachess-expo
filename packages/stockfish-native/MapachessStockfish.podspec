@@ -21,7 +21,9 @@ Pod::Spec.new do |specification|
     "cpp/**/*.{h,hpp,cpp}",
     "ios/generated/**/*.{h,cpp,mm}",
     "third_party/stockfish/src/**/*.{h,hpp,cpp}"
-  specification.exclude_files = "third_party/stockfish/src/main.cpp"
+  specification.exclude_files =
+    "third_party/stockfish/src/main.cpp",
+    "third_party/stockfish/src/syzygy/tbprobe.cpp"
   specification.private_header_files = "ios/**/*.h"
 
   specification.pod_target_xcconfig = {
@@ -32,7 +34,7 @@ Pod::Spec.new do |specification|
       "-funroll-loops",
       "-DNDEBUG",
       "-include\"$(PODS_TARGET_SRCROOT)/cpp/StockfishMobileConfig.h\"",
-      "-Wa,-I$(PODS_TARGET_SRCROOT)/.stockfish-networks/sf_18",
+      "-Wa,-I$(PODS_TARGET_SRCROOT)/.stockfish-networks/stockfish-18-lite",
     ].join(" "),
   }
 

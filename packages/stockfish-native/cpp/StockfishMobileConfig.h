@@ -2,6 +2,10 @@
 
 #include <cstdint>
 
+#define __ENGINE_VERSION__ "18 Lite"
+#define __LITE_NET__ 1
+#define __NO_SYZYGY__ 1
+
 #if INTPTR_MAX == INT64_MAX
     #define IS_64BIT 1
 #endif

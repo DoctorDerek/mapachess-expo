@@ -16,7 +16,7 @@ import {
   type Sha256Hex,
 } from "@mapachess/stockfish/build-identity"
 import {
-  STOCKFISH_18_NATIVE_BUILD_MANIFEST,
+  STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST,
   type StockfishNativeBuildManifest,
   type StockfishNativeNetworkArtifact,
 } from "./nativeBuildIdentity.js"
@@ -27,10 +27,7 @@ const PROVISIONING_MARKER_FILE_NAME = ".mapachess-stockfish-networks.json"
 export type StockfishNativeInputPaths = Readonly<{
   installDirectory: string
   markerPath: string
-  networks: Readonly<{
-    big: string
-    small: string
-  }>
+  networkPath: string
   sourceDirectory: string
 }>
 
@@ -104,8 +101,8 @@ function validateNetworkArtifact(
 }
 
 function validateManifest(manifest: StockfishNativeBuildManifest): void {
-  if (manifest.schemaVersion !== 1) {
-    throw new TypeError("Native Stockfish manifest schemaVersion must be 1.")
+  if (manifest.schemaVersion !== 2) {
+    throw new TypeError("Native Stockfish manifest schemaVersion must be 2.")
   }
 
   if (!/^[0-9a-f]{40}$/.test(manifest.sourceRevision)) {
@@ -114,19 +111,12 @@ function validateManifest(manifest: StockfishNativeBuildManifest): void {
     )
   }
 
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(manifest.releaseTag)) {
-    throw new TypeError(
-      "Native Stockfish releaseTag must be a safe path segment.",
-    )
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(manifest.inputId)) {
+    throw new TypeError("Native Stockfish inputId must be a safe path segment.")
   }
 
   parseSha256Hex(manifest.sourceSnapshotSha256, "sourceSnapshotSha256")
-  validateNetworkArtifact(manifest.networks.big, "networks.big")
-  validateNetworkArtifact(manifest.networks.small, "networks.small")
-
-  if (manifest.networks.big.sha256 === manifest.networks.small.sha256) {
-    throw new TypeError("Native Stockfish networks must be distinct.")
-  }
+  validateNetworkArtifact(manifest.network, "network")
 }
 
 function resolveInputPaths(
@@ -140,16 +130,9 @@ function resolveInputPaths(
     "stockfish",
   )
   const storageDirectory = resolve(resolvedPackageRoot, ".stockfish-networks")
-  const installDirectory = resolve(storageDirectory, manifest.releaseTag)
+  const installDirectory = resolve(storageDirectory, manifest.inputId)
   const markerPath = resolve(installDirectory, PROVISIONING_MARKER_FILE_NAME)
-  const bigNetworkPath = resolve(
-    installDirectory,
-    manifest.networks.big.fileName,
-  )
-  const smallNetworkPath = resolve(
-    installDirectory,
-    manifest.networks.small.fileName,
-  )
+  const networkPath = resolve(installDirectory, manifest.network.fileName)
 
   assertPathWithin(resolvedPackageRoot, sourceDirectory, "Stockfish source")
   assertPathWithin(
@@ -163,18 +146,13 @@ function resolveInputPaths(
     "Stockfish network installation",
   )
   assertPathWithin(installDirectory, markerPath, "Stockfish network marker")
-  assertPathWithin(installDirectory, bigNetworkPath, "Stockfish big network")
-  assertPathWithin(
-    installDirectory,
-    smallNetworkPath,
-    "Stockfish small network",
-  )
+  assertPathWithin(installDirectory, networkPath, "Stockfish Lite network")
 
   return {
     sourceDirectory,
     installDirectory,
     markerPath,
-    networks: { big: bigNetworkPath, small: smallNetworkPath },
+    networkPath,
   }
 }
 
@@ -226,7 +204,7 @@ async function downloadVerifiedNetwork(
   )
 }
 
-async function validateInstalledNetworks(
+async function validateInstalledNetwork(
   paths: StockfishNativeInputPaths,
   manifest: StockfishNativeBuildManifest,
 ): Promise<void> {
@@ -235,28 +213,22 @@ async function validateInstalledNetworks(
     throw new Error("Native Stockfish network marker does not match the pin.")
   }
 
-  const [bigSha256, smallSha256] = await Promise.all([
-    sha256File(paths.networks.big),
-    sha256File(paths.networks.small),
-  ])
-  if (bigSha256 !== manifest.networks.big.sha256) {
-    throw new Error("Native Stockfish big-network SHA-256 mismatch.")
-  }
-  if (smallSha256 !== manifest.networks.small.sha256) {
-    throw new Error("Native Stockfish small-network SHA-256 mismatch.")
+  const networkSha256 = await sha256File(paths.networkPath)
+  if (networkSha256 !== manifest.network.sha256) {
+    throw new Error("Native Stockfish network SHA-256 mismatch.")
   }
 }
 
-export async function provisionStockfishNativeNetworks(
+export async function provisionStockfishNativeNetwork(
   input: StockfishNativeNetworkProvisionInput,
 ): Promise<StockfishNativeInputPaths> {
-  const manifest = input.manifest ?? STOCKFISH_18_NATIVE_BUILD_MANIFEST
+  const manifest = input.manifest ?? STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST
   const download = input.download ?? defaultDownload
   validateManifest(manifest)
   const paths = resolveInputPaths(input.packageRoot, manifest)
 
   if (await pathExists(paths.installDirectory)) {
-    await validateInstalledNetworks(paths, manifest)
+    await validateInstalledNetwork(paths, manifest)
     return paths
   }
 
@@ -277,18 +249,14 @@ export async function provisionStockfishNativeNetworks(
 
   try {
     await mkdir(stagedInstallDirectory)
-    const [bigBytes, smallBytes] = await Promise.all([
-      downloadVerifiedNetwork(manifest.networks.big, download),
-      downloadVerifiedNetwork(manifest.networks.small, download),
-    ])
+    const networkBytes = await downloadVerifiedNetwork(
+      manifest.network,
+      download,
+    )
     await Promise.all([
       writeFile(
-        resolve(stagedInstallDirectory, manifest.networks.big.fileName),
-        bigBytes,
-      ),
-      writeFile(
-        resolve(stagedInstallDirectory, manifest.networks.small.fileName),
-        smallBytes,
+        resolve(stagedInstallDirectory, manifest.network.fileName),
+        networkBytes,
       ),
       writeFile(
         resolve(stagedInstallDirectory, PROVISIONING_MARKER_FILE_NAME),
@@ -297,7 +265,7 @@ export async function provisionStockfishNativeNetworks(
       ),
     ])
 
-    await validateInstalledNetworks(
+    await validateInstalledNetwork(
       {
         ...paths,
         installDirectory: stagedInstallDirectory,
@@ -305,18 +273,12 @@ export async function provisionStockfishNativeNetworks(
           stagedInstallDirectory,
           PROVISIONING_MARKER_FILE_NAME,
         ),
-        networks: {
-          big: resolve(stagedInstallDirectory, manifest.networks.big.fileName),
-          small: resolve(
-            stagedInstallDirectory,
-            manifest.networks.small.fileName,
-          ),
-        },
+        networkPath: resolve(stagedInstallDirectory, manifest.network.fileName),
       },
       manifest,
     )
     await rename(stagedInstallDirectory, paths.installDirectory)
-    await validateInstalledNetworks(paths, manifest)
+    await validateInstalledNetwork(paths, manifest)
     return paths
   } finally {
     await rm(stagingDirectory, { force: true, recursive: true })
@@ -330,7 +292,7 @@ function defaultPackageRoot(): string {
 export default async function provisionStockfishNativeInputs(
   packageRoot = defaultPackageRoot(),
 ): Promise<StockfishNativeInputPaths> {
-  const manifest = STOCKFISH_18_NATIVE_BUILD_MANIFEST
+  const manifest = STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST
   const paths = resolveInputPaths(packageRoot, manifest)
   const sourceSnapshotSha256 = await sha256StockfishSourceSnapshot(
     paths.sourceDirectory,
@@ -341,5 +303,5 @@ export default async function provisionStockfishNativeInputs(
     )
   }
 
-  return provisionStockfishNativeNetworks({ packageRoot, manifest })
+  return provisionStockfishNativeNetwork({ packageRoot, manifest })
 }

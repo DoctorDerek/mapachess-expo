@@ -84,6 +84,7 @@ std::ostream& operator<<(std::ostream& os, const Position& pos) {
     for (Bitboard b = pos.checkers(); b;)
         os << UCIEngine::square(pop_lsb(b)) << " ";
 
+#ifndef __NO_SYZYGY__
     if (Tablebases::MaxCardinality >= popcount(pos.pieces()) && !pos.can_castle(ANY_CASTLING))
     {
         StateInfo st;
@@ -96,6 +97,7 @@ std::ostream& operator<<(std::ostream& os, const Position& pos) {
         os << "\nTablebases WDL: " << std::setw(4) << wdl << " (" << s1 << ")"
            << "\nTablebases DTZ: " << std::setw(4) << dtz << " (" << s2 << ")";
     }
+#endif
 
     return os;
 }
@@ -1519,37 +1521,63 @@ bool Position::material_key_is_ok() const { return compute_material_key() == st-
 // This is meant to be helpful when debugging.
 bool Position::pos_is_ok() const {
 
+#ifndef __EMSCRIPTEN__
     constexpr bool Fast = true;  // Quick (default) or full check?
+#endif
 
     if ((sideToMove != WHITE && sideToMove != BLACK) || piece_on(square<KING>(WHITE)) != W_KING
         || piece_on(square<KING>(BLACK)) != B_KING
         || (ep_square() != SQ_NONE && relative_rank(sideToMove, ep_square()) != RANK_6))
+#ifdef __EMSCRIPTEN__
+        return false;
+#else
         assert(0 && "pos_is_ok: Default");
 
     if (Fast)
         return true;
+#endif
 
     if (pieceCount[W_KING] != 1 || pieceCount[B_KING] != 1
         || attackers_to_exist(square<KING>(~sideToMove), pieces(), sideToMove))
+#ifdef __EMSCRIPTEN__
+        return false;
+#else
         assert(0 && "pos_is_ok: Kings");
+#endif
 
     if ((pieces(PAWN) & (Rank1BB | Rank8BB)) || pieceCount[W_PAWN] > 8 || pieceCount[B_PAWN] > 8)
+#ifdef __EMSCRIPTEN__
+        return false;
+#else
         assert(0 && "pos_is_ok: Pawns");
+#endif
 
     if ((pieces(WHITE) & pieces(BLACK)) || (pieces(WHITE) | pieces(BLACK)) != pieces()
         || popcount(pieces(WHITE)) > 16 || popcount(pieces(BLACK)) > 16)
+#ifdef __EMSCRIPTEN__
+        return false;
+#else
         assert(0 && "pos_is_ok: Bitboards");
+#endif
 
     for (PieceType p1 = PAWN; p1 <= KING; ++p1)
         for (PieceType p2 = PAWN; p2 <= KING; ++p2)
             if (p1 != p2 && (pieces(p1) & pieces(p2)))
+#ifdef __EMSCRIPTEN__
+                return false;
+#else
                 assert(0 && "pos_is_ok: Bitboards");
+#endif
 
 
     for (Piece pc : Pieces)
         if (pieceCount[pc] != popcount(pieces(color_of(pc), type_of(pc)))
-            || pieceCount[pc] != std::count(board.begin(), board.end(), pc))
+        || pieceCount[pc] != std::count(board.begin(), board.end(), pc))
+#ifdef __EMSCRIPTEN__
+            return false;
+#else
             assert(0 && "pos_is_ok: Pieces");
+#endif
 
     for (Color c : {WHITE, BLACK})
         for (CastlingRights cr : {c & KING_SIDE, c & QUEEN_SIDE})
@@ -1560,7 +1588,11 @@ bool Position::pos_is_ok() const {
             if (piece_on(castlingRookSquare[cr]) != make_piece(c, ROOK)
                 || castlingRightsMask[castlingRookSquare[cr]] != cr
                 || (castlingRightsMask[square<KING>(c)] & cr) != cr)
+#ifdef __EMSCRIPTEN__
+                return false;
+#else
                 assert(0 && "pos_is_ok: Castling");
+#endif
         }
 
     assert(material_key_is_ok() && "pos_is_ok: materialKey");

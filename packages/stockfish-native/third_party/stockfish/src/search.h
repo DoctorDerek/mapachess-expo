@@ -351,7 +351,9 @@ class Worker {
     // The main thread has a SearchManager, the others have a NullSearchManager
     std::unique_ptr<ISearchManager> manager;
 
+#ifndef __NO_SYZYGY__
     Tablebases::Config tbConfig;
+#endif
 
     const OptionsMap&                                         options;
     ThreadPool&                                               threads;

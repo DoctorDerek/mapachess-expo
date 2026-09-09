@@ -1,7 +1,5 @@
 import {
   parseSha256Hex,
-  STOCKFISH_18_BUILD_IDENTITY,
-  STOCKFISH_18_SOURCE_REVISION,
   type Sha256Hex,
   type StockfishNetworkIdentity,
 } from "@mapachess/stockfish/build-identity"
@@ -12,18 +10,15 @@ export type StockfishNativeNetworkArtifact = StockfishNetworkIdentity &
   }>
 
 export type StockfishNativeBuildManifest = Readonly<{
-  networks: Readonly<{
-    big: StockfishNativeNetworkArtifact
-    small: StockfishNativeNetworkArtifact
-  }>
-  releaseTag: string
-  schemaVersion: 1
+  inputId: string
+  network: StockfishNativeNetworkArtifact
+  schemaVersion: 2
   sourceRevision: string
   sourceSnapshotSha256: Sha256Hex
 }>
 
-export const STOCKFISH_18_SOURCE_SNAPSHOT_SHA256 = parseSha256Hex(
-  "241ab3661496557ac19fecb9a4f9217c76f0cc20055690a2846db7516fd4b9ed",
+export const STOCKFISH_18_LITE_SOURCE_SNAPSHOT_SHA256 = parseSha256Hex(
+  "ab8c74beeead85ae5eb5c92bb0f35085a9ef17f1d451ca6e9bd5012529ccc834",
 )
 
 function networkArtifact(
@@ -38,13 +33,15 @@ function networkArtifact(
   }
 }
 
-export const STOCKFISH_18_NATIVE_BUILD_MANIFEST = {
-  schemaVersion: 1,
-  releaseTag: STOCKFISH_18_BUILD_IDENTITY.releaseTag,
-  sourceRevision: STOCKFISH_18_SOURCE_REVISION,
-  sourceSnapshotSha256: STOCKFISH_18_SOURCE_SNAPSHOT_SHA256,
-  networks: {
-    big: networkArtifact(STOCKFISH_18_BUILD_IDENTITY.networks.big),
-    small: networkArtifact(STOCKFISH_18_BUILD_IDENTITY.networks.small),
-  },
+export const STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST = {
+  schemaVersion: 2,
+  inputId: "stockfish-18-lite",
+  sourceRevision: "31a98753a5d932511693f44775da908377c24513",
+  sourceSnapshotSha256: STOCKFISH_18_LITE_SOURCE_SNAPSHOT_SHA256,
+  network: networkArtifact({
+    fileName: "nn-9067e33176e8.nnue",
+    sha256: parseSha256Hex(
+      "9067e33176e8c5edb7aa8db6a3aedd012f84a1f39872e86357c6c2d0993f314d",
+    ),
+  }),
 } as const satisfies StockfishNativeBuildManifest

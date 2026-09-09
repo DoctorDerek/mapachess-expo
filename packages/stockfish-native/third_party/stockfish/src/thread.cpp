@@ -54,18 +54,24 @@ Thread::Thread(Search::SharedState&                    sharedState,
     nthreads(sharedState.options["Threads"]),
     stdThread(&Thread::idle_loop, this) {
 
+#ifndef __EMSCRIPTEN__ ///NOTE: This is to fix changing Threads count via the "setoption" UCI command.
     wait_for_search_finished();
 
+
     run_custom_job([this, &binder, &sharedState, &sm, n]() {
+#endif
         // Use the binder to [maybe] bind the threads to a NUMA node before doing
         // the Worker allocation. Ideally we would also allocate the SearchManager
         // here, but that's minor.
         this->numaAccessToken = binder();
         this->worker          = make_unique_large_page<Search::Worker>(
           sharedState, std::move(sm), n, idxInNuma, totalNuma, this->numaAccessToken);
+          
+#ifndef __EMSCRIPTEN__
     });
 
     wait_for_search_finished();
+#endif
 }
 
 
@@ -77,7 +83,9 @@ Thread::~Thread() {
 
     exit = true;
     start_searching();
+#ifndef __EMSCRIPTEN_SINGLE_THREADED__
     stdThread.join();
+#endif
 }
 
 // Wakes up the thread that will start the search
@@ -89,18 +97,24 @@ void Thread::start_searching() {
 // Clears the histories for the thread worker (usually before a new game)
 void Thread::clear_worker() {
     assert(worker != nullptr);
+#ifndef __EMSCRIPTEN__
     run_custom_job([this]() { worker->clear(); });
+#else
+    worker->clear();
+#endif
 }
 
 // Blocks on the condition variable until the thread has finished searching
 void Thread::wait_for_search_finished() {
-
+#ifndef __EMSCRIPTEN_SINGLE_THREADED__
     std::unique_lock<std::mutex> lk(mutex);
     cv.wait(lk, [&] { return !searching; });
+#endif
 }
 
 // Launching a function in the thread
 void Thread::run_custom_job(std::function<void()> f) {
+#ifndef __EMSCRIPTEN_SINGLE_THREADED__
     {
         std::unique_lock<std::mutex> lk(mutex);
         cv.wait(lk, [&] { return !searching; });
@@ -108,6 +122,9 @@ void Thread::run_custom_job(std::function<void()> f) {
         searching = true;
     }
     cv.notify_one();
+#else
+    f();
+#endif
 }
 
 void Thread::ensure_network_replicated() { worker->ensure_network_replicated(); }
@@ -163,6 +180,7 @@ void ThreadPool::set(const NumaConfig&                           numaConfig,
 
     if (requested > 0)  // create new thread(s)
     {
+#ifndef __EMSCRIPTEN__
         // Binding threads may be problematic when there's multiple NUMA nodes and
         // multiple Stockfish instances running. In particular, if each instance
         // runs a single thread then they would all be mapped to the first NUMA node.
@@ -180,6 +198,9 @@ void ThreadPool::set(const NumaConfig&                           numaConfig,
             // numaPolicy == "system", or explicitly set by the user
             return true;
         }();
+#else
+        const bool doBindThreads = false;
+#endif
 
         std::map<NumaIndex, size_t> counts;
         boundThreadToNumaNode = doBindThreads
@@ -252,11 +273,14 @@ void ThreadPool::clear() {
     if (threads.size() == 0)
         return;
 
+
     for (auto&& th : threads)
         th->clear_worker();
 
+#ifndef __EMSCRIPTEN__
     for (auto&& th : threads)
         th->wait_for_search_finished();
+#endif
 
     // These two affect the time taken on the first move of a game:
     main_manager()->bestPreviousAverageScore = VALUE_INFINITE;
@@ -310,7 +334,9 @@ void ThreadPool::start_thinking(const OptionsMap&  options,
         for (const auto& m : legalmoves)
             rootMoves.emplace_back(m);
 
+#ifndef __NO_SYZYGY__
     Tablebases::Config tbConfig = Tablebases::rank_root_moves(options, pos, rootMoves);
+#endif
 
     // After ownership transfer 'states' becomes empty, so if we stop the search
     // and call 'go' again without setting a new position states.get() == nullptr.
@@ -326,7 +352,9 @@ void ThreadPool::start_thinking(const OptionsMap&  options,
     // shared since they are read-only.
     for (auto&& th : threads)
     {
+#ifndef __EMSCRIPTEN__
         th->run_custom_job([&]() {
+#endif
             th->worker->limits = limits;
             th->worker->nodes = th->worker->tbHits = th->worker->bestMoveChanges = 0;
             th->worker->nmpMinPly                                                = 0;
@@ -334,12 +362,18 @@ void ThreadPool::start_thinking(const OptionsMap&  options,
             th->worker->rootMoves                              = rootMoves;
             th->worker->rootPos.set(pos.fen(), pos.is_chess960(), &th->worker->rootState);
             th->worker->rootState = setupStates->back();
+#ifndef __NO_SYZYGY__
             th->worker->tbConfig  = tbConfig;
+#endif
+#ifndef __EMSCRIPTEN__
         });
+#endif
     }
 
+#ifndef __EMSCRIPTEN__
     for (auto&& th : threads)
         th->wait_for_search_finished();
+#endif
 
     main_thread()->start_searching();
 }

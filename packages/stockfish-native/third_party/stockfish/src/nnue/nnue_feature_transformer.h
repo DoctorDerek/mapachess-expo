@@ -80,8 +80,12 @@ void permute(std::array<T, N>& data, const std::array<std::size_t, OrderSize>& o
 // Input feature converter
 template<IndexType TransformedFeatureDimensions>
 class FeatureTransformer {
+#if !defined(__LITE_NET__)
     static constexpr bool UseThreats =
       (TransformedFeatureDimensions == TransformedFeatureDimensionsBig);
+#else
+    static constexpr bool UseThreats = false;
+#endif
     // Number of output dimensions for one side
     static constexpr IndexType HalfDimensions = TransformedFeatureDimensions;
 

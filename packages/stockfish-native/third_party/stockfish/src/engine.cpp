@@ -70,6 +70,7 @@ Engine::Engine(std::optional<std::string> path) :
 
     pos.set(StartFEN, false, &states->back());
 
+#ifndef __EMSCRIPTEN__
     options.add(  //
       "Debug Log File", Option("", [](const Option& o) {
           start_logger(o);
@@ -82,11 +83,21 @@ Engine::Engine(std::optional<std::string> path) :
           return numa_config_information_as_string() + "\n"
                + thread_allocation_information_as_string();
       }));
+#endif
 
     options.add(  //
+#ifdef __EMSCRIPTEN_SINGLE_THREADED__
+      "Threads", Option(1, 1, 1, [](const Option&) {
+          return std::nullopt;
+#elif defined(__EMSCRIPTEN__)
+      "Threads", Option(1, 1, 32, [this](const Option&) {
+          resize_threads();
+          return std::nullopt;
+#else
       "Threads", Option(1, 1, MaxThreads, [this](const Option&) {
           resize_threads();
           return thread_allocation_information_as_string();
+#endif
       }));
 
     options.add(  //
@@ -123,6 +134,7 @@ Engine::Engine(std::optional<std::string> path) :
 
     options.add("UCI_ShowWDL", Option(false));
 
+#ifndef __NO_SYZYGY__
     options.add(  //
       "SyzygyPath", Option("", [](const Option& o) {
           Tablebases::init(o);
@@ -134,6 +146,7 @@ Engine::Engine(std::optional<std::string> path) :
     options.add("Syzygy50MoveRule", Option(true));
 
     options.add("SyzygyProbeLimit", Option(7, 0, 7));
+#endif
 
     options.add(  //
       "EvalFile", Option(EvalFileDefaultNameBig, [this](const Option& o) {
@@ -171,8 +184,10 @@ void Engine::search_clear() {
     tt.clear(threads);
     threads.clear();
 
+#ifndef __NO_SYZYGY__
     // @TODO wont work with multiple instances
     Tablebases::init(options["SyzygyPath"]);  // Free mapped files
+#endif
 }
 
 void Engine::set_on_update_no_moves(std::function<void(const Engine::InfoShort&)>&& f) {
@@ -213,6 +228,12 @@ void Engine::set_position(const std::string& fen, const std::vector<std::string>
         pos.do_move(m, states->back());
     }
 }
+
+#ifdef __EMSCRIPTEN__
+bool Engine::validate_position() const {
+    return pos.pos_is_ok();
+}
+#endif
 
 // modifiers
 
@@ -261,7 +282,9 @@ void Engine::set_ponderhit(bool b) { threads.main_manager()->ponder = b; }
 
 void Engine::verify_networks() const {
     networks->big.verify(options["EvalFile"], onVerifyNetworks);
+#if !defined(__LITE_NET__) && !defined(__ULTRA_LITE_NET__)
     networks->small.verify(options["EvalFileSmall"], onVerifyNetworks);
+#endif
 
     auto statuses = networks.get_status_and_errors();
     for (size_t i = 0; i < statuses.size(); ++i)
@@ -297,7 +320,9 @@ void Engine::verify_networks() const {
 void Engine::load_networks() {
     networks.modify_and_replicate([this](NN::Networks& networks_) {
         networks_.big.load(binaryDirectory, options["EvalFile"]);
+#if !defined(__LITE_NET__) && !defined(__ULTRA_LITE_NET__)
         networks_.small.load(binaryDirectory, options["EvalFileSmall"]);
+#endif
     });
     threads.clear();
     threads.ensure_network_replicated();

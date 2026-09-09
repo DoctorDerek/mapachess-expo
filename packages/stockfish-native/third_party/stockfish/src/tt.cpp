@@ -171,6 +171,10 @@ void TranspositionTable::resize(size_t mbSize, ThreadPool& threads) {
 // in a multi-threaded way.
 void TranspositionTable::clear(ThreadPool& threads) {
     generation8              = 0;
+#ifdef __EMSCRIPTEN__
+    // NOTE: Sometimes threaded TT initialization seems to fail (engine crash on startup), so here we simply initialize on main thread.
+    std::memset(table, 0, clusterCount * sizeof(Cluster));
+#else
     const size_t threadCount = threads.num_threads();
 
     for (size_t i = 0; i < threadCount; ++i)
@@ -187,6 +191,7 @@ void TranspositionTable::clear(ThreadPool& threads) {
 
     for (size_t i = 0; i < threadCount; ++i)
         threads.wait_on_thread(i);
+#endif
 }
 
 

@@ -27,17 +27,43 @@
 
 using namespace Stockfish;
 
+#ifdef __EMSCRIPTEN__
+UCIEngine* uciP; // Create a global pointer to the UCI object
+    #ifndef __EMSCRIPTEN_SINGLE_THREADED__
+        bool ready = false;
+    #endif
+#endif
+
 int main(int argc, char* argv[]) {
     std::cout << engine_info() << std::endl;
 
     Bitboards::init();
     Position::init();
 
+#ifndef __EMSCRIPTEN__
     auto uci = std::make_unique<UCIEngine>(argc, argv);
 
     Tune::init(uci->engine_options());
 
-    uci->loop();
+    uci.loop();
+#else
+    uciP = new UCIEngine(argc, argv); // initialize the UCI object
+    Tune::init(uciP->engine_options());
+    #ifndef __EMSCRIPTEN_SINGLE_THREADED__
+        ready = true;
+    #endif
+#endif
 
     return 0;
 }
+
+#ifdef __EMSCRIPTEN__
+extern "C" void command(const char *cmd) {
+    uciP->process_command(cmd);
+}
+    #ifndef __EMSCRIPTEN_SINGLE_THREADED__
+    extern "C" bool isReady() {
+        return ready;
+    }
+    #endif
+#endif
