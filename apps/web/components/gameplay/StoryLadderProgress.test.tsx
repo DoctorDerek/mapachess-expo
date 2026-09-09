@@ -1,6 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import {
   createInitialStoryProgress,
   type StoryProgress,
@@ -14,6 +13,27 @@ const progress: StoryProgress = {
 }
 
 describe("Story ladder presentation structure", () => {
+  it("offers earned opponents as named choices and defaults setup to the next unlocked animal", () => {
+    const markup = renderToStaticMarkup(
+      <WebMatchSetup
+        activityMessage={null}
+        autoHintMode="no-auto-hints"
+        disabled={false}
+        onAutoHintModeChanged={vi.fn()}
+        onBack={vi.fn()}
+        onStart={vi.fn()}
+        setup={{ mode: "story", variant: "standard" }}
+        storyProgress={progress}
+      />,
+    )
+    expect(markup).toContain('value="chicken-stockfish"')
+    expect(markup).toMatch(/checked="" value="bunny-stockfish"/)
+    expect(markup).not.toContain('value="dog-stockfish"')
+    expect(markup).not.toContain("Dog Stockfish")
+    expect(markup).toContain("Defeated · Gold")
+    expect(markup).not.toContain("<select")
+  })
+
   it("exposes ordered earned and locked status without future-opponent action buttons", () => {
     const markup = renderToStaticMarkup(
       <StoryLadderProgress progress={progress} variant="standard" />,
@@ -25,9 +45,7 @@ describe("Story ladder presentation structure", () => {
     expect(markup).toContain("4.3%")
     expect(markup).toContain("2.2%")
     expect(markup).toContain("0%")
-    expect(markup).toContain(
-      "Additional opponents and their artwork are still in development",
-    )
+    expect(markup).toContain("Play through Raccoon now.")
     expect(markup).not.toContain("<button")
   })
 
@@ -48,7 +66,6 @@ describe("Story ladder presentation structure", () => {
       onAutoHintModeChanged: vi.fn(),
       onBack: vi.fn(),
       onStart: vi.fn(),
-      opponent: stockfishOpponent("chicken-stockfish"),
       storyProgress: createInitialStoryProgress(),
     }
     const story = renderToStaticMarkup(

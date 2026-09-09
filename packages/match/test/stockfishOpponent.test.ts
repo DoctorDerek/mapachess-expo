@@ -50,8 +50,9 @@ describe("canonical Stockfish opponent identities", () => {
   })
 
   it("does not treat catalog membership as implemented save support", () => {
-    expect(IMPLEMENTED_DURABLE_OPPONENT_IDS).toEqual(["chicken-stockfish"])
-    expectTypeOf<ImplementedDurableOpponentId>().toEqualTypeOf<"chicken-stockfish">()
+    expect(IMPLEMENTED_DURABLE_OPPONENT_IDS).toEqual(
+      STOCKFISH_OPPONENTS.slice(0, 10).map(({ id }) => id),
+    )
     expectTypeOf<ImplementedDurableOpponentId>().toExtend<StockfishOpponentId>()
   })
 })
