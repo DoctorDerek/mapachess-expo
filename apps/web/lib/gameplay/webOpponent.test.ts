@@ -14,14 +14,16 @@ import {
   type StockfishEngineSession,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
-import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import createChickenOpponent, {
-  CHICKEN_NODE_LIMIT,
-  CHICKEN_WEB_SEED_DERIVATION_VERSION,
-  generateChickenMatchSeed,
+import {
+  OPPONENT_POSITION_SEED_DERIVATION_VERSION,
+  parseDeterministicRandomSeed,
+} from "@mapachess/stockfish/opponent-move-selection"
+import createWebOpponent, {
+  generateWebMatchSeed,
   selectStoryPlayerColor,
-  type ChickenCryptography,
-} from "./chickenOpponent"
+  type WebOpponentCryptography,
+} from "./webOpponent"
+import { legacyChickenWebPolicy } from "./webOpponentPolicy"
 
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
@@ -63,7 +65,7 @@ const createCryptography = (
   const cryptography = {
     getRandomValues,
     subtle: { digest },
-  } satisfies ChickenCryptography
+  } satisfies WebOpponentCryptography
 
   return { cryptography, digest }
 }
@@ -118,7 +120,7 @@ const createSession = (
   return { search, session }
 }
 
-describe("provisional Chicken opponent", () => {
+describe("deterministic web opponent execution", () => {
   it.each([RANDOM_POSITION_SEED, STOCKFISH_POSITION_SEED])(
     "selects canonical Chess960 moves with position seed %s",
     async (positionSeed) => {
@@ -142,11 +144,11 @@ describe("provisional Chicken opponent", () => {
         bestMove: "g1h1",
         requestId: request.requestId,
       }))
-      const opponent = createChickenOpponent(
+      const opponent = createWebOpponent(
         session,
         cryptography,
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-        "chess960",
+        legacyChickenWebPolicy("chess960"),
       )
       const result = await opponent.selectMove(
         request,
@@ -168,7 +170,7 @@ describe("provisional Chicken opponent", () => {
   it("creates a nonzero cryptographic match seed and both Story colors", () => {
     const { cryptography } = createCryptography()
 
-    expect(generateChickenMatchSeed(cryptography)).toBe(RANDOM_POSITION_SEED)
+    expect(generateWebMatchSeed(cryptography)).toBe(RANDOM_POSITION_SEED)
     expect(
       selectStoryPlayerColor(
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
@@ -186,7 +188,12 @@ describe("provisional Chicken opponent", () => {
       requestId: request.requestId,
     }))
     const matchSeed = parseDeterministicRandomSeed(RANDOM_POSITION_SEED)
-    const opponent = createChickenOpponent(session, cryptography, matchSeed)
+    const opponent = createWebOpponent(
+      session,
+      cryptography,
+      matchSeed,
+      legacyChickenWebPolicy("standard"),
+    )
     const request = createStandardRequest()
     const signal = new AbortController().signal
 
@@ -210,7 +217,7 @@ describe("provisional Chicken opponent", () => {
       : new Uint8Array(digestInput)
     expect(new TextDecoder().decode(digestBytes)).toBe(
       JSON.stringify([
-        CHICKEN_WEB_SEED_DERIVATION_VERSION,
+        OPPONENT_POSITION_SEED_DERIVATION_VERSION,
         matchSeed,
         request.requestId,
       ]),
@@ -223,10 +230,11 @@ describe("provisional Chicken opponent", () => {
       bestMove: "e7e5",
       requestId: request.requestId,
     }))
-    const opponent = createChickenOpponent(
+    const opponent = createWebOpponent(
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+      legacyChickenWebPolicy("standard"),
     )
     const request = createStandardRequestAfterE4()
     const signal = new AbortController().signal
@@ -234,7 +242,7 @@ describe("provisional Chicken opponent", () => {
     await expect(opponent.selectMove(request, signal)).resolves.toBe("e7e5")
     expect(search).toHaveBeenCalledWith(
       {
-        nodeLimit: CHICKEN_NODE_LIMIT,
+        nodeLimit: 10_000,
         position: { fen: request.initialPosition.fen, moves: ["e2e4"] },
         requestId: request.requestId,
       },
@@ -266,10 +274,11 @@ describe("provisional Chicken opponent", () => {
         bestMove,
         requestId: responseRequestId ?? request.requestId,
       }))
-      const opponent = createChickenOpponent(
+      const opponent = createWebOpponent(
         session,
         cryptography,
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+        legacyChickenWebPolicy("standard"),
       )
 
       await expect(
@@ -300,10 +309,11 @@ describe("provisional Chicken opponent", () => {
       bestMove: "a2a3",
       requestId: engineRequest.requestId,
     }))
-    const opponent = createChickenOpponent(
+    const opponent = createWebOpponent(
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+      legacyChickenWebPolicy("standard"),
     )
 
     await expect(
@@ -321,10 +331,11 @@ describe("provisional Chicken opponent", () => {
       bestMove: "e2e4",
       requestId: request.requestId,
     }))
-    const beforeOpponent = createChickenOpponent(
+    const beforeOpponent = createWebOpponent(
       beforeSession.session,
       before.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+      legacyChickenWebPolicy("standard"),
     )
 
     await expect(
@@ -342,10 +353,11 @@ describe("provisional Chicken opponent", () => {
       bestMove: "e2e4",
       requestId: request.requestId,
     }))
-    const afterOpponent = createChickenOpponent(
+    const afterOpponent = createWebOpponent(
       afterSession.session,
       after.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+      legacyChickenWebPolicy("standard"),
     )
 
     await expect(

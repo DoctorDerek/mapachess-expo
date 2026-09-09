@@ -15,7 +15,6 @@ import createMatchSetupForMode, {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import { chickenMatchId } from "../chicken/chickenOpponent"
 import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
@@ -24,6 +23,7 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
+import { webMatchId } from "./webOpponent"
 
 const createSession = (
   seed: string,
@@ -47,7 +47,7 @@ const createSession = (
         throw new Error("Web session test does not request hints.")
       }),
     }),
-    matchId: chickenMatchId(matchSeed, startingPosition, { mode, playerColor }),
+    matchId: webMatchId(matchSeed, startingPosition, { mode, playerColor }),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async () => {

@@ -10,11 +10,6 @@ import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import {
-  chickenMatchId,
-  chickenPolicyFingerprint,
-  selectStoryPlayerColor,
-} from "../chicken/chickenOpponent"
 import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
 import webSha256 from "../profile/webSha256"
@@ -26,6 +21,8 @@ import {
   openFreshWebMatchSession,
   returnWebMatchSessionToMenu,
 } from "./webMatchSession"
+import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+import { legacyChickenWebPolicy } from "./webOpponentPolicy"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
@@ -67,9 +64,11 @@ const createRuntime = (
     variant: "standard",
     chess960PositionId: null,
   },
-  selection: NonNullable<Parameters<typeof chickenMatchId>[2]> = {
+  selection: NonNullable<Parameters<typeof webMatchId>[2]> = {
     mode: "story",
   },
+  policyFingerprint = legacyChickenWebPolicy(startingPosition.variant)
+    .fingerprint,
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -85,7 +84,7 @@ const createRuntime = (
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: chickenMatchId(matchSeed, startingPosition, selection),
+    matchId: webMatchId(matchSeed, startingPosition, selection),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {
@@ -96,9 +95,7 @@ const createRuntime = (
         return move.id
       }),
     }),
-    opponentPolicyFingerprint: chickenPolicyFingerprint(
-      startingPosition.variant,
-    ),
+    opponentPolicyFingerprint: policyFingerprint,
     opponentId: "chicken-stockfish",
     playerColor:
       selection.mode === "challenge"
@@ -184,6 +181,10 @@ describe("web match session ownership", () => {
         matchSeed: FIRST_MATCH_SEED,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: legacyChickenWebPolicy(
+          startingPosition.variant,
+        ).fingerprint,
       })
       expect(resumed.match).toEqual(saved?.activeMatch)
       const restartOpener = runtimeOpener(
@@ -201,6 +202,10 @@ describe("web match session ownership", () => {
         ...selection,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: legacyChickenWebPolicy(
+          startingPosition.variant,
+        ).fingerprint,
       })
       expect(restarted.match).toMatchObject({
         mode: "challenge",
@@ -348,6 +353,10 @@ describe("web match session ownership", () => {
       matchSeed: FIRST_MATCH_SEED,
       setup: startingPosition,
       signal: expect.any(AbortSignal),
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy(
+        startingPosition.variant,
+      ).fingerprint,
     })
     expect(resumed.match).toEqual(first.match)
     const restartOpener = runtimeOpener(
@@ -363,6 +372,10 @@ describe("web match session ownership", () => {
     expect(restartOpener).toHaveBeenCalledWith({
       setup: startingPosition,
       signal: expect.any(AbortSignal),
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy(
+        startingPosition.variant,
+      ).fingerprint,
     })
     expect(restarted.match.startingPosition).toEqual(
       first.match.startingPosition,
@@ -456,6 +469,8 @@ describe("web match session ownership", () => {
       matchSeed: FIRST_MATCH_SEED,
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
     })
     expect(resumedSession.match).toEqual(initialSession.match)
     await resumedSession.close()
@@ -525,6 +540,8 @@ describe("web match session ownership", () => {
       matchSeed: SECOND_MATCH_SEED,
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
     })
     expect(resumedSession.match).toEqual(acceptedMatch)
     await resumedSession.close()

@@ -8,12 +8,9 @@ import {
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import {
-  chickenMatchId,
-  chickenPolicyFingerprint,
-  selectStoryPlayerColor,
-} from "../chicken/chickenOpponent"
 import type { WebMatchRuntime } from "./webMatchRuntime"
+import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+import resolveWebOpponentPolicy from "./webOpponentPolicy"
 
 export type ResumedWebMatch = Readonly<{
   matchSeed: WebMatchRuntime["matchSeed"]
@@ -62,39 +59,37 @@ export function buildFreshWebMatch(
   })
 }
 
-export default function resumeWebMatch(
+export default async function resumeWebMatch(
   record: DurableMatchRecord,
-): ResumedWebMatch {
-  if (record.opponentId !== "chicken-stockfish") {
-    throw new TypeError("Saved match does not use an implemented opponent.")
-  }
-  if (
-    record.opponentPolicyFingerprint !==
-    chickenPolicyFingerprint(record.startingPosition.variant)
-  ) {
-    throw new TypeError("Saved Chicken policy does not match this runtime.")
-  }
+): Promise<ResumedWebMatch> {
+  await resolveWebOpponentPolicy(
+    record.opponentId,
+    record.startingPosition.variant,
+    record.opponentPolicyFingerprint,
+  )
 
   const matchSeed = parseDeterministicRandomSeed(
     record.matchSeed,
-    "Saved Chicken match seed",
+    "Saved opponent match seed",
   )
   if (
     record.matchId !==
-      chickenMatchId(matchSeed, record.startingPosition, {
-        mode: record.mode,
-        playerColor: record.playerColor,
-      }) ||
+      webMatchId(
+        matchSeed,
+        record.startingPosition,
+        { mode: record.mode, playerColor: record.playerColor },
+        record.opponentId,
+      ) ||
     (record.mode === "story" &&
       record.playerColor !== selectStoryPlayerColor(matchSeed))
   ) {
-    throw new TypeError("Saved Chicken identity does not match its seed.")
+    throw new TypeError("Saved opponent identity does not match its seed.")
   }
 
   const reconstruction = reconstructDurableMatch(record)
   if (!reconstruction.ok) {
     throw new TypeError(
-      `Saved Chicken timeline could not reconstruct: ${reconstruction.error.type}`,
+      `Saved opponent timeline could not reconstruct: ${reconstruction.error.type}`,
     )
   }
 
