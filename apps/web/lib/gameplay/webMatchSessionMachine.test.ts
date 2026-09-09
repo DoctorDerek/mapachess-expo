@@ -55,7 +55,7 @@ const createSession = (
       }),
     }),
     opponentPolicyFingerprint: "web-session-test-policy",
-    opponentTargetElo: null,
+    opponentTargetElo: 100,
     opponentId: "chicken-stockfish",
     playerColor,
     startingPosition,

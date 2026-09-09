@@ -16,7 +16,6 @@ import openWebMatchRuntime from "./openWebMatchRuntime"
 import type { WebOpponentCryptography } from "./webOpponent"
 import { webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
-  legacyChickenWebPolicy,
   resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
 
@@ -181,7 +180,7 @@ describe("web match runtime ownership", () => {
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "uses measured %s defaults while preserving an explicitly saved legacy policy",
+    "uses current %s settings when reopening an obsolete difficulty policy",
     async (variant) => {
       const parsed = parseChess960PositionId(959)
       if (!parsed.ok) throw new Error("Invalid test layout")
@@ -191,23 +190,19 @@ describe("web match runtime ownership", () => {
           : ({ variant, chess960PositionId: parsed.positionId } as const)
       const fresh = await openFixture({ setup })
       try {
-        const legacy = legacyChickenWebPolicy(variant)
         const resumed = await openFixture({
           setup,
           matchSeed: fresh.runtime.matchSeed,
           opponentId: "chicken-stockfish",
-          opponentPolicyFingerprint: legacy.fingerprint,
+          opponentPolicyFingerprint: "obsolete-policy",
         })
         try {
           expect(fresh.runtime.opponentPolicyFingerprint).toBe(
             (await resolveWebOpponentPolicy("chicken-stockfish", variant))
               .fingerprint,
           )
-          expect(fresh.runtime.opponentPolicyFingerprint).not.toBe(
-            legacy.fingerprint,
-          )
           expect(resumed.runtime.opponentPolicyFingerprint).toBe(
-            legacy.fingerprint,
+            fresh.runtime.opponentPolicyFingerprint,
           )
           expect(resumed.runtime.matchId).toBe(fresh.runtime.matchId)
           expect(resumed.runtime.playerColor).toBe(fresh.runtime.playerColor)
@@ -220,18 +215,6 @@ describe("web match runtime ownership", () => {
       }
     },
   )
-
-  it("rejects an unknown saved policy before allocating any engine workers", async () => {
-    const openSession = createSessionQueue([])
-    await expect(
-      openWebMatchRuntime({
-        cryptography: createCryptography(),
-        openSession,
-        opponentPolicyFingerprint: "unsupported-policy",
-      }),
-    ).rejects.toThrow("Saved opponent policy")
-    expect(openSession).not.toHaveBeenCalled()
-  })
 
   it.each(["white", "black"] as const)(
     "honors chosen %s with an explicit Chess960 Challenge layout in all three engine sessions",

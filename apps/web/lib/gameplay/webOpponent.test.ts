@@ -24,12 +24,10 @@ import createWebOpponent, {
   selectStoryPlayerColor,
   type WebOpponentCryptography,
 } from "./webOpponent"
-import resolveWebOpponentPolicy, {
-  legacyChickenWebPolicy,
-} from "./webOpponentPolicy"
+import resolveWebOpponentPolicy from "./webOpponentPolicy"
 
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
-const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
+const STOCKFISH_POSITION_SEED = "000000010000001a0000000300000004"
 const BLACK_PLAYER_SEED = "00000001020000000000000300000004"
 const DEFAULT_RANDOM_WORDS = [1, 2, 3, 4] as const
 
@@ -148,8 +146,8 @@ describe("deterministic web opponent execution", () => {
         const policy = await resolveWebOpponentPolicy(id, variant)
         for (const [positionSeed, draw] of [
           [RANDOM_POSITION_SEED, 1520],
-          [STOCKFISH_POSITION_SEED, 8800],
-          ["000000010000001a0000000300000004", 9760],
+          ["00000001000000050000000300000004", 8800],
+          [STOCKFISH_POSITION_SEED, 9760],
         ] as const) {
           const { cryptography } = createCryptography(positionSeed)
           const { session, search } = createSession(({ requestId }) => ({
@@ -217,7 +215,7 @@ describe("deterministic web opponent execution", () => {
         session,
         cryptography,
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-        legacyChickenWebPolicy("chess960"),
+        await resolveWebOpponentPolicy("chicken-stockfish", "chess960"),
       )
       const result = await opponent.selectMove(
         request,
@@ -261,7 +259,7 @@ describe("deterministic web opponent execution", () => {
       session,
       cryptography,
       matchSeed,
-      legacyChickenWebPolicy("standard"),
+      await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
     )
     const request = createStandardRequest()
     const signal = new AbortController().signal
@@ -303,7 +301,7 @@ describe("deterministic web opponent execution", () => {
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-      legacyChickenWebPolicy("standard"),
+      await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
     )
     const request = createStandardRequestAfterE4()
     const signal = new AbortController().signal
@@ -347,7 +345,7 @@ describe("deterministic web opponent execution", () => {
         session,
         cryptography,
         parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-        legacyChickenWebPolicy("standard"),
+        await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
       )
 
       await expect(
@@ -382,7 +380,7 @@ describe("deterministic web opponent execution", () => {
       session,
       cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-      legacyChickenWebPolicy("standard"),
+      await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
     )
 
     await expect(
@@ -404,7 +402,7 @@ describe("deterministic web opponent execution", () => {
       beforeSession.session,
       before.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-      legacyChickenWebPolicy("standard"),
+      await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
     )
 
     await expect(
@@ -426,7 +424,7 @@ describe("deterministic web opponent execution", () => {
       afterSession.session,
       after.cryptography,
       parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
-      legacyChickenWebPolicy("standard"),
+      await resolveWebOpponentPolicy("chicken-stockfish", "standard"),
     )
 
     await expect(

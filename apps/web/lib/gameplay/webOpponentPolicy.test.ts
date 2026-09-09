@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPolicy, {
-  legacyChickenWebPolicy,
   resolveWebChallengePolicy,
   webChallengeDifficultyTargets,
 } from "./webOpponentPolicy"
@@ -34,56 +33,41 @@ describe("versioned web opponent policies", () => {
             raccoon.fingerprint,
           ),
         ).toEqual(raccoon)
-        await expect(
-          resolveWebChallengePolicy(
-            "raccoon-stockfish",
-            variant,
-            target === 100 ? 1000 : 100,
-            raccoon.fingerprint,
-          ),
-        ).rejects.toThrow("Saved opponent policy")
-        await expect(
-          resolveWebChallengePolicy(
-            "raccoon-stockfish",
-            variant === "standard" ? "chess960" : "standard",
-            undefined,
-            raccoon.fingerprint,
-          ),
-        ).rejects.toThrow("Saved opponent policy")
       }
-      const previous = await resolveWebOpponentPolicy(
+      const currentDefault = await resolveWebChallengePolicy(
         "chicken-stockfish",
         variant,
       )
+      expect(currentDefault.targetElo).toBe(100)
       expect(
         await resolveWebChallengePolicy(
           "chicken-stockfish",
           variant,
           undefined,
-          previous.fingerprint,
+          "obsolete-policy",
         ),
-      ).toEqual(previous)
-      const legacy = legacyChickenWebPolicy(variant)
+      ).toEqual(currentDefault)
       expect(
         await resolveWebChallengePolicy(
           "chicken-stockfish",
           variant,
-          undefined,
-          legacy.fingerprint,
+          1000,
+          currentDefault.fingerprint,
         ),
-      ).toEqual(legacy)
-      expect(legacy.targetElo).toBeNull()
+      ).toEqual(
+        await resolveWebChallengePolicy("chicken-stockfish", variant, 1000),
+      )
+      expect(currentDefault.fingerprint).not.toBe(
+        (
+          await resolveWebChallengePolicy(
+            "chicken-stockfish",
+            variant === "standard" ? "chess960" : "standard",
+          )
+        ).fingerprint,
+      )
       await expect(
         resolveWebChallengePolicy("chicken-stockfish", variant, 1100),
       ).rejects.toThrow("no supported web preset")
-      await expect(
-        resolveWebChallengePolicy(
-          "chicken-stockfish",
-          variant,
-          undefined,
-          "unknown",
-        ),
-      ).rejects.toThrow("Saved opponent policy")
     },
   )
   it.each([
@@ -112,66 +96,20 @@ describe("versioned web opponent policies", () => {
         expect(policy.fingerprint).toMatch(/^sha256:[0-9a-f]{64}$/)
         expect(Object.isFrozen(policy)).toBe(true)
         expect(
-          await resolveWebOpponentPolicy(
-            policy.opponentId,
-            variant,
-            policy.fingerprint,
-          ),
+          await resolveWebOpponentPolicy(policy.opponentId, variant),
         ).toEqual(policy)
-        await expect(
-          resolveWebOpponentPolicy(
-            policy.opponentId,
-            variant === "standard" ? "chess960" : "standard",
-            policy.fingerprint,
-          ),
-        ).rejects.toThrow("Saved opponent policy")
+        expect(
+          (
+            await resolveWebOpponentPolicy(
+              policy.opponentId,
+              variant === "standard" ? "chess960" : "standard",
+            )
+          ).fingerprint,
+        ).not.toBe(policy.fingerprint)
       }
       await expect(
         resolveWebOpponentPolicy("axolotl-stockfish", variant),
       ).rejects.toThrow("no measured web policy")
-    },
-  )
-
-  it.each(["standard", "chess960"] as const)(
-    "keeps the exact legacy %s Chicken fingerprint and behavior",
-    async (variant) => {
-      const legacy = legacyChickenWebPolicy(variant)
-      expect(legacy.fingerprint).toBe(
-        [
-          `mapachess-${variant}-chicken-web-policy/v1`,
-          "stockfish-js-source/31a98753a5d932511693f44775da908377c24513",
-          "wasm-sha256/a8fbc05ec6920b56d7485826dcb02c5ffd2826bcbf751cf973046f237a9096f1",
-          "nodes/10000",
-          "random-basis-points/8000",
-          "mapachess-web-sha256-position-state/v1",
-        ].join("|"),
-      )
-      expect(
-        await resolveWebOpponentPolicy(
-          "chicken-stockfish",
-          variant,
-          legacy.fingerprint,
-        ),
-      ).toEqual(legacy)
-      expect(legacy.randomMoveProbabilityBasisPoints).toBe(8000)
-      expect(
-        (await resolveWebOpponentPolicy("chicken-stockfish", variant))
-          .fingerprint,
-      ).not.toBe(legacy.fingerprint)
-      await expect(
-        resolveWebOpponentPolicy(
-          "bunny-stockfish",
-          variant,
-          legacy.fingerprint,
-        ),
-      ).rejects.toThrow("Saved opponent policy")
-      await expect(
-        resolveWebOpponentPolicy(
-          "chicken-stockfish",
-          variant,
-          `${legacy.fingerprint}/changed`,
-        ),
-      ).rejects.toThrow("Saved opponent policy")
     },
   )
 })

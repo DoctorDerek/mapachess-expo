@@ -39,7 +39,6 @@ import {
 } from "./webMatchSession"
 import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
-  legacyChickenWebPolicy,
   resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
 
@@ -86,10 +85,9 @@ const createRuntime = (
   selection: NonNullable<Parameters<typeof webMatchId>[2]> = {
     mode: "story",
   },
-  policyFingerprint = legacyChickenWebPolicy(startingPosition.variant)
-    .fingerprint,
+  policyFingerprint = "session-test-policy",
   opponentId: ImplementedDurableOpponentId = "chicken-stockfish",
-  opponentTargetElo: number | null = null,
+  opponentTargetElo = 100,
 ) => {
   const matchSeed = parseDeterministicRandomSeed(seed, "session test seed")
   const close = vi.fn(async () => undefined)
@@ -318,24 +316,19 @@ describe("web match session ownership", () => {
     },
   )
 
-  it.each([
-    ["standard", "legacy"],
-    ["standard", "measured"],
-    ["chess960", "legacy"],
-    ["chess960", "measured"],
-  ] as const)(
-    "retains the exact %s %s policy through durable reload and restart",
-    async (variant, generation) => {
+  it.each(["standard", "chess960"] as const)(
+    "retains the current %s Story policy through durable reload and restart",
+    async (variant) => {
       const parsed = parseChess960PositionId(959)
       if (!parsed.ok) throw new Error("Invalid test layout")
       const startingPosition: MatchStartingPosition =
         variant === "standard"
           ? { variant, chess960PositionId: null }
           : { variant, chess960PositionId: parsed.positionId }
-      const policy =
-        generation === "legacy"
-          ? legacyChickenWebPolicy(variant)
-          : await resolveWebOpponentPolicy("chicken-stockfish", variant)
+      const policy = await resolveWebOpponentPolicy(
+        "chicken-stockfish",
+        variant,
+      )
       const indexedDb = new IDBFactory()
       const profile = await openProfileRuntime(725, indexedDb)
       const ratings = selectCurrentPlayerData(
@@ -409,17 +402,99 @@ describe("web match session ownership", () => {
     },
   )
 
-  it("preserves a save with an unsupported policy without opening workers or replacing player data", async () => {
+  it.each(
+    (["standard", "chess960"] as const).flatMap((variant) =>
+      (["story", "challenge"] as const).map((mode) => ({ variant, mode })),
+    ),
+  )(
+    "resumes $variant $mode with current difficulty without clearing its board, hints or profile",
+    async ({ variant, mode }) => {
+      const parsed = parseChess960PositionId(518)
+      if (!parsed.ok) throw new Error("Test layout must parse")
+      const startingPosition: MatchStartingPosition =
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: parsed.positionId }
+      const selection =
+        mode === "story" ? { mode } : { mode, playerColor: "white" as const }
+      const policy =
+        mode === "story"
+          ? await resolveWebOpponentPolicy("chicken-stockfish", variant)
+          : await resolveWebChallengePolicy("chicken-stockfish", variant)
+      const profile = await openProfileRuntime(725)
+      const engine = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        selection,
+        policy.fingerprint,
+        "chicken-stockfish",
+        policy.targetElo,
+      )
+      const e4 = parseMatchMoveId("e2e4")
+      const e5 = parseMatchMoveId("e7e5")
+      if (!e4.ok || !e5.ok) throw new Error("Test moves must parse")
+      const candidate = {
+        ...buildFreshWebMatch({
+          mode,
+          autoHintMode: "no-auto-hints",
+          playerEloAtStart: 100,
+          runtime: engine.runtime,
+        }),
+        opponentPolicyFingerprint: "obsolete-policy",
+        moveIds: [e4.moveId, e5.moveId],
+        pieceHintsUsed: true,
+        moveHintsUsed: true,
+      }
+      await persistProfileActiveMatch({
+        actor: profile.actor,
+        candidate,
+        expectedActiveMatch: null,
+        signal: new AbortController().signal,
+      })
+      const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+      if (before === null) throw new Error("Test profile must be ready")
+      const openRuntime = runtimeOpener(engine.runtime)
+      const resumed = await openCurrentWebMatchSession({
+        openRuntime,
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      })
+      const currentMatch = {
+        ...candidate,
+        opponentPolicyFingerprint: policy.fingerprint,
+      }
+      expect(resumed.match).toEqual(currentMatch)
+      expect(
+        resumed.actor.getSnapshot().context.timeline.transitions,
+      ).toHaveLength(2)
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual({
+        ...before,
+        activeMatch: currentMatch,
+        revision: before.revision + 1,
+      })
+      expect(openRuntime).toHaveBeenCalledWith(
+        expect.objectContaining({
+          opponentPolicyFingerprint: "obsolete-policy",
+          matchSeed: FIRST_MATCH_SEED,
+          setup: startingPosition,
+        }),
+      )
+      await resumed.close()
+      await profile.close()
+    },
+  )
+
+  it("closes the runtime and retains the saved match when a policy refresh is aborted", async () => {
     const profile = await openProfileRuntime()
     const engine = createRuntime(FIRST_MATCH_SEED)
-    const candidate = buildFreshWebMatch({
-      autoHintMode: "no-auto-hints",
-      playerEloAtStart: 100,
-      runtime: {
-        ...engine.runtime,
-        opponentPolicyFingerprint: "unsupported-policy",
-      },
-    })
+    const candidate = {
+      ...buildFreshWebMatch({
+        autoHintMode: "no-auto-hints",
+        playerEloAtStart: 100,
+        runtime: engine.runtime,
+      }),
+      opponentPolicyFingerprint: "obsolete-policy",
+    }
     await persistProfileActiveMatch({
       actor: profile.actor,
       candidate,
@@ -427,35 +502,29 @@ describe("web match session ownership", () => {
       signal: new AbortController().signal,
     })
     const before = selectCurrentPlayerData(profile.actor.getSnapshot())
-    const openRuntime = runtimeOpener(engine.runtime)
+    const controller = new AbortController()
     await expect(
       openCurrentWebMatchSession({
-        openRuntime,
+        openRuntime: async () => {
+          controller.abort()
+          return engine.runtime
+        },
         profileActor: profile.actor,
-        signal: new AbortController().signal,
+        signal: controller.signal,
       }),
-    ).rejects.toThrow("Saved opponent policy")
-    expect(openRuntime).not.toHaveBeenCalled()
+    ).rejects.toThrow("aborted")
+    expect(engine.close).toHaveBeenCalledOnce()
     expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(before)
     await profile.close()
   })
 
-  it.each(
-    (["standard", "chess960"] as const).flatMap((variant) =>
-      (["legacy", "ladder", "challenge"] as const).map((generation) => ({
+  it.each(["standard", "chess960"] as const)(
+    "persists, reloads and restarts %s Challenge with its current policy and chosen Black",
+    async (variant) => {
+      const policy = await resolveWebChallengePolicy(
+        "chicken-stockfish",
         variant,
-        generation,
-      })),
-    ),
-  )(
-    "persists, reloads and restarts $variant Challenge with its exact $generation policy and chosen Black",
-    async ({ variant, generation }) => {
-      const policy =
-        generation === "legacy"
-          ? legacyChickenWebPolicy(variant)
-          : generation === "ladder"
-            ? await resolveWebOpponentPolicy("chicken-stockfish", variant)
-            : await resolveWebChallengePolicy("chicken-stockfish", variant)
+      )
       const layout = parseChess960PositionId(959)
       if (!layout.ok) throw new Error("Invalid test layout")
       const startingPosition: MatchStartingPosition =
@@ -709,9 +778,7 @@ describe("web match session ownership", () => {
       setup: startingPosition,
       signal: expect.any(AbortSignal),
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: legacyChickenWebPolicy(
-        startingPosition.variant,
-      ).fingerprint,
+      opponentPolicyFingerprint: "session-test-policy",
     })
     expect(resumed.match).toEqual(first.match)
     const restartOpener = runtimeOpener(
@@ -728,9 +795,7 @@ describe("web match session ownership", () => {
       setup: startingPosition,
       signal: expect.any(AbortSignal),
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: legacyChickenWebPolicy(
-        startingPosition.variant,
-      ).fingerprint,
+      opponentPolicyFingerprint: "session-test-policy",
     })
     expect(restarted.match.startingPosition).toEqual(
       first.match.startingPosition,
@@ -825,7 +890,7 @@ describe("web match session ownership", () => {
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
+      opponentPolicyFingerprint: "session-test-policy",
     })
     expect(resumedSession.match).toEqual(initialSession.match)
     await resumedSession.close()
@@ -896,7 +961,7 @@ describe("web match session ownership", () => {
       signal: expect.any(AbortSignal),
       setup: { variant: "standard", chess960PositionId: null },
       opponentId: "chicken-stockfish",
-      opponentPolicyFingerprint: legacyChickenWebPolicy("standard").fingerprint,
+      opponentPolicyFingerprint: "session-test-policy",
     })
     expect(resumedSession.match).toEqual(acceptedMatch)
     await resumedSession.close()
