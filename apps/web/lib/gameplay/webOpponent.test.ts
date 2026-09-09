@@ -9,6 +9,7 @@ import {
   createInitialMatchPosition,
   reconstructMatchPosition,
 } from "@mapachess/match/match-position"
+import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
@@ -23,7 +24,9 @@ import createWebOpponent, {
   selectStoryPlayerColor,
   type WebOpponentCryptography,
 } from "./webOpponent"
-import { legacyChickenWebPolicy } from "./webOpponentPolicy"
+import resolveWebOpponentPolicy, {
+  legacyChickenWebPolicy,
+} from "./webOpponentPolicy"
 
 const RANDOM_POSITION_SEED = "00000001000000020000000300000004"
 const STOCKFISH_POSITION_SEED = "00000001000000050000000300000004"
@@ -121,6 +124,72 @@ const createSession = (
 }
 
 describe("deterministic web opponent execution", () => {
+  it.each(["standard", "chess960"] as const)(
+    "executes all ten measured %s policies with deterministic legal choices",
+    async (variant) => {
+      const parsed = parseChess960PositionId(0)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const position = createInitialMatchPosition(
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: parsed.positionId },
+      )
+      const legalMoves = listLegalMatchMoves(position)
+      const engineMove = legalMoves[0]
+      if (engineMove === undefined) throw new Error("Missing legal test move")
+      const request: MatchOpponentRequest = {
+        acceptedMoves: [],
+        initialPosition: position,
+        legalMoves,
+        position,
+        requestId: `${variant}/measured-policy/opponent/ply/1`,
+      }
+      for (const { id } of STOCKFISH_OPPONENTS.slice(0, 10)) {
+        const policy = await resolveWebOpponentPolicy(id, variant)
+        for (const [positionSeed, draw] of [
+          [RANDOM_POSITION_SEED, 1520],
+          [STOCKFISH_POSITION_SEED, 8800],
+          ["000000010000001a0000000300000004", 9760],
+        ] as const) {
+          const { cryptography } = createCryptography(positionSeed)
+          const { session, search } = createSession(({ requestId }) => ({
+            bestMove: engineMove.uci,
+            requestId,
+          }))
+          const opponent = createWebOpponent(
+            session,
+            cryptography,
+            parseDeterministicRandomSeed(RANDOM_POSITION_SEED),
+            policy,
+          )
+          const signal = new AbortController().signal
+          const move = await opponent.selectMove(request, signal)
+          expect(legalMoves.some(({ id }) => id === move)).toBe(true)
+          expect(
+            await opponent.selectMove(
+              { ...request, legalMoves: [...legalMoves].reverse() },
+              signal,
+            ),
+          ).toBe(move)
+          if (draw < policy.randomMoveProbabilityBasisPoints) {
+            expect(search).not.toHaveBeenCalled()
+          } else {
+            expect(move).toBe(engineMove.id)
+            expect(search).toHaveBeenCalledTimes(2)
+            expect(search).toHaveBeenCalledWith(
+              {
+                nodeLimit: 10_000,
+                position: { fen: position.fen, moves: [] },
+                requestId: request.requestId,
+              },
+              signal,
+            )
+          }
+        }
+      }
+    },
+  )
+
   it.each([RANDOM_POSITION_SEED, STOCKFISH_POSITION_SEED])(
     "selects canonical Chess960 moves with position seed %s",
     async (positionSeed) => {
