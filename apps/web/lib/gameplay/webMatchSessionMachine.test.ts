@@ -3,7 +3,10 @@ import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
-import type { MatchMode } from "@mapachess/match/durable-match-record"
+import type {
+  ImplementedDurableOpponentId,
+  MatchMode,
+} from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import {
   createInitialMatchPosition,
@@ -33,6 +36,8 @@ const createSession = (
   },
   mode: MatchMode = "story",
   playerColor: MatchColor = "white",
+  opponentId: ImplementedDurableOpponentId = "chicken-stockfish",
+  opponentTargetElo = 100,
 ): WebMatchSession => {
   const matchSeed = parseDeterministicRandomSeed(seed, "web session test seed")
   const runtime = Object.freeze({
@@ -47,7 +52,12 @@ const createSession = (
         throw new Error("Web session test does not request hints.")
       }),
     }),
-    matchId: webMatchId(matchSeed, startingPosition, { mode, playerColor }),
+    matchId: webMatchId(
+      matchSeed,
+      startingPosition,
+      { mode, playerColor },
+      opponentId,
+    ),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async () => {
@@ -55,8 +65,8 @@ const createSession = (
       }),
     }),
     opponentPolicyFingerprint: "web-session-test-policy",
-    opponentTargetElo: 100,
-    opponentId: "chicken-stockfish",
+    opponentTargetElo,
+    opponentId,
     playerColor,
     startingPosition,
     positionEvaluator: vi.fn(async () => {
@@ -105,7 +115,7 @@ const operations = (
 
 describe("web match session machine", () => {
   it.each([0, 959])(
-    "retains Challenge color and position %i through opening retry and restart",
+    "retains Challenge animal, difficulty, color and position %i through opening retry and restart",
     async (positionId) => {
       const layout = parseChess960PositionId(positionId)
       if (!layout.ok) throw new Error("Invalid test layout")
@@ -115,19 +125,28 @@ describe("web match session machine", () => {
       } as const
       const setup: MatchSetup = {
         mode: "challenge",
-        challengeSetup: { ...startingPosition, playerColor: "black" },
+        challengeSetup: {
+          ...startingPosition,
+          playerColor: "black",
+          opponentId: "bunny-stockfish",
+          difficultyTargetElo: 1000,
+        },
       }
       const fresh = createSession(
         "00000001000000020000000300000004",
         startingPosition,
         "challenge",
         "black",
+        "bunny-stockfish",
+        1000,
       )
       const replacement = createSession(
         "00000005000000060000000700000008",
         startingPosition,
         "challenge",
         "black",
+        "bunny-stockfish",
+        1000,
       )
       const openFreshMatch = vi
         .fn<WebMatchSessionOperations["openFreshMatch"]>()
