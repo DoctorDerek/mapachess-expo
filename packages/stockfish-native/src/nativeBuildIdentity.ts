@@ -22,7 +22,7 @@ export type StockfishNativeBuildManifest = Readonly<{
 }>
 
 export const STOCKFISH_18_SOURCE_SNAPSHOT_SHA256 = parseSha256Hex(
-  "3005049e8cb95f1bd991d080e45136628830febc2a1366d3acf4933980f368a9",
+  "ab8c74beeead85ae5eb5c92bb0f35085a9ef17f1d451ca6e9bd5012529ccc834",
 )
 
 function networkArtifact(

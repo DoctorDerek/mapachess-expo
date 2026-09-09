@@ -54,7 +54,14 @@
 #else
 #if !defined(_MSC_VER) && !defined(NNUE_EMBEDDING_OFF)
 INCBIN(EmbeddedNNUEBig, EvalFileDefaultNameBig);
+#if defined(__LITE_NET__)
+// MAPACHESS: Match upstream Lite embedding without incbin on its empty small filename.
+const unsigned char        gEmbeddedNNUESmallData[1] = {0x0};
+const unsigned char* const gEmbeddedNNUESmallEnd     = &gEmbeddedNNUESmallData[1];
+const unsigned int         gEmbeddedNNUESmallSize    = 1;
+#else
 INCBIN(EmbeddedNNUESmall, EvalFileDefaultNameSmall);
+#endif
 #else
 const unsigned char        gEmbeddedNNUEBigData[1]   = {0x0};
 const unsigned char* const gEmbeddedNNUEBigEnd       = &gEmbeddedNNUEBigData[1];

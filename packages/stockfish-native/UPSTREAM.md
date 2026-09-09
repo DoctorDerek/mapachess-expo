@@ -8,6 +8,12 @@ the pinned web runtime. Its underlying official Stockfish 18 revision is
 is owned by `src/nativeBuildIdentity.ts` and verified before native build-input
 provisioning.
 
+The only local change inside the upstream snapshot is in `src/nnue/network.cpp`:
+native Lite embeds the real big network and defines unused one-byte small-network
+symbols, matching the pinned upstream `build.js` embedding generator. This avoids
+an `INCBIN` invocation with Lite's empty small-network filename. The snapshot digest
+includes this patch; native Lite never downloads or evaluates a small network.
+
 The two release NNUE files are not committed because their combined size is
 unsuitable for ordinary Git history. `pnpm --filter
 @mapachess/stockfish-native provision` downloads them from official Stockfish
