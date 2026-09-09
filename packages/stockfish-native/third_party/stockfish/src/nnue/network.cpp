@@ -43,6 +43,15 @@
 //     const unsigned char *const gEmbeddedNNUEEnd;     // a marker to the end
 //     const unsigned int         gEmbeddedNNUESize;    // the size of the embedded file
 // Note that this does not work in Microsoft Visual Studio.
+#ifdef __EMSCRIPTEN__
+    #ifdef __ULTRA_LITE_NET__
+        #include "../emscripten/wasm_embedded_ultra_lite_network.h"
+    #elif defined(__LITE_NET__)
+        #include "../emscripten/wasm_embedded_lite_network.h"
+    #else
+        #include "../emscripten/wasm_embedded_networks.h"
+    #endif
+#else
 #if !defined(_MSC_VER) && !defined(NNUE_EMBEDDING_OFF)
 INCBIN(EmbeddedNNUEBig, EvalFileDefaultNameBig);
 INCBIN(EmbeddedNNUESmall, EvalFileDefaultNameSmall);
@@ -54,6 +63,8 @@ const unsigned char        gEmbeddedNNUESmallData[1] = {0x0};
 const unsigned char* const gEmbeddedNNUESmallEnd     = &gEmbeddedNNUESmallData[1];
 const unsigned int         gEmbeddedNNUESmallSize    = 1;
 #endif
+#endif // __EMSCRIPTEN__
+
 
 namespace {
 
@@ -68,16 +79,13 @@ struct EmbeddedNNUE {
     const unsigned char* end;
     const unsigned int   size;
 };
-
 using namespace Stockfish::Eval::NNUE;
-
 EmbeddedNNUE get_embedded(EmbeddedNNUEType type) {
     if (type == EmbeddedNNUEType::BIG)
         return EmbeddedNNUE(gEmbeddedNNUEBigData, gEmbeddedNNUEBigEnd, gEmbeddedNNUEBigSize);
     else
         return EmbeddedNNUE(gEmbeddedNNUESmallData, gEmbeddedNNUESmallEnd, gEmbeddedNNUESmallSize);
 }
-
 }
 
 
@@ -283,7 +291,6 @@ void Network<Arch, Transformer>::load_internal() {
             setp(p, p + n);
         }
     };
-
     const auto embedded = get_embedded(embeddedType);
 
     MemoryBuffer buffer(const_cast<char*>(reinterpret_cast<const char*>(embedded.data)),

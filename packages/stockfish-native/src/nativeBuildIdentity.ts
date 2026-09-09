@@ -1,7 +1,6 @@
 import {
   parseSha256Hex,
   STOCKFISH_18_BUILD_IDENTITY,
-  STOCKFISH_18_SOURCE_REVISION,
   type Sha256Hex,
   type StockfishNetworkIdentity,
 } from "@mapachess/stockfish/build-identity"
@@ -23,7 +22,7 @@ export type StockfishNativeBuildManifest = Readonly<{
 }>
 
 export const STOCKFISH_18_SOURCE_SNAPSHOT_SHA256 = parseSha256Hex(
-  "241ab3661496557ac19fecb9a4f9217c76f0cc20055690a2846db7516fd4b9ed",
+  "3005049e8cb95f1bd991d080e45136628830febc2a1366d3acf4933980f368a9",
 )
 
 function networkArtifact(
@@ -41,7 +40,7 @@ function networkArtifact(
 export const STOCKFISH_18_NATIVE_BUILD_MANIFEST = {
   schemaVersion: 1,
   releaseTag: STOCKFISH_18_BUILD_IDENTITY.releaseTag,
-  sourceRevision: STOCKFISH_18_SOURCE_REVISION,
+  sourceRevision: "31a98753a5d932511693f44775da908377c24513",
   sourceSnapshotSha256: STOCKFISH_18_SOURCE_SNAPSHOT_SHA256,
   networks: {
     big: networkArtifact(STOCKFISH_18_BUILD_IDENTITY.networks.big),

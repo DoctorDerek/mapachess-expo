@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#define __ENGINE_VERSION__ "18"
+
 #if INTPTR_MAX == INT64_MAX
     #define IS_64BIT 1
 #endif

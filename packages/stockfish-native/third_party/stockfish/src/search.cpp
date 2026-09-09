@@ -50,6 +50,10 @@
 #include "uci.h"
 #include "ucioption.h"
 
+#ifdef __EMSCRIPTEN_SINGLE_THREADED__
+    #include <emscripten.h>
+#endif
+
 namespace Stockfish {
 
 namespace TB = Tablebases;
@@ -63,6 +67,10 @@ void syzygy_extend_pv(const OptionsMap&            options,
 using namespace Search;
 
 namespace {
+
+#ifdef __EMSCRIPTEN_SINGLE_THREADED__
+TimePoint lastElapsed;
+#endif
 
 constexpr int SEARCHEDLIST_CAPACITY = 32;
 constexpr int mainHistoryDefault    = 68;
@@ -182,6 +190,10 @@ void Search::Worker::ensure_network_replicated() {
 
 void Search::Worker::start_searching() {
 
+#ifdef __EMSCRIPTEN_SINGLE_THREADED__
+    lastElapsed = 0;
+#endif
+
     accumulatorStack.reset();
 
     // Non-main threads go directly to iterative_deepening()
@@ -207,6 +219,7 @@ void Search::Worker::start_searching() {
         iterative_deepening();      // main thread start searching
     }
 
+#ifndef __EMSCRIPTEN__
     // When we reach the maximum depth, we can arrive here without a raise of
     // threads.stop. However, if we are pondering or in an infinite search,
     // the UCI protocol states that we shouldn't print the best move before the
@@ -214,6 +227,7 @@ void Search::Worker::start_searching() {
     // until the GUI sends one of those commands.
     while (!threads.stop && (main_manager()->ponder || limits.infinite))
     {}  // Busy wait for a stop or a ponder reset
+#endif
 
     // Stop the threads if not already stopped (also raise the stop if
     // "ponderhit" just reset threads.ponder)
@@ -799,6 +813,7 @@ Value Search::Worker::search(
         }
     }
 
+#ifndef __NO_SYZYGY__
     // Step 5. Tablebases probe
     if (!rootNode && !excludedMove && tbConfig.cardinality)
     {
@@ -852,6 +867,7 @@ Value Search::Worker::search(
             }
         }
     }
+#endif
 
     if (ss->inCheck)
         goto moves_loop;
@@ -1952,6 +1968,13 @@ void SearchManager::check_time(Search::Worker& worker) {
     TimePoint elapsed = tm.elapsed([&worker]() { return worker.threads.nodes_searched(); });
     TimePoint tick    = worker.limits.startTime + elapsed;
 
+#ifdef __EMSCRIPTEN_SINGLE_THREADED__
+    if (elapsed - lastElapsed >= 45) {
+        lastElapsed = elapsed;
+        emscripten_sleep(0);
+    }
+#endif
+
     if (tick - lastInfoTime >= 1000)
     {
         lastInfoTime = tick;
@@ -2120,7 +2143,9 @@ void SearchManager::pv(Search::Worker&           worker,
     auto&      pos       = worker.rootPos;
     size_t     pvIdx     = worker.pvIdx;
     size_t     multiPV   = std::min(size_t(worker.options["MultiPV"]), rootMoves.size());
+#ifndef __NO_SYZYGY__
     uint64_t   tbHits    = threads.tb_hits() + (worker.tbConfig.rootInTB ? rootMoves.size() : 0);
+#endif
 
     for (size_t i = 0; i < multiPV; ++i)
     {
@@ -2135,15 +2160,21 @@ void SearchManager::pv(Search::Worker&           worker,
         if (v == -VALUE_INFINITE)
             v = VALUE_ZERO;
 
+#ifndef __NO_SYZYGY__
         bool tb = worker.tbConfig.rootInTB && std::abs(v) <= VALUE_TB;
         v       = tb ? rootMoves[i].tbScore : v;
+#else
+        bool tb = false;
+#endif
 
         bool isExact = i != pvIdx || tb || !updated;  // tablebase- and previous-scores are exact
 
+#ifndef __NO_SYZYGY__
         // Potentially correct and extend the PV, and in exceptional cases v
         if (is_decisive(v) && std::abs(v) < VALUE_MATE_IN_MAX_PLY
             && ((!rootMoves[i].scoreLowerbound && !rootMoves[i].scoreUpperbound) || isExact))
             syzygy_extend_pv(worker.options, worker.limits, pos, rootMoves[i], v);
+#endif
 
         std::string pv;
         for (Move m : rootMoves[i].pv)
@@ -2173,7 +2204,9 @@ void SearchManager::pv(Search::Worker&           worker,
         info.timeMs    = time;
         info.nodes     = nodes;
         info.nps       = nodes * 1000 / time;
+#ifndef __NO_SYZYGY__
         info.tbHits    = tbHits;
+#endif
         info.pv        = pv;
         info.hashfull  = tt.hashfull();
 

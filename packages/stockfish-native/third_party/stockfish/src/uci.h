@@ -39,8 +39,12 @@ using Value = int;
 class UCIEngine {
    public:
     UCIEngine(int argc, char** argv);
-
+   
+#ifdef __EMSCRIPTEN__
+    void process_command(std::string cmd);
+#else
     void loop();
+#endif
 
     static int         to_cp(Value v, const Position& pos);
     static std::string format_score(const Score& s);

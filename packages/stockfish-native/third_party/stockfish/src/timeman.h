@@ -48,7 +48,12 @@ class TimeManagement {
     TimePoint elapsed(FUNC nodes) const {
         return useNodesTime ? TimePoint(nodes()) : elapsed_time();
     }
+#ifndef __EMSCRIPTEN__
     TimePoint elapsed_time() const { return now() - startTime; };
+#else
+    //NOTE: WASM has issues with time. See https://github.com/lichess-org/lila-stockfish-web/pull/3#discussion_r1748873352 for a discussion.
+    TimePoint elapsed_time() const { return std::max(now() - startTime, TimePoint(1)); };
+#endif
 
     void clear();
     void advance_nodes_time(std::int64_t nodes);

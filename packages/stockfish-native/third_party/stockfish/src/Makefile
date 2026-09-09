@@ -113,6 +113,7 @@ VPATH = syzygy:nnue:nnue/features
 # avx2 = yes/no       --- -mavx2             --- Use Intel Advanced Vector Extensions 2
 # avxvnni = yes/no    --- -mavxvnni          --- Use Intel Vector Neural Network Instructions AVX
 # avx512 = yes/no     --- -mavx512bw         --- Use Intel Advanced Vector Extensions 512
+# vnni256 = yes/no    --- -mavx256vnni       --- Use Intel Vector Neural Network Instructions 512 with 256bit operands
 # vnni512 = yes/no    --- -mavx512vnni       --- Use Intel Vector Neural Network Instructions 512
 # avx512icl = yes/no  --- ... multiple ...   --- Use All AVX-512 features available on both Intel Ice Lake and AMD Zen 4
 # altivec = yes/no    --- -maltivec          --- Use PowerPC Altivec SIMD extension
@@ -143,7 +144,7 @@ endif
 # explicitly check for the list of supported architectures (as listed with make help),
 # the user can override with `make ARCH=x86-64-avx512icl SUPPORTED_ARCH=true`
 ifeq ($(ARCH), $(filter $(ARCH), \
-                 x86-64-avx512icl x86-64-vnni512 x86-64-avx512 x86-64-avxvnni \
+                 x86-64-avx512icl x86-64-vnni512 x86-64-vnni256 x86-64-avx512 x86-64-avxvnni \
                  x86-64-bmi2 x86-64-avx2 x86-64-sse41-popcnt x86-64-modern x86-64-ssse3 x86-64-sse3-popcnt \
                  x86-64 x86-32-sse41-popcnt x86-32-sse2 x86-32 ppc-64 ppc-64-altivec ppc-64-vsx ppc-32 e2k \
                  armv7 armv7-neon armv8 armv8-dotprod apple-silicon general-64 general-32 riscv64 \
@@ -168,6 +169,7 @@ sse41 = no
 avx2 = no
 avxvnni = no
 avx512 = no
+vnni256 = no
 vnni512 = no
 avx512icl = no
 altivec = no
@@ -281,6 +283,17 @@ ifeq ($(findstring -avx512,$(ARCH)),-avx512)
 	avx2 = yes
 	pext = yes
 	avx512 = yes
+endif
+
+ifeq ($(findstring -vnni256,$(ARCH)),-vnni256)
+	popcnt = yes
+	sse = yes
+	sse2 = yes
+	ssse3 = yes
+	sse41 = yes
+	avx2 = yes
+	pext = yes
+	vnni256 = yes
 endif
 
 ifeq ($(findstring -vnni512,$(ARCH)),-vnni512)
@@ -429,6 +442,21 @@ endif
 endif
 
 
+# WASM
+ifeq ($(ARCH),wasm)
+include emscripten/wasm-makefile.mk
+endif
+
+ifeq ($(NO_SYZYGY),yes)
+	# Remove tablebase code
+	TMPVAR1 := $(SRCS)
+	SRCS = $(filter-out syzygy%, $(TMPVAR1))
+	TMPVAR2 := $(OBJS)
+	OBJS = $(filter-out tbprobe%, $(TMPVAR2))
+	CXXFLAGS += -D__NO_SYZYGY__
+endif
+
+
 ### ==========================================================================
 ### Section 3. Low-level Configuration
 ### ==========================================================================
@@ -443,6 +471,11 @@ endif
 CXXFLAGS = $(ENV_CXXFLAGS) -Wall -Wcast-qual -fno-exceptions -std=c++17 $(EXTRACXXFLAGS)
 DEPENDFLAGS = $(ENV_DEPENDFLAGS) -std=c++17
 LDFLAGS = $(ENV_LDFLAGS) $(EXTRALDFLAGS)
+
+
+ifneq ($(ENGINE_VERSION),)
+	CXXFLAGS += -D__ENGINE_VERSION__=\"$(ENGINE_VERSION)\"
+endif
 
 ifeq ($(COMP),)
 	COMP=gcc
@@ -717,7 +750,11 @@ ifeq ($(popcnt),yes)
 	ifeq ($(arch),$(filter $(arch),ppc64 ppc64-altivec ppc64-vsx armv7 armv8 arm64))
 		CXXFLAGS += -DUSE_POPCNT
 	else
-		CXXFLAGS += -msse3 -mpopcnt -DUSE_POPCNT
+		ifeq ($(ARCH),wasm)
+			CXXFLAGS += -msse3 -DUSE_POPCNT
+		else
+			CXXFLAGS += -msse3 -mpopcnt -DUSE_POPCNT
+		endif
 	endif
 endif
 
@@ -743,10 +780,17 @@ ifeq ($(avx512),yes)
 	endif
 endif
 
+ifeq ($(vnni256),yes)
+	CXXFLAGS += -DUSE_VNNI
+	ifeq ($(comp),$(filter $(comp),gcc clang mingw icx))
+		CXXFLAGS += -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=256
+	endif
+endif
+
 ifeq ($(vnni512),yes)
 	CXXFLAGS += -DUSE_VNNI
 	ifeq ($(comp),$(filter $(comp),gcc clang mingw icx))
-		CXXFLAGS += -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl
+		CXXFLAGS += -mavx512f -mavx512bw -mavx512vnni -mavx512dq -mavx512vl -mprefer-vector-width=512
 	endif
 endif
 
@@ -917,6 +961,7 @@ help:
 	echo "native                  > select the best architecture for the host processor (default)" && \
 	echo "x86-64-avx512icl        > x86 64-bit with minimum avx512 support of Intel Ice Lake or AMD Zen 4" && \
 	echo "x86-64-vnni512          > x86 64-bit with vnni 512bit support" && \
+	echo "x86-64-vnni256          > x86 64-bit with vnni 512bit support, limit operands to 256bit wide" && \
 	echo "x86-64-avx512           > x86 64-bit with avx512 support" && \
 	echo "x86-64-avxvnni          > x86 64-bit with vnni 256bit support" && \
 	echo "x86-64-bmi2             > x86 64-bit with bmi2 support" && \
@@ -1027,9 +1072,14 @@ profileclean:
 	@rm -f stockfish.res
 	@rm -f ./-lstdc++.res
 
+
 # evaluation network (nnue)
 net:
+ifeq ($(LITE_NET),yes)
+else ifeq ($(ULTRA_LITE_NET),yes)
+else
 	@$(SHELL) ../scripts/net.sh
+endif
 
 format:
 	$(CLANG-FORMAT) -i $(SRCS) $(HEADERS) -style=file
@@ -1061,6 +1111,7 @@ config-sanity: net
 	echo "avx2: '$(avx2)'" && \
 	echo "avxvnni: '$(avxvnni)'" && \
 	echo "avx512: '$(avx512)'" && \
+	echo "vnni256: '$(vnni256)'" && \
 	echo "vnni512: '$(vnni512)'" && \
 	echo "avx512icl: '$(avx512icl)'" && \
 	echo "altivec: '$(altivec)'" && \
@@ -1083,6 +1134,7 @@ config-sanity: net
 	(test "$(optimize)" = "yes" || test "$(optimize)" = "no") && \
 	(test "$(SUPPORTED_ARCH)" = "true") && \
 	(test "$(arch)" = "any" || test "$(arch)" = "x86_64" || test "$(arch)" = "i386" || \
+	 test "$(arch)" = "wasm" || \
 	 test "$(arch)" = "ppc64" || test "$(arch)" = "ppc" || test "$(arch)" = "e2k" || \
 	 test "$(arch)" = "armv7" || test "$(arch)" = "armv8" || test "$(arch)" = "arm64" || \
 	 test "$(arch)" = "riscv64" || test "$(arch)" = "loongarch64") && \
@@ -1097,6 +1149,7 @@ config-sanity: net
 	(test "$(sse41)" = "yes" || test "$(sse41)" = "no") && \
 	(test "$(avx2)" = "yes" || test "$(avx2)" = "no") && \
 	(test "$(avx512)" = "yes" || test "$(avx512)" = "no") && \
+	(test "$(vnni256)" = "yes" || test "$(vnni256)" = "no") && \
 	(test "$(vnni512)" = "yes" || test "$(vnni512)" = "no") && \
 	(test "$(avx512icl)" = "yes" || test "$(avx512icl)" = "no") && \
 	(test "$(altivec)" = "yes" || test "$(altivec)" = "no") && \

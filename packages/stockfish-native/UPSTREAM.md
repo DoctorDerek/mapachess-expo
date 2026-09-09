@@ -1,8 +1,9 @@
 # Stockfish mobile build inputs
 
 Mapachess compiles Stockfish directly into its Android and iOS applications.
-The preserved source under `third_party/stockfish` is the exact Stockfish 18
-release lineage at revision
+The preserved source under `third_party/stockfish` follows Stockfish.js 18.0.0
+at revision `31a98753a5d932511693f44775da908377c24513`, the fork selected by
+the pinned web runtime. Its underlying official Stockfish 18 revision is
 `cb3d4ee9b47d0c5aae855b12379378ea1439675c`. Its deterministic snapshot digest
 is owned by `src/nativeBuildIdentity.ts` and verified before native build-input
 provisioning.
