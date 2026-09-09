@@ -27,7 +27,7 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
-import { matchModeLabel } from "@mapachess/match/match-setup"
+import { MATCH_SETUP_COPY, matchModeLabel } from "@mapachess/match/match-setup"
 import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
   type StockfishOpponentDefinition,
@@ -186,7 +186,11 @@ export default function WebMatch({
         <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
           <div>
             <dt>Elo target</dt>
-            <dd>{opponent.storyTargetElo} · Provisional</dd>
+            <dd>
+              {runtime.opponentTargetElo === null
+                ? MATCH_SETUP_COPY.legacyDifficulty
+                : `${String(runtime.opponentTargetElo)} · ${MATCH_SETUP_COPY.provisional}`}
+            </dd>
           </div>
           <div>
             <dt>Clock</dt>
