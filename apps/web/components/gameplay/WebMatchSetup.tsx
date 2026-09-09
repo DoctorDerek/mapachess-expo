@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup from "@mapachess/match/challenge-setup"
 import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
+import { isImplementedDurableOpponent } from "@mapachess/match/durable-match-record"
 import {
   MATCH_SETUP_COPY,
   matchModeLabel,
@@ -10,13 +11,16 @@ import {
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import {
   canPlayStoryOpponent,
+  selectChallengeUnlockedOpponents,
   selectDefaultStoryOpponent,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import { webChallengeDifficultyTargets } from "../../lib/gameplay/webOpponentPolicy"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
 import StoryLadderProgress from "./StoryLadderProgress"
+import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type WebMatchSetupProps = Readonly<{
   activityMessage: string | null
@@ -51,12 +55,23 @@ export default function WebMatchSetup({
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
-      : ("chicken-stockfish" as const),
+      : setup.challengeSetup.opponentId,
   )
+  const difficultyTargets = webChallengeDifficultyTargets(variant)
+  const [difficultyTargetElo, setDifficultyTargetElo] = useState(
+    challenge?.difficultyTargetElo,
+  )
+  const challengeOpponents = selectChallengeUnlockedOpponents(
+    storyProgress,
+  ).filter(({ id }) => isImplementedDurableOpponent(id))
   const opponent = stockfishOpponent(selectedOpponentId)
   const selectionAvailable =
-    setup.mode === "challenge" ||
-    canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
+    setup.mode === "challenge"
+      ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&
+        difficultyTargetElo !== undefined &&
+        difficultyTargets.includes(difficultyTargetElo)
+      : isImplementedDurableOpponent(selectedOpponentId) &&
+        canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus()
@@ -66,12 +81,15 @@ export default function WebMatchSetup({
     event.preventDefault()
     if (disabled || !selectionAvailable) return
     if (setup.mode === "story") {
+      if (!isImplementedDurableOpponent(selectedOpponentId)) return
       onStart({ ...setup, opponentId: selectedOpponentId })
       return
     }
     const formData = new FormData(event.currentTarget)
     const rawPosition = formData.get("chess960-position")
     const parsed = parseChallengeSetup({
+      opponentId: selectedOpponentId,
+      difficultyTargetElo,
       variant,
       playerColor: formData.get("player-color"),
       chess960PositionId:
@@ -103,7 +121,8 @@ export default function WebMatchSetup({
       >
         {matchModeLabel({ mode: setup.mode, variant })}
       </h1>
-      {setup.mode === "story" ? (
+      {setup.mode === "story" &&
+      isImplementedDurableOpponent(selectedOpponentId) ? (
         <StoryLadderProgress
           progress={storyProgress}
           variant={variant}
@@ -134,6 +153,58 @@ export default function WebMatchSetup({
             {MATCH_SETUP_COPY.provisionalDifficulty}
           </p>
           <p className="mt-3 text-sm font-bold">{MATCH_SETUP_COPY.untimed}</p>
+
+          {challenge !== null ? (
+            <>
+              <fieldset className="mt-6" disabled={disabled}>
+                <legend className="text-lg font-black">
+                  {MATCH_SETUP_COPY.opponent}
+                </legend>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {challengeOpponents.map((animal) => (
+                    <label
+                      key={animal.id}
+                      className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3"
+                    >
+                      <input
+                        type="radio"
+                        name="challenge-opponent"
+                        value={animal.id}
+                        checked={selectedOpponentId === animal.id}
+                        onChange={() => setSelectedOpponentId(animal.id)}
+                        className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
+                      />
+                      <StoryOpponentPortrait opponent={animal} locked={false} />
+                      <span className="font-bold">{animal.displayName}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset className="mt-6" disabled={disabled}>
+                <legend className="text-lg font-black">
+                  {MATCH_SETUP_COPY.difficulty}
+                </legend>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {difficultyTargets.map((target) => (
+                    <label
+                      key={target}
+                      className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3"
+                    >
+                      <input
+                        type="radio"
+                        name="challenge-difficulty"
+                        value={target}
+                        checked={difficultyTargetElo === target}
+                        onChange={() => setDifficultyTargetElo(target)}
+                        className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
+                      />
+                      {target}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            </>
+          ) : null}
 
           {challenge === null ? (
             <p className="mt-5 text-sm leading-relaxed">
@@ -228,6 +299,11 @@ export default function WebMatchSetup({
         </div>
 
         <div className="grid gap-4 xl:col-start-1 xl:row-start-2">
+          {!selectionAvailable ? (
+            <MapachessNotice role="status" tone="warning">
+              {MATCH_SETUP_COPY.unavailableSelection}
+            </MapachessNotice>
+          ) : null}
           {invalidSetup ? (
             <MapachessNotice role="alert" tone="warning">
               {MATCH_SETUP_COPY.invalidSetup}

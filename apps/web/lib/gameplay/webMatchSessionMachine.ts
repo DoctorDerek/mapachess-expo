@@ -131,6 +131,8 @@ const webMatchSessionMachineDefinition = setup({
           {
             ...params.session.match.startingPosition,
             playerColor: params.session.match.playerColor,
+            opponentId: params.session.match.opponentId,
+            difficultyTargetElo: params.session.runtime.opponentTargetElo,
           },
         ),
         session: params.session,

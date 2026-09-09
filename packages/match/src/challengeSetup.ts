@@ -3,8 +3,12 @@ import {
   type Chess960PositionId,
 } from "./chess960Position.js"
 import type { MatchColor } from "./matchPosition.js"
+import stockfishOpponent, {
+  STOCKFISH_OPPONENTS,
+  type StockfishOpponentId,
+} from "./stockfishOpponent.js"
 
-export type ChallengeSetup = Readonly<
+export type ChallengePositionSetup = Readonly<
   { playerColor: MatchColor } & (
     | { chess960PositionId: null; variant: "standard" }
     | {
@@ -14,7 +18,16 @@ export type ChallengeSetup = Readonly<
   )
 >
 
+export type ChallengeSetup = Readonly<
+  ChallengePositionSetup & {
+    opponentId: StockfishOpponentId
+    difficultyTargetElo: number
+  }
+>
+
 export const DEFAULT_CHALLENGE_SETUP: ChallengeSetup = Object.freeze({
+  opponentId: "chicken-stockfish",
+  difficultyTargetElo: stockfishOpponent("chicken-stockfish").storyTargetElo,
   chess960PositionId: null,
   playerColor: "white",
   variant: "standard",
@@ -23,9 +36,11 @@ export const DEFAULT_CHALLENGE_SETUP: ChallengeSetup = Object.freeze({
 export type ChallengeSetupParseResult =
   Readonly<{ ok: true; setup: ChallengeSetup }> | Readonly<{ ok: false }>
 
-export default function parseChallengeSetup(
+export function parseChallengePositionSetup(
   received: unknown,
-): ChallengeSetupParseResult {
+):
+  | Readonly<{ ok: true; setup: ChallengePositionSetup }>
+  | Readonly<{ ok: false }> {
   if (
     typeof received !== "object" ||
     received === null ||
@@ -61,4 +76,45 @@ export default function parseChallengeSetup(
       variant: "chess960",
     }),
   }
+}
+
+export default function parseChallengeSetup(
+  received: unknown,
+): ChallengeSetupParseResult {
+  if (
+    typeof received !== "object" ||
+    received === null ||
+    Object.keys(received).length !== 5 ||
+    !("variant" in received) ||
+    !("playerColor" in received) ||
+    !("chess960PositionId" in received) ||
+    !("opponentId" in received) ||
+    !("difficultyTargetElo" in received)
+  )
+    return { ok: false }
+  const opponent = STOCKFISH_OPPONENTS.find(
+    ({ id }) => id === received.opponentId,
+  )
+  if (
+    !opponent ||
+    typeof received.difficultyTargetElo !== "number" ||
+    !Number.isSafeInteger(received.difficultyTargetElo) ||
+    received.difficultyTargetElo < DEFAULT_CHALLENGE_SETUP.difficultyTargetElo
+  )
+    return { ok: false }
+  const position = parseChallengePositionSetup({
+    variant: received.variant,
+    playerColor: received.playerColor,
+    chess960PositionId: received.chess960PositionId,
+  })
+  return position.ok
+    ? {
+        ok: true,
+        setup: Object.freeze({
+          ...position.setup,
+          opponentId: opponent.id,
+          difficultyTargetElo: received.difficultyTargetElo,
+        }),
+      }
+    : { ok: false }
 }

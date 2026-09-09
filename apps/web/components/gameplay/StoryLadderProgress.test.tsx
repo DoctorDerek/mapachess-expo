@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import {
   createInitialStoryProgress,
   type StoryProgress,
@@ -13,6 +14,75 @@ const progress: StoryProgress = {
 }
 
 describe("Story ladder presentation structure", () => {
+  it.each([
+    { ...DEFAULT_CHALLENGE_SETUP, opponentId: "bunny-stockfish" as const },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1100 },
+  ])(
+    "keeps unavailable remembered choices in a recoverable setup state",
+    (challengeSetup) => {
+      const markup = renderToStaticMarkup(
+        <WebMatchSetup
+          activityMessage={null}
+          autoHintMode="no-auto-hints"
+          disabled={false}
+          onAutoHintModeChanged={vi.fn()}
+          onBack={vi.fn()}
+          onStart={vi.fn()}
+          setup={{ mode: "challenge", challengeSetup }}
+          storyProgress={createInitialStoryProgress()}
+        />,
+      )
+      expect(markup).toContain(
+        "Choose an earned animal and supported difficulty.",
+      )
+      expect(markup).toMatch(/<button[^>]*disabled=""[^>]*type="submit"/)
+      expect(markup).toContain('value="chicken-stockfish"')
+      expect(markup).toContain('value="100"')
+    },
+  )
+  it.each(["standard", "chess960"] as const)(
+    "offers globally earned animals and independently selected %s difficulty without a dropdown",
+    (variant) => {
+      const markup = renderToStaticMarkup(
+        <WebMatchSetup
+          activityMessage={null}
+          autoHintMode="no-auto-hints"
+          disabled={false}
+          onAutoHintModeChanged={vi.fn()}
+          onBack={vi.fn()}
+          onStart={vi.fn()}
+          setup={{
+            mode: "challenge",
+            challengeSetup: {
+              ...DEFAULT_CHALLENGE_SETUP,
+              variant,
+              chess960PositionId: null,
+              opponentId: "bunny-stockfish",
+              difficultyTargetElo: 1000,
+            },
+          }}
+          storyProgress={{
+            standard: [],
+            chess960: [
+              { opponentId: "chicken-stockfish", highestMedal: "gold" },
+              { opponentId: "bunny-stockfish", highestMedal: "silver" },
+            ],
+          }}
+        />,
+      )
+      expect(markup).toContain("Bunny Stockfish")
+      expect(markup).not.toContain('value="dog-stockfish"')
+      expect(markup).toMatch(
+        /name="challenge-opponent"[^>]*checked=""[^>]*value="bunny-stockfish"/,
+      )
+      expect(markup).toMatch(
+        /name="challenge-difficulty"[^>]*checked=""[^>]*value="1000"/,
+      )
+      expect(markup).toContain("Difficulty · provisional Elo target")
+      expect(markup).not.toContain("<select")
+      expect(markup).not.toContain("Your Story ladder")
+    },
+  )
   it("offers earned opponents as named choices and defaults setup to the next unlocked animal", () => {
     const markup = renderToStaticMarkup(
       <WebMatchSetup
@@ -80,6 +150,7 @@ describe("Story ladder presentation structure", () => {
         setup={{
           mode: "challenge",
           challengeSetup: {
+            ...DEFAULT_CHALLENGE_SETUP,
             variant: "standard",
             playerColor: "white",
             chess960PositionId: null,

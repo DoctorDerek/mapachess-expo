@@ -49,6 +49,8 @@ describe("Mapachess player data", () => {
     "preserves Chess960 selection %s without sharing mutable input",
     (chess960PositionId) => {
       const setup = {
+        opponentId: "bunny-stockfish",
+        difficultyTargetElo: 1000,
         chess960PositionId,
         playerColor: "black",
         variant: "chess960",
@@ -84,6 +86,9 @@ describe("Mapachess player data", () => {
       chess960PositionId: 0.5,
     },
     { ...DEFAULT_CHALLENGE_SETUP, extra: true },
+    { ...DEFAULT_CHALLENGE_SETUP, opponentId: "invented-animal" },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 0 },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: "100" },
   ])(
     "rejects invalid saved Challenge setup %j rather than substituting defaults",
     (challengeSetup) => {

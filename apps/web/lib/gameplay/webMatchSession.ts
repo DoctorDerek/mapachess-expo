@@ -4,9 +4,10 @@ import bindMatchPositionEvaluation, {
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
-import type {
-  DurableMatchRecord,
-  ImplementedDurableOpponentId,
+import {
+  isImplementedDurableOpponent,
+  type DurableMatchRecord,
+  type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import type { MatchVariant } from "@mapachess/match/match-variant"
@@ -18,6 +19,7 @@ import ProfileMatchPersistenceBridge, {
 } from "@mapachess/profile/profile-match-persistence"
 import {
   canPlayStoryOpponent,
+  selectChallengeUnlockedOpponents,
   selectDefaultStoryOpponent,
 } from "@mapachess/profile/story-progress"
 import openWebMatchRuntime, {
@@ -29,6 +31,7 @@ import resumeWebMatch, {
 } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import type { WebMatchSession } from "./webMatchSessionMachine"
+import { webChallengeDifficultyTargets } from "./webOpponentPolicy"
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 
@@ -264,9 +267,25 @@ export async function openFreshWebMatchSession(
   const opponentId =
     previousSession?.match.opponentId ??
     (input.mode === "challenge"
-      ? "chicken-stockfish"
+      ? input.challengeSetup.opponentId
       : (input.opponentId ??
         selectDefaultStoryOpponent(playerData.storyProgress, variant)))
+  if (!isImplementedDurableOpponent(opponentId)) {
+    throw new Error("The selected opponent is not available for web play.")
+  }
+  if (
+    challengeSetup !== undefined &&
+    (!selectChallengeUnlockedOpponents(playerData.storyProgress).some(
+      ({ id }) => id === opponentId,
+    ) ||
+      !webChallengeDifficultyTargets(variant).includes(
+        challengeSetup.difficultyTargetElo,
+      ))
+  ) {
+    throw new Error(
+      "Choose an earned Challenge animal and supported difficulty.",
+    )
+  }
   if (
     previousSession === null &&
     input.mode !== "challenge" &&
@@ -291,7 +310,13 @@ export async function openFreshWebMatchSession(
     opponentId,
     ...(playerColor === undefined
       ? {}
-      : { mode: "challenge" as const, playerColor }),
+      : {
+          mode: "challenge" as const,
+          playerColor,
+          ...(challengeSetup === undefined
+            ? {}
+            : { difficultyTargetElo: challengeSetup.difficultyTargetElo }),
+        }),
     ...(previousSession === null
       ? {}
       : {
@@ -318,6 +343,14 @@ export async function openFreshWebMatchSession(
 
   let resumedMatch: ResumedWebMatch
   try {
+    if (
+      challengeSetup !== undefined &&
+      runtime.opponentTargetElo !== challengeSetup.difficultyTargetElo
+    ) {
+      throw new Error(
+        "The opened Challenge difficulty does not match the selection.",
+      )
+    }
     resumedMatch = resumeWebMatch(freshMatch)
     await persistProfileActiveMatch({
       actor: profileActor,

@@ -2,7 +2,10 @@ import { webcrypto } from "node:crypto"
 import { IDBFactory } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"
 import { waitFor } from "xstate"
-import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
+import {
+  DEFAULT_CHALLENGE_SETUP,
+  type ChallengeSetup,
+} from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import {
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
@@ -24,7 +27,10 @@ import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
-import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
+import {
+  selectDefaultStoryOpponent,
+  type StoryProgress,
+} from "@mapachess/profile/story-progress"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../profile/openWebProfileRuntime"
@@ -48,8 +54,9 @@ const SECOND_MATCH_SEED = "00000005000000060000000700000008"
 const openProfileRuntime = async (
   chess960StoryElo?: number,
   indexedDb = new IDBFactory(),
+  storyProgress?: StoryProgress,
 ) => {
-  if (chess960StoryElo !== undefined) {
+  if (chess960StoryElo !== undefined || storyProgress !== undefined) {
     const adapter = new IndexedDbDurableStore(indexedDb)
     const store = new SerializedPlayerDataStore(adapter, (value) =>
       webSha256(value, webcrypto.subtle),
@@ -57,10 +64,11 @@ const openProfileRuntime = async (
     const initial = createInitialMapachessPlayerData()
     const saved = await store.commitCurrent(await store.load(), {
       ...initial,
+      storyProgress: storyProgress ?? initial.storyProgress,
       ratings: {
         ...initial.ratings,
         standardStory: 450,
-        chess960Story: chess960StoryElo,
+        chess960Story: chess960StoryElo ?? initial.ratings.chess960Story,
         standardChallenge: 600,
         chess960Challenge: 800,
       },
@@ -138,6 +146,59 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it("closes a mismatched Challenge runtime without committing its match or preferences", async () => {
+    const profile = await openProfileRuntime()
+    const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+    const engine = createRuntime(
+      FIRST_MATCH_SEED,
+      { variant: "standard", chess960PositionId: null },
+      { mode: "challenge", playerColor: "white" },
+    )
+    await expect(
+      openFreshWebMatchSession({
+        mode: "challenge",
+        challengeSetup: {
+          ...DEFAULT_CHALLENGE_SETUP,
+          difficultyTargetElo: 1000,
+        },
+        previousSession: null,
+        profileActor: profile.actor,
+        openRuntime: runtimeOpener(engine.runtime),
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toThrow("opened Challenge difficulty does not match")
+    expect(engine.close).toHaveBeenCalledOnce()
+    expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(before)
+    await profile.close()
+  })
+  it.each([
+    { ...DEFAULT_CHALLENGE_SETUP, opponentId: "bunny-stockfish" as const },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1100 },
+    { ...DEFAULT_CHALLENGE_SETUP, opponentId: "dragonfly-stockfish" as const },
+  ])(
+    "rejects unavailable Challenge selection %j before opening resources or changing saves",
+    async (challengeSetup) => {
+      const profile = await openProfileRuntime()
+      const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+      const opener = runtimeOpener(createRuntime(FIRST_MATCH_SEED).runtime)
+      await expect(
+        openFreshWebMatchSession({
+          mode: "challenge",
+          challengeSetup,
+          previousSession: null,
+          profileActor: profile.actor,
+          openRuntime: opener,
+          signal: new AbortController().signal,
+        }),
+      ).rejects.toThrow(/available|earned/)
+      expect(opener).not.toHaveBeenCalled()
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        before,
+      )
+      await profile.close()
+    },
+  )
+
   it.each(["standard", "chess960"] as const)(
     "saves, reloads and restarts all ten earned %s opponents without losing medals or the other ladder",
     async (variant) => {
@@ -519,12 +580,8 @@ describe("web match session ownership", () => {
   })
 
   it.each(["standard", "chess960"] as const)(
-    "persists, reloads and restarts %s Challenge with its current policy and chosen Black",
+    "persists and reloads %s Challenge with a globally earned Bunny, 1000 preset, chosen Black and independent rating",
     async (variant) => {
-      const policy = await resolveWebChallengePolicy(
-        "chicken-stockfish",
-        variant,
-      )
       const layout = parseChess960PositionId(959)
       if (!layout.ok) throw new Error("Invalid test layout")
       const startingPosition: MatchStartingPosition =
@@ -532,18 +589,34 @@ describe("web match session ownership", () => {
           ? { variant, chess960PositionId: null }
           : { variant, chess960PositionId: layout.positionId }
       const challengeSetup: ChallengeSetup = {
+        ...DEFAULT_CHALLENGE_SETUP,
+        opponentId: "bunny-stockfish",
+        difficultyTargetElo: 1000,
         ...startingPosition,
         playerColor: "black",
       }
       const selection = { mode: "challenge", playerColor: "black" } as const
+      const policy = await resolveWebChallengePolicy(
+        "bunny-stockfish",
+        variant,
+        1000,
+      )
       const indexedDb = new IDBFactory()
-      const profile = await openProfileRuntime(725, indexedDb)
+      const earned: StoryProgress = {
+        standard: [],
+        chess960: [],
+        [variant === "standard" ? "chess960" : "standard"]: [
+          { opponentId: "chicken-stockfish", highestMedal: "gold" },
+          { opponentId: "bunny-stockfish", highestMedal: "silver" },
+        ],
+      }
+      const profile = await openProfileRuntime(725, indexedDb, earned)
       const engine = createRuntime(
         FIRST_MATCH_SEED,
         startingPosition,
         selection,
         policy.fingerprint,
-        "chicken-stockfish",
+        "bunny-stockfish",
         policy.targetElo,
       )
       const opener = runtimeOpener(engine.runtime)
@@ -557,12 +630,14 @@ describe("web match session ownership", () => {
       })
       expect(opener).toHaveBeenCalledWith({
         ...selection,
-        opponentId: "chicken-stockfish",
+        difficultyTargetElo: 1000,
+        opponentId: "bunny-stockfish",
         setup: startingPosition,
         signal: expect.any(AbortSignal),
       })
       expect(first.match).toMatchObject({
         mode: "challenge",
+        opponentId: "bunny-stockfish",
         opponentPolicyFingerprint: policy.fingerprint,
         playerColor: "black",
         playerEloAtStart: variant === "standard" ? 600 : 800,
@@ -583,7 +658,7 @@ describe("web match session ownership", () => {
           startingPosition,
           selection,
           policy.fingerprint,
-          "chicken-stockfish",
+          "bunny-stockfish",
           policy.targetElo,
         ).runtime,
       )
@@ -597,24 +672,24 @@ describe("web match session ownership", () => {
         matchSeed: FIRST_MATCH_SEED,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
-        opponentId: "chicken-stockfish",
+        opponentId: "bunny-stockfish",
         opponentPolicyFingerprint: policy.fingerprint,
       })
       expect(resumed.match).toEqual(saved?.activeMatch)
-      expect(resumed.runtime.opponentTargetElo).toBe(policy.targetElo)
+      expect(resumed.runtime.opponentTargetElo).toBe(1000)
       const restartOpener = runtimeOpener(
         createRuntime(
           SECOND_MATCH_SEED,
           startingPosition,
           selection,
           policy.fingerprint,
-          "chicken-stockfish",
+          "bunny-stockfish",
           policy.targetElo,
         ).runtime,
       )
       const restarted = await openFreshWebMatchSession({
         mode: "challenge",
-        challengeSetup,
+        challengeSetup: { ...DEFAULT_CHALLENGE_SETUP, playerColor: "white" },
         previousSession: resumed,
         openRuntime: restartOpener,
         profileActor: reloaded.actor,
@@ -624,20 +699,28 @@ describe("web match session ownership", () => {
         ...selection,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
-        opponentId: "chicken-stockfish",
+        opponentId: "bunny-stockfish",
         opponentPolicyFingerprint: policy.fingerprint,
       })
       expect(restarted.match).toMatchObject({
         mode: "challenge",
+        opponentId: "bunny-stockfish",
         opponentPolicyFingerprint: policy.fingerprint,
         playerColor: "black",
         matchSeed: SECOND_MATCH_SEED,
         startingPosition,
       })
-      expect(restarted.runtime.opponentTargetElo).toBe(policy.targetElo)
+      expect(restarted.runtime.opponentTargetElo).toBe(1000)
       expect(
         selectCurrentPlayerData(reloaded.actor.getSnapshot())?.ratings,
       ).toEqual(saved?.ratings)
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.storyProgress,
+      ).toEqual(earned)
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.settings
+          .challengeSetup,
+      ).toEqual(challengeSetup)
       await restarted.close()
       await reloaded.close()
     },
@@ -651,14 +734,27 @@ describe("web match session ownership", () => {
       chess960PositionId: layout.positionId,
     } as const
     const challengeSetup: ChallengeSetup = {
+      ...DEFAULT_CHALLENGE_SETUP,
       variant: "chess960",
       chess960PositionId: null,
       playerColor: "white",
     }
     const selection = { mode: "challenge", playerColor: "white" } as const
+    const policy = await resolveWebChallengePolicy(
+      "chicken-stockfish",
+      "chess960",
+      100,
+    )
     const profile = await openProfileRuntime()
     const opener = runtimeOpener(
-      createRuntime(FIRST_MATCH_SEED, startingPosition, selection).runtime,
+      createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        selection,
+        policy.fingerprint,
+        "chicken-stockfish",
+        policy.targetElo,
+      ).runtime,
     )
     const first = await openFreshWebMatchSession({
       mode: "challenge",
@@ -670,6 +766,7 @@ describe("web match session ownership", () => {
     })
     expect(opener).toHaveBeenCalledWith({
       ...selection,
+      difficultyTargetElo: 100,
       opponentId: "chicken-stockfish",
       setup: { variant: "chess960" },
       signal: expect.any(AbortSignal),
@@ -679,7 +776,14 @@ describe("web match session ownership", () => {
       challengeSetup,
       previousSession: first,
       openRuntime: runtimeOpener(
-        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+        createRuntime(
+          SECOND_MATCH_SEED,
+          startingPosition,
+          selection,
+          policy.fingerprint,
+          "chicken-stockfish",
+          policy.targetElo,
+        ).runtime,
       ),
       profileActor: profile.actor,
       signal: new AbortController().signal,
@@ -692,7 +796,14 @@ describe("web match session ownership", () => {
     await restarted.close()
     const resumed = await openCurrentWebMatchSession({
       openRuntime: runtimeOpener(
-        createRuntime(SECOND_MATCH_SEED, startingPosition, selection).runtime,
+        createRuntime(
+          SECOND_MATCH_SEED,
+          startingPosition,
+          selection,
+          policy.fingerprint,
+          "chicken-stockfish",
+          policy.targetElo,
+        ).runtime,
       ),
       profileActor: profile.actor,
       signal: new AbortController().signal,
@@ -710,14 +821,23 @@ describe("web match session ownership", () => {
     const profile = await openProfileRuntime()
     const initial = selectCurrentPlayerData(profile.actor.getSnapshot())
     const challengeSetup = {
+      ...DEFAULT_CHALLENGE_SETUP,
       variant: "standard",
       playerColor: "black",
       chess960PositionId: null,
     } as const
+    const policy = await resolveWebChallengePolicy(
+      "chicken-stockfish",
+      "standard",
+      100,
+    )
     const engine = createRuntime(
       FIRST_MATCH_SEED,
       { variant: "standard", chess960PositionId: null },
       { mode: "challenge", playerColor: "black" },
+      policy.fingerprint,
+      "chicken-stockfish",
+      policy.targetElo,
     )
     const controller = new AbortController()
     const openRuntime = vi.fn(async () => {
