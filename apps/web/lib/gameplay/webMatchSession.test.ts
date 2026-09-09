@@ -22,7 +22,9 @@ import {
   returnWebMatchSessionToMenu,
 } from "./webMatchSession"
 import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
-import { legacyChickenWebPolicy } from "./webOpponentPolicy"
+import resolveWebOpponentPolicy, {
+  legacyChickenWebPolicy,
+} from "./webOpponentPolicy"
 
 const FIRST_MATCH_SEED = "00000001000000020000000300000004"
 const SECOND_MATCH_SEED = "00000005000000060000000700000008"
@@ -118,6 +120,128 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it.each([
+    ["standard", "legacy"],
+    ["standard", "measured"],
+    ["chess960", "legacy"],
+    ["chess960", "measured"],
+  ] as const)(
+    "retains the exact %s %s policy through durable reload and restart",
+    async (variant, generation) => {
+      const parsed = parseChess960PositionId(959)
+      if (!parsed.ok) throw new Error("Invalid test layout")
+      const startingPosition: MatchStartingPosition =
+        variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant, chess960PositionId: parsed.positionId }
+      const policy =
+        generation === "legacy"
+          ? legacyChickenWebPolicy(variant)
+          : await resolveWebOpponentPolicy("chicken-stockfish", variant)
+      const indexedDb = new IDBFactory()
+      const profile = await openProfileRuntime(725, indexedDb)
+      const ratings = selectCurrentPlayerData(
+        profile.actor.getSnapshot(),
+      )?.ratings
+      const initialRuntime = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const first = await openFreshWebMatchSession({
+        variant,
+        previousSession: null,
+        openRuntime: runtimeOpener(initialRuntime.runtime),
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      })
+      await first.close()
+      await profile.close()
+
+      const reloaded = await openProfileRuntime(undefined, indexedDb)
+      const resumedRuntime = createRuntime(
+        FIRST_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const resumeOpener = runtimeOpener(resumedRuntime.runtime)
+      const resumed = await openCurrentWebMatchSession({
+        openRuntime: resumeOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(resumeOpener).toHaveBeenCalledWith({
+        matchSeed: FIRST_MATCH_SEED,
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: policy.fingerprint,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(resumed.match).toEqual(first.match)
+      const restartRuntime = createRuntime(
+        SECOND_MATCH_SEED,
+        startingPosition,
+        { mode: "story" },
+        policy.fingerprint,
+      )
+      const restartOpener = runtimeOpener(restartRuntime.runtime)
+      const restarted = await openFreshWebMatchSession({
+        variant,
+        previousSession: resumed,
+        openRuntime: restartOpener,
+        profileActor: reloaded.actor,
+        signal: new AbortController().signal,
+      })
+      expect(restartOpener).toHaveBeenCalledWith({
+        opponentId: "chicken-stockfish",
+        opponentPolicyFingerprint: policy.fingerprint,
+        setup: startingPosition,
+        signal: expect.any(AbortSignal),
+      })
+      expect(restarted.match.opponentPolicyFingerprint).toBe(policy.fingerprint)
+      expect(restarted.match.matchSeed).toBe(SECOND_MATCH_SEED)
+      expect(restarted.match.matchId).not.toBe(first.match.matchId)
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.ratings,
+      ).toEqual(ratings)
+      await restarted.close()
+      await reloaded.close()
+    },
+  )
+
+  it("preserves a save with an unsupported policy without opening workers or replacing player data", async () => {
+    const profile = await openProfileRuntime()
+    const engine = createRuntime(FIRST_MATCH_SEED)
+    const candidate = buildFreshWebMatch({
+      autoHintMode: "no-auto-hints",
+      playerEloAtStart: 100,
+      runtime: {
+        ...engine.runtime,
+        opponentPolicyFingerprint: "unsupported-policy",
+      },
+    })
+    await persistProfileActiveMatch({
+      actor: profile.actor,
+      candidate,
+      expectedActiveMatch: null,
+      signal: new AbortController().signal,
+    })
+    const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+    const openRuntime = runtimeOpener(engine.runtime)
+    await expect(
+      openCurrentWebMatchSession({
+        openRuntime,
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toThrow("Saved opponent policy")
+    expect(openRuntime).not.toHaveBeenCalled()
+    expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(before)
+    await profile.close()
+  })
+
   it.each(["standard", "chess960"] as const)(
     "persists and reloads %s Challenge with chosen Black and its independent rating",
     async (variant) => {
