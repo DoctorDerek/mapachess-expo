@@ -1,6 +1,154 @@
 {
   "files": [
     {
+      "path": "battle/bunny/bunny_attack_strip6.png",
+      "sha256": "a3a98f7ce7461918700e8cfd9e1a0456c86fc6a12e093786ff882c698878a058"
+    },
+    {
+      "path": "battle/bunny/bunny_dash_strip8.png",
+      "sha256": "92bdb0e137a46e3170d24e239b1d076997571b04f27270048c7279251d58c4fe"
+    },
+    {
+      "path": "battle/bunny/bunny_die_strip16.png",
+      "sha256": "7b4f1156892808521f4ae88564beb61dfb199a2ec60059f9fbc65fbdb08ba153"
+    },
+    {
+      "path": "battle/bunny/bunny_fall_strip4.png",
+      "sha256": "0c2eb1f113e90ba6b6f0c1e1ce4209609dd573c8a2b0f4ff00b72d2c543c577f"
+    },
+    {
+      "path": "battle/bunny/bunny_fright_strip9.png",
+      "sha256": "1e93d71680c2fa80b434d9a49a04df34b50839e0ab84b46ad76867334a20f0f5"
+    },
+    {
+      "path": "battle/bunny/bunny_hurt_strip6.png",
+      "sha256": "448601e20b72a38a5e348e857928eb49348ce35ff11f6180c657ca5519da6fc7"
+    },
+    {
+      "path": "battle/bunny/bunny_idle_blink_strip4.png",
+      "sha256": "98cf019af7b71385a58fc2fe04d6bf5381c8dff156bac1d73e089b1933450492"
+    },
+    {
+      "path": "battle/bunny/bunny_idle_strip4.png",
+      "sha256": "7cafff9e0dfb97498a5152f8ae7eb5f033f4bd00b5fc81c7f81b77c5e789c4f7"
+    },
+    {
+      "path": "battle/bunny/bunny_jump_strip12.png",
+      "sha256": "4c0cbe48d7f3ac6fa1a449e614cd8b8a228a9a96af84a15d9581c053f7e6eda8"
+    },
+    {
+      "path": "battle/bunny/bunny_land_strip2.png",
+      "sha256": "3cd0d4c520bdcc64f5ebc007468ed0279323339f217d72ccb0acf6509192276f"
+    },
+    {
+      "path": "battle/bunny/bunny_liedown_strip12.png",
+      "sha256": "b236ca3fb0836fcda26ba979be5c87692485a78a5cacd74aa9664762afa307a0"
+    },
+    {
+      "path": "battle/bunny/bunny_run_strip6.png",
+      "sha256": "326d09f22be333744bcb8dfd839758d1f6b7ab9751d1b1dceab906cb750f0737"
+    },
+    {
+      "path": "battle/bunny/bunny_sit_strip12.png",
+      "sha256": "a1c2473b43441a8ebd94710b5a6edf5a668382e2204a5bb80dae6ead80a4d86f"
+    },
+    {
+      "path": "battle/bunny/bunny_wallgrab_strip4.png",
+      "sha256": "5c38a690effd2cf5d8a912157bb7aad373650134a6f3827ed7fbf0f932384a5e"
+    },
+    {
+      "path": "battle/cat/cat03_attack_strip7.png",
+      "sha256": "b9ce594fc2c0f89c0015ee01dee3fd01c0e56ed87df2c1af9da13d41f00708cb"
+    },
+    {
+      "path": "battle/cat/cat03_crouch_strip8.png",
+      "sha256": "abde92b58a0e63c6b4aa3cbe0dbf27ff50a92e14ac62b3fc7a077a1e5fc0b593"
+    },
+    {
+      "path": "battle/cat/cat03_dash_strip9.png",
+      "sha256": "29e8029185c462e5952be1d73237bfa832c4d71d40f20c97f9046c0d2d000ca6"
+    },
+    {
+      "path": "battle/cat/cat03_die_strip8.png",
+      "sha256": "6e1b9e81044d63fe3915014265d835085a83d2b7e21ae523de005fbf85273e20"
+    },
+    {
+      "path": "battle/cat/cat03_fall_strip3.png",
+      "sha256": "27058c9529b8a5188eb4443b7cac9dc5fca587b37b614711320ed48be34da62c"
+    },
+    {
+      "path": "battle/cat/cat03_fright_strip8.png",
+      "sha256": "83695d84df5bcd7ffdd2743b4b8a986f9539a21199f0aa942b7bd93f86fed0e0"
+    },
+    {
+      "path": "battle/cat/cat03_hurt_strip4.png",
+      "sha256": "a6acce401dabe21fdda1abc257535d64c101ef111d300e1ebf598b410f3a1e94"
+    },
+    {
+      "path": "battle/cat/cat03_idle_blink_strip8.png",
+      "sha256": "d138aa8f48839a1681f99d560f0ed3f616a2472c8e9dfd45c284922828fd9032"
+    },
+    {
+      "path": "battle/cat/cat03_idle_strip8.png",
+      "sha256": "1890d9e5152f74c3311914d54f174526abe61b3d68240a242ad267cc275e601a"
+    },
+    {
+      "path": "battle/cat/cat03_jump_strip4.png",
+      "sha256": "23867305c88a249cb4229f0f8f49f19ecc7e97a46bccf13302f40a045a37b92c"
+    },
+    {
+      "path": "battle/cat/cat03_land_strip2.png",
+      "sha256": "c3b5cac0b9059a0bf8f1147250a143eb38491e4b6b6473a3fc518aacadfb1335"
+    },
+    {
+      "path": "battle/cat/cat03_ledgeclimb_strip11.png",
+      "sha256": "590ec2aa5b7d00f16ca6eec3560a26a3f1842e578b2db559083e64085db410ab"
+    },
+    {
+      "path": "battle/cat/cat03_ledgeclimb_struggle_strip12.png",
+      "sha256": "15b930fd6e30bfc0ecaf84b7bc024ae2eb24720e7ef385d2052195c4234a6fa7"
+    },
+    {
+      "path": "battle/cat/cat03_ledgegrab_strip5.png",
+      "sha256": "700f75c802427433ce1cceecf73712bd2cba74900c07d6fb8e7bea723795567c"
+    },
+    {
+      "path": "battle/cat/cat03_ledgeidle_strip8.png",
+      "sha256": "907a196f6aba82bd50f87a6920ca0d548091b55920beb6915d14f5b89de389e2"
+    },
+    {
+      "path": "battle/cat/cat03_liedown_strip24.png",
+      "sha256": "1e1ef80fa8fe157acfc47d637eed74468fa5f7c6a3e76d9780a7ff862e4f1acd"
+    },
+    {
+      "path": "battle/cat/cat03_run_strip4.png",
+      "sha256": "ef78dfe140cda921ae0c82ddfd1f2e7c1f0856891e6507ab13794fddb107c07a"
+    },
+    {
+      "path": "battle/cat/cat03_sit_strip8.png",
+      "sha256": "a0c7acae1469dc72117043c3ff1a0ff976e08f63e4b0ffea0c4d77a98a2515ef"
+    },
+    {
+      "path": "battle/cat/cat03_sleep_strip8.png",
+      "sha256": "134a4668217ae39d92c60bc980e6b7acb2b9926dd21a8c77bb5f2660b06a0bb3"
+    },
+    {
+      "path": "battle/cat/cat03_sneak_strip8.png",
+      "sha256": "83fd8aba1340f22605a2cbd007c02fd035d62d3f02707813599621fd9c78fb6c"
+    },
+    {
+      "path": "battle/cat/cat03_walk_strip8.png",
+      "sha256": "24a6afb0dde03e8c62f1eaef2348ba3f8c09fb063fb0bcb30c67df6b35934d92"
+    },
+    {
+      "path": "battle/cat/cat03_wallclimb_strip8.png",
+      "sha256": "50dcfd269654b03d244d463dc69da85c47719bbcab05f2ae519035643032800d"
+    },
+    {
+      "path": "battle/cat/cat03_wallgrab_strip8.png",
+      "sha256": "9d5ac9a2b00db6d03854555717146d0ef46c6e07e2cf7c56685c5edab9ba9d10"
+    },
+    {
       "path": "battle/chicken/chicken_attack_air_strip6.png",
       "sha256": "8e165d873ca4994bbba9a3677fb4599653fb5307ba3f8fba8310096215a27f2f"
     },
@@ -59,6 +207,150 @@
     {
       "path": "battle/chicken/chicken_walk_strip8.png",
       "sha256": "f9d133b2448a8af91d7bbf3457959ac91ef82a696a4a1ce908dd7494870499d2"
+    },
+    {
+      "path": "battle/dog/dog_attack_strip7.png",
+      "sha256": "5ae0d89777ce53f47bf587781f2e673b97f2dd719f493d71eb9947e0dc07a2cd"
+    },
+    {
+      "path": "battle/dog/dog_bark_strip6.png",
+      "sha256": "cd71690937ebfc74555e32eb7b30eca4df373060b3391c2ede53e71d4e0644e8"
+    },
+    {
+      "path": "battle/dog/dog_crouch_strip8.png",
+      "sha256": "a2d76074a31eead447ae75c87b030a21d700446914f5b95cf9aa630763ec6051"
+    },
+    {
+      "path": "battle/dog/dog_dash_strip9.png",
+      "sha256": "7dc01eb0a5573f4df1c7f95a02f290f2e88d36add05f0cfb7bb86d1c92b20299"
+    },
+    {
+      "path": "battle/dog/dog_die_strip8.png",
+      "sha256": "9de83b334dc0ac64f86dd7cdb275111f4b3221a7d7fbb85905c0c8e886345b73"
+    },
+    {
+      "path": "battle/dog/dog_fall_strip5.png",
+      "sha256": "e826daa822469d70945869d428b8a09274209759cad56ab88c9b213cbb125830"
+    },
+    {
+      "path": "battle/dog/dog_fly_strip6.png",
+      "sha256": "3b6690ede35e83145651f668519a6b8502e1e8ff8aba2877efc85aa1ebca4178"
+    },
+    {
+      "path": "battle/dog/dog_fright_strip2.png",
+      "sha256": "4a9747f3758e4ce4880b85c81b6fb92299b080351acd57716bcf88cca8b0fd37"
+    },
+    {
+      "path": "battle/dog/dog_growl_strip4.png",
+      "sha256": "0a5d80d61d32047f578108b51752b9cc02dfb23197964db135190e9bb44b557d"
+    },
+    {
+      "path": "battle/dog/dog_hurt_strip7.png",
+      "sha256": "fa817c96d030fae5b11cb6afb2e9b6574491cf94d26ea04722bb42ec62bd642e"
+    },
+    {
+      "path": "battle/dog/dog_idle_blink_strip8.png",
+      "sha256": "f2c0e150d5e84f5571f3b4be006bf92a44c2328ae456e7e9a46442a11b070952"
+    },
+    {
+      "path": "battle/dog/dog_idle_strip8.png",
+      "sha256": "defaa6a8c87efe1bcb7a30b5d363948573ec9355f9cfeeda6b1bb5274e79b901"
+    },
+    {
+      "path": "battle/dog/dog_jump_strip8.png",
+      "sha256": "a21cf9fd0d8326d119b3ebb4fb41dfb65db04125e713683faea7207acb301a14"
+    },
+    {
+      "path": "battle/dog/dog_land_strip3.png",
+      "sha256": "e4818be07eed6bfbad79c6dbade7814a3e7d194931472ac574cbe2560662ecc2"
+    },
+    {
+      "path": "battle/dog/dog_run_strip8.png",
+      "sha256": "f8447a034796965bc2490d2e9348f3e58431388d52bd6e3cedf6916c5dab996d"
+    },
+    {
+      "path": "battle/dog/dog_sit_strip8.png",
+      "sha256": "7ca4f6ec5a6bcdc5d48e96de029bbe7c1b8d6ad42a82a9ce37f1bdc3f251f7ff"
+    },
+    {
+      "path": "battle/dog/dog_walk_strip8.png",
+      "sha256": "51a9df4fac537e2b0ecd613b3b8a00da5f621abd1a58672fd5d1d7726a82d16a"
+    },
+    {
+      "path": "battle/dog/dog_wallgrab_strip8.png",
+      "sha256": "5b9c085d34c52b0598d2957dd43e35530d539a64033ab0cbd8f28c917cca37a6"
+    },
+    {
+      "path": "battle/frog/frog_attackdiagonal_strip6.png",
+      "sha256": "a611ce635d93ed253059c83e262ac4f7513c516a12d0ff7450a1fcb906e1bf32"
+    },
+    {
+      "path": "battle/frog/frog_attackforward_strip6.png",
+      "sha256": "aa594c7b0fa52b057df5ad219ec12e2033861da8313e22cd743b59b946f25797"
+    },
+    {
+      "path": "battle/frog/frog_attackup_strip6.png",
+      "sha256": "d62c21c3a20b42aff9cca2c87d89f06c73362d8d385ca387e57331fe99088272"
+    },
+    {
+      "path": "battle/frog/frog_croak_strip7.png",
+      "sha256": "f25975e2feef716d1f0e2b4b0e501f696ee378cb857ab8e930cf6f65aaad9da2"
+    },
+    {
+      "path": "battle/frog/frog_dash_strip8.png",
+      "sha256": "c43a01c0d7ba128dbc7e83fb2751477b7a15ad07d040600004c001016b1691a7"
+    },
+    {
+      "path": "battle/frog/frog_die_strip12.png",
+      "sha256": "b3992dbb1cd916e2b6d16ca5998d52b48cdb9d1798c8dd70ded7280c5a6ed5fb"
+    },
+    {
+      "path": "battle/frog/frog_fall_strip1.png",
+      "sha256": "2922f8c73b51f672b1cac83a662c677f9653a9342f415bdd469531f3e575f985"
+    },
+    {
+      "path": "battle/frog/frog_fright_strip8.png",
+      "sha256": "9b1b829f2014be7586aed74e498cff13b982a81283c6fe83f536da559efbc5d2"
+    },
+    {
+      "path": "battle/frog/frog_hop_strip6.png",
+      "sha256": "0c7784aa379fabef231f5f614a55ad33e41c5a1ade76f839f3bafba90327ca84"
+    },
+    {
+      "path": "battle/frog/frog_hurt_strip5.png",
+      "sha256": "d1225be85ea618e779e2575647793f42ddc943d55f9326b28c6d8ed01a5879a0"
+    },
+    {
+      "path": "battle/frog/frog_idle_strip4.png",
+      "sha256": "1cfa9e6974b93f833cd8dbcce95b410b8c8c73dc30fbb672e794bd7a0834e0b9"
+    },
+    {
+      "path": "battle/frog/frog_jump_strip12.png",
+      "sha256": "5ea7f5fc7e1cabe77b5542b400382a9acb0aaa0678c5272951c99b649242a60a"
+    },
+    {
+      "path": "battle/frog/frog_land_strip3.png",
+      "sha256": "1b8ca94aa198254e0afb87d5957504ec272b9dda9b637b5b3606929ed5bf3823"
+    },
+    {
+      "path": "battle/frog/frog_swimattackdiagonal_strip6.png",
+      "sha256": "867b9776b5baf434f6f3bdb3a80978a9f451575d05ab6a242670a289487abf37"
+    },
+    {
+      "path": "battle/frog/frog_swimattackforward_strip6.png",
+      "sha256": "f201f93c5907d61a7867d24dfc447b7a3a247a7a339034fe0a177fd18f321438"
+    },
+    {
+      "path": "battle/frog/frog_swimattackup_strip6.png",
+      "sha256": "59467715615c8a03f6fd959842f25f6fc4c01fa92fa49e5fd1ea6307822ef3a9"
+    },
+    {
+      "path": "battle/frog/frog_swimforward_strip6.png",
+      "sha256": "e1969799b28e21cc7428f4b6b5decf9a4c4254f28f8793ac19b992c8a2fcdf62"
+    },
+    {
+      "path": "battle/frog/frog_swimidle_strip4.png",
+      "sha256": "01abbe20a12e0d0eebb39dd214b87bdd7c3c769ea61a4ddc2ea83e901ae61981"
     },
     {
       "path": "battle/mapachito/raccoon_attack_strip7.png",
@@ -123,6 +415,274 @@
     {
       "path": "battle/mapachito/raccoon_wallgrab_strip8.png",
       "sha256": "8c6fceec427a6993bd8adcbd7ebe98e8ba8813d197058cf9050112133da25fa4"
+    },
+    {
+      "path": "battle/mouse/mouse03_attack_strip4.png",
+      "sha256": "378410c09eae29f951b1277c3ca118d0b19ed1d4925817ca536fb0858c119b3d"
+    },
+    {
+      "path": "battle/mouse/mouse03_dash_strip10.png",
+      "sha256": "13e79b3c026e2fe3f90fee2ba9736ad6a648f313adc1bd215f5b195ba5b49f6b"
+    },
+    {
+      "path": "battle/mouse/mouse03_die_strip8.png",
+      "sha256": "6c1badd4d5d34d5a47638083b5eadcfa0861b6547f441e9001e398838a26b638"
+    },
+    {
+      "path": "battle/mouse/mouse03_fall_strip5.png",
+      "sha256": "0dc75da454e3409bde6ea8275b1bf6a81e1d4752e8c9009487e617d00849345c"
+    },
+    {
+      "path": "battle/mouse/mouse03_hurt_strip5.png",
+      "sha256": "29b7ee871d1adcf25b34c4e8024e4b1883bd4980abf41618d8801bf10711b13b"
+    },
+    {
+      "path": "battle/mouse/mouse03_idle_blink_strip8.png",
+      "sha256": "18f9ae54ce2b0d479a2cc5d9db6c8c5052a0cddd432fa18a67e1f04a8e1f4165"
+    },
+    {
+      "path": "battle/mouse/mouse03_idle_strip4.png",
+      "sha256": "089862a25f20089fa5e9e19ccbe750b10c8cf0ec0da30c16f876f610de389964"
+    },
+    {
+      "path": "battle/mouse/mouse03_jump_strip5.png",
+      "sha256": "af766ef201c79f6fc83e5fd20b897c6b54adf69154c31eb9d92d27d30f667bcb"
+    },
+    {
+      "path": "battle/mouse/mouse03_land_strip3.png",
+      "sha256": "8b694f3d8663a34d98c9b62b7b70ecbcd21b3a08b621f1797c33e35aa64b5701"
+    },
+    {
+      "path": "battle/mouse/mouse03_run_strip4.png",
+      "sha256": "5419353a9b02ff56dd8d5ce41606ed46cebde3201c529efaf30092a016ea461c"
+    },
+    {
+      "path": "battle/mouse/mouse03_sniff_strip12.png",
+      "sha256": "24bd966fa21feaee2d82fdbf36060d9d3614e3202046a3bb54665f3e65408ba3"
+    },
+    {
+      "path": "battle/mouse/mouse03_wallclimb_strip4.png",
+      "sha256": "9aeae735f12392fa2a5b6a252954085822dcf7dd2077a6bbde15d4e5a2532ada"
+    },
+    {
+      "path": "battle/mouse/mouse03_wallgrab_strip4.png",
+      "sha256": "47d63fc2ff8de5372273fe05fa12272dec503ad31c766dce2370c89951b846ab"
+    },
+    {
+      "path": "battle/otter/lilotter_attack_strip7.png",
+      "sha256": "09992713d495e079646161144594198c71e6182b00e9c5215fadc8a7b6a40661"
+    },
+    {
+      "path": "battle/otter/lilotter_crouch_strip8.png",
+      "sha256": "1bb5f3e1e8d867fd8440bba4e7e52373b49987a7419fc13768563193fd6417a5"
+    },
+    {
+      "path": "battle/otter/lilotter_dash_strip10.png",
+      "sha256": "d73fa1b6af6c7ee27e1a91dfe3b4f11b7814a98c2ddea86eda8c73da00804d6b"
+    },
+    {
+      "path": "battle/otter/lilotter_die_strip8.png",
+      "sha256": "5e61b925e7d5cef34068970ad764b4b1f568649e48c0f00572861dd494de7417"
+    },
+    {
+      "path": "battle/otter/lilotter_fall_strip1.png",
+      "sha256": "1f27dfc057fdea8421669b751d5ef93ee659a8b73e7e2bd97a2293c56d65b5e7"
+    },
+    {
+      "path": "battle/otter/lilotter_hurt_strip5.png",
+      "sha256": "c1ebb26c41734fc79c56e58008be6a60997ac80550fa27666e60c661de510554"
+    },
+    {
+      "path": "battle/otter/lilotter_idle_blink_strip8.png",
+      "sha256": "9ab6c0e3b46631de6353b481506f0f67ea4ae4d7947d95b1cb42dd67bb8e924c"
+    },
+    {
+      "path": "battle/otter/lilotter_idle_strip8.png",
+      "sha256": "81bc696784eb1f8d3b319e8d56ba6b10e1316531532c45150b06197f3c8679e5"
+    },
+    {
+      "path": "battle/otter/lilotter_jump_strip5.png",
+      "sha256": "6be4e030beba618a3c87ba8586394410dc3784f5479ca59e67e6d6a093cd3d61"
+    },
+    {
+      "path": "battle/otter/lilotter_land_strip3.png",
+      "sha256": "900a58891856d326e8d941c2a30d37c14a12df0ba156359f3bc9af0eff410e18"
+    },
+    {
+      "path": "battle/otter/lilotter_liedown_strip8.png",
+      "sha256": "aca694d00122fb496719696b4bc6699c22b3575d9041a404c433f2465e26ae54"
+    },
+    {
+      "path": "battle/otter/lilotter_run_strip4.png",
+      "sha256": "fc558baf88bd00b0ec901578f14cf42f4be87a5ac0c2ccff9519e0354d7cddef"
+    },
+    {
+      "path": "battle/otter/lilotter_sit_strip8.png",
+      "sha256": "be24fa0f9a3768e0ce43453c35cfc54ae4bf96600628fd9760db0729a1767444"
+    },
+    {
+      "path": "battle/otter/lilotter_sleep_strip4.png",
+      "sha256": "0c107f5f5f0fc3edb94ddf8076c0fed25a8753bc64c8005bab1d91301954b290"
+    },
+    {
+      "path": "battle/otter/lilotter_sneak_strip4.png",
+      "sha256": "8e8e7d798c80107724d4b1209928d7b2d4a4405fc8d22a7e4b423ba740b25058"
+    },
+    {
+      "path": "battle/otter/lilotter_swim_idle_strip4.png",
+      "sha256": "2805e778c957fedcdfd04cb2d13463db116840d996f1acf6697f87ab886237a6"
+    },
+    {
+      "path": "battle/otter/lilotter_swim_strip4.png",
+      "sha256": "8eae4efdac6dad2ff01d5b89e0d6441b42c1e5d6cee09a67c0180d9c998ec9f1"
+    },
+    {
+      "path": "battle/otter/lilotter_walk_strip8.png",
+      "sha256": "5b5cbb6f5f877aa8160e44e201e273758c5e0f622c5a0828ffa0370a2181c784"
+    },
+    {
+      "path": "battle/otter/lilotter_wallclimb_strip4.png",
+      "sha256": "a633d83fa43555a7bc85e136918451cf936fd9e49c8f36207fcf7080a548db9f"
+    },
+    {
+      "path": "battle/otter/lilotter_wallgrab_strip8.png",
+      "sha256": "327feefa2d9b96c31502c968a3c6d154379d1db6b7d4ca80c469952f357f2cd3"
+    },
+    {
+      "path": "battle/panda/panda_attack01_strip5.png",
+      "sha256": "724256339d582a40eebfc7b6b841804b5eb5b5eb845a137fa7e62800ed17a092"
+    },
+    {
+      "path": "battle/panda/panda_attack02_strip5.png",
+      "sha256": "b527403a56993b9485667c8961a9a6e331a4a5b8c7709a2e6b73a4bad49df5c5"
+    },
+    {
+      "path": "battle/panda/panda_bite_strip8.png",
+      "sha256": "7d2548ee3f0fb13cc0ea710cd77572e8e5779bef1228b8b695fe9acc2ea935ec"
+    },
+    {
+      "path": "battle/panda/panda_die_strip8.png",
+      "sha256": "a6561396638b37af3e437552d8cc68df237ffcb46103dd33544f87134e149453"
+    },
+    {
+      "path": "battle/panda/panda_fall_strip1.png",
+      "sha256": "e5cf27ebf2288345d7c1c37eae730b376d0af64a0bf7e9a9dcd40a1f2e5c50b3"
+    },
+    {
+      "path": "battle/panda/panda_fright_strip10.png",
+      "sha256": "339091df2eb82a76701700bbbe78cc594b1b732235bd5e20e4998c60de8cbe61"
+    },
+    {
+      "path": "battle/panda/panda_hurt_strip7.png",
+      "sha256": "a81060c2348b3e804692439c9a802a2f2831614ebce41e3729eea4066c1ad4eb"
+    },
+    {
+      "path": "battle/panda/panda_idle_laugh_strip2.png",
+      "sha256": "0d2a1ca3bd74c7c5bca70f9a3e99451c256d0bd4d7ab47229a869851cf94739d"
+    },
+    {
+      "path": "battle/panda/panda_idle_strip4.png",
+      "sha256": "c18ecc4a2c7d37088d71d37c97af39ac531f50c34fd768fa965fd147dc1677e8"
+    },
+    {
+      "path": "battle/panda/panda_jump_strip8.png",
+      "sha256": "223ce536ed8c343ec53e8f45d24db3e96044cc39b8bdb0e4d521210fb2c7a64e"
+    },
+    {
+      "path": "battle/panda/panda_land_strip3.png",
+      "sha256": "e7ade691ba9452eb8bf3ad78bc445a9a563f6a032d567475867f2713e2cda76e"
+    },
+    {
+      "path": "battle/panda/panda_run_strip8.png",
+      "sha256": "87f254e1a10d2ee4103c02324b73b02b526f885dd9b93ad56d998a2902692a78"
+    },
+    {
+      "path": "battle/panda/panda_sit_leanback_eat_strip24.png",
+      "sha256": "bf95d279da9dd85922599f956e771a87cafaf7d5e1b4a66fcba35fecef64ff24"
+    },
+    {
+      "path": "battle/panda/panda_sit_leanback_laugh_strip2.png",
+      "sha256": "4b5b6887e5019a45ad0a1dfb6ff338fc7a97118cc211fdc7ac5d1b9cd39a0f86"
+    },
+    {
+      "path": "battle/panda/panda_sit_leanback_strip8.png",
+      "sha256": "9ed18d07fa96702562dd09870077bfd3120dcc89e8b86dff14ff4c255e8a8193"
+    },
+    {
+      "path": "battle/panda/panda_sit_leanforward_strip8.png",
+      "sha256": "246558aa6f95c95872f825734b9097288989beb07c535d56de420c17224d45d2"
+    },
+    {
+      "path": "battle/panda/panda_sleep_strip4.png",
+      "sha256": "8f8f3d047ddf1f1a63a927828cb9750adb218649498d7424d079a4c426855847"
+    },
+    {
+      "path": "battle/panda/panda_stand_strip4.png",
+      "sha256": "5d89becd8e50bd0d38e709884587589cb43b6cd02bec97459d117e9d298e78fb"
+    },
+    {
+      "path": "battle/turtle/turtle_attack_strip8.png",
+      "sha256": "e0b297c3c887011180674cab6231ea21c1f1f33932ed854923e2fdea2bc9c70d"
+    },
+    {
+      "path": "battle/turtle/turtle_die_strip12.png",
+      "sha256": "0bf47376c46d4c8db477f115116fd4d07a88969d14781e7ce0c8eba218ddb745"
+    },
+    {
+      "path": "battle/turtle/turtle_fall_strip8.png",
+      "sha256": "92b4e96875a265f80b53c4618b19b1c04821452212e4625104d78d4b918b60b3"
+    },
+    {
+      "path": "battle/turtle/turtle_fright_strip10.png",
+      "sha256": "7271f667524e1a2de3852c18942a9507946ad91d0ae0092d7225175a94074b37"
+    },
+    {
+      "path": "battle/turtle/turtle_hide_strip8.png",
+      "sha256": "d37af1eef6387e7817dbb12113e6a7121461212f25a5603512ed52d2b4c5aa35"
+    },
+    {
+      "path": "battle/turtle/turtle_hurt_strip6.png",
+      "sha256": "e099ae25a0fc7ef752beddcd5f391251f8ee1accc60ec665d6d515edf05cd67a"
+    },
+    {
+      "path": "battle/turtle/turtle_idle_blink_strip6.png",
+      "sha256": "f9a36bee9924d21d400d40eeac46124e1a7cf88539a2137e55af22543beb6a52"
+    },
+    {
+      "path": "battle/turtle/turtle_idle_strip6.png",
+      "sha256": "74cae5845e372b4174e38d030ef2bba9ee8fba24fa9e4f26b29d5f6476d25d98"
+    },
+    {
+      "path": "battle/turtle/turtle_jump_strip8.png",
+      "sha256": "6c487fa01760732afbbf7b73523d09e84c12a538142506cc21429144d43fba30"
+    },
+    {
+      "path": "battle/turtle/turtle_land_strip2.png",
+      "sha256": "36b5e69ba26a164056e73831a0fd955ce2bfbdedd0d00fd09271ce73072cf9d9"
+    },
+    {
+      "path": "battle/turtle/turtle_run_strip5.png",
+      "sha256": "cfa224a7716b08fa8f22b2487888cbe1b398a50f3aac83bb538c9ac7bd11cc04"
+    },
+    {
+      "path": "battle/turtle/turtle_sleep_strip4.png",
+      "sha256": "7ba415fbd2d96470589ec84560dfff45b6cfb67527fe1657ec4efcbd32a0015d"
+    },
+    {
+      "path": "battle/turtle/turtle_swim_forward_strip5.png",
+      "sha256": "8c99cf263630ce5cde512a1350036708bc583f98a5a5051044de708875741e6f"
+    },
+    {
+      "path": "battle/turtle/turtle_swim_idle_strip6.png",
+      "sha256": "b232e371f5463e9007659a5ceafe5c995503b1dae4eb73bcc56b104c7bf127db"
+    },
+    {
+      "path": "battle/turtle/turtle_unhide_strip5.png",
+      "sha256": "ca9b61dc47760ce2dda6a88f8ff4505cea8b56e3d7f0dea8eb81438f04ddd0ce"
+    },
+    {
+      "path": "battle/turtle/turtle_walk_strip5.png",
+      "sha256": "681137e2f13bb3936b5563ccede6d0eb3b39cd4a4ab661d386798b928f2518e1"
     },
     {
       "path": "coach/brilliance.png",

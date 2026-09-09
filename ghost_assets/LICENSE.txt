@@ -9,12 +9,25 @@ repository grants no permission to decrypt, extract, redistribute, sublicense,
 sell, publish, or reuse its contents. Encryption does not alter the original
 licenses or create redistribution rights.
 
-SEETHINGSWARM CHICKENPACK AND RACCOONPACK
+SEETHINGSWARM STORY ANIMAL PACKS
 
 Creator: SeethingSwarm
 Sources:
 https://seethingswarm.itch.io/chickenpack
+https://seethingswarm.itch.io/bunnypack
+https://seethingswarm.itch.io/dogpack
+https://seethingswarm.itch.io/catset
+https://seethingswarm.itch.io/mousepack
+https://seethingswarm.itch.io/frogpack
+https://seethingswarm.itch.io/turtlepack
+https://seethingswarm.itch.io/pandapack
+https://seethingswarm.itch.io/lil-otter
 https://seethingswarm.itch.io/raccoonpack
+
+Catset uses the orange Cat03 variant; Mousepack uses the light-gray Mouse03
+variant. Raccoonpack supplies both Mapachito and Raccoon Stockfish without
+duplicating the licensed source files. Attribution: animal sprites by
+SeethingSwarm. Source terms verified September 9, 2026.
 
 The current storefront terms permit use and modification in commercial
 projects while prohibiting resale, giveaway, and open distribution of the
