@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from "vitest"
-import createBattleSpriteImages, {
-  type BattleSpriteImageLoader,
-} from "./battleSpriteImages"
+import createPresentationImages, {
+  type PresentationImageLoader,
+} from "./presentationImages"
 
 describe("battle sprite image ownership", () => {
   it("shares one preparation per source and releases only displaced sources", async () => {
     const releases = new Map<string, ReturnType<typeof vi.fn>>()
-    const load = vi.fn<BattleSpriteImageLoader>((source) => {
+    const load = vi.fn<PresentationImageLoader>((source) => {
       const release = vi.fn()
       releases.set(source, release)
       return { ready: Promise.resolve(true), release }
     })
-    const images = createBattleSpriteImages(load)
+    const images = createPresentationImages(load)
     await Promise.all([
       images.prepare(["idle", "strike", "strike"]),
       images.prepare(["strike"]),
@@ -29,7 +29,7 @@ describe("battle sprite image ownership", () => {
 
   it("does not mark a compound sequence ready before every clip is decoded", async () => {
     const landing = Promise.withResolvers<boolean>()
-    const images = createBattleSpriteImages((source) => ({
+    const images = createPresentationImages((source) => ({
       ready: source === "land" ? landing.promise : Promise.resolve(true),
       release: vi.fn(),
     }))
@@ -49,10 +49,10 @@ describe("battle sprite image ownership", () => {
   it("reports failed replacement decoding and allows a later request to retry", async () => {
     const release = vi.fn()
     const load = vi
-      .fn<BattleSpriteImageLoader>()
+      .fn<PresentationImageLoader>()
       .mockReturnValueOnce({ ready: Promise.resolve(false), release })
       .mockReturnValueOnce({ ready: Promise.resolve(true), release: vi.fn() })
-    const images = createBattleSpriteImages(load)
+    const images = createPresentationImages(load)
     expect(await images.prepare(["strike"])).toBe(false)
     expect(release).toHaveBeenCalledOnce()
     expect(await images.prepare(["strike"])).toBe(true)
@@ -63,7 +63,7 @@ describe("battle sprite image ownership", () => {
     const pending = Promise.withResolvers<boolean>()
     const releasePending = vi.fn(() => pending.resolve(false))
     const releasePose = vi.fn()
-    const images = createBattleSpriteImages((source) =>
+    const images = createPresentationImages((source) =>
       source === "pose"
         ? { ready: Promise.resolve(true), release: releasePose }
         : { ready: pending.promise, release: releasePending },

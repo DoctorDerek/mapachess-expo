@@ -1,16 +1,16 @@
-export type BattleSpriteImage = Readonly<{
+export type PresentationImage = Readonly<{
   ready: Promise<boolean>
   release: () => void
 }>
 
-export type BattleSpriteImageLoader = (source: string) => BattleSpriteImage
+export type PresentationImageLoader = (source: string) => PresentationImage
 
-export type BattleSpriteImages = Readonly<{
+export type PresentationImages = Readonly<{
   retain: (sources: readonly string[]) => void
   prepare: (sources: readonly string[]) => Promise<boolean>
 }>
 
-export const loadBattleSpriteImage: BattleSpriteImageLoader = (source) => {
+export const loadPresentationImage: PresentationImageLoader = (source) => {
   const image = new Image()
   let settled = false
   image.src = source
@@ -32,10 +32,10 @@ export const loadBattleSpriteImage: BattleSpriteImageLoader = (source) => {
   }
 }
 
-export default function createBattleSpriteImages(
-  load: BattleSpriteImageLoader = loadBattleSpriteImage,
-): BattleSpriteImages {
-  const images = new Map<string, BattleSpriteImage>()
+export default function createPresentationImages(
+  load: PresentationImageLoader = loadPresentationImage,
+): PresentationImages {
+  const images = new Map<string, PresentationImage>()
   return {
     retain(sources: readonly string[]): void {
       const retained = new Set(sources)
@@ -54,11 +54,12 @@ export default function createBattleSpriteImages(
             images.set(source, image)
           }
           const ready = await image.ready
-          if (!ready && images.get(source) === image) {
+          const isCurrent = images.get(source) === image
+          if (!ready && isCurrent) {
             images.delete(source)
             image.release()
           }
-          return ready
+          return ready && isCurrent
         }),
       )
       return readiness.every(Boolean)
