@@ -16,6 +16,7 @@ import {
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import { webChallengeDifficultyTargets } from "../../lib/gameplay/webOpponentPolicy"
+import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImages"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
@@ -63,6 +64,11 @@ export default function WebMatchSetup({
     storyProgress,
   ).filter(({ id }) => isImplementedDurableOpponent(id))
   const opponent = stockfishOpponent(selectedOpponentId)
+  usePreparedMatchImages(
+    isImplementedDurableOpponent(selectedOpponentId)
+      ? selectedOpponentId
+      : null,
+  )
   const selectionAvailable =
     setup.mode === "challenge"
       ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&

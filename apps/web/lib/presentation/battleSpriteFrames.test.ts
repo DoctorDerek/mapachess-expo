@@ -3,6 +3,7 @@ import resolveSpritePresentation from "@mapachess/match-presentation/presentatio
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
+  battleSpriteFrameStyle,
 } from "./battleSpriteFrames"
 import {
   CHICKEN_SPRITE_MANIFEST,
@@ -12,6 +13,41 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it("derives the initial pose crop from its canonical animation geometry", () => {
+    const presentation = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "idle" },
+      Object.values(CHICKEN_SPRITE_SOURCES),
+    )
+    if (presentation.kind !== "sprite")
+      throw new Error("Expected licensed sprite")
+    const step = presentation.steps[0]
+    const initial = battleSpriteFrameStyle(step, false)
+    expect(initial).toMatchObject({
+      backgroundImage: `url("${step.animation.sourceId}")`,
+      backgroundPosition: "0% 0",
+      backgroundSize: `${step.animation.frameCount * 100}% 100%`,
+      height: `calc(${step.animation.geometry.frameHeight}px * var(--sprite-scale))`,
+    })
+    expect(battleSpriteFrameStyle(step, true).backgroundPosition).toBe(
+      `${(step.animation.reducedMotionFrameIndex / (step.animation.frameCount - 1)) * 100}% 0`,
+    )
+  })
+
+  it("selects the held final defeat frame for decoded Reduced Motion playback", () => {
+    const presentation = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "defeat" },
+      Object.values(CHICKEN_SPRITE_SOURCES),
+    )
+    if (presentation.kind !== "sprite")
+      throw new Error("Expected licensed sprite")
+    const step = presentation.steps.at(-1)
+    if (step === undefined) throw new Error("Expected defeat frame")
+    expect(step.playback).toBe("once-hold-final-frame")
+    expect(battleSpriteFrameStyle(step, true).backgroundPosition).toBe("100% 0")
+  })
+
   it("provides each fighter's authored width and the opposing responsive widths", () => {
     const player = resolveSpritePresentation(
       MAPACHITO_SPRITE_MANIFEST,

@@ -12,9 +12,10 @@ import type {
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
+  battleSpriteFrameStyle,
   showBattleSpriteFrame,
 } from "../../lib/presentation/battleSpriteFrames"
-import createBattleSpriteImages from "../../lib/presentation/battleSpriteImages"
+import createPresentationImages from "../../lib/presentation/presentationImages"
 
 const FALLBACK_MOVEMENT_SECONDS = 0.36
 
@@ -60,8 +61,13 @@ export default function BattleFighter({
   const settledTravelTarget = useRef<"home" | "contact" | "recoil" | null>(
     "home",
   )
-  const [images] = useState(() => createBattleSpriteImages())
-  const [hasVisibleSprite, setHasVisibleSprite] = useState(false)
+  const [images] = useState(() => createPresentationImages())
+  const [initialFrameStyle] = useState(() => {
+    if (presentation.kind !== "sprite") return undefined
+    const initialStep = presentation.steps.find((step) => step.beat === beat)
+    return battleSpriteFrameStyle(initialStep ?? presentation.steps[0], false)
+  })
+  const [imageUnavailable, setImageUnavailable] = useState(false)
   const reportCompletion = useEffectEvent(
     (completedPhase: number, completedSequence: number) => {
       if (shouldReportCompletion) {
@@ -98,14 +104,17 @@ export default function BattleFighter({
           ? "recoil"
           : "home"
     const allSteps = presentation.kind === "sprite" ? presentation.steps : []
-    const steps = allSteps.filter((step) => step.beat === beat)
     const sources = allSteps.map((step) => step.animation.sourceId)
     images.retain(
       visibleSource.current === null
         ? sources
         : [...sources, visibleSource.current],
     )
-    const prepared = images.prepare(sources)
+    const preparedSteps = allSteps.map((step) => ({
+      step,
+      ready: images.prepare([step.animation.sourceId]),
+    }))
+    const steps = preparedSteps.filter(({ step }) => step.beat === beat)
 
     const move = async (duration: number): Promise<void> => {
       if (cancelled || settledTravelTarget.current === travelTarget) return
@@ -130,15 +139,23 @@ export default function BattleFighter({
         reportCompletion(phaseIndex, reactionSequence)
         return
       }
-      if (steps.length === 0 || !(await prepared)) {
+      if (steps.length === 0) {
         await move(FALLBACK_MOVEMENT_SECONDS)
       } else {
-        for (const step of shouldReduceMotion ? steps.slice(-1) : steps) {
+        for (const { step, ready } of shouldReduceMotion
+          ? steps.slice(-1)
+          : steps) {
+          const decoded = await ready
           if (cancelled) return
+          if (!decoded) {
+            if (visibleSource.current === null) setImageUnavailable(true)
+            await move(FALLBACK_MOVEMENT_SECONDS)
+            continue
+          }
           const { animation, playback } = step
           showBattleSpriteFrame(sprite, step, shouldReduceMotion)
           visibleSource.current = animation.sourceId
-          setHasVisibleSprite(true)
+          setImageUnavailable(false)
           const duration =
             animation.frameCount * animation.frameDurationMilliseconds
           const travel = move(duration / 1000)
@@ -224,9 +241,10 @@ export default function BattleFighter({
             <span
               ref={spriteRef}
               className="absolute block bg-no-repeat [image-rendering:pixelated]"
+              style={initialFrameStyle}
             />
           </span>
-          {!hasVisibleSprite ? (
+          {presentation.kind === "authored-fallback" || imageUnavailable ? (
             <span
               aria-hidden="true"
               className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-1/2 grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
@@ -240,6 +258,7 @@ export default function BattleFighter({
         className={`border-mapachito-charcoal text-mapachito-white z-1 mt-2 max-w-full border-2 px-2 py-1 text-center font-mono text-xs font-bold [overflow-wrap:anywhere] forced-colors:border-[CanvasText] ${participant === "player" ? "bg-mapachito-violet" : "bg-mapachito-raspberry"}`}
       >
         {displayName}
+        {imageUnavailable ? " · Artwork unavailable" : null}
       </span>
     </div>
   )

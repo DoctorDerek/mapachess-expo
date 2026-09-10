@@ -5,6 +5,7 @@ import {
   AUTO_HINT_MODES,
   type AutoHintMode,
 } from "@mapachess/match/auto-hint-mode"
+import MedalSymbol from "../presentation/MedalSymbol"
 
 export type AutoHintModeChoicesProps = Readonly<{
   autoHintMode: AutoHintMode
@@ -72,6 +73,7 @@ export default function AutoHintModeChoices({
                   className="text-mapachito-violet mt-2 block text-sm font-bold"
                   id={`${controlId}-medal`}
                 >
+                  <MedalSymbol medal={choice.medalTier} />
                   {choice.medal}
                 </span>
               </span>

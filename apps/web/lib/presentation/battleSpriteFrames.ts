@@ -64,11 +64,10 @@ export const battleSpriteFrameKeyframes = (frameCount: number): Keyframe[] =>
     offset: index / frameCount,
   }))
 
-export const showBattleSpriteFrame = (
-  element: HTMLSpanElement,
+export const battleSpriteFrameStyle = (
   step: BattleSpriteStep,
   reducedMotion: boolean,
-): void => {
+): CSSProperties => {
   const { animation } = step
   const { geometry } = animation
   const frameIndex = reducedMotion
@@ -76,7 +75,7 @@ export const showBattleSpriteFrame = (
       ? animation.frameCount - 1
       : animation.reducedMotionFrameIndex
     : 0
-  Object.assign(element.style, {
+  return {
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: `${animation.frameCount === 1 ? 0 : (frameIndex / (animation.frameCount - 1)) * 100}% 0`,
     backgroundSize: `${animation.frameCount * 100}% 100%`,
@@ -84,5 +83,13 @@ export const showBattleSpriteFrame = (
     left: `calc(${-geometry.bottomCenterX}px * var(--sprite-scale))`,
     top: `calc(${-geometry.bottomY}px * var(--sprite-scale))`,
     width: `calc(${geometry.frameWidth}px * var(--sprite-scale))`,
-  })
+  }
+}
+
+export const showBattleSpriteFrame = (
+  element: HTMLSpanElement,
+  step: BattleSpriteStep,
+  reducedMotion: boolean,
+): void => {
+  Object.assign(element.style, battleSpriteFrameStyle(step, reducedMotion))
 }

@@ -103,8 +103,9 @@ build-time provisioning boundary are recorded in
 
 ## Production web deployment
 
-[Mapachess.com](https://mapachess.com/) is the canonical Production domain and
-the target of automated Lighthouse reporting. Vercel creates Preview
+[Mapachess.com](https://www.mapachess.com/) is live at the canonical `www` origin;
+the bare domain redirects there. Automated Lighthouse reporting targets
+`https://www.mapachess.com/` directly. Vercel creates Preview
 deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
 and waits for each merged commit's matching Production deployment. It then

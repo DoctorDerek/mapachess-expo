@@ -15,6 +15,32 @@ const progress: StoryProgress = {
 
 describe("Story ladder presentation structure", () => {
   it.each([
+    { highestMedal: "bronze", symbol: "🥉", label: "Bronze" },
+    { highestMedal: "silver", symbol: "🥈", label: "Silver" },
+    { highestMedal: "gold", symbol: "🥇", label: "Gold" },
+  ] as const)(
+    "shows $label records with a decorative medal and readable text",
+    ({ highestMedal, symbol, label }) => {
+      for (const variant of ["standard", "chess960"] as const) {
+        const markup = renderToStaticMarkup(
+          <StoryLadderProgress
+            progress={{
+              ...createInitialStoryProgress(),
+              [variant]: [{ opponentId: "chicken-stockfish", highestMedal }],
+            }}
+            variant={variant}
+          />,
+        )
+        expect(markup).toContain(`Defeated · ${label}`)
+        expect(markup).toMatch(
+          new RegExp(`<span[^>]*aria-hidden="true"[^>]*>${symbol}</span>`),
+        )
+        expect(markup.match(new RegExp(symbol, "gu"))).toHaveLength(1)
+      }
+    },
+  )
+
+  it.each([
     { ...DEFAULT_CHALLENGE_SETUP, opponentId: "bunny-stockfish" as const },
     { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1100 },
   ])(
