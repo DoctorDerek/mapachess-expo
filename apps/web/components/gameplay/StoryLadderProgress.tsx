@@ -13,6 +13,7 @@ import {
   STORY_PROGRESS_COPY,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import MedalSymbol from "../presentation/MedalSymbol"
 import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type StoryLadderProgressProps = Readonly<{
@@ -132,6 +133,9 @@ export default function StoryLadderProgress({
                       : "border-mapachito-violet text-mapachito-violet rounded border-2 px-3 py-1 text-sm font-black"
                   }
                 >
+                  {highestMedal !== null ? (
+                    <MedalSymbol medal={highestMedal} />
+                  ) : null}
                   {highestMedal === null
                     ? STORY_PROGRESS_COPY[status]
                     : `${STORY_PROGRESS_COPY.defeated} · ${STORY_PROGRESS_COPY.medals[highestMedal]}`}

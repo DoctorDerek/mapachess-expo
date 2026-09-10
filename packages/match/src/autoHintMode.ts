@@ -14,17 +14,20 @@ export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
     description:
       "Automatically show three Piece Hints and their Move Hints for each side.",
     medal: "Bronze if you win after using Move Hints.",
+    medalTier: "bronze",
   },
   "auto-piece-hints": {
     label: "Auto Piece Hints",
     description:
       "Automatically show three Piece Hints for each side. Request Move Hints whenever you want.",
     medal: "Silver if you win with Piece Hints but no Move Hints.",
+    medalTier: "silver",
   },
   "no-auto-hints": {
     label: "No Auto Hints",
     description: "Request Piece Hints or Move Hints whenever you want.",
     medal: "Gold if you win without using any hints.",
+    medalTier: "gold",
   },
 } as const satisfies Readonly<
   Record<
@@ -33,6 +36,7 @@ export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
       label: string
       description: string
       medal: string
+      medalTier: "bronze" | "silver" | "gold"
     }>
   >
 >)
