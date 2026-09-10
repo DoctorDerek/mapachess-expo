@@ -23,7 +23,6 @@ import StoryLadderProgress from "./StoryLadderProgress"
 import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type WebMatchSetupProps = Readonly<{
-  activityMessage: string | null
   autoHintMode: AutoHintMode
   disabled: boolean
   onAutoHintModeChanged: (mode: AutoHintMode) => void
@@ -36,7 +35,6 @@ export type WebMatchSetupProps = Readonly<{
 const LAST_CHESS960_POSITION = CHESS960_POSITION_COUNT - 1
 
 export default function WebMatchSetup({
-  activityMessage,
   autoHintMode,
   disabled,
   onAutoHintModeChanged,
@@ -309,9 +307,6 @@ export default function WebMatchSetup({
               {MATCH_SETUP_COPY.invalidSetup}
             </MapachessNotice>
           ) : null}
-          {activityMessage === null ? null : (
-            <MapachessNotice role="status">{activityMessage}</MapachessNotice>
-          )}
           <MapachessButton
             disabled={disabled || !selectionAvailable}
             type="submit"

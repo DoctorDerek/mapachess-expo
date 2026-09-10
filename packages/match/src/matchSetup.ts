@@ -45,9 +45,6 @@ export const MATCH_SETUP_COPY = Object.freeze({
     "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:
     "Choose any animal you have defeated in either Story ladder. Chicken is always available. Animal appearance does not change difficulty.",
-  savingHints: "Saving your hint preference…",
-  profileUnavailable:
-    "Finish the open Settings or player-data action before starting a match.",
   startMatch: "Start match",
 })
 

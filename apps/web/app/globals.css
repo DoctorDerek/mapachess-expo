@@ -74,9 +74,3 @@
     }
   }
 }
-
-@keyframes mapachess-loading-turn {
-  to {
-    rotate: 368deg;
-  }
-}
