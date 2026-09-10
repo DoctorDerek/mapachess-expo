@@ -146,6 +146,55 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it("prepares a match during a preference write and starts with the latest choice", async () => {
+    const profile = await openProfileRuntime()
+    const store = profile.actor.getSnapshot().context.store
+    const commitCurrent = store.commitCurrent.bind(store)
+    const gate = Promise.withResolvers<void>()
+    vi.spyOn(store, "commitCurrent").mockImplementationOnce(async (...args) => {
+      await gate.promise
+      return commitCurrent(...args)
+    })
+    profile.actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-piece-hints",
+    })
+    profile.actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    const engine = createRuntime(FIRST_MATCH_SEED)
+    const opener = runtimeOpener(engine.runtime)
+    const opening = openFreshWebMatchSession({
+      variant: "standard",
+      previousSession: null,
+      profileActor: profile.actor,
+      openRuntime: opener,
+      signal: new AbortController().signal,
+    })
+    try {
+      await vi.waitFor(() => expect(opener).toHaveBeenCalledOnce())
+      expect(
+        selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch,
+      ).toBeNull()
+    } finally {
+      gate.resolve()
+    }
+    const session = await opening
+    try {
+      expect(session.match.autoHintMode).toBe("no-auto-hints")
+      expect(
+        selectCurrentPlayerData(profile.actor.getSnapshot()),
+      ).toMatchObject({
+        activeMatch: { autoHintMode: "no-auto-hints" },
+        settings: { autoHintMode: "no-auto-hints" },
+      })
+    } finally {
+      await session.close()
+      await profile.close()
+    }
+  })
+
   it("closes a mismatched Challenge runtime without committing its match or preferences", async () => {
     const profile = await openProfileRuntime()
     const before = selectCurrentPlayerData(profile.actor.getSnapshot())

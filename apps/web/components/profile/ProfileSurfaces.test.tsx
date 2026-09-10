@@ -5,10 +5,12 @@ import createInitialMapachessPlayerData, {
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 } from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
 import ProfileSettingsPanel from "./ProfileSettingsPanel"
+import WebMapachessApplication from "./WebMapachessApplication"
 
 const playerData = createInitialMapachessPlayerData()
 
@@ -26,6 +28,41 @@ const backup = Object.freeze({
 }) satisfies MapachessPortableBackup
 
 describe("web player-data controls", () => {
+  it("emits the canonical engine preload during the first application render", () => {
+    const markup = renderToStaticMarkup(createElement(WebMapachessApplication))
+    expect(markup).toContain(
+      `href="/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}"`,
+    )
+    expect(markup).toMatch(/<link[^>]*rel="preload"[^>]*as="fetch"/)
+    expect(markup).toContain('crossorigin=""')
+    expect(markup).toContain("Loading Mapachess.")
+    expect(markup).not.toContain("Saving player data")
+    expect(markup).not.toContain("Opening local storage")
+  })
+
+  it("keeps hint choices and closing available while a standalone preference saves", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ProfileSettingsPanel, {
+        activityMessage: "Saving your hint preference…",
+        hintChangesDisabled: false,
+        autoHintMode: "no-auto-hints",
+        importIssue: null,
+        onAutoHintModeChanged: vi.fn(),
+        onBackupRead: vi.fn(),
+        onClose: vi.fn(),
+        onExportPlayerData: vi.fn(),
+      }),
+    )
+    const hintChoices = markup.match(/<input[^>]*type="radio"[^>]*>/g)
+    expect(hintChoices).toHaveLength(3)
+    expect(markup).not.toMatch(/<fieldset[^>]* disabled=""/)
+    for (const choice of hintChoices ?? [])
+      expect(choice).not.toContain(' disabled=""')
+    expect(markup).not.toMatch(/<button[^>]* disabled=""[^>]*>Close Settings/)
+    expect(markup).toContain('class="sr-only" role="status"')
+    expect(markup).toContain("Saving your hint preference…")
+  })
+
   it("names every applicable corrupt-data recovery action", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileRecoveryPanel, {

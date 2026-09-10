@@ -8,6 +8,8 @@ import matchMachine, {
   selectCanResign,
   selectCanUndo,
   selectDrawOfferResponse,
+  selectHasRedoHistory,
+  selectHasUndoHistory,
   selectHintStage,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
@@ -400,7 +402,15 @@ describe("verified durable match mutation gate", () => {
       pieceHintsUsed: true,
     })
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(false)
-    expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
+    expect(selectHintStage(actor.getSnapshot())).toBe("loading")
+
+    persistence.failNext()
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectHintStage(actor.getSnapshot())).toBe("ready")
+    expect(selectMatchHints(actor.getSnapshot())).toBeNull()
+    expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(false)
+    actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+    expect(selectHintStage(actor.getSnapshot())).toBe("loading")
 
     persistence.succeedNext()
     await waitFor(
@@ -413,12 +423,20 @@ describe("verified durable match mutation gate", () => {
 
     actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
     expect(selectIsPersistingMutation(actor.getSnapshot())).toBe(true)
-    expect(persistence.requests[1]).toMatchObject({
+    expect(persistence.requests.at(-1)).toMatchObject({
       moveHintsUsed: true,
       pieceHintsUsed: true,
     })
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
     expect(selectMatchHints(actor.getSnapshot())).not.toBeNull()
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
+
+    persistence.failNext()
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+    actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
 
     persistence.succeedNext()
     await waitFor(
@@ -430,8 +448,9 @@ describe("verified durable match mutation gate", () => {
     expect(analyze).toHaveBeenCalledTimes(1)
 
     requestE4(actor)
+    expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
     persistence.succeedNext()
-    await waitFor(actor, () => persistence.requests.length === 4)
+    await waitFor(actor, () => persistence.requests.length === 6)
     persistence.succeedNext()
     await waitFor(actor, selectIsPlayerTurn)
     const persistedRequestCount = persistence.requests.length
@@ -448,7 +467,7 @@ describe("verified durable match mutation gate", () => {
     actor.stop()
   })
 
-  it("persists live hint-mode changes before changing visible hints", async () => {
+  it("shows requested preferences immediately while retaining only recorded hints", async () => {
     const persistence = new ControlledPersistence()
     const actor = createActor(matchMachine, {
       input: {
@@ -485,8 +504,10 @@ describe("verified durable match mutation gate", () => {
       moveHintsUsed: true,
       pieceHintsUsed: true,
     })
-    expect(selectAutoHintMode(actor.getSnapshot())).toBe("no-auto-hints")
-    expect(selectHintStage(actor.getSnapshot())).toBe("hidden")
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-move-hints")
+    expect(actor.getSnapshot().context.autoHintMode).toBe("no-auto-hints")
+    expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(false)
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
 
     persistence.succeedNext()
     await waitFor(
@@ -496,16 +517,27 @@ describe("verified durable match mutation gate", () => {
     expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-move-hints")
 
     actor.send({
+      autoHintMode: "auto-piece-hints",
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+    })
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
+    persistence.succeedNext()
+    await waitFor(actor, selectIsPlayerTurn)
+    expect(selectHintStage(actor.getSnapshot())).toBe("piece-hints")
+
+    actor.send({
       autoHintMode: "no-auto-hints",
       type: "MATCH.AUTO_HINT_MODE_CHANGED",
     })
-    expect(persistence.requests[2]).toMatchObject({
+    expect(persistence.requests[3]).toMatchObject({
       autoHintMode: "no-auto-hints",
       moveHintsUsed: true,
       pieceHintsUsed: true,
     })
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("no-auto-hints")
+    expect(selectHintStage(actor.getSnapshot())).toBe("ready")
     persistence.succeedNext()
-    await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "ready")
+    await waitFor(actor, selectIsPlayerTurn)
     expect(selectMatchHints(actor.getSnapshot())).toBeNull()
     expect(selectMoveHintsUsed(actor.getSnapshot())).toBe(true)
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(true)
@@ -523,6 +555,8 @@ describe("verified durable match mutation gate", () => {
 
     actor.send({ type: "MATCH.UNDO_REQUESTED" })
     expect(selectCanUndo(actor.getSnapshot())).toBe(false)
+    expect(selectHasUndoHistory(actor.getSnapshot())).toBe(true)
+    expect(selectHasRedoHistory(actor.getSnapshot())).toBe(false)
     expect(persistence.requests[2]).toMatchObject({
       cursor: 0,
       moveIds: ["e2e4", "e7e5"],

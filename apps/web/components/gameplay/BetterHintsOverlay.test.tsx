@@ -148,7 +148,11 @@ describe("Better Hints board presentation", () => {
     )
 
     expect(readyMarkup).toContain("Show Piece Hints")
-    expect(readyMarkup).not.toContain("Better Hints legend")
+    expect(readyMarkup).toContain("Better Hints legend")
+    for (const markup of [readyMarkup, pieceMarkup, moveMarkup]) {
+      expect(markup).toContain("Player hints · solid green")
+      expect(markup).toContain("Opponent hints · dashed red")
+    }
     expect(pieceMarkup).toContain("Show Move Hints")
     expect(pieceMarkup).toContain('aria-label="Better Hints legend"')
     expect(pieceMarkup).toContain("Player Piece Hint")
@@ -162,6 +166,29 @@ describe("Better Hints board presentation", () => {
       "Player Move Hints: e2 to e4; d2 to d4; g1 to f3.",
     )
   })
+
+  it.each(["saving", "failed"] as const)(
+    "keeps accepted Piece Hints when their Move Hint receipt is %s",
+    (state) => {
+      const markup = renderToStaticMarkup(
+        createElement(BetterHintsControl, {
+          busy: state === "saving",
+          disabled: state === "failed",
+          hints: HINTS,
+          matchComplete: false,
+          onMoveHintsRequested: vi.fn(),
+          onPieceHintsRequested: vi.fn(),
+          stage: "piece-hints",
+        }),
+      )
+      expect(markup).toMatch(/<button[^>]*disabled=""/)
+      expect(markup).toContain(`aria-busy="${String(state === "saving")}"`)
+      expect(markup).toContain("Show Move Hints")
+      expect(markup).toContain("Piece Hints shown.")
+      expect(markup).not.toContain("Finding Piece Hints")
+      expect(markup).not.toContain("Move Hints shown.")
+    },
+  )
 
   it("shows six patterned source borders before revealing moves", () => {
     const markup = renderToStaticMarkup(

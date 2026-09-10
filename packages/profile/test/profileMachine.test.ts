@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import SerializedPlayerDataStore, {
   EMPTY_DURABLE_STORE_SNAPSHOT,
@@ -14,6 +14,7 @@ import {
   decodeMapachessPortableBackup,
 } from "../src/portableBackup.js"
 import profileMachine, {
+  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
   selectImportIssue,
@@ -79,6 +80,84 @@ class FailFirstWriteAdapter implements DurableStoreAdapter {
 }
 
 describe("XState durable profile orchestration", () => {
+  it("accepts the latest preference while an earlier write is still pending", async () => {
+    const store = createStore()
+    await seedProfile(store)
+    const actor = createProfileActor(store)
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const gate = Promise.withResolvers<void>()
+    const commitCurrent = store.commitCurrent.bind(store)
+    const writes = vi
+      .spyOn(store, "commitCurrent")
+      .mockImplementationOnce(async (...args) => {
+        await gate.promise
+        return commitCurrent(...args)
+      })
+
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-piece-hints",
+    })
+    expect(selectCanChangeAutoHintMode(actor.getSnapshot())).toBe(true)
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-move-hints",
+    })
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    expect(
+      selectPendingPlayerData(actor.getSnapshot())?.settings.autoHintMode,
+    ).toBe("no-auto-hints")
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.settings.autoHintMode,
+    ).toBe("auto-move-hints")
+    expect(writes).toHaveBeenCalledTimes(1)
+
+    gate.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toMatchObject({
+      revision: 2,
+      settings: { autoHintMode: "no-auto-hints" },
+    })
+    expect(writes).toHaveBeenCalledTimes(2)
+    expect(actor.getSnapshot().context.requestedAutoHintMode).toBeNull()
+    actor.stop()
+  })
+
+  it("preserves the latest preference through failure and explicit retry", async () => {
+    const store = createStore()
+    await seedProfile(store)
+    const actor = createProfileActor(store)
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const gate = Promise.withResolvers<void>()
+    vi.spyOn(store, "commitCurrent").mockImplementationOnce(async () => {
+      await gate.promise
+      throw new Error("Controlled write failure")
+    })
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-piece-hints",
+    })
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    gate.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectCanChangeAutoHintMode(actor.getSnapshot())).toBe(false)
+    expect(
+      selectPendingPlayerData(actor.getSnapshot())?.settings.autoHintMode,
+    ).toBe("no-auto-hints")
+    actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.settings.autoHintMode,
+    ).toBe("no-auto-hints")
+    actor.stop()
+  })
+
   it("persists a fresh profile with automatic move hints by default", async () => {
     const actor = createProfileActor(createStore())
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
