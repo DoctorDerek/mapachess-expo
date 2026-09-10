@@ -64,12 +64,8 @@ export default function BattleFighter({
   const [images] = useState(() => createPresentationImages())
   const [initialFrameStyle] = useState(() => {
     if (presentation.kind !== "sprite") return undefined
-    const steps = presentation.steps.filter((step) => step.beat === beat)
-    const initialStep = shouldReduceMotion ? steps.at(-1) : steps[0]
-    return battleSpriteFrameStyle(
-      initialStep ?? presentation.steps[0],
-      shouldReduceMotion,
-    )
+    const initialStep = presentation.steps.find((step) => step.beat === beat)
+    return battleSpriteFrameStyle(initialStep ?? presentation.steps[0], false)
   })
   const [imageUnavailable, setImageUnavailable] = useState(false)
   const reportCompletion = useEffectEvent(

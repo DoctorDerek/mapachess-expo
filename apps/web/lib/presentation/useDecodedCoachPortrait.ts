@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import type { ResolvedCoachPortrait } from "@mapachess/match-presentation/coach-portrait"
+import {
+  NEUTRAL_COACH_PORTRAIT_LABEL,
+  type ResolvedCoachPortrait,
+} from "@mapachess/match-presentation/coach-portrait"
 import createPresentationImages from "./presentationImages"
 import { coachPortraitSource } from "./webPresentationAssets"
 
@@ -36,7 +39,7 @@ export default function useDecodedCoachPortrait(
         images.retain([source])
       } else if (visibleSource.current === source) {
         visibleSource.current = null
-        setVisible({ label: "neutral", source: null })
+        setVisible({ label: NEUTRAL_COACH_PORTRAIT_LABEL, source: null })
       }
     })
     return () => {
@@ -50,7 +53,7 @@ export default function useDecodedCoachPortrait(
     onImageError: () => {
       if (visibleSource.current !== visible.source) return
       visibleSource.current = null
-      setVisible({ label: "neutral", source: null })
+      setVisible({ label: NEUTRAL_COACH_PORTRAIT_LABEL, source: null })
     },
   }
 }
