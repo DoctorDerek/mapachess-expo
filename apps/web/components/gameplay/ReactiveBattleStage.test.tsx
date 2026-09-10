@@ -207,6 +207,10 @@ describe("Reactive Battle Stage web presentation", () => {
     expect(markup).toContain("Mapachito coach")
     expect(markup).toContain("Wow Great")
     expect(markup).not.toContain("animation-name")
+    expect(markup).toContain("background-image:url(")
+    expect(markup).not.toContain(">M</span>")
+    expect(markup).not.toContain(">C</span>")
+    expect(markup).not.toContain("Artwork unavailable")
     actor.stop()
   })
 
@@ -270,6 +274,7 @@ describe("Reactive Battle Stage web presentation", () => {
       )
 
       expect(markup).toContain(announcement)
+      expect(markup).toContain(">B</span>")
       expect(markup).not.toContain("Chicken Stockfish")
       expect(markup).not.toContain(
         "/generated/presentation-assets/battle/chicken/",

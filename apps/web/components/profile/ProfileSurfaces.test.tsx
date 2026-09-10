@@ -123,6 +123,10 @@ describe("web player-data controls", () => {
       "Silver if you win with Piece Hints but no Move Hints.",
     )
     expect(markup).toContain("Gold if you win without using any hints.")
+    for (const symbol of ["🥉", "🥈", "🥇"])
+      expect(markup).toMatch(
+        new RegExp(`<span[^>]*aria-hidden="true"[^>]*>${symbol}</span>`),
+      )
     expect(markup).toContain(
       "Changing this setting never erases earlier hint use.",
     )
