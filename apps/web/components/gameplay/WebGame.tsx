@@ -3,10 +3,9 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
-import createMatchSetupForMode, {
-  MATCH_SETUP_COPY,
-} from "@mapachess/match/match-setup"
+import createMatchSetupForMode from "@mapachess/match/match-setup"
 import profileMachine, {
+  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
@@ -23,6 +22,7 @@ import webMatchSessionMachine, {
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import MatchModeMenu from "./MatchModeMenu"
@@ -45,6 +45,7 @@ type GameFrameProps = Omit<
 > &
   Readonly<{
     children: ReactNode
+    activityMessage?: string | null
     matchSessionActive: boolean
     onRestartRequested?: () => void
     onReturnToMenuRequested?: () => void
@@ -52,6 +53,7 @@ type GameFrameProps = Omit<
 
 function GameFrame({
   children,
+  activityMessage = null,
   matchSessionActive,
   onRestartRequested,
   onReturnToMenuRequested,
@@ -61,7 +63,10 @@ function GameFrame({
 }: GameFrameProps) {
   return (
     <MapachessShell>
-      <header className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5">
+      <header
+        inert={activityMessage !== null}
+        className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5"
+      >
         <MapachessWordmark />
         <div className="flex flex-wrap items-center gap-3">
           {matchSessionActive ? (
@@ -95,17 +100,27 @@ function GameFrame({
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[96rem]">{children}</div>
+      <p className="sr-only" role="status">
+        {activityMessage}
+      </p>
+      <div
+        aria-busy={activityMessage !== null}
+        inert={activityMessage !== null}
+        className="mx-auto w-full max-w-[96rem]"
+      >
+        {children}
+      </div>
     </MapachessShell>
   )
 }
 
-const openingTitle = (actor: WebMatchSessionActor): string => {
+const openingTitle = (actor: WebMatchSessionActor): string | null => {
   const snapshot = actor.getSnapshot()
   if (snapshot.matches("openingCurrentMatch")) return "Resuming saved match…"
   if (snapshot.matches("restartingMatch")) return "Restarting match…"
   if (snapshot.matches("returningToMenu")) return "Returning to menu…"
-  return "Opening match…"
+  if (snapshot.matches("openingFreshMatch")) return "Opening match…"
+  return null
 }
 
 const failureTitle = (operation: WebMatchSessionFailureOperation): string => {
@@ -134,7 +149,8 @@ function MatchSessionExperience({
     selectCurrentPlayerData(profileSnapshot)
   if (playerData === null)
     throw new Error("Match setup requires a valid player profile.")
-  const profileReady = profileSnapshot.matches("ready") && !settingsOpen
+  const profileReady =
+    selectCanChangeAutoHintMode(profileSnapshot) && !settingsOpen
   const requestedSetup = snapshot.context.requestedSetup
   const variant =
     requestedSetup.mode === "story"
@@ -147,13 +163,6 @@ function MatchSessionExperience({
       ? selectDefaultStoryOpponent(playerData.storyProgress, variant)
       : undefined,
   )
-  const setupActivity =
-    profileSnapshot.matches("persisting") ||
-    profileSnapshot.matches("retryingPersistence")
-      ? MATCH_SETUP_COPY.savingHints
-      : profileReady
-        ? null
-        : MATCH_SETUP_COPY.profileUnavailable
   const session = selectWebMatchSession(snapshot)
   const failure = selectWebMatchSessionFailure(snapshot)
   const activeMatchActor = snapshot.matches("active") ? session?.actor : null
@@ -167,9 +176,20 @@ function MatchSessionExperience({
     throw new Error("Active web match state has no owned session.")
   }
 
+  if (snapshot.matches("openingCurrentMatch")) {
+    return <MapachessLoadingSurface />
+  }
+
+  const openingFreshMatch = snapshot.matches("openingFreshMatch")
+  const retainingMatch =
+    snapshot.matches("active") ||
+    snapshot.matches("restartingMatch") ||
+    snapshot.matches("returningToMenu")
+
   return (
     <GameFrame
-      matchSessionActive={snapshot.matches("active")}
+      activityMessage={openingTitle(actor)}
+      matchSessionActive={retainingMatch}
       onRestartRequested={() =>
         actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
       }
@@ -184,7 +204,10 @@ function MatchSessionExperience({
         <MatchModeMenu
           disabled={!profileReady}
           onModeSelected={(selection) => {
-            if (!profileActor.getSnapshot().matches("ready") || settingsOpen)
+            if (
+              !selectCanChangeAutoHintMode(profileActor.getSnapshot()) ||
+              settingsOpen
+            )
               return
             actor.send({
               type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
@@ -199,12 +222,11 @@ function MatchSessionExperience({
             })
           }}
         />
-      ) : snapshot.matches({ menu: "setup" }) ? (
+      ) : snapshot.matches({ menu: "setup" }) || openingFreshMatch ? (
         <WebMatchSetup
-          activityMessage={setupActivity}
           autoHintMode={playerData.settings.autoHintMode}
-          disabled={!profileReady}
-          key={JSON.stringify(initialSetup)}
+          disabled={!profileReady && !openingFreshMatch}
+          key={`${requestedSetup.mode}:${variant}`}
           onAutoHintModeChanged={(autoHintMode) =>
             profileActor.send({
               type: "PROFILE.AUTO_HINT_MODE_CHANGED",
@@ -215,14 +237,17 @@ function MatchSessionExperience({
             actor.send({ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" })
           }
           onStart={(setup) => {
-            if (!profileActor.getSnapshot().matches("ready") || settingsOpen)
+            if (
+              !selectCanChangeAutoHintMode(profileActor.getSnapshot()) ||
+              settingsOpen
+            )
               return
             actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
           }}
           setup={initialSetup}
           storyProgress={playerData.storyProgress}
         />
-      ) : snapshot.matches("active") && session !== null ? (
+      ) : retainingMatch && session !== null ? (
         <WebMatch
           actor={session.actor}
           evaluationActor={session.evaluationActor}
@@ -255,25 +280,7 @@ function MatchSessionExperience({
             </MapachessButton>
           </div>
         </section>
-      ) : (
-        <section
-          aria-live="polite"
-          className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-h-[min(74dvh,50rem)] place-items-center rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-8 text-center shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
-        >
-          <div role="status">
-            <div
-              aria-hidden="true"
-              className="border-mapachito-raspberry border-t-mapachito-orange border-r-mapachito-green bg-mapachito-violet mx-auto size-14 rotate-8 animate-[mapachess-loading-turn_900ms_steps(8,end)_infinite] border-[0.625rem] motion-reduce:animate-none"
-            />
-            <h1 className="font-display text-mapachito-charcoal mt-6 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
-              {openingTitle(actor)}
-            </h1>
-            <p className="text-mapachito-charcoal mt-4 leading-[1.55] font-semibold opacity-76">
-              Loading the pinned local engine and validating its identity.
-            </p>
-          </div>
-        </section>
-      )}
+      ) : null}
     </GameFrame>
   )
 }
@@ -360,16 +367,5 @@ export default function WebGame({
     )
   }
 
-  return (
-    <GameFrame matchSessionActive={false} {...frameProps}>
-      <section
-        aria-live="polite"
-        className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-h-[min(74dvh,50rem)] place-items-center rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-8 text-center shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
-      >
-        <h1 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
-          Opening Mapachess…
-        </h1>
-      </section>
-    </GameFrame>
-  )
+  return <MapachessLoadingSurface />
 }

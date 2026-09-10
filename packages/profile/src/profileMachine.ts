@@ -115,6 +115,26 @@ const profileMachineDefinition = setup({
         persistenceFailure: null,
       }
     }),
+    rememberAutoHintMode: assign(({ event }) => {
+      if (event.type !== "PROFILE.AUTO_HINT_MODE_CHANGED") {
+        throw new Error("Settings action received a non-setting event.")
+      }
+      return { requestedAutoHintMode: event.autoHintMode }
+    }),
+    prepareRequestedAutoHintModeWrite: assign(({ context }) => {
+      if (context.requestedAutoHintMode === null) {
+        throw new Error("A requested hint preference is required.")
+      }
+      return {
+        pendingWrite: prepareAutoHintModePending(
+          context,
+          context.requestedAutoHintMode,
+        ),
+        requestedAutoHintMode: null,
+        persistenceFailure: null,
+      }
+    }),
+    clearRequestedAutoHintMode: assign({ requestedAutoHintMode: null }),
     prepareFreshRecoveryWrite: assign(({ context }) => ({
       pendingWrite: prepareFreshRecoveryPending(context),
       persistenceFailure: null,
@@ -135,6 +155,17 @@ const profileMachineDefinition = setup({
   guards: {
     autoHintModeIsStandalone: ({ context }) =>
       requireCurrentPlayerData(context).activeMatch === null,
+    standalonePreferenceIsSaving: ({ context }) =>
+      context.loaded?.current.type === "valid" &&
+      context.loaded.current.data.activeMatch === null &&
+      context.pendingWrite?.operation === "commit" &&
+      context.pendingWrite.candidate.activeMatch === null,
+    requestedAutoHintModeDiffers: ({ context }) =>
+      context.requestedAutoHintMode !== null &&
+      context.requestedAutoHintMode !==
+        requireCurrentPlayerData(context).settings.autoHintMode,
+    requestedAutoHintModeExists: ({ context }) =>
+      context.requestedAutoHintMode !== null,
     currentIsInvalid: ({ context }) =>
       requireLoaded(context).current.type === "invalid",
     currentIsMissing: ({ context }) =>
@@ -154,6 +185,7 @@ const profileMachineDefinition = setup({
     loaded: null,
     pendingWrite: null,
     persistenceFailure: null,
+    requestedAutoHintMode: null,
     store: input.store,
   }),
   states: {
@@ -197,6 +229,17 @@ const profileMachineDefinition = setup({
       always: "persisting",
     },
     ready: {
+      always: [
+        {
+          guard: "requestedAutoHintModeDiffers",
+          actions: "prepareRequestedAutoHintModeWrite",
+          target: "persisting",
+        },
+        {
+          guard: "requestedAutoHintModeExists",
+          actions: "clearRequestedAutoHintMode",
+        },
+      ],
       on: {
         "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED": {
           actions: "prepareActiveMatchWrite",
@@ -275,6 +318,12 @@ const profileMachineDefinition = setup({
       },
     },
     persisting: {
+      on: {
+        "PROFILE.AUTO_HINT_MODE_CHANGED": {
+          guard: "standalonePreferenceIsSaving",
+          actions: "rememberAutoHintMode",
+        },
+      },
       invoke: {
         id: "profile.persistPendingWrite",
         src: "persistPendingWrite",
@@ -307,6 +356,12 @@ const profileMachineDefinition = setup({
       },
     },
     retryingPersistence: {
+      on: {
+        "PROFILE.AUTO_HINT_MODE_CHANGED": {
+          guard: "standalonePreferenceIsSaving",
+          actions: "rememberAutoHintMode",
+        },
+      },
       invoke: {
         id: "profile.persistRetry",
         src: "retryPendingWrite",
@@ -347,8 +402,32 @@ export const selectCurrentPlayerData = (
 
 export const selectPendingPlayerData = (
   snapshot: ProfileMachineSnapshot,
-): MapachessPlayerData | null =>
-  snapshot.context.pendingWrite?.candidate ?? null
+): MapachessPlayerData | null => {
+  const candidate = snapshot.context.pendingWrite?.candidate
+  if (candidate === undefined) return null
+  const requested = snapshot.context.requestedAutoHintMode
+  return requested === null
+    ? candidate
+    : {
+        ...candidate,
+        settings: { ...candidate.settings, autoHintMode: requested },
+      }
+}
+
+export const selectCanChangeAutoHintMode = (
+  snapshot: ProfileMachineSnapshot,
+): boolean => {
+  const current = selectCurrentPlayerData(snapshot)
+  return (
+    current !== null &&
+    current.activeMatch === null &&
+    (snapshot.matches("ready") ||
+      ((snapshot.matches("persisting") ||
+        snapshot.matches("retryingPersistence")) &&
+        snapshot.context.pendingWrite?.operation === "commit" &&
+        snapshot.context.pendingWrite.candidate.activeMatch === null))
+  )
+}
 
 export const selectUnreadablePlayerData = (
   snapshot: ProfileMachineSnapshot,

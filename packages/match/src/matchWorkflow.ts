@@ -273,6 +273,7 @@ export const pendingMoveHintsMutation = (
     mutationSequence: context.mutationSequence,
     pieceHintsUsed: context.pieceHintsUsed,
     route: "move-hints-visible",
+    retainedHintStage: "piece-hints",
     timeline: context.timeline,
   })
 
@@ -305,6 +306,7 @@ export const autoHintModeState = (
 export const pendingAutoHintModeMutation = (
   context: MatchMachineContext,
   autoHintMode: AutoHintMode,
+  previousHintStage: "piece-hints" | "move-hints" | null,
 ): PendingMatchMutation => {
   const state = autoHintModeState(context, autoHintMode)
   return createPendingMatchMutation({
@@ -316,6 +318,12 @@ export const pendingAutoHintModeMutation = (
     mutationSequence: context.mutationSequence,
     pieceHintsUsed: state.pieceHintsUsed,
     route: context.conclusion === null ? "resolve-position" : "complete",
+    retainedHintStage:
+      state.hints === null || previousHintStage === null
+        ? null
+        : autoHintMode === "auto-piece-hints"
+          ? "piece-hints"
+          : previousHintStage,
     timeline: context.timeline,
   })
 }

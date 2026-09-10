@@ -25,7 +25,9 @@ export const selectMatchTimeline = (
 
 export const selectAutoHintMode = (
   snapshot: MatchMachineSnapshot,
-): AutoHintMode => snapshot.context.autoHintMode
+): AutoHintMode =>
+  snapshot.context.pendingMutation?.request.autoHintMode ??
+  snapshot.context.autoHintMode
 
 export const selectMatchConclusion = (
   snapshot: MatchMachineSnapshot,
@@ -42,14 +44,18 @@ export const selectAreMatchMutationsFrozen = (
   snapshot.matches("persistenceFailure")
 
 export const selectCanUndo = (snapshot: MatchMachineSnapshot): boolean =>
-  !selectAreMatchMutationsFrozen(snapshot) &&
+  !selectAreMatchMutationsFrozen(snapshot) && selectHasUndoHistory(snapshot)
+
+export const selectHasUndoHistory = (snapshot: MatchMachineSnapshot): boolean =>
   undoToPreviousPlayerDecision(
     snapshot.context.timeline,
     snapshot.context.playerColor,
   ) !== undefined
 
 export const selectCanRedo = (snapshot: MatchMachineSnapshot): boolean =>
-  !selectAreMatchMutationsFrozen(snapshot) &&
+  !selectAreMatchMutationsFrozen(snapshot) && selectHasRedoHistory(snapshot)
+
+export const selectHasRedoHistory = (snapshot: MatchMachineSnapshot): boolean =>
   redoToNextPlayerDecision(
     snapshot.context.timeline,
     snapshot.context.playerColor,
@@ -78,6 +84,27 @@ export const selectIsOpponentThinking = (
 export const selectHintStage = (
   snapshot: MatchMachineSnapshot,
 ): MatchHintStage => {
+  const pending = snapshot.context.pendingMutation
+  if (pending !== null) {
+    if (
+      pending.conclusion !== null ||
+      pending.request.currentFen !== selectMatchPosition(snapshot).fen
+    )
+      return "hidden"
+    if (
+      pending.retainedHintStage !== null &&
+      snapshot.context.hints?.positionFen === pending.request.currentFen
+    )
+      return pending.retainedHintStage
+    if (selectMatchPosition(snapshot).turn !== snapshot.context.playerColor)
+      return "hidden"
+    if (snapshot.context.hintAnalyst === null) return "unavailable"
+    if (snapshot.matches("persistenceFailure")) return "ready"
+    if (pending.route === "accepted-hints-visible") return "loading"
+    return pending.request.autoHintMode === "no-auto-hints"
+      ? "ready"
+      : "loading"
+  }
   if (!snapshot.matches("playerTurn")) return "hidden"
   if (snapshot.context.hintAnalyst === null) return "unavailable"
   if (snapshot.matches({ playerTurn: "analyzing" })) return "loading"

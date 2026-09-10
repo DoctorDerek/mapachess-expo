@@ -183,9 +183,12 @@ export default async function openWebMatchRuntime(
 
   let engineIdentity: StockfishUciIdentity
   try {
-    engineIdentity = await opponentSession.boot(input.signal)
-    await hintSession.boot(input.signal)
-    await evaluationSession.boot(input.signal)
+    const identities = await Promise.all([
+      opponentSession.boot(input.signal),
+      hintSession.boot(input.signal),
+      evaluationSession.boot(input.signal),
+    ])
+    engineIdentity = identities[0]
     if (input.signal?.aborted === true) {
       throw new DOMException("Web match opening was aborted.", "AbortError")
     }

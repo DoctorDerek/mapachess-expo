@@ -22,7 +22,6 @@ describe("Story ladder presentation structure", () => {
     (challengeSetup) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
-          activityMessage={null}
           autoHintMode="no-auto-hints"
           disabled={false}
           onAutoHintModeChanged={vi.fn()}
@@ -45,7 +44,6 @@ describe("Story ladder presentation structure", () => {
     (variant) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
-          activityMessage={null}
           autoHintMode="no-auto-hints"
           disabled={false}
           onAutoHintModeChanged={vi.fn()}
@@ -86,7 +84,6 @@ describe("Story ladder presentation structure", () => {
   it("offers earned opponents as named choices and defaults setup to the next unlocked animal", () => {
     const markup = renderToStaticMarkup(
       <WebMatchSetup
-        activityMessage={null}
         autoHintMode="no-auto-hints"
         disabled={false}
         onAutoHintModeChanged={vi.fn()}
@@ -130,7 +127,6 @@ describe("Story ladder presentation structure", () => {
 
   it("composes Story progress only into Story setup", () => {
     const props = {
-      activityMessage: null,
       autoHintMode: "auto-move-hints" as const,
       disabled: false,
       onAutoHintModeChanged: vi.fn(),

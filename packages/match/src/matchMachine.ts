@@ -144,7 +144,7 @@ const matchMachineDefinition = setup({
       pendingMutation: pendingMoveHintsMutation(context),
       persistenceFailure: null,
     })),
-    prepareAutoHintModeMutation: assign(({ context, event }) => {
+    prepareAutoHintModeMutation: assign(({ context, event, self }) => {
       if (event.type !== "MATCH.AUTO_HINT_MODE_CHANGED") {
         throw new Error("Hint-mode persistence received a non-setting event.")
       }
@@ -152,6 +152,11 @@ const matchMachineDefinition = setup({
         pendingMutation: pendingAutoHintModeMutation(
           context,
           event.autoHintMode,
+          self.getSnapshot().matches({ playerTurn: "moveHintsVisible" })
+            ? "move-hints"
+            : self.getSnapshot().matches({ playerTurn: "pieceHintsVisible" })
+              ? "piece-hints"
+              : null,
         ),
         persistenceFailure: null,
       }
@@ -719,6 +724,8 @@ export {
   selectCanResign,
   selectCanUndo,
   selectDrawOfferResponse,
+  selectHasRedoHistory,
+  selectHasUndoHistory,
   selectHintFailure,
   selectHintStage,
   selectIsOpponentThinking,

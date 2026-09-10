@@ -118,6 +118,39 @@ const openFixture = async (
   return { runtime, openSession }
 }
 describe("web match runtime ownership", () => {
+  it("boots independent engine sessions together and waits for all three", async () => {
+    const gates = [0, 1, 2].map(() =>
+      Promise.withResolvers<StockfishUciIdentity>(),
+    )
+    const sessions = gates.map((gate) => createSession(() => gate.promise))
+    const opened = vi.fn()
+    const opening = openWebMatchRuntime({
+      setup: { variant: "standard", chess960PositionId: null },
+      cryptography: createCryptography(),
+      openSession: createSessionQueue(sessions.map(({ session }) => session)),
+    }).then((runtime) => {
+      opened()
+      return runtime
+    })
+    try {
+      await vi.waitFor(() => {
+        for (const session of sessions)
+          expect(session.boot).toHaveBeenCalledOnce()
+      })
+      expect(opened).not.toHaveBeenCalled()
+      gates[0]?.resolve(ENGINE_IDENTITY)
+      gates[1]?.resolve(ENGINE_IDENTITY)
+      await Promise.resolve()
+      expect(opened).not.toHaveBeenCalled()
+    } finally {
+      for (const gate of gates) gate.resolve(ENGINE_IDENTITY)
+    }
+    const runtime = await opening
+    expect(opened).toHaveBeenCalledOnce()
+    await runtime.close()
+    for (const session of sessions) expect(session.close).toHaveBeenCalledOnce()
+  })
+
   it.each(["standard", "chess960"] as const)(
     "opens independent %s Challenge strength without changing analysis worker configuration",
     async (variant) => {
@@ -462,9 +495,9 @@ describe("web match runtime ownership", () => {
       }),
     ).rejects.toBe(bootError)
     expect(opponent.close).toHaveBeenCalledTimes(1)
-    expect(hints.boot).not.toHaveBeenCalled()
+    expect(hints.boot).toHaveBeenCalledOnce()
     expect(hints.close).toHaveBeenCalledTimes(1)
-    expect(evaluation.boot).not.toHaveBeenCalled()
+    expect(evaluation.boot).toHaveBeenCalledOnce()
     expect(evaluation.close).toHaveBeenCalledTimes(1)
   })
 
@@ -488,7 +521,7 @@ describe("web match runtime ownership", () => {
     ).rejects.toBe(bootError)
     expect(opponent.close).toHaveBeenCalledTimes(1)
     expect(hints.close).toHaveBeenCalledTimes(1)
-    expect(evaluation.boot).not.toHaveBeenCalled()
+    expect(evaluation.boot).toHaveBeenCalledOnce()
     expect(evaluation.close).toHaveBeenCalledTimes(1)
   })
 

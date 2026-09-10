@@ -15,6 +15,8 @@ type HintControlPresentation = Readonly<{
 }>
 
 export type BetterHintsControlProps = Readonly<{
+  busy?: boolean
+  disabled?: boolean
   hints: BetterHintsResult | null
   matchComplete: boolean
   onMoveHintsRequested: () => void
@@ -103,6 +105,8 @@ const hintAnnouncement = (
 }
 
 export default function BetterHintsControl({
+  busy = false,
+  disabled = false,
   hints,
   matchComplete,
   onMoveHintsRequested,
@@ -113,8 +117,6 @@ export default function BetterHintsControl({
   const guidance = matchComplete
     ? "Better Hints are available only while the match is in progress."
     : HINT_GUIDANCE[stage]
-  const visibleHints =
-    stage === "piece-hints" || stage === "move-hints" ? hints : null
   const activate =
     control.action === "piece-hints"
       ? onPieceHintsRequested
@@ -132,18 +134,18 @@ export default function BetterHintsControl({
       </h2>
       <MapachessButton
         variant="hint"
-        aria-busy={stage === "loading"}
+        aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance"
         className="mt-3 w-full"
         data-hint-stage={matchComplete ? "complete" : stage}
-        disabled={control.action === null}
+        disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
         {control.label}
       </MapachessButton>
       <p
-        className="text-mapachito-charcoal mt-2 text-sm leading-[1.55] font-semibold opacity-76"
+        className="text-mapachito-charcoal mt-2 min-h-[3lh] text-sm leading-[1.55] font-semibold opacity-76"
         id="better-hints-guidance"
       >
         {guidance}
@@ -152,49 +154,25 @@ export default function BetterHintsControl({
         {hintAnnouncement(stage, hints)}
       </p>
 
-      {visibleHints === null ? null : (
-        <ul
-          aria-label="Better Hints legend"
-          className="text-mapachito-charcoal mt-3 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-2 text-xs font-bold xl:grid-cols-1"
-        >
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-6 rounded-md border-[3px] border-emerald-500"
-            />
-            Player Piece Hint
-          </li>
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="size-6 rounded-md border-[3px] border-dashed border-red-500"
-            />
-            Opponent Piece Hint
-          </li>
-          {stage === "move-hints" ? (
-            <>
-              <li className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="grid size-6 place-items-center font-black text-emerald-400"
-                >
-                  →
-                </span>
-                Player Move Hint
-              </li>
-              <li className="flex items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="grid size-6 place-items-center border-t-2 border-dashed border-red-400 font-black text-red-400"
-                >
-                  →
-                </span>
-                Opponent Move Hint
-              </li>
-            </>
-          ) : null}
-        </ul>
-      )}
+      <ul
+        aria-label="Better Hints legend"
+        className="text-mapachito-charcoal mt-3 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-2 text-xs font-bold xl:grid-cols-1"
+      >
+        <li className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="size-6 rounded-md border-[3px] border-emerald-500"
+          />
+          Player hints · solid green
+        </li>
+        <li className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="size-6 rounded-md border-[3px] border-dashed border-red-500"
+          />
+          Opponent hints · dashed red
+        </li>
+      </ul>
     </section>
   )
 }

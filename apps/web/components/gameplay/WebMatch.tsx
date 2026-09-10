@@ -14,6 +14,8 @@ import matchMachine, {
   selectCanResign,
   selectCanUndo,
   selectDrawOfferResponse,
+  selectHasRedoHistory,
+  selectHasUndoHistory,
   selectHintStage,
   selectIsOpponentThinking,
   selectIsPersistingMutation,
@@ -63,9 +65,6 @@ const matchStatusText = (
   if (persistenceFailure !== null) {
     return "Your last action is paused because its local save was not verified."
   }
-  if (selectIsPersistingMutation(snapshot)) {
-    return "Saving and verifying your last action…"
-  }
 
   if (failure?.type === "MATCH.OPPONENT_MOVE_ILLEGAL") {
     return `${opponentName} returned an invalid move. Retry or undo.`
@@ -91,7 +90,10 @@ const matchStatusText = (
       ? "Draw by stalemate."
       : "Draw by insufficient material."
   }
-  if (selectIsOpponentThinking(snapshot)) {
+  if (
+    selectIsOpponentThinking(snapshot) ||
+    selectMatchPosition(snapshot).turn !== playerColor
+  ) {
     return `${opponentName} is choosing a move…`
   }
   if (drawOfferResponse === "rejected") {
@@ -130,6 +132,7 @@ export default function WebMatch({
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
+  const persisting = selectIsPersistingMutation(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
   const hintStage = selectHintStage(snapshot)
@@ -150,7 +153,10 @@ export default function WebMatch({
   })
   const activeTransitions = timeline.transitions.slice(0, timeline.cursor)
   const lastMove = activeTransitions.at(-1)?.move ?? null
-  const legalMoves = playerTurn ? listLegalMatchMoves(position) : []
+  const legalMoves =
+    position.turn === runtime.playerColor && !matchComplete
+      ? listLegalMatchMoves(position)
+      : []
   const offerDraw = (): void => {
     if (drawOfferDecision === null) {
       throw new Error("Offer Draw requires the accepted current evaluation.")
@@ -338,6 +344,8 @@ export default function WebMatch({
           ) : null}
 
           <BetterHintsControl
+            busy={persisting}
+            disabled={persistenceFailure !== null}
             hints={hints}
             matchComplete={matchComplete}
             onMoveHintsRequested={() =>
@@ -352,6 +360,12 @@ export default function WebMatch({
           <div className="mt-5 grid grid-cols-2 gap-3">
             <MapachessButton
               variant="secondary"
+              aria-busy={
+                persisting &&
+                position.turn === runtime.playerColor &&
+                !matchComplete &&
+                drawOfferDecision !== null
+              }
               disabled={
                 !selectCanOfferDraw(snapshot) || drawOfferDecision === null
               }
@@ -362,6 +376,11 @@ export default function WebMatch({
             </MapachessButton>
             <MapachessButton
               variant="secondary"
+              aria-busy={
+                persisting &&
+                !matchComplete &&
+                position.status.type === "playing"
+              }
               disabled={!selectCanResign(snapshot)}
               onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
               type="button"
@@ -373,6 +392,7 @@ export default function WebMatch({
           <div className="mt-5 grid grid-cols-2 gap-3">
             <MapachessButton
               variant="secondary"
+              aria-busy={persisting && selectHasUndoHistory(snapshot)}
               disabled={!selectCanUndo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
               type="button"
@@ -381,6 +401,7 @@ export default function WebMatch({
             </MapachessButton>
             <MapachessButton
               variant="secondary"
+              aria-busy={persisting && selectHasRedoHistory(snapshot)}
               disabled={!selectCanRedo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
               type="button"

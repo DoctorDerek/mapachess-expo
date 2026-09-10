@@ -46,6 +46,7 @@ export type ProfileMachineContext = Readonly<{
   loaded: LoadedDurablePlayerData | null
   pendingWrite: PendingProfileWrite | null
   persistenceFailure: ProfilePersistenceFailure | null
+  requestedAutoHintMode: AutoHintMode | null
   store: DurablePlayerDataStore
 }>
 

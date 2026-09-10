@@ -13,6 +13,7 @@ import {
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
   importIssue: ProfileImportIssue | null
   onAutoHintModeChanged: (autoHintMode: AutoHintMode) => void
@@ -23,6 +24,7 @@ export type ProfileSettingsPanelProps = Readonly<{
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  hintChangesDisabled,
   autoHintMode,
   importIssue,
   onAutoHintModeChanged,
@@ -34,7 +36,8 @@ export default function ProfileSettingsPanel({
 
   return (
     <div
-      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]"
+      aria-busy={busy}
+      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)] aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
       id="profile-settings-panel"
     >
       <ProfileCard labelledBy="profile-settings-title">
@@ -53,7 +56,6 @@ export default function ProfileSettingsPanel({
           <MapachessButton
             variant="secondary"
             autoFocus
-            disabled={busy}
             onClick={onClose}
             type="button"
           >
@@ -69,7 +71,7 @@ export default function ProfileSettingsPanel({
           </p>
           <AutoHintModeChoices
             autoHintMode={autoHintMode}
-            disabled={busy}
+            disabled={hintChangesDisabled ?? busy}
             onAutoHintModeChanged={onAutoHintModeChanged}
           />
         </div>
@@ -100,13 +102,9 @@ export default function ProfileSettingsPanel({
           </MapachessNotice>
         )}
         {activityMessage === null ? null : (
-          <MapachessNotice
-            aria-live="polite"
-            className="mt-5 text-sm"
-            role="status"
-          >
+          <p className="sr-only" role="status">
             {activityMessage}
-          </MapachessNotice>
+          </p>
         )}
       </ProfileCard>
     </div>

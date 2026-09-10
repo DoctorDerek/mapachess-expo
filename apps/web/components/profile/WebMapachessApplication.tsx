@@ -2,12 +2,14 @@
 
 import { useSelector } from "@xstate/react"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
 import profileMachine, {
+  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
   selectImportIssue,
@@ -16,6 +18,7 @@ import profileMachine, {
   selectPersistenceFailure,
   selectUnreadablePlayerData,
 } from "@mapachess/profile/profile-machine"
+import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import openWebProfileRuntime, {
   type WebProfileRuntime,
 } from "../../lib/profile/openWebProfileRuntime"
@@ -27,6 +30,7 @@ import {
 } from "../../lib/profile/webPlayerDataFiles"
 import WebGame from "../gameplay/WebGame"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
@@ -74,10 +78,6 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const importPreview = selectImportPreview(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
   const playableProfile = currentPlayerData !== null
-  const profileBusy =
-    snapshot.matches("importDecoding") ||
-    snapshot.matches("persisting") ||
-    snapshot.matches("retryingPersistence")
   const profileActivityMessage = snapshot.matches("importDecoding")
     ? "Inspecting the selected backup. Nothing has been replaced."
     : snapshot.matches("persisting") || snapshot.matches("retryingPersistence")
@@ -239,6 +239,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           activeMatchActor === null ? (
             <ProfileSettingsPanel
               {...settingsProps}
+              hintChangesDisabled={!selectCanChangeAutoHintMode(snapshot)}
               autoHintMode={
                 (pendingPlayerData ?? currentPlayerData).settings.autoHintMode
               }
@@ -273,18 +274,14 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     )
   }
 
+  if (!snapshot.matches("importDecoding")) return <MapachessLoadingSurface />
+
   return (
     <FullPageProfilePanel
-      description="Mapachess is opening, validating, and verifying this device’s local player data before enabling play."
-      eyebrow="Local-only boot"
+      description="Inspecting the selected backup. Nothing has been replaced."
+      eyebrow="Player data"
       live="polite"
-      title={
-        snapshot.matches("importDecoding")
-          ? "Inspecting backup…"
-          : profileBusy
-            ? "Saving player data…"
-            : "Opening Mapachess…"
-      }
+      title="Inspecting backup…"
     >
       {snapshot.matches("importDecoding") ? (
         <MapachessButton
@@ -300,6 +297,12 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 }
 
 export default function WebMapachessApplication() {
+  preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {
+    as: "fetch",
+    crossOrigin: "anonymous",
+    fetchPriority: "low",
+    type: "application/wasm",
+  })
   const [runtimeState, setRuntimeState] = useState<ProfileRuntimeState>({
     status: "opening",
   })
@@ -333,20 +336,14 @@ export default function WebMapachessApplication() {
     return <ProfileExperience actor={runtimeState.runtime.actor} />
   }
 
+  if (runtimeState.status === "opening") return <MapachessLoadingSurface />
+
   return (
     <FullPageProfilePanel
-      description={
-        runtimeState.status === "opening"
-          ? "Preparing the local-only player-data runtime."
-          : "This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
-      }
+      description="This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
       eyebrow="Local profile"
-      live={runtimeState.status === "opening" ? "polite" : "assertive"}
-      title={
-        runtimeState.status === "opening"
-          ? "Opening Mapachess…"
-          : "Local saves are unavailable."
-      }
+      live="assertive"
+      title="Local saves are unavailable."
     />
   )
 }
