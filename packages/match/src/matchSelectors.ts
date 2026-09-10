@@ -25,7 +25,9 @@ export const selectMatchTimeline = (
 
 export const selectAutoHintMode = (
   snapshot: MatchMachineSnapshot,
-): AutoHintMode => snapshot.context.autoHintMode
+): AutoHintMode =>
+  snapshot.context.pendingMutation?.request.autoHintMode ??
+  snapshot.context.autoHintMode
 
 export const selectMatchConclusion = (
   snapshot: MatchMachineSnapshot,
@@ -78,6 +80,21 @@ export const selectIsOpponentThinking = (
 export const selectHintStage = (
   snapshot: MatchMachineSnapshot,
 ): MatchHintStage => {
+  const pending = snapshot.context.pendingMutation
+  if (pending !== null) {
+    if (
+      pending.conclusion !== null ||
+      pending.request.currentFen !== selectMatchPosition(snapshot).fen
+    )
+      return "hidden"
+    if (
+      pending.retainedHintStage !== null &&
+      snapshot.context.hints?.positionFen === pending.request.currentFen
+    )
+      return pending.retainedHintStage
+    if (pending.route === "accepted-hints-visible") return "loading"
+    return "hidden"
+  }
   if (!snapshot.matches("playerTurn")) return "hidden"
   if (snapshot.context.hintAnalyst === null) return "unavailable"
   if (snapshot.matches({ playerTurn: "analyzing" })) return "loading"

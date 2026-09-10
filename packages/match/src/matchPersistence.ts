@@ -51,6 +51,7 @@ export type PendingMatchMutation = Readonly<{
   moveHintsUsed: boolean
   pieceHintsUsed: boolean
   request: MatchPersistenceRequest
+  retainedHintStage: "piece-hints" | "move-hints" | null
   route: PendingMatchMutationRoute
   timeline: MatchTimeline
 }>
@@ -63,6 +64,7 @@ export type CreatePendingMatchMutationInput = Readonly<{
   moveHintsUsed: boolean
   mutationSequence: number
   pieceHintsUsed: boolean
+  retainedHintStage?: "piece-hints" | "move-hints" | null
   route: PendingMatchMutationRoute
   timeline: MatchTimeline
 }>
@@ -85,6 +87,7 @@ export const createPendingMatchMutation = (
     hints: input.hints,
     moveHintsUsed: input.moveHintsUsed,
     pieceHintsUsed: input.pieceHintsUsed,
+    retainedHintStage: input.retainedHintStage ?? null,
     request: Object.freeze({
       autoHintMode: input.autoHintMode,
       conclusion: input.conclusion,
