@@ -63,9 +63,6 @@ const matchStatusText = (
   if (persistenceFailure !== null) {
     return "Your last action is paused because its local save was not verified."
   }
-  if (selectIsPersistingMutation(snapshot)) {
-    return "Saving and verifying your last action…"
-  }
 
   if (failure?.type === "MATCH.OPPONENT_MOVE_ILLEGAL") {
     return `${opponentName} returned an invalid move. Retry or undo.`
@@ -91,7 +88,10 @@ const matchStatusText = (
       ? "Draw by stalemate."
       : "Draw by insufficient material."
   }
-  if (selectIsOpponentThinking(snapshot)) {
+  if (
+    selectIsOpponentThinking(snapshot) ||
+    selectMatchPosition(snapshot).turn !== playerColor
+  ) {
     return `${opponentName} is choosing a move…`
   }
   if (drawOfferResponse === "rejected") {
@@ -130,6 +130,7 @@ export default function WebMatch({
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
   const playerTurn = selectIsPlayerTurn(snapshot)
+  const persisting = selectIsPersistingMutation(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
   const hintStage = selectHintStage(snapshot)
@@ -150,7 +151,10 @@ export default function WebMatch({
   })
   const activeTransitions = timeline.transitions.slice(0, timeline.cursor)
   const lastMove = activeTransitions.at(-1)?.move ?? null
-  const legalMoves = playerTurn ? listLegalMatchMoves(position) : []
+  const legalMoves =
+    position.turn === runtime.playerColor && !matchComplete
+      ? listLegalMatchMoves(position)
+      : []
   const offerDraw = (): void => {
     if (drawOfferDecision === null) {
       throw new Error("Offer Draw requires the accepted current evaluation.")
@@ -338,6 +342,7 @@ export default function WebMatch({
           ) : null}
 
           <BetterHintsControl
+            busy={persisting}
             hints={hints}
             matchComplete={matchComplete}
             onMoveHintsRequested={() =>
