@@ -724,6 +724,8 @@ export {
   selectCanResign,
   selectCanUndo,
   selectDrawOfferResponse,
+  selectHasRedoHistory,
+  selectHasUndoHistory,
   selectHintFailure,
   selectHintStage,
   selectIsOpponentThinking,

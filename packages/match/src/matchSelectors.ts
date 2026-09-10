@@ -44,14 +44,18 @@ export const selectAreMatchMutationsFrozen = (
   snapshot.matches("persistenceFailure")
 
 export const selectCanUndo = (snapshot: MatchMachineSnapshot): boolean =>
-  !selectAreMatchMutationsFrozen(snapshot) &&
+  !selectAreMatchMutationsFrozen(snapshot) && selectHasUndoHistory(snapshot)
+
+export const selectHasUndoHistory = (snapshot: MatchMachineSnapshot): boolean =>
   undoToPreviousPlayerDecision(
     snapshot.context.timeline,
     snapshot.context.playerColor,
   ) !== undefined
 
 export const selectCanRedo = (snapshot: MatchMachineSnapshot): boolean =>
-  !selectAreMatchMutationsFrozen(snapshot) &&
+  !selectAreMatchMutationsFrozen(snapshot) && selectHasRedoHistory(snapshot)
+
+export const selectHasRedoHistory = (snapshot: MatchMachineSnapshot): boolean =>
   redoToNextPlayerDecision(
     snapshot.context.timeline,
     snapshot.context.playerColor,
@@ -93,7 +97,12 @@ export const selectHintStage = (
     )
       return pending.retainedHintStage
     if (pending.route === "accepted-hints-visible") return "loading"
-    return "hidden"
+    if (selectMatchPosition(snapshot).turn !== snapshot.context.playerColor)
+      return "hidden"
+    if (snapshot.context.hintAnalyst === null) return "unavailable"
+    return pending.request.autoHintMode === "no-auto-hints"
+      ? "ready"
+      : "loading"
   }
   if (!snapshot.matches("playerTurn")) return "hidden"
   if (snapshot.context.hintAnalyst === null) return "unavailable"

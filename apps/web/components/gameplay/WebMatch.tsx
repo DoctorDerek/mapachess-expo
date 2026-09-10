@@ -14,6 +14,8 @@ import matchMachine, {
   selectCanResign,
   selectCanUndo,
   selectDrawOfferResponse,
+  selectHasRedoHistory,
+  selectHasUndoHistory,
   selectHintStage,
   selectIsOpponentThinking,
   selectIsPersistingMutation,
@@ -357,6 +359,12 @@ export default function WebMatch({
           <div className="mt-5 grid grid-cols-2 gap-3">
             <MapachessButton
               variant="secondary"
+              aria-busy={
+                persisting &&
+                position.turn === runtime.playerColor &&
+                !matchComplete &&
+                drawOfferDecision !== null
+              }
               disabled={
                 !selectCanOfferDraw(snapshot) || drawOfferDecision === null
               }
@@ -367,6 +375,11 @@ export default function WebMatch({
             </MapachessButton>
             <MapachessButton
               variant="secondary"
+              aria-busy={
+                persisting &&
+                !matchComplete &&
+                position.status.type === "playing"
+              }
               disabled={!selectCanResign(snapshot)}
               onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
               type="button"
@@ -378,6 +391,7 @@ export default function WebMatch({
           <div className="mt-5 grid grid-cols-2 gap-3">
             <MapachessButton
               variant="secondary"
+              aria-busy={persisting && selectHasUndoHistory(snapshot)}
               disabled={!selectCanUndo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
               type="button"
@@ -386,6 +400,7 @@ export default function WebMatch({
             </MapachessButton>
             <MapachessButton
               variant="secondary"
+              aria-busy={persisting && selectHasRedoHistory(snapshot)}
               disabled={!selectCanRedo(snapshot)}
               onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
               type="button"

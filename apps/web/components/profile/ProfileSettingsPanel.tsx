@@ -36,7 +36,8 @@ export default function ProfileSettingsPanel({
 
   return (
     <div
-      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]"
+      aria-busy={busy}
+      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)] aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
       id="profile-settings-panel"
     >
       <ProfileCard labelledBy="profile-settings-title">
