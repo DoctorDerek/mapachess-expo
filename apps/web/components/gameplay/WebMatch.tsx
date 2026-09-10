@@ -345,6 +345,7 @@ export default function WebMatch({
 
           <BetterHintsControl
             busy={persisting}
+            disabled={persistenceFailure !== null}
             hints={hints}
             matchComplete={matchComplete}
             onMoveHintsRequested={() =>

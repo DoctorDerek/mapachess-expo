@@ -96,10 +96,11 @@ export const selectHintStage = (
       snapshot.context.hints?.positionFen === pending.request.currentFen
     )
       return pending.retainedHintStage
-    if (pending.route === "accepted-hints-visible") return "loading"
     if (selectMatchPosition(snapshot).turn !== snapshot.context.playerColor)
       return "hidden"
     if (snapshot.context.hintAnalyst === null) return "unavailable"
+    if (snapshot.matches("persistenceFailure")) return "ready"
+    if (pending.route === "accepted-hints-visible") return "loading"
     return pending.request.autoHintMode === "no-auto-hints"
       ? "ready"
       : "loading"

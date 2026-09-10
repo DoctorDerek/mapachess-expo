@@ -16,6 +16,7 @@ type HintControlPresentation = Readonly<{
 
 export type BetterHintsControlProps = Readonly<{
   busy?: boolean
+  disabled?: boolean
   hints: BetterHintsResult | null
   matchComplete: boolean
   onMoveHintsRequested: () => void
@@ -105,6 +106,7 @@ const hintAnnouncement = (
 
 export default function BetterHintsControl({
   busy = false,
+  disabled = false,
   hints,
   matchComplete,
   onMoveHintsRequested,
@@ -136,7 +138,7 @@ export default function BetterHintsControl({
         aria-describedby="better-hints-guidance"
         className="mt-3 w-full"
         data-hint-stage={matchComplete ? "complete" : stage}
-        disabled={busy || control.action === null}
+        disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
