@@ -3,10 +3,9 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
-import createMatchSetupForMode, {
-  MATCH_SETUP_COPY,
-} from "@mapachess/match/match-setup"
+import createMatchSetupForMode from "@mapachess/match/match-setup"
 import profileMachine, {
+  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
@@ -134,7 +133,8 @@ function MatchSessionExperience({
     selectCurrentPlayerData(profileSnapshot)
   if (playerData === null)
     throw new Error("Match setup requires a valid player profile.")
-  const profileReady = profileSnapshot.matches("ready") && !settingsOpen
+  const profileReady =
+    selectCanChangeAutoHintMode(profileSnapshot) && !settingsOpen
   const requestedSetup = snapshot.context.requestedSetup
   const variant =
     requestedSetup.mode === "story"
@@ -147,13 +147,6 @@ function MatchSessionExperience({
       ? selectDefaultStoryOpponent(playerData.storyProgress, variant)
       : undefined,
   )
-  const setupActivity =
-    profileSnapshot.matches("persisting") ||
-    profileSnapshot.matches("retryingPersistence")
-      ? MATCH_SETUP_COPY.savingHints
-      : profileReady
-        ? null
-        : MATCH_SETUP_COPY.profileUnavailable
   const session = selectWebMatchSession(snapshot)
   const failure = selectWebMatchSessionFailure(snapshot)
   const activeMatchActor = snapshot.matches("active") ? session?.actor : null
@@ -184,7 +177,10 @@ function MatchSessionExperience({
         <MatchModeMenu
           disabled={!profileReady}
           onModeSelected={(selection) => {
-            if (!profileActor.getSnapshot().matches("ready") || settingsOpen)
+            if (
+              !selectCanChangeAutoHintMode(profileActor.getSnapshot()) ||
+              settingsOpen
+            )
               return
             actor.send({
               type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
@@ -201,7 +197,7 @@ function MatchSessionExperience({
         />
       ) : snapshot.matches({ menu: "setup" }) ? (
         <WebMatchSetup
-          activityMessage={setupActivity}
+          activityMessage={null}
           autoHintMode={playerData.settings.autoHintMode}
           disabled={!profileReady}
           key={JSON.stringify(initialSetup)}
@@ -215,7 +211,10 @@ function MatchSessionExperience({
             actor.send({ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" })
           }
           onStart={(setup) => {
-            if (!profileActor.getSnapshot().matches("ready") || settingsOpen)
+            if (
+              !selectCanChangeAutoHintMode(profileActor.getSnapshot()) ||
+              settingsOpen
+            )
               return
             actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
           }}

@@ -8,6 +8,7 @@ import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
 import profileMachine, {
+  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
   selectImportIssue,
@@ -239,6 +240,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           activeMatchActor === null ? (
             <ProfileSettingsPanel
               {...settingsProps}
+              hintChangesDisabled={!selectCanChangeAutoHintMode(snapshot)}
               autoHintMode={
                 (pendingPlayerData ?? currentPlayerData).settings.autoHintMode
               }

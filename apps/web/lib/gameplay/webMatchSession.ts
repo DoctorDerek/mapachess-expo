@@ -13,6 +13,7 @@ import matchMachine from "@mapachess/match/match-machine"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
   selectCurrentPlayerData,
+  selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
@@ -237,7 +238,9 @@ export async function openFreshWebMatchSession(
   } = input
   await previousSession?.close()
 
-  const playerData = requirePlayerData(profileActor)
+  const playerData =
+    selectPendingPlayerData(profileActor.getSnapshot()) ??
+    requirePlayerData(profileActor)
   const activeMatch = playerData.activeMatch
   if (
     activeMatch !== null &&
