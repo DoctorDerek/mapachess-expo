@@ -83,7 +83,7 @@ describe("bounded direct web ladder refinement", () => {
     },
   )
 
-  it("keeps all refinement evidence separate within the 880-game ceiling", () => {
+  it("identifies the current ladder plans separately from weak-end evidence", () => {
     const plans = [
       createWebOpponentWeakEndPlan("standard").plan,
       createWebOpponentWeakEndPlan("chess960").plan,
@@ -94,8 +94,8 @@ describe("bounded direct web ladder refinement", () => {
     expect(plans.map((plan) => plan.planId)).toEqual([
       "sha256:068eef0fbdf445576730958a9baec081fca5499559a886fdee6749e00392a3d8",
       "sha256:89cc8ac77aedfe9af5750f106c569cb74be7f30156249647d8ea7382cd64f9d6",
-      "sha256:909604ed0df6f22bfc8ef555bc5b4f4915933e7960c011cc3332f5781294bdf9",
-      "sha256:01ec97323770c51e70f455128bf73e284e32436a8cdaf5ff9aa5fc261e3b05d4",
+      "sha256:bfc8f0c21c90516e4b17a0371f6b96e2351ed70af437e14fdc2fcaad34bc424c",
+      "sha256:beb177a693681deebfb9c71222a89a3f5f2468ccb342b8c1a3fb3f1b5c4ebe52",
     ])
     expect(plans.reduce((total, plan) => total + plan.games.length, 0)).toBe(
       880,

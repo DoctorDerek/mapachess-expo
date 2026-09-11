@@ -193,7 +193,7 @@ export default function WebMatch({
           <div>
             <dt>Elo target</dt>
             <dd>
-              {runtime.opponentTargetElo} · {MATCH_SETUP_COPY.provisional}
+              {runtime.opponentTargetElo} · {MATCH_SETUP_COPY.estimated}
             </dd>
           </div>
         </dl>

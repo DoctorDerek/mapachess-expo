@@ -71,8 +71,8 @@ describe("versioned web opponent policies", () => {
     },
   )
   it.each([
-    ["standard", [9150, 8200, 7350, 6550, 6150, 5800, 5400, 5050, 4450, 3850]],
-    ["chess960", [9300, 8700, 8100, 7400, 6650, 6000, 5350, 4800, 4300, 3800]],
+    ["standard", [9150, 8200, 7350, 6550, 6150, 6000, 5400, 5000, 4450, 3850]],
+    ["chess960", [8500, 8100, 7700, 6650, 6000, 5700, 5000, 4300, 3800, 3600]],
   ] as const)(
     "preserves the measured %s ladder through Raccoon",
     async (variant, probabilities) => {

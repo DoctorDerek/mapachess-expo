@@ -10,11 +10,11 @@ export const WEB_OPPONENT_ENGINE_CONFIGURATION = Object.freeze({
   threads: 1,
 }) satisfies Omit<StockfishEngineConfiguration, "variant">
 
-export const PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS = Object.freeze({
+export const WEB_LADDER_RANDOM_BASIS_POINTS = Object.freeze({
   standard: Object.freeze([
-    9_150, 8_200, 7_350, 6_550, 6_150, 5_800, 5_400, 5_050, 4_450, 3_850,
+    9_150, 8_200, 7_350, 6_550, 6_150, 6_000, 5_400, 5_000, 4_450, 3_850,
   ] as const),
   chess960: Object.freeze([
-    9_300, 8_700, 8_100, 7_400, 6_650, 6_000, 5_350, 4_800, 4_300, 3_800,
+    8_500, 8_100, 7_700, 6_650, 6_000, 5_700, 5_000, 4_300, 3_800, 3_600,
   ] as const),
 })

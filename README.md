@@ -21,10 +21,12 @@ The current web development build offers ten Story opponents, Chicken through
 Raccoon, in both Standard and Chess960. Win to unlock the next animal, or replay
 earlier opponents to improve your medal. Each variant retains its own victories
 and best medals, and active matches save locally for reload and restart.
-The authored 100–1000 Elo targets remain provisional and unrated; these matches
-do not update player Elo. Challenge currently offers Chicken with side and
-Chess960-position selection. Independent Challenge animal/difficulty controls,
-XP/Levels, and achievements remain in development.
+The 100–1000 web difficulty presets meet the approved engine-pool calibration
+tolerances in both variants; they are estimates, not certified human ratings.
+These matches still do not update player Elo. Challenge supports independently
+selected earned animals and difficulty, side, and Chess960-position selection.
+XP/Levels, achievements, and player-rating updates remain in development.
+See the [calibration conditions and measured results](packages/calibration/README.md).
 
 ## Current repository
 
@@ -35,8 +37,8 @@ The implemented foundation currently provides:
   Windows UCI process adapter.
 - Deterministic, resumable, color-reversed calibration matches with preserved
   evidence and local BayesElo rating analysis.
-- Measured provisional Standard and Chess960 opponent policies using the pinned
-  web Lite WASM artifacts, without automatic rating promotion.
+- Calibrated Standard and Chess960 100–1000 opponent presets using the pinned
+  web Lite WASM artifacts, without automatic player-rating promotion.
 - Durable Standard and Chess960 browser matches with exact Better Hints, evaluation,
   Undo/Redo, Resign, Offer Draw, reload recovery, Restart Match, and Return to
   Menu.
