@@ -95,22 +95,17 @@ export default function ReactiveBattleStage({
   return (
     <section
       aria-labelledby="reactive-battle-stage-title"
-      className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white relative isolate overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-3 shadow-[0.35rem_0.35rem_0_var(--color-mapachito-orange),0.65rem_0.65rem_0_var(--color-mapachito-raspberry)] forced-colors:border-[CanvasText] forced-colors:shadow-none"
+      className="text-mapachito-white relative isolate"
     >
-      <header className="border-mapachito-charcoal bg-mapachito-orange text-mapachito-charcoal border-b-3 px-4 py-2 forced-colors:border-[CanvasText]">
-        <h2
-          className="font-display text-xl font-black tracking-wide uppercase"
-          id="reactive-battle-stage-title"
-        >
-          Reactive Battle Stage
-        </h2>
-      </header>
+      <h2 className="sr-only" id="reactive-battle-stage-title">
+        Reactive Battle Stage
+      </h2>
 
       <p aria-live="polite" className="sr-only">
         {stageAnnouncement(currentPhase, opponentName)}
       </p>
 
-      <div className="bg-mapachito-blue before:border-mapachito-charcoal before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 grid-rows-[8rem_auto] gap-x-(--battle-gap) overflow-hidden px-4 pt-4 pb-3 [--battle-fallback-size:--spacing(18)] [--battle-gap:--spacing(8)] before:absolute before:inset-x-0 before:top-36 before:bottom-0 before:border-t-4 forced-colors:before:hidden">
+      <div className="bg-mapachito-blue before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 gap-x-(--battle-gap) overflow-hidden px-4 pb-2 [--battle-fallback-size:--spacing(18)] [--battle-gap:--spacing(8)] before:absolute before:inset-x-0 before:bottom-0 before:h-2 forced-colors:before:hidden">
         <BattleFighter
           beat={beat}
           displayName="Mapachito"

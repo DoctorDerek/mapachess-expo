@@ -170,41 +170,37 @@ export default function WebMatch({
   return (
     <section
       aria-label={`${modeLabel} match against ${opponent.displayName}`}
-      className="grid min-w-0 items-start gap-[clamp(1rem,3vw,2rem)] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] xl:grid-rows-[auto_auto_auto] xl:gap-[clamp(1rem,2vw,2rem)] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
+      className="grid min-w-0 items-start gap-2 [--playing-width:min(100%,max(16rem,calc(100svh-30rem)))] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-18rem)))] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
     >
       <section
         aria-labelledby="opponent-band-title"
-        className="border-mapachito-charcoal text-mapachito-charcoal bg-mapachito-white shadow-mapachito-red flex w-full max-w-208 flex-wrap items-center justify-between gap-x-6 gap-y-[0.8rem] justify-self-center rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 px-4 py-[0.85rem] shadow-[0.3rem_0.3rem_0] [grid-area:opponent]"
+        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center [grid-area:opponent]"
       >
         <div>
-          <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+          <p className="sr-only">
             {mode === "story"
               ? `Story opponent ${String(opponent.storyPosition).padStart(2, "0")} / ${String(STOCKFISH_OPPONENTS.length)}`
               : "Challenge opponent"}
           </p>
           <h1
-            className="font-display mt-[0.2rem] text-[clamp(1.5rem,5vw,2.25rem)] leading-[0.95] font-black tracking-[-0.02em] uppercase"
+            className="font-display text-lg leading-tight font-black"
             id="opponent-band-title"
           >
             {opponent.displayName}
           </h1>
         </div>
-        <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
+        <dl className="text-xs [&_dd]:font-bold [&_dt]:sr-only">
           <div>
             <dt>Elo target</dt>
             <dd>
               {runtime.opponentTargetElo} · {MATCH_SETUP_COPY.provisional}
             </dd>
           </div>
-          <div>
-            <dt>Clock</dt>
-            <dd>Untimed</dd>
-          </div>
         </dl>
       </section>
 
-      <div className="grid min-w-0 place-items-center [grid-area:board]">
-        <div className="grid w-full max-w-[min(100%,52rem)] min-w-0 gap-3 xl:max-w-[min(100%,calc(100dvh-2rem))] xl:grid-cols-[minmax(0,1fr)_auto] xl:items-stretch">
+      <div className="grid w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
+        <div className="grid min-w-0 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-stretch">
           <CanonicalChessboard
             disabled={!playerTurn}
             hints={visibleHints}
@@ -222,24 +218,32 @@ export default function WebMatch({
             orientation={runtime.playerColor}
           />
         </div>
+        <ReactiveBattleStage
+          onParticipantAnimationCompleted={
+            presentation.notifyParticipantAnimationCompleted
+          }
+          opponentName={opponent.displayName}
+          opponentPresentation={opponentPresentation}
+          presentationSnapshot={presentation.snapshot}
+        />
       </div>
 
       <section
         aria-labelledby="player-band-title"
-        className="border-mapachito-charcoal text-mapachito-charcoal bg-mapachito-orange shadow-mapachito-charcoal flex w-full max-w-208 flex-wrap items-center justify-between gap-x-6 gap-y-[0.8rem] justify-self-center rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 px-4 py-[0.85rem] shadow-[0.3rem_0.3rem_0] [grid-area:player]"
+        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center [grid-area:player]"
       >
-        <div>
-          <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-            Player
-          </p>
+        <div className="flex items-center gap-2">
+          <MapachitoCoachPortrait
+            presentationSnapshot={presentation.snapshot}
+          />
           <h2
-            className="font-display mt-[0.2rem] text-[clamp(1.5rem,5vw,2.25rem)] leading-[0.95] font-black tracking-[-0.02em] uppercase"
+            className="font-display text-lg font-black"
             id="player-band-title"
           >
             Mapachito
           </h2>
         </div>
-        <dl className="flex flex-wrap gap-x-5 gap-y-[0.65rem] [&_dd]:font-black [&_div]:grid [&_div]:gap-[0.1rem] [&_dt]:font-mono [&_dt]:text-[0.65rem] [&_dt]:font-black [&_dt]:tracking-[0.1em] [&_dt]:uppercase [&_dt]:opacity-72">
+        <dl className="flex flex-wrap gap-3 text-xs [&_dd]:font-bold [&_dt]:sr-only">
           <div>
             <dt>{modeLabel} Elo</dt>
             <dd>{playerEloAtStart}</dd>
@@ -251,78 +255,14 @@ export default function WebMatch({
         </dl>
       </section>
 
-      <aside className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal grid min-w-0 gap-6 rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1rem,3vw,2rem)] shadow-[0.625rem_0.625rem_0] [grid-area:command] [grid-template-areas:'actions'_'reactions'_'data'_'history'] xl:sticky xl:top-6 xl:[grid-template-areas:'reactions'_'data'_'history'_'actions']">
-        <div className="grid gap-4 [grid-area:reactions]">
-          <ReactiveBattleStage
-            onParticipantAnimationCompleted={
-              presentation.notifyParticipantAnimationCompleted
-            }
-            opponentName={opponent.displayName}
-            opponentPresentation={opponentPresentation}
-            presentationSnapshot={presentation.snapshot}
-          />
-          <MapachitoCoachPortrait
-            presentationSnapshot={presentation.snapshot}
-          />
-        </div>
-
-        <dl
-          aria-label="Current match data"
-          className="border-mapachito-charcoal bg-mapachito-white shadow-mapachito-blue [&_dt]:text-mapachito-charcoal [&_dd]:text-mapachito-charcoal grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-3 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 text-sm shadow-[0.25rem_0.25rem_0] [grid-area:data] [&_dd]:font-extrabold [&_dt]:font-black [&_dt]:opacity-72"
-        >
-          <dt>Mode</dt>
-          <dd>{modeLabel}</dd>
-          <dt>Privacy</dt>
-          <dd>Local · Accountless</dd>
-          <dt>Engine</dt>
-          <dd className="truncate">{runtime.engineIdentity.name}</dd>
-        </dl>
-
-        <section
-          aria-labelledby="move-history-title"
-          className="[grid-area:history]"
-        >
-          <div className="flex items-baseline justify-between gap-4">
-            <h2
-              className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-              id="move-history-title"
-            >
-              Move History
-            </h2>
-            <span className="text-mapachito-charcoal font-mono text-xs leading-[1.55] font-semibold opacity-76">
-              {activeTransitions.length === 1
-                ? "1 ply"
-                : `${String(activeTransitions.length)} plies`}
-            </span>
-          </div>
-          {activeTransitions.length === 0 ? (
-            <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-              No moves yet.
-            </p>
-          ) : (
-            <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 font-mono text-sm inset-shadow-[0.5rem_0_0]">
-              {activeTransitions.map((transition, index) => (
-                <li
-                  className="odd:bg-mapachito-charcoal/6 grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5"
-                  key={`${String(index)}-${transition.move.beforeFen}`}
-                >
-                  <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
-                    {String(index + 1)}.
-                  </span>
-                  <span>{transition.move.san}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-
+      <aside className="text-mapachito-charcoal grid w-full max-w-(--playing-width) min-w-0 gap-4 justify-self-center [grid-area:command] [grid-template-areas:'actions'_'data'_'history'] xl:max-w-none">
         <section
           aria-label="Core match actions"
-          className="border-mapachito-charcoal bg-mapachito-white shadow-mapachito-violet sticky bottom-3 z-5 rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 p-[0.8rem] shadow-[0.35rem_0.35rem_0] [grid-area:actions] xl:static"
+          className="grid min-w-0 gap-2 [grid-area:actions]"
         >
           <p
             aria-live="polite"
-            className="border-mapachito-charcoal bg-mapachito-orange text-mapachito-charcoal shadow-mapachito-charcoal/20 rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 px-4 py-4 font-black shadow-[0.25rem_0.25rem_0]"
+            className="text-mapachito-white text-sm font-bold"
           >
             {matchStatusText(
               snapshot,
@@ -357,8 +297,9 @@ export default function WebMatch({
             stage={hintStage}
           />
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-4 gap-2">
             <MapachessButton
+              className="px-1! text-sm"
               variant="secondary"
               aria-busy={
                 persisting &&
@@ -375,6 +316,7 @@ export default function WebMatch({
               Offer Draw
             </MapachessButton>
             <MapachessButton
+              className="px-1! text-sm"
               variant="secondary"
               aria-busy={
                 persisting &&
@@ -387,10 +329,8 @@ export default function WebMatch({
             >
               Resign
             </MapachessButton>
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-3">
             <MapachessButton
+              className="px-1! text-sm"
               variant="secondary"
               aria-busy={persisting && selectHasUndoHistory(snapshot)}
               disabled={!selectCanUndo(snapshot)}
@@ -400,6 +340,7 @@ export default function WebMatch({
               Undo
             </MapachessButton>
             <MapachessButton
+              className="px-1! text-sm"
               variant="secondary"
               aria-busy={persisting && selectHasRedoHistory(snapshot)}
               disabled={!selectCanRedo(snapshot)}
@@ -432,6 +373,57 @@ export default function WebMatch({
             >
               Retry local save
             </MapachessButton>
+          )}
+        </section>
+        <dl
+          aria-label="Current match data"
+          className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
+        >
+          <dt>Mode</dt>
+          <dd>{modeLabel}</dd>
+          <dt>Clock</dt>
+          <dd>Untimed</dd>
+          <dt>Privacy</dt>
+          <dd>Local · Accountless</dd>
+          <dt>Engine</dt>
+          <dd className="truncate">{runtime.engineIdentity.name}</dd>
+        </dl>
+
+        <section
+          aria-labelledby="move-history-title"
+          className="bg-mapachito-white rounded-lg p-3 [grid-area:history]"
+        >
+          <div className="flex items-baseline justify-between gap-4">
+            <h2
+              className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+              id="move-history-title"
+            >
+              Move History
+            </h2>
+            <span className="text-mapachito-charcoal font-mono text-xs leading-[1.55] font-semibold opacity-76">
+              {activeTransitions.length === 1
+                ? "1 ply"
+                : `${String(activeTransitions.length)} plies`}
+            </span>
+          </div>
+          {activeTransitions.length === 0 ? (
+            <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
+              No moves yet.
+            </p>
+          ) : (
+            <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 font-mono text-sm inset-shadow-[0.5rem_0_0]">
+              {activeTransitions.map((transition, index) => (
+                <li
+                  className="odd:bg-mapachito-charcoal/6 grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5"
+                  key={`${String(index)}-${transition.move.beforeFen}`}
+                >
+                  <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
+                    {String(index + 1)}.
+                  </span>
+                  <span>{transition.move.san}</span>
+                </li>
+              ))}
+            </ol>
           )}
         </section>
       </aside>

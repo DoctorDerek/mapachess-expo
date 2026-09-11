@@ -223,10 +223,10 @@ export default function BattleFighter({
   ])
 
   return (
-    <div className="relative z-2 row-span-2 grid min-w-0 grid-rows-subgrid justify-items-center">
+    <div className="relative z-2 grid min-w-0 justify-items-center">
       <div
         aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
-        className={`relative flex h-32 w-full items-end justify-center [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-direction:1]" : "[--battle-direction:-1]"}`}
+        className={`relative flex h-24 w-full items-end justify-center [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:h-32 xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-direction:1]" : "[--battle-direction:-1]"}`}
         role="img"
         style={battleSpriteAnchorStyle(presentation, opposingPresentation)}
       >
@@ -255,7 +255,11 @@ export default function BattleFighter({
         </div>
       </div>
       <span
-        className={`border-mapachito-charcoal text-mapachito-white z-1 mt-2 max-w-full border-2 px-2 py-1 text-center font-mono text-xs font-bold [overflow-wrap:anywhere] forced-colors:border-[CanvasText] ${participant === "player" ? "bg-mapachito-violet" : "bg-mapachito-raspberry"}`}
+        className={
+          imageUnavailable
+            ? "bg-mapachito-charcoal text-mapachito-white z-1 max-w-full px-2 py-1 text-center text-xs font-bold [overflow-wrap:anywhere]"
+            : "sr-only"
+        }
       >
         {displayName}
         {imageUnavailable ? " · Artwork unavailable" : null}

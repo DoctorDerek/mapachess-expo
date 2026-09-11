@@ -10,6 +10,7 @@ import { matchSpriteReactionSlot } from "@mapachess/match-presentation/presentat
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import { battleSpriteAnchorStyle } from "../../lib/presentation/battleSpriteFrames"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import ReactiveBattleStage from "./ReactiveBattleStage"
@@ -87,7 +88,19 @@ describe("Reactive Battle Stage web presentation", () => {
         expect(presentation.kind).toBe("sprite")
         if (presentation.kind !== "sprite")
           throw new Error("Licensed sprite expected")
+        const scales = battleSpriteAnchorStyle(presentation, presentation)
         for (const { animation } of presentation.steps) {
+          const topExtent =
+            animation.geometry.bottomY - animation.geometry.visibleY
+          expect(
+            topExtent * scales["--sprite-mobile-scale"],
+          ).toBeLessThanOrEqual(96)
+          expect(
+            topExtent * scales["--sprite-desktop-scale"],
+          ).toBeLessThanOrEqual(128)
+          expect(
+            animation.geometry.visibleY + animation.geometry.visibleHeight,
+          ).toBeLessThanOrEqual(animation.geometry.bottomY)
           expect(animation.sourceId).toMatch(
             /^\/generated\/presentation-assets\/battle\//,
           )

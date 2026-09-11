@@ -61,16 +61,31 @@ function GameFrame({
   settingsButtonRef,
   settingsOpen,
 }: GameFrameProps) {
+  const settingsButton = (
+    <MapachessButton
+      variant="secondary"
+      aria-controls="profile-settings-panel"
+      aria-expanded={settingsOpen}
+      onClick={onSettingsRequested}
+      ref={settingsButtonRef}
+      type="button"
+    >
+      Settings
+    </MapachessButton>
+  )
   return (
-    <MapachessShell>
+    <MapachessShell spacing={matchSessionActive ? "match" : "page"}>
       <header
         inert={activityMessage !== null}
-        className="mx-auto mb-[clamp(1.5rem,3vw,2.5rem)] flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-5"
+        className={`mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between ${matchSessionActive ? "mb-2 gap-2" : "mb-[clamp(1.5rem,3vw,2.5rem)] gap-5"}`}
       >
         <MapachessWordmark />
-        <div className="flex flex-wrap items-center gap-3">
-          {matchSessionActive ? (
-            <>
+        {matchSessionActive ? (
+          <details className="relative z-40">
+            <summary className="border-mapachito-white/30 bg-mapachito-charcoal text-mapachito-white min-h-12 cursor-pointer content-center rounded-lg border px-4 py-3 font-bold focus-visible:outline-2 focus-visible:outline-offset-2">
+              Match menu
+            </summary>
+            <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute top-full right-0 mt-2 grid w-60 max-w-[calc(100vw-1.5rem)] gap-3 rounded-lg border p-3 shadow-xl">
               <MapachessButton
                 variant="secondary"
                 onClick={onRestartRequested}
@@ -85,19 +100,12 @@ function GameFrame({
               >
                 Return to Menu
               </MapachessButton>
-            </>
-          ) : null}
-          <MapachessButton
-            variant="secondary"
-            aria-controls="profile-settings-panel"
-            aria-expanded={settingsOpen}
-            onClick={onSettingsRequested}
-            ref={settingsButtonRef}
-            type="button"
-          >
-            Settings
-          </MapachessButton>
-        </div>
+              {settingsButton}
+            </div>
+          </details>
+        ) : (
+          settingsButton
+        )}
       </header>
 
       <p className="sr-only" role="status">
