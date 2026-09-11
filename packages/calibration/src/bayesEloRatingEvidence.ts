@@ -330,25 +330,37 @@ export default function parseBayesEloRatingEvidence(
   }
 
   const lines = normalizedOutputLines(`${input.stdout}\n${input.stderr}`)
-  const normalized = lines.join("\n")
-  const loadedMatch =
-    /(\d+) game\(s\) loaded, (\d+) game\(s\) with unknown result ignored\./.exec(
-      normalized,
-    )
-  if (loadedMatch === null) {
+  const loadingUpdates = input.stderr.trim().split(/[\r\n]+/)
+  if (input.stderr.trim().length === 0) {
     throw new TypeError("BayesElo loaded-game summary is missing.")
   }
-  const loadedGames = parseSafeInteger(loadedMatch[1] ?? "", "loaded games")
-  const ignoredGames = parseSafeInteger(loadedMatch[2] ?? "", "ignored games")
-  const expectedStderr = `${loadedGames} game(s) loaded, ${ignoredGames} game(s) with unknown result ignored.`
-  if (input.stderr.trim() !== expectedStderr) {
-    throw new Error(
-      `BayesElo stderr did not match its loaded-game summary: ${input.stderr.trim() || "none"}.`,
-    )
+  let loadedGames = 0
+  for (const update of loadingUpdates) {
+    const loadedMatch =
+      /^(\d+) game\(s\) loaded, (\d+) game\(s\) with unknown result ignored\.$/.exec(
+        update.trim(),
+      )
+    if (loadedMatch === null) {
+      throw new Error(
+        `BayesElo stderr did not match its loaded-game summary: ${update}.`,
+      )
+    }
+    const currentLoaded = parseSafeInteger(loadedMatch[1] ?? "", "loaded games")
+    const ignoredGames = parseSafeInteger(loadedMatch[2] ?? "", "ignored games")
+    if (
+      ignoredGames !== 0 ||
+      currentLoaded < loadedGames ||
+      currentLoaded > input.input.completedGameCount
+    ) {
+      throw new TypeError(
+        `BayesElo loaded ${currentLoaded} games and ignored ${ignoredGames}; expected ${input.input.completedGameCount} loaded and 0 ignored in nondecreasing progress updates.`,
+      )
+    }
+    loadedGames = currentLoaded
   }
-  if (loadedGames !== input.input.completedGameCount || ignoredGames !== 0) {
+  if (loadedGames !== input.input.completedGameCount) {
     throw new TypeError(
-      `BayesElo loaded ${loadedGames} games and ignored ${ignoredGames}; expected ${input.input.completedGameCount} loaded and 0 ignored.`,
+      `BayesElo loaded ${loadedGames} games; expected ${input.input.completedGameCount} loaded and 0 ignored.`,
     )
   }
 
