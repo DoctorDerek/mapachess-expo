@@ -125,18 +125,18 @@ export default function BetterHintsControl({
         : undefined
 
   return (
-    <section aria-labelledby="better-hints-title" className="mt-5">
-      <h2
-        className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-        id="better-hints-title"
-      >
+    <section
+      aria-labelledby="better-hints-title"
+      className="relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2"
+    >
+      <h2 className="sr-only" id="better-hints-title">
         Better Hints
       </h2>
       <MapachessButton
         variant="hint"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="mt-3 w-full"
+        className="w-full"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={disabled || busy || control.action === null}
         onClick={activate}
@@ -144,35 +144,47 @@ export default function BetterHintsControl({
       >
         {control.label}
       </MapachessButton>
+      <details>
+        <summary className="text-mapachito-white min-h-12 cursor-pointer content-center rounded-lg border px-3 py-3 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2">
+          Hint guide
+        </summary>
+        <div className="bg-mapachito-white text-mapachito-charcoal absolute inset-x-0 top-full z-30 mt-2 rounded-lg border p-3 shadow-lg">
+          <p className="text-sm font-semibold">{guidance}</p>
+
+          <ul
+            aria-label="Better Hints legend"
+            className="text-mapachito-charcoal mt-3 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-2 text-xs font-bold xl:grid-cols-1"
+          >
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-6 rounded-md border-[3px] border-emerald-500"
+              />
+              Player hints · solid green
+            </li>
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-6 rounded-md border-[3px] border-dashed border-red-500"
+              />
+              Opponent hints · dashed red
+            </li>
+          </ul>
+        </div>
+      </details>
+      <p aria-atomic="true" aria-live="polite" className="sr-only">
+        {hintAnnouncement(stage, hints)}
+      </p>
       <p
-        className="text-mapachito-charcoal mt-2 min-h-[3lh] text-sm leading-[1.55] font-semibold opacity-76"
+        className={
+          stage === "failure" || stage === "unavailable"
+            ? "text-mapachito-white col-span-full text-sm font-semibold"
+            : "sr-only"
+        }
         id="better-hints-guidance"
       >
         {guidance}
       </p>
-      <p aria-atomic="true" aria-live="polite" className="sr-only">
-        {hintAnnouncement(stage, hints)}
-      </p>
-
-      <ul
-        aria-label="Better Hints legend"
-        className="text-mapachito-charcoal mt-3 grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-2 text-xs font-bold xl:grid-cols-1"
-      >
-        <li className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="size-6 rounded-md border-[3px] border-emerald-500"
-          />
-          Player hints · solid green
-        </li>
-        <li className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="size-6 rounded-md border-[3px] border-dashed border-red-500"
-          />
-          Opponent hints · dashed red
-        </li>
-      </ul>
     </section>
   )
 }
