@@ -86,7 +86,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
     page.getByRole("radio", { name: "No Auto Hints", exact: true }),
   ).toBeChecked()
   await expect(
-    page.getByText("Gold if you win without using any hints.", { exact: true }),
+    page.getByText(/Gold if you win without using any hints\.$/),
   ).toBeVisible()
 })
 
