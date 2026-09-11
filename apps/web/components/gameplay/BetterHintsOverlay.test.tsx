@@ -118,6 +118,27 @@ describe("Better Hints board presentation", () => {
     },
   )
 
+  it("keeps hint failures and announcements outside collapsed guidance", () => {
+    const markup = renderToStaticMarkup(
+      createElement(BetterHintsControl, {
+        hints: null,
+        matchComplete: false,
+        stage: "failure",
+        onMoveHintsRequested: vi.fn(),
+        onPieceHintsRequested: vi.fn(),
+      }),
+    )
+    const disclosureEnd = markup.indexOf("</details>")
+    expect(disclosureEnd).toBeGreaterThan(0)
+    expect(markup).toContain("Hint guide")
+    expect(markup).toContain("Retry Piece Hints")
+    expect(markup.indexOf('aria-live="polite"')).toBeGreaterThan(disclosureEnd)
+    expect(markup.indexOf('id="better-hints-guidance"')).toBeGreaterThan(
+      disclosureEnd,
+    )
+    expect(markup.slice(disclosureEnd)).toContain("Your position is unchanged.")
+  })
+
   it("progresses the accessible control from pieces to moves", () => {
     const readyMarkup = renderToStaticMarkup(
       createElement(BetterHintsControl, {
