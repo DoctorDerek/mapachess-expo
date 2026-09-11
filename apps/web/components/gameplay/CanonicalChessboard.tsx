@@ -158,7 +158,7 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1.65rem,8vw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-mapachito-orange focus-visible:ring-inset aria-disabled:cursor-default"
+  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1rem,8cqw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-mapachito-orange focus-visible:ring-inset aria-disabled:cursor-default"
 
 const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
   (rowIndex + columnIndex) % 2 === 0
@@ -273,11 +273,11 @@ export default function CanonicalChessboard({
   const castles = selectedMoves.filter((move) => move.kind === "castle")
 
   return (
-    <div className="relative w-full max-w-[min(100%,52rem)] xl:max-w-[min(100%,calc(100dvh-6rem))]">
+    <div className="[container-type:inline-size] relative w-full min-w-0">
       <div className="relative">
         <div
           aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
-          className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden rounded-[1rem_0.25rem_1rem_0.25rem] border-4 shadow-[0.5rem_0.5rem_0_var(--color-mapachito-raspberry),0.85rem_0.85rem_0_var(--color-mapachito-orange)]"
+          className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden border"
           role="grid"
         >
           {rows.map((row, rowIndex) => (

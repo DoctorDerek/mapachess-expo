@@ -33,15 +33,12 @@ export default function MapachitoCoachPortrait({
   const readableLabel = readablePortraitLabel(visiblePortrait.label)
 
   return (
-    <figure
-      aria-live="polite"
-      className="border-mapachito-charcoal bg-mapachito-orange text-mapachito-charcoal shadow-mapachito-raspberry grid grid-cols-[auto_minmax(0,1fr)] items-center gap-[0.9rem] rounded-[0.75rem_0.2rem_0.75rem_0.2rem] border-3 p-[0.8rem] shadow-[0.3rem_0.3rem_0]"
-    >
-      <div className="border-mapachito-charcoal bg-mapachito-violet size-18 overflow-hidden border-3">
+    <figure aria-live="polite" className="flex items-center gap-2">
+      <div className="bg-mapachito-violet size-10 shrink-0 overflow-hidden rounded">
         {visiblePortrait.source === null ? (
           <span
             aria-hidden="true"
-            className="font-display text-mapachito-white grid size-18 place-items-center text-[2.5rem] font-black"
+            className="font-display text-mapachito-white grid size-full place-items-center text-2xl font-black"
           >
             M
           </span>
@@ -58,12 +55,8 @@ export default function MapachitoCoachPortrait({
         )}
       </div>
       <figcaption className="grid gap-1">
-        <span className="font-mono text-[0.68rem] font-black tracking-[0.12em] uppercase">
-          Mapachito coach
-        </span>
-        <strong className="font-display text-2xl leading-none uppercase">
-          {readableLabel}
-        </strong>
+        <span className="sr-only">Mapachito coach</span>
+        <strong className="sr-only">{readableLabel}</strong>
         {portrait.kind === "portrait" && visiblePortrait.source === null ? (
           <span role="status" className="text-sm font-bold">
             Artwork unavailable

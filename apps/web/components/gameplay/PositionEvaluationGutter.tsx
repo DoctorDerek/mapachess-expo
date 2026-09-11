@@ -95,7 +95,7 @@ export default function PositionEvaluationGutter({
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}
       aria-valuetext={statusText}
-      className="border-mapachito-charcoal bg-mapachito-charcoal relative h-10 w-full overflow-hidden rounded-[0.65rem_0.15rem_0.65rem_0.15rem] border-[3px] shadow-[0.25rem_0.25rem_0_var(--color-mapachito-raspberry),0.45rem_0.45rem_0_var(--color-mapachito-orange)] xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
+      className="border-mapachito-charcoal bg-mapachito-charcoal relative h-10 w-full overflow-hidden border xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
       data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
       role="meter"
       style={style}
