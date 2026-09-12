@@ -23,6 +23,8 @@ earlier opponents to improve your medal. Each variant retains its own victories
 and best medals, and active matches save locally for reload and restart.
 The 100–1000 web difficulty presets meet the approved engine-pool calibration
 tolerances in both variants; they are estimates, not certified human ratings.
+Six targets share their random-move setting; four measured Chess960 exceptions
+remain in the same canonical schedule and difficulty implementation.
 These matches still do not update player Elo. Challenge supports independently
 selected earned animals and difficulty, side, and Chess960-position selection.
 XP/Levels, achievements, and player-rating updates remain in development.

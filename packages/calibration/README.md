@@ -39,45 +39,80 @@ invalidate the associated policy evidence; a version label alone is insufficient
 
 ## Accepted settings
 
+One canonical schedule supplies both variants. Six targets share a percentage;
+only 100, 700, 800 and 900 have explicit Chess960 exceptions. Story and Challenge
+consume the same settings and move-selection implementation. Separate validation
+pools do not create separate player-facing rating systems or duplicate difficulty
+logic.
+
 Randomness is a percentage of moves selected uniformly from legal moves. Each
 row corresponds to the existing animal target, from Chicken through Raccoon.
 
 | Target | Standard random % | Standard estimate (95% interval) | Chess960 random % | Chess960 estimate (95% interval) |
 | ------ | ----------------- | -------------------------------- | ----------------- | -------------------------------- |
-| 100    | 91.5              | 106 (27–183)                     | 85                | 121 (65–177)                     |
-| 200    | 82                | 163 (107–219)                    | 81                | 194 (156–232)                    |
-| 300    | 73.5              | 260 (210–309)                    | 77                | 306 (246–367)                    |
-| 400    | 65.5              | 387 (343–432)                    | 66.5              | 438 (375–502)                    |
-| 500    | 61.5              | 526 (480–572)                    | 60                | 518 (464–571)                    |
-| 600    | 60                | 583 (518–648)                    | 57                | 633 (570–697)                    |
-| 700    | 54                | 683 (621–745)                    | 50                | 711 (653–770)                    |
-| 800    | 50                | 835 (755–916)                    | 43                | 828 (772–883)                    |
-| 900    | 44.5              | 852 (785–919)                    | 38                | 927 (876–978)                    |
-| 1000   | 38.5              | 989 (915–1062)                   | 36                | 957 (866–1049)                   |
+| 100    | 90                | 83 (49–117)                      | 83.5              | 82 (50–114)                      |
+| 200    | 80                | 194 (161–226)                    | 80                | 197 (166–228)                    |
+| 300    | 73.5              | 291 (268–314)                    | 73.5              | 258 (232–284)                    |
+| 400    | 65.5              | 433 (414–452)                    | 65.5              | 429 (408–450)                    |
+| 500    | 61.5              | 498 (474–522)                    | 61.5              | 511 (482–540)                    |
+| 600    | 55                | 608 (578–638)                    | 55                | 638 (607–669)                    |
+| 700    | 50                | 701 (682–720)                    | 54                | 684 (657–711)                    |
+| 800    | 44.5              | 813 (787–839)                    | 50                | 780 (761–799)                    |
+| 900    | 38.5              | 950 (917–983)                    | 44.5              | 901 (873–929)                    |
+| 1000   | 36.5              | 988 (953–1023)                   | 36.5              | 1012 (978–1046)                  |
 
-The largest target error is 48 Elo; the largest one-sided interval radius is
-92 Elo. These tolerances allow uneven measured step sizes. For example,
-Standard 800 and 900 currently fit to 835 and 852, respectively. Further
-playtesting can refine the spacing without pretending the two are already
-strongly separated.
+The largest target error is 50 Elo; the largest one-sided reported interval
+radius is 35 Elo, compared with 92 in the earlier fit. Each selected policy has
+240–1,120 recorded games. These tolerances still allow uneven measured steps:
+Standard 900 and 1000 fit to 950 and 988, respectively. Their intervals overlap;
+this is not proof of a distinct 100-Elo gap.
+
+### Why four exceptions remain
+
+The original Standard schedule was tested unchanged in both variants with a
+fresh seed, followed by a revised shared schedule and focused cross-links.
+Neither complete shared candidate met the same target tolerances. The final
+cumulative fit includes all valid historical and additional evidence, not just
+games favorable to the selected settings.
+
+Copying the final Standard setting at each exception would give these Chess960
+results:
+
+| Target | Copied random % | Chess960 estimate (95% interval) | Accepted point-estimate range |
+| ------ | --------------- | -------------------------------- | ----------------------------- |
+| 100    | 90              | -11 (-41–19)                     | 50–150                        |
+| 700    | 50              | 780 (761–799)                    | 650–750                       |
+| 800    | 44.5            | 901 (873–929)                    | 750–850                       |
+| 900    | 38.5            | 1013 (978–1048)                  | 850–950                       |
+
+Each of these reported conditional intervals lies outside the target's accepted
+range. This supports exceptions to the tested Standard settings in this pool;
+it does not prove that no untested shared percentage could ever work. No target
+tolerance was relaxed, and no legacy difficulty table or migration was added.
 
 ## Evidence identity
 
-The final pools contain 840 scored Standard games (420 pairs, none excluded)
-and 1,078 scored Chess960 games (539 pairs, one historical pair excluded).
-The finishing pass added 560 games, all completed, after the earlier 80-game
-cross-link diagnostic. Original reports remain unchanged. Generated raw
-evidence and scratch records remain local-only; the curated acceptance fixture
-pins each selected policy fingerprint, estimate, interval and game count.
+The final pools contain 6,436 scored Standard games (3,218 pairs, two capped pairs
+excluded) and 6,678 scored Chess960 games (3,339 pairs, one historical capped pair
+excluded): 13,114 scored games total. The review added 11,200 game outcomes
+across fresh seeds 43, 44 and 45; four outcomes were excluded with their capped
+Standard pairs. The focused seed-45 comparisons completed all 2,400 games.
+
+An initial review launcher incorrectly routed reference seats through Lite;
+that entire batch was rejected and is absent from these pools. The replacement
+launcher follows the existing adapter routing and checks the installed reference
+identity. Original valid reports remain unchanged. Generated raw evidence and
+scratch records remain local-only; the curated acceptance fixture pins each
+selected policy fingerprint, estimate, interval and game count.
 
 | Artifact                 | SHA-256                                                            |
 | ------------------------ | ------------------------------------------------------------------ |
 | Lite loader              | `2278005057f381491f1c9bb3e44c9f5920b3a00bef9759e33cc6582769a1f1fe` |
 | Lite WASM                | `a8fbc05ec6920b56d7485826dcb02c5ffd2826bcbf751cf973046f237a9096f1` |
-| Standard combined PGN    | `cd2f7c01b982d064381e012fa03c81f7d8b9777e70b03e0f5d69135d74056ce0` |
-| Chess960 combined PGN    | `8e4bd9b3443a600d675608a66d55f92a10e54b62ec9f681a72d432068d64d4fa` |
-| Standard BayesElo stdout | `bac121ba9c66a6b7c21eea0973f81b8e9f993aa107237c1dc11b7c7ae2bc33e9` |
-| Chess960 BayesElo stdout | `3c9e5edca8ed69e528d9084d7f7f6aca9615800a773c13e8ef61b96f2016ddc0` |
+| Standard combined PGN    | `ea5326accd8d5a07b6abfc8b1c55fd82d13126e0d4d81122fbd94cdb81ba96b7` |
+| Chess960 combined PGN    | `85aa5d9aeaa7930fd5ff30718d2bea6015b3ff11c865709699639830f2598060` |
+| Standard BayesElo stdout | `48d9792cc28562d68d763bb998f896e97a3df41fcbf1ea01a46db4cb4bdf916c` |
+| Chess960 BayesElo stdout | `47fac6add775e17cd988135448bee5296f571554d620efc4012a23e250128bca` |
 
 The focused acceptance tests protect preset/fingerprint correspondence and
 the recorded tolerances. They do not rerun games or prove new measurements.

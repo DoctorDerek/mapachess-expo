@@ -94,8 +94,8 @@ describe("bounded direct web ladder refinement", () => {
     expect(plans.map((plan) => plan.planId)).toEqual([
       "sha256:068eef0fbdf445576730958a9baec081fca5499559a886fdee6749e00392a3d8",
       "sha256:89cc8ac77aedfe9af5750f106c569cb74be7f30156249647d8ea7382cd64f9d6",
-      "sha256:bfc8f0c21c90516e4b17a0371f6b96e2351ed70af437e14fdc2fcaad34bc424c",
-      "sha256:beb177a693681deebfb9c71222a89a3f5f2468ccb342b8c1a3fb3f1b5c4ebe52",
+      "sha256:826b5c47eec3cbf31bca17922fbadb5bae09194cb8599c21cf59de4c875368d4",
+      "sha256:4a134a0db83b2ebd1df0b21dfcfab9e07d119a4691422934c9b8aa90fe855be0",
     ])
     expect(plans.reduce((total, plan) => total + plan.games.length, 0)).toBe(
       880,

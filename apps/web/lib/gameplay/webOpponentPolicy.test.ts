@@ -70,12 +70,9 @@ describe("versioned web opponent policies", () => {
       ).rejects.toThrow("no supported web preset")
     },
   )
-  it.each([
-    ["standard", [9150, 8200, 7350, 6550, 6150, 6000, 5400, 5000, 4450, 3850]],
-    ["chess960", [8500, 8100, 7700, 6650, 6000, 5700, 5000, 4300, 3800, 3600]],
-  ] as const)(
+  it.each(["standard", "chess960"] as const)(
     "preserves the measured %s ladder through Raccoon",
-    async (variant, probabilities) => {
+    async (variant) => {
       const policies = await Promise.all(
         STOCKFISH_OPPONENTS.slice(0, 10).map(({ id }) =>
           resolveWebOpponentPolicy(id, variant),
@@ -86,26 +83,40 @@ describe("versioned web opponent policies", () => {
           ({ randomMoveProbabilityBasisPoints }) =>
             randomMoveProbabilityBasisPoints,
         ),
-      ).toEqual(probabilities)
+      ).toEqual(
+        variant === "standard"
+          ? [9000, 8000, 7350, 6550, 6150, 5500, 5000, 4450, 3850, 3650]
+          : [8350, 8000, 7350, 6550, 6150, 5500, 5400, 5000, 4450, 3650],
+      )
       expect(policies.at(-1)?.opponentId).toBe("raccoon-stockfish")
       expect(new Set(policies.map(({ fingerprint }) => fingerprint)).size).toBe(
         10,
       )
       for (const policy of policies) {
+        const otherVariantPolicy = await resolveWebOpponentPolicy(
+          policy.opponentId,
+          variant === "standard" ? "chess960" : "standard",
+        )
+        expect(
+          otherVariantPolicy.randomMoveProbabilityBasisPoints ===
+            policy.randomMoveProbabilityBasisPoints,
+        ).toBe(![100, 700, 800, 900].includes(policy.targetElo))
         expect(policy.nodeLimit).toBe(10_000)
         expect(policy.fingerprint).toMatch(/^sha256:[0-9a-f]{64}$/)
         expect(Object.isFrozen(policy)).toBe(true)
         expect(
           await resolveWebOpponentPolicy(policy.opponentId, variant),
         ).toEqual(policy)
+        expect(otherVariantPolicy.fingerprint).not.toBe(policy.fingerprint)
         expect(
           (
-            await resolveWebOpponentPolicy(
+            await resolveWebChallengePolicy(
               policy.opponentId,
-              variant === "standard" ? "chess960" : "standard",
+              variant,
+              policy.targetElo,
             )
-          ).fingerprint,
-        ).not.toBe(policy.fingerprint)
+          ).randomMoveProbabilityBasisPoints,
+        ).toBe(policy.randomMoveProbabilityBasisPoints)
       }
       await expect(
         resolveWebOpponentPolicy("axolotl-stockfish", variant),
