@@ -4,7 +4,7 @@ import resolveSpritePresentation, {
   type SpriteAssetManifest,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
-import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   AVAILABLE_CHICKEN_SPRITE_SOURCES,
   AVAILABLE_MAPACHITO_SPRITE_SOURCES,
@@ -41,10 +41,31 @@ const WEB_STORY_ANIMAL_SPRITES = {
   "turtle-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["turtle-stockfish"]),
   "panda-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["panda-stockfish"]),
   "otter-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["otter-stockfish"]),
+  "axolotl-stockfish": webAnimalSprite(
+    STORY_ANIMAL_SPRITES["axolotl-stockfish"],
+  ),
+  "hedgehog-stockfish": webAnimalSprite(
+    STORY_ANIMAL_SPRITES["hedgehog-stockfish"],
+  ),
+  "deer-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["deer-stockfish"]),
+  "fox-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["fox-stockfish"]),
+  "wolf-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["wolf-stockfish"]),
+  "ninja-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["ninja-stockfish"]),
+  "war-hero-stockfish": webAnimalSprite(
+    STORY_ANIMAL_SPRITES["war-hero-stockfish"],
+  ),
+  "parrot-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["parrot-stockfish"]),
+  "falcon-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["falcon-stockfish"]),
+  "crane-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["crane-stockfish"]),
+  "crow-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["crow-stockfish"]),
+  "bat-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["bat-stockfish"]),
+  "dragonfly-stockfish": webAnimalSprite(
+    STORY_ANIMAL_SPRITES["dragonfly-stockfish"],
+  ),
 } as const
 
 export default function resolveWebOpponentPresentation(
-  opponentId: ImplementedDurableOpponentId,
+  opponentId: StockfishOpponentId,
   reaction: MatchParticipantReaction = { family: "idle" },
 ): ResolvedSpritePresentation<string, string> {
   switch (opponentId) {
