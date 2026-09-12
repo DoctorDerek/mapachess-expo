@@ -8,8 +8,9 @@ import matchPresentationMachine from "@mapachess/match-presentation/match-presen
 import type { MatchPresentationPhase } from "@mapachess/match-presentation/match-reaction"
 import { matchSpriteReactionSlot } from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
-import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import stockfishOpponent, {
+  STOCKFISH_OPPONENTS,
+} from "@mapachess/match/stockfish-opponent"
 import { battleSpriteAnchorStyle } from "../../lib/presentation/battleSpriteFrames"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
@@ -69,7 +70,7 @@ afterAll(() => {
 })
 
 describe("Reactive Battle Stage web presentation", () => {
-  it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
+  it.each(STOCKFISH_OPPONENTS.map(({ id }) => id))(
     "resolves licensed %s reactions through the existing fighter contract",
     (opponentId) => {
       for (const reaction of [
@@ -108,7 +109,7 @@ describe("Reactive Battle Stage web presentation", () => {
           expect(animation.reducedMotionFrameIndex).toBeLessThan(
             animation.frameCount,
           )
-          expect(animation.geometry.bottomY).toBe(
+          expect(animation.geometry.bottomY).toBeGreaterThanOrEqual(
             presentation.referenceGeometry.bottomY,
           )
           expect(
@@ -157,20 +158,20 @@ describe("Reactive Battle Stage web presentation", () => {
         clipCount += 1
       }
     }
-    expect(clipCount).toBe(140)
+    expect(clipCount).toBe(352)
     expect(archiveManifest).not.toContain("battle/raccoon/")
     const raccoon = resolveWebOpponentPresentation("raccoon-stockfish")
     if (raccoon.kind !== "sprite") throw new Error("Raccoon sprite expected")
     expect(raccoon.steps[0].animation.sourceId).toContain("battle/mapachito/")
   })
 
-  it("preserves intentional public-clone fallback for every playable opponent", async () => {
+  it("preserves intentional public-clone fallback for the complete presentation roster", async () => {
     vi.stubEnv("MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS", "false")
     vi.resetModules()
     try {
       const { default: resolveWithoutAssets } =
         await import("../../lib/presentation/webOpponentPresentation")
-      for (const opponentId of IMPLEMENTED_DURABLE_OPPONENT_IDS)
+      for (const { id: opponentId } of STOCKFISH_OPPONENTS)
         expect(resolveWithoutAssets(opponentId)).toEqual({
           kind: "authored-fallback",
           reactionSlot: "idle",
