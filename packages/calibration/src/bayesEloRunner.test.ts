@@ -5,7 +5,7 @@ import type { BayesEloBridgeOffset } from "./bayesEloRatingEvidence"
 import { createBayesEloCommands } from "./bayesEloRunner"
 
 describe("BayesElo runner", () => {
-  it("builds the bounded rating command session", () => {
+  it("widens the rating integration range while preserving three-Elo grid spacing", () => {
     const policy = standardPlanFixture().policies[0]
     if (policy === undefined) {
       throw new Error("BayesElo command fixture policy is missing.")
@@ -25,6 +25,9 @@ describe("BayesElo runner", () => {
       "readpgn input.pgn",
       "elo",
       "mm",
+      "minelo -4500",
+      "maxelo 4500",
+      "resolution 3001",
       "exactdist",
       "offset 1320 P001",
       "ratings",

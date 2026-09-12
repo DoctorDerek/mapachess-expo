@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup from "@mapachess/match/challenge-setup"
 import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
-import { isImplementedDurableOpponent } from "@mapachess/match/durable-match-record"
 import {
   MATCH_SETUP_COPY,
   matchModeLabel,
@@ -60,22 +59,15 @@ export default function WebMatchSetup({
   const [difficultyTargetElo, setDifficultyTargetElo] = useState(
     challenge?.difficultyTargetElo,
   )
-  const challengeOpponents = selectChallengeUnlockedOpponents(
-    storyProgress,
-  ).filter(({ id }) => isImplementedDurableOpponent(id))
+  const challengeOpponents = selectChallengeUnlockedOpponents(storyProgress)
   const opponent = stockfishOpponent(selectedOpponentId)
-  usePreparedMatchImages(
-    isImplementedDurableOpponent(selectedOpponentId)
-      ? selectedOpponentId
-      : null,
-  )
+  usePreparedMatchImages(selectedOpponentId)
   const selectionAvailable =
     setup.mode === "challenge"
       ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&
         difficultyTargetElo !== undefined &&
         difficultyTargets.includes(difficultyTargetElo)
-      : isImplementedDurableOpponent(selectedOpponentId) &&
-        canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
+      : canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus()
@@ -85,7 +77,6 @@ export default function WebMatchSetup({
     event.preventDefault()
     if (disabled || !selectionAvailable) return
     if (setup.mode === "story") {
-      if (!isImplementedDurableOpponent(selectedOpponentId)) return
       onStart({ ...setup, opponentId: selectedOpponentId })
       return
     }
@@ -125,8 +116,7 @@ export default function WebMatchSetup({
       >
         {matchModeLabel({ mode: setup.mode, variant })}
       </h1>
-      {setup.mode === "story" &&
-      isImplementedDurableOpponent(selectedOpponentId) ? (
+      {setup.mode === "story" ? (
         <StoryLadderProgress
           progress={storyProgress}
           variant={variant}

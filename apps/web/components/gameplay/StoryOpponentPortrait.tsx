@@ -1,4 +1,3 @@
-import { isImplementedDurableOpponent } from "@mapachess/match/durable-match-record"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 
@@ -13,11 +12,9 @@ export default function StoryOpponentPortrait({
   opponent,
   locked,
 }: StoryOpponentPortraitProps) {
-  const presentation = isImplementedDurableOpponent(opponent.id)
-    ? resolveWebOpponentPresentation(opponent.id)
-    : null
+  const presentation = resolveWebOpponentPresentation(opponent.id)
   const animation =
-    presentation?.kind === "sprite" ? presentation.steps[0].animation : null
+    presentation.kind === "sprite" ? presentation.steps[0].animation : null
 
   return (
     <span

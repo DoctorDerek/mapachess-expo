@@ -49,9 +49,9 @@ describe("canonical Stockfish opponent identities", () => {
     expect(Object.isFrozen(STOCKFISH_OPPONENTS)).toBe(true)
   })
 
-  it("does not treat catalog membership as implemented save support", () => {
+  it("supports the complete canonical roster in durable saves", () => {
     expect(IMPLEMENTED_DURABLE_OPPONENT_IDS).toEqual(
-      STOCKFISH_OPPONENTS.slice(0, 10).map(({ id }) => id),
+      STOCKFISH_OPPONENTS.map(({ id }) => id),
     )
     expectTypeOf<ImplementedDurableOpponentId>().toExtend<StockfishOpponentId>()
   })

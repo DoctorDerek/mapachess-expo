@@ -123,7 +123,7 @@ const createSession = (
 
 describe("deterministic web opponent execution", () => {
   it.each(["standard", "chess960"] as const)(
-    "executes all ten measured %s policies with deterministic legal choices",
+    "executes the complete measured %s roster with deterministic legal choices",
     async (variant) => {
       const parsed = parseChess960PositionId(0)
       if (!parsed.ok) throw new Error("Invalid test layout")
@@ -142,7 +142,7 @@ describe("deterministic web opponent execution", () => {
         position,
         requestId: `${variant}/measured-policy/opponent/ply/1`,
       }
-      for (const { id } of STOCKFISH_OPPONENTS.slice(0, 10)) {
+      for (const { id } of STOCKFISH_OPPONENTS) {
         const policy = await resolveWebOpponentPolicy(id, variant)
         for (const [positionSeed, draw] of [
           [RANDOM_POSITION_SEED, 1520],

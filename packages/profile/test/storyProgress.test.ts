@@ -15,7 +15,7 @@ import completedStoryMatch from "./storyProgressTestSupport.js"
 
 describe("earned Story progression", () => {
   it.each(["standard", "chess960"] as const)(
-    "offers ten earned %s opponents without unlocking the other ladder or future animals",
+    "offers the complete earned %s roster without unlocking the other ladder",
     (variant) => {
       let progress = createInitialStoryProgress()
       const other = variant === "standard" ? "chess960" : "standard"
@@ -56,15 +56,15 @@ describe("earned Story progression", () => {
           ),
         ).toEqual(progress)
       }
-      expect(progress[variant]).toHaveLength(10)
+      expect(progress[variant]).toHaveLength(STOCKFISH_OPPONENTS.length)
       expect(progress[other]).toEqual([])
       expect(selectDefaultStoryOpponent(progress, variant)).toBe(
-        "raccoon-stockfish",
+        "dragonfly-stockfish",
       )
-      expect(canPlayStoryOpponent(progress, variant, "axolotl-stockfish")).toBe(
-        false,
-      )
-      expect(selectStoryCompletion(progress)[variant]).toBe(1000 / 23)
+      expect(
+        selectChallengeUnlockedOpponents(progress).map(({ id }) => id),
+      ).toEqual(IMPLEMENTED_DURABLE_OPPONENT_IDS)
+      expect(selectStoryCompletion(progress)[variant]).toBe(100)
     },
   )
 

@@ -205,7 +205,7 @@ describe("web match runtime ownership", () => {
       await expect(
         openWebMatchRuntime({
           ...input,
-          difficultyTargetElo: 1100,
+          difficultyTargetElo: 2400,
           openSession,
         }),
       ).rejects.toThrow("no supported web preset")

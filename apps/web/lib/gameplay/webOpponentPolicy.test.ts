@@ -9,9 +9,9 @@ describe("versioned web opponent policies", () => {
   it.each(["standard", "chess960"] as const)(
     "separates %s animal identity from every supported Challenge preset",
     async (variant) => {
-      expect(webChallengeDifficultyTargets(variant)).toEqual([
-        100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
-      ])
+      expect(webChallengeDifficultyTargets(variant)).toEqual(
+        STOCKFISH_OPPONENTS.map(({ storyTargetElo }) => storyTargetElo),
+      )
       for (const target of webChallengeDifficultyTargets(variant)) {
         const chicken = await resolveWebChallengePolicy(
           "chicken-stockfish",
@@ -66,15 +66,15 @@ describe("versioned web opponent policies", () => {
         ).fingerprint,
       )
       await expect(
-        resolveWebChallengePolicy("chicken-stockfish", variant, 1100),
+        resolveWebChallengePolicy("chicken-stockfish", variant, 2400),
       ).rejects.toThrow("no supported web preset")
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "preserves the measured %s ladder through Raccoon",
+    "preserves the measured %s ladder through Dragonfly",
     async (variant) => {
       const policies = await Promise.all(
-        STOCKFISH_OPPONENTS.slice(0, 10).map(({ id }) =>
+        STOCKFISH_OPPONENTS.map(({ id }) =>
           resolveWebOpponentPolicy(id, variant),
         ),
       )
@@ -85,12 +85,18 @@ describe("versioned web opponent policies", () => {
         ),
       ).toEqual(
         variant === "standard"
-          ? [9000, 8000, 7350, 6550, 6150, 5500, 5000, 4450, 3850, 3650]
-          : [8350, 8000, 7350, 6550, 6150, 5500, 5400, 5000, 4450, 3650],
+          ? [
+              9000, 8000, 7350, 6550, 6150, 5500, 5000, 4450, 3850, 3650, 3200,
+              2800, 2550, 2325, 2000, 1725, 1350, 1125, 825, 550, 400, 250, 80,
+            ]
+          : [
+              8350, 8000, 7350, 6550, 6150, 5500, 5400, 5000, 4450, 3650, 3200,
+              2800, 2550, 2325, 2000, 1725, 1350, 1125, 825, 550, 400, 250, 80,
+            ],
       )
-      expect(policies.at(-1)?.opponentId).toBe("raccoon-stockfish")
+      expect(policies.at(-1)?.opponentId).toBe("dragonfly-stockfish")
       expect(new Set(policies.map(({ fingerprint }) => fingerprint)).size).toBe(
-        10,
+        STOCKFISH_OPPONENTS.length,
       )
       for (const policy of policies) {
         const otherVariantPolicy = await resolveWebOpponentPolicy(
@@ -118,9 +124,6 @@ describe("versioned web opponent policies", () => {
           ).randomMoveProbabilityBasisPoints,
         ).toBe(policy.randomMoveProbabilityBasisPoints)
       }
-      await expect(
-        resolveWebOpponentPolicy("axolotl-stockfish", variant),
-      ).rejects.toThrow("no measured web policy")
     },
   )
 })

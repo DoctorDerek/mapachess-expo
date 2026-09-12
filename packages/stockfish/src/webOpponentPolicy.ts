@@ -21,6 +21,19 @@ const WEB_LADDER_RANDOM_PRESETS = Object.freeze([
   { standard: 4_450, chess960: 5_000 },
   { standard: 3_850, chess960: 4_450 },
   3_650,
+  3_200,
+  2_800,
+  2_550,
+  2_325,
+  2_000,
+  1_725,
+  1_350,
+  1_125,
+  825,
+  550,
+  400,
+  250,
+  80,
 ] as const)
 
 export const WEB_LADDER_RANDOM_BASIS_POINTS = Object.freeze({

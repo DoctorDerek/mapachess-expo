@@ -14,7 +14,6 @@ import {
   createMatchTimeline,
   currentMatchPosition,
 } from "@mapachess/match/match-timeline"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
@@ -211,7 +210,7 @@ describe("web durable match mapping", () => {
     ).toEqual(resumeWebMatch(fresh))
   })
 
-  it("round-trips the implemented identity but rejects catalog-only opponents", async () => {
+  it("round-trips the implemented identity but rejects unknown opponents", async () => {
     const record = buildFreshWebMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
@@ -235,7 +234,7 @@ describe("web durable match mapping", () => {
         ...playerData,
         activeMatch: {
           ...record,
-          opponentId: stockfishOpponent("axolotl-stockfish").id,
+          opponentId: "unknown-stockfish",
         },
       }),
     ).toEqual({
