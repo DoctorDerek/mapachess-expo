@@ -1,6 +1,5 @@
 import {
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
-  isImplementedDurableOpponent,
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
@@ -61,9 +60,6 @@ export const STORY_PROGRESS_COPY = Object.freeze({
   allDefeated: "Every opponent defeated",
   replay: "Replay wins to improve your medals. Your highest medal is kept.",
   independence: "Standard and Chess960 keep separate victories and medals.",
-  availability:
-    "Play through Raccoon now. Later opponents remain in development; earned progress is saved for them.",
-  inDevelopment: "In development",
   medals: Object.freeze({ bronze: "Bronze", silver: "Silver", gold: "Gold" }),
 })
 
@@ -82,8 +78,7 @@ export const canPlayStoryOpponent = (
   progress: StoryProgress,
   variant: MatchVariant,
   opponentId: StockfishOpponentId,
-): opponentId is ImplementedDurableOpponentId =>
-  isImplementedDurableOpponent(opponentId) &&
+): boolean =>
   stockfishOpponent(opponentId).storyPosition <= progress[variant].length + 1
 
 export const selectDefaultStoryOpponent = (
@@ -95,7 +90,7 @@ export const selectDefaultStoryOpponent = (
       canPlayStoryOpponent(progress, variant, opponentId)
         ? opponentId
         : selected,
-    IMPLEMENTED_DURABLE_OPPONENT_IDS[0],
+    "chicken-stockfish",
   )
 
 export const storyVictoryMedal = (

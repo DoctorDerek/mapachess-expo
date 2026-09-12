@@ -42,12 +42,12 @@ describe("bounded direct web ladder refinement", () => {
   )
 
   it.each(["standard", "chess960"] as const)(
-    "connects ten candidates directly to the original reference in %s",
+    "connects the complete roster of candidates directly to the original reference in %s",
     (variant) => {
       const { plan, anchor } = createWebOpponentLadderPlan(variant)
       expect(createWebOpponentLadderPlan(variant).plan).toEqual(plan)
-      expect(plan.games).toHaveLength(400)
-      expect(indexCalibrationPolicies(plan.policies).size).toBe(11)
+      expect(plan.games).toHaveLength(920)
+      expect(indexCalibrationPolicies(plan.policies).size).toBe(24)
       expect(anchor).toEqual(createWebOpponentCandidatePlan(variant).anchor)
       const probabilities = plan.policies
         .filter(({ policy }) => "kind" in policy.engine)
@@ -56,10 +56,10 @@ describe("bounded direct web ladder refinement", () => {
         )
         .sort((left, right) => right - left)
       expect(probabilities).toEqual(WEB_OPPONENT_LADDER_CANDIDATES[variant])
-      expect(new Set(probabilities).size).toBe(10)
+      expect(new Set(probabilities).size).toBe(23)
 
       const edgeIds = new Set(plan.games.map((game) => game.edgeId))
-      expect(edgeIds.size).toBe(10)
+      expect(edgeIds.size).toBe(23)
       for (const edgeId of edgeIds) {
         expect(
           plan.games.filter((game) => game.edgeId === edgeId),
@@ -94,15 +94,15 @@ describe("bounded direct web ladder refinement", () => {
     expect(plans.map((plan) => plan.planId)).toEqual([
       "sha256:068eef0fbdf445576730958a9baec081fca5499559a886fdee6749e00392a3d8",
       "sha256:89cc8ac77aedfe9af5750f106c569cb74be7f30156249647d8ea7382cd64f9d6",
-      "sha256:826b5c47eec3cbf31bca17922fbadb5bae09194cb8599c21cf59de4c875368d4",
-      "sha256:4a134a0db83b2ebd1df0b21dfcfab9e07d119a4691422934c9b8aa90fe855be0",
+      "sha256:34ed1daab08c6126cbac2a59c88a25eebe82052ba6bd5a131cd85025b2ffbe76",
+      "sha256:53beaaf2e80207544c7315a728a234b4e77ad7932c597c4dc738683ce886b09e",
     ])
     expect(plans.reduce((total, plan) => total + plan.games.length, 0)).toBe(
-      880,
+      1920,
     )
     expect(
       new Set(plans.flatMap((plan) => plan.games.map((game) => game.gameId)))
         .size,
-    ).toBe(880)
+    ).toBe(1920)
   })
 })

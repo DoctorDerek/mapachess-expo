@@ -5,12 +5,12 @@ import webLadderAcceptanceFixture from "../test/webLadderAcceptanceFixture"
 import fingerprintOpponentPolicy from "./opponentPolicy"
 import { createWebOpponentCalibrationPolicy } from "./webOpponentCandidatePlan"
 
-describe("accepted 100–1000 web engine-pool estimates", () => {
+describe("accepted 100–2300 web engine-pool estimates", () => {
   it.each(["standard", "chess960"] as const)(
     "keeps every %s preset within the approved measured tolerances",
     (variant) => {
       const rows = webLadderAcceptanceFixture[variant]
-      expect(rows).toHaveLength(10)
+      expect(rows).toHaveLength(STOCKFISH_OPPONENTS.length)
       expect(WEB_LADDER_RANDOM_BASIS_POINTS[variant]).toEqual(
         rows.map(([probability]) => probability),
       )

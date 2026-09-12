@@ -222,7 +222,7 @@ describe("web match session ownership", () => {
   })
   it.each([
     { ...DEFAULT_CHALLENGE_SETUP, opponentId: "bunny-stockfish" as const },
-    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1100 },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 2400 },
     { ...DEFAULT_CHALLENGE_SETUP, opponentId: "dragonfly-stockfish" as const },
   ])(
     "rejects unavailable Challenge selection %j before opening resources or changing saves",
@@ -249,7 +249,7 @@ describe("web match session ownership", () => {
   )
 
   it.each(["standard", "chess960"] as const)(
-    "saves, reloads and restarts all ten earned %s opponents without losing medals or the other ladder",
+    "saves, reloads and restarts the complete earned roster of %s opponents without losing medals or the other ladder",
     async (variant) => {
       const parsed = parseChess960PositionId(518)
       if (!parsed.ok) throw new Error("Orthodox Chess960 fixture must parse")
@@ -394,7 +394,9 @@ describe("web match session ownership", () => {
         if (progress === undefined)
           throw new Error("Story progress must remain available")
         expect(selectDefaultStoryOpponent(progress, variant)).toBe(
-          IMPLEMENTED_DURABLE_OPPONENT_IDS[Math.min(index + 1, 9)],
+          IMPLEMENTED_DURABLE_OPPONENT_IDS[
+            Math.min(index + 1, IMPLEMENTED_DURABLE_OPPONENT_IDS.length - 1)
+          ],
         )
       }
       await profile.close()

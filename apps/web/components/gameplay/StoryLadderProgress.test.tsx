@@ -42,7 +42,7 @@ describe("Story ladder presentation structure", () => {
 
   it.each([
     { ...DEFAULT_CHALLENGE_SETUP, opponentId: "bunny-stockfish" as const },
-    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 1100 },
+    { ...DEFAULT_CHALLENGE_SETUP, difficultyTargetElo: 2400 },
   ])(
     "keeps unavailable remembered choices in a recoverable setup state",
     (challengeSetup) => {
@@ -140,7 +140,8 @@ describe("Story ladder presentation structure", () => {
     expect(markup).toContain("4.3%")
     expect(markup).toContain("2.2%")
     expect(markup).toContain("0%")
-    expect(markup).toContain("Play through Raccoon now.")
+    expect(markup).not.toContain("Play through Raccoon now.")
+    expect(markup).not.toContain("In development")
     expect(markup).not.toContain("<button")
   })
 

@@ -5,7 +5,6 @@ import bindMatchPositionEvaluation, {
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import {
-  isImplementedDurableOpponent,
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
@@ -273,9 +272,6 @@ export async function openFreshWebMatchSession(
       ? input.challengeSetup.opponentId
       : (input.opponentId ??
         selectDefaultStoryOpponent(playerData.storyProgress, variant)))
-  if (!isImplementedDurableOpponent(opponentId)) {
-    throw new Error("The selected opponent is not available for web play.")
-  }
   if (
     challengeSetup !== undefined &&
     (!selectChallengeUnlockedOpponents(playerData.storyProgress).some(

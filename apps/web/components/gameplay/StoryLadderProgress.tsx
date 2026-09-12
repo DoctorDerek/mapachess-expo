@@ -1,8 +1,5 @@
 import { useId } from "react"
-import {
-  isImplementedDurableOpponent,
-  type ImplementedDurableOpponentId,
-} from "@mapachess/match/durable-match-record"
+import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
   canPlayStoryOpponent,
@@ -73,9 +70,6 @@ export default function StoryLadderProgress({
           ? STORY_PROGRESS_COPY.allDefeated
           : `${STORY_PROGRESS_COPY.nextOpponent}: ${nextOpponent.opponent.displayName}`}
       </p>
-      <p className="mt-2 text-sm leading-relaxed">
-        {STORY_PROGRESS_COPY.availability}
-      </p>
       <ol
         aria-label={STORY_PROGRESS_COPY.opponents}
         className="border-mapachito-charcoal/30 focus-visible:outline-mapachito-violet mt-5 grid max-h-80 gap-2 overflow-y-auto rounded-lg border-2 p-3 focus-visible:outline-3 focus-visible:outline-offset-4"
@@ -118,12 +112,6 @@ export default function StoryLadderProgress({
                     <p className="mt-1 text-xs">
                       {STORY_PROGRESS_COPY.targetElo}: {opponent.storyTargetElo}
                     </p>
-                    {status !== "locked" &&
-                    !isImplementedDurableOpponent(opponent.id) ? (
-                      <p className="mt-1 text-xs font-bold">
-                        {STORY_PROGRESS_COPY.inDevelopment}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
                 <p

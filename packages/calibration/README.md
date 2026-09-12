@@ -120,3 +120,61 @@ Existing local calibration helpers own execution, evidence validation and
 estimation; ordinary CI still runs no engine matches. The report parser accepts
 BayesElo's cumulative progress output above 1,000 games while rejecting unknown
 results, unexpected diagnostics, regressing counts and incorrect final totals.
+
+## Complete Story ladder extension — September 12, 2026
+
+All thirteen remaining targets (1100–2300) meet the same stopping rule in both
+variants using one shared probability schedule. The first ten probabilities and
+their four established exceptions are unchanged. Their final cumulative estimates
+also still pass; the acceptance fixture now records this cumulative fit for all
+23 targets. The earlier tables above retain the dated first-ten evidence, not a
+second policy table.
+
+| Target | Shared random % | Standard estimate (95% interval) | Chess960 estimate (95% interval) | Games per variant |
+| ------ | --------------- | -------------------------------- | -------------------------------- | ----------------- |
+| 1100   | 32              | 1098 (1062–1134)                 | 1142 (1107–1178)                 | 320               |
+| 1200   | 28              | 1239 (1203–1275)                 | 1222 (1187–1257)                 | 320               |
+| 1300   | 25.5            | 1299 (1270–1328)                 | 1320 (1291–1349)                 | 480               |
+| 1400   | 23.25           | 1397 (1360–1434)                 | 1414 (1378–1450)                 | 320               |
+| 1500   | 20              | 1505 (1479–1531)                 | 1495 (1469–1521)                 | 640               |
+| 1600   | 17.25           | 1582 (1557–1607)                 | 1588 (1563–1614)                 | 640               |
+| 1700   | 13.5            | 1709 (1680–1738)                 | 1725 (1696–1755)                 | 480               |
+| 1800   | 11.25           | 1784 (1757–1811)                 | 1803 (1776–1830)                 | 640               |
+| 1900   | 8.25            | 1948 (1911–1985)                 | 1900 (1864–1936)                 | 320               |
+| 2000   | 5.5             | 2036 (2017–2055)                 | 2012 (1993–2031)                 | 1440              |
+| 2100   | 4               | 2115 (2064–2166)                 | 2075 (2024–2126)                 | 160               |
+| 2200   | 2.5             | 2189 (2164–2214)                 | 2153 (2127–2179)                 | 640               |
+| 2300   | 0.8             | 2323 (2299–2347)                 | 2303 (2278–2328)                 | 640               |
+
+The largest new-target error is 48 Elo and the largest new interval radius is
+51 Elo. These remain conditional pool estimates, not independently certified
+human ratings or proof of non-overlapping adjacent strengths. No tolerances were
+relaxed. No new variant exceptions, Full runtime, or search-budget changes were
+needed. The original ten also remain within 50 Elo in this cumulative fit
+(including Chess960 600 at 650); their previously accepted settings are preserved.
+
+The extension adds 13,600 scored games across seeds 46–50, including direct
+reference and intermediate-strength cross-links rather than relying only on a
+long adjacent-opponent chain. All new pairs completed. Cumulative input contains
+13,236 Standard games and 13,478 Chess960 games (26,714 total), with the same
+historical capped-pair exclusions and rejected routing batch described above.
+All valid candidate results remain in the cumulative fit, including candidates
+not selected for activation.
+
+The wider pool exposed clipping in BayesElo's default integration range. The
+runner now sets `minelo -4500`, `maxelo 4500`, and `resolution 3001` before
+`exactdist`, retaining the original 3-Elo grid spacing. The point-estimation
+model, reference offset and strict output validation are unchanged. Reusing the
+same captured input verified the numerical correction without rerunning matches.
+
+| Cumulative artifact      | SHA-256                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| Standard PGN             | `0b6bdc5bd00309cd833590e06a9b7ec8151c0a5130e245ea74f65187eac764fa` |
+| Chess960 PGN             | `6527a7b5f6ba58aaaf8266d2ee9392e70056888d80162a3e78c0c32b0137eba4` |
+| Standard BayesElo stdout | `67d6eea25395a1cecff49103b72ebd652f623e94a6883310e3a324549870a7ef` |
+| Chess960 BayesElo stdout | `ed5af0b0be38a9c758a0f92e54782963eb6814621cff00c4da43e5af8b07b670` |
+
+Story now supports the entire earned roster through Dragonfly. Challenge shares
+these 100–2300 presets while keeping animal selection independent and earned.
+Native equivalence and difficulty above 2300 remain separate evidence gates;
+this extension does not certify either or enable player-rating updates.
