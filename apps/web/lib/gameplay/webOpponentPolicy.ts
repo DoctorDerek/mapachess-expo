@@ -9,7 +9,7 @@ import {
   OPPONENT_POSITION_SEED_DERIVATION_VERSION,
 } from "@mapachess/stockfish/opponent-move-selection"
 import {
-  PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS,
+  WEB_LADDER_RANDOM_BASIS_POINTS,
   WEB_OPPONENT_ENGINE_CONFIGURATION,
   WEB_OPPONENT_NODE_LIMIT,
 } from "@mapachess/stockfish/web-opponent-policy"
@@ -34,7 +34,7 @@ const webChallengePresets = (
 ): readonly Readonly<{ targetElo: number; randomBasisPoints: number }>[] =>
   STOCKFISH_OPPONENTS.flatMap(({ storyPosition, storyTargetElo }) => {
     const randomBasisPoints =
-      PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS[variant][storyPosition - 1]
+      WEB_LADDER_RANDOM_BASIS_POINTS[variant][storyPosition - 1]
     return randomBasisPoints === undefined
       ? []
       : [{ targetElo: storyTargetElo, randomBasisPoints }]
@@ -52,9 +52,7 @@ export default async function resolveWebOpponentPolicy(
 ): Promise<WebOpponentPolicy> {
   const opponent = stockfishOpponent(opponentId)
   const randomMoveProbabilityBasisPoints =
-    PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS[variant][
-      opponent.storyPosition - 1
-    ]
+    WEB_LADDER_RANDOM_BASIS_POINTS[variant][opponent.storyPosition - 1]
   if (randomMoveProbabilityBasisPoints === undefined) {
     throw new TypeError("This opponent has no measured web policy.")
   }

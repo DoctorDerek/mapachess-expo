@@ -34,13 +34,13 @@ export const MATCH_SETUP_COPY = Object.freeze({
   positionNumber: "Position number",
   invalidSetup:
     "Choose an available animal, difficulty, side, and valid starting position.",
-  difficulty: "Difficulty · provisional Elo target",
-  provisional: "Provisional",
+  difficulty: "Difficulty · estimated Elo",
+  estimated: "Estimated Elo",
   unavailableSelection:
     "This selection is not available. Choose an earned animal and supported difficulty.",
   untimed: "Untimed",
-  provisionalDifficulty:
-    "Opponent settings are provisional. Authored Elo targets are not certified ratings, and this match does not update your Elo.",
+  webCalibrationDifficulty:
+    "These difficulty estimates are calibrated against a controlled engine pool, not certified human ratings. This match does not update your Elo.",
   storyAvailability:
     "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:

@@ -154,7 +154,7 @@ export default function WebMatchSetup({
               : MATCH_SETUP_COPY.challengeAvailability}
           </p>
           <p className="border-mapachito-deep-cyan mt-5 border-l-4 pl-3 text-sm leading-relaxed">
-            {MATCH_SETUP_COPY.provisionalDifficulty}
+            {MATCH_SETUP_COPY.webCalibrationDifficulty}
           </p>
           <p className="mt-3 text-sm font-bold">{MATCH_SETUP_COPY.untimed}</p>
 

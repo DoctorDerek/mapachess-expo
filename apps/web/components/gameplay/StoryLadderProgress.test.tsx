@@ -102,7 +102,9 @@ describe("Story ladder presentation structure", () => {
       expect(markup).toMatch(
         /name="challenge-difficulty"[^>]*checked=""[^>]*value="1000"/,
       )
-      expect(markup).toContain("Difficulty · provisional Elo target")
+      expect(markup).toContain("Difficulty · estimated Elo")
+      expect(markup).toContain("not certified human ratings")
+      expect(markup).toContain("does not update your Elo")
       expect(markup).not.toContain("<select")
       expect(markup).not.toContain("Your Story ladder")
     },

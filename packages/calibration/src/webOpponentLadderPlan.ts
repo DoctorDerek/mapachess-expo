@@ -1,4 +1,4 @@
-import { PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS } from "@mapachess/stockfish/web-opponent-policy"
+import { WEB_LADDER_RANDOM_BASIS_POINTS } from "@mapachess/stockfish/web-opponent-policy"
 import type { RunBayesEloInput } from "./bayesEloRunner.js"
 import type { CalibrationPlan } from "./calibrationPlan.js"
 import fingerprintOpponentPolicy, {
@@ -13,8 +13,7 @@ import {
 
 const WEAK_END_PROBABILITIES = [9_000, 8_000] as const
 
-export const WEB_OPPONENT_LADDER_CANDIDATES =
-  PROVISIONAL_WEB_LADDER_RANDOM_BASIS_POINTS
+export const WEB_OPPONENT_LADDER_CANDIDATES = WEB_LADDER_RANDOM_BASIS_POINTS
 
 const PRIOR_WEB_RANDOM_80_EVIDENCE = {
   standard: {

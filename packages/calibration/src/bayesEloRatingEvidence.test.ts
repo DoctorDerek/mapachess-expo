@@ -102,6 +102,49 @@ ResultSet-EloRating>ResultSet>`
 }
 
 describe("BayesElo rating evidence", () => {
+  it("accepts cumulative loading progress without losing final count validation", async () => {
+    const original = await completedInput()
+    const [first, second] = original.policyAliases
+    if (first === undefined || second === undefined)
+      throw new Error("Missing aliases")
+    const input = {
+      ...original,
+      completedGameCount: 1078,
+      completedPairCount: 539,
+    }
+    const bridgeOffset = {
+      anchorElo: 1320,
+      alias: first.alias,
+      policyFingerprint: first.policyFingerprint,
+    }
+    const stdout = observedOutput(first.alias, second.alias).replace(
+      /\s2\s+50%/g,
+      " 1078 50%",
+    )
+    const progress =
+      "1000 game(s) loaded, 0 game(s) with unknown result ignored."
+    const final = "1078 game(s) loaded, 0 game(s) with unknown result ignored."
+    expect(
+      parseBayesEloRatingEvidence({
+        input,
+        bridgeOffset,
+        stdout,
+        stderr: `${progress}\r${final}\r\n`,
+      }).completedGameCount,
+    ).toBe(1078)
+    for (const stderr of [
+      progress,
+      `${final}\r${progress}`,
+      `${progress}\rUnexpected warning\r${final}`,
+      `${progress.replace(", 0 game(s)", ", 1 game(s)")}\r${final}`,
+      final.replace("1078", "1079"),
+    ]) {
+      expect(() =>
+        parseBayesEloRatingEvidence({ input, bridgeOffset, stdout, stderr }),
+      ).toThrow()
+    }
+  })
+
   it.each(["standard", "chess960"] as const)("parses %s", async (variant) => {
     const input = await completedInput(variant)
     const first = input.policyAliases[0]
