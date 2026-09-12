@@ -1,79 +1,9 @@
-import {
-  PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
-  type SpriteAnimationDefinition,
-  type SpriteAssetManifest,
-  type SpriteFrameGeometry,
-} from "./presentationAssetManifest.js"
+import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
+import REMAINING_STORY_ANIMAL_SPRITES from "./remainingStoryAnimalSprites.js"
 import STORY_ANIMAL_SPRITE_DATA from "./storyAnimalSpriteData.js"
 
-type SpriteClip = readonly [
-  frameCount: number,
-  visibleX: number,
-  visibleY: number,
-  visibleWidth: number,
-  visibleHeight: number,
-]
-
-type StoryAnimalSpriteSource<AnimationId extends string> = Readonly<{
-  sourceAnimalId: string
-  relativeDirectory: string
-  filePrefix: string
-  frameSize: number
-  clips: Readonly<Record<AnimationId | "idle", SpriteClip>>
-}>
-
-function defineStoryAnimalSprite<AnimationId extends string>(
-  source: StoryAnimalSpriteSource<AnimationId>,
-  reactionPlans: SpriteAssetManifest<
-    NoInfer<AnimationId> | "idle",
-    string
-  >["reactionPlans"],
-): SpriteAssetManifest<string, string> {
-  const [, visibleX, visibleY, visibleWidth, visibleHeight] = source.clips.idle
-  const referenceGeometry: SpriteFrameGeometry = Object.freeze({
-    bottomCenterX: visibleX + visibleWidth / 2,
-    bottomY: visibleY + visibleHeight,
-    frameWidth: source.frameSize,
-    frameHeight: source.frameSize,
-    visibleX,
-    visibleY,
-    visibleWidth,
-    visibleHeight,
-  })
-  const animations = Object.fromEntries(
-    Object.entries<SpriteClip>(source.clips).map(
-      ([animationId, [frameCount, x, y, width, height]]) => {
-        const animation: SpriteAnimationDefinition<string> = Object.freeze({
-          frameCount,
-          frameDurationMilliseconds: PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
-          geometry: Object.freeze({
-            ...referenceGeometry,
-            visibleX: x,
-            visibleY: y,
-            visibleWidth: width,
-            visibleHeight: height,
-          }),
-          reducedMotionFrameIndex:
-            animationId === "die"
-              ? frameCount - 1
-              : animationId.startsWith("idle")
-                ? 0
-                : Math.floor(frameCount / 2),
-          sourceId: `${source.relativeDirectory}/${source.filePrefix}_${animationId}_strip${frameCount}.png`,
-        })
-        return [animationId, animation]
-      },
-    ),
-  )
-  return Object.freeze({
-    animations: Object.freeze(animations),
-    referenceGeometry,
-    sourceFacing: "right",
-    reactionPlans,
-  })
-}
-
 const STORY_ANIMAL_SPRITES = Object.freeze({
+  ...REMAINING_STORY_ANIMAL_SPRITES,
   "bunny-stockfish": defineStoryAnimalSprite(STORY_ANIMAL_SPRITE_DATA.bunny, {
     idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
     "capture-attacker": [

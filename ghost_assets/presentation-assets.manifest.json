@@ -1,6 +1,146 @@
 {
   "files": [
     {
+      "path": "battle/axolotl/lilaxolotl_attack_strip7.png",
+      "sha256": "6402e515a5b9b543309c3c11db529c83609153be023b03a215c01a7d35640e2b"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_crouch_strip8.png",
+      "sha256": "6fa1c8a4de592fe251161f359fb23c806568df0727369846d2a31a8b6bac5ba5"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_dash_strip10.png",
+      "sha256": "dad912ad55443a7e69f5fb21c346e05e1c4122822fdcec074b794c3b93a7e558"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_die_strip8.png",
+      "sha256": "134d7dae54dcce32547d35c2439753408b6fe164d4fe8d583ff5c5abfecd5fa8"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_fall_strip5.png",
+      "sha256": "4e308236133a5936279e0e0b45e73c678cc0c15a636b9c685aec15562b73123c"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_hurt_strip5.png",
+      "sha256": "76027b318ba321f4baea025c88e4afcd77f0abed83fc3fa9e4b52be2ad71392d"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_idle_blink_strip8.png",
+      "sha256": "ef58ad2014146842e53f61a57812352deb0f1d353e42fa575448d15e6c2880f1"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_idle_strip8.png",
+      "sha256": "5a8afab719c3b5ac9522461fdea1ff2b7f9e3d4c52e4acc7c0353cf7cf0ae611"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_jump_strip5.png",
+      "sha256": "9541006dd6914725fdbbc5f3edac1e35b5fe97aba6de1dfc82e2527474171a0c"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_land_strip3.png",
+      "sha256": "13d36653d9b6288a4b049fd5a686267da11ac63a132fc35160b2827322b5144b"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_liedown_strip8.png",
+      "sha256": "8dd318d3e274c10814ee4630198c2745aec3b50909bd5c3f8e47dc76928aa5a7"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_run_strip4.png",
+      "sha256": "b256b31bc25942ee3aca5a1c642741d1b680afc1e9321ad0a801114ecafeb0f9"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_sit_strip8.png",
+      "sha256": "bde95fd38a6e379e60798bef4f49c25d6214acf2e75fc9232e8adaab72d198d5"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_sleep_strip4.png",
+      "sha256": "84ee0340514186d3e2d7d615e66cb63961110b8cc8e8b0b3eb66eed540eece9a"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_sneak_strip4.png",
+      "sha256": "95a4532044afffa35d4ab26b9bb30fcaf0fcd228baba4ec5054ad0c38c4309d9"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_swim_idle_strip4.png",
+      "sha256": "db95e15ace0d99239d772593afcb304aa5fd84d21df286a06125f02f0eababdb"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_swim_strip4.png",
+      "sha256": "3cb77690e5da537cfc1d9b21bf8ce269a63af38e98640c0e34b451a5e314b320"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_walk_strip8.png",
+      "sha256": "f6953053cabbcbd73af4c30daa79f3d410472b59426256c15d133bbaba95707f"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_wallclimb_strip4.png",
+      "sha256": "89295217b4120d1925995a6248491f7e0efa5e32e67fb0471a9c418bdc2d4147"
+    },
+    {
+      "path": "battle/axolotl/lilaxolotl_wallgrab_strip8.png",
+      "sha256": "e6a2099e96e94ea028d380b356192509e04b9d725617a38451aecc7b630987b4"
+    },
+    {
+      "path": "battle/bat/bat_attack_strip7.png",
+      "sha256": "87bf5f4af1d94a3d22ec17b1c12351bd2acaaadf5ebc64d41b4859428421dab0"
+    },
+    {
+      "path": "battle/bat/bat_crouch_strip4.png",
+      "sha256": "6612fb1e90a40e8e3926a8c6c59bfcba7e34af8cb0322e5d9c6d75b2fda6e55f"
+    },
+    {
+      "path": "battle/bat/bat_dash_strip8.png",
+      "sha256": "24572c9423b51602eda9dc127b44035c9454d345a792de23242c82abbdfe006b"
+    },
+    {
+      "path": "battle/bat/bat_die_strip8.png",
+      "sha256": "8f478db0d39465f87198d83c0ebbff66645e5dec5ad2e7b31db459ae3e56f0ef"
+    },
+    {
+      "path": "battle/bat/bat_fly_forward_strip4.png",
+      "sha256": "2e8d1d3bc2d8351c403e86cfd9130cc2672b060e044ef02c3cac98c9ce6ca41f"
+    },
+    {
+      "path": "battle/bat/bat_fly_idle_strip6.png",
+      "sha256": "bf5685cfbacbc5f1552bd7099d05c7faf475bf80fddeb13d82b7f6f9d36c4846"
+    },
+    {
+      "path": "battle/bat/bat_hurt_strip5.png",
+      "sha256": "4643003244bbaf798636d94098926b5a58ff48635dbe3f0fc3a0265c54a81372"
+    },
+    {
+      "path": "battle/bat/bat_idle_upright_blink_strip4.png",
+      "sha256": "eda275d599f1ae7d40a2e2b7c1c2cd770f411443aaf8a7f047f6248b916e83f9"
+    },
+    {
+      "path": "battle/bat/bat_idle_upright_strip4.png",
+      "sha256": "e2f2d9770ddf012c14a16462b6c3fa04fe08bfcd09f4dbd271a1599b89c0b24b"
+    },
+    {
+      "path": "battle/bat/bat_idle_upsidedown_blink_strip4.png",
+      "sha256": "edd58380b202425212e6ed399a1cbc29c6f0e1ee08449c4067625144e41b1256"
+    },
+    {
+      "path": "battle/bat/bat_idle_upsidedown_strip4.png",
+      "sha256": "93aea84dc3c37eed6623a0626c9ed0697ad1c6b05292e0ecda21e8101114aed8"
+    },
+    {
+      "path": "battle/bat/bat_land_upright_strip4.png",
+      "sha256": "daf72731ac8b65235c9f3e0ba7bacc1117bde55b3c67d76fdb5582931cdba001"
+    },
+    {
+      "path": "battle/bat/bat_land_upsidedown_strip4.png",
+      "sha256": "b30ae7d8bd2de0872a7324171e4a340c717e7ddc1f2a6dabdfd3ccea82335d43"
+    },
+    {
+      "path": "battle/bat/bat_liedown_strip2.png",
+      "sha256": "47857283f366d67325b42d13b8f23620448706c3809ad0e813f316850bc89bf4"
+    },
+    {
+      "path": "battle/bat/bat_sleep_strip4.png",
+      "sha256": "43a63aa97493048aa176550f5a83360eacc731955c8c5767dc012eb60e529348"
+    },
+    {
       "path": "battle/bunny/bunny_attack_strip6.png",
       "sha256": "a3a98f7ce7461918700e8cfd9e1a0456c86fc6a12e093786ff882c698878a058"
     },
@@ -209,6 +349,198 @@
       "sha256": "f9d133b2448a8af91d7bbf3457959ac91ef82a696a4a1ce908dd7494870499d2"
     },
     {
+      "path": "battle/crane/redcrane_attack_strip7.png",
+      "sha256": "11c651dd61a63f84af1619649e5c920b2a05d2a9060af8109021426303d5bb1f"
+    },
+    {
+      "path": "battle/crane/redcrane_call_strip9.png",
+      "sha256": "1eaaf8be83046b3128a21941bba509d91e095edd1c8eb78dd3876387e3354f69"
+    },
+    {
+      "path": "battle/crane/redcrane_dance_strip16.png",
+      "sha256": "dcc1b73a76a210281610d82d8c8e20fb71b1f091380838ea6eb9486af79680fe"
+    },
+    {
+      "path": "battle/crane/redcrane_die_strip12.png",
+      "sha256": "b95ad90d953e919430d5747640a0c3a80a3d04000dcbbcd0b7d399858c58a7b9"
+    },
+    {
+      "path": "battle/crane/redcrane_display_strip23.png",
+      "sha256": "685ba1e71bf47ec3305447288c60871070e97e17b8262fd1ed9e3ff790178569"
+    },
+    {
+      "path": "battle/crane/redcrane_fall_strip2.png",
+      "sha256": "7fba342c2560293124e2ce58bf0cd0b921ca4bbd1d3567e4900f1f960e03bf4e"
+    },
+    {
+      "path": "battle/crane/redcrane_fly_strip6.png",
+      "sha256": "abf63db8c6f74c832c6eaa8cd44f21e006f40d50c29fc2852a6fdeb158139319"
+    },
+    {
+      "path": "battle/crane/redcrane_fright_strip12.png",
+      "sha256": "8282820a42d0695ca7c093467748467263a0da4551486231652c7c0ce57acf3d"
+    },
+    {
+      "path": "battle/crane/redcrane_hurt_strip7.png",
+      "sha256": "7cdb437e685f40082c7c0a214c57bc5f53f9a255ede86af065e6e70adebaceb7"
+    },
+    {
+      "path": "battle/crane/redcrane_idle_blink_strip12.png",
+      "sha256": "d0d58365b61c460dcb2690775b77ede0410f3181ba3d2500f66a3e4c000ff012"
+    },
+    {
+      "path": "battle/crane/redcrane_idle_strip4.png",
+      "sha256": "d7ff9247d0771ce4de9fce55b452e354e5440462f9a9238fbaef4cace032a27c"
+    },
+    {
+      "path": "battle/crane/redcrane_land_strip4.png",
+      "sha256": "6d1bb446d9056c085ec726f16bd888177212a5a9efe700ba072bbb864253a8c7"
+    },
+    {
+      "path": "battle/crane/redcrane_peck_strip20.png",
+      "sha256": "97121819abaf57fae02bc2bf5e6faf356320b4b9085e488b0b09e75df5edf2eb"
+    },
+    {
+      "path": "battle/crane/redcrane_run_strip4.png",
+      "sha256": "7173a899c78fc88b7001e07ffd180337cec441f9ec897fbb39f6a1fb8d503643"
+    },
+    {
+      "path": "battle/crane/redcrane_soar_strip2.png",
+      "sha256": "c7bb441257a5279dadf8bf0cc0f14f8a0e1d96325d7fc8ca2fc67c2933f6dc98"
+    },
+    {
+      "path": "battle/crane/redcrane_takeoff_strip9.png",
+      "sha256": "a5a1b6f394679a4609b49936f81b2cc5487e00c6900047a11c5d87aad327283e"
+    },
+    {
+      "path": "battle/crane/redcrane_walk_strip8.png",
+      "sha256": "f06ee4bfb592fff48d3b39ba1f3b05456173d136dbef29af4fa26403d6c6ec32"
+    },
+    {
+      "path": "battle/crow/crow_attack_air_strip6.png",
+      "sha256": "d90a4a7dada52f70d90768724077fa5eab26fa4efbc0e55c323134afdbce5481"
+    },
+    {
+      "path": "battle/crow/crow_attack_ground_strip6.png",
+      "sha256": "586db0d389a613c89a0948382c18ef2edfc4877a049c5328ef0648d154a78648"
+    },
+    {
+      "path": "battle/crow/crow_dash_strip8.png",
+      "sha256": "d4697c392cf1b00fc390dde47d15852db0110e0f84c26674fc41acaec31d6b0f"
+    },
+    {
+      "path": "battle/crow/crow_die_strip16.png",
+      "sha256": "35759506bde337448f1a061463ae34de69e981db686928d9853cab9d4a0e7549"
+    },
+    {
+      "path": "battle/crow/crow_fall_strip2.png",
+      "sha256": "ea3403ee024f6f472e9361e0945804ee70538490300b3102aac2339b498072ca"
+    },
+    {
+      "path": "battle/crow/crow_fly_strip6.png",
+      "sha256": "2788883534e9c7f5437286ef230ea0ba347f43e0a6cccada39b74473c30032b2"
+    },
+    {
+      "path": "battle/crow/crow_hurt_strip5.png",
+      "sha256": "f0cdeae7c45d30cdaba5c1538376bf91d4e0b14934ff3285ca2fd9d9a231f1f6"
+    },
+    {
+      "path": "battle/crow/crow_idle_caw_strip12.png",
+      "sha256": "caa10a9b7683acb610b7edcd8fe9a71da6c730a2ba9df9f4df36c4d4b17b89f3"
+    },
+    {
+      "path": "battle/crow/crow_idle_strip12.png",
+      "sha256": "76f9ed98eb3bf32253ad97390e2b7adc1f61a13cdb157a7a4c957e69b08f50bb"
+    },
+    {
+      "path": "battle/crow/crow_land_strip3.png",
+      "sha256": "1d37ed3b20244314028a21880bcdf41ef172511c83aadda44b07e074f4d6ec71"
+    },
+    {
+      "path": "battle/crow/crow_sit_caw_strip12.png",
+      "sha256": "eb41e7efd7447aa540aec4392f00c25942cfb14a94316ce62bd75caee12582f4"
+    },
+    {
+      "path": "battle/crow/crow_sit_strip16.png",
+      "sha256": "5220556880111f080f4eb0f4c4a176589364bc1ba77e316b3e80447098586d1b"
+    },
+    {
+      "path": "battle/crow/crow_soar_strip6.png",
+      "sha256": "2191eab1e3f591f3c468b13a3eaf578b3d02d9fcc091eca149bc0150ad7e1823"
+    },
+    {
+      "path": "battle/crow/crow_takeoff_strip9.png",
+      "sha256": "8a07bc6f47c0078e839cb8a4ab8b8ef83628286f926f4efbdf32f7b482e2e97a"
+    },
+    {
+      "path": "battle/crow/crow_walk_strip16.png",
+      "sha256": "f1dbe770cccd547271bb63d7f949cf9c20ed5ee4e521ca19979f4e556c9d6238"
+    },
+    {
+      "path": "battle/deer/deer_female_alerted_strip20.png",
+      "sha256": "81916e9fcb4464f0daa9596a3bfb9d7be1d7eaa6551b528ed12b6d333dc80d2a"
+    },
+    {
+      "path": "battle/deer/deer_female_attack01_strip6.png",
+      "sha256": "d50e9a04ed2ece8025c9835f23d4869f138359e20c571e7b1259f08405c4bfe1"
+    },
+    {
+      "path": "battle/deer/deer_female_attack02_strip5.png",
+      "sha256": "d9f7aea7e748ae0bffa2e72cf0b748b45d12ddcf615fdbb314f4aae636f232a8"
+    },
+    {
+      "path": "battle/deer/deer_female_crouch_strip8.png",
+      "sha256": "998cc5dd9595d760ec38a1b9336dc6b75dd8e3178173973a9f8537ee9b0c99bc"
+    },
+    {
+      "path": "battle/deer/deer_female_dash_strip9.png",
+      "sha256": "09391f3ec8ece18381da59f6c46d13e86fcf0bbf24e571485178f235e9cc9cd1"
+    },
+    {
+      "path": "battle/deer/deer_female_die_strip10.png",
+      "sha256": "37720438a3955739e7a2d28cc35744b193f5993b8dfda4486f6376dc6b081d92"
+    },
+    {
+      "path": "battle/deer/deer_female_eat_strip20.png",
+      "sha256": "d35462119498eb8b5c5cd6bf4b18f7600fce0588d197c3561906bf2e82703f19"
+    },
+    {
+      "path": "battle/deer/deer_female_fall_strip12.png",
+      "sha256": "ffefd7589db3d0cceb61a08a50a2eb62cf0c1aabed00949f5905d921d31d7a16"
+    },
+    {
+      "path": "battle/deer/deer_female_hurt_strip6.png",
+      "sha256": "e3e99c1897bb84764851b7bb61809a2084fbc7eb3aa81f07df8541fb8227a909"
+    },
+    {
+      "path": "battle/deer/deer_female_idle_strip24.png",
+      "sha256": "740e2dda5646e5e38c6ef4584d98b9afd57eda08a61888000a29e270eae9d421"
+    },
+    {
+      "path": "battle/deer/deer_female_jump_strip12.png",
+      "sha256": "9be721b5a38e741ff3dcc48cd60f7ee61a51655ce8c6d83c8ebbade57ebd9d16"
+    },
+    {
+      "path": "battle/deer/deer_female_land_strip3.png",
+      "sha256": "1d28acfbd2651f6f8f1115f72dbb01c08b7326ed900ec7de8a7fd6113f67ccd4"
+    },
+    {
+      "path": "battle/deer/deer_female_liedown_getup_strip5.png",
+      "sha256": "75a25935632b4fed03fea09f9f3a5003aab07769fac69f75ec1d030496305ee9"
+    },
+    {
+      "path": "battle/deer/deer_female_liedown_godown_strip6.png",
+      "sha256": "d8cafc9376dc5c04500e4da4f69d520f00a3538646181593c3922c6b14719e9c"
+    },
+    {
+      "path": "battle/deer/deer_female_liedown_idle_strip24.png",
+      "sha256": "a506d5848e749b762497b2f1c3774d61215b81384141a164951ce7770336c55d"
+    },
+    {
+      "path": "battle/deer/deer_female_run_strip5.png",
+      "sha256": "f2639026655334227e1ab353167ec0ef00ada8cf666f7c2fc8ac1ca2153bf611"
+    },
+    {
       "path": "battle/dog/dog_attack_strip7.png",
       "sha256": "5ae0d89777ce53f47bf587781f2e673b97f2dd719f493d71eb9947e0dc07a2cd"
     },
@@ -281,6 +613,194 @@
       "sha256": "5b9c085d34c52b0598d2957dd43e35530d539a64033ab0cbd8f28c917cca37a6"
     },
     {
+      "path": "battle/dragonfly/dragonfly01_attack_strip7.png",
+      "sha256": "8e781699dd54940b589ffcd1e901f9b9602f104e3cb591cc9e2a9c2791f7f560"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_crouch_strip4.png",
+      "sha256": "bc9fbb47252d8dd28e328418f536f4a7b46da88e723bed7eb5f3cc914fa72a8e"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_die_strip8.png",
+      "sha256": "e904a96af7c8ba5aee27f1de4c7ab4c726aa5657a1c512724c923830934d950b"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_fall_strip2.png",
+      "sha256": "2cc7a02c8a692a1b623101bff096e2cb204a6bb6bc3a89564262efa184f77c66"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_fly_forward_strip6.png",
+      "sha256": "1c1a264bbddc769a02cca024840623268eb8fd203ecd57d55ca8ecc364d00255"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_fly_idle01_strip6.png",
+      "sha256": "250c6ce3a151c89eebc004dd7b75ccaf00bbaaa61ec0300dbe305afeb317bcc1"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_fly_idle02_strip6.png",
+      "sha256": "3b8d1186b28dcda9c34776700389599b8e24efaca9f2954cfd985560c91c4598"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_fright_strip7.png",
+      "sha256": "297cf39195d552a4fc4cae59b8f0008289b3d69187b2cb96238b9bb6b19fef93"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_hurt_strip5.png",
+      "sha256": "fb09c4dcafdf005cbc3d6d9e0872972404b0385fa52855d8b070b20d9c61c585"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_idle_blink_strip4.png",
+      "sha256": "c598909f3e19af0daf45d7693278774162b5e95857bbaca161f39be6cbd66857"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_idle_strip4.png",
+      "sha256": "115829335dc7918d2dba108a782d76564d446ca25f44396b2288e341b3909755"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_land_strip3.png",
+      "sha256": "ee50d8f37f21765ef444ccd231408b6f76cc92eac999efa33ce3a07f5b4f437d"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_run_strip4.png",
+      "sha256": "097fbc7fbc5fa18b55477a6f4c9eddbe9c210f9795c8239481cec1acbd756826"
+    },
+    {
+      "path": "battle/dragonfly/dragonfly01_walk_strip4.png",
+      "sha256": "3cba194c07383f2114697443b63dcd71a1fbe5ccdcbc5c6caff23a64d3ea1bb9"
+    },
+    {
+      "path": "battle/falcon/falcon_attack_air_strip6.png",
+      "sha256": "ee8bc2c466fa3ec25f88a04c9df0b00a6144060ce64c4ddf903539f5b8687c9b"
+    },
+    {
+      "path": "battle/falcon/falcon_attack_ground_strip6.png",
+      "sha256": "20f5698822808ab8f3897a24a5beb1f29813d7ea184b56900037f01e27ea4cfb"
+    },
+    {
+      "path": "battle/falcon/falcon_dash_strip8.png",
+      "sha256": "d2480e3cadf09016ed6f74e50b75a9c42dba8200005d14a0202c4344e56b9f25"
+    },
+    {
+      "path": "battle/falcon/falcon_die_strip16.png",
+      "sha256": "773fb20f150877c7bdf315843a71232605b59ad39ac02b54963f3f54c65a5a3e"
+    },
+    {
+      "path": "battle/falcon/falcon_fall_strip2.png",
+      "sha256": "188ab3295a92f5955b07d8b76ffeb5ff5531a183b0888b59be9355d7fbf0becc"
+    },
+    {
+      "path": "battle/falcon/falcon_fly_strip6.png",
+      "sha256": "600428a2f752abcfed9228b1551f7cb1ecd1c2b2f191a2e815c7fabc2fd5bc40"
+    },
+    {
+      "path": "battle/falcon/falcon_hurt_strip5.png",
+      "sha256": "4cf773731f57e10c922513693e7a759ba5218c29b80d1c13dad1388bb8d7983f"
+    },
+    {
+      "path": "battle/falcon/falcon_idle_call_strip12.png",
+      "sha256": "6a74b7717a1b1438ffff89872ff7939da9d40833a41d6fdcf5d7ab9ff13466d0"
+    },
+    {
+      "path": "battle/falcon/falcon_idle_strip6.png",
+      "sha256": "ea12fbe78869df899c40edc19906932df124039675037407d23f63657d766f36"
+    },
+    {
+      "path": "battle/falcon/falcon_land_strip3.png",
+      "sha256": "898afa3c91582eb05a12f4ab1e78f4ac623f0f2d720bf6959f46102a7419154f"
+    },
+    {
+      "path": "battle/falcon/falcon_sit_call_strip12.png",
+      "sha256": "bd1a6d99b972b7b46ea386e9f7acf73cb9e74aaf224bc9d0e52fb2ee16cd0cd7"
+    },
+    {
+      "path": "battle/falcon/falcon_sit_strip4.png",
+      "sha256": "2da54ce8d19cf4b16366aa368638003c22756c0e90586e2b8f8a93fdfccf4632"
+    },
+    {
+      "path": "battle/falcon/falcon_soar_call_strip12.png",
+      "sha256": "f24e7d82dd5f1be0d075ac73ef775440cbc7afc07384c0b13dc6d0a66ae6d015"
+    },
+    {
+      "path": "battle/falcon/falcon_soar_strip6.png",
+      "sha256": "fba048dfd88d86e6a8e1f3179b12d1b8f930e589913aa2cb4ba9661c2cdfd520"
+    },
+    {
+      "path": "battle/falcon/falcon_takeoff_strip9.png",
+      "sha256": "cb3588f94638c68a8e0648f2554952c18a91a62f03bb7c9cb5accde8344b825b"
+    },
+    {
+      "path": "battle/falcon/falcon_walk_strip8.png",
+      "sha256": "ffca51c0d823fc2aa22eada14e8b95026516faa0e925f284eec49db89d519677"
+    },
+    {
+      "path": "battle/fox/fox_attack_strip7.png",
+      "sha256": "169df425ae4c8b415c26acc8c99f6d5a35a06fd7e1f61737055e813d4e7c8310"
+    },
+    {
+      "path": "battle/fox/fox_bark_strip6.png",
+      "sha256": "578bf6c4b7cb869b6ad368578709deb245002b8884f083713375afa26780451f"
+    },
+    {
+      "path": "battle/fox/fox_crouch_strip8.png",
+      "sha256": "ac9858719f6b92780bcd1680b455b2339d37ab536da72b7c6a82892b535d8efe"
+    },
+    {
+      "path": "battle/fox/fox_dash_strip9.png",
+      "sha256": "abc8104caecdf57219494222e58d8fd96191f147b83c5d33cde031b9ae92bb51"
+    },
+    {
+      "path": "battle/fox/fox_die_strip8.png",
+      "sha256": "246754a362df53f21084edcc5beef0bacf521d338fddb1dc1a53386389d95758"
+    },
+    {
+      "path": "battle/fox/fox_fall_strip5.png",
+      "sha256": "be82e5e26c335da015bf4d4fa5fb9fc49c9a1235dde708f02d99f59af756282b"
+    },
+    {
+      "path": "battle/fox/fox_fright_strip4.png",
+      "sha256": "d3e3edef79c854c247c1e6239f6e4037b8e44c934796f8e4913bb9df02d4349b"
+    },
+    {
+      "path": "battle/fox/fox_howl_strip16.png",
+      "sha256": "f9e3b7abe8afaeef3a507bcd55c8a6859460473aab7a729d41dc582e4d15306c"
+    },
+    {
+      "path": "battle/fox/fox_hurt_strip7.png",
+      "sha256": "59d197605966772b6c7210aad4228ad83324921d4979452cab19b9519d2661d7"
+    },
+    {
+      "path": "battle/fox/fox_idle_blink_strip8.png",
+      "sha256": "a6b5ee2b5098a1e822bee11e0cd9793896a99d9c63ac4d1136094dfa87525396"
+    },
+    {
+      "path": "battle/fox/fox_idle_strip8.png",
+      "sha256": "7e015bf1a5f2823efeeb3b68fba614c92c670f260b54f6c276da965b34c677e6"
+    },
+    {
+      "path": "battle/fox/fox_jump_strip14.png",
+      "sha256": "dfade038141720b9cc622f9c509394442d34e9c8d69b9f4c4640427287fb86c4"
+    },
+    {
+      "path": "battle/fox/fox_land_strip3.png",
+      "sha256": "ccf2f13ebf1c066c246790067e9fda99589337db7f419540ed040b86a3736982"
+    },
+    {
+      "path": "battle/fox/fox_run_strip8.png",
+      "sha256": "47d20eb25db98ea36235d3501b68c8eb841c5798ced01d33da6d40b862d7f75c"
+    },
+    {
+      "path": "battle/fox/fox_sit01_strip8.png",
+      "sha256": "99e100b753628d141742d6a21d8305ee6e8f47a42121ececc31b4f686f230ef1"
+    },
+    {
+      "path": "battle/fox/fox_sit02_strip24.png",
+      "sha256": "9c8bd2fa5736d5df47445fae83480c44125f840e74ae4f2a69cd9149ff43a3c7"
+    },
+    {
+      "path": "battle/fox/fox_wallgrab_strip8.png",
+      "sha256": "ddf4ac1b8f01cc4ac6f9486f5b48e7d465416102685c06eea4993a7a48bb72e3"
+    },
+    {
       "path": "battle/frog/frog_attackdiagonal_strip6.png",
       "sha256": "a611ce635d93ed253059c83e262ac4f7513c516a12d0ff7450a1fcb906e1bf32"
     },
@@ -351,6 +871,74 @@
     {
       "path": "battle/frog/frog_swimidle_strip4.png",
       "sha256": "01abbe20a12e0d0eebb39dd214b87bdd7c3c769ea61a4ddc2ea83e901ae61981"
+    },
+    {
+      "path": "battle/hedgehog/hedgehog_fall_strip1.png",
+      "sha256": "a9066e74fdf2b506320d31c8b7df095636c94158e63f2cbfa6eac40c845cb86e"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_attack_strip7.png",
+      "sha256": "dd6aeaaa4b75be3c3b42bbccfc690c121b51a50e951eee9803020ce20fed6564"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_crouch_strip4.png",
+      "sha256": "f6d301648b725464b56f37d0536d5d3da886a6abf51943fd9593652414764b30"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_dash_strip10.png",
+      "sha256": "80081757ef8747cabb426ddde594306077f77a3520298f2835a29f9d43588609"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_die_strip8.png",
+      "sha256": "d1cfcceb91abc4f86ec83f80b371d5f96fb0647a3cd2f253ca17f63baaf3dea6"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_hurt_strip5.png",
+      "sha256": "6e38f535edcfa76330dd993e3189da9ece90b0c83c568dd2880e6d37c6f71c68"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_idle_blink_strip12.png",
+      "sha256": "fff726cff3ad6e78dd80c5a9c46e0ebd9cf6261dea8a55019ee3a6788788418d"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_idle_strip4.png",
+      "sha256": "6461ec9e2c70929a4f7cef4505bea251bc201b3f2409618d96f0869ebe561a5d"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_jump_strip5.png",
+      "sha256": "8bdf737408a019ba9293bb546dca97ed03b2a9765b9a6db1869bbf4bdebc5ba5"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_land_strip3.png",
+      "sha256": "ec3412d0076dedd6229a454feb9deb45f594451ab11bb9da82990ce02fc8ec56"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_liedown_strip4.png",
+      "sha256": "995508af4bf8d3f7163bf5d3ac121566877605b346be61d35f83b6fc60dbcdf3"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_run_strip4.png",
+      "sha256": "764e122c01ae55aca9d9258c46982d99db4d5137d802143e16b16cb6e4f951f5"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_sleep_strip4.png",
+      "sha256": "8f70e463be331c0fe27d65b3f6d55b031a2ea56fdb8e8206749f3f01f669ac38"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_sneak_strip4.png",
+      "sha256": "16e15e6cb2c90446ecd0dbc6e0c2bf1cfff03cccd0474e107980248e1d5b2b16"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_walk_strip4.png",
+      "sha256": "57fd6fc15ebebda142d1a14d260a4b5dd1012a680b9219560bc02ba7c057017b"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_wallclimb_strip4.png",
+      "sha256": "1ca25cc74063dcf3854fb1be929824d869680366d354133e4907281e153a2880"
+    },
+    {
+      "path": "battle/hedgehog/lilhedgehog_wallgrab_strip4.png",
+      "sha256": "5b126884ccb2680320930a94df34b9d88562ee79e9bcdd5203cd8bb2352bc835"
     },
     {
       "path": "battle/mapachito/raccoon_attack_strip7.png",
@@ -467,6 +1055,74 @@
     {
       "path": "battle/mouse/mouse03_wallgrab_strip4.png",
       "sha256": "47d63fc2ff8de5372273fe05fa12272dec503ad31c766dce2370c89951b846ab"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_attack01_strip5.png",
+      "sha256": "2b49215475dc4da54651528f5f7868ab0e4b39dad19165d43f25b73af2056c7e"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_attack02_strip5.png",
+      "sha256": "3f7984224935eaf0db31f82500b3503044517be08ac22d133bc9c8689ddf5f48"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_climb_strip6.png",
+      "sha256": "c62166561b9d0bfa6b23817a5e650d70b910e4e8b3b2143018d9ab419facb53d"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_climbidle_strip1.png",
+      "sha256": "f2b43569c660e4511ae4cbee26ad76192d98643fb63fcd102a3471302b5da7d3"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_die_strip9.png",
+      "sha256": "31898138b84a8a1be332343a2328ec9be129bf3af405eaee74a8721c09c59244"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_fall_strip12.png",
+      "sha256": "a0f6cd1bce122bda75efb514e344d944be4e4804a75c43eb26f7ce4a59e62759"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_hurt_strip6.png",
+      "sha256": "a6cc8a83c5041b63ab58b816d69cc8f188c073a33d77f2621ff749b9d611e943"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_idle_strip4.png",
+      "sha256": "af8fc4a248ba7477e2eaf6009ffb35ce8e84c96bfa48c834f98e55dd2e5513f6"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_jump_strip12.png",
+      "sha256": "028927c249cfcb3c1535b8ef3c6f893505f99debaa3a0b61fa2ece18e7950f98"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_land_strip4.png",
+      "sha256": "29224c1d507670fb46284128852408163e1a51050f1adb25d94ea9c4475f1e3a"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_ledgeclimb_strip9.png",
+      "sha256": "bb281499e2604365b360cc8b89c42fc35310e27840569fd4550a0cd08b8f4891"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_run_strip8.png",
+      "sha256": "d1e7d409455a725047e710cee945f0be791d595dbe6b661b8f0c8cf756846b28"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_sit_strip4.png",
+      "sha256": "41e61716c194a9a330af01ec1b6de605db55cae598917bedc604d159d9edc6dd"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_swim_forward_strip10.png",
+      "sha256": "ef615ffe4a47dc4005395bacca84218b7f2c6b102a32fe9ab94ce44f96245f97"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_swim_idle_strip6.png",
+      "sha256": "7408ef138e04661a6a4b5914e5da047f63c098a11a9599de15ce5d6825fb0f81"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_throw_strip5.png",
+      "sha256": "d88f130a81fdb96071114ff0828226423d3852a6d6438bf7260d16fb32041e82"
+    },
+    {
+      "path": "battle/ninja/lilmaskedninja_wallgrab_strip4.png",
+      "sha256": "f872ecaaabb161b12559bbb9212aed5d258db8b8ad93ca3f26d941159b650db2"
     },
     {
       "path": "battle/otter/lilotter_attack_strip7.png",
@@ -621,6 +1277,66 @@
       "sha256": "5d89becd8e50bd0d38e709884587589cb43b6cd02bec97459d117e9d298e78fb"
     },
     {
+      "path": "battle/parrot/parrot_attack_air_strip6.png",
+      "sha256": "9070b2f43444b0e2126a609b4ed5023bfc62878760f24a7c1c9e36e0a2d79e70"
+    },
+    {
+      "path": "battle/parrot/parrot_attack_ground_strip6.png",
+      "sha256": "f5029cea108d0f0366a7ace62c568dd4e4df329c01faeb0434e72fc40997b541"
+    },
+    {
+      "path": "battle/parrot/parrot_dash_strip8.png",
+      "sha256": "aedd4bbe2c8807b664984462d6dc6a61cacde74e75c3861fc0e994ac1e24bbbc"
+    },
+    {
+      "path": "battle/parrot/parrot_die_strip16.png",
+      "sha256": "35cae079b2ece938dbb41e245b0756422f5165c07e21ddd3a694b2f4b5483780"
+    },
+    {
+      "path": "battle/parrot/parrot_fall_strip2.png",
+      "sha256": "8ac1a92409d3543159e1c79b37a65e6c6a74571c0ae2d0900113418db5607324"
+    },
+    {
+      "path": "battle/parrot/parrot_fly_strip6.png",
+      "sha256": "413baff25fdf63ab86cb137decdd6c6964f54d2c4dd4d0a9ae5b529117efaf67"
+    },
+    {
+      "path": "battle/parrot/parrot_hurt_strip5.png",
+      "sha256": "01875df99d1153d1481fb19dae0e50b72df39bad3661769f492478468bf05c87"
+    },
+    {
+      "path": "battle/parrot/parrot_idle_caw_strip12.png",
+      "sha256": "cf2bc252db2f163edff27c14f9801271a60857f0765699d5bde9fd6686403c3d"
+    },
+    {
+      "path": "battle/parrot/parrot_idle_strip12.png",
+      "sha256": "4316b9e6aecc554519f4f832af249adcf7895cb177085205d2a211234b19acc4"
+    },
+    {
+      "path": "battle/parrot/parrot_land_strip3.png",
+      "sha256": "cff76a2d8ea27ab72835fa360ac063ab51301fecbb62328632446ee0041a0796"
+    },
+    {
+      "path": "battle/parrot/parrot_sit_caw_strip12.png",
+      "sha256": "f5d38a8fc6beecb7f0072b8a92b94a215003950a583a543eadd7bc6e49e7d88d"
+    },
+    {
+      "path": "battle/parrot/parrot_sit_strip16.png",
+      "sha256": "9a5d4ac40c2175a9f1230bdceed9b73acd7fe08d4610ff10ecee90354751ab15"
+    },
+    {
+      "path": "battle/parrot/parrot_soar_strip6.png",
+      "sha256": "2e444490ae3973cdb6aff363bd704ccec9f862249afcaaf30c5c8f5e134e0556"
+    },
+    {
+      "path": "battle/parrot/parrot_takeoff_strip9.png",
+      "sha256": "68137518a3df6db6f3950c57a5038898d74ecd99c4d305e293bcad21133e1fa7"
+    },
+    {
+      "path": "battle/parrot/parrot_walk_strip16.png",
+      "sha256": "7941d5b41daf136718288bdcadee17bbf453be3571e60b7ddc8f32f3754a2d88"
+    },
+    {
       "path": "battle/turtle/turtle_attack_strip8.png",
       "sha256": "e0b297c3c887011180674cab6231ea21c1f1f33932ed854923e2fdea2bc9c70d"
     },
@@ -683,6 +1399,138 @@
     {
       "path": "battle/turtle/turtle_walk_strip5.png",
       "sha256": "681137e2f13bb3936b5563ccede6d0eb3b39cd4a4ab661d386798b928f2518e1"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_attack01_strip5.png",
+      "sha256": "89c0515083b325b29cae7bdfa42d1e76e6fd6ab258d64f5e8ce9c9f05c486710"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_attack02_strip5.png",
+      "sha256": "7c296cbf1740af10d674cdb8c8b390dc6f21f63cff6c8c86b434ad979c90b76d"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_climb_strip6.png",
+      "sha256": "24edbb8da82438634e0d7476028d136ffd43c3c1cc7900fb2c86aff674cbae2b"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_climbidle_strip1.png",
+      "sha256": "73b914642a4ae4e31aa384673ce1c373a4de89f390bd1a4c825282f9207c1e80"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_die_strip9.png",
+      "sha256": "79f9234f357267ca82c4384336e8d6c4f2bddc87e520ded22900714de4a5bf1b"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_fall_strip12.png",
+      "sha256": "9e6abd39e4b6ab218a68cd0e9dd3a55fb20c8acae1cd797fed9e4b68d7bc55d5"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_hurt_strip6.png",
+      "sha256": "d732e6545f4d0064cc399b0d0ddf002e36d1d5035ec3f653328efb7185b88c8a"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_idle_strip4.png",
+      "sha256": "2b98af4ca9788f348fd6af531152c1788040628bed744a7e7ee41af74d9860c0"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_jump_strip12.png",
+      "sha256": "4d346c511aad0210f601dc3fc032c97d327363800b58bd8c509f9809ddf9626c"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_land_strip4.png",
+      "sha256": "19a3b742bee41253b17d9af9b9c41f0c81ea0c7a591315e7057eacb96d4ec004"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_ledgeclimb_strip9.png",
+      "sha256": "ecedff535c2e906a875f7c494d508c2b0f500757772a6ee97b445a1b7f9e6603"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_run_strip8.png",
+      "sha256": "18f2bc17740c491be5dc8ae665740315642ff1144bf9043947551127fe3c99fa"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_sit_strip4.png",
+      "sha256": "3265bf49c02785bd773a756ba3b73cb1ea37186b31a1eccc759522377bd0d46e"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_swimforward_strip10.png",
+      "sha256": "1b7d7d3b0396c6499a410d9a200a49ca1827b42d5d3b97dd4b457e1f8704cbfc"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_swimidle_strip6.png",
+      "sha256": "b1bc35741ccb35ef35ac086252df258b59ac1b12ecf18621d57a29036d4f89fb"
+    },
+    {
+      "path": "battle/war-hero/lilwarhero_knife_wallgrab_strip4.png",
+      "sha256": "829cfc5fc6f5060b3b8bc66b6b2cef7b12f5d0293a62e102fd864229086e2216"
+    },
+    {
+      "path": "battle/wolf/wolf_attack_strip7.png",
+      "sha256": "bcc0bf63caf11f74b41a301509885a97ef7d684842144a3d635bad70f4f0316d"
+    },
+    {
+      "path": "battle/wolf/wolf_crouch_strip8.png",
+      "sha256": "92467b69c1a8cbc82fa88b7a4e5f1e9baca2e27a11a9de80b8d16004c1b96c56"
+    },
+    {
+      "path": "battle/wolf/wolf_dash_strip9.png",
+      "sha256": "7453ada89046586adfaf734dcc2a1bc46c8e38554fac15a2723b8dcc7f9080ed"
+    },
+    {
+      "path": "battle/wolf/wolf_die_strip8.png",
+      "sha256": "e7df58359dda6fab879bd8e76d85eed8683df06af2337f8f018d56598896ef28"
+    },
+    {
+      "path": "battle/wolf/wolf_fall_strip5.png",
+      "sha256": "e6f1db990f4754ed0d78809ff0a89f1fe7a1e35d282252f123fe2bb5b9365242"
+    },
+    {
+      "path": "battle/wolf/wolf_fright_strip2.png",
+      "sha256": "65e07669703060c1c111d6d21f2429b3954a2662e9cef9ef216a3b7b31bad5c1"
+    },
+    {
+      "path": "battle/wolf/wolf_growl_strip4.png",
+      "sha256": "b58a2b7cfaa0c91d8b33c012e23595118f135b8bc7e93251c8cec122b955ec64"
+    },
+    {
+      "path": "battle/wolf/wolf_howl_strip21.png",
+      "sha256": "9beb445786c8f32645bb7ee0a4c7534eea9fa306177c536bf1fab4e2974a41d2"
+    },
+    {
+      "path": "battle/wolf/wolf_hurt_strip7.png",
+      "sha256": "d678f3bb9417d418b7f0643242ffd727f8bd31df7da1e0726f245c23317f7375"
+    },
+    {
+      "path": "battle/wolf/wolf_idle_blink_strip8.png",
+      "sha256": "66837730d5b350215e621a390de0a79cb43a51c35239284dc8dbcac2a81fe7a6"
+    },
+    {
+      "path": "battle/wolf/wolf_idle_strip8.png",
+      "sha256": "7493ae5c8a0cc0a5aee3ba96b1522af398b005a2019df835aef5f8d66a27c6bd"
+    },
+    {
+      "path": "battle/wolf/wolf_jump_strip8.png",
+      "sha256": "e58243425dc01540db212aba33291ece5b4f5ca22697d22315bb96e3090368ee"
+    },
+    {
+      "path": "battle/wolf/wolf_land_strip3.png",
+      "sha256": "5b55e730dd485100580a3772c64b82a8290c86585e2c77a1c87c9f176d90118b"
+    },
+    {
+      "path": "battle/wolf/wolf_run_strip8.png",
+      "sha256": "bbfbf34662adfd16a54491c357112eb034579d9d496885ec7c7891fe26112f40"
+    },
+    {
+      "path": "battle/wolf/wolf_sit_howl_strip24.png",
+      "sha256": "7c8d80d5f8e59c614b658863287117fa9138edd43c3b535ae6992c60f909e904"
+    },
+    {
+      "path": "battle/wolf/wolf_sit_strip8.png",
+      "sha256": "d48d4ddab58d5ac014038e4bba4fa9c4da80a416e3e8ecdc6b1f85188ab792db"
+    },
+    {
+      "path": "battle/wolf/wolf_wallgrab_strip8.png",
+      "sha256": "72205649f91344ec6d4cebae0e47fd97c5bc4b00094217b5d3ef5eecd5440acc"
     },
     {
       "path": "coach/brilliance.png",
