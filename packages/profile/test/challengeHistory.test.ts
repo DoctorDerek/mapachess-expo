@@ -64,6 +64,27 @@ describe("Challenge history", () => {
       lifetimeLosses: 0,
       highestMedal: "gold",
     })
+    const lowerTierWin = challenge({
+      matchId: "second-chicken-win",
+      pieceHintsUsed: true,
+      moveHintsUsed: true,
+    })
+    const nextStart = recordChallengeStart(started, {
+      ...lowerTierWin,
+      conclusion: null,
+    })
+    const wonAgain = applyChallengeMatchResult(
+      nextStart,
+      { ...lowerTierWin, conclusion: null },
+      lowerTierWin,
+    )
+    expect(wonAgain.standard.difficulties[0]?.highestMedal).toBe("gold")
+    expect(wonAgain.standard.animals[0]).toEqual({
+      opponentId: "chicken-stockfish",
+      lifetimeWins: 2,
+      lifetimeLosses: 0,
+      highestMedal: "gold",
+    })
   })
 
   it("does not recount an accepted conclusion on retry or timeline navigation", () => {

@@ -736,6 +736,9 @@ describe("web match session ownership", () => {
       })
       expect(resumed.match).toEqual(saved?.activeMatch)
       expect(resumed.runtime.opponentTargetElo).toBe(1000)
+      expect(
+        selectCurrentPlayerData(reloaded.actor.getSnapshot())?.challengeHistory,
+      ).toEqual(saved?.challengeHistory)
       const restartOpener = runtimeOpener(
         createRuntime(
           SECOND_MATCH_SEED,
