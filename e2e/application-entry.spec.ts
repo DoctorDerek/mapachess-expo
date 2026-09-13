@@ -9,6 +9,148 @@ const modeNames = [
   "Chess960 Challenge",
 ] as const
 
+test("backup failures release their controls for another attempt", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.evaluate(() => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle)
+    crypto.subtle.digest = async () => {
+      crypto.subtle.digest = digest
+      throw new Error("Test export failure")
+    }
+    const read = File.prototype.text
+    File.prototype.text = async function () {
+      File.prototype.text = read
+      throw new Error("Test read failure")
+    }
+  })
+  const exportButton = page.getByRole("button", {
+    name: "Export Player Data",
+    exact: true,
+  })
+  await exportButton.click()
+  await expect(
+    page.getByText("The download could not be created.", { exact: false }),
+  ).toBeVisible()
+  await expect(exportButton).toBeEnabled()
+  const download = page.waitForEvent("download")
+  await exportButton.click()
+  await download
+  const file = {
+    name: "history.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(challengeHistoryBackup)),
+  }
+  await page.locator('input[type="file"]').setInputFiles(file)
+  await expect(
+    page.getByText("That file could not be read.", { exact: false }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Import Backup", exact: true }),
+  ).toBeEnabled()
+  await page.locator('input[type="file"]').setInputFiles(file)
+  await expect(
+    page.getByRole("button", { name: "Cancel Import", exact: true }),
+  ).toBeVisible()
+})
+
+test("guards backup preparation and file reading while keeping their buttons stable", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.evaluate(() => {
+    const original = crypto.subtle.digest.bind(crypto.subtle)
+    crypto.subtle.digest = async (algorithm, data) => {
+      await new Promise<void>((resolve) =>
+        window.addEventListener("release-backup-export", () => resolve(), {
+          once: true,
+        }),
+      )
+      return original(algorithm, data)
+    }
+    window.addEventListener(
+      "release-backup-export",
+      () => {
+        crypto.subtle.digest = original
+      },
+      { once: true },
+    )
+  })
+  const downloads: string[] = []
+  page.on("download", (download) =>
+    downloads.push(download.suggestedFilename()),
+  )
+  const exportButton = page.getByRole("button", {
+    name: "Export Player Data",
+    exact: true,
+  })
+  await exportButton.scrollIntoViewIfNeeded()
+  const exportBox = await exportButton.boundingBox()
+  await exportButton.evaluate((button) => {
+    button.click()
+    button.click()
+  })
+  const preparing = page.getByRole("button", {
+    name: "Preparing backup…",
+    exact: true,
+  })
+  await expect(preparing).toBeDisabled()
+  expect(await preparing.boundingBox()).toEqual(exportBox)
+  const download = page.waitForEvent("download")
+  await page.evaluate(() =>
+    window.dispatchEvent(new Event("release-backup-export")),
+  )
+  await download
+  await expect(exportButton).toBeEnabled()
+  expect(downloads).toHaveLength(1)
+
+  await page.evaluate(() => {
+    const original = File.prototype.text
+    File.prototype.text = async function () {
+      await new Promise<void>((resolve) =>
+        window.addEventListener("release-backup-read", () => resolve(), {
+          once: true,
+        }),
+      )
+      return original.call(this)
+    }
+    window.addEventListener(
+      "release-backup-read",
+      () => {
+        File.prototype.text = original
+      },
+      { once: true },
+    )
+  })
+  const importButton = page.getByRole("button", {
+    name: "Import Backup",
+    exact: true,
+  })
+  await importButton.scrollIntoViewIfNeeded()
+  const importBox = await importButton.boundingBox()
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "history.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(challengeHistoryBackup)),
+  })
+  const reading = page.getByRole("button", {
+    name: "Reading backup…",
+    exact: true,
+  })
+  await expect(reading).toBeDisabled()
+  expect(await reading.boundingBox()).toEqual(importBox)
+  await expect(page.locator('input[type="file"]')).toBeDisabled()
+  await page.evaluate(() =>
+    window.dispatchEvent(new Event("release-backup-read")),
+  )
+  await expect(
+    page.getByRole("button", { name: "Cancel Import", exact: true }),
+  ).toBeVisible()
+})
+
 test("retains setup and button geometry while match opening is pending", async ({
   page,
 }) => {

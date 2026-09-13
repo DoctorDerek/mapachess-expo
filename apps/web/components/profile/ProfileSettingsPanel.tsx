@@ -8,11 +8,13 @@ import AutoHintModeChoices from "./AutoHintModeChoices"
 import {
   ImportBackupButton,
   importIssueMessage,
+  PREPARING_BACKUP_LABEL,
   ProfileCard,
 } from "./ProfileFoundation"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  exporting?: boolean
   hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
   importIssue: ProfileImportIssue | null
@@ -24,6 +26,7 @@ export type ProfileSettingsPanelProps = Readonly<{
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  exporting = false,
   hintChangesDisabled,
   autoHintMode,
   importIssue,
@@ -89,7 +92,12 @@ export default function ProfileSettingsPanel({
             never applied before you review it.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <MapachessButton onClick={onExportPlayerData} type="button">
+            <MapachessButton
+              aria-busy={exporting}
+              busyLabel={PREPARING_BACKUP_LABEL}
+              onClick={onExportPlayerData}
+              type="button"
+            >
               Export Player Data
             </MapachessButton>
             <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
