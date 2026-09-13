@@ -313,6 +313,12 @@ const matchMachineDefinition = setup({
   on: {
     "MATCH.AUTO_HINT_MODE_CHANGED": [
       {
+        guard: ({ context }) => context.pendingMutation !== null,
+        actions: assign(({ event }) => ({
+          requestedAutoHintMode: event.autoHintMode,
+        })),
+      },
+      {
         actions: "prepareAutoHintModeMutation",
         guard: "autoHintModeChangeNeedsPersistence",
         target: "#match.persistingMutation",
@@ -597,6 +603,32 @@ const matchMachineDefinition = setup({
           request: requirePendingMutation(context).request,
         }),
         onDone: [
+          {
+            guard: ({ context, event }) =>
+              context.requestedAutoHintMode !== null &&
+              context.requestedAutoHintMode !==
+                requirePendingMutation(context).request.autoHintMode &&
+              persistenceReceiptMatches(
+                requirePendingMutation(context).request,
+                event.output,
+              ),
+            actions: assign(({ context }) => {
+              const requested = context.requestedAutoHintMode
+              if (requested === null)
+                throw new Error("A queued hint preference is required.")
+              const accepted = acceptedPendingMutation(context)
+              return {
+                ...accepted,
+                pendingMutation: pendingAutoHintModeMutation(
+                  { ...context, ...accepted },
+                  requested,
+                  requirePendingMutation(context).retainedHintStage,
+                ),
+              }
+            }),
+            target: "persistingMutation",
+            reenter: true,
+          },
           {
             actions: assign(({ context }) => acceptedPendingMutation(context)),
             guard: ({ context, event }) => {
