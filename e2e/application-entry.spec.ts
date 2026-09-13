@@ -1,8 +1,6 @@
-import { createHash } from "node:crypto"
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Page } from "@playwright/test"
-import createInitialMapachessPlayerData from "../packages/profile/src/playerData"
-import { createMapachessPortableBackup } from "../packages/profile/src/portableBackup"
+import challengeHistoryBackup from "./fixtures/challenge-history.json" with { type: "json" }
 
 const modeNames = [
   "Standard Story",
@@ -123,35 +121,7 @@ test("does not retain the former private playtest route", async ({ page }) => {
 test("presents imported Challenge medals with stable animal artwork", async ({
   page,
 }) => {
-  const data = createInitialMapachessPlayerData()
-  const backup = await createMapachessPortableBackup({
-    applicationVersion: "local-test",
-    gddRevision: "local-test",
-    sha256: async (value) => createHash("sha256").update(value).digest("hex"),
-    playerData: {
-      ...data,
-      challengeHistory: {
-        ...data.challengeHistory,
-        standard: {
-          difficulties: [
-            {
-              targetElo: 100,
-              lastPlayedAnimal: "chicken-stockfish",
-              highestMedal: "gold",
-            },
-          ],
-          animals: [
-            {
-              opponentId: "chicken-stockfish",
-              lifetimeWins: 1,
-              lifetimeLosses: 0,
-              highestMedal: "gold",
-            },
-          ],
-        },
-      },
-    },
-  })
+  const backup = JSON.stringify(challengeHistoryBackup)
   await page.goto("/")
   await expectModeMenu(page)
   await page.getByRole("button", { name: "Settings", exact: true }).click()

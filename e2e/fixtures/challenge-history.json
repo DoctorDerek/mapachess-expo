@@ -1,0 +1,54 @@
+{
+  "applicationVersion": "local-test",
+  "format": "mapachess-portable-backup",
+  "formatVersion": 1,
+  "gddRevision": "local-test",
+  "integrity": {
+    "algorithm": "SHA-256",
+    "payloadHash": "abd7ddb1bb1509d7594e155a7e648572e8ff745136434af35749ab976168ed03"
+  },
+  "payload": {
+    "activeMatch": null,
+    "challengeHistory": {
+      "standard": {
+        "difficulties": [
+          {
+            "targetElo": 100,
+            "lastPlayedAnimal": "chicken-stockfish",
+            "highestMedal": "gold"
+          }
+        ],
+        "animals": [
+          {
+            "opponentId": "chicken-stockfish",
+            "lifetimeWins": 1,
+            "lifetimeLosses": 0,
+            "highestMedal": "gold"
+          }
+        ]
+      },
+      "chess960": { "difficulties": [], "animals": [] }
+    },
+    "ratings": {
+      "chess960Challenge": 100,
+      "chess960Story": 100,
+      "standardChallenge": 100,
+      "standardStory": 100
+    },
+    "revision": 0,
+    "schema": "mapachess-player-data",
+    "schemaVersion": 6,
+    "storyProgress": { "standard": [], "chess960": [] },
+    "settings": {
+      "challengeSetup": {
+        "opponentId": "chicken-stockfish",
+        "difficultyTargetElo": 100,
+        "chess960PositionId": null,
+        "playerColor": "white",
+        "variant": "standard"
+      },
+      "autoHintMode": "auto-move-hints"
+    }
+  },
+  "saveSchemaVersion": 6
+}
