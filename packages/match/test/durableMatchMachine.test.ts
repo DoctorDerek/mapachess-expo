@@ -107,6 +107,80 @@ const requestE4 = (actor: ReturnType<typeof createDurableActor>["actor"]) => {
 }
 
 describe("verified durable match mutation gate", () => {
+  it("coalesces a queued preference matching the in-flight choice", async () => {
+    const persistence = new ControlledPersistence()
+    const { actor } = createDurableActor(persistence)
+    for (const autoHintMode of [
+      "auto-piece-hints",
+      "auto-move-hints",
+      "auto-piece-hints",
+    ] as const) {
+      actor.send({ type: "MATCH.AUTO_HINT_MODE_CHANGED", autoHintMode })
+    }
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => !selectIsPersistingMutation(snapshot))
+    expect(persistence.requests).toHaveLength(1)
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-piece-hints")
+    expect(actor.getSnapshot().context.requestedAutoHintMode).toBeNull()
+    actor.stop()
+  })
+
+  it("serializes the latest hint preference without losing a return to the accepted mode", async () => {
+    const persistence = new ControlledPersistence()
+    const { actor } = createDurableActor(persistence)
+    actor.send({
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-piece-hints",
+    })
+    actor.send({
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-move-hints",
+    })
+    actor.send({
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("no-auto-hints")
+    expect(persistence.requests).toHaveLength(1)
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => snapshot.context.mutationSequence === 1)
+    expect(persistence.requests).toHaveLength(2)
+    expect(persistence.requests[1]?.autoHintMode).toBe("no-auto-hints")
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => !selectIsPersistingMutation(snapshot))
+    expect(actor.getSnapshot().context.autoHintMode).toBe("no-auto-hints")
+    expect(actor.getSnapshot().context.requestedAutoHintMode).toBeNull()
+    expect(selectMatchPosition(actor.getSnapshot()).fen).toBe(
+      standardInitialPosition().fen,
+    )
+    actor.stop()
+  })
+
+  it("preserves queued preference through a failed move save and applies it to the accepted position", async () => {
+    const persistence = new ControlledPersistence()
+    const { actor, selectMove } = createDurableActor(persistence)
+    requestE4(actor)
+    actor.send({
+      type: "MATCH.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "auto-piece-hints",
+    })
+    persistence.failNext()
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectAutoHintMode(actor.getSnapshot())).toBe("auto-piece-hints")
+    actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => snapshot.context.mutationSequence === 1)
+    expect(persistence.requests[2]?.moveIds).toEqual(
+      persistence.requests[0]?.moveIds,
+    )
+    expect(persistence.requests[2]?.autoHintMode).toBe("auto-piece-hints")
+    expect(selectMove).not.toHaveBeenCalled()
+    persistence.succeedNext()
+    await waitFor(actor, (snapshot) => snapshot.context.mutationSequence === 2)
+    expect(selectMatchPosition(actor.getSnapshot()).fen).toContain("4P3")
+    actor.stop()
+  })
+
   it("persists an accepted draw through exact stale-receipt retry", async () => {
     const persistence = new ControlledPersistence()
     const { actor } = createDurableActor(persistence)
