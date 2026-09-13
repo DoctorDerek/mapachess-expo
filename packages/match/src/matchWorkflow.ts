@@ -66,6 +66,7 @@ export const createInitialContext = (
 
   return {
     autoHintMode: input.autoHintMode,
+    requestedAutoHintMode: null,
     conclusion,
     durability: input.durability,
     drawOfferResponse: null,
@@ -334,6 +335,7 @@ export const acceptedPendingMutation = (
   const pending = requirePendingMutation(context)
   return {
     autoHintMode: pending.request.autoHintMode,
+    requestedAutoHintMode: null,
     conclusion: pending.conclusion,
     drawOfferResponse: null,
     hintFailure: null,

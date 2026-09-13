@@ -247,6 +247,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           ) : (
             <ActiveMatchSettingsPanel
               {...settingsProps}
+              hintChangesDisabled={false}
               matchActor={activeMatchActor}
             />
           )

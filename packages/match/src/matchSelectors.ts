@@ -26,6 +26,7 @@ export const selectMatchTimeline = (
 export const selectAutoHintMode = (
   snapshot: MatchMachineSnapshot,
 ): AutoHintMode =>
+  snapshot.context.requestedAutoHintMode ??
   snapshot.context.pendingMutation?.request.autoHintMode ??
   snapshot.context.autoHintMode
 

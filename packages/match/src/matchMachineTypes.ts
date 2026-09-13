@@ -93,6 +93,7 @@ export type MatchMachineInput =
 export type MatchMachineContext = Readonly<{
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
+  requestedAutoHintMode: AutoHintMode | null
   durability: MatchDurability
   drawOfferResponse: "rejected" | null
   hintAnalyst: BetterHintsAnalyst | null
