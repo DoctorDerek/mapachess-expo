@@ -232,6 +232,7 @@ function MatchSessionExperience({
         />
       ) : snapshot.matches({ menu: "setup" }) || openingFreshMatch ? (
         <WebMatchSetup
+          challengeHistory={playerData.challengeHistory}
           autoHintMode={playerData.settings.autoHintMode}
           disabled={!profileReady && !openingFreshMatch}
           key={`${requestedSetup.mode}:${variant}`}

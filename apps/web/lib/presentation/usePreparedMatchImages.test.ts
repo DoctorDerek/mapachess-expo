@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { afterAll, describe, expect, it, vi } from "vitest"
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
+import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { createInitialStoryProgress } from "@mapachess/profile/story-progress"
 import WebMatchSetup from "../../components/gameplay/WebMatchSetup"
 import { initialMatchPresentationSources } from "./usePreparedMatchImages"
@@ -41,6 +42,7 @@ describe("selected match image preparation", () => {
   it("emits selected image preloads while Start Match is still on screen", () => {
     const markup = renderToStaticMarkup(
       createElement(WebMatchSetup, {
+        challengeHistory: createInitialMapachessPlayerData().challengeHistory,
         autoHintMode: "auto-move-hints",
         disabled: false,
         onAutoHintModeChanged: vi.fn(),
