@@ -174,7 +174,7 @@ test("retains setup and button geometry while match opening is pending", async (
     await expect.poll(() => start.innerText()).toBe("Opening match…")
     await expect.poll(() => start.getAttribute("aria-busy")).toBe("true")
     expect(await start.isDisabled()).toBe(true)
-    expect(await start.boundingBox()).toEqual(before)
+    await expect.poll(() => start.boundingBox()).toEqual(before)
     await expect(page.locator("#match-setup-title")).toBeVisible()
   } finally {
     release.resolve()
