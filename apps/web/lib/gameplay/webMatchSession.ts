@@ -4,6 +4,7 @@ import bindMatchPositionEvaluation, {
 } from "@mapachess/evaluation/match-position-evaluation"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
+import type { Chess960PositionId } from "@mapachess/match/chess960-position"
 import {
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
@@ -55,7 +56,11 @@ export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
         variant: MatchVariant
         opponentId?: ImplementedDurableOpponentId
       }>
-    | Readonly<{ mode: "challenge"; challengeSetup: ChallengeSetup }>
+    | Readonly<{
+        mode: "challenge"
+        challengeSetup: ChallengeSetup
+        displayedChess960PositionId?: Chess960PositionId
+      }>
   )
 
 export type ReturnWebMatchSessionToMenuInput = Readonly<{
@@ -296,15 +301,22 @@ export async function openFreshWebMatchSession(
   }
   const setup: OpenWebMatchRuntimeInput["setup"] =
     previousSession?.match.startingPosition ??
-    (challengeSetup?.variant === "chess960" &&
-    challengeSetup.chess960PositionId !== null
+    (input.mode === "challenge" &&
+    input.challengeSetup.variant === "chess960" &&
+    input.displayedChess960PositionId !== undefined
       ? {
           variant: "chess960",
-          chess960PositionId: challengeSetup.chess960PositionId,
+          chess960PositionId: input.displayedChess960PositionId,
         }
-      : variant === "standard"
-        ? { variant, chess960PositionId: null }
-        : { variant })
+      : challengeSetup?.variant === "chess960" &&
+          challengeSetup.chess960PositionId !== null
+        ? {
+            variant: "chess960",
+            chess960PositionId: challengeSetup.chess960PositionId,
+          }
+        : variant === "standard"
+          ? { variant, chess960PositionId: null }
+          : { variant })
   const runtime = await openRuntime({
     opponentId,
     ...(playerColor === undefined

@@ -14,7 +14,7 @@ import type {
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openWebMatchRuntime from "./openWebMatchRuntime"
 import type { WebOpponentCryptography } from "./webOpponent"
-import { webMatchId } from "./webOpponent"
+import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
   resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
@@ -249,7 +249,7 @@ describe("web match runtime ownership", () => {
     },
   )
 
-  it.each(["white", "black"] as const)(
+  it.each(["white", "black", "random"] as const)(
     "honors chosen %s with an explicit Chess960 Challenge layout in all three engine sessions",
     async (playerColor) => {
       const parsed = parseChess960PositionId(959)
@@ -264,10 +264,17 @@ describe("web match runtime ownership", () => {
         setup: startingPosition,
       })
       try {
-        expect(opened.runtime.playerColor).toBe(playerColor)
+        const resolvedColor =
+          playerColor === "random"
+            ? selectStoryPlayerColor(opened.runtime.matchSeed)
+            : playerColor
+        expect(opened.runtime.playerColor).toBe(resolvedColor)
         expect(opened.runtime.startingPosition).toEqual(startingPosition)
         expect(opened.runtime.matchId).toBe(
-          webMatchId(opened.runtime.matchSeed, startingPosition, selection),
+          webMatchId(opened.runtime.matchSeed, startingPosition, {
+            mode: "challenge",
+            playerColor: resolvedColor,
+          }),
         )
         expect(opened.runtime.matchId).not.toBe(
           webMatchId(opened.runtime.matchSeed, startingPosition),

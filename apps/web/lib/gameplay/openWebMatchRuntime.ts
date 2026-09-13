@@ -67,7 +67,7 @@ export type OpenWebMatchRuntimeInput = Readonly<{
       }>
     | Readonly<{
         mode: "challenge"
-        playerColor: MatchColor
+        playerColor: MatchColor | "random"
         difficultyTargetElo?: number
       }>
   )
@@ -138,6 +138,10 @@ export default async function openWebMatchRuntime(
         )
   input.signal?.throwIfAborted()
   const matchSeed = input.matchSeed ?? generateWebMatchSeed(cryptography)
+  const playerColor =
+    input.mode === "challenge" && input.playerColor !== "random"
+      ? input.playerColor
+      : selectStoryPlayerColor(matchSeed)
   let startingPosition: MatchStartingPosition
   if (setup.variant === "chess960" && setup.chess960PositionId === undefined) {
     const random = createDeterministicRandom(matchSeed)
@@ -204,7 +208,7 @@ export default async function openWebMatchRuntime(
       matchSeed,
       startingPosition,
       input.mode === "challenge"
-        ? { mode: "challenge", playerColor: input.playerColor }
+        ? { mode: "challenge", playerColor }
         : { mode: "story" },
       opponentId,
     ),
@@ -218,10 +222,7 @@ export default async function openWebMatchRuntime(
     opponentId,
     opponentPolicyFingerprint: policy.fingerprint,
     opponentTargetElo: policy.targetElo,
-    playerColor:
-      input.mode === "challenge"
-        ? input.playerColor
-        : selectStoryPlayerColor(matchSeed),
+    playerColor,
     startingPosition,
     positionEvaluator: (request, signal) =>
       evaluatePositionWithStockfish(evaluationSession, request, signal),

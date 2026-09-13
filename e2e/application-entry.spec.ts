@@ -71,20 +71,37 @@ test("offers four direct modes with Challenge controls and saved hint preference
       ).toBeChecked()
     }
     if (name === "Chess960 Challenge") {
-      await expect(
-        page.getByRole("radio", { name: "Random position", exact: true }),
-      ).toBeChecked()
       const position = page.getByRole("spinbutton", {
         name: "Position number (0–959)",
         exact: true,
       })
-      await expect(position).toBeDisabled()
-      await page
-        .getByRole("radio", { name: "Choose a position number", exact: true })
-        .check()
-      await expect(position).toHaveValue("0")
+      await expect(position).toBeEnabled()
+      const initialNumber = Number(await position.inputValue())
+      expect(initialNumber).toBeGreaterThanOrEqual(0)
+      expect(initialNumber).toBeLessThanOrEqual(959)
       await position.fill("959")
       await expect(position).toHaveValue("959")
+      await page.getByRole("radio", { name: "Random", exact: true }).check()
+      await page
+        .getByRole("radio", { name: "No Auto Hints", exact: true })
+        .check()
+      await expect(position).toHaveValue("959")
+      await expect(
+        page.getByText(
+          "This position is remembered until you choose Randomize.",
+          { exact: true },
+        ),
+      ).toBeVisible()
+      await page.getByRole("button", { name: "Randomize", exact: true }).click()
+      await expect(
+        page.getByText(
+          "A fresh number for each new setup. Start uses the number shown.",
+          { exact: true },
+        ),
+      ).toBeVisible()
+      await expect(
+        page.getByRole("radio", { name: "Random", exact: true }),
+      ).toBeChecked()
       await expect(position).toHaveAttribute("min", "0")
       await expect(position).toHaveAttribute("max", "959")
     }

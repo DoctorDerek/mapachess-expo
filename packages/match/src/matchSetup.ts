@@ -1,4 +1,5 @@
 import type { ChallengeSetup } from "./challengeSetup.js"
+import type { Chess960PositionId } from "./chess960Position.js"
 import {
   MATCH_MODES,
   type ImplementedDurableOpponentId,
@@ -12,7 +13,11 @@ export type MatchSetup =
       variant: MatchVariant
       opponentId?: ImplementedDurableOpponentId
     }>
-  | Readonly<{ mode: "challenge"; challengeSetup: ChallengeSetup }>
+  | Readonly<{
+      mode: "challenge"
+      challengeSetup: ChallengeSetup
+      displayedChess960PositionId?: Chess960PositionId
+    }>
 
 export type MatchModeSelection = Readonly<{
   mode: MatchMode
@@ -27,10 +32,13 @@ export const MATCH_SETUP_COPY = Object.freeze({
   color: "Play as",
   white: "White",
   black: "Black",
+  random: "Random",
+  randomize: "Randomize",
+  pinnedPosition: "This position is remembered until you choose Randomize.",
+  freshPosition:
+    "A fresh number for each new setup. Start uses the number shown.",
   randomColor: "Your side is chosen at random when the match starts.",
   position: "Chess960 starting position",
-  randomPosition: "Random position",
-  numberedPosition: "Choose a position number",
   positionNumber: "Position number",
   invalidSetup:
     "Choose an available animal, difficulty, side, and valid starting position.",
@@ -57,7 +65,8 @@ const MATCH_MODE_PRESENTATION = {
     },
     challenge: {
       title: "Standard Challenge",
-      description: "The classic starting position. Choose White or Black.",
+      description:
+        "The classic starting position. Choose White, Black, or Random.",
     },
   },
   chess960: {

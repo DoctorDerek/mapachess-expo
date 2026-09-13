@@ -21,6 +21,7 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
+import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
@@ -164,13 +165,14 @@ function MatchSessionExperience({
     requestedSetup.mode === "story"
       ? requestedSetup.variant
       : requestedSetup.challengeSetup.variant
-  const initialSetup = createMatchSetupForMode(
-    { mode: requestedSetup.mode, variant },
-    playerData.settings.challengeSetup,
-    requestedSetup.mode === "story"
-      ? selectDefaultStoryOpponent(playerData.storyProgress, variant)
-      : undefined,
-  )
+  const initialSetup =
+    requestedSetup.mode === "challenge"
+      ? requestedSetup
+      : createMatchSetupForMode(
+          { mode: requestedSetup.mode, variant },
+          playerData.settings.challengeSetup,
+          selectDefaultStoryOpponent(playerData.storyProgress, variant),
+        )
   const session = selectWebMatchSession(snapshot)
   const failure = selectWebMatchSessionFailure(snapshot)
   const activeMatchActor = snapshot.matches("active") ? session?.actor : null
@@ -217,16 +219,26 @@ function MatchSessionExperience({
               settingsOpen
             )
               return
+            const setup = createMatchSetupForMode(
+              selection,
+              playerData.settings.challengeSetup,
+              selectDefaultStoryOpponent(
+                playerData.storyProgress,
+                selection.variant,
+              ),
+            )
             actor.send({
               type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
-              setup: createMatchSetupForMode(
-                selection,
-                playerData.settings.challengeSetup,
-                selectDefaultStoryOpponent(
-                  playerData.storyProgress,
-                  selection.variant,
-                ),
-              ),
+              setup:
+                setup.mode === "challenge" &&
+                setup.challengeSetup.variant === "chess960"
+                  ? {
+                      ...setup,
+                      displayedChess960PositionId:
+                        setup.challengeSetup.chess960PositionId ??
+                        generateWebChess960Position(globalThis.crypto),
+                    }
+                  : setup,
             })
           }}
         />
