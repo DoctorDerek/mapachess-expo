@@ -77,13 +77,16 @@ const openProfile = async () => {
 describe("profile-owned match persistence bridge", () => {
   it("does not accept an unchanged match as acknowledgement of a different difficulty preference", async () => {
     const actor = await openProfile()
-    const match: DurableMatchRecord = { ...durableMatch(), mode: "challenge" }
+    const match: DurableMatchRecord = {
+      ...durableMatch(),
+      mode: "challenge",
+      opponentTargetElo: 1000,
+    }
     const signal = new AbortController().signal
     await persistProfileActiveMatch({
       actor,
       candidate: match,
       expectedActiveMatch: null,
-      challengeSetup: DEFAULT_CHALLENGE_SETUP,
       signal,
     })
     const before = selectCurrentPlayerData(actor.getSnapshot())
@@ -122,6 +125,7 @@ describe("profile-owned match persistence bridge", () => {
     const match: DurableMatchRecord = {
       ...durableMatch(),
       mode: "challenge",
+      opponentTargetElo: 1000,
       playerColor: "black",
     }
     const signal = new AbortController().signal
@@ -136,6 +140,19 @@ describe("profile-owned match persistence bridge", () => {
       ...initial,
       activeMatch: match,
       revision: initial.revision + 1,
+      challengeHistory: {
+        standard: {
+          animals: [],
+          difficulties: [
+            {
+              targetElo: 1000,
+              lastPlayedAnimal: match.opponentId,
+              highestMedal: null,
+            },
+          ],
+        },
+        chess960: { animals: [], difficulties: [] },
+      },
       settings: { ...initial.settings, challengeSetup },
     })
 

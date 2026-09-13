@@ -77,10 +77,14 @@ export const persistProfileActiveMatch = ({
       const playerData = selectCurrentPlayerData(snapshot)
       if (
         playerData !== null &&
-        activeMatchesEqual(playerData.activeMatch, candidate) &&
+        (challengeSetup === undefined
+          ? activeMatchesEqual(playerData.activeMatch, candidate)
+          : playerData.activeMatch?.matchId === candidate?.matchId) &&
         (challengeSetup === undefined ||
           (playerData.settings.challengeSetup.variant ===
             challengeSetup.variant &&
+            playerData.activeMatch?.opponentTargetElo ===
+              challengeSetup.difficultyTargetElo &&
             playerData.settings.challengeSetup.opponentId ===
               challengeSetup.opponentId &&
             playerData.settings.challengeSetup.difficultyTargetElo ===
@@ -88,7 +92,14 @@ export const persistProfileActiveMatch = ({
             playerData.settings.challengeSetup.playerColor ===
               challengeSetup.playerColor &&
             playerData.settings.challengeSetup.chess960PositionId ===
-              challengeSetup.chess960PositionId))
+              challengeSetup.chess960PositionId &&
+            playerData.challengeHistory[
+              challengeSetup.variant
+            ].difficulties.some(
+              (record) =>
+                record.targetElo === challengeSetup.difficultyTargetElo &&
+                record.lastPlayedAnimal === challengeSetup.opponentId,
+            )))
       ) {
         settle("accepted")
         return
@@ -96,7 +107,11 @@ export const persistProfileActiveMatch = ({
       if (!snapshot.matches("ready") || writeRequested) return
       if (
         playerData === null ||
-        !activeMatchesEqual(playerData.activeMatch, expectedActiveMatch)
+        (!(
+          challengeSetup !== undefined &&
+          playerData.activeMatch?.matchId === candidate?.matchId
+        ) &&
+          !activeMatchesEqual(playerData.activeMatch, expectedActiveMatch))
       ) {
         settle(activeMatchChanged())
         return
@@ -104,7 +119,11 @@ export const persistProfileActiveMatch = ({
 
       writeRequested = true
       actor.send({
-        activeMatch: candidate,
+        activeMatch:
+          challengeSetup !== undefined &&
+          playerData.activeMatch?.matchId === candidate?.matchId
+            ? playerData.activeMatch
+            : candidate,
         ...(challengeSetup === undefined ? {} : { challengeSetup }),
         type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED",
       })

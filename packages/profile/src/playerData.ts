@@ -9,6 +9,10 @@ import {
 } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import {
+  createInitialChallengeHistory,
+  type ChallengeHistory,
+} from "./challengeHistory.js"
+import {
   createInitialStoryProgress,
   type StoryProgress,
 } from "./storyProgress.js"
@@ -18,7 +22,8 @@ export const LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
 export const THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION = 2 as const
 export const CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION = 3 as const
 export const STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION = 4 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 5 as const
+export const INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION = 5 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 6 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -76,6 +81,7 @@ export type MapachessPlayerDataV4 = Readonly<
 export type MapachessPlayerData = Readonly<
   Omit<MapachessPlayerDataV4, "schemaVersion" | "settings"> & {
     schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    challengeHistory: ChallengeHistory
     settings: Readonly<{
       autoHintMode: AutoHintMode
       challengeSetup: ChallengeSetup
@@ -94,6 +100,7 @@ export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
 export default function createInitialMapachessPlayerData(): MapachessPlayerData {
   return Object.freeze({
     activeMatch: null,
+    challengeHistory: createInitialChallengeHistory(),
     ratings: createInitialPlayerEloRatings(),
     revision: 0,
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,

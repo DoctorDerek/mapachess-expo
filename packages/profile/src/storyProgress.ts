@@ -12,9 +12,13 @@ import stockfishOpponent, {
   type StockfishOpponentDefinition,
   type StockfishOpponentId,
 } from "@mapachess/match/stockfish-opponent"
+import matchVictoryMedal, {
+  MATCH_MEDALS,
+  type MatchMedal,
+} from "./matchMedal.js"
 
-export const STORY_MEDALS = ["bronze", "silver", "gold"] as const
-export type StoryMedal = (typeof STORY_MEDALS)[number]
+export const STORY_MEDALS = MATCH_MEDALS
+export type StoryMedal = MatchMedal
 
 export type StoryVictory = Readonly<{
   opponentId: StockfishOpponentId
@@ -95,25 +99,8 @@ export const selectDefaultStoryOpponent = (
 
 export const storyVictoryMedal = (
   match: StoryMatchResult,
-): StoryMedal | null => {
-  if (
-    match.mode !== "story" ||
-    (match.conclusion?.type !== "checkmate" &&
-      match.conclusion?.type !== "resignation") ||
-    match.conclusion.winner !== match.playerColor
-  )
-    return null
-  if (match.moveHintsUsed && !match.pieceHintsUsed) {
-    throw new TypeError(
-      "Move Hints cannot award a medal without Piece Hint use.",
-    )
-  }
-  return match.moveHintsUsed
-    ? "bronze"
-    : match.pieceHintsUsed
-      ? "silver"
-      : "gold"
-}
+): StoryMedal | null =>
+  match.mode === "story" ? matchVictoryMedal(match) : null
 
 export default function applyStoryMatchResult(
   progress: StoryProgress,

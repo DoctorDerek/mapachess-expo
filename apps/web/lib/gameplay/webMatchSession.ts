@@ -354,7 +354,6 @@ export async function openFreshWebMatchSession(
     await persistProfileActiveMatch({
       actor: profileActor,
       candidate: freshMatch,
-      ...(challengeSetup === undefined ? {} : { challengeSetup }),
       expectedActiveMatch: activeMatch,
       signal,
     })
@@ -362,13 +361,28 @@ export async function openFreshWebMatchSession(
     return closeRuntimeAfterFailure(runtime, error)
   }
 
-  return openActorSession({
+  const session = await openActorSession({
     match: freshMatch,
     profileActor,
     resumedMatch,
     runtime,
     signal,
   })
+  try {
+    if (challengeSetup !== undefined) {
+      await persistProfileActiveMatch({
+        actor: profileActor,
+        candidate: requirePlayerData(profileActor).activeMatch,
+        challengeSetup,
+        expectedActiveMatch: requirePlayerData(profileActor).activeMatch,
+        signal,
+      })
+    }
+    return session
+  } catch (error) {
+    await session.close()
+    throw error
+  }
 }
 
 export async function returnWebMatchSessionToMenu({
