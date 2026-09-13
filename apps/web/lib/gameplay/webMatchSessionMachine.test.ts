@@ -114,6 +114,47 @@ const operations = (
 })
 
 describe("web match session machine", () => {
+  it("ignores repeated start, restart and menu requests while their operation is pending", async () => {
+    const opened = createSession("00000001000000020000000300000004")
+    const start = Promise.withResolvers<WebMatchSession>()
+    const restart = Promise.withResolvers<WebMatchSession>()
+    const menu = Promise.withResolvers<void>()
+    const openFreshMatch = vi
+      .fn<WebMatchSessionOperations["openFreshMatch"]>()
+      .mockReturnValueOnce(start.promise)
+      .mockReturnValueOnce(restart.promise)
+    const returnToMenu = vi.fn(() => menu.promise)
+    const actor = createActor(webMatchSessionMachine, {
+      input: {
+        activeMatchExists: false,
+        operations: operations({ openFreshMatch, returnToMenu }),
+      },
+    }).start()
+    const setup = createMatchSetupForMode(
+      { mode: "story", variant: "standard" },
+      DEFAULT_CHALLENGE_SETUP,
+    )
+    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+    actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+    expect(openFreshMatch).toHaveBeenCalledTimes(1)
+    expect(actor.getSnapshot().matches("openingFreshMatch")).toBe(true)
+    start.resolve(opened)
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    expect(openFreshMatch).toHaveBeenCalledTimes(2)
+    expect(actor.getSnapshot().context.session).toBe(opened)
+    restart.resolve(opened)
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    expect(returnToMenu).toHaveBeenCalledOnce()
+    expect(actor.getSnapshot().context.session).toBe(opened)
+    menu.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches("menu"))
+    actor.stop()
+  })
   it.each([0, 959])(
     "retains Challenge animal, difficulty, color and position %i through opening retry and restart",
     async (positionId) => {

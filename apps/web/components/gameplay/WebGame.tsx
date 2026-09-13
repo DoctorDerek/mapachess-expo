@@ -3,7 +3,9 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
-import createMatchSetupForMode from "@mapachess/match/match-setup"
+import createMatchSetupForMode, {
+  MATCH_SETUP_COPY,
+} from "@mapachess/match/match-setup"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
@@ -47,6 +49,8 @@ type GameFrameProps = Omit<
   Readonly<{
     children: ReactNode
     activityMessage?: string | null
+    restarting?: boolean
+    returningToMenu?: boolean
     matchSessionActive: boolean
     onRestartRequested?: () => void
     onReturnToMenuRequested?: () => void
@@ -55,6 +59,8 @@ type GameFrameProps = Omit<
 function GameFrame({
   children,
   activityMessage = null,
+  restarting = false,
+  returningToMenu = false,
   matchSessionActive,
   onRestartRequested,
   onReturnToMenuRequested,
@@ -88,6 +94,8 @@ function GameFrame({
             </summary>
             <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute top-full right-0 mt-2 grid w-60 max-w-[calc(100vw-1.5rem)] gap-3 rounded-lg border p-3 shadow-xl">
               <MapachessButton
+                aria-busy={restarting}
+                busyLabel={MATCH_SETUP_COPY.restartingMatch}
                 variant="secondary"
                 onClick={onRestartRequested}
                 type="button"
@@ -95,6 +103,8 @@ function GameFrame({
                 Restart Match
               </MapachessButton>
               <MapachessButton
+                aria-busy={returningToMenu}
+                busyLabel={MATCH_SETUP_COPY.returningToMenu}
                 variant="secondary"
                 onClick={onReturnToMenuRequested}
                 type="button"
@@ -126,9 +136,12 @@ function GameFrame({
 const openingTitle = (actor: WebMatchSessionActor): string | null => {
   const snapshot = actor.getSnapshot()
   if (snapshot.matches("openingCurrentMatch")) return "Resuming saved match…"
-  if (snapshot.matches("restartingMatch")) return "Restarting match…"
-  if (snapshot.matches("returningToMenu")) return "Returning to menu…"
-  if (snapshot.matches("openingFreshMatch")) return "Opening match…"
+  if (snapshot.matches("restartingMatch"))
+    return MATCH_SETUP_COPY.restartingMatch
+  if (snapshot.matches("returningToMenu"))
+    return MATCH_SETUP_COPY.returningToMenu
+  if (snapshot.matches("openingFreshMatch"))
+    return MATCH_SETUP_COPY.openingMatch
   return null
 }
 
@@ -198,6 +211,8 @@ function MatchSessionExperience({
 
   return (
     <GameFrame
+      restarting={snapshot.matches("restartingMatch")}
+      returningToMenu={snapshot.matches("returningToMenu")}
       activityMessage={openingTitle(actor)}
       matchSessionActive={retainingMatch}
       onRestartRequested={() =>
@@ -244,6 +259,7 @@ function MatchSessionExperience({
         />
       ) : snapshot.matches({ menu: "setup" }) || openingFreshMatch ? (
         <WebMatchSetup
+          opening={openingFreshMatch}
           challengeHistory={playerData.challengeHistory}
           autoHintMode={playerData.settings.autoHintMode}
           disabled={!profileReady && !openingFreshMatch}

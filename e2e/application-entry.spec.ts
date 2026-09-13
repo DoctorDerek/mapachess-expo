@@ -9,6 +9,36 @@ const modeNames = [
   "Chess960 Challenge",
 ] as const
 
+test("retains setup and button geometry while match opening is pending", async ({
+  page,
+}) => {
+  const release = Promise.withResolvers<void>()
+  await page.route("**/stockfish-runtime/**", async (route) => {
+    await release.promise
+    await route.abort()
+  })
+  try {
+    await page.goto("/")
+    await page
+      .getByRole("button", { name: "Standard Challenge", exact: true })
+      .click()
+    const start = await page
+      .getByRole("button", { name: "Start match", exact: true })
+      .elementHandle()
+    if (start === null) throw new Error("Start button must exist")
+    await start.scrollIntoViewIfNeeded()
+    const before = await start.boundingBox()
+    await start.click()
+    await expect.poll(() => start.innerText()).toBe("Opening match…")
+    await expect.poll(() => start.getAttribute("aria-busy")).toBe("true")
+    expect(await start.isDisabled()).toBe(true)
+    expect(await start.boundingBox()).toEqual(before)
+    await expect(page.locator("#match-setup-title")).toBeVisible()
+  } finally {
+    release.resolve()
+  }
+})
+
 const expectModeMenu = async (page: Page): Promise<void> => {
   await expect(
     page.getByRole("heading", {
