@@ -159,6 +159,9 @@ export const decodeDurableMatch = (
           "autoHintMode",
           "conclusion",
           "recordVersion",
+          ...(object.opponentTargetElo === undefined
+            ? []
+            : ["opponentTargetElo"]),
         ]
       : legacyRecordV2
         ? [
@@ -197,6 +200,14 @@ export const decodeDurableMatch = (
   if (timeControl.type !== "untimed") failData(`${path}.timeControl.type`)
 
   const recordWithoutConclusion: DurableMatchRecord = Object.freeze({
+    ...(currentRecord && object.opponentTargetElo !== undefined
+      ? {
+          opponentTargetElo: requirePlayerElo(
+            object.opponentTargetElo,
+            `${path}.opponentTargetElo`,
+          ),
+        }
+      : {}),
     autoHintMode: currentRecord
       ? requireEnumValue(
           object.autoHintMode,
@@ -308,4 +319,5 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
   match.pieceHintsUsed,
   match.moveHintsUsed,
   canonicalConclusion(match.conclusion),
+  ...(match.opponentTargetElo === undefined ? [] : [match.opponentTargetElo]),
 ]

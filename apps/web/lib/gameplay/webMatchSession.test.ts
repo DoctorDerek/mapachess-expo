@@ -697,6 +697,14 @@ describe("web match session ownership", () => {
       await waitFor(profile.actor, (snapshot) => snapshot.matches("ready"))
       const saved = selectCurrentPlayerData(profile.actor.getSnapshot())
       expect(saved?.settings.challengeSetup).toEqual(challengeSetup)
+      expect(saved?.activeMatch?.opponentTargetElo).toBe(1000)
+      expect(saved?.challengeHistory[variant].difficulties).toEqual([
+        {
+          targetElo: 1000,
+          lastPlayedAnimal: "bunny-stockfish",
+          highestMedal: null,
+        },
+      ])
       await profile.close()
 
       const reloaded = await openProfileRuntime(undefined, indexedDb)

@@ -50,6 +50,7 @@ export type DurableMatchRecordV2 = DurableMatchRecordFields &
 
 export type DurableMatchRecordV3 = DurableMatchRecordFields &
   Readonly<{
+    opponentTargetElo?: number
     autoHintMode: AutoHintMode
     conclusion: MatchConclusion | null
     recordVersion: typeof DURABLE_MATCH_RECORD_VERSION

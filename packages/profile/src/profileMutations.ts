@@ -1,6 +1,9 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import applyChallengeMatchResult, {
+  recordChallengeStart,
+} from "./challengeHistory.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
 import createInitialMapachessPlayerData, {
@@ -36,6 +39,7 @@ export const replaceActiveMatch = (
     challengeSetup !== undefined &&
     (activeMatch?.mode !== "challenge" ||
       activeMatch.opponentId !== challengeSetup.opponentId ||
+      activeMatch.opponentTargetElo !== challengeSetup.difficultyTargetElo ||
       activeMatch.playerColor !== challengeSetup.playerColor ||
       activeMatch.startingPosition.variant !== challengeSetup.variant ||
       (challengeSetup.chess960PositionId !== null &&
@@ -45,9 +49,25 @@ export const replaceActiveMatch = (
     throw new TypeError("Challenge setup must describe the match being saved.")
   }
 
+  const historyMatch =
+    activeMatch === null
+      ? null
+      : {
+          ...activeMatch,
+          opponentTargetElo: activeMatch.opponentTargetElo ?? null,
+        }
+  const challengeHistory = applyChallengeMatchResult(
+    current.challengeHistory,
+    current.activeMatch,
+    historyMatch,
+  )
   return Object.freeze({
     ...current,
     activeMatch,
+    challengeHistory:
+      challengeSetup !== undefined && historyMatch !== null
+        ? recordChallengeStart(challengeHistory, historyMatch)
+        : challengeHistory,
     storyProgress: applyStoryMatchResult(
       applyStoryMatchResult(current.storyProgress, current.activeMatch),
       activeMatch,

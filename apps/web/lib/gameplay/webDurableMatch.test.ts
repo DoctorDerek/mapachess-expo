@@ -34,6 +34,7 @@ const runtime = Object.freeze({
   matchSeed,
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: "test-policy",
+  opponentTargetElo: 100,
   playerColor: selectStoryPlayerColor(matchSeed),
   startingPosition: { variant: "standard", chess960PositionId: null } as const,
 }) satisfies FreshWebMatchInput["runtime"]

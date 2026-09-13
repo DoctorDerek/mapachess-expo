@@ -14,6 +14,10 @@ describe("Mapachess player data", () => {
 
     expect(playerData).toEqual({
       activeMatch: null,
+      challengeHistory: {
+        standard: { animals: [], difficulties: [] },
+        chess960: { animals: [], difficulties: [] },
+      },
       ratings: {
         chess960Challenge: INITIAL_PLAYER_ELO,
         chess960Story: INITIAL_PLAYER_ELO,
