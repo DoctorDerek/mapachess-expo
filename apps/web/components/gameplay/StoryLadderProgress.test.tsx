@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
+import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import {
   createInitialStoryProgress,
   type StoryProgress,
@@ -48,6 +49,7 @@ describe("Story ladder presentation structure", () => {
     (challengeSetup) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
+          challengeHistory={createInitialMapachessPlayerData().challengeHistory}
           autoHintMode="no-auto-hints"
           disabled={false}
           onAutoHintModeChanged={vi.fn()}
@@ -70,6 +72,7 @@ describe("Story ladder presentation structure", () => {
     (variant) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
+          challengeHistory={createInitialMapachessPlayerData().challengeHistory}
           autoHintMode="no-auto-hints"
           disabled={false}
           onAutoHintModeChanged={vi.fn()}
@@ -112,6 +115,7 @@ describe("Story ladder presentation structure", () => {
   it("offers earned opponents as named choices and defaults setup to the next unlocked animal", () => {
     const markup = renderToStaticMarkup(
       <WebMatchSetup
+        challengeHistory={createInitialMapachessPlayerData().challengeHistory}
         autoHintMode="no-auto-hints"
         disabled={false}
         onAutoHintModeChanged={vi.fn()}
@@ -165,12 +169,14 @@ describe("Story ladder presentation structure", () => {
     }
     const story = renderToStaticMarkup(
       <WebMatchSetup
+        challengeHistory={createInitialMapachessPlayerData().challengeHistory}
         {...props}
         setup={{ mode: "story", variant: "standard" }}
       />,
     )
     const challenge = renderToStaticMarkup(
       <WebMatchSetup
+        challengeHistory={createInitialMapachessPlayerData().challengeHistory}
         {...props}
         setup={{
           mode: "challenge",

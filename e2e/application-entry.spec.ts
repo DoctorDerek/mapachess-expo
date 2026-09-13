@@ -1,5 +1,8 @@
+import { createHash } from "node:crypto"
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Page } from "@playwright/test"
+import createInitialMapachessPlayerData from "../packages/profile/src/playerData"
+import { createMapachessPortableBackup } from "../packages/profile/src/portableBackup"
 
 const modeNames = [
   "Standard Story",
@@ -40,6 +43,27 @@ test("offers four direct modes with Challenge controls and saved hint preference
       page.getByRole("radio", { name: "Auto Move Hints", exact: true }),
     ).toBeChecked()
     if (name.endsWith("Challenge")) {
+      const initialDifficulty = page.getByRole("radio", {
+        name: "100 Elo",
+        exact: true,
+      })
+      await initialDifficulty.focus()
+      await initialDifficulty.press("ArrowRight")
+      await expect(
+        page.getByRole("radio", { name: "200 Elo", exact: true }),
+      ).toBeChecked()
+      await expect(
+        page.getByRole("radio", { name: "Chicken Stockfish", exact: true }),
+      ).toBeChecked()
+      const difficultyDisclosure = page
+        .locator("summary")
+        .filter({ hasText: "Change difficulty" })
+      await difficultyDisclosure.click()
+      await expect(initialDifficulty).toBeHidden()
+      await difficultyDisclosure.click()
+      await expect(
+        page.getByRole("radio", { name: "200 Elo", exact: true }),
+      ).toBeChecked()
       await expect(
         page.getByRole("radio", { name: "White", exact: true }),
       ).toBeChecked()
@@ -94,6 +118,100 @@ test("does not retain the former private playtest route", async ({ page }) => {
   const response = await page.goto("/playtest")
 
   expect(response?.status()).toBe(404)
+})
+
+test("presents imported Challenge medals with stable animal artwork", async ({
+  page,
+}) => {
+  const data = createInitialMapachessPlayerData()
+  const backup = await createMapachessPortableBackup({
+    applicationVersion: "local-test",
+    gddRevision: "local-test",
+    sha256: async (value) => createHash("sha256").update(value).digest("hex"),
+    playerData: {
+      ...data,
+      challengeHistory: {
+        ...data.challengeHistory,
+        standard: {
+          difficulties: [
+            {
+              targetElo: 100,
+              lastPlayedAnimal: "chicken-stockfish",
+              highestMedal: "gold",
+            },
+          ],
+          animals: [
+            {
+              opponentId: "chicken-stockfish",
+              lifetimeWins: 1,
+              lifetimeLosses: 0,
+              highestMedal: "gold",
+            },
+          ],
+        },
+      },
+    },
+  })
+  await page.goto("/")
+  await expectModeMenu(page)
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "tile-history.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(backup),
+  })
+  await page
+    .getByRole("button", { name: "Replace Local Player Data", exact: true })
+    .click()
+  await page
+    .getByRole("button", { name: "Close Settings", exact: true })
+    .click()
+  await page
+    .getByRole("button", { name: "Standard Challenge", exact: true })
+    .click()
+  const choice = page.getByRole("radio", {
+    name: "100 Elo · Best medal: Gold · Last played: Chicken Stockfish",
+    exact: true,
+  })
+  await expect(choice).toBeChecked()
+  const tile = page.locator("label").filter({ has: choice })
+  const sprite = tile.locator('span[style*="background-image"]')
+  if (await sprite.count()) {
+    const spriteElement = await sprite.elementHandle()
+    if (spriteElement === null)
+      throw new Error("Expected mounted animal sprite")
+    await expect
+      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
+      .toBe(1)
+    await choice.focus()
+    await expect(choice).toBeFocused()
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await expect
+      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
+      .toBe(0)
+    await expect(sprite).toHaveCSS("background-position", "0% 0px")
+    await page.emulateMedia({ reducedMotion: "no-preference" })
+    await expect
+      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
+      .toBe(1)
+    const disclosure = page
+      .locator("summary")
+      .filter({ hasText: "Change difficulty" })
+    await disclosure.click()
+    await expect
+      .poll(() =>
+        spriteElement.evaluate((element) => element.getAnimations().length),
+      )
+      .toBe(0)
+    await disclosure.click()
+    await expect
+      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
+      .toBe(1)
+  } else {
+    await expect(
+      tile.getByText("Chicken Stockfish", { exact: true }),
+    ).toBeVisible()
+  }
 })
 
 test("loads the app icon without browser console errors", async ({

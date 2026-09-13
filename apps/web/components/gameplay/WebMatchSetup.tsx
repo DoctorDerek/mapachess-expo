@@ -8,6 +8,7 @@ import {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
   canPlayStoryOpponent,
   selectChallengeUnlockedOpponents,
@@ -19,11 +20,13 @@ import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImage
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
 import StoryLadderProgress from "./StoryLadderProgress"
 import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type WebMatchSetupProps = Readonly<{
   autoHintMode: AutoHintMode
+  challengeHistory: MapachessPlayerData["challengeHistory"]
   disabled: boolean
   onAutoHintModeChanged: (mode: AutoHintMode) => void
   onBack: () => void
@@ -36,6 +39,7 @@ const LAST_CHESS960_POSITION = CHESS960_POSITION_COUNT - 1
 
 export default function WebMatchSetup({
   autoHintMode,
+  challengeHistory,
   disabled,
   onAutoHintModeChanged,
   onBack,
@@ -174,29 +178,13 @@ export default function WebMatchSetup({
                   ))}
                 </div>
               </fieldset>
-              <fieldset className="mt-6" disabled={disabled}>
-                <legend className="text-lg font-black">
-                  {MATCH_SETUP_COPY.difficulty}
-                </legend>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {difficultyTargets.map((target) => (
-                    <label
-                      key={target}
-                      className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3"
-                    >
-                      <input
-                        type="radio"
-                        name="challenge-difficulty"
-                        value={target}
-                        checked={difficultyTargetElo === target}
-                        onChange={() => setDifficultyTargetElo(target)}
-                        className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                      />
-                      {target}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <ChallengeDifficultyChoices
+                disabled={disabled}
+                history={challengeHistory[variant]}
+                onSelected={setDifficultyTargetElo}
+                selectedElo={difficultyTargetElo}
+                targets={difficultyTargets}
+              />
             </>
           ) : null}
 
