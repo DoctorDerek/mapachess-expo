@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup from "@mapachess/match/challenge-setup"
-import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
+import {
+  CHESS960_POSITION_COUNT,
+  parseChess960PositionId,
+} from "@mapachess/match/chess960-position"
 import {
   MATCH_SETUP_COPY,
   matchModeLabel,
@@ -15,6 +18,7 @@ import {
   selectDefaultStoryOpponent,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
 import { webChallengeDifficultyTargets } from "../../lib/gameplay/webOpponentPolicy"
 import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImages"
 import MapachessButton from "../presentation/MapachessButton"
@@ -53,6 +57,15 @@ export default function WebMatchSetup({
   const [numberedPosition, setNumberedPosition] = useState(
     challenge?.variant === "chess960" && challenge.chess960PositionId !== null,
   )
+  const [positionNumber, setPositionNumber] = useState(() =>
+    String(
+      challenge?.chess960PositionId ??
+        (setup.mode === "challenge"
+          ? setup.displayedChess960PositionId
+          : undefined) ??
+        "",
+    ),
+  )
   const [invalidSetup, setInvalidSetup] = useState(false)
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
@@ -86,6 +99,11 @@ export default function WebMatchSetup({
     }
     const formData = new FormData(event.currentTarget)
     const rawPosition = formData.get("chess960-position")
+    const displayedPosition = parseChess960PositionId(
+      typeof rawPosition === "string" && rawPosition.trim() !== ""
+        ? Number(rawPosition)
+        : Number.NaN,
+    )
     const parsed = parseChallengeSetup({
       opponentId: selectedOpponentId,
       difficultyTargetElo,
@@ -98,12 +116,18 @@ export default function WebMatchSetup({
             ? Number(rawPosition)
             : Number.NaN,
     })
-    if (!parsed.ok) {
+    if (!parsed.ok || (variant === "chess960" && !displayedPosition.ok)) {
       setInvalidSetup(true)
       return
     }
     setInvalidSetup(false)
-    onStart({ mode: "challenge", challengeSetup: parsed.setup })
+    onStart({
+      mode: "challenge",
+      challengeSetup: parsed.setup,
+      ...(variant === "chess960" && displayedPosition.ok
+        ? { displayedChess960PositionId: displayedPosition.positionId }
+        : {}),
+    })
   }
 
   return (
@@ -218,6 +242,16 @@ export default function WebMatchSetup({
                   />
                   {MATCH_SETUP_COPY.black}
                 </label>
+                <label className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3">
+                  <input
+                    className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
+                    defaultChecked={challenge.playerColor === "random"}
+                    name="player-color"
+                    type="radio"
+                    value="random"
+                  />
+                  {MATCH_SETUP_COPY.random}
+                </label>
               </div>
             </fieldset>
           )}
@@ -227,28 +261,6 @@ export default function WebMatchSetup({
               <legend className="text-lg font-black">
                 {MATCH_SETUP_COPY.position}
               </legend>
-              <label className="mt-3 flex min-h-12 cursor-pointer items-center gap-3">
-                <input
-                  checked={!numberedPosition}
-                  className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                  name="position-choice"
-                  onChange={() => setNumberedPosition(false)}
-                  type="radio"
-                  value="random"
-                />
-                {MATCH_SETUP_COPY.randomPosition}
-              </label>
-              <label className="flex min-h-12 cursor-pointer items-center gap-3">
-                <input
-                  checked={numberedPosition}
-                  className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                  name="position-choice"
-                  onChange={() => setNumberedPosition(true)}
-                  type="radio"
-                  value="numbered"
-                />
-                {MATCH_SETUP_COPY.numberedPosition}
-              </label>
               <label
                 className="mt-2 block text-sm font-bold"
                 htmlFor="chess960-position"
@@ -257,17 +269,40 @@ export default function WebMatchSetup({
               </label>
               <input
                 className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet mt-2 min-h-12 w-full rounded-lg border-2 px-4 py-3 disabled:opacity-50"
-                defaultValue={challenge.chess960PositionId ?? 0}
-                disabled={!numberedPosition}
+                value={positionNumber}
+                onChange={(event) => {
+                  setPositionNumber(event.currentTarget.value)
+                  setNumberedPosition(true)
+                }}
                 id="chess960-position"
                 inputMode="numeric"
                 max={LAST_CHESS960_POSITION}
                 min={0}
                 name="chess960-position"
-                required={numberedPosition}
+                required
                 step={1}
                 type="number"
               />
+              <div className="mt-3">
+                <MapachessButton
+                  type="button"
+                  variant="secondary"
+                  disabled={disabled}
+                  onClick={() => {
+                    setPositionNumber(
+                      String(generateWebChess960Position(globalThis.crypto)),
+                    )
+                    setNumberedPosition(false)
+                  }}
+                >
+                  {MATCH_SETUP_COPY.randomize}
+                </MapachessButton>
+              </div>
+              <p className="mt-3 text-sm">
+                {numberedPosition
+                  ? MATCH_SETUP_COPY.pinnedPosition
+                  : MATCH_SETUP_COPY.freshPosition}
+              </p>
             </fieldset>
           ) : null}
         </div>

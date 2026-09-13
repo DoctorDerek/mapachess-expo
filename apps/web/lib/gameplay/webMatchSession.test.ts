@@ -630,9 +630,16 @@ describe("web match session ownership", () => {
     await profile.close()
   })
 
-  it.each(["standard", "chess960"] as const)(
-    "persists and reloads %s Challenge with a globally earned Bunny, 1000 preset, chosen Black and independent rating",
-    async (variant) => {
+  it.each(
+    (["standard", "chess960"] as const).flatMap((variant) =>
+      (["black", "random"] as const).map((playerColor) => ({
+        variant,
+        playerColor,
+      })),
+    ),
+  )(
+    "persists and reloads $variant Challenge with $playerColor preference, actual Black and independent rating",
+    async ({ variant, playerColor }) => {
       const layout = parseChess960PositionId(959)
       if (!layout.ok) throw new Error("Invalid test layout")
       const startingPosition: MatchStartingPosition =
@@ -644,7 +651,8 @@ describe("web match session ownership", () => {
         opponentId: "bunny-stockfish",
         difficultyTargetElo: 1000,
         ...startingPosition,
-        playerColor: "black",
+        playerColor,
+        ...(playerColor === "random" ? { chess960PositionId: null } : {}),
       }
       const selection = { mode: "challenge", playerColor: "black" } as const
       const policy = await resolveWebChallengePolicy(
@@ -674,6 +682,9 @@ describe("web match session ownership", () => {
       const first = await openFreshWebMatchSession({
         mode: "challenge",
         challengeSetup,
+        ...(variant === "chess960"
+          ? { displayedChess960PositionId: layout.positionId }
+          : {}),
         previousSession: null,
         openRuntime: opener,
         profileActor: profile.actor,
@@ -681,6 +692,7 @@ describe("web match session ownership", () => {
       })
       expect(opener).toHaveBeenCalledWith({
         ...selection,
+        playerColor,
         difficultyTargetElo: 1000,
         opponentId: "bunny-stockfish",
         setup: startingPosition,

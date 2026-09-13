@@ -56,7 +56,7 @@ describe("Mapachess player data", () => {
         opponentId: "bunny-stockfish",
         difficultyTargetElo: 1000,
         chess960PositionId,
-        playerColor: "black",
+        playerColor: "random",
         variant: "chess960",
       }
       const initial = createInitialMapachessPlayerData()
@@ -76,7 +76,7 @@ describe("Mapachess player data", () => {
     undefined,
     null,
     { ...DEFAULT_CHALLENGE_SETUP, variant: "unsupported" },
-    { ...DEFAULT_CHALLENGE_SETUP, playerColor: "random" },
+    { ...DEFAULT_CHALLENGE_SETUP, playerColor: "purple" },
     { ...DEFAULT_CHALLENGE_SETUP, chess960PositionId: 0 },
     { ...DEFAULT_CHALLENGE_SETUP, variant: "chess960", chess960PositionId: -1 },
     {

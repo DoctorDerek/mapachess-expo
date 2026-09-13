@@ -9,7 +9,7 @@ import stockfishOpponent, {
 } from "./stockfishOpponent.js"
 
 export type ChallengePositionSetup = Readonly<
-  { playerColor: MatchColor } & (
+  { playerColor: MatchColor | "random" } & (
     | { chess960PositionId: null; variant: "standard" }
     | {
         chess960PositionId: Chess960PositionId | null
@@ -48,7 +48,9 @@ export function parseChallengePositionSetup(
     !("variant" in received) ||
     !("playerColor" in received) ||
     !("chess960PositionId" in received) ||
-    (received.playerColor !== "white" && received.playerColor !== "black")
+    (received.playerColor !== "white" &&
+      received.playerColor !== "black" &&
+      received.playerColor !== "random")
   ) {
     return { ok: false }
   }

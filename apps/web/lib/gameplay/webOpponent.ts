@@ -1,3 +1,8 @@
+import {
+  CHESS960_POSITION_COUNT,
+  parseChess960PositionId,
+  type Chess960PositionId,
+} from "@mapachess/match/chess960-position"
 import type {
   MatchOpponent,
   MatchOpponentRequest,
@@ -55,6 +60,17 @@ export function selectStoryPlayerColor(
 ): "black" | "white" {
   const random = createDeterministicRandom(matchSeed)
   return random.nextIndex(2) === 0 ? "white" : "black"
+}
+
+export function generateWebChess960Position(
+  cryptography: WebOpponentCryptography,
+): Chess960PositionId {
+  const random = createDeterministicRandom(generateWebMatchSeed(cryptography))
+  const parsed = parseChess960PositionId(
+    random.nextIndex(CHESS960_POSITION_COUNT),
+  )
+  if (!parsed.ok) throw new Error("Generated Chess960 position is invalid.")
+  return parsed.positionId
 }
 
 export function webMatchId(

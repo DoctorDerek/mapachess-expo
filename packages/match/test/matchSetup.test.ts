@@ -9,6 +9,16 @@ import createMatchSetupForMode, {
 } from "../src/matchSetup.js"
 
 describe("match setup choices", () => {
+  it("remembers Random as a preference without choosing a side", () => {
+    const setup = { ...DEFAULT_CHALLENGE_SETUP, playerColor: "random" } as const
+    expect(parseChallengeSetup(setup)).toEqual({ ok: true, setup })
+    expect(
+      createMatchSetupForMode(
+        { mode: "challenge", variant: "standard" },
+        setup,
+      ),
+    ).toEqual({ mode: "challenge", challengeSetup: setup })
+  })
   it("parses animal and difficulty independently and rejects malformed boundaries", () => {
     const setup = {
       ...DEFAULT_CHALLENGE_SETUP,

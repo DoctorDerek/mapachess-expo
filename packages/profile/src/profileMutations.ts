@@ -40,7 +40,8 @@ export const replaceActiveMatch = (
     (activeMatch?.mode !== "challenge" ||
       activeMatch.opponentId !== challengeSetup.opponentId ||
       activeMatch.opponentTargetElo !== challengeSetup.difficultyTargetElo ||
-      activeMatch.playerColor !== challengeSetup.playerColor ||
+      (challengeSetup.playerColor !== "random" &&
+        activeMatch.playerColor !== challengeSetup.playerColor) ||
       activeMatch.startingPosition.variant !== challengeSetup.variant ||
       (challengeSetup.chess960PositionId !== null &&
         activeMatch.startingPosition.chess960PositionId !==
