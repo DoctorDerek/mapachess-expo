@@ -32,6 +32,7 @@ export type WebMatchSetupProps = Readonly<{
   autoHintMode: AutoHintMode
   challengeHistory: MapachessPlayerData["challengeHistory"]
   disabled: boolean
+  opening?: boolean
   onAutoHintModeChanged: (mode: AutoHintMode) => void
   onBack: () => void
   onStart: (setup: MatchSetup) => void
@@ -45,6 +46,7 @@ export default function WebMatchSetup({
   autoHintMode,
   challengeHistory,
   disabled,
+  opening = false,
   onAutoHintModeChanged,
   onBack,
   onStart,
@@ -92,7 +94,7 @@ export default function WebMatchSetup({
 
   const startMatch = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (disabled || !selectionAvailable) return
+    if (disabled || opening || !selectionAvailable) return
     if (setup.mode === "story") {
       onStart({ ...setup, opponentId: selectedOpponentId })
       return
@@ -327,6 +329,8 @@ export default function WebMatchSetup({
             </MapachessNotice>
           ) : null}
           <MapachessButton
+            aria-busy={opening}
+            busyLabel={MATCH_SETUP_COPY.openingMatch}
             disabled={disabled || !selectionAvailable}
             type="submit"
           >

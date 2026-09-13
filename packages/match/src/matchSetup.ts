@@ -54,6 +54,9 @@ export const MATCH_SETUP_COPY = Object.freeze({
   challengeAvailability:
     "Choose any animal you have defeated in either Story ladder. Chicken is always available. Animal appearance does not change difficulty.",
   startMatch: "Start match",
+  openingMatch: "Opening match…",
+  restartingMatch: "Restarting match…",
+  returningToMenu: "Returning to menu…",
 })
 
 const MATCH_MODE_PRESENTATION = {
