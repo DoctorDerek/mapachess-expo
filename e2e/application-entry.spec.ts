@@ -9,6 +9,72 @@ const modeNames = [
   "Chess960 Challenge",
 ] as const
 
+test("retains save recovery while retrying and restores settings after success", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.evaluate(() => {
+    const put = IDBObjectStore.prototype.put
+    IDBObjectStore.prototype.put = function () {
+      IDBObjectStore.prototype.put = put
+      throw new DOMException("Test storage failure", "QuotaExceededError")
+    }
+  })
+  await page.getByRole("radio", { name: "No Auto Hints", exact: true }).click()
+  const retry = page.getByRole("button", { name: "Retry Save", exact: true })
+  await expect(retry).toBeVisible()
+  const button = await retry.elementHandle()
+  if (button === null) throw new Error("Retry button must exist")
+  await retry.scrollIntoViewIfNeeded()
+  const before = await retry.boundingBox()
+  await page.evaluate(() => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle)
+    crypto.subtle.digest = async (algorithm, data) => {
+      await new Promise<void>((resolve) =>
+        window.addEventListener("release-save-retry", () => resolve(), {
+          once: true,
+        }),
+      )
+      return digest(algorithm, data)
+    }
+    window.addEventListener(
+      "release-save-retry",
+      () => {
+        crypto.subtle.digest = digest
+      },
+      { once: true },
+    )
+  })
+  await retry.click()
+  await expect.poll(() => button.innerText()).toBe("Retrying save…")
+  expect(await button.isDisabled()).toBe(true)
+  await expect.poll(() => button.boundingBox()).toEqual(before)
+  await expect(
+    page.getByText("This change was not marked saved."),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", {
+      name: "Export Pending Player Data",
+      exact: true,
+    }),
+  ).toBeVisible()
+  await page.evaluate(() =>
+    window.dispatchEvent(new Event("release-save-retry")),
+  )
+  await expect(
+    page.getByRole("button", { name: "Close Settings", exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("radio", { name: "No Auto Hints", exact: true }),
+  ).toBeChecked()
+  await page.reload()
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await expect(
+    page.getByRole("radio", { name: "No Auto Hints", exact: true }),
+  ).toBeChecked()
+})
+
 test("backup failures release their controls for another attempt", async ({
   page,
 }) => {

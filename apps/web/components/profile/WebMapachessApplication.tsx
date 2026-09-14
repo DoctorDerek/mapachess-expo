@@ -209,8 +209,11 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     ) : null
 
   const persistenceFailurePanel =
-    snapshot.matches("persistenceFailure") && persistenceFailure !== null ? (
+    (snapshot.matches("persistenceFailure") ||
+      snapshot.matches("retryingPersistence")) &&
+    persistenceFailure !== null ? (
       <ProfilePersistenceFailurePanel
+        retrying={snapshot.matches("retryingPersistence")}
         exporting={exporting}
         exportablePlayerData={exportablePlayerData}
         failure={persistenceFailure}
