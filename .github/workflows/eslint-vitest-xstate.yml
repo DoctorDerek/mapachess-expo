@@ -48,6 +48,7 @@ jobs:
           runtime: node@${{ steps.node-version.outputs.value }}
 
       - name: Install Dependencies
+        id: dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint and Capture Advisory Output
@@ -140,20 +141,77 @@ jobs:
         run: pnpm typecheck
 
       - name: Run Blocking Tests and Measure Coverage
-        run: pnpm test:coverage
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: pnpm test:coverage --continue=dependencies-successful
 
       - name: Run Blocking XState Analyzer Tests
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
         run: pnpm test:xstate-diff
 
       - name: Run Blocking Lighthouse Tooling Tests
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
         run: pnpm test:lighthouse
 
+      - name: Inventory Vitest Coverage Evidence
+        id: coverage-evidence
+        if: ${{ !cancelled() }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require("node:fs")
+            const path = require("node:path")
+            const owners = ["."]
+            for (const parent of ["apps", "packages"]) {
+              if (!fs.existsSync(parent)) continue
+              for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
+                const owner = `${parent}/${entry.name}`
+                const manifest = `${owner}/package.json`
+                if (!entry.isDirectory() || !fs.existsSync(manifest)) continue
+                const scripts = JSON.parse(fs.readFileSync(manifest, "utf8")).scripts
+                if (scripts?.["test:coverage"]?.includes("vitest")) owners.push(owner)
+              }
+            }
+            const available = []
+            const evidence = owners.map(owner => {
+              const file = `${owner}/coverage/lcov.info`
+              const content = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""
+              const sources = [...content.matchAll(/^SF:(.+)$/gm)].map(match => match[1].trim())
+              const missingSources = sources.filter(source =>
+                !fs.existsSync(path.resolve(owner, source)) && !fs.existsSync(path.resolve(source)),
+              )
+              const present = sources.length > 0 && content.includes("end_of_record")
+              if (present) available.push(file)
+              if (!present || missingSources.length) core.warning(`Incomplete coverage evidence: ${file}; unresolved sources: ${missingSources.length}`)
+              return { file, present, sourceCount: sources.length, missingSources }
+            })
+            const complete = evidence.every(report => report.present && report.missingSources.length === 0)
+            fs.mkdirSync("coverage-evidence", { recursive: true })
+            fs.writeFileSync("coverage-evidence/vitest.json", JSON.stringify({ sha: context.sha, flag: "vitest", complete, reports: evidence }, null, 2))
+            core.setOutput("files", available.join(","))
+            await core.summary.addHeading("Vitest coverage evidence")
+              .addRaw(`Commit: ${context.sha}. ${complete ? "All expected reports found with resolvable source paths." : "INCOMPLETE: missing evidence is unavailable, not zero coverage; do not compare this as a complete baseline."}`)
+              .addTable([["Report", "Available", "Source paths missing"], ...evidence.map(report => [report.file, String(report.present), String(report.missingSources.length)])]).write()
+
+      - name: Preserve Vitest Coverage Evidence
+        if: ${{ !cancelled() && steps.coverage-evidence.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vitest-coverage-evidence
+          path: |
+            coverage-evidence/vitest.json
+            coverage/lcov.info
+            apps/*/coverage/lcov.info
+            packages/*/coverage/lcov.info
+          retention-days: 14
+          if-no-files-found: warn
+
       - name: Publish Measured Coverage to Codecov
+        if: ${{ !cancelled() && steps.coverage-evidence.outputs.files != '' }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           disable_search: true
           fail_ci_if_error: false
-          files: ./coverage/lcov.info,./apps/web/coverage/lcov.info,./packages/calibration/coverage/lcov.info,./packages/match/coverage/lcov.info,./packages/stockfish/coverage/lcov.info,./packages/stockfish-native/coverage/lcov.info
+          files: ${{ steps.coverage-evidence.outputs.files }}
           flags: vitest
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -207,7 +265,30 @@ jobs:
       - name: Run Native Jest Coverage
         run: pnpm --filter @mapachess/mobile test:native:coverage
 
+      - name: Inventory Native Coverage Evidence
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          echo "### Native coverage evidence" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $GITHUB_SHA; flag: native" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -s coverage/native/lcov.info ]] && grep -q '^SF:' coverage/native/lcov.info; then
+            echo "Report available: coverage/native/lcov.info" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Native coverage is unavailable; do not treat it as zero or complete evidence."
+            echo "INCOMPLETE: coverage/native/lcov.info unavailable." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Preserve Native Coverage Evidence
+        if: ${{ !cancelled() && hashFiles('coverage/native/lcov.info') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-coverage-evidence
+          path: coverage/native/lcov.info
+          retention-days: 14
+          if-no-files-found: warn
+
       - name: Publish Native Coverage to Codecov
+        if: ${{ !cancelled() && hashFiles('coverage/native/lcov.info') != '' }}
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           disable_search: true

@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     include: ["__tests__/scripts/xstate-diff/**/*.test.ts"],
     coverage: {
+      reportOnFailure: true,
       include: ["scripts/xstate-diff/**/*.ts"],
       exclude: ["scripts/xstate-diff/xstateDiff.cli.ts"],
       reporter: ["text", "json-summary", "lcov"],
