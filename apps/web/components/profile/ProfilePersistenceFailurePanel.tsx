@@ -13,6 +13,7 @@ import {
 export type ProfilePersistenceFailurePanelProps = Readonly<{
   exportablePlayerData: MapachessPlayerData | null
   exporting?: boolean
+  retrying?: boolean
   failure: ProfilePersistenceFailure
   onExportPlayerData: () => void
   onExportUnreadable: (() => void) | null
@@ -22,6 +23,7 @@ export type ProfilePersistenceFailurePanelProps = Readonly<{
 export default function ProfilePersistenceFailurePanel({
   exportablePlayerData,
   exporting = false,
+  retrying = false,
   failure,
   onExportPlayerData,
   onExportUnreadable,
@@ -44,7 +46,13 @@ export default function ProfilePersistenceFailurePanel({
           frozen until Retry succeeds.
         </MapachessNotice>
         <div className="mt-6 flex flex-wrap gap-3">
-          <MapachessButton autoFocus onClick={onRetry} type="button">
+          <MapachessButton
+            aria-busy={retrying}
+            autoFocus
+            busyLabel="Retrying save…"
+            onClick={onRetry}
+            type="button"
+          >
             Retry Save
           </MapachessButton>
           {exportablePlayerData === null ? null : (
