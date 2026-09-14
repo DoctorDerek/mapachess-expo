@@ -70,6 +70,15 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   )
   const settingsButton = useRef<HTMLButtonElement>(null)
   const [exportFailed, setExportFailed] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const exportOperation = useRef<AbortController | null>(null)
+  useEffect(
+    () => () => {
+      exportOperation.current?.abort()
+      exportOperation.current = null
+    },
+    [],
+  )
   const currentPlayerData = selectCurrentPlayerData(snapshot)
   const pendingPlayerData = selectPendingPlayerData(snapshot)
   const exportablePlayerData = pendingPlayerData ?? currentPlayerData
@@ -101,16 +110,26 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   }
 
   const exportPlayerData = async (): Promise<void> => {
-    if (exportablePlayerData === null) return
+    if (exportablePlayerData === null || exportOperation.current !== null)
+      return
+    const operation = new AbortController()
+    exportOperation.current = operation
+    setExporting(true)
     try {
       const rawBackup = await createWebPlayerDataBackup(
         exportablePlayerData,
         globalThis.crypto.subtle,
       )
+      if (operation.signal.aborted) return
       downloadTextFile(rawBackup, MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME)
       setExportFailed(false)
     } catch {
-      setExportFailed(true)
+      if (!operation.signal.aborted) setExportFailed(true)
+    } finally {
+      if (exportOperation.current === operation) {
+        exportOperation.current = null
+        setExporting(false)
+      }
     }
   }
 
@@ -192,6 +211,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const persistenceFailurePanel =
     snapshot.matches("persistenceFailure") && persistenceFailure !== null ? (
       <ProfilePersistenceFailurePanel
+        exporting={exporting}
         exportablePlayerData={exportablePlayerData}
         failure={persistenceFailure}
         onExportPlayerData={() => void exportPlayerData()}
@@ -210,6 +230,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 
   if (playableProfile) {
     const settingsProps = {
+      exporting,
       activityMessage: profileActivityMessage,
       importIssue,
       onAutoHintModeChanged: (autoHintMode: AutoHintMode): void => {

@@ -4,10 +4,15 @@ import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
-import { persistenceFailureMessage, ProfileCard } from "./ProfileFoundation"
+import {
+  persistenceFailureMessage,
+  PREPARING_BACKUP_LABEL,
+  ProfileCard,
+} from "./ProfileFoundation"
 
 export type ProfilePersistenceFailurePanelProps = Readonly<{
   exportablePlayerData: MapachessPlayerData | null
+  exporting?: boolean
   failure: ProfilePersistenceFailure
   onExportPlayerData: () => void
   onExportUnreadable: (() => void) | null
@@ -16,6 +21,7 @@ export type ProfilePersistenceFailurePanelProps = Readonly<{
 
 export default function ProfilePersistenceFailurePanel({
   exportablePlayerData,
+  exporting = false,
   failure,
   onExportPlayerData,
   onExportUnreadable,
@@ -43,6 +49,8 @@ export default function ProfilePersistenceFailurePanel({
           </MapachessButton>
           {exportablePlayerData === null ? null : (
             <MapachessButton
+              aria-busy={exporting}
+              busyLabel={PREPARING_BACKUP_LABEL}
               variant="secondary"
               onClick={onExportPlayerData}
               type="button"

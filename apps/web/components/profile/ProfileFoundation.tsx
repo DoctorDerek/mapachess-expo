@@ -1,6 +1,12 @@
 "use client"
 
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react"
 import { MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS } from "@mapachess/profile/portable-backup"
 import type {
   ProfileImportIssue,
@@ -12,6 +18,7 @@ import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
+export const PREPARING_BACKUP_LABEL = "Preparing backup…"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -80,6 +87,15 @@ export function ImportBackupButton({
   onBackupRead,
 }: ImportBackupButtonProps) {
   const fileInput = useRef<HTMLInputElement>(null)
+  const readOperation = useRef<AbortController | null>(null)
+  const [reading, setReading] = useState(false)
+  useEffect(
+    () => () => {
+      readOperation.current?.abort()
+      readOperation.current = null
+    },
+    [],
+  )
   const [fileIssue, setFileIssue] = useState<"read" | "too-large" | null>(null)
 
   const readSelectedBackup = async (
@@ -88,34 +104,49 @@ export function ImportBackupButton({
     const input = event.currentTarget
     const file = input.files?.[0]
     input.value = ""
+    if (disabled || readOperation.current !== null) return
     if (file === undefined) return
     if (file.size > MAX_PORTABLE_BACKUP_UTF8_BYTES) {
       setFileIssue("too-large")
       return
     }
 
+    const operation = new AbortController()
+    readOperation.current = operation
+    setReading(true)
     try {
       const rawBackup = await file.text()
+      if (operation.signal.aborted) return
       setFileIssue(null)
       onBackupRead(rawBackup)
     } catch {
-      setFileIssue("read")
+      if (!operation.signal.aborted) setFileIssue("read")
+    } finally {
+      if (readOperation.current === operation) {
+        readOperation.current = null
+        setReading(false)
+      }
     }
   }
 
   return (
     <div>
       <MapachessButton
+        aria-busy={reading}
+        busyLabel="Reading backup…"
         variant="secondary"
         disabled={disabled}
-        onClick={() => fileInput.current?.click()}
+        onClick={() => {
+          if (!disabled && readOperation.current === null)
+            fileInput.current?.click()
+        }}
         type="button"
       >
         Import Backup
       </MapachessButton>
       <input
         accept=".json,application/json"
-        disabled={disabled}
+        disabled={disabled || reading}
         hidden
         onChange={(event) => void readSelectedBackup(event)}
         ref={fileInput}
