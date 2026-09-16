@@ -3,6 +3,11 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useState, type ReactNode, type Ref } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
+import {
+  selectIsPersistingMutation,
+  selectMatchConclusion,
+  selectPersistenceFailure,
+} from "@mapachess/match/match-machine"
 import createMatchSetupForMode, {
   MATCH_SETUP_COPY,
 } from "@mapachess/match/match-setup"
@@ -29,6 +34,7 @@ import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import MatchModeMenu from "./MatchModeMenu"
+import StoryMatchResult from "./StoryMatchResult"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
 
@@ -166,6 +172,8 @@ function MatchSessionExperience({
 }: WebGameProps & Readonly<{ actor: WebMatchSessionActor }>) {
   const snapshot = useSelector(actor, (current) => current)
   const profileSnapshot = useSelector(profileActor, (current) => current)
+  const savedPlayerData = selectCurrentPlayerData(profileSnapshot)
+  const savedMatch = savedPlayerData?.activeMatch ?? null
   const playerData =
     selectPendingPlayerData(profileSnapshot) ??
     selectCurrentPlayerData(profileSnapshot)
@@ -179,7 +187,8 @@ function MatchSessionExperience({
       ? requestedSetup.variant
       : requestedSetup.challengeSetup.variant
   const initialSetup =
-    requestedSetup.mode === "challenge"
+    requestedSetup.mode === "challenge" ||
+    requestedSetup.opponentId !== undefined
       ? requestedSetup
       : createMatchSetupForMode(
           { mode: requestedSetup.mode, variant },
@@ -292,6 +301,35 @@ function MatchSessionExperience({
           mode={session.match.mode}
           playerEloAtStart={session.match.playerEloAtStart}
           runtime={session.runtime}
+          result={(matchBusy) =>
+            savedPlayerData !== null &&
+            savedMatch !== null &&
+            savedMatch.matchId === session.match.matchId ? (
+              <StoryMatchResult
+                match={savedMatch}
+                progress={savedPlayerData.storyProgress}
+                disabled={
+                  matchBusy || !profileSnapshot.matches("ready") || settingsOpen
+                }
+                opening={snapshot.matches("returningToMenu")}
+                onSetupRequested={(setup) => {
+                  const matchSnapshot = session.actor.getSnapshot()
+                  if (
+                    !profileActor.getSnapshot().matches("ready") ||
+                    selectIsPersistingMutation(matchSnapshot) ||
+                    selectPersistenceFailure(matchSnapshot) !== null ||
+                    selectMatchConclusion(matchSnapshot) === null ||
+                    settingsOpen
+                  )
+                    return
+                  actor.send({
+                    type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
+                    setup,
+                  })
+                }}
+              />
+            ) : null
+          }
         />
       ) : snapshot.matches("failed") && failure !== null ? (
         <section

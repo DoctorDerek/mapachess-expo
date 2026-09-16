@@ -565,6 +565,39 @@ test("restarts with a fresh side and returns through the Story menu", async ({
   await diagnostics.assertClean(OWNED_WORKER_COUNT * 3)
 })
 
+test("opens replay setup from a saved Story result without starting another match", async ({
+  page,
+}) => {
+  await installDeterministicCryptography(page, {
+    digestDelayMilliseconds: 0,
+    matchWordSequence: [WHITE_MATCH_WORDS],
+    positionSeed: WHITE_MATCH_SEED,
+  })
+  await page.goto("/")
+  await page
+    .getByRole("button", { name: "Standard Story", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Start match", exact: true }).click()
+  const before = await readCurrentBrowserPlayerData(page)
+  await page.getByRole("button", { name: "Resign", exact: true }).click()
+  const result = page.getByRole("region", { name: "Saved Story result" })
+  await expect(result).toContainText("No new medal")
+  await expect(page.getByRole("grid", { name: /^Chessboard,/ })).toBeVisible()
+  const replay = result.getByRole("button", { name: "Replay opponent" })
+  await expect(replay).toBeEnabled()
+  await replay.click()
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Standard Story" }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Start match", exact: true }),
+  ).toBeEnabled()
+  const after = await readCurrentBrowserPlayerData(page)
+  expect(after.activeMatch).toBeNull()
+  expect(after.settings.autoHintMode).toBe(before.settings.autoHintMode)
+  expect(after.storyProgress).toEqual(before.storyProgress)
+})
+
 test("persists an accepted Chicken draw across reload", async ({ page }) => {
   await page.setViewportSize({ height: 800, width: 1_280 })
   await installDeterministicCryptography(page, {
