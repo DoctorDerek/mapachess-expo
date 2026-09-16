@@ -1,5 +1,6 @@
 import {
   PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+  STANDALONE_ANIMAL_SCALE,
   type SpriteAnimationDefinition,
   type SpriteAssetManifest,
   type SpriteFrameGeometry,
@@ -19,6 +20,7 @@ type StoryAnimalSpriteSource<AnimationId extends string> = Readonly<{
   relativeDirectory: string
   filePrefix: string
   frameSize: number
+  humanCharacter?: true
   clips: Readonly<Record<AnimationId, SpriteClip>>
 }> &
   (
@@ -76,6 +78,9 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
   return Object.freeze({
     animations: Object.freeze(animations),
     referenceGeometry,
+    ...(source.humanCharacter
+      ? {}
+      : { standaloneScale: STANDALONE_ANIMAL_SCALE }),
     sourceFacing: "right",
     reactionPlans,
   })

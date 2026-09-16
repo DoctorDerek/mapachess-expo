@@ -37,7 +37,7 @@ export default function ChallengeDifficultyChoices({
             : `${selectedElo} Elo`}{" "}
           · Change difficulty
         </summary>
-        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-3">
           {targets.map((target) => {
             const record = history.difficulties.find(
               ({ targetElo }) => targetElo === target,
@@ -50,7 +50,7 @@ export default function ChallengeDifficultyChoices({
             return (
               <label
                 key={target}
-                className="group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid cursor-pointer grid-rows-[auto_5rem] gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60"
+                className="group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid cursor-pointer grid-rows-[auto_6rem] gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60"
               >
                 <input
                   aria-describedby={explanationId}

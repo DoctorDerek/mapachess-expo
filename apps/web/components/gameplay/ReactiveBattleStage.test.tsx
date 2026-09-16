@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it, vi } from "vitest"
 import { createActor } from "xstate"
 import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationPhase } from "@mapachess/match-presentation/match-reaction"
-import { matchSpriteReactionSlot } from "@mapachess/match-presentation/presentation-asset-manifest"
+import resolveSpritePresentation from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
 import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
@@ -90,15 +90,30 @@ describe("Reactive Battle Stage web presentation", () => {
         if (presentation.kind !== "sprite")
           throw new Error("Licensed sprite expected")
         const scales = battleSpriteAnchorStyle(presentation, presentation)
+        const expectedScale =
+          opponentId === "ninja-stockfish" ||
+          opponentId === "war-hero-stockfish"
+            ? undefined
+            : 3
+        if (expectedScale !== undefined) {
+          expect(scales["--sprite-mobile-scale"]).toBe(expectedScale)
+          expect(scales["--sprite-desktop-scale"]).toBe(expectedScale)
+        }
         for (const { animation } of presentation.steps) {
           const topExtent =
             animation.geometry.bottomY - animation.geometry.visibleY
+          expect(topExtent).toBeLessThanOrEqual(
+            presentation.layout.clearance.above,
+          )
           expect(
-            topExtent * scales["--sprite-mobile-scale"],
-          ).toBeLessThanOrEqual(96)
+            animation.geometry.bottomCenterX - animation.geometry.visibleX,
+          ).toBeLessThanOrEqual(presentation.layout.clearance.horizontalRadius)
           expect(
-            topExtent * scales["--sprite-desktop-scale"],
-          ).toBeLessThanOrEqual(128)
+            animation.geometry.visibleX +
+              animation.geometry.visibleWidth -
+              animation.geometry.bottomCenterX,
+          ).toBeLessThanOrEqual(presentation.layout.clearance.horizontalRadius)
+          expect(animation.frameDurationMilliseconds).toBe(100)
           expect(
             animation.geometry.visibleY + animation.geometry.visibleHeight,
           ).toBeLessThanOrEqual(animation.geometry.bottomY)
@@ -172,7 +187,7 @@ describe("Reactive Battle Stage web presentation", () => {
       const { default: resolveWithoutAssets } =
         await import("../../lib/presentation/webOpponentPresentation")
       for (const { id: opponentId } of STOCKFISH_OPPONENTS)
-        expect(resolveWithoutAssets(opponentId)).toEqual({
+        expect(resolveWithoutAssets(opponentId)).toMatchObject({
           kind: "authored-fallback",
           reactionSlot: "idle",
         })
@@ -277,12 +292,11 @@ describe("Reactive Battle Stage web presentation", () => {
         createElement(ReactiveBattleStage, {
           onParticipantAnimationCompleted: vi.fn(),
           opponentName: stockfishOpponent("bunny-stockfish").displayName,
-          opponentPresentation: {
-            kind: "authored-fallback",
-            reactionSlot: matchSpriteReactionSlot(
-              phase?.opponent ?? { family: "idle" },
-            ),
-          },
+          opponentPresentation: resolveSpritePresentation(
+            STORY_ANIMAL_SPRITES["bunny-stockfish"],
+            phase?.opponent ?? { family: "idle" },
+            [],
+          ),
           presentationSnapshot: actor.getSnapshot(),
         }),
       )

@@ -246,6 +246,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   ninja: {
+    humanCharacter: true,
     sourceAnimalId: "lilmaskedninja",
     relativeDirectory: "battle/ninja",
     filePrefix: "lilmaskedninja",
@@ -271,6 +272,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   "war-hero": {
+    humanCharacter: true,
     sourceAnimalId: "lilwarhero_knife",
     relativeDirectory: "battle/war-hero",
     filePrefix: "lilwarhero_knife",
