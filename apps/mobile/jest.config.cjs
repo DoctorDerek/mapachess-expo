@@ -26,5 +26,8 @@ module.exports = {
     "<rootDir>/lib/profile/**/*.ts",
   ],
   coverageDirectory: "<rootDir>/../../coverage/native",
-  coverageReporters: ["lcov", "text"],
+  coverageReporters: [
+    ["lcov", { projectRoot: path.resolve(mobilePackageRoot, "../..") }],
+    "text",
+  ],
 }

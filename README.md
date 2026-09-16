@@ -86,8 +86,6 @@ corepack pnpm format:check
 corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm test:coverage
-corepack pnpm test:xstate-diff
-corepack pnpm test:lighthouse
 corepack pnpm build
 corepack pnpm test:e2e
 ```
