@@ -32,8 +32,12 @@ describe("Challenge animal portrait asset contract", () => {
       )
       expect(markup.match(/rel="preload"/g)).toHaveLength(1)
       expect(markup).toContain(animation.sourceId)
-      expect(geometry.visibleWidth * 2).toBeLessThanOrEqual(100)
-      expect((geometry.bottomY - geometry.visibleY) * 2).toBeLessThanOrEqual(76)
+      const scale = presentation.layout.standaloneScale ?? 2
+      expect(geometry.visibleWidth * scale).toBeLessThanOrEqual(116)
+      expect(
+        (geometry.bottomY - geometry.visibleY) * scale,
+      ).toBeLessThanOrEqual(92)
+      expect(markup).toContain(`--sprite-scale:${scale}`)
       expect(markup).not.toContain("Loading")
     },
   )

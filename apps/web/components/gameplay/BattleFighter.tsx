@@ -226,17 +226,17 @@ export default function BattleFighter({
     <div className="relative z-2 grid min-w-0 justify-items-center">
       <div
         aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
-        className={`relative flex h-24 w-full items-end justify-center [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:h-32 xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-direction:1]" : "[--battle-direction:-1]"}`}
+        className={`relative flex h-[max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))] w-full items-end justify-center pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-anchor:0%] [--battle-direction:1]" : "[--battle-anchor:100%] [--battle-direction:-1]"}`}
         role="img"
         style={battleSpriteAnchorStyle(presentation, opposingPresentation)}
       >
         <div
           ref={travelerRef}
-          className="relative h-0 w-full translate-x-[calc(var(--battle-direction)*(var(--battle-advance)*var(--battle-contact-distance)_-_var(--battle-recoil)*min(10px,var(--battle-contact-distance)/4)))] [--battle-advance:0] [--battle-contact-distance:max(0px,calc(100%_+_var(--battle-gap)_-_(var(--sprite-visible-width)*var(--sprite-scale)_+_var(--opponent-width))/2))] [--battle-recoil:0]"
+          className="relative h-0 w-full translate-x-[calc(var(--battle-direction)*(var(--battle-advance)*var(--battle-contact-distance)_-_var(--battle-recoil)*min(var(--battle-recoil-limit),var(--battle-contact-distance)/4)))] [--battle-advance:0] [--battle-contact-distance:max(0px,calc(200%_+_var(--battle-gap)_-_(var(--sprite-visible-width)*var(--sprite-scale)_+_var(--opponent-width))/2))] [--battle-recoil:0]"
         >
           <span
             aria-hidden="true"
-            className={`relative left-1/2 block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+            className={`relative left-(--battle-anchor) block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
           >
             <span
               ref={spriteRef}
@@ -247,7 +247,7 @@ export default function BattleFighter({
           {presentation.kind === "authored-fallback" || imageUnavailable ? (
             <span
               aria-hidden="true"
-              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-1/2 grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
+              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-(--battle-anchor) grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
             >
               {displayName.slice(0, 1)}
             </span>

@@ -15,6 +15,30 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it.each(Object.entries(STORY_ANIMAL_SPRITES))(
+    "%s preserves full-repertoire clearance across reactions and asset availability",
+    (id, manifest) => {
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const idle = resolveSpritePresentation(
+        manifest,
+        { family: "idle" },
+        sources,
+      )
+      expect(idle.layout.standaloneScale).toBe(
+        id === "ninja-stockfish" || id === "war-hero-stockfish" ? undefined : 3,
+      )
+      for (const reaction of REACTIONS) {
+        expect(
+          resolveSpritePresentation(manifest, reaction, sources).layout,
+        ).toEqual(idle.layout)
+        expect(
+          resolveSpritePresentation(manifest, reaction, []).layout,
+        ).toEqual(idle.layout)
+      }
+    },
+  )
   it("composes the remaining roster without duplicating Chicken or Mapachito", () => {
     expect(Object.keys(REMAINING_STORY_ANIMAL_SPRITES)).toHaveLength(13)
     expect(Object.keys(STORY_ANIMAL_SPRITES)).toHaveLength(21)

@@ -2,6 +2,7 @@ import { COACH_PORTRAITS } from "@mapachess/match-presentation/coach-portrait"
 import type { CoachPortraitLabel } from "@mapachess/match-presentation/coach-portrait"
 import {
   PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+  STANDALONE_ANIMAL_SCALE,
   type SpriteAnimationDefinition,
   type SpriteAssetManifest,
   type SpriteFrameGeometry,
@@ -190,6 +191,7 @@ export type ChickenSpriteSourceId =
   (typeof CHICKEN_SPRITE_SOURCES)[keyof typeof CHICKEN_SPRITE_SOURCES]
 
 export const CHICKEN_SPRITE_MANIFEST = {
+  standaloneScale: STANDALONE_ANIMAL_SCALE,
   animations: chickenAnimations,
   referenceGeometry: CHICKEN_REFERENCE_GEOMETRY,
   sourceFacing: "right",
@@ -376,6 +378,7 @@ export type MapachitoSpriteSourceId =
   (typeof MAPACHITO_SPRITE_SOURCES)[keyof typeof MAPACHITO_SPRITE_SOURCES]
 
 export const MAPACHITO_SPRITE_MANIFEST = {
+  standaloneScale: STANDALONE_ANIMAL_SCALE,
   animations: mapachitoAnimations,
   referenceGeometry: MAPACHITO_REFERENCE_GEOMETRY,
   sourceFacing: "right",

@@ -62,25 +62,26 @@ describe("battle frame and clip contracts", () => {
 
     expect(battleSpriteAnchorStyle(player, opponent)).toEqual({
       "--sprite-mobile-scale": 3,
-      "--sprite-desktop-scale": 4,
+      "--sprite-desktop-scale": 3,
       "--sprite-visible-width": "29px",
       "--opponent-mobile-width": "calc(17px * 3)",
-      "--opponent-desktop-width": "calc(17px * 4)",
+      "--opponent-desktop-width": "calc(17px * 3)",
     })
     expect(battleSpriteAnchorStyle(opponent, player)).toEqual({
       "--sprite-mobile-scale": 3,
-      "--sprite-desktop-scale": 4,
+      "--sprite-desktop-scale": 3,
       "--sprite-visible-width": "17px",
       "--opponent-mobile-width": "calc(29px * 3)",
-      "--opponent-desktop-width": "calc(29px * 4)",
+      "--opponent-desktop-width": "calc(29px * 3)",
     })
   })
 
   it("leaves public-clone fallback size under CSS ownership", () => {
-    const fallback = {
-      kind: "authored-fallback",
-      reactionSlot: "idle",
-    } as const
+    const fallback = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "idle" },
+      [],
+    )
 
     expect(battleSpriteAnchorStyle(fallback, fallback)).toEqual({
       "--sprite-mobile-scale": 1,
@@ -97,10 +98,11 @@ describe("battle frame and clip contracts", () => {
       { family: "idle" },
       Object.values(CHICKEN_SPRITE_SOURCES),
     )
-    const fallback = {
-      kind: "authored-fallback",
-      reactionSlot: "idle",
-    } as const
+    const fallback = resolveSpritePresentation(
+      CHICKEN_SPRITE_MANIFEST,
+      { family: "idle" },
+      [],
+    )
 
     expect(battleSpriteAnchorStyle(sprite, fallback)).toMatchObject({
       "--sprite-visible-width": "17px",

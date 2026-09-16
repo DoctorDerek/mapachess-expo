@@ -19,19 +19,80 @@ const responsiveSpriteGeometry = (
       mobileScale: 1,
       visibleWidth: "var(--battle-fallback-size)",
     }
-  const { referenceGeometry } = presentation
+  const { referenceGeometry, standaloneScale } = presentation.layout
   return {
-    mobileScale: createSpritePresentationGeometry(
-      referenceGeometry,
-      referenceGeometry,
-      MOBILE_VISIBLE_HEIGHT_PIXELS,
-    ).integerScale,
-    desktopScale: createSpritePresentationGeometry(
-      referenceGeometry,
-      referenceGeometry,
-      DESKTOP_VISIBLE_HEIGHT_PIXELS,
-    ).integerScale,
+    mobileScale:
+      standaloneScale ??
+      createSpritePresentationGeometry(
+        referenceGeometry,
+        referenceGeometry,
+        MOBILE_VISIBLE_HEIGHT_PIXELS,
+      ).integerScale,
+    desktopScale:
+      standaloneScale ??
+      createSpritePresentationGeometry(
+        referenceGeometry,
+        referenceGeometry,
+        DESKTOP_VISIBLE_HEIGHT_PIXELS,
+      ).integerScale,
     visibleWidth: `${referenceGeometry.visibleWidth}px`,
+  }
+}
+
+export const battleStageStyle = (
+  player: ResolvedSpritePresentation<string, string>,
+  opponent: ResolvedSpritePresentation<string, string>,
+): CSSProperties &
+  Readonly<
+    Record<
+      | "--battle-mobile-above"
+      | "--battle-desktop-above"
+      | "--battle-mobile-below"
+      | "--battle-desktop-below"
+      | "--battle-mobile-player-radius"
+      | "--battle-desktop-player-radius"
+      | "--battle-mobile-opponent-radius"
+      | "--battle-desktop-opponent-radius",
+      string
+    >
+  > => {
+  const bounds = [player, opponent].map((presentation) => {
+    const geometry = responsiveSpriteGeometry(presentation)
+    return {
+      geometry,
+      clearance: presentation.layout.clearance,
+      fallback: presentation.kind === "authored-fallback",
+    }
+  })
+  const extent = (
+    axis: "above" | "below",
+    scale: "mobileScale" | "desktopScale",
+  ) =>
+    `max(${bounds
+      .map(({ geometry, clearance, fallback }) =>
+        fallback
+          ? axis === "above"
+            ? "var(--battle-fallback-size)"
+            : "0px"
+          : `${clearance[axis] * geometry[scale]}px`,
+      )
+      .join(", ")})`
+  const radius = (
+    presentation: typeof player,
+    scale: "mobileScale" | "desktopScale",
+  ) =>
+    presentation.kind === "authored-fallback"
+      ? "calc(var(--battle-fallback-size) / 2)"
+      : `${presentation.layout.clearance.horizontalRadius * responsiveSpriteGeometry(presentation)[scale]}px`
+  return {
+    "--battle-mobile-above": extent("above", "mobileScale"),
+    "--battle-desktop-above": extent("above", "desktopScale"),
+    "--battle-mobile-below": extent("below", "mobileScale"),
+    "--battle-desktop-below": extent("below", "desktopScale"),
+    "--battle-mobile-player-radius": radius(player, "mobileScale"),
+    "--battle-desktop-player-radius": radius(player, "desktopScale"),
+    "--battle-mobile-opponent-radius": radius(opponent, "mobileScale"),
+    "--battle-desktop-opponent-radius": radius(opponent, "desktopScale"),
   }
 }
 

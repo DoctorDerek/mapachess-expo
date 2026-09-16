@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import type { CSSProperties } from "react"
 import { preload } from "react-dom"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import {
@@ -79,10 +80,14 @@ export default function ChallengeAnimalPortrait({
     }
   }, [active, images, step])
 
+  const portraitStyle: CSSProperties & { "--sprite-scale": number } = {
+    "--sprite-scale": presentation.layout.standaloneScale ?? 2,
+  }
   return (
     <span
       aria-hidden="true"
-      className="relative block h-20 w-full overflow-hidden [--sprite-scale:2] motion-safe:transition-transform motion-safe:group-hover:-translate-y-1 motion-safe:group-has-focus-visible:-translate-y-1"
+      className="relative block h-24 w-full motion-safe:transition-transform motion-safe:group-hover:-translate-y-1 motion-safe:group-has-focus-visible:-translate-y-1"
+      style={portraitStyle}
     >
       {step === null || unavailable ? (
         <span className="absolute inset-0 grid place-items-center text-center text-xs font-bold">

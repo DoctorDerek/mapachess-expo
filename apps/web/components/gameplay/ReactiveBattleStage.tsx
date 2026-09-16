@@ -14,6 +14,7 @@ import resolveSpritePresentation, {
   type ResolvedSpritePresentation,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import { battleStageStyle } from "../../lib/presentation/battleSpriteFrames"
 import {
   AVAILABLE_MAPACHITO_SPRITE_SOURCES,
   MAPACHITO_SPRITE_MANIFEST,
@@ -105,7 +106,10 @@ export default function ReactiveBattleStage({
         {stageAnnouncement(currentPhase, opponentName)}
       </p>
 
-      <div className="bg-mapachito-blue before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 gap-x-(--battle-gap) overflow-hidden px-4 pb-2 [--battle-fallback-size:--spacing(18)] [--battle-gap:--spacing(8)] before:absolute before:inset-x-0 before:bottom-0 before:h-2 forced-colors:before:hidden">
+      <div
+        className="bg-mapachito-blue before:bg-mapachito-deep-gold relative isolate grid grid-cols-2 gap-x-(--battle-gap) overflow-hidden pr-[calc(var(--battle-opponent-radius)+var(--battle-recoil-limit))] pb-2 pl-[calc(var(--battle-player-radius)+var(--battle-recoil-limit))] [--battle-above:var(--battle-mobile-above)] [--battle-below:var(--battle-mobile-below)] [--battle-fallback-size:--spacing(18)] [--battle-gap:--spacing(8)] [--battle-opponent-radius:var(--battle-mobile-opponent-radius)] [--battle-player-radius:var(--battle-mobile-player-radius)] [--battle-recoil-limit:10px] before:absolute before:inset-x-0 before:bottom-0 before:h-2 xl:[--battle-above:var(--battle-desktop-above)] xl:[--battle-below:var(--battle-desktop-below)] xl:[--battle-opponent-radius:var(--battle-desktop-opponent-radius)] xl:[--battle-player-radius:var(--battle-desktop-player-radius)] forced-colors:before:hidden"
+        style={battleStageStyle(playerPresentation, opponentPresentation)}
+      >
         <BattleFighter
           beat={beat}
           displayName="Mapachito"

@@ -2,6 +2,19 @@ import type { MatchPresentationBeat } from "./matchPresentationMachine.js"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 
 export const PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS = 100
+export const STANDALONE_ANIMAL_SCALE = 3
+
+export type SpriteClearance = Readonly<{
+  above: number
+  below: number
+  horizontalRadius: number
+}>
+
+export type SpriteLayout = Readonly<{
+  referenceGeometry: SpriteFrameGeometry
+  clearance: SpriteClearance
+  standaloneScale?: number
+}>
 
 export const MATCH_SPRITE_REACTION_SLOTS = [
   "idle",
@@ -51,6 +64,7 @@ export type SpriteAssetManifest<
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   referenceGeometry: SpriteFrameGeometry
+  standaloneScale?: number
   sourceFacing: SpriteFacing
   reactionPlans: Readonly<
     Record<
@@ -76,21 +90,23 @@ export type ResolvedSpriteStep<
 export type ResolvedSpritePresentation<
   AnimationId extends string,
   SourceId extends string,
-> =
-  | Readonly<{
-      kind: "sprite"
-      reactionSlot: MatchSpriteReactionSlot
-      referenceGeometry: SpriteFrameGeometry
-      sourceFacing: SpriteFacing
-      steps: readonly [
-        ResolvedSpriteStep<AnimationId, SourceId>,
-        ...ResolvedSpriteStep<AnimationId, SourceId>[],
-      ]
-    }>
-  | Readonly<{
-      kind: "authored-fallback"
-      reactionSlot: MatchSpriteReactionSlot
-    }>
+> = Readonly<{ layout: SpriteLayout }> &
+  (
+    | Readonly<{
+        kind: "sprite"
+        reactionSlot: MatchSpriteReactionSlot
+        referenceGeometry: SpriteFrameGeometry
+        sourceFacing: SpriteFacing
+        steps: readonly [
+          ResolvedSpriteStep<AnimationId, SourceId>,
+          ...ResolvedSpriteStep<AnimationId, SourceId>[],
+        ]
+      }>
+    | Readonly<{
+        kind: "authored-fallback"
+        reactionSlot: MatchSpriteReactionSlot
+      }>
+  )
 
 export const matchSpriteReactionSlot = (
   reaction: MatchParticipantReaction,
@@ -133,6 +149,37 @@ export default function resolveSpritePresentation<
   availableSourceIds: readonly SourceId[],
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
+  const eligibleGeometry = Object.values(manifest.reactionPlans).flatMap(
+    (steps) =>
+      steps.flatMap(({ animationIds }) =>
+        animationIds.map((id) => manifest.animations[id].geometry),
+      ),
+  )
+  const layout: SpriteLayout = Object.freeze({
+    referenceGeometry: manifest.referenceGeometry,
+    ...(manifest.standaloneScale === undefined
+      ? {}
+      : { standaloneScale: manifest.standaloneScale }),
+    clearance: Object.freeze({
+      above: Math.max(
+        0,
+        ...eligibleGeometry.map((g) => g.bottomY - g.visibleY),
+      ),
+      below: Math.max(
+        0,
+        ...eligibleGeometry.map(
+          (g) => g.visibleY + g.visibleHeight - g.bottomY,
+        ),
+      ),
+      horizontalRadius: Math.max(
+        0,
+        ...eligibleGeometry.flatMap((g) => [
+          g.bottomCenterX - g.visibleX,
+          g.visibleX + g.visibleWidth - g.bottomCenterX,
+        ]),
+      ),
+    }),
+  })
   const idleStep = manifest.reactionPlans.idle
     .map((step) => resolveStep(manifest, step, availableSourceIds))
     .find((step) => step !== null)
@@ -167,9 +214,10 @@ export default function resolveSpritePresentation<
   const [firstStep, ...remainingSteps] = resolvedSteps
 
   return firstStep === undefined
-    ? Object.freeze({ kind: "authored-fallback", reactionSlot })
+    ? Object.freeze({ kind: "authored-fallback", reactionSlot, layout })
     : Object.freeze({
         kind: "sprite",
+        layout,
         reactionSlot,
         referenceGeometry: manifest.referenceGeometry,
         sourceFacing: manifest.sourceFacing,

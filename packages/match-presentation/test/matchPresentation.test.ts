@@ -307,7 +307,7 @@ describe("match presentation contracts", () => {
     })
     expect(
       resolveSpritePresentation(SPRITE_MANIFEST, { family: "idle" }, []),
-    ).toEqual({ kind: "authored-fallback", reactionSlot: "idle" })
+    ).toMatchObject({ kind: "authored-fallback", reactionSlot: "idle" })
     expect(resolveCoachPortrait({ family: "victory" }, ["neutral"])).toEqual({
       kind: "portrait",
       label: "neutral",
