@@ -27,6 +27,8 @@ test("retains save recovery while retrying and restores settings after success",
   const button = await retry.elementHandle()
   if (button === null) throw new Error("Retry button must exist")
   await retry.scrollIntoViewIfNeeded()
+  await page.mouse.move(0, 0)
+  await expect(retry).toHaveCSS("translate", "none")
   const before = await retry.boundingBox()
   await page.evaluate(() => {
     const digest = crypto.subtle.digest.bind(crypto.subtle)
