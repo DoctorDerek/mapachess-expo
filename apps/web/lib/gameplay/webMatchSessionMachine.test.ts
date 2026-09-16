@@ -114,6 +114,34 @@ const operations = (
 })
 
 describe("web match session machine", () => {
+  it("opens selected Story setup only after closing the saved session, without starting a match", async () => {
+    const menu = Promise.withResolvers<void>()
+    const ops = operations({ returnToMenu: vi.fn(() => menu.promise) })
+    const actor = createActor(webMatchSessionMachine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    const setup = {
+      mode: "story",
+      variant: "chess960",
+      opponentId: "bunny-stockfish",
+    } as const
+    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({
+      type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
+      setup: { mode: "story", variant: "standard" },
+    })
+    expect(actor.getSnapshot().matches("returningToMenu")).toBe(true)
+    expect(actor.getSnapshot().context.requestedSetup).toEqual(setup)
+    expect(ops.returnToMenu).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    menu.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches({ menu: "setup" }))
+    expect(actor.getSnapshot().context.requestedSetup).toEqual(setup)
+    expect(actor.getSnapshot().context.session).toBeNull()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it("ignores repeated start, restart and menu requests while their operation is pending", async () => {
     const opened = createSession("00000001000000020000000300000004")
     const start = Promise.withResolvers<WebMatchSession>()

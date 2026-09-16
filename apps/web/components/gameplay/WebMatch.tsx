@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useMemo } from "react"
+import { useMemo, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine, {
@@ -50,6 +50,7 @@ export type WebMatchProps = Readonly<{
   mode: MatchMode
   playerEloAtStart: number
   runtime: WebMatchRuntime
+  result?: (disabled: boolean) => ReactNode
 }>
 
 const matchStatusText = (
@@ -108,6 +109,7 @@ export default function WebMatch({
   mode,
   playerEloAtStart,
   runtime,
+  result,
 }: WebMatchProps) {
   const snapshot = useSelector(actor, (current) => current)
   const evaluationResult = useSelector(
@@ -270,6 +272,10 @@ export default function WebMatch({
               opponent.displayName,
             )}
           </p>
+
+          {matchComplete
+            ? result?.(persisting || persistenceFailure !== null)
+            : null}
 
           {evaluationStage === "failure" ? (
             <MapachessButton

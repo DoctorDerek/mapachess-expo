@@ -253,6 +253,13 @@ const webMatchSessionMachineDefinition = setup({
     },
     active: {
       on: {
+        "WEB_MATCH_SESSION.SETUP_REQUESTED": {
+          actions: {
+            type: "rememberRequestedSetup",
+            params: ({ event }) => ({ setup: event.setup }),
+          },
+          target: "returningToMenu",
+        },
         "WEB_MATCH_SESSION.RESTART_REQUESTED": {
           target: "restartingMatch",
         },
