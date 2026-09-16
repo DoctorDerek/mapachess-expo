@@ -63,9 +63,7 @@ export default function StoryMatchResult({
         </div>
       </div>
       {medal === null ? (
-        <p className="text-sm">
-          Your previous victories and medals are unchanged.
-        </p>
+        <p className="text-sm">Your Story progress is unchanged.</p>
       ) : (
         <p className="text-sm">
           {medal === "gold"
@@ -73,9 +71,9 @@ export default function StoryMatchResult({
             : medal === "silver"
               ? "Piece Hints used · no Move Hints."
               : "Move Hints used."}
-          {best === undefined
+          {best === undefined || best === medal
             ? ""
-            : ` Best retained: ${STORY_PROGRESS_COPY.medals[best]}.`}
+            : ` Your best: ${STORY_PROGRESS_COPY.medals[best]}.`}
         </p>
       )}
       {medal !== null ? (
@@ -83,7 +81,7 @@ export default function StoryMatchResult({
           {opponent.displayName} is available in both Challenge modes.
           {next === undefined
             ? ` All ${ladder.length} opponents in this Story defeated.`
-            : ` Next undefeated: ${next.opponent.displayName}.`}
+            : ` Up next: ${next.opponent.displayName}.`}
         </p>
       ) : null}
       {medal !== null && next !== undefined ? (
@@ -115,9 +113,7 @@ export default function StoryMatchResult({
       >
         Replay opponent
       </MapachessButton>
-      <p className="text-xs">
-        Opens setup. Your hint preference stays unchanged.
-      </p>
+      <p className="text-xs">Choose your settings before playing again.</p>
     </section>
   )
 }

@@ -34,10 +34,11 @@ const render = (match = win, records = progress) =>
   )
 
 describe("saved Story result presentation", () => {
-  it("shows the earned medal, retained best and next opponent without XP", () => {
+  it("shows the earned medal and next opponent without repeating an equal best", () => {
     const result = render()
     expect(result).toContain("Gold this match")
-    expect(result).toContain("Best retained: Gold")
+    expect(result).not.toContain("Your best:")
+    expect(result).toContain("Up next:")
     expect(result).toContain("Next opponent")
     expect(result).toContain(
       "Chicken Stockfish is available in both Challenge modes",
@@ -47,7 +48,13 @@ describe("saved Story result presentation", () => {
   it("distinguishes a lower replay medal from the retained best", () => {
     const result = render({ ...win, pieceHintsUsed: true, moveHintsUsed: true })
     expect(result).toContain("Bronze this match")
-    expect(result).toContain("Best retained: Gold")
+    expect(result).toContain("Your best: Gold")
+  })
+  it("explains Silver without implying Piece Hints prevent a medal", () => {
+    const result = render({ ...win, pieceHintsUsed: true })
+    expect(result).toContain("Silver this match")
+    expect(result).toContain("Piece Hints used · no Move Hints.")
+    expect(result).toContain("Your best: Gold")
   })
   it("uses the matching variant's ladder", () => {
     const position = parseChess960PositionId(518)
@@ -62,7 +69,7 @@ describe("saved Story result presentation", () => {
       },
       { standard: [], chess960: progress.standard },
     )
-    expect(result).toContain("Best retained: Gold")
+    expect(result).toContain("Gold this match")
     expect(result).toContain("Next opponent")
   })
   it.each([
@@ -71,6 +78,7 @@ describe("saved Story result presentation", () => {
   ] as const)("awards no medal or next opponent for $type", (conclusion) => {
     const result = render({ ...win, conclusion })
     expect(result).toContain("No new medal")
+    expect(result).toContain("Your Story progress is unchanged.")
     expect(result).not.toContain("Next opponent")
     expect(result).toContain("Replay opponent")
   })
