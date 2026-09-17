@@ -77,6 +77,7 @@ describe("Reactive Battle Stage web presentation", () => {
         input: { initialConclusionPhase: null },
       }).start()
       const selectedPlans: string[][] = []
+      const restingPlans: string[][] = []
       for (let iteration = 0; iteration < 3; iteration += 1) {
         actor.send({
           phases: [PLAYER_CAPTURE_PHASE],
@@ -104,6 +105,19 @@ describe("Reactive Battle Stage web presentation", () => {
         }
         expect(actor.getSnapshot().matches("idle")).toBe(true)
         expect(actor.getSnapshot().context.reactionSequence).toBe(sequence)
+        const resting = resolveWebOpponentPresentation(
+          opponentId,
+          { family: "idle" },
+          sequence,
+        )
+        if (resting.kind !== "sprite")
+          throw new Error("Expected licensed sprite")
+        restingPlans.push(resting.steps.map(({ animationId }) => animationId))
+        expect(
+          resting.steps.every(
+            ({ animation }) => animation.frameDurationMilliseconds === 160,
+          ),
+        ).toBe(true)
         actor.send({
           type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
           participant: "player",
@@ -114,6 +128,9 @@ describe("Reactive Battle Stage web presentation", () => {
       }
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
       expect(selectedPlans[2]).toEqual(selectedPlans[0])
+      if (opponentId === "dog-stockfish") {
+        expect(restingPlans).toEqual([["sit"], ["idle_blink"], ["sit"]])
+      }
       actor.stop()
     },
   )

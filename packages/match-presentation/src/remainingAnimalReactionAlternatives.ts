@@ -1,5 +1,6 @@
 const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   axolotl: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -32,6 +33,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   deer: {
+    idle: [[{ animationIds: ["eat"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -48,6 +50,10 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   fox: {
+    idle: [
+      [{ animationIds: ["sit01"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit02"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -60,6 +66,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   wolf: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
