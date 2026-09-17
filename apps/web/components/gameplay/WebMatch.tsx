@@ -126,9 +126,15 @@ export default function WebMatch({
   )
   const opponent = stockfishOpponent(runtime.opponentId)
   const opponentReaction = presentation.snapshot.context.currentPhase?.opponent
+  const reactionSequence = presentation.snapshot.context.reactionSequence
   const opponentPresentation = useMemo(
-    () => resolveWebOpponentPresentation(runtime.opponentId, opponentReaction),
-    [opponentReaction, runtime.opponentId],
+    () =>
+      resolveWebOpponentPresentation(
+        runtime.opponentId,
+        opponentReaction,
+        reactionSequence,
+      ),
+    [opponentReaction, runtime.opponentId, reactionSequence],
   )
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })

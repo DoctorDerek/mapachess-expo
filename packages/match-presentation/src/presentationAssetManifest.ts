@@ -59,6 +59,11 @@ export type SpriteReactionStep<AnimationId extends string> = Readonly<{
   playback: SpritePlaybackMode
 }>
 
+export type SpriteReactionPlan<AnimationId extends string> = readonly [
+  SpriteReactionStep<AnimationId>,
+  ...SpriteReactionStep<AnimationId>[],
+]
+
 export type SpriteAssetManifest<
   AnimationId extends string,
   SourceId extends string,
@@ -69,14 +74,16 @@ export type SpriteAssetManifest<
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
   sourceFacing: SpriteFacing
-  reactionPlans: Readonly<
-    Record<
-      MatchSpriteReactionSlot,
-      readonly [
-        SpriteReactionStep<AnimationId>,
-        ...SpriteReactionStep<AnimationId>[],
-      ]
+  reactionAlternatives?: Readonly<
+    Partial<
+      Record<
+        MatchSpriteReactionSlot,
+        readonly SpriteReactionPlan<AnimationId>[]
+      >
     >
+  >
+  reactionPlans: Readonly<
+    Record<MatchSpriteReactionSlot, SpriteReactionPlan<AnimationId>>
   >
 }>
 
@@ -177,13 +184,16 @@ export default function resolveSpritePresentation<
   manifest: SpriteAssetManifest<AnimationId, SourceId>,
   reaction: MatchParticipantReaction,
   availableSourceIds: readonly SourceId[],
+  reactionSequence = 0,
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
-  const eligibleGeometry = Object.values(manifest.reactionPlans).flatMap(
-    (steps) =>
-      steps.flatMap(({ animationIds }) =>
-        animationIds.map((id) => manifest.animations[id].geometry),
-      ),
+  const eligibleGeometry = [
+    ...Object.values(manifest.reactionPlans),
+    ...Object.values(manifest.reactionAlternatives ?? {}).flat(),
+  ].flatMap((steps) =>
+    steps.flatMap(({ animationIds }) =>
+      animationIds.map((id) => manifest.animations[id].geometry),
+    ),
   )
   const layout: SpriteLayout = Object.freeze({
     referenceGeometry: manifest.referenceGeometry,
@@ -217,7 +227,23 @@ export default function resolveSpritePresentation<
     idleStep === undefined
       ? null
       : Object.freeze({ ...idleStep, playback: "loop" as const })
-  const plan = manifest.reactionPlans[reactionSlot].map((step) => ({
+  const candidates = [
+    manifest.reactionPlans[reactionSlot],
+    ...(manifest.reactionAlternatives?.[reactionSlot] ?? []),
+  ]
+  const selectedIndex = reactionSequence % candidates.length
+  const selectedPlan =
+    [
+      ...candidates.slice(selectedIndex),
+      ...candidates.slice(0, selectedIndex),
+    ].find((candidate) =>
+      candidate.every((step) =>
+        step.animationIds.some((id) =>
+          availableSourceIds.includes(manifest.animations[id].sourceId),
+        ),
+      ),
+    ) ?? manifest.reactionPlans[reactionSlot]
+  const plan = selectedPlan.map((step) => ({
     step,
     resolved: resolveStep(
       manifest,

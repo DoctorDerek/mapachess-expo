@@ -95,11 +95,13 @@ export const resolveWebOpponentAttention = (
 export default function resolveWebOpponentPresentation(
   opponentId: StockfishOpponentId,
   reaction: MatchParticipantReaction = { family: "idle" },
+  reactionSequence = 0,
 ): ResolvedSpritePresentation<string, string> {
   const manifest = opponentManifest(opponentId)
   return resolveSpritePresentation(
     manifest,
     reaction,
     availableSources(manifest),
+    reactionSequence,
   )
 }

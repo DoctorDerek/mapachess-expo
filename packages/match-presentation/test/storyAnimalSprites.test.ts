@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { MatchParticipantReaction } from "../src/matchReaction"
 import resolveSpritePresentation, {
   resolveSpriteAttention,
+  type SpriteAssetManifest,
 } from "../src/presentationAssetManifest"
 import REMAINING_STORY_ANIMAL_SPRITES from "../src/remainingStoryAnimalSprites"
 import STORY_ANIMAL_SPRITES from "../src/storyAnimalSprites"
@@ -17,6 +18,89 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it("selects complete alternatives by reaction identity without reshuffling fallback order", () => {
+    const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
+    const manifest: SpriteAssetManifest<string, string> = {
+      ...dog,
+      reactionAlternatives: {
+        victory: [
+          [
+            {
+              animationIds: ["bark", "idle"],
+              beat: "conclusion",
+              playback: "loop",
+            },
+          ],
+        ],
+      },
+    }
+    const sources = Object.values(dog.animations).map(
+      ({ sourceId }) => sourceId,
+    )
+    const resolve = (sequence: number, available = sources) =>
+      resolveSpritePresentation(
+        manifest,
+        { family: "victory" },
+        available,
+        sequence,
+      )
+    const initial = resolve(0)
+    const alternative = resolve(1)
+    expect(
+      initial.kind === "sprite" &&
+        initial.steps.map(({ animationId }) => animationId),
+    ).toEqual(["jump", "fall", "land", "bark"])
+    expect(
+      alternative.kind === "sprite" &&
+        alternative.steps.map(({ animationId }) => animationId),
+    ).toEqual(["bark"])
+    expect(resolve(1)).toEqual(alternative)
+    expect(resolve(2)).toEqual(initial)
+    expect(alternative.layout).toEqual(initial.layout)
+    const withoutLand = Object.entries(dog.animations)
+      .filter(([id]) => id !== "land")
+      .map(([, animation]) => animation.sourceId)
+    expect(resolve(0, withoutLand)).toEqual(alternative)
+    const withoutBark = Object.entries(dog.animations)
+      .filter(([id]) => id !== "bark")
+      .map(([, animation]) => animation.sourceId)
+    const fallback = resolve(1, withoutBark)
+    expect(
+      fallback.kind === "sprite" &&
+        fallback.steps.map(({ animationId }) => animationId),
+    ).toEqual(["idle"])
+    expect(resolve(1, []).kind).toBe("authored-fallback")
+  })
+
+  it("skips an incomplete compound alternative instead of mixing its phases with the base", () => {
+    const turtle = STORY_ANIMAL_SPRITES["turtle-stockfish"]
+    const manifest: SpriteAssetManifest<string, string> = {
+      ...turtle,
+      reactionAlternatives: {
+        victory: [
+          [
+            { animationIds: ["hide"], beat: "conclusion", playback: "once" },
+            { animationIds: ["unhide"], beat: "conclusion", playback: "once" },
+            { animationIds: ["idle"], beat: "conclusion", playback: "loop" },
+          ],
+        ],
+      },
+    }
+    const sources = Object.entries(turtle.animations)
+      .filter(([id]) => id !== "unhide")
+      .map(([, animation]) => animation.sourceId)
+    const presentation = resolveSpritePresentation(
+      manifest,
+      { family: "victory" },
+      sources,
+      1,
+    )
+    expect(
+      presentation.kind === "sprite" &&
+        presentation.steps.map(({ animationId }) => animationId),
+    ).toEqual(["jump", "fall", "land", "idle_blink"])
+  })
+
   it("resolves optional attention without substituting unavailable or human artwork", () => {
     const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
     const sources = Object.values(dog.animations).map(

@@ -70,6 +70,81 @@ afterAll(() => {
 })
 
 describe("Reactive Battle Stage web presentation", () => {
+  it.each(["chicken-stockfish", "raccoon-stockfish"] as const)(
+    "%s varies whole battle plans while preserving geometry and pacing",
+    (opponentId) => {
+      const reaction = { family: "capture", role: "attacker" } as const
+      const first = resolveWebOpponentPresentation(opponentId, reaction, 0)
+      const next = resolveWebOpponentPresentation(opponentId, reaction, 1)
+      if (first.kind !== "sprite" || next.kind !== "sprite")
+        throw new Error("Licensed sprite expected")
+      expect(first.steps.map(({ animationId }) => animationId)).not.toEqual(
+        next.steps.map(({ animationId }) => animationId),
+      )
+      expect(next.steps.map(({ beat }) => beat)).toEqual([
+        "approach",
+        "strike",
+        "recovery",
+      ])
+      expect(
+        next.steps.every(
+          ({ animation }) => animation.frameDurationMilliseconds === 100,
+        ),
+      ).toBe(true)
+      expect(next.layout).toEqual(first.layout)
+      expect(resolveWebOpponentPresentation(opponentId, reaction, 1)).toEqual(
+        next,
+      )
+      expect(resolveWebOpponentPresentation(opponentId, reaction, 2)).toEqual(
+        first,
+      )
+      const victory = resolveWebOpponentPresentation(
+        opponentId,
+        { family: "victory" },
+        1,
+      )
+      expect(
+        victory.kind === "sprite" &&
+          victory.steps.map(({ playback }) => playback),
+      ).toEqual(["loop"])
+    },
+  )
+
+  it("keeps a selected plan through every canonical battle beat", () => {
+    const actor = createActor(matchPresentationMachine, {
+      input: { initialConclusionPhase: null },
+    }).start()
+    actor.send({
+      phases: [PLAYER_CAPTURE_PHASE],
+      type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+    })
+    const sequence = actor.getSnapshot().context.reactionSequence
+    const chosen = resolveWebOpponentPresentation(
+      "raccoon-stockfish",
+      PLAYER_CAPTURE_PHASE.player,
+      sequence,
+    )
+    for (let beat = 0; beat < 4; beat += 1) {
+      const snapshot = actor.getSnapshot()
+      expect(snapshot.context.reactionSequence).toBe(sequence)
+      expect(
+        resolveWebOpponentPresentation(
+          "raccoon-stockfish",
+          PLAYER_CAPTURE_PHASE.player,
+          snapshot.context.reactionSequence,
+        ),
+      ).toEqual(chosen)
+      for (const participant of snapshot.context.pendingParticipants)
+        actor.send({
+          type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
+          participant,
+          phaseIndex: snapshot.context.phaseIndex,
+          reactionSequence: sequence,
+        })
+    }
+    actor.stop()
+  })
+
   it.each(STOCKFISH_OPPONENTS.map(({ id }) => id))(
     "resolves licensed %s reactions through the existing fighter contract",
     (opponentId) => {
