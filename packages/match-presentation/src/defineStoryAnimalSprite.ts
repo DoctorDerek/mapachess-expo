@@ -22,6 +22,7 @@ type StoryAnimalSpriteSource<AnimationId extends string> = Readonly<{
   filePrefix: string
   frameSize: number
   humanCharacter?: true
+  attentionAnimationId?: NoInfer<AnimationId>
   clips: Readonly<Record<AnimationId, SpriteClip>>
 }> &
   (
@@ -78,6 +79,9 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
   )
   return Object.freeze({
     animations: Object.freeze(animations),
+    ...(source.attentionAnimationId === undefined
+      ? {}
+      : { attentionAnimationId: source.attentionAnimationId }),
     referenceGeometry,
     ...(source.humanCharacter
       ? {}

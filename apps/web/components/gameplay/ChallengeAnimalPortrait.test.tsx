@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { afterAll, describe, expect, it, vi } from "vitest"
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
-import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import resolveWebOpponentPresentation, {
+  resolveWebOpponentAttention,
+} from "../../lib/presentation/webOpponentPresentation"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 
 const previousAvailability = vi.hoisted(() => {
@@ -19,6 +21,29 @@ afterAll(() => {
 })
 
 describe("Challenge animal portrait asset contract", () => {
+  it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
+    "keeps %s attention source-authored, bounded and at action pacing",
+    (id) => {
+      const attention = resolveWebOpponentAttention(id)
+      if (id === "ninja-stockfish" || id === "war-hero-stockfish") {
+        expect(attention).toBeNull()
+        return
+      }
+      if (attention === null) throw new Error("Expected attention clip")
+      expect(attention.playback).toBe("once")
+      expect(attention.animation.frameDurationMilliseconds).toBe(100)
+      const g = attention.animation.geometry
+      expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(92)
+      expect(
+        Math.max(
+          g.bottomCenterX - g.visibleX,
+          g.visibleX + g.visibleWidth - g.bottomCenterX,
+        ) * 6,
+      ).toBeLessThanOrEqual(132)
+      expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
+      expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
+    },
+  )
   it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
     "uses one existing idle strip with fitting authored bounds for %s",
     (id) => {
