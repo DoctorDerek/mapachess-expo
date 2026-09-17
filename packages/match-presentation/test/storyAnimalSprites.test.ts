@@ -19,6 +19,118 @@ const REACTIONS = [
 
 describe("complete Story animal presentation", () => {
   it.each([
+    ["axolotl-stockfish", "capture", ["dash", "attack", "walk"]],
+    ["axolotl-stockfish", "check", ["sneak", "attack", "walk"]],
+    ["hedgehog-stockfish", "capture", ["dash", "attack", "walk"]],
+    ["hedgehog-stockfish", "check", ["sneak", "attack", "walk"]],
+    ["deer-stockfish", "capture", ["dash", "attack02", "run"]],
+    ["deer-stockfish", "check", ["run", "alerted", "run"]],
+    ["fox-stockfish", "capture", ["dash", "attack", "run"]],
+    ["fox-stockfish", "victory", ["howl"]],
+    ["wolf-stockfish", "capture", ["dash", "attack", "run"]],
+    ["wolf-stockfish", "victory", ["howl"]],
+    [
+      "parrot-stockfish",
+      "victory",
+      ["takeoff", "soar", "fall", "land", "idle_caw"],
+    ],
+    [
+      "falcon-stockfish",
+      "victory",
+      ["takeoff", "soar_call", "fall", "land", "idle_call"],
+    ],
+    ["crane-stockfish", "victory", ["display", "call"]],
+    [
+      "crow-stockfish",
+      "victory",
+      ["takeoff", "soar", "fall", "land", "idle_caw"],
+    ],
+    ["bat-stockfish", "check", ["fly_forward", "fly_idle", "land_upright"]],
+    ["dragonfly-stockfish", "capture", ["fly_forward", "attack", "land"]],
+  ] as const)(
+    "%s retains a complete source-specific alternative and stable geometry",
+    (id, family, expected) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const reaction: MatchParticipantReaction =
+        family === "victory" ? { family } : { family, role: "attacker" }
+      const alternative = resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources,
+        1,
+      )
+      if (alternative.kind !== "sprite")
+        throw new Error("Expected licensed sprite")
+      expect(alternative.steps.map(({ animationId }) => animationId)).toEqual(
+        expected,
+      )
+      expect(resolveSpritePresentation(manifest, reaction, sources, 1)).toEqual(
+        alternative,
+      )
+      expect(resolveSpritePresentation(manifest, reaction, sources, 2)).toEqual(
+        resolveSpritePresentation(manifest, reaction, sources, 0),
+      )
+      expect(alternative.layout).toEqual(
+        resolveSpritePresentation(
+          { ...manifest, reactionAlternatives: {} },
+          reaction,
+          sources,
+        ).layout,
+      )
+      expect(alternative.layout.standaloneScale).toBe(3)
+      expect(
+        alternative.steps.every(
+          ({ animation }) => animation.frameDurationMilliseconds === 100,
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it.each(["parrot-stockfish", "falcon-stockfish", "crow-stockfish"] as const)(
+    "%s rejects an incomplete soaring celebration",
+    (id) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const withoutSoaring = Object.entries(manifest.animations)
+        .filter(([animationId]) => !animationId.startsWith("soar"))
+        .map(([, animation]) => animation.sourceId)
+      const result = resolveSpritePresentation(
+        manifest,
+        { family: "victory" },
+        withoutSoaring,
+        1,
+      )
+      expect(
+        result.kind === "sprite" &&
+          result.steps.map(({ animationId }) => animationId),
+      ).toEqual([
+        "takeoff",
+        "fly",
+        "fall",
+        "land",
+        id === "falcon-stockfish" ? "idle_call" : "idle_caw",
+      ])
+      const withoutLanding = Object.entries(manifest.animations)
+        .filter(([animationId]) => animationId !== "land")
+        .map(([, animation]) => animation.sourceId)
+      const grounded = resolveSpritePresentation(
+        manifest,
+        { family: "victory" },
+        withoutLanding,
+        1,
+      )
+      expect(
+        grounded.kind === "sprite" &&
+          grounded.steps.every(({ animationId }) =>
+            animationId.startsWith("idle"),
+          ),
+      ).toBe(true)
+    },
+  )
+
+  it.each([
     ["frog-stockfish", "croak"],
     ["panda-stockfish", "idle_laugh"],
   ] as const)(
