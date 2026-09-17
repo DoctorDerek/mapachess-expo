@@ -1,13 +1,13 @@
 import type { MatchParticipantReaction } from "@mapachess/match-presentation/match-reaction"
 import resolveSpritePresentation, {
+  resolveSpriteAttention,
   type ResolvedSpritePresentation,
+  type ResolvedSpriteStep,
   type SpriteAssetManifest,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
-  AVAILABLE_CHICKEN_SPRITE_SOURCES,
-  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
   CHICKEN_SPRITE_MANIFEST,
   LICENSED_PRESENTATION_ASSETS_ENABLED,
   MAPACHITO_SPRITE_MANIFEST,
@@ -64,32 +64,42 @@ const WEB_STORY_ANIMAL_SPRITES = {
   ),
 } as const
 
+const opponentManifest = (
+  opponentId: StockfishOpponentId,
+): SpriteAssetManifest<string, string> => {
+  switch (opponentId) {
+    case "chicken-stockfish":
+      return CHICKEN_SPRITE_MANIFEST
+    case "raccoon-stockfish":
+      return MAPACHITO_SPRITE_MANIFEST
+    default: {
+      return WEB_STORY_ANIMAL_SPRITES[opponentId]
+    }
+  }
+}
+
+const availableSources = (
+  manifest: SpriteAssetManifest<string, string>,
+): readonly string[] =>
+  LICENSED_PRESENTATION_ASSETS_ENABLED
+    ? Object.values(manifest.animations).map(({ sourceId }) => sourceId)
+    : []
+
+export const resolveWebOpponentAttention = (
+  opponentId: StockfishOpponentId,
+): ResolvedSpriteStep<string, string> | null => {
+  const manifest = opponentManifest(opponentId)
+  return resolveSpriteAttention(manifest, availableSources(manifest))
+}
+
 export default function resolveWebOpponentPresentation(
   opponentId: StockfishOpponentId,
   reaction: MatchParticipantReaction = { family: "idle" },
 ): ResolvedSpritePresentation<string, string> {
-  switch (opponentId) {
-    case "chicken-stockfish":
-      return resolveSpritePresentation(
-        CHICKEN_SPRITE_MANIFEST,
-        reaction,
-        AVAILABLE_CHICKEN_SPRITE_SOURCES,
-      )
-    case "raccoon-stockfish":
-      return resolveSpritePresentation(
-        MAPACHITO_SPRITE_MANIFEST,
-        reaction,
-        AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-      )
-    default: {
-      const manifest = WEB_STORY_ANIMAL_SPRITES[opponentId]
-      return resolveSpritePresentation(
-        manifest,
-        reaction,
-        LICENSED_PRESENTATION_ASSETS_ENABLED
-          ? Object.values(manifest.animations).map(({ sourceId }) => sourceId)
-          : [],
-      )
-    }
-  }
+  const manifest = opponentManifest(opponentId)
+  return resolveSpritePresentation(
+    manifest,
+    reaction,
+    availableSources(manifest),
+  )
 }

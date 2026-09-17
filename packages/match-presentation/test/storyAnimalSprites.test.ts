@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import type { MatchParticipantReaction } from "../src/matchReaction"
-import resolveSpritePresentation from "../src/presentationAssetManifest"
+import resolveSpritePresentation, {
+  resolveSpriteAttention,
+} from "../src/presentationAssetManifest"
 import REMAINING_STORY_ANIMAL_SPRITES from "../src/remainingStoryAnimalSprites"
 import STORY_ANIMAL_SPRITES from "../src/storyAnimalSprites"
 
@@ -15,6 +17,24 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it("resolves optional attention without substituting unavailable or human artwork", () => {
+    const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
+    const sources = Object.values(dog.animations).map(
+      ({ sourceId }) => sourceId,
+    )
+    const attention = resolveSpriteAttention(dog, sources)
+    expect(attention?.animationId).toBe("bark")
+    expect(attention?.animation.frameDurationMilliseconds).toBe(100)
+    expect(attention?.playback).toBe("once")
+    expect(resolveSpriteAttention(dog, [])).toBeNull()
+    const ninja = STORY_ANIMAL_SPRITES["ninja-stockfish"]
+    expect(
+      resolveSpriteAttention(
+        ninja,
+        Object.values(ninja.animations).map(({ sourceId }) => sourceId),
+      ),
+    ).toBeNull()
+  })
   it.each(Object.entries(STORY_ANIMAL_SPRITES))(
     "%s resolves calm pacing without slowing battle actions or changing source definitions",
     (id, manifest) => {

@@ -410,8 +410,38 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     await expect
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))
       .toBe(1)
+    await tile.scrollIntoViewIfNeeded()
+    const tileBounds = await tile.boundingBox()
+    await tile.hover()
+    await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
+    const attentionAnimation = await sprite.evaluateHandle((element) => {
+      const animation = element.getAnimations()[0]
+      animation.pause()
+      animation.currentTime = 200
+      return animation
+    })
+    expect(
+      await attentionAnimation.evaluate(
+        (animation) => animation.effect?.getTiming().duration,
+      ),
+    ).toBe(900)
+    await expect(sprite).not.toHaveCSS("background-position", "0% 0px")
+    expect(await tile.boundingBox()).toEqual(tileBounds)
+    await choice.focus()
+    expect(
+      await sprite.evaluate(
+        (element, animation) => element.getAnimations()[0] === animation,
+        attentionAnimation,
+      ),
+    ).toBe(true)
+    await attentionAnimation.evaluate((animation) => animation.finish())
+    await expect(sprite).toHaveCSS("background-image", /chicken_idle/)
+    await attentionAnimation.dispose()
+    await page.mouse.move(0, 0)
+    await page.keyboard.press("Tab")
     await choice.focus()
     await expect(choice).toBeFocused()
+    await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
     await page.emulateMedia({ reducedMotion: "reduce" })
     await expect
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))

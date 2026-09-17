@@ -65,6 +65,7 @@ export type SpriteAssetManifest<
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   calmFrameDurationMilliseconds?: number
+  attentionAnimationId?: AnimationId
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
   sourceFacing: SpriteFacing
@@ -148,6 +149,26 @@ const resolveStep = <AnimationId extends string, SourceId extends string>(
         playback: step.playback,
       })
 }
+
+export const resolveSpriteAttention = <
+  AnimationId extends string,
+  SourceId extends string,
+>(
+  manifest: SpriteAssetManifest<AnimationId, SourceId>,
+  availableSourceIds: readonly SourceId[],
+): ResolvedSpriteStep<AnimationId, SourceId> | null =>
+  manifest.attentionAnimationId === undefined
+    ? null
+    : resolveStep(
+        manifest,
+        {
+          animationIds: [manifest.attentionAnimationId],
+          beat: "idle",
+          playback: "once",
+        },
+        availableSourceIds,
+        PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+      )
 
 export default function resolveSpritePresentation<
   AnimationId extends string,

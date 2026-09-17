@@ -21,6 +21,8 @@ export default function ChallengeDifficultyChoices({
 }>) {
   const explanationId = useId()
   const [expanded, setExpanded] = useState(true)
+  const [hoveredTarget, setHoveredTarget] = useState<number | null>(null)
+  const [focusedTarget, setFocusedTarget] = useState<number | null>(null)
 
   return (
     <fieldset className="mt-6" disabled={disabled}>
@@ -37,7 +39,7 @@ export default function ChallengeDifficultyChoices({
             : `${selectedElo} Elo`}{" "}
           · Change difficulty
         </summary>
-        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-3">
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(10rem,100%),1fr))] gap-3">
           {targets.map((target) => {
             const record = history.difficulties.find(
               ({ targetElo }) => targetElo === target,
@@ -50,6 +52,10 @@ export default function ChallengeDifficultyChoices({
             return (
               <label
                 key={target}
+                onPointerEnter={(event) => {
+                  if (event.pointerType !== "touch") setHoveredTarget(target)
+                }}
+                onPointerLeave={() => setHoveredTarget(null)}
                 className="group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid cursor-pointer grid-rows-[auto_6rem] gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60"
               >
                 <input
@@ -60,6 +66,11 @@ export default function ChallengeDifficultyChoices({
                   value={target}
                   checked={selectedElo === target}
                   onChange={() => onSelected(target)}
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(":focus-visible"))
+                      setFocusedTarget(target)
+                  }}
+                  onBlur={() => setFocusedTarget(null)}
                 />
                 <span className="flex w-full items-center justify-between gap-1">
                   <span className="font-display text-2xl font-black">
@@ -84,6 +95,10 @@ export default function ChallengeDifficultyChoices({
                       key={animal.id}
                       opponent={animal}
                       active={expanded}
+                      attention={
+                        !disabled &&
+                        (hoveredTarget === target || focusedTarget === target)
+                      }
                     />
                     <span className="sr-only">
                       {" "}
