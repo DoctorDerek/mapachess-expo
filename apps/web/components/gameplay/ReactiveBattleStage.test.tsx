@@ -113,7 +113,11 @@ describe("Reactive Battle Stage web presentation", () => {
               animation.geometry.visibleWidth -
               animation.geometry.bottomCenterX,
           ).toBeLessThanOrEqual(presentation.layout.clearance.horizontalRadius)
-          expect(animation.frameDurationMilliseconds).toBe(100)
+          expect(animation.frameDurationMilliseconds).toBe(
+            reaction.family === "idle" && expectedScale !== undefined
+              ? 160
+              : 100,
+          )
           expect(
             animation.geometry.visibleY + animation.geometry.visibleHeight,
           ).toBeLessThanOrEqual(animation.geometry.bottomY)

@@ -1,4 +1,5 @@
 import {
+  CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
   PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
   STANDALONE_ANIMAL_SCALE,
   type SpriteAnimationDefinition,
@@ -80,7 +81,11 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
     referenceGeometry,
     ...(source.humanCharacter
       ? {}
-      : { standaloneScale: STANDALONE_ANIMAL_SCALE }),
+      : {
+          standaloneScale: STANDALONE_ANIMAL_SCALE,
+          calmFrameDurationMilliseconds:
+            CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
+        }),
     sourceFacing: "right",
     reactionPlans,
   })

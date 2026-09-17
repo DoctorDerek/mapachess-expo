@@ -2,6 +2,7 @@ import type { MatchPresentationBeat } from "./matchPresentationMachine.js"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 
 export const PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS = 100
+export const CALM_ANIMAL_FRAME_DURATION_MILLISECONDS = 160
 export const STANDALONE_ANIMAL_SCALE = 3
 
 export type SpriteClearance = Readonly<{
@@ -63,6 +64,7 @@ export type SpriteAssetManifest<
   SourceId extends string,
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
+  calmFrameDurationMilliseconds?: number
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
   sourceFacing: SpriteFacing
@@ -126,6 +128,7 @@ const resolveStep = <AnimationId extends string, SourceId extends string>(
   manifest: SpriteAssetManifest<AnimationId, SourceId>,
   step: SpriteReactionStep<AnimationId>,
   availableSourceIds: readonly SourceId[],
+  frameDurationMilliseconds?: number,
 ): ResolvedSpriteStep<AnimationId, SourceId> | null => {
   const animationId = step.animationIds.find((candidateId) =>
     availableSourceIds.includes(manifest.animations[candidateId].sourceId),
@@ -133,7 +136,13 @@ const resolveStep = <AnimationId extends string, SourceId extends string>(
   return animationId === undefined
     ? null
     : Object.freeze({
-        animation: manifest.animations[animationId],
+        animation:
+          frameDurationMilliseconds === undefined
+            ? manifest.animations[animationId]
+            : Object.freeze({
+                ...manifest.animations[animationId],
+                frameDurationMilliseconds,
+              }),
         animationId,
         beat: step.beat,
         playback: step.playback,
@@ -189,7 +198,14 @@ export default function resolveSpritePresentation<
       : Object.freeze({ ...idleStep, playback: "loop" as const })
   const plan = manifest.reactionPlans[reactionSlot].map((step) => ({
     step,
-    resolved: resolveStep(manifest, step, availableSourceIds),
+    resolved: resolveStep(
+      manifest,
+      step,
+      availableSourceIds,
+      reactionSlot === "idle"
+        ? manifest.calmFrameDurationMilliseconds
+        : undefined,
+    ),
   }))
   const completeSequenceAvailable = plan.every(
     ({ resolved }) => resolved !== null,

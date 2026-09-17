@@ -16,6 +16,26 @@ const REACTIONS = [
 
 describe("complete Story animal presentation", () => {
   it.each(Object.entries(STORY_ANIMAL_SPRITES))(
+    "%s resolves calm pacing without slowing battle actions or changing source definitions",
+    (id, manifest) => {
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const human = id === "ninja-stockfish" || id === "war-hero-stockfish"
+      for (const reaction of REACTIONS) {
+        const result = resolveSpritePresentation(manifest, reaction, sources)
+        if (result.kind !== "sprite") throw new Error("Expected sprite")
+        for (const { animation } of result.steps) {
+          expect(animation.frameDurationMilliseconds).toBe(
+            reaction.family === "idle" && !human ? 160 : 100,
+          )
+        }
+      }
+      for (const animation of Object.values(manifest.animations))
+        expect(animation.frameDurationMilliseconds).toBe(100)
+    },
+  )
+  it.each(Object.entries(STORY_ANIMAL_SPRITES))(
     "%s preserves full-repertoire clearance across reactions and asset availability",
     (id, manifest) => {
       const sources = Object.values(manifest.animations).map(
