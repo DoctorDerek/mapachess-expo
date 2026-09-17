@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
-import resolveSpritePresentation from "@mapachess/match-presentation/presentation-asset-manifest"
+import resolveSpritePresentation, {
+  type SpriteAssetManifest,
+} from "@mapachess/match-presentation/presentation-asset-manifest"
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
@@ -13,6 +15,30 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it.each([CHICKEN_SPRITE_MANIFEST, MAPACHITO_SPRITE_MANIFEST])(
+    "resolves calm animal pacing while preserving action and recovery pacing",
+    (manifest: SpriteAssetManifest<string, string>) => {
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const idle = resolveSpritePresentation(
+        manifest,
+        { family: "idle" },
+        sources,
+      )
+      const action = resolveSpritePresentation(
+        manifest,
+        { family: "capture", role: "attacker" },
+        sources,
+      )
+      if (idle.kind !== "sprite" || action.kind !== "sprite")
+        throw new Error("Expected licensed sprite")
+      expect(idle.steps[0].animation.frameDurationMilliseconds).toBe(160)
+      for (const step of action.steps)
+        expect(step.animation.frameDurationMilliseconds).toBe(100)
+      expect(action.layout).toEqual(idle.layout)
+    },
+  )
   it("derives the initial pose crop from its canonical animation geometry", () => {
     const presentation = resolveSpritePresentation(
       CHICKEN_SPRITE_MANIFEST,
