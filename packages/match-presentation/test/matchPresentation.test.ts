@@ -272,10 +272,28 @@ describe("match presentation contracts", () => {
         "player",
         "opponent",
       ])
+      const interruptedSequence = actor.getSnapshot().context.reactionSequence
       actor.send({ type: "MATCH_PRESENTATION.RESET_REQUESTED" })
+      expect(actor.getSnapshot().context.reactionSequence).toBe(
+        interruptedSequence + 1,
+      )
       completeParticipant(actor, "player")
       expect(selectMatchPresentationBeat(actor.getSnapshot())).toBe("idle")
       expect(actor.getSnapshot().context.currentPhase).toBeNull()
+      actor.send({
+        phases: [CAPTURE_PHASE],
+        type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+      })
+      actor.send({
+        participant: "player",
+        phaseIndex: 0,
+        reactionSequence: interruptedSequence,
+        type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
+      })
+      expect(actor.getSnapshot().context.pendingParticipants).toEqual([
+        "player",
+        "opponent",
+      ])
       actor.stop()
     },
   )
