@@ -1,4 +1,5 @@
 import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
+import REMAINING_ANIMAL_REACTION_ALTERNATIVES from "./remainingAnimalReactionAlternatives.js"
 import REMAINING_STORY_ANIMAL_SPRITE_DATA from "./remainingStoryAnimalSpriteData.js"
 
 const GROUND_STORY_ANIMAL_SPRITES = {
@@ -36,6 +37,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.axolotl,
   ),
   "hedgehog-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["hedgehog"],
@@ -71,6 +73,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.hedgehog,
   ),
   "deer-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["deer"],
@@ -106,6 +109,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["alerted"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.deer,
   ),
   "fox-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["fox"],
@@ -141,6 +145,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["howl"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.fox,
   ),
   "wolf-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["wolf"],
@@ -176,6 +181,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["howl"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.wolf,
   ),
   "ninja-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["ninja"],

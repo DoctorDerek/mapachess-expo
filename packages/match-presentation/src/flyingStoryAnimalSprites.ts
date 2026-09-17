@@ -1,4 +1,5 @@
 import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
+import REMAINING_ANIMAL_REACTION_ALTERNATIVES from "./remainingAnimalReactionAlternatives.js"
 import REMAINING_STORY_ANIMAL_SPRITE_DATA from "./remainingStoryAnimalSpriteData.js"
 
 const FLYING_STORY_ANIMAL_SPRITES = {
@@ -37,6 +38,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.parrot,
   ),
   "falcon-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["falcon"],
@@ -73,6 +75,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_call"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.falcon,
   ),
   "crane-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["crane"],
@@ -106,6 +109,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["dance"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.crane,
   ),
   "crow-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["crow"],
@@ -142,6 +146,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.crow,
   ),
   "bat-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["bat"],
@@ -190,6 +195,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.bat,
   ),
   "dragonfly-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["dragonfly"],
@@ -225,6 +231,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
       ],
     },
+    REMAINING_ANIMAL_REACTION_ALTERNATIVES.dragonfly,
   ),
 } as const
 
