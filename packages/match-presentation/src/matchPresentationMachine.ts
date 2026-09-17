@@ -155,13 +155,15 @@ const matchPresentationMachine = setup({
         ),
       }
     }),
-    resetPresentation: assign(({ context }) => ({
+    invalidateReactionSequence: assign(({ context }) => ({
+      reactionSequence: context.reactionSequence + 1,
+    })),
+    resetPresentation: assign({
       currentPhase: null,
       pendingParticipants: noParticipants,
       phaseIndex: 0,
-      reactionSequence: context.reactionSequence + 1,
       remainingPhases: Object.freeze([]),
-    })),
+    }),
     startRequestedReactions: assign(({ context, event }) => {
       const request = requireRequestedReactions(event)
       const [currentPhase, ...remainingPhases] = request.phases
@@ -222,7 +224,7 @@ const matchPresentationMachine = setup({
       },
     ],
     "MATCH_PRESENTATION.RESET_REQUESTED": {
-      actions: "resetPresentation",
+      actions: ["resetPresentation", "invalidateReactionSequence"],
       target: ".idle",
     },
   },

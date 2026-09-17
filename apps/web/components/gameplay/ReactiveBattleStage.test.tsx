@@ -70,6 +70,54 @@ afterAll(() => {
 })
 
 describe("Reactive Battle Stage web presentation", () => {
+  it.each(["chicken-stockfish", "raccoon-stockfish", "dog-stockfish"] as const)(
+    "%s varies across completed actor-driven reactions without consuming a choice on settlement",
+    (opponentId) => {
+      const actor = createActor(matchPresentationMachine, {
+        input: { initialConclusionPhase: null },
+      }).start()
+      const selectedPlans: string[][] = []
+      for (let iteration = 0; iteration < 3; iteration += 1) {
+        actor.send({
+          phases: [PLAYER_CAPTURE_PHASE],
+          type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
+        })
+        const sequence = actor.getSnapshot().context.reactionSequence
+        const chosen = resolveWebOpponentPresentation(
+          opponentId,
+          PLAYER_CAPTURE_PHASE.player,
+          sequence,
+        )
+        if (chosen.kind !== "sprite")
+          throw new Error("Expected licensed sprite")
+        selectedPlans.push(chosen.steps.map(({ animationId }) => animationId))
+        for (let beat = 0; beat < 4; beat += 1) {
+          const { context } = actor.getSnapshot()
+          expect(context.reactionSequence).toBe(sequence)
+          for (const participant of context.pendingParticipants)
+            actor.send({
+              type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
+              participant,
+              phaseIndex: context.phaseIndex,
+              reactionSequence: sequence,
+            })
+        }
+        expect(actor.getSnapshot().matches("idle")).toBe(true)
+        expect(actor.getSnapshot().context.reactionSequence).toBe(sequence)
+        actor.send({
+          type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
+          participant: "player",
+          phaseIndex: 0,
+          reactionSequence: sequence,
+        })
+        expect(actor.getSnapshot().matches("idle")).toBe(true)
+      }
+      expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
+      expect(selectedPlans[2]).toEqual(selectedPlans[0])
+      actor.stop()
+    },
+  )
+
   it.each(["chicken-stockfish", "raccoon-stockfish"] as const)(
     "%s varies whole battle plans while preserving geometry and pacing",
     (opponentId) => {
