@@ -87,8 +87,9 @@ export default function ReactiveBattleStage({
         MAPACHITO_SPRITE_MANIFEST,
         playerReaction,
         AVAILABLE_MAPACHITO_SPRITE_SOURCES,
+        reactionSequence,
       ),
-    [playerReaction],
+    [playerReaction, reactionSequence],
   )
   const beat = selectMatchPresentationBeat(presentationSnapshot)
   const isReacting = presentationSnapshot.matches("reacting")

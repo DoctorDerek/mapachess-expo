@@ -198,6 +198,39 @@ export const CHICKEN_SPRITE_MANIFEST = {
   animations: chickenAnimations,
   referenceGeometry: CHICKEN_REFERENCE_GEOMETRY,
   sourceFacing: "right",
+  reactionAlternatives: {
+    "capture-attacker": [
+      [
+        { animationIds: ["walk", "run"], beat: "approach", playback: "once" },
+        {
+          animationIds: ["attack-ground", "peck"],
+          beat: "strike",
+          playback: "once",
+        },
+        { animationIds: ["run", "walk"], beat: "recovery", playback: "once" },
+      ],
+    ],
+    "check-attacker": [
+      [
+        { animationIds: ["run", "walk"], beat: "approach", playback: "once" },
+        {
+          animationIds: ["peck", "attack-ground"],
+          beat: "strike",
+          playback: "once",
+        },
+        { animationIds: ["run", "walk"], beat: "recovery", playback: "once" },
+      ],
+    ],
+    victory: [
+      [
+        {
+          animationIds: ["peck", "idle-blink"],
+          beat: "conclusion",
+          playback: "loop",
+        },
+      ],
+    ],
+  },
   reactionPlans: {
     "capture-attacker": [
       { animationIds: ["run", "walk"], beat: "approach", playback: "once" },
@@ -387,6 +420,31 @@ export const MAPACHITO_SPRITE_MANIFEST = {
   animations: mapachitoAnimations,
   referenceGeometry: MAPACHITO_REFERENCE_GEOMETRY,
   sourceFacing: "right",
+  reactionAlternatives: {
+    "capture-attacker": [
+      [
+        { animationIds: ["run", "dash"], beat: "approach", playback: "once" },
+        { animationIds: ["attack", "bark"], beat: "strike", playback: "once" },
+        { animationIds: ["dash", "run"], beat: "recovery", playback: "once" },
+      ],
+    ],
+    "check-attacker": [
+      [
+        { animationIds: ["dash", "run"], beat: "approach", playback: "once" },
+        { animationIds: ["bark", "attack"], beat: "strike", playback: "once" },
+        { animationIds: ["dash", "run"], beat: "recovery", playback: "once" },
+      ],
+    ],
+    victory: [
+      [
+        {
+          animationIds: ["bark", "sit-two"],
+          beat: "conclusion",
+          playback: "loop",
+        },
+      ],
+    ],
+  },
   reactionPlans: {
     "capture-attacker": [
       { animationIds: ["dash", "run"], beat: "approach", playback: "once" },
