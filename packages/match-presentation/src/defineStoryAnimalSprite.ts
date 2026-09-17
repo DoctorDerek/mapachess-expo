@@ -36,6 +36,10 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
     NoInfer<AnimationId>,
     string
   >["reactionPlans"],
+  reactionAlternatives?: SpriteAssetManifest<
+    NoInfer<AnimationId>,
+    string
+  >["reactionAlternatives"],
 ): SpriteAssetManifest<string, string> {
   const [, visibleX, visibleY, visibleWidth, visibleHeight] =
     "referenceAnimation" in source
@@ -92,5 +96,6 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
         }),
     sourceFacing: "right",
     reactionPlans,
+    ...(reactionAlternatives === undefined ? {} : { reactionAlternatives }),
   })
 }
