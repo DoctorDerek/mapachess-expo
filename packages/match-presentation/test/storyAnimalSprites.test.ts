@@ -18,6 +18,155 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it.each([
+    ["frog-stockfish", "croak"],
+    ["panda-stockfish", "idle_laugh"],
+  ] as const)(
+    "%s can celebrate without an airborne compound",
+    (id, expected) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const result = resolveSpritePresentation(
+        manifest,
+        { family: "victory" },
+        sources,
+        1,
+      )
+      expect(
+        result.kind === "sprite" &&
+          result.steps.map(({ animationId, playback }) => [
+            animationId,
+            playback,
+          ]),
+      ).toEqual([[expected, "loop"]])
+      expect(result.layout).toEqual(
+        resolveSpritePresentation(
+          { ...manifest, reactionAlternatives: {} },
+          { family: "idle" },
+          sources,
+        ).layout,
+      )
+    },
+  )
+  it.each([
+    ["bunny-stockfish", "dash"],
+    ["dog-stockfish", "dash"],
+    ["cat-stockfish", "dash"],
+    ["mouse-stockfish", "dash"],
+    ["turtle-stockfish", "run"],
+    ["panda-stockfish", "run"],
+    ["otter-stockfish", "dash"],
+  ] as const)(
+    "%s selects a complete ground alternative without changing reserved scale or clearance",
+    (id, approach) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const reaction = { family: "capture", role: "attacker" } as const
+      const base = resolveSpritePresentation(manifest, reaction, sources, 0)
+      const alternative = resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources,
+        1,
+      )
+      if (base.kind !== "sprite" || alternative.kind !== "sprite")
+        throw new Error("Expected licensed sprite")
+      expect(alternative.steps.map(({ beat }) => beat)).toEqual([
+        "approach",
+        "strike",
+        "recovery",
+      ])
+      expect(alternative.steps[0].animationId).toBe(approach)
+      expect(
+        alternative.steps.map(({ animationId }) => animationId),
+      ).not.toEqual(base.steps.map(({ animationId }) => animationId))
+      expect(resolveSpritePresentation(manifest, reaction, sources, 1)).toEqual(
+        alternative,
+      )
+      expect(resolveSpritePresentation(manifest, reaction, sources, 2)).toEqual(
+        base,
+      )
+      expect(alternative.layout).toEqual(
+        resolveSpritePresentation(
+          { ...manifest, reactionAlternatives: {} },
+          reaction,
+          sources,
+        ).layout,
+      )
+      for (const currentReaction of REACTIONS) {
+        const resolved = resolveSpritePresentation(
+          manifest,
+          currentReaction,
+          sources,
+          1,
+        )
+        if (resolved.kind !== "sprite")
+          throw new Error("Expected licensed sprite")
+        expect(resolved.layout.standaloneScale).toBe(3)
+        for (const { animation, animationId } of resolved.steps) {
+          expect(animation.frameDurationMilliseconds).toBe(
+            currentReaction.family === "idle" ? 160 : 100,
+          )
+          expect(animationId).not.toMatch(
+            /swim|wall|ledge|sleep|liedown|attackup|attackdiagonal/,
+          )
+        }
+      }
+    },
+  )
+
+  it.each([
+    ["dog-stockfish", ["walk", "growl", "walk"]],
+    ["cat-stockfish", ["sneak", "attack", "walk"]],
+    ["mouse-stockfish", ["run", "sniff", "run"]],
+    ["otter-stockfish", ["sneak", "attack", "walk"]],
+  ] as const)(
+    "%s uses its source-specific check expression",
+    (id, expected) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const result = resolveSpritePresentation(
+        manifest,
+        { family: "check", role: "attacker" },
+        Object.values(manifest.animations).map(({ sourceId }) => sourceId),
+        1,
+      )
+      expect(
+        result.kind === "sprite" &&
+          result.steps.map(({ animationId }) => animationId),
+      ).toEqual(expected)
+    },
+  )
+
+  it("keeps the turtle capture retreat paired and falls back before hiding if recovery is unavailable", () => {
+    const manifest = STORY_ANIMAL_SPRITES["turtle-stockfish"]
+    const sources = Object.values(manifest.animations).map(
+      ({ sourceId }) => sourceId,
+    )
+    const reaction = { family: "capture", role: "victim" } as const
+    const complete = resolveSpritePresentation(manifest, reaction, sources, 1)
+    expect(
+      complete.kind === "sprite" &&
+        complete.steps.map(({ animationId }) => animationId),
+    ).toEqual(["hide", "unhide"])
+    const withoutRecovery = Object.entries(manifest.animations)
+      .filter(([id]) => id !== "unhide")
+      .map(([, animation]) => animation.sourceId)
+    const recovered = resolveSpritePresentation(
+      manifest,
+      reaction,
+      withoutRecovery,
+      1,
+    )
+    expect(
+      recovered.kind === "sprite" &&
+        recovered.steps.map(({ animationId }) => animationId),
+    ).toEqual(["hurt"])
+  })
+
   it("selects complete alternatives by reaction identity without reshuffling fallback order", () => {
     const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
     const manifest: SpriteAssetManifest<string, string> = {
