@@ -19,6 +19,62 @@ const REACTIONS = [
 
 describe("complete Story animal presentation", () => {
   it.each([
+    ["bunny-stockfish", "sit", 1],
+    ["dog-stockfish", "sit", 1],
+    ["cat-stockfish", "sit", 1],
+    ["otter-stockfish", "sit", 1],
+    ["axolotl-stockfish", "sit", 1],
+    ["deer-stockfish", "eat", 1],
+    ["fox-stockfish", "sit01", 1],
+    ["fox-stockfish", "sit02", 2],
+    ["wolf-stockfish", "sit", 1],
+  ] as const)(
+    "%s rests with %s without changing scale or clearance",
+    (id, expected, sequence) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const reaction = { family: "idle" } as const
+      const result = resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources,
+        sequence,
+      )
+      if (result.kind !== "sprite") throw new Error("Expected licensed sprite")
+      expect(
+        result.steps.map(({ animationId, playback, beat, animation }) => [
+          animationId,
+          playback,
+          beat,
+          animation.frameDurationMilliseconds,
+        ]),
+      ).toEqual([[expected, "loop", "idle", 160]])
+      expect(
+        resolveSpritePresentation(manifest, reaction, sources, sequence),
+      ).toEqual(result)
+      expect(result.layout.standaloneScale).toBe(3)
+      expect(result.layout).toEqual(
+        resolveSpritePresentation(
+          { ...manifest, reactionAlternatives: {} },
+          reaction,
+          sources,
+        ).layout,
+      )
+      const baseSources = Object.entries(manifest.animations)
+        .filter(
+          ([animationId]) =>
+            !["sit", "sit01", "sit02", "eat"].includes(animationId),
+        )
+        .map(([, animation]) => animation.sourceId)
+      expect(
+        resolveSpritePresentation(manifest, reaction, baseSources, sequence),
+      ).toEqual(resolveSpritePresentation(manifest, reaction, baseSources, 0))
+    },
+  )
+
+  it.each([
     ["axolotl-stockfish", "capture", ["dash", "attack", "walk"]],
     ["axolotl-stockfish", "check", ["sneak", "attack", "walk"]],
     ["hedgehog-stockfish", "capture", ["dash", "attack", "walk"]],

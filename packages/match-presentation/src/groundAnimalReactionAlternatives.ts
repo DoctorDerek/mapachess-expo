@@ -1,5 +1,6 @@
 const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   bunny: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -9,6 +10,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   dog: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -25,6 +27,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   cat: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -92,6 +95,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   otter: {
+    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
