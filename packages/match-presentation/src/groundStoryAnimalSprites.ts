@@ -6,7 +6,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
   "axolotl-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["axolotl"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -42,7 +42,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
   "hedgehog-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["hedgehog"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -114,7 +114,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
   "fox-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["fox"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -150,7 +150,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
   "wolf-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["wolf"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },

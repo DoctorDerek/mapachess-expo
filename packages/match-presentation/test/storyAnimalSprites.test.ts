@@ -18,16 +18,39 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it("uses another approved calm pose when the primary rest and battle recipe are unavailable", () => {
+    const manifest = STORY_ANIMAL_SPRITES["dog-stockfish"]
+    const sources = Object.entries(manifest.animations)
+      .filter(([id]) => id === "idle_blink")
+      .map(([, animation]) => animation.sourceId)
+    for (const reaction of [
+      { family: "idle" },
+      { family: "capture", role: "attacker" },
+    ] as const) {
+      expect(
+        resolveSpritePresentation(manifest, reaction, sources),
+      ).toMatchObject({
+        kind: "sprite",
+        steps: [
+          {
+            animationId: "idle_blink",
+            playback: "loop",
+            animation: { frameDurationMilliseconds: 160 },
+          },
+        ],
+      })
+    }
+  })
   it.each([
-    ["bunny-stockfish", "sit", 1],
-    ["dog-stockfish", "sit", 1],
-    ["cat-stockfish", "sit", 1],
-    ["otter-stockfish", "sit", 1],
-    ["axolotl-stockfish", "sit", 1],
+    ["bunny-stockfish", "sit", 2],
+    ["dog-stockfish", "sit", 2],
+    ["cat-stockfish", "sit", 2],
+    ["otter-stockfish", "sit", 2],
+    ["axolotl-stockfish", "sit", 2],
     ["deer-stockfish", "eat", 1],
-    ["fox-stockfish", "sit01", 1],
-    ["fox-stockfish", "sit02", 2],
-    ["wolf-stockfish", "sit", 1],
+    ["fox-stockfish", "sit01", 2],
+    ["fox-stockfish", "sit02", 3],
+    ["wolf-stockfish", "sit", 2],
   ] as const)(
     "%s rests with %s without changing scale or clearance",
     (id, expected, sequence) => {

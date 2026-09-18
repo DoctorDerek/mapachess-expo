@@ -1,6 +1,9 @@
 const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   axolotl: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -17,6 +20,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   hedgehog: {
+    idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -51,6 +55,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   },
   fox: {
     idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
       [{ animationIds: ["sit01"], beat: "idle", playback: "loop" }],
       [{ animationIds: ["sit02"], beat: "idle", playback: "loop" }],
     ],
@@ -66,7 +71,10 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   wolf: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -79,6 +87,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   parrot: {
+    idle: [[{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }]],
     victory: [
       [
         { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
@@ -90,6 +99,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   falcon: {
+    idle: [[{ animationIds: ["idle_call"], beat: "idle", playback: "loop" }]],
     victory: [
       [
         { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
@@ -101,6 +111,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   crane: {
+    idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     victory: [
       [
         { animationIds: ["display"], beat: "conclusion", playback: "once" },
@@ -109,6 +120,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   crow: {
+    idle: [[{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }]],
     victory: [
       [
         { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
@@ -120,6 +132,15 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   bat: {
+    idle: [
+      [
+        {
+          animationIds: ["idle_upright_blink"],
+          beat: "idle",
+          playback: "loop",
+        },
+      ],
+    ],
     "check-attacker": [
       [
         { animationIds: ["fly_forward"], beat: "approach", playback: "once" },
@@ -129,6 +150,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   dragonfly: {
+    idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["fly_forward"], beat: "approach", playback: "once" },

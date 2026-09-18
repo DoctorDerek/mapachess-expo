@@ -6,7 +6,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
   "parrot-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["parrot"],
     {
-      idle: [{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack_ground"], beat: "strike", playback: "once" },
@@ -43,7 +43,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
   "falcon-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["falcon"],
     {
-      idle: [{ animationIds: ["idle_call"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack_ground"], beat: "strike", playback: "once" },
@@ -80,7 +80,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
   "crane-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["crane"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -114,7 +114,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
   "crow-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["crow"],
     {
-      idle: [{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack_ground"], beat: "strike", playback: "once" },
@@ -153,7 +153,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
     {
       idle: [
         {
-          animationIds: ["idle_upright_blink"],
+          animationIds: ["idle_upright"],
           beat: "idle",
           playback: "loop",
         },
@@ -200,7 +200,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
   "dragonfly-stockfish": defineStoryAnimalSprite(
     REMAINING_STORY_ANIMAL_SPRITE_DATA["dragonfly"],
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },

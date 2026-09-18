@@ -1,6 +1,9 @@
 const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   bunny: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -10,7 +13,10 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   dog: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -27,7 +33,10 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   cat: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -44,6 +53,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   mouse: {
+    idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
@@ -65,6 +75,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   turtle: {
+    idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["run"], beat: "approach", playback: "once" },
@@ -83,6 +94,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   panda: {
+    idle: [[{ animationIds: ["idle_laugh"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
         { animationIds: ["run"], beat: "approach", playback: "once" },
@@ -95,7 +107,10 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   otter: {
-    idle: [[{ animationIds: ["sit"], beat: "idle", playback: "loop" }]],
+    idle: [
+      [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },

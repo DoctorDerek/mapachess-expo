@@ -10,11 +10,26 @@ type AttentionEvent =
 
 const animalAttentionMachine = setup({
   types: {
-    context: {} as { attentionRequested: boolean; ordinal: number },
+    context: {} as {
+      attentionRequested: boolean
+      ordinal: number
+      active: boolean
+      calmOrdinal: number
+    },
     events: {} as AttentionEvent,
   },
   actions: {
     recordInput: assign({
+      active: ({ context, event }) =>
+        event.type === "ANIMAL_ATTENTION.INPUT_CHANGED"
+          ? event.active
+          : context.active,
+      calmOrdinal: ({ context, event }) =>
+        event.type === "ANIMAL_ATTENTION.INPUT_CHANGED" &&
+        event.active &&
+        !context.active
+          ? context.calmOrdinal + 1
+          : context.calmOrdinal,
       attentionRequested: ({ context, event }) =>
         event.type === "ANIMAL_ATTENTION.INPUT_CHANGED"
           ? event.attention
@@ -38,7 +53,12 @@ const animalAttentionMachine = setup({
 }).createMachine({
   id: "animalAttention",
   initial: "resting",
-  context: { attentionRequested: false, ordinal: -1 },
+  context: {
+    attentionRequested: false,
+    ordinal: -1,
+    active: false,
+    calmOrdinal: -1,
+  },
   on: {
     "ANIMAL_ATTENTION.INPUT_CHANGED": [
       {

@@ -8,7 +8,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "bunny-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.bunny,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -44,7 +44,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "dog-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.dog,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -80,7 +80,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "cat-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.cat,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -116,7 +116,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "mouse-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.mouse,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -188,7 +188,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "turtle-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.turtle,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
@@ -261,7 +261,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
   "otter-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.otter,
     {
-      idle: [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
+      idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
         { animationIds: ["run"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },

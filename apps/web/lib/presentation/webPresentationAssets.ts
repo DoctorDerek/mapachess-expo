@@ -199,6 +199,10 @@ export const CHICKEN_SPRITE_MANIFEST = {
   referenceGeometry: CHICKEN_REFERENCE_GEOMETRY,
   sourceFacing: "right",
   reactionAlternatives: {
+    idle: [
+      [{ animationIds: ["idle-blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["walk", "run"], beat: "approach", playback: "once" },
@@ -265,7 +269,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
     ],
     idle: [
       {
-        animationIds: ["idle-blink", "idle", "sit"],
+        animationIds: ["idle"],
         beat: "idle",
         playback: "loop",
       },
@@ -421,6 +425,11 @@ export const MAPACHITO_SPRITE_MANIFEST = {
   referenceGeometry: MAPACHITO_REFERENCE_GEOMETRY,
   sourceFacing: "right",
   reactionAlternatives: {
+    idle: [
+      [{ animationIds: ["idle-blink"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit-one"], beat: "idle", playback: "loop" }],
+      [{ animationIds: ["sit-two"], beat: "idle", playback: "loop" }],
+    ],
     "capture-attacker": [
       [
         { animationIds: ["run", "dash"], beat: "approach", playback: "once" },
@@ -471,7 +480,7 @@ export const MAPACHITO_SPRITE_MANIFEST = {
     ],
     idle: [
       {
-        animationIds: ["idle-blink", "idle", "sit-two", "sit-one", "crouch"],
+        animationIds: ["idle"],
         beat: "idle",
         playback: "loop",
       },

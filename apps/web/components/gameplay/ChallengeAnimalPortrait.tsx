@@ -28,6 +28,9 @@ export default function ChallengeAnimalPortrait({
   const attentionOrdinal = useSelector(attentionActor, (snapshot) =>
     snapshot.matches("attention") ? snapshot.context.ordinal : null,
   )
+  const calmOrdinal = useSelector(attentionActor, (snapshot) =>
+    Math.max(0, snapshot.context.calmOrdinal),
+  )
   useEffect(() => {
     attentionActor.send({
       type: "ANIMAL_ATTENTION.INPUT_CHANGED",
@@ -36,10 +39,18 @@ export default function ChallengeAnimalPortrait({
     })
   }, [active, attention, attentionActor])
   const presentation = useMemo(
-    () => resolveWebOpponentPresentation(opponent.id),
-    [opponent.id],
+    () =>
+      resolveWebOpponentPresentation(
+        opponent.id,
+        { family: "idle" },
+        calmOrdinal,
+      ),
+    [opponent.id, calmOrdinal],
   )
   const step = presentation.kind === "sprite" ? presentation.steps[0] : null
+  const [initialFrameStyle] = useState(() =>
+    step === null ? undefined : battleSpriteFrameStyle(step, false),
+  )
   const attentionStep = useMemo(
     () => resolveWebOpponentAttention(opponent.id, attentionOrdinal ?? 0),
     [opponent.id, attentionOrdinal],
@@ -170,9 +181,7 @@ export default function ChallengeAnimalPortrait({
         <span
           ref={spriteRef}
           className="absolute block bg-no-repeat [image-rendering:pixelated]"
-          style={
-            step === null ? undefined : battleSpriteFrameStyle(step, false)
-          }
+          style={initialFrameStyle}
         />
       </span>
     </span>
