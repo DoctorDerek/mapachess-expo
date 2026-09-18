@@ -221,7 +221,14 @@ export default function resolveSpritePresentation<
     }),
   })
   const idleStep = manifest.reactionPlans.idle
-    .map((step) => resolveStep(manifest, step, availableSourceIds))
+    .map((step) =>
+      resolveStep(
+        manifest,
+        step,
+        availableSourceIds,
+        manifest.calmFrameDurationMilliseconds,
+      ),
+    )
     .find((step) => step !== null)
   const idleFallback =
     idleStep === undefined
@@ -257,23 +264,23 @@ export default function resolveSpritePresentation<
   const completeSequenceAvailable = plan.every(
     ({ resolved }) => resolved !== null,
   )
-  const resolvedSteps =
-    reaction.family === "victory" && !completeSequenceAvailable
-      ? idleFallback === null
-        ? []
-        : [Object.freeze({ ...idleFallback, beat: "conclusion" as const })]
-      : plan.flatMap(({ step, resolved }) => {
-          const resolvedStep =
-            resolved ??
-            (idleFallback === null
-              ? null
-              : Object.freeze({
-                  ...idleFallback,
-                  beat: step.beat,
-                  playback: step.playback,
-                }))
-          return resolvedStep === null ? [] : [resolvedStep]
-        })
+  const resolvedSteps = !completeSequenceAvailable
+    ? idleFallback === null
+      ? []
+      : [
+          Object.freeze({
+            ...idleFallback,
+            beat:
+              reaction.family === "victory" || reaction.family === "defeat"
+                ? ("conclusion" as const)
+                : ("idle" as const),
+            playback:
+              reaction.family === "defeat"
+                ? ("once-hold-final-frame" as const)
+                : ("loop" as const),
+          }),
+        ]
+    : plan.flatMap(({ resolved }) => (resolved === null ? [] : [resolved]))
   const [firstStep, ...remainingSteps] = resolvedSteps
 
   return firstStep === undefined
