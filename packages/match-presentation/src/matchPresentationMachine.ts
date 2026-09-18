@@ -1,4 +1,9 @@
 import { assign, setup, type SnapshotFrom } from "xstate"
+import advanceMatchPresentationVariation, {
+  INITIAL_MATCH_PRESENTATION_VARIATION,
+  matchPresentationVariationOrdinal,
+  type MatchPresentationVariation,
+} from "./matchPresentationVariation.js"
 import {
   MATCH_PRESENTATION_PARTICIPANTS,
   type MatchPresentationParticipant,
@@ -30,6 +35,7 @@ type MatchPresentationMachineContext = Readonly<{
   phaseIndex: number
   reactionSequence: number
   remainingPhases: readonly MatchPresentationPhase[]
+  variation: MatchPresentationVariation
 }>
 
 const noParticipants: readonly MatchPresentationParticipant[] = Object.freeze(
@@ -64,6 +70,13 @@ const createInitialContext = ({
     phaseIndex: 0,
     reactionSequence: 0,
     remainingPhases: Object.freeze([]),
+    variation:
+      initialConclusionPhase === null
+        ? INITIAL_MATCH_PRESENTATION_VARIATION
+        : advanceMatchPresentationVariation(
+            INITIAL_MATCH_PRESENTATION_VARIATION,
+            initialConclusionPhase,
+          ),
   })
 }
 
@@ -126,12 +139,19 @@ const matchPresentationMachine = setup({
       pendingParticipants: allParticipants,
       phaseIndex: context.phaseIndex + 1,
     })),
-    advanceToTerminalPhase: assign(({ context }) => ({
-      currentPhase: requireTerminalPhase(context.remainingPhases[0]),
-      pendingParticipants: noParticipants,
-      phaseIndex: context.phaseIndex + 1,
-      remainingPhases: Object.freeze([]),
-    })),
+    advanceToTerminalPhase: assign(({ context }) => {
+      const currentPhase = requireTerminalPhase(context.remainingPhases[0])
+      return {
+        currentPhase,
+        variation: advanceMatchPresentationVariation(
+          context.variation,
+          currentPhase,
+        ),
+        pendingParticipants: noParticipants,
+        phaseIndex: context.phaseIndex + 1,
+        remainingPhases: Object.freeze([]),
+      }
+    }),
     advanceToNextPhase: assign(({ context }) => {
       const [currentPhase, ...remainingPhases] = context.remainingPhases
       if (currentPhase === undefined) {
@@ -140,6 +160,10 @@ const matchPresentationMachine = setup({
 
       return {
         currentPhase,
+        variation: advanceMatchPresentationVariation(
+          context.variation,
+          currentPhase,
+        ),
         pendingParticipants: allParticipants,
         phaseIndex: context.phaseIndex + 1,
         remainingPhases: Object.freeze(remainingPhases),
@@ -170,6 +194,10 @@ const matchPresentationMachine = setup({
 
       return {
         currentPhase,
+        variation: advanceMatchPresentationVariation(
+          context.variation,
+          currentPhase,
+        ),
         pendingParticipants: allParticipants,
         phaseIndex: 0,
         reactionSequence: context.reactionSequence + 1,
@@ -178,8 +206,13 @@ const matchPresentationMachine = setup({
     }),
     startTerminalReaction: assign(({ context, event }) => {
       const request = requireRequestedReactions(event)
+      const currentPhase = requireTerminalPhase(request.phases[0])
       return {
-        currentPhase: requireTerminalPhase(request.phases[0]),
+        currentPhase,
+        variation: advanceMatchPresentationVariation(
+          context.variation,
+          currentPhase,
+        ),
         pendingParticipants: noParticipants,
         phaseIndex: 0,
         reactionSequence: context.reactionSequence + 1,
@@ -305,6 +338,15 @@ export type MatchPresentationMachineSnapshot = SnapshotFrom<
 
 export type MatchPresentationBeat =
   "idle" | "approach" | "strike" | "reaction" | "recovery" | "conclusion"
+
+export const selectMatchPresentationVariationOrdinal = (
+  snapshot: MatchPresentationMachineSnapshot,
+  participant: MatchPresentationParticipant,
+): number =>
+  matchPresentationVariationOrdinal(
+    snapshot.context.variation[participant],
+    snapshot.context.currentPhase?.[participant] ?? { family: "idle" },
+  )
 
 export const selectMatchPresentationBeat = (
   snapshot: MatchPresentationMachineSnapshot,

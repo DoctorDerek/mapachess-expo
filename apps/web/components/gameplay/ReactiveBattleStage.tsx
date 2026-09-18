@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import {
   selectMatchPresentationBeat,
+  selectMatchPresentationVariationOrdinal,
   type MatchPresentationMachineSnapshot,
 } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
@@ -81,15 +82,19 @@ export default function ReactiveBattleStage({
   const { currentPhase, pendingParticipants, phaseIndex, reactionSequence } =
     presentationSnapshot.context
   const playerReaction = currentPhase?.player ?? IDLE_REACTION
+  const playerVariationOrdinal = selectMatchPresentationVariationOrdinal(
+    presentationSnapshot,
+    "player",
+  )
   const playerPresentation = useMemo(
     () =>
       resolveSpritePresentation(
         MAPACHITO_SPRITE_MANIFEST,
         playerReaction,
         AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-        reactionSequence,
+        playerVariationOrdinal,
       ),
-    [playerReaction, reactionSequence],
+    [playerReaction, playerVariationOrdinal],
   )
   const beat = selectMatchPresentationBeat(presentationSnapshot)
   const isReacting = presentationSnapshot.matches("reacting")

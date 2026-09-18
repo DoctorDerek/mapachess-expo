@@ -7,6 +7,7 @@ import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine, {
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
+import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine, {
   selectCanOfferDraw,
@@ -126,15 +127,18 @@ export default function WebMatch({
   )
   const opponent = stockfishOpponent(runtime.opponentId)
   const opponentReaction = presentation.snapshot.context.currentPhase?.opponent
-  const reactionSequence = presentation.snapshot.context.reactionSequence
+  const opponentVariationOrdinal = selectMatchPresentationVariationOrdinal(
+    presentation.snapshot,
+    "opponent",
+  )
   const opponentPresentation = useMemo(
     () =>
       resolveWebOpponentPresentation(
         runtime.opponentId,
         opponentReaction,
-        reactionSequence,
+        opponentVariationOrdinal,
       ),
-    [opponentReaction, runtime.opponentId, reactionSequence],
+    [opponentReaction, runtime.opponentId, opponentVariationOrdinal],
   )
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
