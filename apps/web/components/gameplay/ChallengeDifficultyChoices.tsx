@@ -56,7 +56,7 @@ export default function ChallengeDifficultyChoices({
                   if (event.pointerType !== "touch") setHoveredTarget(target)
                 }}
                 onPointerLeave={() => setHoveredTarget(null)}
-                className="group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid cursor-pointer grid-rows-[auto_6rem] gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60"
+                className="group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid cursor-pointer grid-rows-[auto_6.5rem] gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60"
               >
                 <input
                   aria-describedby={explanationId}
@@ -90,7 +90,7 @@ export default function ChallengeDifficultyChoices({
                 {animal === null ? (
                   <span aria-hidden="true" />
                 ) : (
-                  <span className="w-full justify-self-center">
+                  <span className="h-full w-full justify-self-center">
                     <ChallengeAnimalPortrait
                       key={animal.id}
                       opponent={animal}

@@ -70,7 +70,7 @@ export type SpriteAssetManifest<
 > = Readonly<{
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   calmFrameDurationMilliseconds?: number
-  attentionAnimationId?: AnimationId
+  attentionAnimationIds?: readonly [AnimationId, ...AnimationId[]]
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
   sourceFacing: SpriteFacing
@@ -163,19 +163,29 @@ export const resolveSpriteAttention = <
 >(
   manifest: SpriteAssetManifest<AnimationId, SourceId>,
   availableSourceIds: readonly SourceId[],
-): ResolvedSpriteStep<AnimationId, SourceId> | null =>
-  manifest.attentionAnimationId === undefined
-    ? null
-    : resolveStep(
-        manifest,
-        {
-          animationIds: [manifest.attentionAnimationId],
-          beat: "idle",
-          playback: "once",
-        },
-        availableSourceIds,
-        PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
-      )
+  variationOrdinal = 0,
+): ResolvedSpriteStep<AnimationId, SourceId> | null => {
+  const candidates = manifest.attentionAnimationIds
+  if (candidates === undefined) return null
+  const selectedIndex = variationOrdinal % candidates.length
+  for (const animationId of [
+    ...candidates.slice(selectedIndex),
+    ...candidates.slice(0, selectedIndex),
+  ]) {
+    const step = resolveStep(
+      manifest,
+      {
+        animationIds: [animationId],
+        beat: "idle",
+        playback: "once",
+      },
+      availableSourceIds,
+      PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+    )
+    if (step !== null) return step
+  }
+  return null
+}
 
 export default function resolveSpritePresentation<
   AnimationId extends string,

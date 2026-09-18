@@ -87,9 +87,14 @@ const availableSources = (
 
 export const resolveWebOpponentAttention = (
   opponentId: StockfishOpponentId,
+  variationOrdinal = 0,
 ): ResolvedSpriteStep<string, string> | null => {
   const manifest = opponentManifest(opponentId)
-  return resolveSpriteAttention(manifest, availableSources(manifest))
+  return resolveSpriteAttention(
+    manifest,
+    availableSources(manifest),
+    variationOrdinal,
+  )
 }
 
 export default function resolveWebOpponentPresentation(
