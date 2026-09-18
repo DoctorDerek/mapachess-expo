@@ -1,6 +1,6 @@
 const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
   axolotl: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["crouch"],
     sourceAnimalId: "lilaxolotl",
     relativeDirectory: "battle/axolotl",
     filePrefix: "lilaxolotl",
@@ -29,7 +29,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   parrot: {
-    attentionAnimationId: "idle_caw",
+    attentionAnimationIds: ["idle_caw"],
     sourceAnimalId: "parrot",
     relativeDirectory: "battle/parrot",
     filePrefix: "parrot",
@@ -53,7 +53,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   hedgehog: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["crouch"],
     sourceAnimalId: "lilhedgehog",
     relativeDirectory: "battle/hedgehog",
     filePrefix: "lilhedgehog",
@@ -79,7 +79,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   deer: {
-    attentionAnimationId: "alerted",
+    attentionAnimationIds: ["alerted", "crouch"],
     sourceAnimalId: "deer_female",
     relativeDirectory: "battle/deer",
     filePrefix: "deer_female",
@@ -104,7 +104,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   fox: {
-    attentionAnimationId: "bark",
+    attentionAnimationIds: ["bark", "howl", "crouch"],
     sourceAnimalId: "fox",
     relativeDirectory: "battle/fox",
     filePrefix: "fox",
@@ -130,7 +130,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   wolf: {
-    attentionAnimationId: "howl",
+    attentionAnimationIds: ["growl", "howl", "crouch"],
     sourceAnimalId: "wolf",
     relativeDirectory: "battle/wolf",
     filePrefix: "wolf",
@@ -156,7 +156,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   falcon: {
-    attentionAnimationId: "idle_call",
+    attentionAnimationIds: ["idle_call"],
     sourceAnimalId: "falcon",
     relativeDirectory: "battle/falcon",
     filePrefix: "falcon",
@@ -181,7 +181,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   crane: {
-    attentionAnimationId: "peck",
+    attentionAnimationIds: ["display", "call"],
     sourceAnimalId: "redcrane",
     relativeDirectory: "battle/crane",
     filePrefix: "redcrane",
@@ -207,7 +207,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   crow: {
-    attentionAnimationId: "idle_caw",
+    attentionAnimationIds: ["idle_caw"],
     sourceAnimalId: "crow",
     relativeDirectory: "battle/crow",
     filePrefix: "crow",
@@ -231,7 +231,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   bat: {
-    attentionAnimationId: "idle_upright_blink",
+    attentionAnimationIds: ["crouch"],
     referenceAnimation: "idle_upright",
     sourceAnimalId: "bat",
     relativeDirectory: "battle/bat",
@@ -307,7 +307,7 @@ const REMAINING_STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   dragonfly: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["crouch"],
     sourceAnimalId: "dragonfly01",
     relativeDirectory: "battle/dragonfly",
     filePrefix: "dragonfly01",

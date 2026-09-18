@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./animal-attention-machine": {
+      "types": "./src/animalAttentionMachine.ts",
+      "default": "./dist/animalAttentionMachine.js"
+    },
     "./animal-opponent": {
       "types": "./src/animalOpponent.ts",
       "default": "./dist/animalOpponent.js"

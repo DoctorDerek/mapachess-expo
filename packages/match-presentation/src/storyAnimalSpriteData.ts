@@ -1,6 +1,6 @@
 const STORY_ANIMAL_SPRITE_DATA = {
   bunny: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["idle_blink"],
     sourceAnimalId: "bunnypack",
     relativeDirectory: "battle/bunny",
     filePrefix: "bunny",
@@ -23,7 +23,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   dog: {
-    attentionAnimationId: "bark",
+    attentionAnimationIds: ["bark", "growl", "crouch"],
     sourceAnimalId: "dogpack",
     relativeDirectory: "battle/dog",
     filePrefix: "dog",
@@ -50,7 +50,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   cat: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["crouch"],
     sourceAnimalId: "catset/cat03_orange",
     relativeDirectory: "battle/cat",
     filePrefix: "cat03",
@@ -82,7 +82,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   mouse: {
-    attentionAnimationId: "sniff",
+    attentionAnimationIds: ["sniff"],
     sourceAnimalId: "mousepack/mouse03_light_gray",
     relativeDirectory: "battle/mouse",
     filePrefix: "mouse03",
@@ -104,7 +104,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   frog: {
-    attentionAnimationId: "croak",
+    attentionAnimationIds: ["croak"],
     sourceAnimalId: "frogpack",
     relativeDirectory: "battle/frog",
     filePrefix: "frog",
@@ -131,7 +131,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   turtle: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["idle_blink"],
     sourceAnimalId: "turtle",
     relativeDirectory: "battle/turtle",
     filePrefix: "turtle",
@@ -156,7 +156,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   panda: {
-    attentionAnimationId: "idle_laugh",
+    attentionAnimationIds: ["idle_laugh"],
     sourceAnimalId: "pandapack",
     relativeDirectory: "battle/panda",
     filePrefix: "panda",
@@ -183,7 +183,7 @@ const STORY_ANIMAL_SPRITE_DATA = {
     },
   },
   otter: {
-    attentionAnimationId: "idle_blink",
+    attentionAnimationIds: ["crouch"],
     sourceAnimalId: "lilotter",
     relativeDirectory: "battle/otter",
     filePrefix: "lilotter",

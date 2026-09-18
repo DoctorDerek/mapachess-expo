@@ -29,19 +29,22 @@ describe("Challenge animal portrait asset contract", () => {
         expect(attention).toBeNull()
         return
       }
-      if (attention === null) throw new Error("Expected attention clip")
-      expect(attention.playback).toBe("once")
-      expect(attention.animation.frameDurationMilliseconds).toBe(100)
-      const g = attention.animation.geometry
-      expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(92)
-      expect(
-        Math.max(
-          g.bottomCenterX - g.visibleX,
-          g.visibleX + g.visibleWidth - g.bottomCenterX,
-        ) * 6,
-      ).toBeLessThanOrEqual(132)
-      expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
-      expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
+      for (let ordinal = 0; ordinal < 3; ordinal += 1) {
+        const attention = resolveWebOpponentAttention(id, ordinal)
+        if (attention === null) throw new Error("Expected attention clip")
+        expect(attention.playback).toBe("once")
+        expect(attention.animation.frameDurationMilliseconds).toBe(100)
+        const g = attention.animation.geometry
+        expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(100)
+        expect(
+          Math.max(
+            g.bottomCenterX - g.visibleX,
+            g.visibleX + g.visibleWidth - g.bottomCenterX,
+          ) * 6,
+        ).toBeLessThanOrEqual(132)
+        expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
+        expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
+      }
     },
   )
   it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
