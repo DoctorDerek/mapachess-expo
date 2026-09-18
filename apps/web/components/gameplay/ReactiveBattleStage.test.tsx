@@ -4,7 +4,9 @@ import { createElement, Fragment, type ComponentPropsWithoutRef } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { afterAll, describe, expect, it, vi } from "vitest"
 import { createActor } from "xstate"
-import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
+import matchPresentationMachine, {
+  selectMatchPresentationVariationOrdinal,
+} from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationPhase } from "@mapachess/match-presentation/match-reaction"
 import resolveSpritePresentation from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
@@ -87,7 +89,10 @@ describe("Reactive Battle Stage web presentation", () => {
         const chosen = resolveWebOpponentPresentation(
           opponentId,
           PLAYER_CAPTURE_PHASE.player,
-          sequence,
+          selectMatchPresentationVariationOrdinal(
+            actor.getSnapshot(),
+            "player",
+          ),
         )
         if (chosen.kind !== "sprite")
           throw new Error("Expected licensed sprite")
@@ -108,7 +113,10 @@ describe("Reactive Battle Stage web presentation", () => {
         const resting = resolveWebOpponentPresentation(
           opponentId,
           { family: "idle" },
-          sequence,
+          selectMatchPresentationVariationOrdinal(
+            actor.getSnapshot(),
+            "player",
+          ),
         )
         if (resting.kind !== "sprite")
           throw new Error("Expected licensed sprite")
@@ -129,7 +137,11 @@ describe("Reactive Battle Stage web presentation", () => {
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
       expect(selectedPlans[2]).toEqual(selectedPlans[0])
       if (opponentId === "dog-stockfish") {
-        expect(restingPlans).toEqual([["sit"], ["idle_blink"], ["sit"]])
+        expect(restingPlans).toEqual([
+          ["idle_blink"],
+          ["idle_blink"],
+          ["idle_blink"],
+        ])
       }
       actor.stop()
     },
@@ -187,7 +199,7 @@ describe("Reactive Battle Stage web presentation", () => {
     const chosen = resolveWebOpponentPresentation(
       "raccoon-stockfish",
       PLAYER_CAPTURE_PHASE.player,
-      sequence,
+      selectMatchPresentationVariationOrdinal(actor.getSnapshot(), "player"),
     )
     for (let beat = 0; beat < 4; beat += 1) {
       const snapshot = actor.getSnapshot()
@@ -196,7 +208,7 @@ describe("Reactive Battle Stage web presentation", () => {
         resolveWebOpponentPresentation(
           "raccoon-stockfish",
           PLAYER_CAPTURE_PHASE.player,
-          snapshot.context.reactionSequence,
+          selectMatchPresentationVariationOrdinal(snapshot, "player"),
         ),
       ).toEqual(chosen)
       for (const participant of snapshot.context.pendingParticipants)

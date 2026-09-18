@@ -184,7 +184,7 @@ export default function resolveSpritePresentation<
   manifest: SpriteAssetManifest<AnimationId, SourceId>,
   reaction: MatchParticipantReaction,
   availableSourceIds: readonly SourceId[],
-  reactionSequence = 0,
+  variationOrdinal = 0,
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
   const eligibleGeometry = [
@@ -238,7 +238,7 @@ export default function resolveSpritePresentation<
     manifest.reactionPlans[reactionSlot],
     ...(manifest.reactionAlternatives?.[reactionSlot] ?? []),
   ]
-  const selectedIndex = reactionSequence % candidates.length
+  const selectedIndex = variationOrdinal % candidates.length
   const selectedPlan =
     [
       ...candidates.slice(selectedIndex),
