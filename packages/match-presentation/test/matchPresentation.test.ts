@@ -336,7 +336,7 @@ describe("match presentation contracts", () => {
     })
   })
 
-  it("keeps an available strike after a missing locomotion step uses idle", () => {
+  it("rejects an incomplete attack rather than substituting its missing approach", () => {
     const manifest = {
       ...SPRITE_MANIFEST,
       reactionPlans: {
@@ -359,12 +359,64 @@ describe("match presentation contracts", () => {
       reactionSlot: "capture-attacker",
       referenceGeometry: TEST_FRAME_GEOMETRY,
       sourceFacing: "right",
-      steps: [
-        { animationId: "idle", beat: "approach", playback: "once" },
-        { animationId: "fallback", beat: "strike", playback: "once" },
-      ],
+      steps: [{ animationId: "idle", beat: "idle", playback: "loop" }],
     })
   })
+
+  it.each(["approach", "strike", "recovery"] as const)(
+    "rejects the whole attack when %s is unavailable without cancelling the victim",
+    (missingBeat) => {
+      const step = (
+        beat: "approach" | "strike" | "recovery",
+      ): SpriteReactionStep<TestAnimationId> => ({
+        animationIds: [beat === missingBeat ? "preferred" : "fallback"],
+        beat,
+        playback: "once",
+      })
+      const manifest = {
+        ...SPRITE_MANIFEST,
+        calmFrameDurationMilliseconds: 160,
+        reactionPlans: {
+          ...SPRITE_MANIFEST.reactionPlans,
+          "capture-attacker": [
+            step("approach"),
+            step("strike"),
+            step("recovery"),
+          ],
+        },
+      } satisfies SpriteAssetManifest<TestAnimationId, TestSourceId>
+      const attacker = { family: "capture", role: "attacker" } as const
+      expect(
+        resolveSpritePresentation(manifest, attacker, [
+          "idle-source",
+          "fallback-source",
+        ]),
+      ).toMatchObject({
+        steps: [
+          {
+            animationId: "idle",
+            beat: "idle",
+            playback: "loop",
+            animation: { frameDurationMilliseconds: 160 },
+          },
+        ],
+      })
+      expect(
+        resolveSpritePresentation(manifest, attacker, ["fallback-source"]),
+      ).toMatchObject({ kind: "authored-fallback" })
+      expect(
+        resolveSpritePresentation(
+          manifest,
+          { family: "capture", role: "victim" },
+          ["fallback-source"],
+        ),
+      ).toMatchObject({
+        steps: [
+          { animationId: "fallback", beat: "reaction", playback: "once" },
+        ],
+      })
+    },
+  )
 
   it("uses valid idle for a missing terminal clip without replacing available death playback", () => {
     expect(
