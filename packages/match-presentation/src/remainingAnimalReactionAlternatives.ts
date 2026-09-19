@@ -132,6 +132,13 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   },
   crane: {
     idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
+    "capture-attacker": [
+      [
+        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["peck"], beat: "strike", playback: "once" },
+        { animationIds: ["run"], beat: "recovery", playback: "once" },
+      ],
+    ],
     victory: [
       [
         { animationIds: ["display"], beat: "conclusion", playback: "once" },
@@ -172,6 +179,11 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   dragonfly: {
     idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
+      [
+        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["run"], beat: "recovery", playback: "once" },
+      ],
       [
         { animationIds: ["fly_forward"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },

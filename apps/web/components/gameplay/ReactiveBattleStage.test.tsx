@@ -72,7 +72,13 @@ afterAll(() => {
 })
 
 describe("Reactive Battle Stage web presentation", () => {
-  it.each(["chicken-stockfish", "raccoon-stockfish", "dog-stockfish"] as const)(
+  it.each([
+    "chicken-stockfish",
+    "raccoon-stockfish",
+    "dog-stockfish",
+    "crane-stockfish",
+    "dragonfly-stockfish",
+  ] as const)(
     "%s varies across completed actor-driven reactions without consuming a choice on settlement",
     (opponentId) => {
       const actor = createActor(matchPresentationMachine, {
@@ -80,7 +86,10 @@ describe("Reactive Battle Stage web presentation", () => {
       }).start()
       const selectedPlans: string[][] = []
       const restingPlans: string[][] = []
-      const period = opponentId === "dog-stockfish" ? 3 : 2
+      const period =
+        opponentId === "dog-stockfish" || opponentId === "dragonfly-stockfish"
+          ? 3
+          : 2
       for (let iteration = 0; iteration <= period; iteration += 1) {
         actor.send({
           phases: [PLAYER_CAPTURE_PHASE],
@@ -137,6 +146,28 @@ describe("Reactive Battle Stage web presentation", () => {
       }
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
       expect(selectedPlans[period]).toEqual(selectedPlans[0])
+      if (opponentId === "raccoon-stockfish") {
+        expect(selectedPlans).toEqual([
+          ["run", "attack", "run"],
+          ["dash", "attack", "dash"],
+          ["run", "attack", "run"],
+        ])
+      }
+      if (opponentId === "crane-stockfish") {
+        expect(selectedPlans).toEqual([
+          ["walk", "attack", "walk"],
+          ["run", "peck", "run"],
+          ["walk", "attack", "walk"],
+        ])
+      }
+      if (opponentId === "dragonfly-stockfish") {
+        expect(selectedPlans).toEqual([
+          ["walk", "attack", "walk"],
+          ["run", "attack", "run"],
+          ["fly_forward", "attack", "land"],
+          ["walk", "attack", "walk"],
+        ])
+      }
       if (opponentId === "dog-stockfish") {
         expect(selectedPlans).toEqual([
           ["walk", "attack", "walk"],

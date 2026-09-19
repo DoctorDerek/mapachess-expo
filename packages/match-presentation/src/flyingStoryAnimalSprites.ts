@@ -82,7 +82,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
     {
       idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
-        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
@@ -202,7 +202,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
     {
       idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
-        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],

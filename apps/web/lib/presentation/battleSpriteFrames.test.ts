@@ -15,6 +15,64 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it("keeps Raccoon captures as whole shared recipes without replacing an attack with a bark", () => {
+    const manifest = MAPACHITO_SPRITE_MANIFEST
+    const sources = Object.values(MAPACHITO_SPRITE_SOURCES)
+    const reaction = { family: "capture", role: "attacker" } as const
+    for (const [ordinal, travel] of ["run", "dash", "run"].entries()) {
+      const result = resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources,
+        ordinal,
+      )
+      if (result.kind !== "sprite") throw new Error("Expected licensed sprite")
+      expect(result.steps.map(({ animationId }) => animationId)).toEqual([
+        travel,
+        "attack",
+        travel,
+      ])
+      expect(
+        result.steps.every(
+          ({ playback, animation }) =>
+            playback === "once" && animation.frameDurationMilliseconds === 100,
+        ),
+      ).toBe(true)
+    }
+    for (const [missing, ordinal, fallback] of [
+      ["run", 0, 1],
+      ["dash", 1, 0],
+    ] as const) {
+      expect(
+        resolveSpritePresentation(
+          manifest,
+          reaction,
+          sources.filter(
+            (source) => source !== MAPACHITO_SPRITE_SOURCES[missing],
+          ),
+          ordinal,
+        ),
+      ).toEqual(
+        resolveSpritePresentation(manifest, reaction, sources, fallback),
+      )
+    }
+    expect(
+      resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources.filter((source) => source !== MAPACHITO_SPRITE_SOURCES.attack),
+      ),
+    ).toMatchObject({
+      kind: "sprite",
+      steps: [
+        {
+          animationId: "idle",
+          playback: "loop",
+          animation: { frameDurationMilliseconds: 160 },
+        },
+      ],
+    })
+  })
   it.each([CHICKEN_SPRITE_MANIFEST, MAPACHITO_SPRITE_MANIFEST])(
     "resolves calm animal pacing while preserving action and recovery pacing",
     (manifest: SpriteAssetManifest<string, string>) => {
