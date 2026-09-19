@@ -126,7 +126,7 @@ describe("complete Story animal presentation", () => {
       ["takeoff", "soar", "fall", "land", "idle_caw"],
     ],
     ["bat-stockfish", "check", ["fly_forward", "fly_idle", "land_upright"]],
-    ["dragonfly-stockfish", "capture", ["fly_forward", "attack", "land"]],
+    ["dragonfly-stockfish", "capture", ["run", "attack", "run"]],
   ] as const)(
     "%s retains a complete source-specific alternative and stable geometry",
     (id, family, expected) => {
@@ -260,6 +260,7 @@ describe("complete Story animal presentation", () => {
     ["deer-stockfish", ["run", "dash"], ["attack01", "attack02"]],
     ["fox-stockfish", ["run", "dash"], ["attack"]],
     ["wolf-stockfish", ["run", "dash"], ["attack"]],
+    ["crane-stockfish", ["walk", "run"], ["attack", "peck"]],
   ] as const)(
     "%s uses complete shared grounded capture recipes in the approved order",
     (id, locomotion, attacks) => {
@@ -353,6 +354,83 @@ describe("complete Story animal presentation", () => {
       })
     },
   )
+
+  it("keeps Dragonfly ground and airborne captures complete across selection and source failure", () => {
+    const manifest = STORY_ANIMAL_SPRITES["dragonfly-stockfish"]
+    const reaction = { family: "capture", role: "attacker" } as const
+    const sources = Object.values(manifest.animations).map(
+      ({ sourceId }) => sourceId,
+    )
+    const recipes = [
+      ["walk", "attack", "walk"],
+      ["run", "attack", "run"],
+      ["fly_forward", "attack", "land"],
+      ["walk", "attack", "walk"],
+    ]
+    for (const [ordinal, expected] of recipes.entries()) {
+      const result = resolveSpritePresentation(
+        manifest,
+        reaction,
+        sources,
+        ordinal,
+      )
+      if (result.kind !== "sprite") throw new Error("Expected licensed sprite")
+      expect(result.steps.map(({ animationId }) => animationId)).toEqual(
+        expected,
+      )
+      expect(result.steps.map(({ beat }) => beat)).toEqual([
+        "approach",
+        "strike",
+        "recovery",
+      ])
+      expect(
+        result.steps.every(
+          ({ playback, animation }) =>
+            playback === "once" && animation.frameDurationMilliseconds === 100,
+        ),
+      ).toBe(true)
+      expect(
+        resolveSpritePresentation(manifest, reaction, sources, ordinal),
+      ).toEqual(result)
+    }
+    for (const missing of ["fly_forward", "land"] as const) {
+      expect(
+        resolveSpritePresentation(
+          manifest,
+          reaction,
+          Object.entries(manifest.animations)
+            .filter(([id]) => id !== missing)
+            .map(([, animation]) => animation.sourceId),
+          2,
+        ),
+      ).toEqual(resolveSpritePresentation(manifest, reaction, sources, 0))
+    }
+    const withoutGroundTravel = Object.entries(manifest.animations)
+      .filter(([id]) => id !== "walk" && id !== "run")
+      .map(([, animation]) => animation.sourceId)
+    expect(
+      resolveSpritePresentation(manifest, reaction, withoutGroundTravel, 0),
+    ).toEqual(resolveSpritePresentation(manifest, reaction, sources, 2))
+    expect(
+      resolveSpritePresentation(
+        manifest,
+        reaction,
+        Object.entries(manifest.animations)
+          .filter(([id]) => id !== "attack")
+          .map(([, animation]) => animation.sourceId),
+        2,
+      ),
+    ).toMatchObject({
+      kind: "sprite",
+      steps: [
+        {
+          animationId: "idle",
+          playback: "loop",
+          animation: { frameDurationMilliseconds: 160 },
+        },
+      ],
+    })
+  })
 
   it.each([
     ["dog-stockfish", ["walk", "growl", "walk"]],

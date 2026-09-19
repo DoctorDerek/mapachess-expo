@@ -432,9 +432,9 @@ export const MAPACHITO_SPRITE_MANIFEST = {
     ],
     "capture-attacker": [
       [
-        { animationIds: ["run", "dash"], beat: "approach", playback: "once" },
-        { animationIds: ["attack", "bark"], beat: "strike", playback: "once" },
-        { animationIds: ["dash", "run"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
       ],
     ],
     "check-attacker": [
@@ -456,9 +456,9 @@ export const MAPACHITO_SPRITE_MANIFEST = {
   },
   reactionPlans: {
     "capture-attacker": [
-      { animationIds: ["dash", "run"], beat: "approach", playback: "once" },
-      { animationIds: ["attack", "bark"], beat: "strike", playback: "once" },
-      { animationIds: ["run", "dash"], beat: "recovery", playback: "once" },
+      { animationIds: ["run"], beat: "approach", playback: "once" },
+      { animationIds: ["attack"], beat: "strike", playback: "once" },
+      { animationIds: ["run"], beat: "recovery", playback: "once" },
     ],
     "capture-victim": [
       { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
