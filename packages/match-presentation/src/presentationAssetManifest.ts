@@ -71,6 +71,7 @@ export type SpriteAssetManifest<
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   calmFrameDurationMilliseconds?: number
   attentionAnimationIds?: readonly [AnimationId, ...AnimationId[]]
+  repeatVictory?: true
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
   sourceFacing: SpriteFacing
@@ -104,6 +105,7 @@ export type ResolvedSpritePresentation<
   (
     | Readonly<{
         kind: "sprite"
+        repeatSequence?: true
         reactionSlot: MatchSpriteReactionSlot
         referenceGeometry: SpriteFrameGeometry
         sourceFacing: SpriteFacing
@@ -301,6 +303,11 @@ export default function resolveSpritePresentation<
     ? Object.freeze({ kind: "authored-fallback", reactionSlot, layout })
     : Object.freeze({
         kind: "sprite",
+        ...(completeSequenceAvailable &&
+        reactionSlot === "victory" &&
+        manifest.repeatVictory
+          ? { repeatSequence: true as const }
+          : {}),
         layout,
         reactionSlot,
         referenceGeometry: manifest.referenceGeometry,

@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./create-celebration-recipe": {
+      "types": "./src/createCelebrationRecipe.ts",
+      "default": "./dist/createCelebrationRecipe.js"
+    },
     "./animal-attention-machine": {
       "types": "./src/animalAttentionMachine.ts",
       "default": "./dist/animalAttentionMachine.js"
