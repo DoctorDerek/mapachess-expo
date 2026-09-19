@@ -21,7 +21,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["idle_caw"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
@@ -58,7 +58,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["idle_call"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
@@ -129,7 +129,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["idle_caw"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
@@ -172,7 +172,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
         { animationIds: ["land_upright"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["crouch"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {

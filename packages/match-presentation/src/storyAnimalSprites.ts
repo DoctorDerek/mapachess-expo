@@ -131,7 +131,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
         { animationIds: ["run"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["sniff"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
@@ -276,7 +276,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["crouch"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
