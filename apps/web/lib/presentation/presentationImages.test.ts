@@ -5,6 +5,19 @@ import createPresentationImages, {
 } from "./presentationImages"
 
 describe("presentation image ownership", () => {
+  it("rejects a sequence if an earlier decoded source is released while a partner loads", async () => {
+    const landing = Promise.withResolvers<boolean>()
+    const images = createPresentationImages((source) => ({
+      ready: source === "land" ? landing.promise : Promise.resolve(true),
+      release: vi.fn(),
+    }))
+    const sequence = images.prepare(["jump", "land"])
+    expect(await images.prepare(["jump"])).toBe(true)
+    images.retain(["land"])
+    landing.resolve(true)
+    expect(await sequence).toBe(false)
+  })
+
   it("makes the first clip usable while a later clip is still decoding", async () => {
     const first = Promise.withResolvers<boolean>()
     const later = Promise.withResolvers<boolean>()
