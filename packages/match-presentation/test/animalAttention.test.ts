@@ -5,6 +5,30 @@ import { resolveSpriteAttention } from "../src/presentationAssetManifest.js"
 import STORY_ANIMAL_SPRITES from "../src/storyAnimalSprites.js"
 
 describe("shared animal attention", () => {
+  it("retains calm selection through attention and advances only on surface reentry", () => {
+    const actor = createActor(animalAttentionMachine).start()
+    const input = (active: boolean, attention = false) =>
+      actor.send({ type: "ANIMAL_ATTENTION.INPUT_CHANGED", active, attention })
+    input(false)
+    expect(actor.getSnapshot().context.calmOrdinal).toBe(-1)
+    input(true)
+    input(true)
+    input(true, true)
+    actor.send({ type: "ANIMAL_ATTENTION.COMPLETED", ordinal: 0 })
+    input(true, false)
+    input(true, true)
+    expect(actor.getSnapshot().context.calmOrdinal).toBe(0)
+    input(false, true)
+    input(true, true)
+    expect(actor.getSnapshot().context.calmOrdinal).toBe(1)
+    expect(actor.getSnapshot().matches("resting")).toBe(true)
+    actor.send({ type: "ANIMAL_ATTENTION.COMPLETED", ordinal: 0 })
+    expect(actor.getSnapshot().context.calmOrdinal).toBe(1)
+    actor.stop()
+    const fresh = createActor(animalAttentionMachine).start()
+    expect(fresh.getSnapshot().context.calmOrdinal).toBe(-1)
+    fresh.stop()
+  })
   it("advances only on a new combined input entry and ignores stale completion", () => {
     const actor = createActor(animalAttentionMachine).start()
     const input = (attention: boolean, active = true) =>

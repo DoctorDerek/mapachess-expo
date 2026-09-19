@@ -137,11 +137,7 @@ describe("Reactive Battle Stage web presentation", () => {
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
       expect(selectedPlans[2]).toEqual(selectedPlans[0])
       if (opponentId === "dog-stockfish") {
-        expect(restingPlans).toEqual([
-          ["idle_blink"],
-          ["idle_blink"],
-          ["idle_blink"],
-        ])
+        expect(restingPlans).toEqual([["idle"], ["idle"], ["idle"]])
       }
       actor.stop()
     },

@@ -230,7 +230,11 @@ export default function resolveSpritePresentation<
       ),
     }),
   })
-  const idleStep = manifest.reactionPlans.idle
+  const idleStep = [
+    manifest.reactionPlans.idle,
+    ...(manifest.reactionAlternatives?.idle ?? []),
+  ]
+    .flat()
     .map((step) =>
       resolveStep(
         manifest,

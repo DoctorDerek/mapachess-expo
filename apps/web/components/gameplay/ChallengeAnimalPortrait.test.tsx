@@ -21,6 +21,52 @@ afterAll(() => {
 })
 
 describe("Challenge animal portrait asset contract", () => {
+  it.each([
+    ["chicken-stockfish", ["idle", "idle-blink", "sit"]],
+    ["raccoon-stockfish", ["idle", "idle-blink", "sit-one", "sit-two"]],
+    ["bunny-stockfish", ["idle", "idle_blink", "sit"]],
+    ["dog-stockfish", ["idle", "idle_blink", "sit"]],
+    ["cat-stockfish", ["idle", "idle_blink", "sit"]],
+    ["mouse-stockfish", ["idle", "idle_blink"]],
+    ["frog-stockfish", ["idle"]],
+    ["turtle-stockfish", ["idle", "idle_blink"]],
+    ["panda-stockfish", ["idle", "idle_laugh"]],
+    ["otter-stockfish", ["idle", "idle_blink", "sit"]],
+    ["axolotl-stockfish", ["idle", "idle_blink", "sit"]],
+    ["hedgehog-stockfish", ["idle", "idle_blink"]],
+    ["deer-stockfish", ["idle", "eat"]],
+    ["fox-stockfish", ["idle", "idle_blink", "sit01", "sit02"]],
+    ["wolf-stockfish", ["idle", "idle_blink", "sit"]],
+    ["falcon-stockfish", ["idle", "idle_call"]],
+    ["crane-stockfish", ["idle", "idle_blink"]],
+    ["crow-stockfish", ["idle", "idle_caw"]],
+    ["parrot-stockfish", ["idle", "idle_caw"]],
+    ["bat-stockfish", ["idle_upright", "idle_upright_blink"]],
+    ["dragonfly-stockfish", ["idle", "idle_blink"]],
+  ] as const)("uses the shared ordered calm pool for %s", (id, pool) => {
+    for (let ordinal = 0; ordinal <= pool.length; ordinal += 1) {
+      const result = resolveWebOpponentPresentation(
+        id,
+        { family: "idle" },
+        ordinal,
+      )
+      if (result.kind !== "sprite") throw new Error("Expected licensed sprite")
+      expect(result.steps).toHaveLength(1)
+      const step = result.steps[0]
+      expect(step.animationId).toBe(pool[ordinal % pool.length])
+      expect(step.playback).toBe("loop")
+      expect(step.animation.frameDurationMilliseconds).toBe(160)
+      const g = step.animation.geometry
+      expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(100)
+      expect(
+        Math.max(
+          g.bottomCenterX - g.visibleX,
+          g.visibleX + g.visibleWidth - g.bottomCenterX,
+        ) * 6,
+      ).toBeLessThanOrEqual(132)
+      expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
+    }
+  })
   it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
     "keeps %s attention source-authored, bounded and at action pacing",
     (id) => {
