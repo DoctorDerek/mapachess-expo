@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { MatchParticipantReaction } from "../src/matchReaction"
 import resolveSpritePresentation, {
+  matchSpriteReactionSlot,
   resolveSpriteAttention,
   type SpriteAssetManifest,
 } from "../src/presentationAssetManifest"
@@ -98,15 +99,15 @@ describe("complete Story animal presentation", () => {
   )
 
   it.each([
-    ["axolotl-stockfish", "capture", ["dash", "attack", "walk"]],
+    ["axolotl-stockfish", "capture", ["run", "attack", "run"]],
     ["axolotl-stockfish", "check", ["sneak", "attack", "walk"]],
-    ["hedgehog-stockfish", "capture", ["dash", "attack", "walk"]],
+    ["hedgehog-stockfish", "capture", ["run", "attack", "run"]],
     ["hedgehog-stockfish", "check", ["sneak", "attack", "walk"]],
-    ["deer-stockfish", "capture", ["dash", "attack02", "run"]],
+    ["deer-stockfish", "capture", ["dash", "attack02", "dash"]],
     ["deer-stockfish", "check", ["run", "alerted", "run"]],
-    ["fox-stockfish", "capture", ["dash", "attack", "run"]],
+    ["fox-stockfish", "capture", ["dash", "attack", "dash"]],
     ["fox-stockfish", "victory", ["howl"]],
-    ["wolf-stockfish", "capture", ["dash", "attack", "run"]],
+    ["wolf-stockfish", "capture", ["dash", "attack", "dash"]],
     ["wolf-stockfish", "victory", ["howl"]],
     [
       "parrot-stockfish",
@@ -149,9 +150,13 @@ describe("complete Story animal presentation", () => {
       expect(resolveSpritePresentation(manifest, reaction, sources, 1)).toEqual(
         alternative,
       )
-      expect(resolveSpritePresentation(manifest, reaction, sources, 2)).toEqual(
-        resolveSpritePresentation(manifest, reaction, sources, 0),
-      )
+      const period =
+        1 +
+        (manifest.reactionAlternatives?.[matchSpriteReactionSlot(reaction)]
+          ?.length ?? 0)
+      expect(
+        resolveSpritePresentation(manifest, reaction, sources, period),
+      ).toEqual(resolveSpritePresentation(manifest, reaction, sources, 0))
       expect(alternative.layout).toEqual(
         resolveSpritePresentation(
           { ...manifest, reactionAlternatives: {} },
@@ -242,52 +247,61 @@ describe("complete Story animal presentation", () => {
     },
   )
   it.each([
-    ["bunny-stockfish", "dash"],
-    ["dog-stockfish", "dash"],
-    ["cat-stockfish", "dash"],
-    ["mouse-stockfish", "dash"],
-    ["turtle-stockfish", "run"],
-    ["panda-stockfish", "run"],
-    ["otter-stockfish", "dash"],
+    ["bunny-stockfish", ["run", "dash"], ["attack"]],
+    ["dog-stockfish", ["walk", "run", "dash"], ["attack"]],
+    ["cat-stockfish", ["walk", "run", "dash", "sneak"], ["attack"]],
+    ["mouse-stockfish", ["run", "dash"], ["attack"]],
+    ["frog-stockfish", ["hop"], ["attackforward"]],
+    ["turtle-stockfish", ["walk", "run"], ["attack"]],
+    ["panda-stockfish", ["run"], ["attack01", "attack02", "bite"]],
+    ["otter-stockfish", ["walk", "run", "dash", "sneak"], ["attack"]],
+    ["axolotl-stockfish", ["walk", "run", "dash", "sneak"], ["attack"]],
+    ["hedgehog-stockfish", ["walk", "run", "dash", "sneak"], ["attack"]],
+    ["deer-stockfish", ["run", "dash"], ["attack01", "attack02"]],
+    ["fox-stockfish", ["run", "dash"], ["attack"]],
+    ["wolf-stockfish", ["run", "dash"], ["attack"]],
   ] as const)(
-    "%s selects a complete ground alternative without changing reserved scale or clearance",
-    (id, approach) => {
+    "%s uses complete shared grounded capture recipes in the approved order",
+    (id, locomotion, attacks) => {
       const manifest = STORY_ANIMAL_SPRITES[id]
       const sources = Object.values(manifest.animations).map(
         ({ sourceId }) => sourceId,
       )
       const reaction = { family: "capture", role: "attacker" } as const
-      const base = resolveSpritePresentation(manifest, reaction, sources, 0)
-      const alternative = resolveSpritePresentation(
-        manifest,
-        reaction,
-        sources,
-        1,
-      )
-      if (base.kind !== "sprite" || alternative.kind !== "sprite")
-        throw new Error("Expected licensed sprite")
-      expect(alternative.steps.map(({ beat }) => beat)).toEqual([
-        "approach",
-        "strike",
-        "recovery",
-      ])
-      expect(alternative.steps[0].animationId).toBe(approach)
-      expect(
-        alternative.steps.map(({ animationId }) => animationId),
-      ).not.toEqual(base.steps.map(({ animationId }) => animationId))
-      expect(resolveSpritePresentation(manifest, reaction, sources, 1)).toEqual(
-        alternative,
-      )
-      expect(resolveSpritePresentation(manifest, reaction, sources, 2)).toEqual(
-        base,
-      )
-      expect(alternative.layout).toEqual(
-        resolveSpritePresentation(
-          { ...manifest, reactionAlternatives: {} },
+      const period = Math.max(locomotion.length, attacks.length)
+      for (let ordinal = 0; ordinal <= period; ordinal += 1) {
+        const result = resolveSpritePresentation(
+          manifest,
           reaction,
           sources,
-        ).layout,
-      )
+          ordinal,
+        )
+        if (result.kind !== "sprite")
+          throw new Error("Expected licensed sprite")
+        const travel = locomotion[ordinal % locomotion.length]
+        const attack = attacks[ordinal % attacks.length]
+        expect(result.steps.map(({ animationId }) => animationId)).toEqual([
+          travel,
+          attack,
+          travel,
+        ])
+        expect(result.steps.map(({ beat }) => beat)).toEqual([
+          "approach",
+          "strike",
+          "recovery",
+        ])
+        expect(
+          result.steps.every(
+            ({ playback, animation }) =>
+              playback === "once" &&
+              animation.frameDurationMilliseconds === 100,
+          ),
+        ).toBe(true)
+        expect(
+          resolveSpritePresentation(manifest, reaction, sources, ordinal),
+        ).toEqual(result)
+        expect(result.layout.standaloneScale).toBe(3)
+      }
       for (const currentReaction of REACTIONS) {
         const resolved = resolveSpritePresentation(
           manifest,
@@ -307,6 +321,36 @@ describe("complete Story animal presentation", () => {
           )
         }
       }
+      const withoutFirstTravel = Object.entries(manifest.animations)
+        .filter(([id]) => id !== locomotion[0])
+        .map(([, animation]) => animation.sourceId)
+      const fallback = resolveSpritePresentation(
+        manifest,
+        reaction,
+        withoutFirstTravel,
+      )
+      if (fallback.kind !== "sprite")
+        throw new Error("Expected a complete fallback")
+      expect(fallback.steps.map(({ animationId }) => animationId)).toEqual(
+        locomotion.length === 1
+          ? ["idle"]
+          : [locomotion[1], attacks[1 % attacks.length], locomotion[1]],
+      )
+      const withoutAttacks = Object.entries(manifest.animations)
+        .filter(([id]) => !attacks.some((attack) => attack === id))
+        .map(([, animation]) => animation.sourceId)
+      expect(
+        resolveSpritePresentation(manifest, reaction, withoutAttacks),
+      ).toMatchObject({
+        kind: "sprite",
+        steps: [
+          {
+            animationId: "idle",
+            playback: "loop",
+            animation: { frameDurationMilliseconds: 160 },
+          },
+        ],
+      })
     },
   )
 

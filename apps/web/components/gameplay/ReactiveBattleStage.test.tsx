@@ -80,7 +80,8 @@ describe("Reactive Battle Stage web presentation", () => {
       }).start()
       const selectedPlans: string[][] = []
       const restingPlans: string[][] = []
-      for (let iteration = 0; iteration < 3; iteration += 1) {
+      const period = opponentId === "dog-stockfish" ? 3 : 2
+      for (let iteration = 0; iteration <= period; iteration += 1) {
         actor.send({
           phases: [PLAYER_CAPTURE_PHASE],
           type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
@@ -135,9 +136,17 @@ describe("Reactive Battle Stage web presentation", () => {
         expect(actor.getSnapshot().matches("idle")).toBe(true)
       }
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
-      expect(selectedPlans[2]).toEqual(selectedPlans[0])
+      expect(selectedPlans[period]).toEqual(selectedPlans[0])
       if (opponentId === "dog-stockfish") {
-        expect(restingPlans).toEqual([["idle"], ["idle"], ["idle"]])
+        expect(selectedPlans).toEqual([
+          ["walk", "attack", "walk"],
+          ["run", "attack", "run"],
+          ["dash", "attack", "dash"],
+          ["walk", "attack", "walk"],
+        ])
+        expect(
+          restingPlans.every((plan) => plan.length === 1 && plan[0] === "idle"),
+        ).toBe(true)
       }
       actor.stop()
     },
