@@ -1,3 +1,5 @@
+import createCelebrationRecipe from "./createCelebrationRecipe.js"
+
 const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   axolotl: {
     idle: [
@@ -87,7 +89,8 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
       ],
     ],
     victory: [
-      [{ animationIds: ["howl"], beat: "conclusion", playback: "loop" }],
+      createCelebrationRecipe("bark", "idle"),
+      createCelebrationRecipe("jump", "fall", "land", "idle"),
     ],
   },
   wolf: {
@@ -102,32 +105,21 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
         { animationIds: ["dash"], beat: "recovery", playback: "once" },
       ],
     ],
-    victory: [
-      [{ animationIds: ["howl"], beat: "conclusion", playback: "loop" }],
-    ],
+    victory: [createCelebrationRecipe("jump", "fall", "land", "idle")],
   },
   parrot: {
     idle: [[{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }]],
     victory: [
-      [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["soar"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
-      ],
+      createCelebrationRecipe("takeoff", "fly", "fall", "land", "idle"),
+      createCelebrationRecipe("takeoff", "soar", "fall", "land", "idle"),
     ],
   },
   falcon: {
     idle: [[{ animationIds: ["idle_call"], beat: "idle", playback: "loop" }]],
     victory: [
-      [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["soar_call"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_call"], beat: "conclusion", playback: "loop" },
-      ],
+      createCelebrationRecipe("takeoff", "fly", "fall", "land", "idle"),
+      createCelebrationRecipe("takeoff", "soar", "fall", "land", "idle"),
+      createCelebrationRecipe("takeoff", "soar_call", "fall", "land", "idle"),
     ],
   },
   crane: {
@@ -140,22 +132,17 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
       ],
     ],
     victory: [
-      [
-        { animationIds: ["display"], beat: "conclusion", playback: "once" },
-        { animationIds: ["call"], beat: "conclusion", playback: "loop" },
-      ],
+      createCelebrationRecipe("display", "idle"),
+      createCelebrationRecipe("call", "idle"),
+      createCelebrationRecipe("takeoff", "fly", "fall", "land", "idle"),
+      createCelebrationRecipe("takeoff", "soar", "fall", "land", "idle"),
     ],
   },
   crow: {
     idle: [[{ animationIds: ["idle_caw"], beat: "idle", playback: "loop" }]],
     victory: [
-      [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["soar"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
-      ],
+      createCelebrationRecipe("takeoff", "fly", "fall", "land", "idle"),
+      createCelebrationRecipe("takeoff", "soar", "fall", "land", "idle"),
     ],
   },
   bat: {
@@ -177,6 +164,9 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   dragonfly: {
+    victory: [
+      createCelebrationRecipe("fly_forward", "fly_idle02", "land", "idle"),
+    ],
     idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [

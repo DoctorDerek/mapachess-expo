@@ -1,3 +1,4 @@
+import createCelebrationRecipe from "./createCelebrationRecipe.js"
 import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
 import REMAINING_ANIMAL_REACTION_ALTERNATIVES from "./remainingAnimalReactionAlternatives.js"
 import REMAINING_STORY_ANIMAL_SPRITE_DATA from "./remainingStoryAnimalSpriteData.js"
@@ -30,13 +31,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fly"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("idle_caw", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.parrot,
   ),
@@ -67,13 +62,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fly"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_call"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("idle_call", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.falcon,
   ),
@@ -104,10 +93,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["display"], beat: "conclusion", playback: "once" },
-        { animationIds: ["dance"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("dance", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.crane,
   ),
@@ -138,13 +124,7 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fly"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_caw"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("idle_caw", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.crow,
   ),
@@ -181,19 +161,12 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["fly_idle"], beat: "conclusion", playback: "once" },
-        {
-          animationIds: ["land_upright"],
-          beat: "conclusion",
-          playback: "once",
-        },
-        {
-          animationIds: ["idle_upright_blink"],
-          beat: "conclusion",
-          playback: "loop",
-        },
-      ],
+      victory: createCelebrationRecipe(
+        "fly_forward",
+        "fly_idle",
+        "land_upright",
+        "idle_upright",
+      ),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.bat,
   ),
@@ -224,12 +197,12 @@ const FLYING_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["fly_idle01"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fly_idle02"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe(
+        "fly_forward",
+        "fly_idle01",
+        "land",
+        "idle",
+      ),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.dragonfly,
   ),

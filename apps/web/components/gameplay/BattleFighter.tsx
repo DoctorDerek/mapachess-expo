@@ -115,6 +115,10 @@ export default function BattleFighter({
       ready: images.prepare([step.animation.sourceId]),
     }))
     const steps = preparedSteps.filter(({ step }) => step.beat === beat)
+    const repeatSequence =
+      presentation.kind === "sprite" &&
+      presentation.repeatSequence === true &&
+      !shouldReduceMotion
 
     const move = async (duration: number): Promise<void> => {
       if (cancelled || settledTravelTarget.current === travelTarget) return
@@ -142,45 +146,55 @@ export default function BattleFighter({
       if (steps.length === 0) {
         await move(FALLBACK_MOVEMENT_SECONDS)
       } else {
-        for (const { step, ready } of shouldReduceMotion
-          ? steps.slice(-1)
-          : steps) {
-          const decoded = await ready
+        if (repeatSequence) {
+          const decoded = await Promise.all(steps.map(({ ready }) => ready))
           if (cancelled) return
-          if (!decoded) {
+          if (decoded.some((ready) => !ready)) {
             if (visibleSource.current === null) setImageUnavailable(true)
-            await move(FALLBACK_MOVEMENT_SECONDS)
-            continue
+            return
           }
-          const { animation, playback } = step
-          showBattleSpriteFrame(sprite, step, shouldReduceMotion)
-          visibleSource.current = animation.sourceId
-          setImageUnavailable(false)
-          const duration =
-            animation.frameCount * animation.frameDurationMilliseconds
-          const travel = move(duration / 1000)
-          if (shouldReduceMotion) {
-            await travel
-            continue
-          }
-          frames = sprite.animate(
-            battleSpriteFrameKeyframes(animation.frameCount),
-            {
-              duration,
-              fill: "forwards",
-              iterations: playback === "loop" ? Infinity : 1,
-            },
-          )
-          if (document.visibilityState === "hidden") {
-            frames.pause()
-            movement?.pause()
-          }
-          await Promise.all([frames.finished, travel])
-          if (cancelled) return
-          sprite.style.backgroundPosition = "100% 0"
-          frames.cancel()
-          frames = null
         }
+        do {
+          for (const { step, ready } of shouldReduceMotion
+            ? steps.slice(-1)
+            : steps) {
+            const decoded = await ready
+            if (cancelled) return
+            if (!decoded) {
+              if (visibleSource.current === null) setImageUnavailable(true)
+              await move(FALLBACK_MOVEMENT_SECONDS)
+              continue
+            }
+            const { animation, playback } = step
+            showBattleSpriteFrame(sprite, step, shouldReduceMotion)
+            visibleSource.current = animation.sourceId
+            setImageUnavailable(false)
+            const duration =
+              animation.frameCount * animation.frameDurationMilliseconds
+            const travel = move(duration / 1000)
+            if (shouldReduceMotion) {
+              await travel
+              continue
+            }
+            frames = sprite.animate(
+              battleSpriteFrameKeyframes(animation.frameCount),
+              {
+                duration,
+                fill: "forwards",
+                iterations: playback === "loop" ? Infinity : 1,
+              },
+            )
+            if (document.visibilityState === "hidden") {
+              frames.pause()
+              movement?.pause()
+            }
+            await Promise.all([frames.finished, travel])
+            if (cancelled) return
+            sprite.style.backgroundPosition = "100% 0"
+            frames.cancel()
+            frames = null
+          }
+        } while (repeatSequence && !cancelled)
       }
       if (!cancelled) reportCompletion(phaseIndex, reactionSequence)
     }
