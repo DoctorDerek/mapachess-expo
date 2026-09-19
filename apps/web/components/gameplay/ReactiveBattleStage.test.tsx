@@ -146,6 +146,13 @@ describe("Reactive Battle Stage web presentation", () => {
       }
       expect(selectedPlans[0]).not.toEqual(selectedPlans[1])
       expect(selectedPlans[period]).toEqual(selectedPlans[0])
+      if (opponentId === "chicken-stockfish") {
+        expect(selectedPlans).toEqual([
+          ["walk", "attack-ground", "walk"],
+          ["run", "attack-ground", "run"],
+          ["walk", "attack-ground", "walk"],
+        ])
+      }
       if (opponentId === "raccoon-stockfish") {
         expect(selectedPlans).toEqual([
           ["run", "attack", "run"],

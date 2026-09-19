@@ -15,64 +15,89 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
-  it("keeps Raccoon captures as whole shared recipes without replacing an attack with a bark", () => {
-    const manifest = MAPACHITO_SPRITE_MANIFEST
-    const sources = Object.values(MAPACHITO_SPRITE_SOURCES)
-    const reaction = { family: "capture", role: "attacker" } as const
-    for (const [ordinal, travel] of ["run", "dash", "run"].entries()) {
-      const result = resolveSpritePresentation(
-        manifest,
-        reaction,
-        sources,
-        ordinal,
+  it.each([
+    {
+      name: "Raccoon",
+      manifest: MAPACHITO_SPRITE_MANIFEST,
+      travelPool: ["run", "dash"],
+      attack: "attack",
+    },
+    {
+      name: "Chicken",
+      manifest: CHICKEN_SPRITE_MANIFEST,
+      travelPool: ["walk", "run"],
+      attack: "attack-ground",
+    },
+  ])(
+    "keeps $name captures complete without substituting an unrelated expression",
+    ({ manifest, travelPool, attack }) => {
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
       )
-      if (result.kind !== "sprite") throw new Error("Expected licensed sprite")
-      expect(result.steps.map(({ animationId }) => animationId)).toEqual([
-        travel,
-        "attack",
-        travel,
-      ])
-      expect(
-        result.steps.every(
-          ({ playback, animation }) =>
-            playback === "once" && animation.frameDurationMilliseconds === 100,
-        ),
-      ).toBe(true)
-    }
-    for (const [missing, ordinal, fallback] of [
-      ["run", 0, 1],
-      ["dash", 1, 0],
-    ] as const) {
-      expect(
-        resolveSpritePresentation(
+      const reaction = { family: "capture", role: "attacker" } as const
+      for (let ordinal = 0; ordinal <= travelPool.length; ordinal += 1) {
+        const travel = travelPool[ordinal % travelPool.length]
+        const result = resolveSpritePresentation<string, string>(
           manifest,
           reaction,
-          sources.filter(
-            (source) => source !== MAPACHITO_SPRITE_SOURCES[missing],
-          ),
+          sources,
           ordinal,
+        )
+        if (result.kind !== "sprite")
+          throw new Error("Expected licensed sprite")
+        expect(result.steps.map(({ animationId }) => animationId)).toEqual([
+          travel,
+          attack,
+          travel,
+        ])
+        expect(
+          result.steps.every(
+            ({ playback, animation }) =>
+              playback === "once" &&
+              animation.frameDurationMilliseconds === 100,
+          ),
+        ).toBe(true)
+      }
+      for (const [ordinal, missing] of travelPool.entries()) {
+        const fallback = (ordinal + 1) % travelPool.length
+        expect(
+          resolveSpritePresentation<string, string>(
+            manifest,
+            reaction,
+            Object.entries(manifest.animations)
+              .filter(([id]) => id !== missing)
+              .map(([, animation]) => animation.sourceId),
+            ordinal,
+          ),
+        ).toEqual(
+          resolveSpritePresentation<string, string>(
+            manifest,
+            reaction,
+            sources,
+            fallback,
+          ),
+        )
+      }
+      expect(
+        resolveSpritePresentation<string, string>(
+          manifest,
+          reaction,
+          Object.entries(manifest.animations)
+            .filter(([id]) => id !== attack)
+            .map(([, animation]) => animation.sourceId),
         ),
-      ).toEqual(
-        resolveSpritePresentation(manifest, reaction, sources, fallback),
-      )
-    }
-    expect(
-      resolveSpritePresentation(
-        manifest,
-        reaction,
-        sources.filter((source) => source !== MAPACHITO_SPRITE_SOURCES.attack),
-      ),
-    ).toMatchObject({
-      kind: "sprite",
-      steps: [
-        {
-          animationId: "idle",
-          playback: "loop",
-          animation: { frameDurationMilliseconds: 160 },
-        },
-      ],
-    })
-  })
+      ).toMatchObject({
+        kind: "sprite",
+        steps: [
+          {
+            animationId: "idle",
+            playback: "loop",
+            animation: { frameDurationMilliseconds: 160 },
+          },
+        ],
+      })
+    },
+  )
   it.each([CHICKEN_SPRITE_MANIFEST, MAPACHITO_SPRITE_MANIFEST])(
     "resolves calm animal pacing while preserving action and recovery pacing",
     (manifest: SpriteAssetManifest<string, string>) => {
