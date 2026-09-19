@@ -16,6 +16,73 @@ import {
 
 describe("battle frame and clip contracts", () => {
   it.each([
+    {
+      name: "Chicken",
+      manifest: CHICKEN_SPRITE_MANIFEST,
+      recipes: [["takeoff", "fly", "fall", "land", "idle"]],
+      withoutLanding: ["idle"],
+    },
+    {
+      name: "Raccoon",
+      manifest: MAPACHITO_SPRITE_MANIFEST,
+      recipes: [
+        ["bark", "idle"],
+        ["jump", "fall", "land", "idle"],
+      ],
+      withoutLanding: ["bark", "idle"],
+    },
+  ])(
+    "keeps $name terminal celebration partners and settled rest",
+    ({ manifest, recipes, withoutLanding }) => {
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      for (let ordinal = 0; ordinal <= recipes.length; ordinal += 1) {
+        const result = resolveSpritePresentation<string, string>(
+          manifest,
+          { family: "victory" },
+          sources,
+          ordinal,
+        )
+        if (result.kind !== "sprite")
+          throw new Error("Expected licensed celebration")
+        expect(result.repeatSequence).toBe(true)
+        expect(result.steps.map(({ animationId }) => animationId)).toEqual(
+          recipes[ordinal % recipes.length],
+        )
+        expect(
+          result.steps.every(
+            ({ playback, animation }) =>
+              playback === "once" &&
+              animation.frameDurationMilliseconds === 100,
+          ),
+        ).toBe(true)
+        const settled = result.steps.at(-1)
+        if (settled === undefined) throw new Error("Expected settled rest")
+        expect(settled.animationId).toBe("idle")
+        expect(battleSpriteFrameStyle(settled, true).backgroundPosition).toBe(
+          "0% 0",
+        )
+      }
+      const fallback = resolveSpritePresentation<string, string>(
+        manifest,
+        { family: "victory" },
+        Object.entries(manifest.animations)
+          .filter(([id]) => id !== "land")
+          .map(([, animation]) => animation.sourceId),
+        1,
+      )
+      if (fallback.kind !== "sprite")
+        throw new Error("Expected complete fallback")
+      expect(fallback.steps.map(({ animationId }) => animationId)).toEqual(
+        withoutLanding,
+      )
+      expect(fallback.repeatSequence).toBe(
+        withoutLanding.length === 1 ? undefined : true,
+      )
+    },
+  )
+  it.each([
     { name: "Chicken", manifest: CHICKEN_SPRITE_MANIFEST },
     { name: "Raccoon", manifest: MAPACHITO_SPRITE_MANIFEST },
   ])(

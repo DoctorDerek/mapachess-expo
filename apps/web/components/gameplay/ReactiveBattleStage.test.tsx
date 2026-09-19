@@ -225,8 +225,9 @@ describe("Reactive Battle Stage web presentation", () => {
       )
       expect(
         victory.kind === "sprite" &&
-          victory.steps.map(({ playback }) => playback),
-      ).toEqual(["loop"])
+          victory.repeatSequence === true &&
+          victory.steps.every(({ playback }) => playback === "once"),
+      ).toBe(true)
     },
   )
 
@@ -344,7 +345,12 @@ describe("Reactive Battle Stage web presentation", () => {
             "once-hold-final-frame",
           )
         if (reaction.family === "victory") {
-          expect(presentation.steps.at(-1)?.playback).toBe("loop")
+          expect(presentation.steps.at(-1)?.playback).toBe(
+            expectedScale === undefined ? "loop" : "once",
+          )
+          expect(presentation.repeatSequence).toBe(
+            expectedScale === undefined ? undefined : true,
+          )
           expect(
             presentation.steps
               .slice(0, -1)
