@@ -16,6 +16,87 @@ import {
 
 describe("battle frame and clip contracts", () => {
   it.each([
+    { name: "Chicken", manifest: CHICKEN_SPRITE_MANIFEST },
+    { name: "Raccoon", manifest: MAPACHITO_SPRITE_MANIFEST },
+  ])(
+    "preserves $name hurt and defeat meanings without cross-role substitutions",
+    ({ manifest }) => {
+      const cases = [
+        {
+          reaction: { family: "capture", role: "victim" },
+          animationId: "hurt",
+          beat: "reaction",
+          playback: "once",
+          fallbackBeat: "idle",
+          fallbackPlayback: "loop",
+        },
+        {
+          reaction: { family: "defeat" },
+          animationId: "die",
+          beat: "conclusion",
+          playback: "once-hold-final-frame",
+          fallbackBeat: "conclusion",
+          fallbackPlayback: "once-hold-final-frame",
+        },
+      ] as const
+      for (const testCase of cases) {
+        const sources = Object.values(manifest.animations).map(
+          ({ sourceId }) => sourceId,
+        )
+        const loaded = resolveSpritePresentation<string, string>(
+          manifest,
+          testCase.reaction,
+          sources,
+        )
+        expect(loaded).toMatchObject({
+          kind: "sprite",
+          steps: [
+            {
+              animationId: testCase.animationId,
+              beat: testCase.beat,
+              playback: testCase.playback,
+              animation: { frameDurationMilliseconds: 100 },
+            },
+          ],
+        })
+        const missing = resolveSpritePresentation<string, string>(
+          manifest,
+          testCase.reaction,
+          Object.entries(manifest.animations)
+            .filter(([id]) => id !== testCase.animationId)
+            .map(([, animation]) => animation.sourceId),
+        )
+        expect(missing).toMatchObject({
+          kind: "sprite",
+          steps: [
+            {
+              animationId: "idle",
+              beat: testCase.fallbackBeat,
+              playback: testCase.fallbackPlayback,
+              animation: { frameDurationMilliseconds: 160 },
+            },
+          ],
+        })
+        if (testCase.reaction.family === "defeat") {
+          if (loaded.kind !== "sprite" || missing.kind !== "sprite")
+            throw new Error("Expected licensed sprite or calm fallback")
+          for (const presentation of [loaded, missing])
+            expect(
+              battleSpriteFrameStyle(presentation.steps[0], true)
+                .backgroundPosition,
+            ).toBe("100% 0")
+        }
+        expect(
+          resolveSpritePresentation<string, string>(
+            manifest,
+            testCase.reaction,
+            [],
+          ).kind,
+        ).toBe("authored-fallback")
+      }
+    },
+  )
+  it.each([
     { name: "Chicken", manifest: CHICKEN_SPRITE_MANIFEST, fallback: ["peck"] },
     {
       name: "Raccoon",

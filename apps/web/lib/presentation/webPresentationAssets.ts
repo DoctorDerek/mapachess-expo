@@ -246,7 +246,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
       { animationIds: ["walk"], beat: "recovery", playback: "once" },
     ],
     "capture-victim": [
-      { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
+      { animationIds: ["hurt"], beat: "reaction", playback: "once" },
     ],
     "check-attacker": [
       { animationIds: ["walk", "run"], beat: "approach", playback: "once" },
@@ -262,7 +262,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
     ],
     defeat: [
       {
-        animationIds: ["die", "sit"],
+        animationIds: ["die"],
         beat: "conclusion",
         playback: "once-hold-final-frame",
       },
@@ -461,7 +461,7 @@ export const MAPACHITO_SPRITE_MANIFEST = {
       { animationIds: ["run"], beat: "recovery", playback: "once" },
     ],
     "capture-victim": [
-      { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
+      { animationIds: ["hurt"], beat: "reaction", playback: "once" },
     ],
     "check-attacker": [
       { animationIds: ["run", "dash"], beat: "approach", playback: "once" },
@@ -477,7 +477,7 @@ export const MAPACHITO_SPRITE_MANIFEST = {
     ],
     defeat: [
       {
-        animationIds: ["die", "sit-one"],
+        animationIds: ["die"],
         beat: "conclusion",
         playback: "once-hold-final-frame",
       },
