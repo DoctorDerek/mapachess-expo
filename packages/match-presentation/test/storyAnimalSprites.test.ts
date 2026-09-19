@@ -19,6 +19,70 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it.each([
+    ["mouse-stockfish", "sniff"],
+    ["otter-stockfish", "crouch"],
+    ["axolotl-stockfish", "crouch"],
+    ["hedgehog-stockfish", "crouch"],
+    ["parrot-stockfish", "idle_caw"],
+    ["falcon-stockfish", "idle_call"],
+    ["crow-stockfish", "idle_caw"],
+    ["bat-stockfish", "crouch"],
+  ] as const)(
+    "%s distinguishes alarm from capture hurt using %s",
+    (id, expression) => {
+      const manifest = STORY_ANIMAL_SPRITES[id]
+      const sources = Object.values(manifest.animations).map(
+        ({ sourceId }) => sourceId,
+      )
+      const reaction = { family: "check", role: "victim" } as const
+      for (const ordinal of [0, 1, 2]) {
+        const alarm = resolveSpritePresentation(
+          manifest,
+          reaction,
+          sources,
+          ordinal,
+        )
+        expect(alarm).toMatchObject({
+          kind: "sprite",
+          steps: [
+            {
+              animationId: expression,
+              beat: "reaction",
+              playback: "once",
+              animation: { frameDurationMilliseconds: 100 },
+            },
+          ],
+        })
+        expect(
+          resolveSpritePresentation(
+            manifest,
+            { family: "capture", role: "victim" },
+            sources,
+            ordinal,
+          ),
+        ).toMatchObject({
+          kind: "sprite",
+          steps: [{ animationId: "hurt", playback: "once" }],
+        })
+      }
+      const withoutExpression = Object.entries(manifest.animations)
+        .filter(([animationId]) => animationId !== expression)
+        .map(([, animation]) => animation.sourceId)
+      expect(
+        resolveSpritePresentation(manifest, reaction, withoutExpression),
+      ).toMatchObject({
+        kind: "sprite",
+        steps: [
+          {
+            animationId: id === "bat-stockfish" ? "idle_upright" : "idle",
+            playback: "loop",
+            animation: { frameDurationMilliseconds: 160 },
+          },
+        ],
+      })
+    },
+  )
   it("uses another approved calm pose when the primary rest and battle recipe are unavailable", () => {
     const manifest = STORY_ANIMAL_SPRITES["dog-stockfish"]
     const sources = Object.entries(manifest.animations)

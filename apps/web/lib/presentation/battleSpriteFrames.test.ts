@@ -16,6 +16,58 @@ import {
 
 describe("battle frame and clip contracts", () => {
   it.each([
+    { name: "Chicken", manifest: CHICKEN_SPRITE_MANIFEST, fallback: ["peck"] },
+    {
+      name: "Raccoon",
+      manifest: MAPACHITO_SPRITE_MANIFEST,
+      fallback: ["bark", "crouch"],
+    },
+  ])(
+    "keeps $name alarm fallback separate from capture hurt",
+    ({ manifest, fallback }) => {
+      const reaction = { family: "check", role: "victim" } as const
+      const candidates = ["fright", ...fallback]
+      for (
+        let unavailable = 0;
+        unavailable <= candidates.length;
+        unavailable += 1
+      ) {
+        const sources = Object.entries(manifest.animations)
+          .filter(([id]) => !candidates.slice(0, unavailable).includes(id))
+          .map(([, animation]) => animation.sourceId)
+        expect(
+          resolveSpritePresentation<string, string>(
+            manifest,
+            reaction,
+            sources,
+          ),
+        ).toMatchObject({
+          kind: "sprite",
+          steps: [
+            {
+              animationId: candidates[unavailable] ?? "idle",
+              playback: unavailable === candidates.length ? "loop" : "once",
+              animation: {
+                frameDurationMilliseconds:
+                  unavailable === candidates.length ? 160 : 100,
+              },
+            },
+          ],
+        })
+        expect(
+          resolveSpritePresentation<string, string>(
+            manifest,
+            { family: "capture", role: "victim" },
+            sources,
+          ),
+        ).toMatchObject({
+          kind: "sprite",
+          steps: [{ animationId: "hurt", playback: "once" }],
+        })
+      }
+    },
+  )
+  it.each([
     {
       name: "Raccoon",
       manifest: MAPACHITO_SPRITE_MANIFEST,

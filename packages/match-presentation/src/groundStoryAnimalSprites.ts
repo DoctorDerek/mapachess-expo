@@ -21,7 +21,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["crouch"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {
@@ -57,7 +57,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
       "check-victim": [
-        { animationIds: ["hurt"], beat: "reaction", playback: "once" },
+        { animationIds: ["crouch"], beat: "reaction", playback: "once" },
       ],
       defeat: [
         {

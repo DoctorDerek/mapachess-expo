@@ -258,7 +258,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
       { animationIds: ["walk", "run"], beat: "recovery", playback: "once" },
     ],
     "check-victim": [
-      { animationIds: ["fright", "hurt"], beat: "reaction", playback: "once" },
+      { animationIds: ["fright", "peck"], beat: "reaction", playback: "once" },
     ],
     defeat: [
       {
@@ -469,7 +469,11 @@ export const MAPACHITO_SPRITE_MANIFEST = {
       { animationIds: ["run", "dash"], beat: "recovery", playback: "once" },
     ],
     "check-victim": [
-      { animationIds: ["fright", "hurt"], beat: "reaction", playback: "once" },
+      {
+        animationIds: ["fright", "bark", "crouch"],
+        beat: "reaction",
+        playback: "once",
+      },
     ],
     defeat: [
       {
