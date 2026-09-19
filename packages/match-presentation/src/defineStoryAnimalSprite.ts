@@ -94,6 +94,7 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
       ? {}
       : {
           standaloneScale: STANDALONE_ANIMAL_SCALE,
+          repeatVictory: true as const,
           calmFrameDurationMilliseconds:
             CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
         }),

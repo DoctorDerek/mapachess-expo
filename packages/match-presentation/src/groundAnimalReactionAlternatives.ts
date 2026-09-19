@@ -1,3 +1,5 @@
+import createCelebrationRecipe from "./createCelebrationRecipe.js"
+
 const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
   bunny: {
     idle: [
@@ -13,6 +15,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   dog: {
+    victory: [createCelebrationRecipe("jump", "fall", "land", "idle")],
     idle: [
       [{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }],
       [{ animationIds: ["sit"], beat: "idle", playback: "loop" }],
@@ -85,9 +88,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
   },
   frog: {
-    victory: [
-      [{ animationIds: ["croak"], beat: "conclusion", playback: "loop" }],
-    ],
+    victory: [createCelebrationRecipe("jump", "fall", "land", "idle")],
   },
   turtle: {
     idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
@@ -122,9 +123,7 @@ const GROUND_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
         { animationIds: ["run"], beat: "recovery", playback: "once" },
       ],
     ],
-    victory: [
-      [{ animationIds: ["idle_laugh"], beat: "conclusion", playback: "loop" }],
-    ],
+    victory: [createCelebrationRecipe("jump", "fall", "land", "idle")],
   },
   otter: {
     idle: [

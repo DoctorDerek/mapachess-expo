@@ -1,3 +1,4 @@
+import createCelebrationRecipe from "./createCelebrationRecipe.js"
 import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
 import REMAINING_ANIMAL_REACTION_ALTERNATIVES from "./remainingAnimalReactionAlternatives.js"
 import REMAINING_STORY_ANIMAL_SPRITE_DATA from "./remainingStoryAnimalSpriteData.js"
@@ -30,12 +31,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("jump", "fall", "land", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.axolotl,
   ),
@@ -66,12 +62,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["idle_blink"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("jump", "fall", "land", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.hedgehog,
   ),
@@ -102,12 +93,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["alerted"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("jump", "fall", "land", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.deer,
   ),
@@ -138,12 +124,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["howl"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("howl", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.fox,
   ),
@@ -174,12 +155,7 @@ const GROUND_STORY_ANIMAL_SPRITES = {
           playback: "once-hold-final-frame",
         },
       ],
-      victory: [
-        { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-        { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-        { animationIds: ["land"], beat: "conclusion", playback: "once" },
-        { animationIds: ["howl"], beat: "conclusion", playback: "loop" },
-      ],
+      victory: createCelebrationRecipe("howl", "idle"),
     },
     REMAINING_ANIMAL_REACTION_ALTERNATIVES.wolf,
   ),
