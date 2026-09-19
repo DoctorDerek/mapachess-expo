@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import createCelebrationRecipe from "../src/createCelebrationRecipe"
 import type { MatchParticipantReaction } from "../src/matchReaction"
 import resolveSpritePresentation, {
   matchSpriteReactionSlot,
@@ -144,11 +145,7 @@ describe("complete Story animal presentation", () => {
       ).toEqual(result)
       expect(result.layout.standaloneScale).toBe(3)
       expect(result.layout).toEqual(
-        resolveSpritePresentation(
-          { ...manifest, reactionAlternatives: {} },
-          reaction,
-          sources,
-        ).layout,
+        resolveSpritePresentation(manifest, reaction, sources).layout,
       )
       const baseSources = Object.entries(manifest.animations)
         .filter(
@@ -170,25 +167,13 @@ describe("complete Story animal presentation", () => {
     ["deer-stockfish", "capture", ["dash", "attack02", "dash"]],
     ["deer-stockfish", "check", ["run", "alerted", "run"]],
     ["fox-stockfish", "capture", ["dash", "attack", "dash"]],
-    ["fox-stockfish", "victory", ["howl"]],
+    ["fox-stockfish", "victory", ["bark", "idle"]],
     ["wolf-stockfish", "capture", ["dash", "attack", "dash"]],
-    ["wolf-stockfish", "victory", ["howl"]],
-    [
-      "parrot-stockfish",
-      "victory",
-      ["takeoff", "soar", "fall", "land", "idle_caw"],
-    ],
-    [
-      "falcon-stockfish",
-      "victory",
-      ["takeoff", "soar_call", "fall", "land", "idle_call"],
-    ],
-    ["crane-stockfish", "victory", ["display", "call"]],
-    [
-      "crow-stockfish",
-      "victory",
-      ["takeoff", "soar", "fall", "land", "idle_caw"],
-    ],
+    ["wolf-stockfish", "victory", ["jump", "fall", "land", "idle"]],
+    ["parrot-stockfish", "victory", ["takeoff", "fly", "fall", "land", "idle"]],
+    ["falcon-stockfish", "victory", ["takeoff", "fly", "fall", "land", "idle"]],
+    ["crane-stockfish", "victory", ["display", "idle"]],
+    ["crow-stockfish", "victory", ["takeoff", "fly", "fall", "land", "idle"]],
     ["bat-stockfish", "check", ["fly_forward", "fly_idle", "land_upright"]],
     ["dragonfly-stockfish", "capture", ["run", "attack", "run"]],
   ] as const)(
@@ -222,11 +207,7 @@ describe("complete Story animal presentation", () => {
         resolveSpritePresentation(manifest, reaction, sources, period),
       ).toEqual(resolveSpritePresentation(manifest, reaction, sources, 0))
       expect(alternative.layout).toEqual(
-        resolveSpritePresentation(
-          { ...manifest, reactionAlternatives: {} },
-          reaction,
-          sources,
-        ).layout,
+        resolveSpritePresentation(manifest, reaction, sources).layout,
       )
       expect(alternative.layout.standaloneScale).toBe(3)
       expect(
@@ -248,18 +229,12 @@ describe("complete Story animal presentation", () => {
         manifest,
         { family: "victory" },
         withoutSoaring,
-        1,
+        2,
       )
       expect(
         result.kind === "sprite" &&
           result.steps.map(({ animationId }) => animationId),
-      ).toEqual([
-        "takeoff",
-        "fly",
-        "fall",
-        "land",
-        id === "falcon-stockfish" ? "idle_call" : "idle_caw",
-      ])
+      ).toEqual([id === "falcon-stockfish" ? "idle_call" : "idle_caw", "idle"])
       const withoutLanding = Object.entries(manifest.animations)
         .filter(([animationId]) => animationId !== "land")
         .map(([, animation]) => animation.sourceId)
@@ -292,7 +267,7 @@ describe("complete Story animal presentation", () => {
         manifest,
         { family: "victory" },
         sources,
-        1,
+        0,
       )
       expect(
         result.kind === "sprite" &&
@@ -300,13 +275,12 @@ describe("complete Story animal presentation", () => {
             animationId,
             playback,
           ]),
-      ).toEqual([[expected, "loop"]])
+      ).toEqual([
+        [expected, "once"],
+        ["idle", "once"],
+      ])
       expect(result.layout).toEqual(
-        resolveSpritePresentation(
-          { ...manifest, reactionAlternatives: {} },
-          { family: "idle" },
-          sources,
-        ).layout,
+        resolveSpritePresentation(manifest, { family: "idle" }, sources).layout,
       )
     },
   )
@@ -548,6 +522,10 @@ describe("complete Story animal presentation", () => {
     const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
     const manifest: SpriteAssetManifest<string, string> = {
       ...dog,
+      reactionPlans: {
+        ...dog.reactionPlans,
+        victory: createCelebrationRecipe("jump", "fall", "land", "bark"),
+      },
       reactionAlternatives: {
         victory: [
           [
@@ -624,7 +602,7 @@ describe("complete Story animal presentation", () => {
     expect(
       presentation.kind === "sprite" &&
         presentation.steps.map(({ animationId }) => animationId),
-    ).toEqual(["jump", "fall", "land", "idle_blink"])
+    ).toEqual(["jump", "fall", "land", "idle"])
   })
 
   it("resolves optional attention without substituting unavailable or human artwork", () => {
