@@ -46,13 +46,16 @@ export default function createPresentationImages(
       }
     },
     async prepare(sources: readonly string[]): Promise<boolean> {
+      const requestedImages = [...new Set(sources)].map((source) => {
+        let image = images.get(source)
+        if (image === undefined) {
+          image = load(source)
+          images.set(source, image)
+        }
+        return { source, image }
+      })
       const readiness = await Promise.all(
-        [...new Set(sources)].map(async (source) => {
-          let image = images.get(source)
-          if (image === undefined) {
-            image = load(source)
-            images.set(source, image)
-          }
+        requestedImages.map(async ({ source, image }) => {
           const ready = await image.ready
           const isCurrent = images.get(source) === image
           if (!ready && isCurrent) {
@@ -62,7 +65,12 @@ export default function createPresentationImages(
           return ready && isCurrent
         }),
       )
-      return readiness.every(Boolean)
+      return (
+        readiness.every(Boolean) &&
+        requestedImages.every(
+          ({ source, image }) => images.get(source) === image,
+        )
+      )
     },
   }
 }
