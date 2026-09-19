@@ -1,5 +1,6 @@
 import { COACH_PORTRAITS } from "@mapachess/match-presentation/coach-portrait"
 import type { CoachPortraitLabel } from "@mapachess/match-presentation/coach-portrait"
+import createCelebrationRecipe from "@mapachess/match-presentation/create-celebration-recipe"
 import {
   CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
   PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
@@ -192,6 +193,7 @@ export type ChickenSpriteSourceId =
   (typeof CHICKEN_SPRITE_SOURCES)[keyof typeof CHICKEN_SPRITE_SOURCES]
 
 export const CHICKEN_SPRITE_MANIFEST = {
+  repeatVictory: true,
   attentionAnimationIds: ["peck"],
   calmFrameDurationMilliseconds: CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
   standaloneScale: STANDALONE_ANIMAL_SCALE,
@@ -225,15 +227,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
         { animationIds: ["run", "walk"], beat: "recovery", playback: "once" },
       ],
     ],
-    victory: [
-      [
-        {
-          animationIds: ["peck", "idle-blink"],
-          beat: "conclusion",
-          playback: "loop",
-        },
-      ],
-    ],
+    victory: [],
   },
   reactionPlans: {
     "capture-attacker": [
@@ -274,17 +268,7 @@ export const CHICKEN_SPRITE_MANIFEST = {
         playback: "loop",
       },
     ],
-    victory: [
-      { animationIds: ["takeoff"], beat: "conclusion", playback: "once" },
-      { animationIds: ["fly"], beat: "conclusion", playback: "once" },
-      { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-      { animationIds: ["land"], beat: "conclusion", playback: "once" },
-      {
-        animationIds: ["peck", "idle-blink"],
-        beat: "conclusion",
-        playback: "loop",
-      },
-    ],
+    victory: createCelebrationRecipe("takeoff", "fly", "fall", "land", "idle"),
   },
 } as const satisfies SpriteAssetManifest<
   ChickenSpriteAnimationId,
@@ -418,6 +402,7 @@ export type MapachitoSpriteSourceId =
   (typeof MAPACHITO_SPRITE_SOURCES)[keyof typeof MAPACHITO_SPRITE_SOURCES]
 
 export const MAPACHITO_SPRITE_MANIFEST = {
+  repeatVictory: true,
   attentionAnimationIds: ["bark", "crouch"],
   calmFrameDurationMilliseconds: CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
   standaloneScale: STANDALONE_ANIMAL_SCALE,
@@ -444,15 +429,7 @@ export const MAPACHITO_SPRITE_MANIFEST = {
         { animationIds: ["dash", "run"], beat: "recovery", playback: "once" },
       ],
     ],
-    victory: [
-      [
-        {
-          animationIds: ["bark", "sit-two"],
-          beat: "conclusion",
-          playback: "loop",
-        },
-      ],
-    ],
+    victory: [createCelebrationRecipe("jump", "fall", "land", "idle")],
   },
   reactionPlans: {
     "capture-attacker": [
@@ -489,16 +466,7 @@ export const MAPACHITO_SPRITE_MANIFEST = {
         playback: "loop",
       },
     ],
-    victory: [
-      { animationIds: ["jump"], beat: "conclusion", playback: "once" },
-      { animationIds: ["fall"], beat: "conclusion", playback: "once" },
-      { animationIds: ["land"], beat: "conclusion", playback: "once" },
-      {
-        animationIds: ["bark", "sit-two"],
-        beat: "conclusion",
-        playback: "loop",
-      },
-    ],
+    victory: createCelebrationRecipe("bark", "idle"),
   },
 } as const satisfies SpriteAssetManifest<
   MapachitoSpriteAnimationId,
