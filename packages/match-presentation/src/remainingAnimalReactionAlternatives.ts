@@ -6,9 +6,19 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     ],
     "capture-attacker": [
       [
+        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["run"], beat: "recovery", playback: "once" },
+      ],
+      [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
-        { animationIds: ["walk"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
+      ],
+      [
+        { animationIds: ["sneak"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["sneak"], beat: "recovery", playback: "once" },
       ],
     ],
     "check-attacker": [
@@ -23,9 +33,19 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
     idle: [[{ animationIds: ["idle_blink"], beat: "idle", playback: "loop" }]],
     "capture-attacker": [
       [
+        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["run"], beat: "recovery", playback: "once" },
+      ],
+      [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
-        { animationIds: ["walk"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
+      ],
+      [
+        { animationIds: ["sneak"], beat: "approach", playback: "once" },
+        { animationIds: ["attack"], beat: "strike", playback: "once" },
+        { animationIds: ["sneak"], beat: "recovery", playback: "once" },
       ],
     ],
     "check-attacker": [
@@ -42,7 +62,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
         { animationIds: ["attack02"], beat: "strike", playback: "once" },
-        { animationIds: ["run"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
       ],
     ],
     "check-attacker": [
@@ -63,7 +83,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
-        { animationIds: ["run"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
       ],
     ],
     victory: [
@@ -79,7 +99,7 @@ const REMAINING_ANIMAL_REACTION_ALTERNATIVES = Object.freeze({
       [
         { animationIds: ["dash"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
-        { animationIds: ["run"], beat: "recovery", playback: "once" },
+        { animationIds: ["dash"], beat: "recovery", playback: "once" },
       ],
     ],
     victory: [

@@ -46,7 +46,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
     {
       idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
-        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
@@ -82,7 +82,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
     {
       idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
-        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
@@ -263,7 +263,7 @@ const STORY_ANIMAL_SPRITES = Object.freeze({
     {
       idle: [{ animationIds: ["idle"], beat: "idle", playback: "loop" }],
       "capture-attacker": [
-        { animationIds: ["run"], beat: "approach", playback: "once" },
+        { animationIds: ["walk"], beat: "approach", playback: "once" },
         { animationIds: ["attack"], beat: "strike", playback: "once" },
         { animationIds: ["walk"], beat: "recovery", playback: "once" },
       ],
