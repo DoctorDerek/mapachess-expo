@@ -9,6 +9,7 @@ import type {
   ResolvedSpritePresentation,
   SpriteFacing,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import createBattleRecipePreparation from "../../lib/presentation/battleRecipePreparation"
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
@@ -18,6 +19,7 @@ import {
 import createPresentationImages from "../../lib/presentation/presentationImages"
 
 const FALLBACK_MOVEMENT_SECONDS = 0.36
+type BattleTravelTarget = "home" | "contact" | "recoil"
 
 export type BattleFighterProps = Readonly<{
   beat: MatchPresentationBeat
@@ -58,10 +60,11 @@ export default function BattleFighter({
   const spriteRef = useRef<HTMLSpanElement>(null)
   const travelerRef = useRef<HTMLDivElement>(null)
   const visibleSource = useRef<string | null>(null)
-  const settledTravelTarget = useRef<"home" | "contact" | "recoil" | null>(
-    "home",
-  )
+  const settledTravelTarget = useRef<BattleTravelTarget | null>("home")
   const [images] = useState(() => createPresentationImages())
+  const [recipePreparation] = useState(() =>
+    createBattleRecipePreparation(images),
+  )
   const [initialFrameStyle] = useState(() => {
     if (presentation.kind !== "sprite") return undefined
     const initialStep = presentation.steps.find((step) => step.beat === beat)
@@ -76,7 +79,13 @@ export default function BattleFighter({
     },
   )
 
-  useEffect(() => () => images.retain([]), [images])
+  useEffect(
+    () => () => {
+      recipePreparation.reset()
+      images.retain([])
+    },
+    [images, recipePreparation],
+  )
 
   useEffect(() => {
     const sprite = spriteRef.current
@@ -110,24 +119,28 @@ export default function BattleFighter({
         ? sources
         : [...sources, visibleSource.current],
     )
-    const preparedSteps = allSteps.map((step) => ({
-      step,
-      ready: images.prepare([step.animation.sourceId]),
-    }))
-    const steps = preparedSteps.filter(({ step }) => step.beat === beat)
+    const recipeReady = recipePreparation.prepare({
+      phaseIndex,
+      reactionSequence,
+      sources,
+    })
+    const steps = allSteps.filter((step) => step.beat === beat)
     const repeatSequence =
       presentation.kind === "sprite" &&
       presentation.repeatSequence === true &&
       !shouldReduceMotion
 
-    const move = async (duration: number): Promise<void> => {
-      if (cancelled || settledTravelTarget.current === travelTarget) return
+    const move = async (
+      duration: number,
+      target: BattleTravelTarget = travelTarget,
+    ): Promise<void> => {
+      if (cancelled || settledTravelTarget.current === target) return
       settledTravelTarget.current = null
       movement = animate(
         traveler,
         {
-          "--battle-advance": travelTarget === "contact" ? 1 : 0,
-          "--battle-recoil": travelTarget === "recoil" ? 1 : 0,
+          "--battle-advance": target === "contact" ? 1 : 0,
+          "--battle-recoil": target === "recoil" ? 1 : 0,
         },
         {
           duration: shouldReduceMotion ? 0 : duration,
@@ -135,7 +148,7 @@ export default function BattleFighter({
         },
       )
       await movement
-      if (!cancelled) settledTravelTarget.current = travelTarget
+      if (!cancelled) settledTravelTarget.current = target
     }
 
     const play = async (): Promise<void> => {
@@ -143,28 +156,19 @@ export default function BattleFighter({
         reportCompletion(phaseIndex, reactionSequence)
         return
       }
+      const decoded = await recipeReady
+      if (cancelled) return
+      if (!decoded) {
+        if (visibleSource.current === null) setImageUnavailable(true)
+        await move(0, "home")
+        if (!cancelled) reportCompletion(phaseIndex, reactionSequence)
+        return
+      }
       if (steps.length === 0) {
         await move(FALLBACK_MOVEMENT_SECONDS)
       } else {
-        if (repeatSequence) {
-          const decoded = await Promise.all(steps.map(({ ready }) => ready))
-          if (cancelled) return
-          if (decoded.some((ready) => !ready)) {
-            if (visibleSource.current === null) setImageUnavailable(true)
-            return
-          }
-        }
         do {
-          for (const { step, ready } of shouldReduceMotion
-            ? steps.slice(-1)
-            : steps) {
-            const decoded = await ready
-            if (cancelled) return
-            if (!decoded) {
-              if (visibleSource.current === null) setImageUnavailable(true)
-              await move(FALLBACK_MOVEMENT_SECONDS)
-              continue
-            }
+          for (const step of shouldReduceMotion ? steps.slice(-1) : steps) {
             const { animation, playback } = step
             showBattleSpriteFrame(sprite, step, shouldReduceMotion)
             visibleSource.current = animation.sourceId
@@ -233,6 +237,7 @@ export default function BattleFighter({
     phaseIndex,
     presentation,
     reactionSequence,
+    recipePreparation,
     shouldReduceMotion,
   ])
 
