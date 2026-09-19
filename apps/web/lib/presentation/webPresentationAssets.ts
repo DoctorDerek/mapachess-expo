@@ -205,13 +205,13 @@ export const CHICKEN_SPRITE_MANIFEST = {
     ],
     "capture-attacker": [
       [
-        { animationIds: ["walk", "run"], beat: "approach", playback: "once" },
+        { animationIds: ["run"], beat: "approach", playback: "once" },
         {
-          animationIds: ["attack-ground", "peck"],
+          animationIds: ["attack-ground"],
           beat: "strike",
           playback: "once",
         },
-        { animationIds: ["run", "walk"], beat: "recovery", playback: "once" },
+        { animationIds: ["run"], beat: "recovery", playback: "once" },
       ],
     ],
     "check-attacker": [
@@ -237,13 +237,13 @@ export const CHICKEN_SPRITE_MANIFEST = {
   },
   reactionPlans: {
     "capture-attacker": [
-      { animationIds: ["run", "walk"], beat: "approach", playback: "once" },
+      { animationIds: ["walk"], beat: "approach", playback: "once" },
       {
-        animationIds: ["attack-ground", "peck"],
+        animationIds: ["attack-ground"],
         beat: "strike",
         playback: "once",
       },
-      { animationIds: ["walk", "run"], beat: "recovery", playback: "once" },
+      { animationIds: ["walk"], beat: "recovery", playback: "once" },
     ],
     "capture-victim": [
       { animationIds: ["hurt", "fright"], beat: "reaction", playback: "once" },
