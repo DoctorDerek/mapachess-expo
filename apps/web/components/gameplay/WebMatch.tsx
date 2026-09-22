@@ -182,11 +182,11 @@ export default function WebMatch({
   return (
     <section
       aria-label={`${modeLabel} match against ${opponent.displayName}`}
-      className="grid min-w-0 items-start gap-2 [--playing-width:min(100%,max(16rem,calc(100svh-30rem)))] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-18rem)))] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
+      className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'opponent'_'board'_'player'_'command'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-18rem)))] xl:[grid-template-areas:'opponent_command'_'board_command'_'player_command']"
     >
       <section
         aria-labelledby="opponent-band-title"
-        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center [grid-area:opponent]"
+        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center px-3 [grid-area:opponent] xl:px-0"
       >
         <div>
           <p className="sr-only">
@@ -201,7 +201,7 @@ export default function WebMatch({
             {opponent.displayName}
           </h1>
         </div>
-        <dl className="text-xs [&_dd]:font-bold [&_dt]:sr-only">
+        <dl className="text-base [&_dd]:font-bold [&_dt]:sr-only">
           <div>
             <dt>Elo target</dt>
             <dd>
@@ -242,7 +242,7 @@ export default function WebMatch({
 
       <section
         aria-labelledby="player-band-title"
-        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center [grid-area:player]"
+        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center px-3 [grid-area:player] xl:px-0"
       >
         <div className="flex items-center gap-2">
           <MapachitoCoachPortrait
@@ -255,7 +255,7 @@ export default function WebMatch({
             Mapachito
           </h2>
         </div>
-        <dl className="flex flex-wrap gap-3 text-xs [&_dd]:font-bold [&_dt]:sr-only">
+        <dl className="flex flex-wrap gap-3 text-base [&_dd]:font-bold [&_dt]:sr-only">
           <div>
             <dt>{modeLabel} Elo</dt>
             <dd>{playerEloAtStart}</dd>
@@ -267,7 +267,7 @@ export default function WebMatch({
         </dl>
       </section>
 
-      <aside className="text-mapachito-charcoal grid w-full max-w-(--playing-width) min-w-0 gap-4 justify-self-center [grid-area:command] [grid-template-areas:'actions'_'data'_'history'] xl:max-w-none">
+      <aside className="text-mapachito-charcoal grid w-full max-w-(--playing-width) min-w-0 gap-3 justify-self-center px-3 [grid-area:command] [grid-template-areas:'actions'_'data'_'history'] xl:max-w-none xl:px-0">
         <section
           aria-label="Core match actions"
           className="grid min-w-0 gap-2 [grid-area:actions]"
