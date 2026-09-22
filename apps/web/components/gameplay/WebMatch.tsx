@@ -10,13 +10,7 @@ import positionEvaluationMachine, {
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine, {
-  selectCanOfferDraw,
-  selectCanRedo,
-  selectCanResign,
-  selectCanUndo,
   selectDrawOfferResponse,
-  selectHasRedoHistory,
-  selectHasUndoHistory,
   selectHintStage,
   selectIsOpponentThinking,
   selectIsPersistingMutation,
@@ -42,6 +36,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
+import MatchCommands from "./MatchCommands"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
@@ -313,59 +308,16 @@ export default function WebMatch({
             stage={hintStage}
           />
 
-          <div className="grid grid-cols-4 gap-2">
-            <MapachessButton
-              className="px-1! text-sm"
-              variant="secondary"
-              aria-busy={
-                persisting &&
-                position.turn === runtime.playerColor &&
-                !matchComplete &&
-                drawOfferDecision !== null
-              }
-              disabled={
-                !selectCanOfferDraw(snapshot) || drawOfferDecision === null
-              }
-              onClick={offerDraw}
-              type="button"
-            >
-              Offer Draw
-            </MapachessButton>
-            <MapachessButton
-              className="px-1! text-sm"
-              variant="secondary"
-              aria-busy={
-                persisting &&
-                !matchComplete &&
-                position.status.type === "playing"
-              }
-              disabled={!selectCanResign(snapshot)}
-              onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
-              type="button"
-            >
-              Resign
-            </MapachessButton>
-            <MapachessButton
-              className="px-1! text-sm"
-              variant="secondary"
-              aria-busy={persisting && selectHasUndoHistory(snapshot)}
-              disabled={!selectCanUndo(snapshot)}
-              onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
-              type="button"
-            >
-              Undo
-            </MapachessButton>
-            <MapachessButton
-              className="px-1! text-sm"
-              variant="secondary"
-              aria-busy={persisting && selectHasRedoHistory(snapshot)}
-              disabled={!selectCanRedo(snapshot)}
-              onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
-              type="button"
-            >
-              Redo
-            </MapachessButton>
-          </div>
+          <MatchCommands
+            actor={actor}
+            drawAvailable={
+              drawOfferDecision !== null &&
+              !matchComplete &&
+              position.turn === runtime.playerColor
+            }
+            onOfferDraw={offerDraw}
+            snapshot={snapshot}
+          />
 
           {opponentFailure === null ? null : (
             <MapachessButton
