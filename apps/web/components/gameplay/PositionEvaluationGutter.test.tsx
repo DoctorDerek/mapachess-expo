@@ -52,7 +52,7 @@ describe("position evaluation gutter", () => {
     expect(markup).toContain(
       'data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"',
     )
-    expect(markup).toContain("h-10 w-full")
+    expect(markup).toContain("h-8 w-full")
     expect(markup).toContain("xl:h-full")
     expect(markup).toContain(">W<")
     expect(markup).toContain(">B<")

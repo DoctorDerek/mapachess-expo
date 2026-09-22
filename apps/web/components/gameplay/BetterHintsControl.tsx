@@ -127,7 +127,7 @@ export default function BetterHintsControl({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="relative flex flex-wrap items-start gap-2"
+      className="relative min-w-0 flex-1 basis-12"
     >
       <h2 className="sr-only" id="better-hints-title">
         Better Hints
@@ -136,43 +136,16 @@ export default function BetterHintsControl({
         variant="hint"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="min-w-0 flex-1 basis-44 text-base"
+        className="flex min-h-14 w-full min-w-0 flex-col items-center justify-center px-1! py-1! text-base"
         data-hint-stage={matchComplete ? "complete" : stage}
         disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
         <span aria-hidden="true">✦ </span>
-        {control.label}
+        <span className="sr-only">{control.label}</span>
+        <span aria-hidden="true">Hints</span>
       </MapachessButton>
-      <details>
-        <summary className="text-mapachito-white min-h-12 cursor-pointer content-center rounded-lg border px-3 py-3 text-base font-bold focus-visible:outline-2 focus-visible:outline-offset-2">
-          <span aria-hidden="true">ⓘ </span>Hint guide
-        </summary>
-        <div className="bg-mapachito-white text-mapachito-charcoal absolute inset-x-0 top-full z-30 mt-2 rounded-lg border p-3 shadow-lg">
-          <p className="text-base font-semibold">{guidance}</p>
-
-          <ul
-            aria-label="Better Hints legend"
-            className="text-mapachito-charcoal mt-3 grid gap-2 text-base font-bold"
-          >
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-6 rounded-md border-[3px] border-emerald-500"
-              />
-              Player hints · solid green
-            </li>
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-6 rounded-md border-[3px] border-dashed border-red-500"
-              />
-              Opponent hints · dashed red
-            </li>
-          </ul>
-        </div>
-      </details>
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {hintAnnouncement(stage, hints)}
       </p>

@@ -76,24 +76,24 @@ describe("match composition", () => {
         'role="grid"',
         'role="meter"',
         'id="reactive-battle-stage-title"',
-        'id="player-band-title"',
+        'id="opponent-band-title"',
       ]) {
         expect(markup.split(token)).toHaveLength(2)
       }
-      expect(markup.indexOf('role="grid"')).toBeLessThan(
-        markup.indexOf('role="meter"'),
+      expect(markup.indexOf('role="meter"')).toBeLessThan(
+        markup.indexOf('role="grid"'),
       )
       expect(markup.indexOf('role="meter"')).toBeLessThan(
         markup.indexOf('id="reactive-battle-stage-title"'),
       )
-      expect(markup.indexOf('id="reactive-battle-stage-title"')).toBeLessThan(
-        markup.indexOf('id="player-band-title"'),
+      expect(markup.indexOf('aria-label="Core match actions"')).toBeLessThan(
+        markup.indexOf('id="reactive-battle-stage-title"'),
       )
       for (const label of [
         "Dog Stockfish",
         "Mapachito coach",
         "Show Piece Hints",
-        "Hint guide",
+        "vs.",
         "Offer Draw",
         "Resign",
         "Undo",
