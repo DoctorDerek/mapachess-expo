@@ -44,6 +44,8 @@ export type WebMatchSetupProps = Readonly<{
   storyProgress: StoryProgress
 }>
 
+type SetupEditor = "opponent" | "difficulty" | "hints"
+
 export default function WebMatchSetup({
   autoHintMode,
   challengeHistory,
@@ -71,9 +73,14 @@ export default function WebMatchSetup({
     ),
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
-  const [editing, setEditing] = useState<
-    "opponent" | "difficulty" | "hints" | null
-  >(null)
+  const [editing, setEditing] = useState<SetupEditor | null>(null)
+  const openEditor = (
+    editor: SetupEditor,
+    trigger: HTMLButtonElement,
+  ): void => {
+    trigger.focus({ preventScroll: true })
+    setEditing(editor)
+  }
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
@@ -162,7 +169,7 @@ export default function WebMatchSetup({
           <button
             className="focus-visible:outline-mapachito-violet flex min-w-0 flex-wrap items-center justify-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
             disabled={disabled || opening}
-            onClick={() => setEditing("opponent")}
+            onClick={(event) => openEditor("opponent", event.currentTarget)}
             type="button"
           >
             <span className="block h-26 w-24 shrink-0">
@@ -185,7 +192,9 @@ export default function WebMatchSetup({
                   : "Change animal"}
               </span>
             </span>
-            <span aria-hidden="true">✎</span>
+            <span aria-hidden="true" className="inline-block -scale-x-100">
+              ✎
+            </span>
           </button>
 
           {challenge === null ? (
@@ -194,12 +203,16 @@ export default function WebMatchSetup({
             <>
               <MapachessButton
                 disabled={disabled || opening}
-                onClick={() => setEditing("difficulty")}
+                onClick={(event) =>
+                  openEditor("difficulty", event.currentTarget)
+                }
                 type="button"
                 variant="secondary"
               >
                 {difficultyTargetElo} Elo · Change difficulty{" "}
-                <span aria-hidden="true">✎</span>
+                <span aria-hidden="true" className="inline-block -scale-x-100">
+                  ✎
+                </span>
               </MapachessButton>
               <MatchColorChoices
                 disabled={disabled || opening}
@@ -226,12 +239,14 @@ export default function WebMatchSetup({
           ) : null}
           <MapachessButton
             disabled={disabled || opening}
-            onClick={() => setEditing("hints")}
+            onClick={(event) => openEditor("hints", event.currentTarget)}
             type="button"
             variant="secondary"
           >
             {AUTO_HINT_MODE_PRESENTATION[autoHintMode].label} · Change hints{" "}
-            <span aria-hidden="true">✎</span>
+            <span aria-hidden="true" className="inline-block -scale-x-100">
+              ✎
+            </span>
           </MapachessButton>
         </div>
 
@@ -245,6 +260,7 @@ export default function WebMatchSetup({
             {MATCH_SETUP_COPY.invalidSetup}
           </MapachessNotice>
         ) : null}
+        <p className="text-mapachito-white">{MATCH_SETUP_COPY.untimed}</p>
         <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <MapachessButton
             aria-busy={opening}
@@ -256,13 +272,6 @@ export default function WebMatchSetup({
             {MATCH_SETUP_COPY.startMatch}
           </MapachessButton>
         </div>
-        <details className="text-mapachito-white">
-          <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
-            About this match
-          </summary>
-          <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
-          <p className="mt-2">{MATCH_SETUP_COPY.untimed}</p>
-        </details>
 
         {editing === null ? null : (
           <MatchSetupPicker

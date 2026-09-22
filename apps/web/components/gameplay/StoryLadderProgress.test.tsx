@@ -125,8 +125,10 @@ describe("Story ladder presentation structure", () => {
       expect(markup).toContain("1000")
       expect(markup).toContain("Change difficulty")
       expect(markup).toContain("Change animal")
-      expect(markup).toContain("not certified human ratings")
-      expect(markup).toContain("does not update your Elo")
+      expect(markup).not.toContain("not certified human ratings")
+      expect(markup).not.toContain("does not update your Elo")
+      expect(markup).not.toContain("About this match")
+      expect(markup).toContain("Untimed")
       expect(markup).not.toContain("<select")
       expect(markup).not.toContain("Your Story ladder")
     },

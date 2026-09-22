@@ -1,6 +1,7 @@
 "use client"
 
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -103,6 +104,13 @@ export default function ProfileSettingsPanel({
             <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
           </div>
         </section>
+
+        <details className="text-mapachito-charcoal mt-7 text-base">
+          <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+            About Elo ratings
+          </summary>
+          <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
+        </details>
 
         {importIssue === null ? null : (
           <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">

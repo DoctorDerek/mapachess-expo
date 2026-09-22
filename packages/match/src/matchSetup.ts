@@ -48,7 +48,7 @@ export const MATCH_SETUP_COPY = Object.freeze({
     "This selection is not available. Choose an earned animal and supported difficulty.",
   untimed: "Untimed",
   webCalibrationDifficulty:
-    "These difficulty estimates are calibrated against a controlled engine pool, not certified human ratings. This match does not update your Elo.",
+    "These difficulty estimates are calibrated against a controlled engine pool, not certified human ratings.",
   storyAvailability:
     "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:
