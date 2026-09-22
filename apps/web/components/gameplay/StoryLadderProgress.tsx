@@ -102,7 +102,7 @@ export default function StoryLadderProgress({
           return (
             <li key={opponent.id}>
               <Row className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet flex min-h-24 flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-[input]:cursor-pointer">
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-3">
                   {selection !== undefined && playable ? (
                     <input
                       type="radio"

@@ -15,11 +15,9 @@ export default function MatchSetupPicker({
 
   useEffect(() => {
     const element = dialog.current
-    const trigger = document.activeElement
     element?.showModal()
     return () => {
       element?.close()
-      if (trigger instanceof HTMLElement) trigger.focus({ preventScroll: true })
     }
   }, [])
 
@@ -33,7 +31,7 @@ export default function MatchSetupPicker({
       }}
       ref={dialog}
     >
-      <header className="bg-mapachito-white sticky top-0 z-20 mb-4 flex items-center justify-between gap-3 py-2">
+      <header className="bg-mapachito-white sticky top-0 z-20 mb-4 flex flex-wrap items-center justify-between gap-3 py-2">
         <h2 className="font-display text-2xl font-black" id={titleId}>
           {title}
         </h2>

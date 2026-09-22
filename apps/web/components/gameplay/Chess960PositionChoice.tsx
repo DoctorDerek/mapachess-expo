@@ -19,7 +19,7 @@ export default function Chess960PositionChoice({
     <fieldset disabled={disabled}>
       <legend className="font-bold">{MATCH_SETUP_COPY.position}</legend>
       <div className="mt-2 flex flex-wrap items-end gap-2">
-        <label className="min-w-0 flex-1" htmlFor="chess960-position">
+        <label className="min-w-0 flex-1 basis-32" htmlFor="chess960-position">
           <span className="sr-only">
             {MATCH_SETUP_COPY.positionNumber} (0–{CHESS960_POSITION_COUNT - 1})
           </span>
