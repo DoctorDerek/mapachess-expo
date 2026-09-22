@@ -13,10 +13,6 @@ import matchMachine, {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import MapachessButton from "../presentation/MapachessButton"
-import {
-  ReactionPlaytestControls,
-  useReactionPlaytest,
-} from "./ReactionPlaytest"
 
 export default function MatchCommands({
   actor,
@@ -36,7 +32,6 @@ export default function MatchCommands({
   snapshot: MatchMachineSnapshot
 }>) {
   const persisting = selectIsPersistingMutation(snapshot)
-  const playtest = useReactionPlaytest()
   return (
     <div className="flex flex-wrap items-center gap-2">
       {coach}
@@ -44,10 +39,7 @@ export default function MatchCommands({
         aria-busy={persisting && selectHasUndoHistory(snapshot)}
         className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanUndo(snapshot)}
-        onClick={() => {
-          playtest?.send({ type: "DEMO.RESET" })
-          actor.send({ type: "MATCH.UNDO_REQUESTED" })
-        }}
+        onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
         type="button"
         variant="secondary"
       >
@@ -60,10 +52,7 @@ export default function MatchCommands({
         aria-busy={persisting && selectHasRedoHistory(snapshot)}
         className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanRedo(snapshot)}
-        onClick={() => {
-          playtest?.send({ type: "DEMO.RESET" })
-          actor.send({ type: "MATCH.REDO_REQUESTED" })
-        }}
+        onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
         type="button"
         variant="secondary"
       >
@@ -82,7 +71,6 @@ export default function MatchCommands({
         </summary>
         <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-64 max-w-[calc(100vw-1rem)] gap-3 overflow-auto rounded-lg border p-3 shadow-xl">
           {menuActions}
-          <ReactionPlaytestControls />
           <MapachessButton
             aria-busy={persisting && drawAvailable}
             className="px-1! text-base"

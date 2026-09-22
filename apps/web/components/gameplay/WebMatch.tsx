@@ -37,7 +37,6 @@ import CanonicalChessboard from "./CanonicalChessboard"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import MatchCommands from "./MatchCommands"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
-import { useReactionPlaytest } from "./ReactionPlaytest"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
 export type WebMatchProps = Readonly<{
@@ -109,13 +108,6 @@ export default function WebMatch({
   result,
   menuActions,
 }: WebMatchProps) {
-  const playtest = useReactionPlaytest()
-  useEffect(
-    () => () => {
-      playtest?.send({ type: "DEMO.RESET" })
-    },
-    [actor, playtest],
-  )
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     heading.current?.focus({ preventScroll: true })
