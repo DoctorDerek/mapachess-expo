@@ -118,7 +118,7 @@ describe("Better Hints board presentation", () => {
     },
   )
 
-  it("keeps hint failures and announcements outside collapsed guidance", () => {
+  it("keeps hint failures and announcements without the removed guide", () => {
     const markup = renderToStaticMarkup(
       createElement(BetterHintsControl, {
         hints: null,
@@ -128,15 +128,12 @@ describe("Better Hints board presentation", () => {
         onPieceHintsRequested: vi.fn(),
       }),
     )
-    const disclosureEnd = markup.indexOf("</details>")
-    expect(disclosureEnd).toBeGreaterThan(0)
-    expect(markup).toContain("Hint guide")
+    expect(markup).not.toContain("Hint guide")
+    expect(markup).not.toContain("<details")
     expect(markup).toContain("Retry Piece Hints")
-    expect(markup.indexOf('aria-live="polite"')).toBeGreaterThan(disclosureEnd)
-    expect(markup.indexOf('id="better-hints-guidance"')).toBeGreaterThan(
-      disclosureEnd,
-    )
-    expect(markup.slice(disclosureEnd)).toContain("Your position is unchanged.")
+    expect(markup).toContain('aria-live="polite"')
+    expect(markup).toContain('id="better-hints-guidance"')
+    expect(markup).toContain("Your position is unchanged.")
   })
 
   it("progresses the accessible control from pieces to moves", () => {
@@ -169,13 +166,8 @@ describe("Better Hints board presentation", () => {
     )
 
     expect(readyMarkup).toContain("Show Piece Hints")
-    expect(readyMarkup).toContain("Better Hints legend")
-    for (const markup of [readyMarkup, pieceMarkup, moveMarkup]) {
-      expect(markup).toContain("Player hints · solid green")
-      expect(markup).toContain("Opponent hints · dashed red")
-    }
+    expect(readyMarkup).not.toContain("Hint guide")
     expect(pieceMarkup).toContain("Show Move Hints")
-    expect(pieceMarkup).toContain('aria-label="Better Hints legend"')
     expect(pieceMarkup).toContain("Player Piece Hint")
     expect(pieceMarkup).toContain("Opponent Piece Hint")
     expect(pieceMarkup).not.toContain("Player Move Hint")

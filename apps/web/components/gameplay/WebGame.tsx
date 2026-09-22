@@ -55,21 +55,13 @@ type GameFrameProps = Omit<
   Readonly<{
     children: ReactNode
     activityMessage?: string | null
-    restarting?: boolean
-    returningToMenu?: boolean
     matchSessionActive: boolean
-    onRestartRequested?: () => void
-    onReturnToMenuRequested?: () => void
   }>
 
 function GameFrame({
   children,
   activityMessage = null,
-  restarting = false,
-  returningToMenu = false,
   matchSessionActive,
-  onRestartRequested,
-  onReturnToMenuRequested,
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
@@ -88,42 +80,15 @@ function GameFrame({
   )
   return (
     <MapachessShell spacing={matchSessionActive ? "match" : "page"}>
-      <header
-        inert={activityMessage !== null}
-        className={`mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between ${matchSessionActive ? "mb-2 gap-2 px-3 xl:px-0" : "mb-4 gap-3"}`}
-      >
-        {matchSessionActive ? null : <MapachessWordmark />}
-        {matchSessionActive ? (
-          <details className="relative z-40 ml-auto">
-            <summary className="border-mapachito-white/30 bg-mapachito-charcoal text-mapachito-white min-h-12 cursor-pointer content-center rounded-lg border px-4 py-3 font-bold focus-visible:outline-2 focus-visible:outline-offset-2">
-              <span aria-hidden="true">☰ </span>Match menu
-            </summary>
-            <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute top-full right-0 mt-2 grid w-60 max-w-[calc(100vw-1.5rem)] gap-3 rounded-lg border p-3 shadow-xl">
-              <MapachessButton
-                aria-busy={restarting}
-                busyLabel={MATCH_SETUP_COPY.restartingMatch}
-                variant="secondary"
-                onClick={onRestartRequested}
-                type="button"
-              >
-                Restart Match
-              </MapachessButton>
-              <MapachessButton
-                aria-busy={returningToMenu}
-                busyLabel={MATCH_SETUP_COPY.returningToMenu}
-                variant="secondary"
-                onClick={onReturnToMenuRequested}
-                type="button"
-              >
-                Return to Menu
-              </MapachessButton>
-              {settingsButton}
-            </div>
-          </details>
-        ) : (
-          settingsButton
-        )}
-      </header>
+      {matchSessionActive ? null : (
+        <header
+          inert={activityMessage !== null}
+          className={`mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between ${matchSessionActive ? "mb-2 gap-2 px-3 xl:px-0" : "mb-4 gap-3"}`}
+        >
+          <MapachessWordmark />
+          {settingsButton}
+        </header>
+      )}
 
       <p className="sr-only" role="status">
         {activityMessage}
@@ -220,16 +185,8 @@ function MatchSessionExperience({
 
   return (
     <GameFrame
-      restarting={snapshot.matches("restartingMatch")}
-      returningToMenu={snapshot.matches("returningToMenu")}
       activityMessage={openingTitle(actor)}
       matchSessionActive={retainingMatch}
-      onRestartRequested={() =>
-        actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
-      }
-      onReturnToMenuRequested={() =>
-        actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
-      }
       onSettingsRequested={onSettingsRequested}
       settingsButtonRef={settingsButtonRef}
       settingsOpen={settingsOpen}
@@ -295,6 +252,41 @@ function MatchSessionExperience({
         />
       ) : retainingMatch && session !== null ? (
         <WebMatch
+          menuActions={
+            <>
+              <MapachessButton
+                aria-busy={snapshot.matches("restartingMatch")}
+                busyLabel={MATCH_SETUP_COPY.restartingMatch}
+                variant="secondary"
+                onClick={() =>
+                  actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+                }
+              >
+                Restart Match
+              </MapachessButton>
+              <MapachessButton
+                aria-busy={snapshot.matches("returningToMenu")}
+                busyLabel={MATCH_SETUP_COPY.returningToMenu}
+                variant="secondary"
+                onClick={() =>
+                  actor.send({
+                    type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED",
+                  })
+                }
+              >
+                Return to Menu
+              </MapachessButton>
+              <MapachessButton
+                variant="secondary"
+                aria-controls="profile-settings-panel"
+                aria-expanded={settingsOpen}
+                onClick={onSettingsRequested}
+                ref={settingsButtonRef}
+              >
+                Settings
+              </MapachessButton>
+            </>
+          }
           actor={session.actor}
           evaluationActor={session.evaluationActor}
           key={session.match.matchId}
