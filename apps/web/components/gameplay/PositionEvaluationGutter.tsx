@@ -9,6 +9,7 @@ import positionEvaluationMachine, {
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
 import type { MatchColor } from "@mapachess/match/match-position"
+import { ReactionPlaytestBadge, useReactionPlaytest } from "./ReactionPlaytest"
 
 const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
 
@@ -65,6 +66,7 @@ export default function PositionEvaluationGutter({
   actor,
   orientation,
 }: PositionEvaluationGutterProps) {
+  const playtest = useReactionPlaytest()
   const snapshot = useSelector(actor, (current) => current)
   const evaluation = selectPositionEvaluation(snapshot)
   const stage = selectPositionEvaluationStage(snapshot)
@@ -87,6 +89,42 @@ export default function PositionEvaluationGutter({
   }
   const topColor = orientation === "white" ? "Black" : "White"
   const bottomColor = orientation === "white" ? "White" : "Black"
+
+  if (playtest !== null) {
+    const blackLeads =
+      evaluation?.kind === "mate"
+        ? evaluation.winner === "black"
+        : evaluation?.kind === "centipawns" && evaluation.whiteCentipawns < 0
+    return (
+      <div
+        style={style}
+        className="bg-mapachito-charcoal relative min-h-14 w-full xl:w-56"
+      >
+        <div
+          role="meter"
+          aria-label="Stockfish evaluation"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(whiteShare)}
+          aria-valuetext={statusText}
+          className="absolute inset-0"
+        >
+          <div
+            aria-hidden="true"
+            className="bg-mapachito-white absolute inset-y-0 left-0 w-[var(--white-share)]"
+          />
+          <span
+            className={`absolute top-1/2 z-10 max-w-[30%] -translate-y-1/2 rounded px-1 font-mono text-base font-bold ${blackLeads ? "bg-mapachito-charcoal right-0 text-white" : "bg-mapachito-white text-mapachito-charcoal left-0"}`}
+          >
+            {acceptedText ?? "Evaluating…"}
+          </span>
+        </div>
+        <div className="absolute inset-y-0 left-1/2 z-20 flex max-w-[45%] -translate-x-1/2 items-center justify-center">
+          <ReactionPlaytestBadge />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
