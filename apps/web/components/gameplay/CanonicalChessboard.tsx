@@ -270,7 +270,6 @@ export default function CanonicalChessboard({
               PROMOTION_ROLES.indexOf(right.promotion)
             : 0,
         )
-  const castles = selectedMoves.filter((move) => move.kind === "castle")
 
   return (
     <div className="[container-type:inline-size] relative w-full min-w-0">
@@ -369,25 +368,6 @@ export default function CanonicalChessboard({
           />
         )}
       </div>
-
-      {disabled || pendingChoice !== null || castles.length === 0 ? null : (
-        <div
-          aria-label="Castling choices"
-          className="mt-4 flex flex-wrap gap-3"
-          role="group"
-        >
-          {castles.map((move) => (
-            <MapachessButton
-              key={move.id}
-              onClick={() => commitMove(move.id)}
-              type="button"
-              variant="secondary"
-            >
-              {moveChoiceLabel(move)}
-            </MapachessButton>
-          ))}
-        </div>
-      )}
 
       {pendingChoice === null ? null : (
         <div
