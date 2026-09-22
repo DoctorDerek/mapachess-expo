@@ -95,7 +95,7 @@ export default function PositionEvaluationGutter({
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}
       aria-valuetext={statusText}
-      className="border-mapachito-charcoal bg-mapachito-charcoal relative min-h-10 w-full border xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
+      className="border-mapachito-charcoal bg-mapachito-charcoal relative min-h-8 w-full border xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
       data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
       role="meter"
       style={style}
@@ -131,7 +131,7 @@ export default function PositionEvaluationGutter({
       <span
         aria-atomic="true"
         aria-live="polite"
-        className="relative z-10 grid min-h-10 place-items-center px-8 py-1 text-center font-mono text-base font-black text-white [text-shadow:0_1px_3px_rgb(30_30_30),0_0_4px_rgb(30_30_30)] xl:absolute xl:inset-0 xl:rotate-180 xl:px-0 xl:[writing-mode:vertical-rl]"
+        className="relative z-10 grid min-h-8 place-items-center px-8 py-1 text-center font-mono text-base font-black text-white [text-shadow:0_1px_3px_rgb(30_30_30),0_0_4px_rgb(30_30_30)] xl:absolute xl:inset-0 xl:rotate-180 xl:px-0 xl:[writing-mode:vertical-rl]"
       >
         {statusText}
       </span>
