@@ -22,27 +22,27 @@ export default function MatchModeMenu({
 
   return (
     <section aria-labelledby="game-modes-title" className="mx-auto max-w-6xl">
-      <div className="mb-8 max-w-3xl">
+      <div className="mb-4 max-w-3xl">
         <h1
-          className="font-display text-mapachito-white text-[clamp(2.5rem,6vw,5rem)] leading-none font-black tracking-tight text-balance"
+          className="font-display text-mapachito-white text-3xl leading-tight font-black tracking-tight text-balance xl:text-5xl"
           id="game-modes-title"
           ref={heading}
           tabIndex={-1}
         >
           {MATCH_SETUP_COPY.menuTitle}
         </h1>
-        <p className="text-mapachito-white mt-4 text-lg leading-relaxed">
+        <p className="text-mapachito-white mt-2 text-base leading-relaxed">
           {MATCH_SETUP_COPY.menuDescription}
         </p>
       </div>
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-2">
         {MATCH_MODE_CHOICES.map(({ mode, variant, title, description }) => {
           const titleId = `mode-${variant}-${mode}`
           return (
             <MapachessButton
               aria-describedby={`${titleId}-description`}
               aria-labelledby={titleId}
-              className="min-h-40 p-[clamp(1.5rem,3vw,2.5rem)] text-left"
+              className="min-h-24 p-4 text-left xl:p-6"
               disabled={disabled}
               key={titleId}
               onClick={() => onModeSelected({ mode, variant })}
@@ -50,7 +50,7 @@ export default function MatchModeMenu({
             >
               <span className="flex items-start justify-between gap-4">
                 <span
-                  className="font-display text-[clamp(1.75rem,4vw,2.75rem)] leading-tight font-black"
+                  className="font-display text-xl leading-tight font-black xl:text-2xl"
                   id={titleId}
                 >
                   {title}
@@ -60,7 +60,7 @@ export default function MatchModeMenu({
                 </span>
               </span>
               <span
-                className="mt-3 block text-base leading-relaxed font-medium"
+                className="mt-2 block text-base leading-snug font-medium"
                 id={`${titleId}-description`}
               >
                 {description}

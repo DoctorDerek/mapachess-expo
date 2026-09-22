@@ -43,12 +43,13 @@ describe("Challenge difficulty history presentation", () => {
     expect(tiles[2]).not.toContain("Best medal")
     expect(tiles[2]).not.toContain("Last played")
     expect(markup).toContain("Gold — no hints")
-    expect(markup).toContain("<summary")
+    expect(markup).not.toContain("<summary")
+    expect(markup).not.toContain("<select")
     expect(markup).not.toContain('type="checkbox"')
   })
 
   it.each(["standard", "chess960"] as const)(
-    "reads only %s history and does not select the historical animal",
+    "keeps %s setup focused on current choices without displaying the historical catalog",
     (variant) => {
       const data = createInitialMapachessPlayerData()
       const markup = renderToStaticMarkup(
@@ -74,16 +75,13 @@ describe("Challenge difficulty history presentation", () => {
           storyProgress={data.storyProgress}
         />,
       )
-      expect(markup).toMatch(
-        /name="challenge-opponent"[^>]*checked="" value="chicken-stockfish"/,
-      )
-      expect(markup.includes("Last played: Dog Stockfish")).toBe(
-        variant === "standard",
-      )
-      expect(markup.includes("Best medal: Gold")).toBe(variant === "standard")
-      expect(markup).toMatch(
-        /name="challenge-difficulty"[^>]*checked="" value="900"/,
-      )
+      expect(markup).toContain("Chicken Stockfish")
+      expect(markup).toContain("900")
+      expect(markup).toContain("Change difficulty")
+      expect(markup).toContain("Change animal")
+      expect(markup).not.toContain("Last played: Dog Stockfish")
+      expect(markup).not.toContain("Best medal: Gold")
+      expect(markup).not.toContain('name="challenge-difficulty"')
     },
   )
 

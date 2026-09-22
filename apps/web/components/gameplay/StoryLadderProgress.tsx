@@ -11,6 +11,7 @@ import {
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MedalSymbol from "../presentation/MedalSymbol"
+import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type StoryLadderProgressProps = Readonly<{
@@ -36,7 +37,11 @@ export default function StoryLadderProgress({
   return (
     <section
       aria-labelledby={headingId}
-      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal mb-6 rounded-xl border-3 p-[clamp(1.25rem,3vw,2rem)]"
+      className={
+        selection === undefined
+          ? "border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal mb-6 rounded-xl border-3 p-[clamp(1.25rem,3vw,2rem)]"
+          : "text-mapachito-charcoal"
+      }
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -46,7 +51,13 @@ export default function StoryLadderProgress({
           >
             {STORY_PROGRESS_COPY.title}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed">
+          <p
+            className={
+              selection === undefined
+                ? "mt-2 text-sm leading-relaxed"
+                : "sr-only"
+            }
+          >
             {STORY_PROGRESS_COPY.independence}
           </p>
         </div>
@@ -55,7 +66,13 @@ export default function StoryLadderProgress({
           {ladder.length}
         </p>
       </div>
-      <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 text-sm">
+      <dl
+        className={
+          selection === undefined
+            ? "mt-4 flex flex-wrap gap-x-8 gap-y-3 text-sm"
+            : "sr-only"
+        }
+      >
         {(["standard", "chess960", "overall"] as const).map((scope) => (
           <div key={scope}>
             <dt>{STORY_PROGRESS_COPY[scope]}</dt>
@@ -72,8 +89,12 @@ export default function StoryLadderProgress({
       </p>
       <ol
         aria-label={STORY_PROGRESS_COPY.opponents}
-        className="border-mapachito-charcoal/30 focus-visible:outline-mapachito-violet mt-5 grid max-h-80 gap-2 overflow-y-auto rounded-lg border-2 p-3 focus-visible:outline-3 focus-visible:outline-offset-4"
-        tabIndex={0}
+        className={
+          selection === undefined
+            ? "border-mapachito-charcoal/30 focus-visible:outline-mapachito-violet mt-5 grid max-h-80 gap-2 overflow-y-auto rounded-lg border-2 p-3 focus-visible:outline-3 focus-visible:outline-offset-4"
+            : "mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(12rem,100%),1fr))] gap-3"
+        }
+        tabIndex={selection === undefined ? 0 : undefined}
       >
         {ladder.map(({ opponent, highestMedal, status }) => {
           const playable = canPlayStoryOpponent(progress, variant, opponent.id)
@@ -81,7 +102,7 @@ export default function StoryLadderProgress({
           return (
             <li key={opponent.id}>
               <Row className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet flex min-h-24 flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-[input]:cursor-pointer">
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-3">
                   {selection !== undefined && playable ? (
                     <input
                       type="radio"
@@ -99,17 +120,23 @@ export default function StoryLadderProgress({
                       className="accent-mapachito-violet size-5 shrink-0"
                     />
                   ) : null}
-                  <StoryOpponentPortrait
-                    opponent={opponent}
-                    locked={status === "locked"}
-                  />
+                  {selection !== undefined && status !== "locked" ? (
+                    <span className="block h-26 w-24 shrink-0">
+                      <ChallengeAnimalPortrait active opponent={opponent} />
+                    </span>
+                  ) : (
+                    <StoryOpponentPortrait
+                      opponent={opponent}
+                      locked={status === "locked"}
+                    />
+                  )}
                   <div>
                     <p className="font-display font-black">
                       {status === "locked"
                         ? `${STORY_PROGRESS_COPY.lockedOpponent} ${String(opponent.storyPosition)}`
                         : opponent.displayName}
                     </p>
-                    <p className="mt-1 text-xs">
+                    <p className="mt-1 text-base">
                       {STORY_PROGRESS_COPY.targetElo}: {opponent.storyTargetElo}
                     </p>
                   </div>
@@ -134,7 +161,11 @@ export default function StoryLadderProgress({
         })}
       </ol>
       <p className="mt-3 text-sm">{STORY_PROGRESS_COPY.replay}</p>
-      <p className="mt-2 text-sm leading-relaxed">
+      <p
+        className={
+          selection === undefined ? "mt-2 text-sm leading-relaxed" : "sr-only"
+        }
+      >
         {STORY_PROGRESS_COPY.challengeUnlocked}:{" "}
         {selectChallengeUnlockedOpponents(progress)
           .map(({ displayName }) => displayName)
