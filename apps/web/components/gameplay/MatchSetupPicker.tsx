@@ -15,9 +15,12 @@ export default function MatchSetupPicker({
 
   useEffect(() => {
     const element = dialog.current
+    const trigger = document.activeElement
     element?.showModal()
     return () => {
       element?.close()
+      if (trigger instanceof HTMLElement && trigger.isConnected)
+        trigger.focus({ preventScroll: true })
     }
   }, [])
 
