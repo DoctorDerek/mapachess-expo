@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useMemo, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine, {
@@ -107,6 +107,11 @@ export default function WebMatch({
   runtime,
   result,
 }: WebMatchProps) {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true })
+    window.scrollTo({ top: 0, behavior: "instant" })
+  }, [actor])
   const snapshot = useSelector(actor, (current) => current)
   const evaluationResult = useSelector(
     evaluationActor,
@@ -192,6 +197,8 @@ export default function WebMatch({
           <h1
             className="font-display text-lg leading-tight font-black"
             id="opponent-band-title"
+            ref={heading}
+            tabIndex={-1}
           >
             {opponent.displayName}
           </h1>

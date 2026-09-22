@@ -160,19 +160,19 @@ export default function WebMatchSetup({
       <form onSubmit={startMatch} className="grid gap-3 text-base">
         <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
           <button
-            className="focus-visible:outline-mapachito-violet grid min-w-0 grid-cols-[minmax(6rem,8rem)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
+            className="focus-visible:outline-mapachito-violet flex min-w-0 flex-wrap items-center justify-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
             disabled={disabled || opening}
             onClick={() => setEditing("opponent")}
             type="button"
           >
-            <span className="block h-26">
+            <span className="block h-26 w-24 shrink-0">
               <ChallengeAnimalPortrait
                 key={opponent.id}
                 active={editing === null}
                 opponent={opponent}
               />
             </span>
-            <span>
+            <span className="min-w-0 flex-1 basis-32 wrap-anywhere">
               <span className="font-display block text-xl font-black">
                 {opponent.displayName}
               </span>
@@ -245,7 +245,7 @@ export default function WebMatchSetup({
             {MATCH_SETUP_COPY.invalidSetup}
           </MapachessNotice>
         ) : null}
-        <div className="bg-mapachito-charcoal sticky bottom-0 z-10 grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <MapachessButton
             aria-busy={opening}
             busyLabel={MATCH_SETUP_COPY.openingMatch}
