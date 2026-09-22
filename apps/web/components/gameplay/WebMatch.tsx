@@ -343,57 +343,64 @@ export default function WebMatch({
             </MapachessButton>
           )}
         </section>
-        <dl
-          aria-label="Current match data"
-          className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
-        >
-          <dt>Mode</dt>
-          <dd>{modeLabel}</dd>
-          <dt>Clock</dt>
-          <dd>Untimed</dd>
-          <dt>Privacy</dt>
-          <dd>Local · Accountless</dd>
-          <dt>Engine</dt>
-          <dd className="truncate">{runtime.engineIdentity.name}</dd>
-        </dl>
-
-        <section
-          aria-labelledby="move-history-title"
-          className="bg-mapachito-white rounded-lg p-3 [grid-area:history]"
-        >
-          <div className="flex items-baseline justify-between gap-4">
-            <h2
-              className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-              id="move-history-title"
+        <details className="text-mapachito-white [grid-area:data]">
+          <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+            Match details &amp; Move History
+          </summary>
+          <div className="text-mapachito-charcoal grid gap-3">
+            <dl
+              aria-label="Current match data"
+              className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
             >
-              Move History
-            </h2>
-            <span className="text-mapachito-charcoal font-mono text-xs leading-[1.55] font-semibold opacity-76">
-              {activeTransitions.length === 1
-                ? "1 ply"
-                : `${String(activeTransitions.length)} plies`}
-            </span>
-          </div>
-          {activeTransitions.length === 0 ? (
-            <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-              No moves yet.
-            </p>
-          ) : (
-            <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 font-mono text-sm inset-shadow-[0.5rem_0_0]">
-              {activeTransitions.map((transition, index) => (
-                <li
-                  className="odd:bg-mapachito-charcoal/6 grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5"
-                  key={`${String(index)}-${transition.move.beforeFen}`}
+              <dt>Mode</dt>
+              <dd>{modeLabel}</dd>
+              <dt>Clock</dt>
+              <dd>Untimed</dd>
+              <dt>Privacy</dt>
+              <dd>Local · Accountless</dd>
+              <dt>Engine</dt>
+              <dd className="truncate">{runtime.engineIdentity.name}</dd>
+            </dl>
+
+            <section
+              aria-labelledby="move-history-title"
+              className="bg-mapachito-white rounded-lg p-3 [grid-area:history]"
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <h2
+                  className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+                  id="move-history-title"
                 >
-                  <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
-                    {String(index + 1)}.
-                  </span>
-                  <span>{transition.move.san}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
+                  Move History
+                </h2>
+                <span className="text-mapachito-charcoal font-mono text-xs leading-[1.55] font-semibold opacity-76">
+                  {activeTransitions.length === 1
+                    ? "1 ply"
+                    : `${String(activeTransitions.length)} plies`}
+                </span>
+              </div>
+              {activeTransitions.length === 0 ? (
+                <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
+                  No moves yet.
+                </p>
+              ) : (
+                <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 font-mono text-sm inset-shadow-[0.5rem_0_0]">
+                  {activeTransitions.map((transition, index) => (
+                    <li
+                      className="odd:bg-mapachito-charcoal/6 grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5"
+                      key={`${String(index)}-${transition.move.beforeFen}`}
+                    >
+                      <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
+                        {String(index + 1)}.
+                      </span>
+                      <span>{transition.move.san}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+        </details>
       </aside>
     </section>
   )
