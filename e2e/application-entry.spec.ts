@@ -277,10 +277,13 @@ test("offers four direct modes with Challenge controls and saved hint preference
     await expect(
       page.getByRole("button", { name: "Start match", exact: true }),
     ).toBeEnabled()
+    await page.getByRole("button", { name: /Change hints/ }).click()
     await expect(
       page.getByRole("radio", { name: "Auto Move Hints", exact: true }),
     ).toBeChecked()
+    await page.getByRole("button", { name: "Done", exact: true }).click()
     if (name.endsWith("Challenge")) {
+      await page.getByRole("button", { name: /Change difficulty/ }).click()
       const initialDifficulty = page.getByRole("radio", {
         name: "100 Elo",
         exact: true,
@@ -290,18 +293,24 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await expect(
         page.getByRole("radio", { name: "200 Elo", exact: true }),
       ).toBeChecked()
-      await expect(
-        page.getByRole("radio", { name: "Chicken Stockfish", exact: true }),
-      ).toBeChecked()
-      const difficultyDisclosure = page
-        .locator("summary")
-        .filter({ hasText: "Change difficulty" })
-      await difficultyDisclosure.click()
+      await page.getByRole("button", { name: "Done", exact: true }).click()
       await expect(initialDifficulty).toBeHidden()
-      await difficultyDisclosure.click()
+      await expect(
+        page.getByRole("button", { name: /Change difficulty/ }),
+      ).toBeFocused()
+      await page.getByRole("button", { name: /Change difficulty/ }).click()
       await expect(
         page.getByRole("radio", { name: "200 Elo", exact: true }),
       ).toBeChecked()
+      await page.getByRole("button", { name: "Done", exact: true }).click()
+      await page.getByRole("button", { name: /Change animal/ }).click()
+      await expect(
+        page.getByRole("radio", { name: "Chicken Stockfish", exact: true }),
+      ).toBeChecked()
+      await page.keyboard.press("Escape")
+      await expect(
+        page.getByRole("button", { name: /Change animal/ }),
+      ).toBeFocused()
       await expect(
         page.getByRole("radio", { name: "White", exact: true }),
       ).toBeChecked()
@@ -322,9 +331,11 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await position.fill("959")
       await expect(position).toHaveValue("959")
       await page.getByRole("radio", { name: "Random", exact: true }).check()
+      await page.getByRole("button", { name: /Change hints/ }).click()
       await page
         .getByRole("radio", { name: "No Auto Hints", exact: true })
         .check()
+      await page.getByRole("button", { name: "Done", exact: true }).click()
       await expect(position).toHaveValue("959")
       await expect(
         page.getByText(
@@ -354,7 +365,9 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await page
     .getByRole("button", { name: "Standard Story", exact: true })
     .click()
+  await page.getByRole("button", { name: /Change hints/ }).click()
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
+  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Start match", exact: true }),
   ).toBeEnabled()
@@ -396,6 +409,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
   await page
     .getByRole("button", { name: "Standard Challenge", exact: true })
     .click()
+  await page.getByRole("button", { name: /Change difficulty/ }).click()
   const choice = page.getByRole("radio", {
     name: "100 Elo · Best medal: Gold · Last played: Chicken Stockfish",
     exact: true,
@@ -438,8 +452,8 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     await expect(sprite).toHaveCSS("background-image", /chicken_idle/)
     await attentionAnimation.dispose()
     await page.mouse.move(0, 0)
+    await page.getByRole("button", { name: "Done", exact: true }).focus()
     await page.keyboard.press("Tab")
-    await choice.focus()
     await expect(choice).toBeFocused()
     await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
     await page.emulateMedia({ reducedMotion: "reduce" })
@@ -451,16 +465,13 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     await expect
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))
       .toBe(1)
-    const disclosure = page
-      .locator("summary")
-      .filter({ hasText: "Change difficulty" })
-    await disclosure.click()
+    await page.getByRole("button", { name: "Done", exact: true }).click()
     await expect
       .poll(() =>
         spriteElement.evaluate((element) => element.getAnimations().length),
       )
       .toBe(0)
-    await disclosure.click()
+    await page.getByRole("button", { name: /Change difficulty/ }).click()
     await expect
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))
       .toBe(1)
