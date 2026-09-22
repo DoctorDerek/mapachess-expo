@@ -4,8 +4,10 @@ import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import {
   createInitialStoryProgress,
+  selectChallengeUnlockedOpponents,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
 import StoryLadderProgress from "./StoryLadderProgress"
 import WebMatchSetup from "./WebMatchSetup"
 
@@ -15,6 +17,27 @@ const progress: StoryProgress = {
 }
 
 describe("Story ladder presentation structure", () => {
+  it("renders only the globally earned animals in the focused Challenge chooser", () => {
+    const markup = renderToStaticMarkup(
+      <ChallengeOpponentChoices
+        disabled={false}
+        onSelected={vi.fn()}
+        opponents={selectChallengeUnlockedOpponents({
+          standard: [],
+          chess960: [
+            { opponentId: "chicken-stockfish", highestMedal: "gold" },
+            { opponentId: "bunny-stockfish", highestMedal: "silver" },
+          ],
+        })}
+        selectedId="bunny-stockfish"
+      />,
+    )
+    expect(markup).toContain('value="chicken-stockfish"')
+    expect(markup).toMatch(/checked=""[^>]*value="bunny-stockfish"/)
+    expect(markup).not.toContain('value="dog-stockfish"')
+    expect(markup).not.toContain("<select")
+  })
+
   it.each([
     { highestMedal: "bronze", symbol: "🥉", label: "Bronze" },
     { highestMedal: "silver", symbol: "🥈", label: "Silver" },
@@ -63,8 +86,8 @@ describe("Story ladder presentation structure", () => {
         "Choose an earned animal and supported difficulty.",
       )
       expect(markup).toMatch(/<button[^>]*disabled=""[^>]*type="submit"/)
-      expect(markup).toContain('value="chicken-stockfish"')
-      expect(markup).toContain('value="100"')
+      expect(markup).toContain("Change animal")
+      expect(markup).toContain("Change difficulty")
     },
   )
   it.each(["standard", "chess960"] as const)(
@@ -99,13 +122,9 @@ describe("Story ladder presentation structure", () => {
       )
       expect(markup).toContain("Bunny Stockfish")
       expect(markup).not.toContain('value="dog-stockfish"')
-      expect(markup).toMatch(
-        /name="challenge-opponent"[^>]*checked=""[^>]*value="bunny-stockfish"/,
-      )
-      expect(markup).toMatch(
-        /name="challenge-difficulty"[^>]*checked=""[^>]*value="1000"/,
-      )
-      expect(markup).toContain("Difficulty · estimated Elo")
+      expect(markup).toContain("1000")
+      expect(markup).toContain("Change difficulty")
+      expect(markup).toContain("Change animal")
       expect(markup).toContain("not certified human ratings")
       expect(markup).toContain("does not update your Elo")
       expect(markup).not.toContain("<select")
@@ -125,11 +144,11 @@ describe("Story ladder presentation structure", () => {
         storyProgress={progress}
       />,
     )
-    expect(markup).toContain('value="chicken-stockfish"')
-    expect(markup).toMatch(/checked="" value="bunny-stockfish"/)
+    expect(markup).toContain("Bunny Stockfish")
+    expect(markup).toContain("Choose Story opponent")
     expect(markup).not.toContain('value="dog-stockfish"')
     expect(markup).not.toContain("Dog Stockfish")
-    expect(markup).toContain("Defeated · Gold")
+    expect(markup).not.toContain("Defeated · Gold")
     expect(markup).not.toContain("<select")
   })
 
@@ -189,7 +208,7 @@ describe("Story ladder presentation structure", () => {
         }}
       />,
     )
-    expect(story).toContain("Your Story ladder")
+    expect(story).toContain("Choose Story opponent")
     expect(story).toContain("Start match")
     expect(challenge).not.toContain("Your Story ladder")
     expect(challenge).toContain("Play as")
