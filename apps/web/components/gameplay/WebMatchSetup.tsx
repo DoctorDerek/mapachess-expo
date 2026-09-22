@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
-import parseChallengeSetup from "@mapachess/match/challenge-setup"
 import {
-  CHESS960_POSITION_COUNT,
-  parseChess960PositionId,
-} from "@mapachess/match/chess960-position"
+  AUTO_HINT_MODE_PRESENTATION,
+  type AutoHintMode,
+} from "@mapachess/match/auto-hint-mode"
+import parseChallengeSetup from "@mapachess/match/challenge-setup"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import {
   MATCH_SETUP_COPY,
   matchModeLabel,
@@ -24,9 +24,13 @@ import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImage
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
+import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
+import Chess960PositionChoice from "./Chess960PositionChoice"
+import MatchColorChoices from "./MatchColorChoices"
+import MatchSetupPicker from "./MatchSetupPicker"
 import StoryLadderProgress from "./StoryLadderProgress"
-import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 export type WebMatchSetupProps = Readonly<{
   autoHintMode: AutoHintMode
@@ -39,8 +43,6 @@ export type WebMatchSetupProps = Readonly<{
   setup: MatchSetup
   storyProgress: StoryProgress
 }>
-
-const LAST_CHESS960_POSITION = CHESS960_POSITION_COUNT - 1
 
 export default function WebMatchSetup({
   autoHintMode,
@@ -69,6 +71,9 @@ export default function WebMatchSetup({
     ),
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
+  const [editing, setEditing] = useState<
+    "opponent" | "difficulty" | "hints" | null
+  >(null)
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
@@ -94,7 +99,7 @@ export default function WebMatchSetup({
 
   const startMatch = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    if (disabled || opening || !selectionAvailable) return
+    if (disabled || opening || editing !== null || !selectionAvailable) return
     if (setup.mode === "story") {
       onStart({ ...setup, opponentId: selectedOpponentId })
       return
@@ -133,77 +138,150 @@ export default function WebMatchSetup({
   }
 
   return (
-    <section aria-labelledby="match-setup-title" className="mx-auto max-w-6xl">
-      <MapachessButton disabled={disabled} onClick={onBack} variant="secondary">
-        <span aria-hidden="true">← </span>
-        {MATCH_SETUP_COPY.allModes}
-      </MapachessButton>
-      <h1
-        className="font-display text-mapachito-white mt-6 mb-8 text-[clamp(2.25rem,6vw,4rem)] leading-tight font-black text-balance"
-        id="match-setup-title"
-        ref={heading}
-        tabIndex={-1}
-      >
-        {matchModeLabel({ mode: setup.mode, variant })}
-      </h1>
-      {setup.mode === "story" ? (
-        <StoryLadderProgress
-          progress={storyProgress}
-          variant={variant}
-          selection={{
-            disabled,
-            opponentId: selectedOpponentId,
-            onSelected: setSelectedOpponentId,
-          }}
-        />
-      ) : null}
-      <form
-        onSubmit={startMatch}
-        className="grid items-start gap-6 xl:grid-cols-2"
-      >
-        <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal rounded-xl border-3 p-[clamp(1.25rem,3vw,2rem)]">
-          <h2 className="text-mapachito-violet text-sm font-black uppercase">
-            {MATCH_SETUP_COPY.opponent}
-          </h2>
-          <p className="font-display mt-2 text-3xl font-black">
-            {opponent.displayName}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed">
-            {setup.mode === "story"
-              ? MATCH_SETUP_COPY.storyAvailability
-              : MATCH_SETUP_COPY.challengeAvailability}
-          </p>
-          <p className="border-mapachito-deep-cyan mt-5 border-l-4 pl-3 text-sm leading-relaxed">
-            {MATCH_SETUP_COPY.webCalibrationDifficulty}
-          </p>
-          <p className="mt-3 text-sm font-bold">{MATCH_SETUP_COPY.untimed}</p>
+    <section aria-labelledby="match-setup-title" className="mx-auto max-w-3xl">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <MapachessButton
+          disabled={disabled}
+          onClick={onBack}
+          variant="secondary"
+        >
+          <span aria-hidden="true">← </span>
+          {MATCH_SETUP_COPY.allModes}
+        </MapachessButton>
+        <h1
+          className="font-display text-mapachito-white text-2xl leading-tight font-black"
+          id="match-setup-title"
+          ref={heading}
+          tabIndex={-1}
+        >
+          {matchModeLabel({ mode: setup.mode, variant })}
+        </h1>
+      </div>
+      <form onSubmit={startMatch} className="grid gap-3 text-base">
+        <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
+          <button
+            className="focus-visible:outline-mapachito-violet grid min-w-0 grid-cols-[minmax(6rem,8rem)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
+            disabled={disabled || opening}
+            onClick={() => setEditing("opponent")}
+            type="button"
+          >
+            <span className="block h-26">
+              <ChallengeAnimalPortrait
+                key={opponent.id}
+                active={editing === null}
+                opponent={opponent}
+              />
+            </span>
+            <span>
+              <span className="font-display block text-xl font-black">
+                {opponent.displayName}
+              </span>
+              {setup.mode === "story" ? (
+                <span>{opponent.storyTargetElo} Elo</span>
+              ) : null}
+              <span className="text-mapachito-violet block font-bold">
+                {setup.mode === "story"
+                  ? "Choose Story opponent"
+                  : "Change animal"}
+              </span>
+            </span>
+            <span aria-hidden="true">✎</span>
+          </button>
 
-          {challenge !== null ? (
+          {challenge === null ? (
+            <p>{MATCH_SETUP_COPY.randomColor}</p>
+          ) : (
             <>
-              <fieldset className="mt-6" disabled={disabled}>
-                <legend className="text-lg font-black">
-                  {MATCH_SETUP_COPY.opponent}
-                </legend>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {challengeOpponents.map((animal) => (
-                    <label
-                      key={animal.id}
-                      className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3"
-                    >
-                      <input
-                        type="radio"
-                        name="challenge-opponent"
-                        value={animal.id}
-                        checked={selectedOpponentId === animal.id}
-                        onChange={() => setSelectedOpponentId(animal.id)}
-                        className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                      />
-                      <StoryOpponentPortrait opponent={animal} locked={false} />
-                      <span className="font-bold">{animal.displayName}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
+              <MapachessButton
+                disabled={disabled || opening}
+                onClick={() => setEditing("difficulty")}
+                type="button"
+                variant="secondary"
+              >
+                {difficultyTargetElo} Elo · Change difficulty{" "}
+                <span aria-hidden="true">✎</span>
+              </MapachessButton>
+              <MatchColorChoices
+                disabled={disabled || opening}
+                initialColor={challenge.playerColor}
+              />
+            </>
+          )}
+          {challenge?.variant === "chess960" ? (
+            <Chess960PositionChoice
+              disabled={disabled || opening}
+              numberedPosition={numberedPosition}
+              onChanged={(value) => {
+                setPositionNumber(value)
+                setNumberedPosition(true)
+              }}
+              onRandomize={() => {
+                setPositionNumber(
+                  String(generateWebChess960Position(globalThis.crypto)),
+                )
+                setNumberedPosition(false)
+              }}
+              value={positionNumber}
+            />
+          ) : null}
+          <MapachessButton
+            disabled={disabled || opening}
+            onClick={() => setEditing("hints")}
+            type="button"
+            variant="secondary"
+          >
+            {AUTO_HINT_MODE_PRESENTATION[autoHintMode].label} · Change hints{" "}
+            <span aria-hidden="true">✎</span>
+          </MapachessButton>
+        </div>
+
+        {!selectionAvailable ? (
+          <MapachessNotice role="status" tone="warning">
+            {MATCH_SETUP_COPY.unavailableSelection}
+          </MapachessNotice>
+        ) : null}
+        {invalidSetup ? (
+          <MapachessNotice role="alert" tone="warning">
+            {MATCH_SETUP_COPY.invalidSetup}
+          </MapachessNotice>
+        ) : null}
+        <div className="bg-mapachito-charcoal sticky bottom-0 z-10 grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <MapachessButton
+            aria-busy={opening}
+            busyLabel={MATCH_SETUP_COPY.openingMatch}
+            disabled={disabled || !selectionAvailable}
+            type="submit"
+          >
+            <span aria-hidden="true">▶ </span>
+            {MATCH_SETUP_COPY.startMatch}
+          </MapachessButton>
+        </div>
+        <details className="text-mapachito-white">
+          <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+            About this match
+          </summary>
+          <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
+          <p className="mt-2">{MATCH_SETUP_COPY.untimed}</p>
+        </details>
+
+        {editing === null ? null : (
+          <MatchSetupPicker
+            onDone={() => setEditing(null)}
+            title={
+              editing === "hints"
+                ? "Better Hints"
+                : editing === "difficulty"
+                  ? "Choose difficulty"
+                  : "Choose opponent"
+            }
+          >
+            {editing === "hints" ? (
+              <AutoHintModeChoices
+                autoHintMode={autoHintMode}
+                disabled={disabled}
+                onAutoHintModeChanged={onAutoHintModeChanged}
+              />
+            ) : editing === "difficulty" ? (
               <ChallengeDifficultyChoices
                 disabled={disabled}
                 history={challengeHistory[variant]}
@@ -211,132 +289,26 @@ export default function WebMatchSetup({
                 selectedElo={difficultyTargetElo}
                 targets={difficultyTargets}
               />
-            </>
-          ) : null}
-
-          {challenge === null ? (
-            <p className="mt-5 text-sm leading-relaxed">
-              {MATCH_SETUP_COPY.randomColor}
-            </p>
-          ) : (
-            <fieldset className="mt-6" disabled={disabled}>
-              <legend className="text-lg font-black">
-                {MATCH_SETUP_COPY.color}
-              </legend>
-              <div className="mt-3 flex flex-wrap gap-4">
-                <label className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3">
-                  <input
-                    className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                    defaultChecked={challenge.playerColor === "white"}
-                    name="player-color"
-                    type="radio"
-                    value="white"
-                  />
-                  {MATCH_SETUP_COPY.white}
-                </label>
-                <label className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3">
-                  <input
-                    className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                    defaultChecked={challenge.playerColor === "black"}
-                    name="player-color"
-                    type="radio"
-                    value="black"
-                  />
-                  {MATCH_SETUP_COPY.black}
-                </label>
-                <label className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3">
-                  <input
-                    className="accent-mapachito-violet focus-visible:outline-mapachito-violet size-5"
-                    defaultChecked={challenge.playerColor === "random"}
-                    name="player-color"
-                    type="radio"
-                    value="random"
-                  />
-                  {MATCH_SETUP_COPY.random}
-                </label>
-              </div>
-            </fieldset>
-          )}
-
-          {challenge?.variant === "chess960" ? (
-            <fieldset className="mt-6" disabled={disabled}>
-              <legend className="text-lg font-black">
-                {MATCH_SETUP_COPY.position}
-              </legend>
-              <label
-                className="mt-2 block text-sm font-bold"
-                htmlFor="chess960-position"
-              >
-                {MATCH_SETUP_COPY.positionNumber} (0–{LAST_CHESS960_POSITION})
-              </label>
-              <input
-                className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet mt-2 min-h-12 w-full rounded-lg border-2 px-4 py-3 disabled:opacity-50"
-                value={positionNumber}
-                onChange={(event) => {
-                  setPositionNumber(event.currentTarget.value)
-                  setNumberedPosition(true)
+            ) : setup.mode === "story" ? (
+              <StoryLadderProgress
+                progress={storyProgress}
+                variant={variant}
+                selection={{
+                  disabled,
+                  opponentId: selectedOpponentId,
+                  onSelected: setSelectedOpponentId,
                 }}
-                id="chess960-position"
-                inputMode="numeric"
-                max={LAST_CHESS960_POSITION}
-                min={0}
-                name="chess960-position"
-                required
-                step={1}
-                type="number"
               />
-              <div className="mt-3">
-                <MapachessButton
-                  type="button"
-                  variant="secondary"
-                  disabled={disabled}
-                  onClick={() => {
-                    setPositionNumber(
-                      String(generateWebChess960Position(globalThis.crypto)),
-                    )
-                    setNumberedPosition(false)
-                  }}
-                >
-                  {MATCH_SETUP_COPY.randomize}
-                </MapachessButton>
-              </div>
-              <p className="mt-3 text-sm">
-                {numberedPosition
-                  ? MATCH_SETUP_COPY.pinnedPosition
-                  : MATCH_SETUP_COPY.freshPosition}
-              </p>
-            </fieldset>
-          ) : null}
-        </div>
-
-        <div className="border-mapachito-charcoal bg-mapachito-white rounded-xl border-3 p-[clamp(1.25rem,3vw,2rem)] xl:row-span-2">
-          <AutoHintModeChoices
-            autoHintMode={autoHintMode}
-            disabled={disabled}
-            onAutoHintModeChanged={onAutoHintModeChanged}
-          />
-        </div>
-
-        <div className="grid gap-4 xl:col-start-1 xl:row-start-2">
-          {!selectionAvailable ? (
-            <MapachessNotice role="status" tone="warning">
-              {MATCH_SETUP_COPY.unavailableSelection}
-            </MapachessNotice>
-          ) : null}
-          {invalidSetup ? (
-            <MapachessNotice role="alert" tone="warning">
-              {MATCH_SETUP_COPY.invalidSetup}
-            </MapachessNotice>
-          ) : null}
-          <MapachessButton
-            aria-busy={opening}
-            busyLabel={MATCH_SETUP_COPY.openingMatch}
-            disabled={disabled || !selectionAvailable}
-            type="submit"
-          >
-            {MATCH_SETUP_COPY.startMatch}
-          </MapachessButton>
-        </div>
+            ) : (
+              <ChallengeOpponentChoices
+                disabled={disabled}
+                onSelected={setSelectedOpponentId}
+                opponents={challengeOpponents}
+                selectedId={selectedOpponentId}
+              />
+            )}
+          </MatchSetupPicker>
+        )}
       </form>
     </section>
   )
