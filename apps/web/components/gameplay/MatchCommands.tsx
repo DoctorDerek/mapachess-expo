@@ -33,11 +33,11 @@ export default function MatchCommands({
 }>) {
   const persisting = selectIsPersistingMutation(snapshot)
   return (
-    <div className="grid grid-cols-[auto_repeat(4,minmax(0,1fr))] items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {coach}
       <MapachessButton
         aria-busy={persisting && selectHasUndoHistory(snapshot)}
-        className="flex min-h-14 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanUndo(snapshot)}
         onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
         type="button"
@@ -50,7 +50,7 @@ export default function MatchCommands({
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasRedoHistory(snapshot)}
-        className="flex min-h-14 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanRedo(snapshot)}
         onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
         type="button"
@@ -62,7 +62,7 @@ export default function MatchCommands({
         Redo
       </MapachessButton>
       {hints}
-      <details className="relative z-40 min-w-0">
+      <details className="relative z-40 min-w-0 flex-1 basis-12">
         <summary
           aria-label="Match menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
