@@ -36,7 +36,7 @@ export type MoveClassificationInput = Readonly<{
 export type MoveClassificationResult =
   | Readonly<{ status: "classified"; classification: MoveClassification }>
   | Readonly<{
-      status: "verification-required"
+      status: "unavailable"
       reason: "bounded-evaluation"
     }>
 
@@ -85,7 +85,7 @@ export default function classifyMove({
     (before.kind !== "draw" && before.bound !== "exact") ||
     (after.kind !== "draw" && after.bound !== "exact")
   ) {
-    return { status: "verification-required", reason: "bounded-evaluation" }
+    return { status: "unavailable", reason: "bounded-evaluation" }
   }
 
   if (before.kind === "mate" && before.winner === mover) {

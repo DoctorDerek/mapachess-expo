@@ -139,11 +139,11 @@ describe("approved mate transitions", () => {
         bound,
       }
       expect(classify({ before: bounded })).toEqual({
-        status: "verification-required",
+        status: "unavailable",
         reason: "bounded-evaluation",
       })
       expect(classify({ after: bounded })).toEqual({
-        status: "verification-required",
+        status: "unavailable",
         reason: "bounded-evaluation",
       })
     }
