@@ -256,6 +256,14 @@ describe("Stockfish process adapter", () => {
     expect(identity.name).toBe("Stockfish 18")
     expect(result).toEqual({
       requestId: "game-1/ply-1/white",
+      latestExactPrincipalVariation: {
+        rank: 1,
+        moves: ["e1e2"],
+        depth: 7,
+        selectiveDepth: 9,
+        nodes: 200,
+        score: { kind: "centipawns", value: 34, bound: "exact" },
+      },
       bestMove: "e1e2",
       ponderMove: "e3e4",
       informationLineCount: 1,
@@ -318,6 +326,7 @@ describe("Stockfish process adapter", () => {
       "info depth 5 seldepth 7 multipv 2 score cp 12 nodes 100 pv e1d1 e3d3",
       "info depth 5 seldepth 7 multipv 1 score cp 34 nodes 100 pv e1e2 e3e4",
       "info depth 7 seldepth 9 multipv 1 score cp 38 nodes 200 pv e1f1 e3f3",
+      "info depth 8 multipv 1 score cp 45 lowerbound nodes 200 pv e1f1",
       "info string a diagnostic may contain the word pv without being a variation",
       "info depth 8 nodes 200",
       "bestmove e1f1",
@@ -326,7 +335,15 @@ describe("Stockfish process adapter", () => {
     await expect(search).resolves.toEqual({
       requestId: "ranked-root-moves",
       bestMove: "e1f1",
-      informationLineCount: 5,
+      informationLineCount: 6,
+      latestExactPrincipalVariation: {
+        rank: 1,
+        moves: ["e1f1", "e3f3"],
+        depth: 7,
+        selectiveDepth: 9,
+        nodes: 200,
+        score: { kind: "centipawns", value: 38, bound: "exact" },
+      },
       latestInformation: {
         line: "info depth 8 nodes 200",
         depth: 8,
@@ -335,11 +352,10 @@ describe("Stockfish process adapter", () => {
       principalVariations: [
         {
           rank: 1,
-          moves: ["e1f1", "e3f3"],
-          depth: 7,
-          selectiveDepth: 9,
+          moves: ["e1f1"],
+          depth: 8,
           nodes: 200,
-          score: { kind: "centipawns", value: 38, bound: "exact" },
+          score: { kind: "centipawns", value: 45, bound: "lower" },
         },
         {
           rank: 2,

@@ -54,6 +54,7 @@ export type StockfishPrincipalVariation = StockfishEngineSearchInformation &
 export type StockfishEngineSearchResult = Readonly<{
   bestMove: string | null
   latestInformation?: StockfishEngineSearchInformation
+  latestExactPrincipalVariation?: StockfishPrincipalVariation
   ponderMove?: string
   principalVariations?: readonly StockfishPrincipalVariation[]
   requestId: string
