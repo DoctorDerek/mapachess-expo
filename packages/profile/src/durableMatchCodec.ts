@@ -33,6 +33,9 @@ import {
   requireSafeRevision,
   requireString,
 } from "./decodePrimitives.js"
+import decodeMoveFeedback, {
+  canonicalMoveFeedback,
+} from "./moveFeedbackCodec.js"
 
 const MAX_DURABLE_MATCH_PLY_COUNT = 20_000
 const MAX_FEN_LENGTH = 256
@@ -159,6 +162,7 @@ export const decodeDurableMatch = (
           "autoHintMode",
           "conclusion",
           "recordVersion",
+          ...(object.moveFeedback === undefined ? [] : ["moveFeedback"]),
           ...(object.opponentTargetElo === undefined
             ? []
             : ["opponentTargetElo"]),
@@ -270,7 +274,19 @@ export const decodeDurableMatch = (
     return failData(`${path}.conclusion`)
   }
 
-  return Object.freeze({ ...recordWithoutConclusion, conclusion })
+  return Object.freeze({
+    ...recordWithoutConclusion,
+    conclusion,
+    ...(object.moveFeedback === undefined
+      ? {}
+      : {
+          moveFeedback: decodeMoveFeedback(
+            object.moveFeedback,
+            timeline,
+            `${path}.moveFeedback`,
+          ),
+        }),
+  })
 }
 
 const canonicalConclusion = (conclusion: MatchConclusion | null) =>
@@ -320,4 +336,7 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
   match.moveHintsUsed,
   canonicalConclusion(match.conclusion),
   ...(match.opponentTargetElo === undefined ? [] : [match.opponentTargetElo]),
+  ...(match.moveFeedback === undefined
+    ? []
+    : [match.moveFeedback.map(canonicalMoveFeedback)]),
 ]
