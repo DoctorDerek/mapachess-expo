@@ -2,6 +2,7 @@ import type { AutoHintMode } from "./autoHintMode.js"
 import type { MatchConclusion } from "./matchConclusion.js"
 import type { MatchMoveId } from "./matchMove.js"
 import type { MatchColor, MatchStartingPosition } from "./matchPosition.js"
+import type { MoveFeedbackRecord } from "./moveFeedback.js"
 import {
   STOCKFISH_OPPONENTS,
   type StockfishOpponentId,
@@ -50,6 +51,7 @@ export type DurableMatchRecordV2 = DurableMatchRecordFields &
 
 export type DurableMatchRecordV3 = DurableMatchRecordFields &
   Readonly<{
+    moveFeedback?: readonly MoveFeedbackRecord[]
     opponentTargetElo?: number
     autoHintMode: AutoHintMode
     conclusion: MatchConclusion | null

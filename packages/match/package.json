@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./move-feedback": {
+      "types": "./src/moveFeedback.ts",
+      "default": "./dist/moveFeedback.js"
+    },
     "./auto-hint-mode": {
       "types": "./src/autoHintMode.ts",
       "default": "./dist/autoHintMode.js"
