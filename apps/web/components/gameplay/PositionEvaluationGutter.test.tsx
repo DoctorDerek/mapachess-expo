@@ -68,6 +68,21 @@ describe("position evaluation gutter", () => {
         },
       },
     })
+    for (const mover of ["white", "black", "black"] as const) {
+      reactionActor.send({
+        type: "MOVE_REACTION.RECEIVED",
+        reaction: {
+          id: `waiting/${mover}/${String(reactionActor.getSnapshot().context.pending.length)}`,
+          mover,
+          san: "e4",
+          classification: {
+            grade: "good",
+            reason: null,
+            policyId: MOVE_CLASSIFICATION_POLICY_ID,
+          },
+        },
+      })
+    }
     const markup = renderToStaticMarkup(
       createElement(PositionEvaluationGutter, {
         actor,
@@ -77,6 +92,7 @@ describe("position evaluation gutter", () => {
     )
     expect(markup).toContain("Black +2.50")
     expect(markup).toContain("Dismiss White • Mistake ?")
+    expect(markup).toContain("Waiting: White 1, Black 2.")
     expect(markup).not.toContain("Qh5")
     expect(markup).not.toContain("Lost forced mate")
     expect(markup.match(/role="meter"/g)).toHaveLength(1)
