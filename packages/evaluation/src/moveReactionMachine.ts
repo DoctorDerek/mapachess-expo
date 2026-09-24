@@ -20,6 +20,7 @@ type MoveReactionContext = Readonly<{
 export type MoveReactionEvent =
   | Readonly<{ type: "MOVE_REACTION.RECEIVED"; reaction: MoveReaction }>
   | Readonly<{ type: "MOVE_REACTION.DISMISSED"; id: string }>
+  | Readonly<{ type: "MOVE_REACTION.PRESENTED"; id: string }>
   | Readonly<{ type: "MOVE_REACTION.CLEARED" }>
 
 const moveReactionMachine = setup({
@@ -35,6 +36,9 @@ const moveReactionMachine = setup({
       !context.receivedIds.includes(event.reaction.id),
     dismissesVisible: ({ context, event }) =>
       event.type === "MOVE_REACTION.DISMISSED" &&
+      event.id === context.visible?.id,
+    presentsVisible: ({ context, event }) =>
+      event.type === "MOVE_REACTION.PRESENTED" &&
       event.id === context.visible?.id,
   },
   actions: {
@@ -74,12 +78,25 @@ const moveReactionMachine = setup({
         "MOVE_REACTION.RECEIVED": {
           guard: "isNewReaction",
           actions: "show",
-          target: "visible",
+          target: "active",
         },
       },
     },
-    visible: {
-      after: { visibilityDuration: "advancing" },
+    active: {
+      initial: "awaitingPresentation",
+      states: {
+        awaitingPresentation: {
+          on: {
+            "MOVE_REACTION.PRESENTED": {
+              guard: "presentsVisible",
+              target: "displaying",
+            },
+          },
+        },
+        displaying: {
+          after: { visibilityDuration: "#moveReaction.advancing" },
+        },
+      },
       on: {
         "MOVE_REACTION.RECEIVED": { guard: "isNewReaction", actions: "queue" },
         "MOVE_REACTION.DISMISSED": {
@@ -90,7 +107,7 @@ const moveReactionMachine = setup({
     },
     advancing: {
       always: [
-        { guard: "hasPending", actions: "advance", target: "visible" },
+        { guard: "hasPending", actions: "advance", target: "active" },
         { actions: "hide", target: "idle" },
       ],
     },
