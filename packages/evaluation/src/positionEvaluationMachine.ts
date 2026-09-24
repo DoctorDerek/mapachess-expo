@@ -27,6 +27,7 @@ export type PositionEvaluationMachineContext = Readonly<{
   failure: PositionEvaluationFailure | null
   pendingRequest: PositionEvaluationRequest | null
   queuedRequest: PositionEvaluationRequest | null
+  remainingRequests: readonly PositionEvaluationRequest[]
   result: PositionEvaluationResult | null
 }>
 
@@ -74,18 +75,21 @@ const positionEvaluationMachineDefinition = setup({
         failure: null,
         pendingRequest: event.request,
         queuedRequest: null,
+        remainingRequests: [],
       }
     }),
     acceptResult: assign((_, result: PositionEvaluationResult) => ({
       failure: null,
       pendingRequest: null,
       queuedRequest: null,
+      remainingRequests: [],
       result,
     })),
     advanceQueuedRequest: assign(({ context }) => ({
       failure: null,
       pendingRequest: requireQueuedRequest(context),
-      queuedRequest: null,
+      queuedRequest: context.remainingRequests[0] ?? null,
+      remainingRequests: context.remainingRequests.slice(1),
     })),
     clearFailure: assign({ failure: null }),
     markRequestFailed: assign(({ context }) => ({
@@ -102,11 +106,13 @@ const positionEvaluationMachineDefinition = setup({
       }),
       result: null,
     })),
-    queueRequest: assign(({ event }) => {
+    queueRequest: assign(({ context, event }) => {
       if (event.type !== "EVALUATION.POSITION_REQUESTED") {
         throw new Error("Evaluation queue action received another event.")
       }
-      return { queuedRequest: event.request }
+      return context.queuedRequest === null
+        ? { queuedRequest: event.request }
+        : { remainingRequests: [...context.remainingRequests, event.request] }
     }),
   },
   guards: {
@@ -130,6 +136,7 @@ const positionEvaluationMachineDefinition = setup({
     failure: null,
     pendingRequest: null,
     queuedRequest: null,
+    remainingRequests: [],
     result: null,
   }),
   states: {
