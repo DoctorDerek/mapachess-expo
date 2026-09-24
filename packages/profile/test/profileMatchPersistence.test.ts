@@ -8,10 +8,19 @@ import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
+import {
+  applyMatchMove,
+  listLegalMatchMoves,
+} from "@mapachess/match/match-move"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
+import { decodeDurableMatch } from "../src/durableMatchCodec.js"
 import SerializedPlayerDataStore from "../src/durableStore.js"
 import createInitialMapachessPlayerData from "../src/playerData.js"
-import { decodeMapachessPortableBackup } from "../src/portableBackup.js"
+import {
+  createMapachessPortableBackup,
+  decodeMapachessPortableBackup,
+} from "../src/portableBackup.js"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "../src/profileMachine.js"
@@ -75,6 +84,159 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("orders feedback with moves, round-trips backups, and trims only an abandoned branch", async () => {
+    const actor = await openProfile()
+    const initial = durableMatch()
+    const bridge = new ProfileMatchPersistenceBridge({
+      actor,
+      expectedActiveMatch: null,
+      initialMatch: initial,
+    })
+    const signal = new AbortController().signal
+    await bridge.establish(signal)
+    const firstMove = listLegalMatchMoves(initialPosition).find(
+      ({ uci }) => uci === "e2e4",
+    )
+    if (!firstMove) throw new Error("Expected e4")
+    const first = applyMatchMove(initialPosition, firstMove.id)
+    if (!first.ok) throw new Error("Expected e4 transition")
+    const replyMove = listLegalMatchMoves(first.transition.after).find(
+      ({ uci }) => uci === "e7e5",
+    )
+    if (!replyMove) throw new Error("Expected e5")
+    const reply = applyMatchMove(first.transition.after, replyMove.id)
+    if (!reply.ok) throw new Error("Expected e5 transition")
+    const firstRequest = {
+      ...initial,
+      currentFen: first.transition.after.fen,
+      cursor: 1,
+      moveIds: [firstMove.id],
+      requestId: "first",
+    }
+    await bridge.persist(firstRequest, signal)
+    const record: MoveFeedbackRecord = {
+      ply: 1,
+      moveId: firstMove.id,
+      mover: "white",
+      beforeFen: initialPosition.fen,
+      afterFen: first.transition.after.fen,
+      before: { bound: "exact", kind: "centipawns", whiteCentipawns: 0 },
+      after: { kind: "centipawns", whiteCentipawns: 30, bound: "exact" },
+      grade: "best",
+      reason: null,
+      policyId: "mapachess-gdd-3.1",
+    }
+    await Promise.all([
+      bridge.persistMoveFeedback(record, signal),
+      bridge.persist(
+        {
+          ...firstRequest,
+          currentFen: reply.transition.after.fen,
+          cursor: 2,
+          moveIds: [firstMove.id, replyMove.id],
+          requestId: "reply",
+        },
+        signal,
+      ),
+    ])
+    const data = selectCurrentPlayerData(actor.getSnapshot())
+    if (!data) throw new Error("Expected saved data")
+    expect(data.activeMatch).toMatchObject({
+      cursor: 2,
+      moveFeedback: [record],
+    })
+    const backup = await createMapachessPortableBackup({
+      applicationVersion: "test",
+      gddRevision: "v3.1",
+      playerData: data,
+      sha256,
+    })
+    const restored = await decodeMapachessPortableBackup(backup, sha256)
+    expect(restored.ok).toBe(true)
+    expect(
+      decodeDurableMatch(JSON.parse(JSON.stringify(data.activeMatch)), "match"),
+    ).toEqual(data.activeMatch)
+    expect(() =>
+      decodeDurableMatch(
+        {
+          ...data.activeMatch,
+          moveFeedback: [{ ...record, afterFen: initialPosition.fen }],
+        },
+        "match",
+      ),
+    ).toThrow()
+    expect(() =>
+      decodeDurableMatch(
+        { ...data.activeMatch, moveFeedback: [record, record] },
+        "match",
+      ),
+    ).toThrow()
+    expect(() =>
+      decodeDurableMatch(
+        {
+          ...data.activeMatch,
+          moveFeedback: [
+            {
+              ...record,
+              after: {
+                kind: "centipawns",
+                bound: "exact",
+                whiteCentipawns: Infinity,
+              },
+            },
+          ],
+        },
+        "match",
+      ),
+    ).toThrow()
+    await bridge.persist(
+      {
+        ...firstRequest,
+        cursor: 0,
+        currentFen: initialPosition.fen,
+        moveIds: [firstMove.id, replyMove.id],
+        requestId: "undo",
+      },
+      signal,
+    )
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch?.moveFeedback,
+    ).toEqual([record])
+    const branchMove = listLegalMatchMoves(initialPosition).find(
+      ({ uci }) => uci === "d2d4",
+    )
+    if (!branchMove) throw new Error("Expected d4")
+    const branch = applyMatchMove(initialPosition, branchMove.id)
+    if (!branch.ok) throw new Error("Expected d4 transition")
+    await bridge.persist(
+      {
+        ...firstRequest,
+        moveIds: [branchMove.id],
+        currentFen: branch.transition.after.fen,
+        requestId: "branch",
+      },
+      signal,
+    )
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch?.moveFeedback,
+    ).toEqual([])
+    expect(await bridge.persistMoveFeedback(record, signal)).toBe(false)
+    const aborted = new AbortController()
+    aborted.abort()
+    await expect(
+      bridge.persistMoveFeedback(record, aborted.signal),
+    ).rejects.toThrow("aborted")
+    await bridge.persist(
+      {
+        ...firstRequest,
+        moveIds: [branchMove.id],
+        currentFen: branch.transition.after.fen,
+        requestId: "after-abort",
+      },
+      signal,
+    )
+    actor.stop()
+  })
   it("does not accept an unchanged match as acknowledgement of a different difficulty preference", async () => {
     const actor = await openProfile()
     const match: DurableMatchRecord = {
