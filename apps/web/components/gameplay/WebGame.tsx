@@ -289,6 +289,12 @@ function MatchSessionExperience({
           }
           actor={session.actor}
           evaluationActor={session.evaluationActor}
+          moveFeedback={
+            savedMatch?.matchId === session.match.matchId
+              ? (savedMatch.moveFeedback ?? [])
+              : []
+          }
+          reactionsPaused={settingsOpen}
           key={session.match.matchId}
           mode={session.match.mode}
           playerEloAtStart={session.match.playerEloAtStart}

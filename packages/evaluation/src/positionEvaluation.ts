@@ -1,21 +1,14 @@
 import type { MatchColor, MatchPosition } from "@mapachess/match/match-position"
+import type {
+  PositionEvaluation,
+  PositionEvaluationBound,
+} from "@mapachess/match/move-feedback"
 import type { StockfishScore } from "@mapachess/stockfish/engine-session"
 
-export type PositionEvaluationBound = "exact" | "lower" | "upper"
-
-export type PositionEvaluation =
-  | Readonly<{ kind: "draw" }>
-  | Readonly<{
-      bound: PositionEvaluationBound
-      kind: "centipawns"
-      whiteCentipawns: number
-    }>
-  | Readonly<{
-      bound: PositionEvaluationBound
-      kind: "mate"
-      moves: number
-      winner: MatchColor
-    }>
+export type {
+  PositionEvaluation,
+  PositionEvaluationBound,
+} from "@mapachess/match/move-feedback"
 
 const invertBound = (
   bound: PositionEvaluationBound,

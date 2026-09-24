@@ -126,7 +126,7 @@ describe("position evaluation lifecycle", () => {
     actor.stop()
   })
 
-  it("coalesces queued positions and retries the latest request after failure", async () => {
+  it("retains queued positions in order and retries the final failed request", async () => {
     const attempts: Array<{
       deferredResult: Deferred<PositionEvaluationResult>
       request: PositionEvaluationRequest
@@ -152,9 +152,13 @@ describe("position evaluation lifecycle", () => {
     await waitFor(actor, () => attempts.length === 2)
     expect(
       attempts.map(({ request: attempted }) => attempted.requestId),
-    ).toEqual([first.requestId, latest.requestId])
+    ).toEqual([first.requestId, skipped.requestId])
 
-    attempts[1]?.deferredResult.reject(new Error("latest failure"))
+    attempts[1]?.deferredResult.resolve(result(skipped, 20))
+    await waitFor(actor, () => attempts.length === 3)
+    expect(attempts[2]?.request).toBe(latest)
+
+    attempts[2]?.deferredResult.reject(new Error("latest failure"))
     await waitFor(actor, (snapshot) => snapshot.matches("failure"))
     expect(selectPositionEvaluationFailure(actor.getSnapshot())).toEqual({
       requestId: latest.requestId,
@@ -162,9 +166,9 @@ describe("position evaluation lifecycle", () => {
     })
 
     actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
-    await waitFor(actor, () => attempts.length === 3)
-    expect(attempts[2]?.request).toBe(latest)
-    attempts[2]?.deferredResult.resolve(result(latest, 42))
+    await waitFor(actor, () => attempts.length === 4)
+    expect(attempts[3]?.request).toBe(latest)
+    attempts[3]?.deferredResult.resolve(result(latest, 42))
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
       whiteCentipawns: 42,

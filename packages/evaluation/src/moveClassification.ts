@@ -1,4 +1,5 @@
 import type { MatchColor } from "@mapachess/match/match-position"
+import type { MoveGrade } from "@mapachess/match/move-feedback"
 import type { PositionEvaluation } from "./positionEvaluation.js"
 
 export const MOVE_CLASSIFICATION_POLICY_ID = "mapachess-gdd-3.1" as const
@@ -11,14 +12,7 @@ export const MOVE_CLASSIFICATION_THRESHOLDS = Object.freeze({
   blunderLoss: 20,
 })
 
-export type MoveClassificationGrade =
-  | "brilliant"
-  | "genius"
-  | "best"
-  | "good"
-  | "inaccuracy"
-  | "mistake"
-  | "blunder"
+export type MoveClassificationGrade = MoveGrade
 
 export type MoveClassification = Readonly<{
   grade: MoveClassificationGrade

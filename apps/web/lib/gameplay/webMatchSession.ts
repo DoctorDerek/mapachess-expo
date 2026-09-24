@@ -2,6 +2,7 @@ import { createActor, type ActorRefFrom } from "xstate"
 import bindMatchPositionEvaluation, {
   type MatchPositionEvaluationBinding,
 } from "@mapachess/evaluation/match-position-evaluation"
+import createMoveFeedbackEvaluator from "@mapachess/evaluation/move-feedback-evaluator"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { Chess960PositionId } from "@mapachess/match/chess960-position"
@@ -9,7 +10,9 @@ import {
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
-import matchMachine from "@mapachess/match/match-machine"
+import matchMachine, {
+  selectMatchTimeline,
+} from "@mapachess/match/match-machine"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -147,7 +150,18 @@ const openActorSession = async ({
     }).start()
     matchActor = openedMatchActor
     const openedEvaluationActor = createActor(positionEvaluationMachine, {
-      input: { evaluator: runtime.positionEvaluator },
+      input: {
+        evaluator: createMoveFeedbackEvaluator({
+          matchId: match.matchId,
+          evaluate: runtime.positionEvaluator,
+          timeline: () => selectMatchTimeline(openedMatchActor.getSnapshot()),
+          records: () =>
+            selectCurrentPlayerData(profileActor.getSnapshot())?.activeMatch
+              ?.moveFeedback ?? [],
+          persist: (record, analysisSignal) =>
+            persistence.persistMoveFeedback(record, analysisSignal),
+        }),
+      },
     }).start()
     evaluationActor = openedEvaluationActor
     const openedEvaluationBinding = bindMatchPositionEvaluation(

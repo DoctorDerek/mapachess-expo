@@ -6,6 +6,7 @@ import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "./AutoHintModeChoices"
+import MoveClassificationFaq from "./MoveClassificationFaq"
 import {
   ImportBackupButton,
   importIssueMessage,
@@ -105,6 +106,7 @@ export default function ProfileSettingsPanel({
           </div>
         </section>
 
+        <MoveClassificationFaq />
         <details className="text-mapachito-charcoal mt-7 text-base">
           <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
             About Elo ratings

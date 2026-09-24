@@ -25,9 +25,14 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { matchModeLabel } from "@mapachess/match/match-setup"
+import {
+  MOVE_GRADE_LABELS,
+  type MoveFeedbackRecord,
+} from "@mapachess/match/move-feedback"
 import stockfishOpponent, {
   type StockfishOpponentDefinition,
 } from "@mapachess/match/stockfish-opponent"
+import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
@@ -42,6 +47,8 @@ import ReactiveBattleStage from "./ReactiveBattleStage"
 export type WebMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
+  moveFeedback?: readonly MoveFeedbackRecord[]
+  reactionsPaused?: boolean
   mode: MatchMode
   playerEloAtStart: number
   runtime: WebMatchRuntime
@@ -102,6 +109,8 @@ const matchStatusText = (
 export default function WebMatch({
   actor,
   evaluationActor,
+  moveFeedback = [],
+  reactionsPaused = false,
   mode,
   playerEloAtStart,
   runtime,
@@ -144,6 +153,11 @@ export default function WebMatch({
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
+  const reactionActor = useMoveReactions(
+    timeline,
+    moveFeedback,
+    reactionsPaused,
+  )
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
@@ -211,6 +225,7 @@ export default function WebMatch({
       <div className="grid w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
         <div className="grid min-w-0 xl:grid-cols-[auto_minmax(0,1fr)] xl:items-stretch">
           <PositionEvaluationGutter
+            reactionActor={reactionActor}
             actor={evaluationActor}
             orientation={runtime.playerColor}
           />
@@ -337,7 +352,25 @@ export default function WebMatch({
                               <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
                                 {String(index + 1)}.
                               </span>
-                              <span>{transition.move.san}</span>
+                              <span>
+                                {transition.move.san}
+                                {moveFeedback
+                                  .filter(
+                                    (entry) =>
+                                      entry.ply === index + 1 &&
+                                      entry.beforeFen ===
+                                        transition.before.fen &&
+                                      entry.afterFen === transition.after.fen,
+                                  )
+                                  .map((entry) => (
+                                    <span className="ml-2" key={entry.ply}>
+                                      {MOVE_GRADE_LABELS[entry.grade]}
+                                      {entry.reason === null
+                                        ? ""
+                                        : ` · ${entry.reason}`}
+                                    </span>
+                                  ))}
+                              </span>
                             </li>
                           ))}
                         </ol>
