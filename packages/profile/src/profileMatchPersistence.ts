@@ -1,12 +1,15 @@
 import type { ActorRefFrom } from "xstate"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
+import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type {
   MatchPersistence,
   MatchPersistenceReceipt,
   MatchPersistenceRequest,
 } from "@mapachess/match/match-persistence"
+import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import { canonicalActiveMatch } from "./durableMatchCodec.js"
+import decodeMoveFeedback from "./moveFeedbackCodec.js"
 import profileMachine, {
   selectCurrentPlayerData,
   type ProfileMachineSnapshot,
@@ -152,8 +155,22 @@ const candidateFromRequest = (
     throw new TypeError("Move Hint use requires Piece Hint use.")
   }
 
+  let commonPly = 0
+  while (
+    commonPly < initialMatch.moveIds.length &&
+    initialMatch.moveIds[commonPly] === request.moveIds[commonPly]
+  )
+    commonPly += 1
+
   return Object.freeze({
     ...initialMatch,
+    ...(initialMatch.moveFeedback === undefined
+      ? {}
+      : {
+          moveFeedback: initialMatch.moveFeedback.filter(
+            ({ ply }) => ply <= commonPly,
+          ),
+        }),
     autoHintMode: request.autoHintMode,
     conclusion: request.conclusion,
     currentFen: request.currentFen,
@@ -202,6 +219,16 @@ export default class ProfileMatchPersistenceBridge implements MatchPersistence {
   readonly #initialMatch: DurableMatchRecord
   #acceptedMatch: DurableMatchRecord | null
   #established = false
+  #pendingWrite: Promise<void> = Promise.resolve()
+
+  #enqueue<Result>(operation: () => Promise<Result>): Promise<Result> {
+    const write = this.#pendingWrite.then(operation)
+    this.#pendingWrite = write.then(
+      () => undefined,
+      () => undefined,
+    )
+    return write
+  }
 
   constructor(input: ProfileMatchPersistenceBridgeInput) {
     if (
@@ -226,17 +253,53 @@ export default class ProfileMatchPersistenceBridge implements MatchPersistence {
     request: MatchPersistenceRequest,
     signal: AbortSignal,
   ): Promise<MatchPersistenceReceipt> {
-    if (!this.#established || this.#acceptedMatch === null) {
-      throw new Error("Match persistence bridge is not established.")
-    }
+    return this.#enqueue(async () => {
+      if (!this.#established || this.#acceptedMatch === null) {
+        throw new Error("Match persistence bridge is not established.")
+      }
 
-    const candidate = candidateFromRequest(this.#initialMatch, request)
-    requireMonotonicHintUse(this.#acceptedMatch, candidate)
-    requireMonotonicConclusion(this.#acceptedMatch, candidate)
-    await this.#persistCandidate(candidate, signal)
-    return Object.freeze({
-      requestId: request.requestId,
-      type: "MATCH.MUTATION_PERSISTED",
+      const candidate = candidateFromRequest(this.#acceptedMatch, request)
+      requireMonotonicHintUse(this.#acceptedMatch, candidate)
+      requireMonotonicConclusion(this.#acceptedMatch, candidate)
+      await this.#persistCandidate(candidate, signal)
+      return Object.freeze({
+        requestId: request.requestId,
+        type: "MATCH.MUTATION_PERSISTED",
+      })
+    })
+  }
+
+  async persistMoveFeedback(
+    record: MoveFeedbackRecord,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    return this.#enqueue(async () => {
+      if (!this.#established || this.#acceptedMatch === null)
+        throw new Error("Match persistence bridge is not established.")
+      if (signal.aborted) throw abortedPersistence()
+      const accepted = this.#acceptedMatch
+      const reconstruction = reconstructDurableMatch(accepted)
+      if (!reconstruction.ok)
+        throw new Error("Accepted match cannot be reconstructed.")
+      const transition = reconstruction.timeline.transitions[record.ply - 1]
+      if (
+        transition === undefined ||
+        transition.move.id !== record.moveId ||
+        transition.before.fen !== record.beforeFen ||
+        transition.after.fen !== record.afterFen
+      )
+        return false
+      if (accepted.moveFeedback?.some(({ ply }) => ply === record.ply))
+        return true
+      const moveFeedback = decodeMoveFeedback(
+        [...(accepted.moveFeedback ?? []), record].sort(
+          (left, right) => left.ply - right.ply,
+        ),
+        reconstruction.timeline,
+        "activeMatch.moveFeedback",
+      )
+      await this.#persistCandidate({ ...accepted, moveFeedback }, signal)
+      return true
     })
   }
 
