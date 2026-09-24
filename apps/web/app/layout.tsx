@@ -1,6 +1,7 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import WebsiteAnalytics from "../components/WebsiteAnalytics"
 
 export const metadata: Metadata = {
   title: "Mapachess",
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        {process.env.VERCEL_ENV === "production" && <WebsiteAnalytics />}
+      </body>
     </html>
   )
 }
