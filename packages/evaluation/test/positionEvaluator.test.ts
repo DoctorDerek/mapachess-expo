@@ -98,6 +98,7 @@ describe("evaluatePositionWithStockfish", () => {
         new AbortController().signal,
       ),
     ).resolves.toEqual({
+      bestMove: "e2e4",
       evaluation: {
         bound: "lower",
         kind: "centipawns",

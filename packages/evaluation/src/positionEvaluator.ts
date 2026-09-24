@@ -18,6 +18,7 @@ export type PositionEvaluationRequest = Readonly<{
 }>
 
 export type PositionEvaluationResult = Readonly<{
+  bestMove?: string | null
   evaluation: PositionEvaluation
   positionFen: string
   requestId: string
@@ -73,6 +74,7 @@ export const evaluatePositionWithStockfish = async (
   }
 
   return Object.freeze({
+    bestMove: result.bestMove,
     evaluation: normalizeStockfishPositionEvaluation(
       request.position.turn,
       requireFinalScore(result),
