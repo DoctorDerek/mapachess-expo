@@ -35,7 +35,10 @@ const requireFinalScore = (
   const rankOneScore = result.principalVariations?.find(
     (variation) => variation.rank === 1,
   )?.score
-  const score = rankOneScore ?? result.latestInformation?.score
+  const score =
+    result.latestExactPrincipalVariation?.score ??
+    rankOneScore ??
+    result.latestInformation?.score
 
   if (score === undefined) {
     throw new Error("Stockfish completed position evaluation without a score.")
@@ -74,7 +77,7 @@ export const evaluatePositionWithStockfish = async (
   }
 
   return Object.freeze({
-    bestMove: result.bestMove,
+    bestMove: result.latestExactPrincipalVariation?.moves[0] ?? result.bestMove,
     evaluation: normalizeStockfishPositionEvaluation(
       request.position.turn,
       requireFinalScore(result),
