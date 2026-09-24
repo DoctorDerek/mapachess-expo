@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./move-classification-copy": {
+      "types": "./src/moveClassificationCopy.ts",
+      "default": "./dist/moveClassificationCopy.js"
+    },
+    "./move-feedback-evaluator": {
+      "types": "./src/moveFeedbackEvaluator.ts",
+      "default": "./dist/moveFeedbackEvaluator.js"
+    },
     "./classified-move": {
       "types": "./src/classifiedMove.ts",
       "default": "./dist/classifiedMove.js"
