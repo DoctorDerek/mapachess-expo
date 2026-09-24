@@ -1,4 +1,4 @@
-import { assign, setup } from "xstate"
+import { assign, setup, type SnapshotFrom } from "xstate"
 import type { MatchColor } from "@mapachess/match/match-position"
 import type { MoveClassification } from "./moveClassification.js"
 
@@ -98,3 +98,19 @@ const moveReactionMachine = setup({
 })
 
 export default moveReactionMachine
+
+export type MoveReactionWaitingCounts = Readonly<{
+  white: number
+  black: number
+}>
+
+export const selectMoveReactionWaitingCounts = (
+  snapshot: SnapshotFrom<typeof moveReactionMachine>,
+): MoveReactionWaitingCounts =>
+  snapshot.context.pending.reduce<MoveReactionWaitingCounts>(
+    (counts, reaction) => ({
+      white: counts.white + (reaction.mover === "white" ? 1 : 0),
+      black: counts.black + (reaction.mover === "black" ? 1 : 0),
+    }),
+    { white: 0, black: 0 },
+  )
