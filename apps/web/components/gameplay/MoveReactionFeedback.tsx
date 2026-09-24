@@ -1,9 +1,11 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import { useAnimate } from "motion/react"
 import { useLayoutEffect } from "react"
 import type { ActorRefFrom } from "xstate"
 import moveReactionMachine, {
+  MOVE_REACTION_DURATION_MS,
   selectMoveReactionWaitingCounts,
 } from "@mapachess/evaluation/move-reaction-machine"
 import { moveGradeText } from "@mapachess/match/move-feedback"
@@ -14,11 +16,18 @@ export default function MoveReactionFeedback({
   const snapshot = useSelector(actor, (current) => current)
   const reaction = snapshot.context.visible
   const counts = selectMoveReactionWaitingCounts(snapshot)
+  const [countdown, animate] = useAnimate<HTMLSpanElement>()
 
   useLayoutEffect(() => {
-    if (reaction !== null)
-      actor.send({ type: "MOVE_REACTION.PRESENTED", id: reaction.id })
-  }, [actor, reaction])
+    if (reaction === null) return
+    const playback = animate(
+      countdown.current,
+      { scaleX: [1, 0] },
+      { duration: MOVE_REACTION_DURATION_MS / 1_000, ease: "linear" },
+    )
+    actor.send({ type: "MOVE_REACTION.PRESENTED", id: reaction.id })
+    return () => playback.stop()
+  }, [actor, animate, countdown, reaction])
 
   if (reaction === null) return null
   const grade = moveGradeText(reaction.mover, reaction.classification.grade)
@@ -45,6 +54,12 @@ export default function MoveReactionFeedback({
       >
         {counts.black}
       </span>
+      <span
+        key={reaction.id}
+        ref={countdown}
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 h-0.5 origin-left rounded-full bg-linear-[to_right,var(--color-mapachito-raspberry),var(--color-mapachito-orange),var(--color-mapachito-green),var(--color-mapachito-blue),var(--color-mapachito-violet)] motion-reduce:invisible"
+      />
     </button>
   )
 }
