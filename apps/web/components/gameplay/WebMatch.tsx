@@ -12,7 +12,6 @@ import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine, {
   selectDrawOfferResponse,
   selectHintStage,
-  selectIsOpponentThinking,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
   selectMatchConclusion,
@@ -26,7 +25,7 @@ import matchMachine, {
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { matchModeLabel } from "@mapachess/match/match-setup"
 import {
-  MOVE_GRADE_LABELS,
+  moveGradeText,
   type MoveFeedbackRecord,
 } from "@mapachess/match/move-feedback"
 import stockfishOpponent, {
@@ -60,7 +59,7 @@ const matchStatusText = (
   snapshot: MatchMachineSnapshot,
   playerColor: WebMatchRuntime["playerColor"],
   opponentName: StockfishOpponentDefinition["displayName"],
-): string => {
+): string | null => {
   const conclusion = selectMatchConclusion(snapshot)
   const drawOfferResponse = selectDrawOfferResponse(snapshot)
   const failure = selectOpponentFailure(snapshot)
@@ -94,16 +93,10 @@ const matchStatusText = (
       ? "Draw by stalemate."
       : "Draw by insufficient material."
   }
-  if (
-    selectIsOpponentThinking(snapshot) ||
-    selectMatchPosition(snapshot).turn !== playerColor
-  ) {
-    return `${opponentName} is choosing a move…`
-  }
   if (drawOfferResponse === "rejected") {
     return `${opponentName} declines the draw.`
   }
-  return "Your move."
+  return null
 }
 
 export default function WebMatch({
@@ -173,6 +166,11 @@ export default function WebMatch({
     throw new Error("Visible Better Hints have no canonical analysis result.")
   }
   const matchComplete = selectMatchConclusion(snapshot) !== null
+  const statusText = matchStatusText(
+    snapshot,
+    runtime.playerColor,
+    opponent.displayName,
+  )
   const drawOfferDecision = decideChickenDrawOffer({
     evaluationResult,
     playerColor: runtime.playerColor,
@@ -229,18 +227,20 @@ export default function WebMatch({
             actor={evaluationActor}
             orientation={runtime.playerColor}
           />
-          <CanonicalChessboard
-            disabled={!playerTurn}
-            hints={visibleHints}
-            lastMove={lastMove}
-            legalMoves={legalMoves}
-            onMove={(moveId) =>
-              actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
-            }
-            orientation={runtime.playerColor}
-            position={position}
-            showMoveHints={hintStage === "move-hints"}
-          />
+          <div className="col-start-1 row-start-2 min-w-0 xl:col-start-2">
+            <CanonicalChessboard
+              disabled={!playerTurn}
+              hints={visibleHints}
+              lastMove={lastMove}
+              legalMoves={legalMoves}
+              onMove={(moveId) =>
+                actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
+              }
+              orientation={runtime.playerColor}
+              position={position}
+              showMoveHints={hintStage === "move-hints"}
+            />
+          </div>
         </div>
       </div>
 
@@ -249,16 +249,14 @@ export default function WebMatch({
           aria-label="Core match actions"
           className="grid min-w-0 gap-2 [grid-area:actions]"
         >
-          <p
-            aria-live="polite"
-            className="text-mapachito-white text-sm font-bold"
-          >
-            {matchStatusText(
-              snapshot,
-              runtime.playerColor,
-              opponent.displayName,
-            )}
-          </p>
+          {statusText === null ? null : (
+            <p
+              aria-live="polite"
+              className="text-mapachito-white text-sm font-bold"
+            >
+              {statusText}
+            </p>
+          )}
 
           {matchComplete
             ? result?.(persisting || persistenceFailure !== null)
@@ -364,10 +362,7 @@ export default function WebMatch({
                                   )
                                   .map((entry) => (
                                     <span className="ml-2" key={entry.ply}>
-                                      {MOVE_GRADE_LABELS[entry.grade]}
-                                      {entry.reason === null
-                                        ? ""
-                                        : ` · ${entry.reason}`}
+                                      {moveGradeText(entry.mover, entry.grade)}
                                     </span>
                                   ))}
                               </span>

@@ -76,7 +76,9 @@ describe("position evaluation gutter", () => {
       }),
     )
     expect(markup).toContain("Black +2.50")
-    expect(markup).toContain("Dismiss White Qh5: Mistake ?, Lost forced mate")
+    expect(markup).toContain("Dismiss White • Mistake ?")
+    expect(markup).not.toContain("Qh5")
+    expect(markup).not.toContain("Lost forced mate")
     expect(markup.match(/role="meter"/g)).toHaveLength(1)
     expect(markup.match(/<button/g)).toHaveLength(1)
     reactionActor.stop()
@@ -93,10 +95,9 @@ describe("position evaluation gutter", () => {
     expect(markup).toContain(
       'data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"',
     )
-    expect(markup).toContain("h-8 w-full")
+    expect(markup).toContain("h-10 w-full")
     expect(markup).toContain("xl:h-full")
-    expect(markup).toContain(">W<")
-    expect(markup).toContain(">B<")
+    expect(markup).not.toContain("writing-mode")
     actor.stop()
   })
 

@@ -139,7 +139,8 @@ describe("match composition", () => {
         }),
       )
       expect(markup).toContain("Retry Evaluation")
-      expect(markup).toContain("Your move.")
+      expect(markup).not.toContain("Your move.")
+      expect(markup).not.toContain("is choosing a move")
     } finally {
       actor.stop()
       evaluationActor.stop()
