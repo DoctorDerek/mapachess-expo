@@ -121,16 +121,16 @@ export default function PositionEvaluationGutter({
           className={`bg-mapachito-white absolute inset-y-0 left-0 w-[var(--white-share)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
         />
       </div>
-      <div className="relative col-start-1 row-start-1 grid h-10 min-w-0 grid-cols-[minmax(0,1fr)_max-content_minmax(0,1fr)] items-center px-1 font-mono text-base font-bold text-white xl:col-start-2">
+      <div className="relative isolate col-start-1 row-start-1 h-10 min-w-0 font-mono text-base font-bold text-white xl:col-start-2">
         <span
           aria-label={statusText}
-          className={`bg-mapachito-charcoal w-fit rounded px-1 text-sm tabular-nums ${blackLeading ? "col-start-3 row-start-1 justify-self-end" : "col-start-1 row-start-1"}`}
+          className={`bg-mapachito-charcoal pointer-events-none absolute top-1/2 z-0 w-fit -translate-y-1/2 rounded px-1 text-sm tabular-nums ${blackLeading ? "right-1" : "left-1"}`}
         >
           {scoreBound}
           {score}
         </span>
         <div
-          className="col-start-2 row-start-1"
+          className="pointer-events-none absolute inset-0 z-10 grid place-items-center"
           role="status"
           aria-atomic="true"
         >

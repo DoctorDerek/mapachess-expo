@@ -35,7 +35,7 @@ export default function MoveReactionFeedback({
   return (
     <button
       type="button"
-      className="bg-mapachito-charcoal font-body relative grid h-10 grid-cols-[1.75rem_max-content_1.75rem] items-center gap-1 rounded px-1 text-base font-bold whitespace-nowrap text-white focus-visible:outline-2"
+      className="bg-mapachito-charcoal font-body pointer-events-auto relative grid h-10 grid-cols-[1.75rem_max-content_1.75rem] items-center gap-1 rounded px-1 text-base font-bold whitespace-nowrap text-white focus-visible:outline-2"
       aria-label={`Dismiss ${grade}. Waiting: White ${String(counts.white)}, Black ${String(counts.black)}.`}
       onClick={() =>
         actor.send({ type: "MOVE_REACTION.DISMISSED", id: reaction.id })
