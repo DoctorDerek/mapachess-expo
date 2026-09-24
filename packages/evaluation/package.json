@@ -5,6 +5,18 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./classified-move": {
+      "types": "./src/classifiedMove.ts",
+      "default": "./dist/classifiedMove.js"
+    },
+    "./move-classification": {
+      "types": "./src/moveClassification.ts",
+      "default": "./dist/moveClassification.js"
+    },
+    "./move-reaction-machine": {
+      "types": "./src/moveReactionMachine.ts",
+      "default": "./dist/moveReactionMachine.js"
+    },
     "./chicken-draw-decision": {
       "types": "./src/chickenDrawDecision.ts",
       "default": "./dist/chickenDrawDecision.js"
