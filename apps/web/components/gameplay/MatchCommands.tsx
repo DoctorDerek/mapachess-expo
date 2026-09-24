@@ -69,7 +69,7 @@ export default function MatchCommands({
         >
           <span aria-hidden="true">☰</span>Menu
         </summary>
-        <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-64 max-w-[calc(100vw-1rem)] gap-3 overflow-auto rounded-lg border p-3 shadow-xl">
+        <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-64 max-w-[calc(100vw-1rem)] gap-3 overflow-auto rounded-lg border p-3 shadow-xl xl:top-full xl:bottom-auto xl:mt-2 xl:mb-0">
           {menuActions}
           <MapachessButton
             aria-busy={persisting && drawAvailable}

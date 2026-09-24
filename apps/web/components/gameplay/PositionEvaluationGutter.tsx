@@ -10,7 +10,7 @@ import positionEvaluationMachine, {
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
 import type { MatchColor } from "@mapachess/match/match-position"
-import { MOVE_GRADE_LABELS } from "@mapachess/match/move-feedback"
+import { moveGradeText } from "@mapachess/match/move-feedback"
 
 const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
 
@@ -79,107 +79,87 @@ export default function PositionEvaluationGutter({
   if (stage === "ready" && evaluation === null) {
     throw new Error("Ready position evaluation has no accepted score.")
   }
-
   const acceptedText = evaluation === null ? null : evaluationText(evaluation)
   const statusText =
-    stage === "analyzing"
-      ? acceptedText === null
-        ? "Evaluating…"
-        : `Evaluating… · ${acceptedText}`
-      : stage === "failure"
-        ? "Evaluation unavailable"
-        : (acceptedText ?? "Evaluation waiting")
+    acceptedText ??
+    (stage === "failure" ? "Evaluation unavailable" : "Evaluation waiting")
   const whiteShare = whiteSharePercent(evaluation)
   const style: EvaluationGutterStyle = {
     "--white-share": `${String(whiteShare)}%`,
   }
-  const topColor = orientation === "white" ? "Black" : "White"
-  const bottomColor = orientation === "white" ? "White" : "Black"
+  const blackLeading =
+    evaluation?.kind === "mate"
+      ? evaluation.winner === "black"
+      : evaluation?.kind === "centipawns" && evaluation.whiteCentipawns < 0
+  const score =
+    evaluation === null
+      ? "…"
+      : evaluation.kind === "draw"
+        ? "0.00"
+        : evaluation.kind === "mate"
+          ? `M${String(evaluation.moves)}`
+          : `+${(Math.abs(evaluation.whiteCentipawns) / 100).toFixed(2)}`
+  const scoreBound =
+    evaluation === null ||
+    evaluation.kind === "draw" ||
+    evaluation.bound === "exact"
+      ? ""
+      : evaluation.bound === (blackLeading ? "upper" : "lower")
+        ? "≥"
+        : "≤"
+  const grade =
+    reaction === null
+      ? null
+      : moveGradeText(reaction.mover, reaction.classification.grade)
 
   return (
-    <div
-      className="border-mapachito-charcoal bg-mapachito-charcoal relative min-h-8 w-full border xl:h-full xl:w-[clamp(2rem,2.75vw,3rem)]"
-      data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
-      style={style}
-    >
+    <>
       <div
+        className="bg-mapachito-charcoal relative col-start-1 row-start-1 h-10 w-full xl:row-start-2 xl:h-full xl:w-6"
+        data-evaluation-orientation="horizontal-below-xl-vertical-at-xl"
+        style={style}
         aria-label="Stockfish evaluation"
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={Math.round(whiteShare)}
         aria-valuetext={statusText}
         role="meter"
-        className="absolute inset-0"
       >
         <div
           aria-hidden="true"
           className={`bg-mapachito-white absolute inset-y-0 left-0 w-[var(--white-share)] transition-[width,height] duration-300 motion-reduce:transition-none xl:inset-x-0 xl:inset-y-auto xl:h-[var(--white-share)] xl:w-auto ${orientation === "white" ? "xl:bottom-0" : "xl:top-0"}`}
         />
       </div>
-      {reaction === null ? (
-        <>
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 left-2 -translate-y-1/2 rounded bg-slate-950/80 px-1 font-mono text-[0.625rem] font-black text-white xl:hidden"
-          >
-            White
-          </span>
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded bg-slate-950/80 px-1 font-mono text-[0.625rem] font-black text-white xl:hidden"
-          >
-            Black
-          </span>
-          <span
-            aria-hidden="true"
-            className="absolute top-2 left-1/2 hidden -translate-x-1/2 rounded bg-slate-950/80 px-1 font-mono text-[0.625rem] font-black text-white xl:block"
-          >
-            {topColor.slice(0, 1)}
-          </span>
-          <span
-            aria-hidden="true"
-            className="absolute bottom-2 left-1/2 hidden -translate-x-1/2 rounded bg-slate-950/80 px-1 font-mono text-[0.625rem] font-black text-white xl:block"
-          >
-            {bottomColor.slice(0, 1)}
-          </span>
-        </>
-      ) : null}
-      <span
-        aria-atomic="true"
-        aria-live="polite"
-        className={`relative z-10 grid min-h-8 place-items-center px-14 py-1 text-center font-mono text-base font-black text-white [text-shadow:0_1px_3px_rgb(30_30_30),0_0_4px_rgb(30_30_30)] xl:absolute xl:inset-0 xl:rotate-180 xl:px-0 xl:[writing-mode:vertical-rl] ${reaction === null ? "" : "sr-only"}`}
-      >
-        {statusText}
-      </span>
-      {reaction === null ? null : (
-        <div className="relative z-20 flex min-h-8 items-center justify-between gap-1 px-1 font-mono text-sm font-bold text-white [text-shadow:0_1px_3px_rgb(30_30_30),0_0_4px_rgb(30_30_30)] xl:absolute xl:inset-0 xl:flex-col xl:justify-center xl:[writing-mode:vertical-rl]">
-          <span
-            className={`bg-mapachito-charcoal rounded px-1 ${evaluation?.kind === "mate" ? (evaluation.winner === "black" ? "order-last" : "") : evaluation?.kind === "centipawns" && evaluation.whiteCentipawns < 0 ? "order-last" : ""}`}
-            aria-label={statusText}
-          >
-            {acceptedText ?? "Evaluating…"}
-          </span>
-          <button
-            type="button"
-            className="bg-mapachito-charcoal min-h-8 min-w-0 flex-1 rounded px-1 leading-4 focus-visible:outline-2"
-            onClick={() =>
-              reactionActor.send({
-                type: "MOVE_REACTION.DISMISSED",
-                id: reaction.id,
-              })
-            }
-            aria-label={`Dismiss ${reaction.mover === "white" ? "White" : "Black"} ${reaction.san}: ${MOVE_GRADE_LABELS[reaction.classification.grade]}${reaction.classification.reason === null ? "" : `, ${reaction.classification.reason}`}`}
-          >
-            <span role="status" aria-atomic="true">
-              {reaction.mover === "white" ? "White" : "Black"} {reaction.san} ·{" "}
-              {MOVE_GRADE_LABELS[reaction.classification.grade]}
-              {reaction.classification.reason === null ? null : (
-                <span className="block">{reaction.classification.reason}</span>
-              )}
-            </span>
-          </button>
+      <div className="relative col-start-1 row-start-1 grid h-10 min-w-0 grid-cols-[minmax(0,1fr)_max-content_minmax(0,1fr)] items-center px-1 font-mono text-base font-bold text-white xl:col-start-2">
+        <span
+          aria-label={statusText}
+          className={`bg-mapachito-charcoal w-fit rounded px-1 text-sm tabular-nums ${blackLeading ? "col-start-3 row-start-1 justify-self-end" : "col-start-1 row-start-1"}`}
+        >
+          {scoreBound}
+          {score}
+        </span>
+        <div
+          className="col-start-2 row-start-1"
+          role="status"
+          aria-atomic="true"
+        >
+          {reaction === null ? null : (
+            <button
+              type="button"
+              className="bg-mapachito-charcoal h-10 rounded px-1 whitespace-nowrap focus-visible:outline-2"
+              aria-label={`Dismiss ${grade}`}
+              onClick={() =>
+                reactionActor.send({
+                  type: "MOVE_REACTION.DISMISSED",
+                  id: reaction.id,
+                })
+              }
+            >
+              {grade}
+            </button>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }

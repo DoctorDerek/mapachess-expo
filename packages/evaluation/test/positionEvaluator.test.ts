@@ -55,6 +55,35 @@ const sessionReturning = (
 }
 
 describe("evaluatePositionWithStockfish", () => {
+  it("uses the last exact principal score and its move within the existing search", async () => {
+    const request = evaluationRequest()
+    const scripted = sessionReturning({
+      requestId: request.requestId,
+      bestMove: "d2d4",
+      latestInformation: {
+        score: { kind: "centipawns", value: 80, bound: "lower" },
+      },
+      latestExactPrincipalVariation: {
+        rank: 1,
+        moves: ["e2e4"],
+        depth: 6,
+        score: { kind: "centipawns", value: 35, bound: "exact" },
+      },
+    })
+    const result = await evaluatePositionWithStockfish(
+      scripted.session,
+      request,
+      new AbortController().signal,
+    )
+    expect(result.evaluation).toEqual({
+      kind: "centipawns",
+      whiteCentipawns: 35,
+      bound: "exact",
+    })
+    expect(result.bestMove).toBe("e2e4")
+    expect(scripted.requests).toHaveLength(1)
+    expect(scripted.requests[0]?.nodeLimit).toBe(POSITION_EVALUATION_NODE_LIMIT)
+  })
   it("returns terminal truth without spending an engine search", async () => {
     const terminal = requirePosition("7k/6Q1/5K2/8/8/8/8/8 b - - 0 1")
     const scripted = sessionReturning({

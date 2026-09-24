@@ -219,6 +219,7 @@ export default function createStockfishUciSession(
 
       let informationLineCount = 0
       let latestInformation: StockfishUciSearchInformation | undefined
+      let latestExactPrincipalVariation: StockfishPrincipalVariation | undefined
       const principalVariationsByRank = new Map<
         number,
         StockfishPrincipalVariation
@@ -252,6 +253,10 @@ export default function createStockfishUciSession(
                     : { score: latestInformation.score }),
                 }),
               )
+              if (rank === 1 && latestInformation.score?.bound === "exact") {
+                latestExactPrincipalVariation =
+                  principalVariationsByRank.get(rank)
+              }
             }
           }
           continue
@@ -288,6 +293,9 @@ export default function createStockfishUciSession(
               ? {}
               : { ponderMove: result.ponderMove }),
             ...(latestInformation === undefined ? {} : { latestInformation }),
+            ...(latestExactPrincipalVariation === undefined
+              ? {}
+              : { latestExactPrincipalVariation }),
             ...(principalVariations.length === 0
               ? {}
               : { principalVariations }),
