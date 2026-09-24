@@ -13,16 +13,14 @@ export type MoveReaction = Readonly<{
 
 type MoveReactionContext = Readonly<{
   visible: MoveReaction | null
-  pending: MoveReaction | null
+  pending: readonly MoveReaction[]
+  receivedIds: readonly string[]
 }>
 
 export type MoveReactionEvent =
   | Readonly<{ type: "MOVE_REACTION.RECEIVED"; reaction: MoveReaction }>
   | Readonly<{ type: "MOVE_REACTION.DISMISSED"; id: string }>
   | Readonly<{ type: "MOVE_REACTION.CLEARED" }>
-
-const priority = ({ classification }: MoveReaction): number =>
-  classification.grade === "best" || classification.grade === "good" ? 0 : 1
 
 const moveReactionMachine = setup({
   types: {
@@ -31,56 +29,59 @@ const moveReactionMachine = setup({
   },
   delays: { visibilityDuration: MOVE_REACTION_DURATION_MS },
   guards: {
-    hasPending: ({ context }) => context.pending !== null,
+    hasPending: ({ context }) => context.pending.length > 0,
+    isNewReaction: ({ context, event }) =>
+      event.type === "MOVE_REACTION.RECEIVED" &&
+      !context.receivedIds.includes(event.reaction.id),
     dismissesVisible: ({ context, event }) =>
       event.type === "MOVE_REACTION.DISMISSED" &&
       event.id === context.visible?.id,
   },
   actions: {
-    show: assign(({ event }) => {
+    show: assign(({ context, event }) => {
       if (event.type !== "MOVE_REACTION.RECEIVED")
         throw new Error("Showing a reaction requires a received move.")
-      return { visible: event.reaction, pending: null }
+      return {
+        visible: event.reaction,
+        receivedIds: [...context.receivedIds, event.reaction.id],
+      }
     }),
     queue: assign(({ context, event }) => {
       if (event.type !== "MOVE_REACTION.RECEIVED")
         throw new Error("Queuing a reaction requires a received move.")
-      if (
-        event.reaction.id === context.visible?.id ||
-        event.reaction.id === context.pending?.id
-      )
-        return {}
       return {
-        pending:
-          context.pending === null ||
-          priority(event.reaction) >= priority(context.pending)
-            ? event.reaction
-            : context.pending,
+        pending: [...context.pending, event.reaction],
+        receivedIds: [...context.receivedIds, event.reaction.id],
       }
     }),
     advance: assign(({ context }) => ({
-      visible: context.pending,
-      pending: null,
+      visible: context.pending[0] ?? null,
+      pending: context.pending.slice(1),
     })),
-    clear: assign({ visible: null, pending: null }),
+    hide: assign({ visible: null }),
+    clear: assign({ visible: null, pending: [], receivedIds: [] }),
   },
 }).createMachine({
   id: "moveReaction",
   initial: "idle",
-  context: { visible: null, pending: null },
+  context: { visible: null, pending: [], receivedIds: [] },
   on: {
     "MOVE_REACTION.CLEARED": { actions: "clear", target: ".idle" },
   },
   states: {
     idle: {
       on: {
-        "MOVE_REACTION.RECEIVED": { actions: "show", target: "visible" },
+        "MOVE_REACTION.RECEIVED": {
+          guard: "isNewReaction",
+          actions: "show",
+          target: "visible",
+        },
       },
     },
     visible: {
       after: { visibilityDuration: "advancing" },
       on: {
-        "MOVE_REACTION.RECEIVED": { actions: "queue" },
+        "MOVE_REACTION.RECEIVED": { guard: "isNewReaction", actions: "queue" },
         "MOVE_REACTION.DISMISSED": {
           guard: "dismissesVisible",
           target: "advancing",
@@ -90,7 +91,7 @@ const moveReactionMachine = setup({
     advancing: {
       always: [
         { guard: "hasPending", actions: "advance", target: "visible" },
-        { actions: "clear", target: "idle" },
+        { actions: "hide", target: "idle" },
       ],
     },
   },
