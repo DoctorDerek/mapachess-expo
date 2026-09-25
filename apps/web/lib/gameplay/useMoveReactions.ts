@@ -1,9 +1,10 @@
 "use client"
 
 import { useActorRef } from "@xstate/react"
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { MOVE_CLASSIFICATION_POLICY_ID } from "@mapachess/evaluation/move-classification"
 import moveReactionMachine from "@mapachess/evaluation/move-reaction-machine"
+import { formatMatchMoveNotation } from "@mapachess/match/match-move"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 
@@ -15,12 +16,12 @@ export default function useMoveReactions(
   const actor = useActorRef(moveReactionMachine)
   const previous = useRef(timeline)
   const eligible = useRef(new Set<string>())
+  const clear = useCallback(() => {
+    eligible.current.clear()
+    actor.send({ type: "MOVE_REACTION.CLEARED" })
+  }, [actor])
 
   useEffect(() => {
-    const clear = () => {
-      eligible.current.clear()
-      actor.send({ type: "MOVE_REACTION.CLEARED" })
-    }
     const visibilityChanged = () => {
       if (document.hidden) clear()
     }
@@ -29,7 +30,7 @@ export default function useMoveReactions(
       document.removeEventListener("visibilitychange", visibilityChanged)
       clear()
     }
-  }, [actor])
+  }, [clear])
 
   useEffect(() => {
     const before = previous.current
@@ -53,8 +54,7 @@ export default function useMoveReactions(
       (!newMove && timeline.cursor !== before.cursor) ||
       (newMove && before.cursor < before.transitions.length)
     ) {
-      eligible.current.clear()
-      actor.send({ type: "MOVE_REACTION.CLEARED" })
+      clear()
     }
     if (newMove && !paused && !document.hidden) {
       for (let index = before.cursor; index < timeline.cursor; index += 1) {
@@ -81,8 +81,9 @@ export default function useMoveReactions(
         type: "MOVE_REACTION.RECEIVED",
         reaction: {
           id,
+          ply: record.ply,
+          notation: formatMatchMoveNotation(transition.move),
           mover: record.mover,
-          san: transition.move.san,
           classification: {
             grade: record.grade,
             reason: record.reason,
@@ -91,6 +92,6 @@ export default function useMoveReactions(
         },
       })
     }
-  }, [actor, paused, records, timeline])
-  return actor
+  }, [actor, clear, paused, records, timeline])
+  return { actor, clear }
 }

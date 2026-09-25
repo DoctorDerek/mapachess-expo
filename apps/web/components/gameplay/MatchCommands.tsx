@@ -21,6 +21,7 @@ export default function MatchCommands({
   menuActions,
   drawAvailable,
   onOfferDraw,
+  onMenuOpened,
   snapshot,
 }: Readonly<{
   hints: ReactNode
@@ -29,6 +30,7 @@ export default function MatchCommands({
   actor: ActorRefFrom<typeof matchMachine>
   drawAvailable: boolean
   onOfferDraw: () => void
+  onMenuOpened: () => void
   snapshot: MatchMachineSnapshot
 }>) {
   const persisting = selectIsPersistingMutation(snapshot)
@@ -62,7 +64,13 @@ export default function MatchCommands({
         Redo
       </MapachessButton>
       {hints}
-      <details className="relative z-40 min-w-0 flex-1 basis-12">
+      <details
+        className="relative z-40 min-w-0 flex-1 basis-12"
+        onToggle={(event) => {
+          if (event.target === event.currentTarget && event.currentTarget.open)
+            onMenuOpened()
+        }}
+      >
         <summary
           aria-label="Match menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
