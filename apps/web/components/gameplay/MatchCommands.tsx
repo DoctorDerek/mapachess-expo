@@ -5,6 +5,7 @@ import matchMachine, {
   selectCanRedo,
   selectCanResign,
   selectCanUndo,
+  selectDrawOfferResponse,
   selectHasRedoHistory,
   selectHasUndoHistory,
   selectIsPersistingMutation,
@@ -23,6 +24,7 @@ export default function MatchCommands({
   onOfferDraw,
   onMenuOpened,
   snapshot,
+  opponentName,
 }: Readonly<{
   hints: ReactNode
   coach: ReactNode
@@ -32,6 +34,7 @@ export default function MatchCommands({
   onOfferDraw: () => void
   onMenuOpened: () => void
   snapshot: MatchMachineSnapshot
+  opponentName: string
 }>) {
   const persisting = selectIsPersistingMutation(snapshot)
   return (
@@ -92,6 +95,11 @@ export default function MatchCommands({
             </span>
             Offer Draw
           </MapachessButton>
+          {selectDrawOfferResponse(snapshot) === "rejected" ? (
+            <p role="status" className="text-mapachito-white">
+              {opponentName} declines the draw.
+            </p>
+          ) : null}
           <MapachessButton
             aria-busy={
               persisting &&

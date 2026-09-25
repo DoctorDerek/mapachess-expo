@@ -4,13 +4,10 @@ import { useSelector } from "@xstate/react"
 import { useEffect, useMemo, useRef, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
-import positionEvaluationMachine, {
-  selectPositionEvaluationStage,
-} from "@mapachess/evaluation/position-evaluation-machine"
+import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchMode } from "@mapachess/match/durable-match-record"
 import matchMachine, {
-  selectDrawOfferResponse,
   selectHintStage,
   selectIsPersistingMutation,
   selectIsPlayerTurn,
@@ -18,26 +15,24 @@ import matchMachine, {
   selectMatchHints,
   selectMatchPosition,
   selectMatchTimeline,
-  selectOpponentFailure,
   selectPersistenceFailure,
-  type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
-import stockfishOpponent, {
-  type StockfishOpponentDefinition,
-} from "@mapachess/match/stockfish-opponent"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
-import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import ClassifiedMoveHistory from "./ClassifiedMoveHistory"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import MatchCommands from "./MatchCommands"
+import MatchIdentity from "./MatchIdentity"
+import MatchOutcome from "./MatchOutcome"
+import MatchRecovery from "./MatchRecovery"
 import MoveReactionFeedback from "./MoveReactionFeedback"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 import ReactiveBattleStage from "./ReactiveBattleStage"
@@ -53,50 +48,6 @@ export type WebMatchProps = Readonly<{
   menuActions?: ReactNode
   result?: (disabled: boolean) => ReactNode
 }>
-
-const matchStatusText = (
-  snapshot: MatchMachineSnapshot,
-  playerColor: WebMatchRuntime["playerColor"],
-  opponentName: StockfishOpponentDefinition["displayName"],
-): string | null => {
-  const conclusion = selectMatchConclusion(snapshot)
-  const drawOfferResponse = selectDrawOfferResponse(snapshot)
-  const failure = selectOpponentFailure(snapshot)
-  const persistenceFailure = selectPersistenceFailure(snapshot)
-
-  if (persistenceFailure !== null) {
-    return "Your last action is paused because its local save was not verified."
-  }
-
-  if (failure?.type === "MATCH.OPPONENT_MOVE_ILLEGAL") {
-    return `${opponentName} returned an invalid move. Retry or undo.`
-  }
-  if (failure?.type === "MATCH.OPPONENT_REQUEST_FAILED") {
-    return `${opponentName} could not finish its turn. Retry or undo.`
-  }
-  if (conclusion !== null) {
-    if (conclusion.type === "checkmate") {
-      return conclusion.winner === playerColor
-        ? "Checkmate — you won."
-        : `Checkmate — ${opponentName} won.`
-    }
-    if (conclusion.type === "resignation") {
-      return conclusion.winner === playerColor
-        ? `${opponentName} resigned — you won.`
-        : `You resigned — ${opponentName} won.`
-    }
-    if (conclusion.type === "draw-agreement") {
-      return "Draw by agreement."
-    }
-    return conclusion.type === "stalemate"
-      ? "Draw by stalemate."
-      : "Draw by insufficient material."
-  }
-  if (drawOfferResponse === "rejected") {
-    return `${opponentName} declines the draw.`
-  }
-  return null
-}
 
 export default function WebMatch({
   actor,
@@ -115,14 +66,7 @@ export default function WebMatch({
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [actor])
   const snapshot = useSelector(actor, (current) => current)
-  const evaluationResult = useSelector(
-    evaluationActor,
-    (current) => current.context.result,
-  )
-  const evaluationStage = useSelector(
-    evaluationActor,
-    selectPositionEvaluationStage,
-  )
+  const evaluationSnapshot = useSelector(evaluationActor, (current) => current)
   const presentation = useAcceptedMatchPresentation(
     snapshot,
     runtime.playerColor,
@@ -148,7 +92,6 @@ export default function WebMatch({
   const reactions = useMoveReactions(timeline, moveFeedback, reactionsPaused)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
-  const opponentFailure = selectOpponentFailure(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
   const hintStage = selectHintStage(snapshot)
   const hints = selectMatchHints(snapshot)
@@ -160,14 +103,10 @@ export default function WebMatch({
   ) {
     throw new Error("Visible Better Hints have no canonical analysis result.")
   }
-  const matchComplete = selectMatchConclusion(snapshot) !== null
-  const statusText = matchStatusText(
-    snapshot,
-    runtime.playerColor,
-    opponent.displayName,
-  )
+  const conclusion = selectMatchConclusion(snapshot)
+  const matchComplete = conclusion !== null
   const drawOfferDecision = decideChickenDrawOffer({
-    evaluationResult,
+    evaluationResult: evaluationSnapshot.context.result,
     playerColor: runtime.playerColor,
     positionFen: position.fen,
   })
@@ -190,44 +129,26 @@ export default function WebMatch({
   return (
     <section
       aria-label={`${modeLabel} match against ${opponent.displayName}`}
-      className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'opponent'_'board'_'command'_'battle'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-18rem)))] xl:[grid-template-areas:'opponent_command'_'board_command'_'battle_command']"
+      className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
     >
-      <section
-        aria-labelledby="opponent-band-title"
-        className="text-mapachito-white relative flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center px-3 [grid-area:opponent] xl:px-0"
-      >
-        <h1
-          id="opponent-band-title"
-          ref={heading}
-          tabIndex={-1}
-          className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 text-base leading-tight"
-        >
-          <span>
-            <strong className="block">Mapachito</strong> {playerEloAtStart} ·{" "}
-            {runtime.playerColor === "white" ? "White" : "Black"}
-          </span>
-          <span>vs.</span>
-          <span>
-            <strong className="block">{opponent.displayName}</strong>{" "}
-            {runtime.opponentTargetElo} ·{" "}
-            {runtime.playerColor === "white" ? "Black" : "White"}
-          </span>
-        </h1>
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
-          <MoveReactionFeedback
-            actor={reactions.actor}
+      <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
+        <div className="grid min-w-0 gap-2 [grid-area:playing] xl:[grid-area:auto]">
+          <MatchIdentity
+            headingRef={heading}
             playerColor={runtime.playerColor}
+            playerElo={playerEloAtStart}
+            opponentName={opponent.displayName}
+            opponentElo={runtime.opponentTargetElo}
+            reactions={
+              <MoveReactionFeedback
+                actor={reactions.actor}
+                playerColor={runtime.playerColor}
+              />
+            }
           />
-        </div>
-      </section>
 
-      <div className="grid w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
-        <div className="grid min-w-0 xl:grid-cols-[auto_minmax(0,1fr)] xl:items-stretch">
-          <PositionEvaluationGutter
-            actor={evaluationActor}
-            orientation={runtime.playerColor}
-          />
-          <div className="col-start-1 row-start-2 min-w-0 xl:col-start-2">
+          <div className="grid min-w-0">
+            <PositionEvaluationGutter actor={evaluationActor} />
             <CanonicalChessboard
               disabled={!playerTurn}
               hints={visibleHints}
@@ -242,39 +163,25 @@ export default function WebMatch({
             />
           </div>
         </div>
+        <div className="w-full [grid-area:battle] xl:[grid-area:auto]">
+          <ReactiveBattleStage
+            onParticipantAnimationCompleted={
+              presentation.notifyParticipantAnimationCompleted
+            }
+            opponentName={opponent.displayName}
+            opponentPresentation={opponentPresentation}
+            presentationSnapshot={presentation.snapshot}
+          />
+        </div>
       </div>
 
-      <aside className="text-mapachito-charcoal w-full max-w-(--playing-width) min-w-0 justify-self-center px-3 [grid-area:command] xl:max-w-none xl:px-0">
+      <div className="contents xl:grid xl:min-w-0 xl:gap-2">
         <section
           aria-label="Core match actions"
-          className="grid min-w-0 gap-2 [grid-area:actions]"
+          className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
         >
-          {statusText === null ? null : (
-            <p
-              aria-live="polite"
-              className="text-mapachito-white text-sm font-bold"
-            >
-              {statusText}
-            </p>
-          )}
-
-          {matchComplete
-            ? result?.(persisting || persistenceFailure !== null)
-            : null}
-
-          {evaluationStage === "failure" ? (
-            <MapachessButton
-              className="mt-3 w-full"
-              onClick={() =>
-                evaluationActor.send({ type: "EVALUATION.RETRY_REQUESTED" })
-              }
-              type="button"
-            >
-              Retry Evaluation
-            </MapachessButton>
-          ) : null}
-
           <MatchCommands
+            opponentName={opponent.displayName}
             onMenuOpened={reactions.clear}
             coach={
               <MapachitoCoachPortrait
@@ -338,40 +245,25 @@ export default function WebMatch({
             snapshot={snapshot}
           />
 
-          {opponentFailure === null ? null : (
-            <MapachessButton
-              className="mt-3 w-full"
-              onClick={() =>
-                actor.send({ type: "MATCH.OPPONENT_RETRY_REQUESTED" })
-              }
-              type="button"
-            >
-              Retry {opponent.displayName} turn
-            </MapachessButton>
-          )}
-
-          {persistenceFailure === null ? null : (
-            <MapachessButton
-              className="mt-3 w-full"
-              onClick={() =>
-                actor.send({ type: "MATCH.PERSISTENCE_RETRY_REQUESTED" })
-              }
-              type="button"
-            >
-              Retry local save
-            </MapachessButton>
-          )}
+          <MatchRecovery
+            actor={actor}
+            snapshot={snapshot}
+            evaluationActor={evaluationActor}
+            evaluationSnapshot={evaluationSnapshot}
+            opponentName={opponent.displayName}
+          />
         </section>
-      </aside>
-      <div className="w-full max-w-(--playing-width) justify-self-center [grid-area:battle]">
-        <ReactiveBattleStage
-          onParticipantAnimationCompleted={
-            presentation.notifyParticipantAnimationCompleted
-          }
-          opponentName={opponent.displayName}
-          opponentPresentation={opponentPresentation}
-          presentationSnapshot={presentation.snapshot}
-        />
+        {conclusion === null ? null : (
+          <div className="px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]">
+            <MatchOutcome
+              conclusion={conclusion}
+              playerColor={runtime.playerColor}
+              opponentName={opponent.displayName}
+            >
+              {result?.(persisting || persistenceFailure !== null)}
+            </MatchOutcome>
+          </div>
+        )}
       </div>
     </section>
   )

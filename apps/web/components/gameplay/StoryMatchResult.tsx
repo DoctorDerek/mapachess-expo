@@ -36,10 +36,7 @@ export default function StoryMatchResult({
     onSetupRequested({ mode: "story", variant, opponentId })
 
   return (
-    <section
-      aria-label="Saved Story result"
-      className="bg-mapachito-white text-mapachito-charcoal grid gap-3 rounded-lg p-4"
-    >
+    <section aria-label="Saved Story result" className="grid gap-3">
       <div className="flex items-center gap-3">
         {medal === null ? null : (
           <span className="text-3xl">
@@ -47,13 +44,9 @@ export default function StoryMatchResult({
           </span>
         )}
         <div>
-          <h2 className="font-display text-xl font-black">
-            {medal !== null
-              ? next === undefined
-                ? "Story complete!"
-                : "You won!"
-              : "Match complete"}
-          </h2>
+          {medal !== null && next === undefined ? (
+            <h3 className="font-display text-xl font-black">Story complete!</h3>
+          ) : null}
           <p className="text-sm">
             {medal === null
               ? "No new medal"

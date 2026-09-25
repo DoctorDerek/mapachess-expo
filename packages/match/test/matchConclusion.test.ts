@@ -5,6 +5,7 @@ import {
   createPlayerResignationConclusion,
   deriveRetainedBranchConclusion,
   deriveTerminalMatchConclusion,
+  matchConclusionText,
 } from "../src/matchConclusion.js"
 import { createInitialMatchPosition } from "../src/matchPosition.js"
 import {
@@ -38,6 +39,49 @@ const applyMoves = (
 }
 
 describe("canonical match conclusions", () => {
+  it.each(["white", "black"] as const)(
+    "keeps %s hero outcome meaning without a duplicate checkmate label",
+    (playerColor) => {
+      const opponentColor = playerColor === "white" ? "black" : "white"
+      expect(
+        matchConclusionText(
+          { type: "checkmate", winner: playerColor },
+          playerColor,
+          "Chicken Stockfish",
+        ),
+      ).toBe("You won!")
+      expect(
+        matchConclusionText(
+          { type: "checkmate", winner: opponentColor },
+          playerColor,
+          "Chicken Stockfish",
+        ),
+      ).toBe("Chicken Stockfish won.")
+      expect(
+        matchConclusionText(
+          { type: "resignation", winner: playerColor },
+          playerColor,
+          "Chicken Stockfish",
+        ),
+      ).toBe("Chicken Stockfish resigned — you won.")
+      expect(
+        matchConclusionText(
+          { type: "resignation", winner: opponentColor },
+          playerColor,
+          "Chicken Stockfish",
+        ),
+      ).toBe("You resigned — Chicken Stockfish won.")
+    },
+  )
+  it.each([
+    ["draw-agreement", "Draw by agreement."],
+    ["stalemate", "Draw by stalemate."],
+    ["insufficient-material", "Draw by insufficient material."],
+  ] as const)("retains the %s reason", (type, expected) => {
+    expect(matchConclusionText({ type }, "white", "Chicken Stockfish")).toBe(
+      expected,
+    )
+  })
   it("derives every terminal chess reason without inventing active results", () => {
     expect(deriveTerminalMatchConclusion({ type: "playing" })).toBeNull()
     expect(

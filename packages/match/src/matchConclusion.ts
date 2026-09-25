@@ -19,6 +19,29 @@ export type MatchDrawOfferDecision = Readonly<{
   positionFen: string
 }>
 
+export const matchConclusionText = (
+  conclusion: MatchConclusion,
+  playerColor: MatchColor,
+  opponentName: string,
+): string => {
+  switch (conclusion.type) {
+    case "checkmate":
+      return conclusion.winner === playerColor
+        ? "You won!"
+        : `${opponentName} won.`
+    case "resignation":
+      return conclusion.winner === playerColor
+        ? `${opponentName} resigned — you won.`
+        : `You resigned — ${opponentName} won.`
+    case "draw-agreement":
+      return "Draw by agreement."
+    case "stalemate":
+      return "Draw by stalemate."
+    case "insufficient-material":
+      return "Draw by insufficient material."
+  }
+}
+
 const oppositeColor = (color: MatchColor): MatchColor =>
   color === "white" ? "black" : "white"
 

@@ -23,6 +23,20 @@ import {
 
 const WEB_RUNTIME_MARKER_SCHEMA_VERSION = 1 as const
 const WEB_RUNTIME_MARKER_FILE_NAME = ".mapachess-stockfish-web.json"
+const WEB_RUNTIME_MIRROR_URL = "https://www.mapachess.com/stockfish-runtime/"
+const DOWNLOAD_TIMEOUT_MS = 20_000
+const MAX_RETRY_AFTER_MS = 10_000
+const UPSTREAM_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 1_000
+
+type DownloadAttempt =
+  | Readonly<{ ok: true; bytes: Uint8Array }>
+  | Readonly<{ ok: false; reason: string; retryAfterMs: number | null }>
+
+export type VerifiedWebRuntimeDownload = Readonly<{
+  bytes: Uint8Array
+  recovery: string | null
+}>
 
 type WebRuntimeMarker = Readonly<{
   schemaVersion: typeof WEB_RUNTIME_MARKER_SCHEMA_VERSION
@@ -33,6 +47,7 @@ export type ProvisionedStockfishWebRuntime = Readonly<{
   loaderPath: string
   runtimeDirectory: string
   wasmPath: string
+  downloadRecoveries: readonly string[]
 }>
 
 export type StockfishWebRuntimeProvisionOptions = Readonly<{
@@ -127,6 +142,7 @@ function provisionedRuntime(
 ): ProvisionedStockfishWebRuntime {
   return {
     runtimeDirectory,
+    downloadRecoveries: [],
     loaderPath: resolve(
       runtimeDirectory,
       STOCKFISH_18_WEB_LOADER_ARTIFACT.fileName,
@@ -174,23 +190,111 @@ async function validateRuntimeDirectory(
   return provisionedRuntime(runtimeDirectory)
 }
 
+function retryAfterMilliseconds(header: string | null): number | null {
+  if (header === null) return 0
+  if (!/^\d+$/.test(header) && !/^[A-Za-z]/.test(header)) return null
+  const delay = /^\d+$/.test(header)
+    ? Number(header) * 1_000
+    : Math.max(0, Date.parse(header) - Date.now())
+  return Number.isFinite(delay) && delay <= MAX_RETRY_AFTER_MS ? delay : null
+}
+
+async function attemptArtifactDownload(
+  url: string,
+  fetchImplementation: typeof fetch,
+): Promise<DownloadAttempt> {
+  const controller = new AbortController()
+  const timeout = setTimeout(
+    () => controller.abort(new Error("download timed out")),
+    DOWNLOAD_TIMEOUT_MS,
+  )
+  try {
+    const response = await fetchImplementation(url, {
+      signal: controller.signal,
+    })
+    if (!response.ok) {
+      const retryAfter = response.headers.get("retry-after")
+      const retryable =
+        [408, 429, 500, 502, 503, 504].includes(response.status) &&
+        (response.status !== 429 || retryAfter !== null)
+      return {
+        ok: false,
+        reason: `HTTP ${response.status}`,
+        retryAfterMs: retryable ? retryAfterMilliseconds(retryAfter) : null,
+      }
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    return { ok: true, bytes }
+  } catch (error) {
+    return {
+      ok: false,
+      reason: error instanceof Error ? error.message : String(error),
+      retryAfterMs: 0,
+    }
+  } finally {
+    clearTimeout(timeout)
+    controller.abort()
+  }
+}
+
+export async function fetchVerifiedWebRuntimeArtifact(
+  artifact: StockfishWebRuntimeArtifact,
+  fetchImplementation: typeof fetch = fetch,
+): Promise<VerifiedWebRuntimeDownload> {
+  const failures: string[] = []
+  for (let attempt = 1; attempt <= UPSTREAM_ATTEMPTS; attempt += 1) {
+    const upstream = await attemptArtifactDownload(
+      artifact.downloadUrl,
+      fetchImplementation,
+    )
+    if (upstream.ok) {
+      validateWebRuntimeArtifactBytes(upstream.bytes, artifact)
+      return {
+        bytes: upstream.bytes,
+        recovery:
+          attempt === 1
+            ? null
+            : `${artifact.fileName}: GitHub succeeded on attempt ${attempt} (${failures.join("; ")})`,
+      }
+    }
+    failures.push(`GitHub attempt ${attempt}: ${upstream.reason}`)
+    if (upstream.retryAfterMs === null || attempt === UPSTREAM_ATTEMPTS) break
+    const delay = Math.max(
+      RETRY_BASE_DELAY_MS * 2 ** (attempt - 1),
+      upstream.retryAfterMs,
+    )
+    await new Promise<void>((resolve) => setTimeout(resolve, delay))
+  }
+  const mirror = await attemptArtifactDownload(
+    new URL(artifact.fileName, WEB_RUNTIME_MIRROR_URL).href,
+    fetchImplementation,
+  )
+  if (mirror.ok) {
+    validateWebRuntimeArtifactBytes(mirror.bytes, artifact)
+    return {
+      bytes: mirror.bytes,
+      recovery: `${artifact.fileName}: Mapachess fallback succeeded (${failures.join("; ")})`,
+    }
+  }
+  failures.push(`Mapachess fallback: ${mirror.reason}`)
+  throw new Error(
+    `${artifact.fileName} download failed (${failures.join("; ")}).`,
+  )
+}
+
 async function downloadArtifact(
   artifact: StockfishWebRuntimeArtifact,
   destinationDirectory: string,
   fetchImplementation: typeof fetch,
-): Promise<void> {
-  const response = await fetchImplementation(artifact.downloadUrl)
-  if (!response.ok) {
-    throw new Error(
-      `${artifact.fileName} download failed with HTTP ${response.status}.`,
-    )
-  }
-
-  const bytes = new Uint8Array(await response.arrayBuffer())
-  validateWebRuntimeArtifactBytes(bytes, artifact)
+): Promise<string | null> {
+  const download = await fetchVerifiedWebRuntimeArtifact(
+    artifact,
+    fetchImplementation,
+  )
   const destinationPath = resolve(destinationDirectory, artifact.fileName)
   assertPathWithin(destinationDirectory, destinationPath, artifact.fileName)
-  await writeFile(destinationPath, bytes)
+  await writeFile(destinationPath, download.bytes)
+  return download.recovery
 }
 
 export default async function provisionStockfishWebRuntime(
@@ -215,11 +319,19 @@ export default async function provisionStockfishWebRuntime(
 
   try {
     const fetchImplementation = options.fetchImplementation ?? fetch
-    await Promise.all(
+    const downloads = await Promise.allSettled(
       STOCKFISH_18_WEB_RUNTIME_ARTIFACTS.map((artifact) =>
         downloadArtifact(artifact, stagingDirectory, fetchImplementation),
       ),
     )
+    const downloadRecoveries: string[] = []
+    for (const download of downloads) {
+      if (download.status === "rejected") {
+        const failure: unknown = download.reason
+        throw failure
+      }
+      if (download.value !== null) downloadRecoveries.push(download.value)
+    }
     await writeFile(
       resolve(stagingDirectory, WEB_RUNTIME_MARKER_FILE_NAME),
       `${JSON.stringify(createWebRuntimeMarker(), null, 2)}\n`,
@@ -233,7 +345,8 @@ export default async function provisionStockfishWebRuntime(
       if (!(await pathExists(runtimeDirectory))) throw error
     }
 
-    return await validateRuntimeDirectory(runtimeDirectory)
+    const provisioned = await validateRuntimeDirectory(runtimeDirectory)
+    return { ...provisioned, downloadRecoveries }
   } finally {
     await rm(stagingDirectory, { force: true, recursive: true })
   }
