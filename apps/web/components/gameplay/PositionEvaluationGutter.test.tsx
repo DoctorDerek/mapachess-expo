@@ -2,8 +2,6 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 import { createActor, waitFor } from "xstate"
-import { MOVE_CLASSIFICATION_POLICY_ID } from "@mapachess/evaluation/move-classification"
-import moveReactionMachine from "@mapachess/evaluation/move-reaction-machine"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import type {
   PositionEvaluationRequest,
@@ -43,61 +41,28 @@ const renderGutter = (
     createElement(PositionEvaluationGutter, {
       actor,
       orientation,
-      reactionActor: createActor(moveReactionMachine),
     }),
   )
 
 describe("position evaluation gutter", () => {
-  it("keeps the current score separate from a mover-qualified dismissible reaction", async () => {
+  it("renders current evaluation without owning transient reactions", async () => {
     const actor = startActor(async () =>
       result({ kind: "centipawns", bound: "exact", whiteCentipawns: -250 }),
     )
     actor.send({ request, type: "EVALUATION.POSITION_REQUESTED" })
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
-    const reactionActor = createActor(moveReactionMachine).start()
-    reactionActor.send({
-      type: "MOVE_REACTION.RECEIVED",
-      reaction: {
-        id: "move/white",
-        mover: "white",
-        san: "Qh5",
-        classification: {
-          grade: "mistake",
-          reason: "Lost forced mate",
-          policyId: MOVE_CLASSIFICATION_POLICY_ID,
-        },
-      },
-    })
-    for (const mover of ["white", "black", "black"] as const) {
-      reactionActor.send({
-        type: "MOVE_REACTION.RECEIVED",
-        reaction: {
-          id: `waiting/${mover}/${String(reactionActor.getSnapshot().context.pending.length)}`,
-          mover,
-          san: "e4",
-          classification: {
-            grade: "good",
-            reason: null,
-            policyId: MOVE_CLASSIFICATION_POLICY_ID,
-          },
-        },
-      })
-    }
     const markup = renderToStaticMarkup(
       createElement(PositionEvaluationGutter, {
         actor,
-        reactionActor,
         orientation: "white",
       }),
     )
     expect(markup).toContain("Black +2.50")
-    expect(markup).toContain("Dismiss White • Mistake ?")
-    expect(markup).toContain("Waiting: White 1, Black 2.")
+    expect(markup).not.toContain("Waiting:")
     expect(markup).not.toContain("Qh5")
     expect(markup).not.toContain("Lost forced mate")
     expect(markup.match(/role="meter"/g)).toHaveLength(1)
-    expect(markup.match(/<button/g)).toHaveLength(1)
-    reactionActor.stop()
+    expect(markup).not.toContain("<button")
     actor.stop()
   })
 
