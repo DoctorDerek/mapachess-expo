@@ -6,8 +6,60 @@ import {
 } from "@mapachess/match/match-position"
 import {
   normalizeStockfishPositionEvaluation,
+  positionEvaluationLabel,
   terminalPositionEvaluation,
 } from "../src/positionEvaluation"
+
+describe("White-relative evaluation labels", () => {
+  it.each([
+    [125, "exact", "+1.25"],
+    [-125, "exact", "−1.25"],
+    [0, "exact", "0.00"],
+    [-75, "upper", "≤ −0.75"],
+    [125, "lower", "≥ +1.25"],
+    [0, "lower", "≥ 0.00"],
+  ] as const)(
+    "preserves %s centipawns and its %s bound",
+    (whiteCentipawns, bound, expected) => {
+      expect(
+        positionEvaluationLabel({ kind: "centipawns", whiteCentipawns, bound }),
+      ).toBe(expected)
+    },
+  )
+  it.each(["white", "black"] as const)(
+    "names %s for forced mate and canonical checkmate",
+    (winner) => {
+      const color = winner === "white" ? "White" : "Black"
+      expect(
+        positionEvaluationLabel({
+          kind: "mate",
+          winner,
+          moves: 3,
+          bound: "exact",
+        }),
+      ).toBe(`${color} M3`)
+      expect(
+        positionEvaluationLabel({
+          kind: "mate",
+          winner,
+          moves: 0,
+          bound: "exact",
+        }),
+      ).toBe(`${color} checkmate`)
+      expect(
+        positionEvaluationLabel({
+          kind: "mate",
+          winner,
+          moves: 3,
+          bound: "lower",
+        }),
+      ).toBe(`${color} M3 · lower bound`)
+    },
+  )
+  it("shows a terminal draw as even", () => {
+    expect(positionEvaluationLabel({ kind: "draw" })).toBe("0.00")
+  })
+})
 
 const standardStartingPosition = Object.freeze({
   chess960PositionId: null,
