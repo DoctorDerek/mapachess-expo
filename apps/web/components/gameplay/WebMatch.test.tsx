@@ -86,9 +86,7 @@ describe("match composition", () => {
       expect(markup.indexOf('role="meter"')).toBeLessThan(
         markup.indexOf('id="reactive-battle-stage-title"'),
       )
-      expect(markup.indexOf('aria-label="Core match actions"')).toBeLessThan(
-        markup.indexOf('id="reactive-battle-stage-title"'),
-      )
+      expect(markup).not.toContain('aria-label="Match result"')
       for (const label of [
         "Dog Stockfish",
         "Mapachito coach",
@@ -139,8 +137,50 @@ describe("match composition", () => {
         }),
       )
       expect(markup).toContain("Retry Evaluation")
+      expect(markup.indexOf('aria-label="Match menu"')).toBeLessThan(
+        markup.indexOf("Retry Evaluation"),
+      )
       expect(markup).not.toContain("Your move.")
       expect(markup).not.toContain("is choosing a move")
+    } finally {
+      actor.stop()
+      evaluationActor.stop()
+    }
+  })
+
+  it("keeps declined draw feedback inside Menu beside Offer Draw", () => {
+    const actor = createActor(matchMachine, {
+      input: {
+        autoHintMode: "no-auto-hints",
+        durability: { type: "ephemeral" },
+        initialPosition: position,
+        matchId: runtime.matchId,
+        opponent: runtime.opponent,
+        playerColor: "white",
+      },
+    }).start()
+    const evaluationActor = createActor(positionEvaluationMachine, {
+      input: { evaluator: runtime.positionEvaluator },
+    }).start()
+    try {
+      actor.send({
+        type: "MATCH.DRAW_OFFER_REQUESTED",
+        decision: { outcome: "rejected", positionFen: position.fen },
+      })
+      const markup = renderToStaticMarkup(
+        <WebMatch
+          actor={actor}
+          evaluationActor={evaluationActor}
+          mode="challenge"
+          playerEloAtStart={100}
+          runtime={runtime}
+        />,
+      )
+      const drawAction = markup.indexOf("Offer Draw")
+      const declined = markup.indexOf("declines the draw.")
+      expect(declined).toBeGreaterThan(drawAction)
+      expect(declined).toBeLessThan(markup.indexOf("Resign"))
+      expect(markup).not.toContain('aria-label="Match result"')
     } finally {
       actor.stop()
       evaluationActor.stop()

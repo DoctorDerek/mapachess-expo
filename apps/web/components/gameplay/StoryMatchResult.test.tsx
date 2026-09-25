@@ -44,6 +44,8 @@ describe("saved Story result presentation", () => {
       "Chicken Stockfish is available in both Challenge modes",
     )
     expect(result).not.toContain("XP")
+    expect(result).not.toContain("You won!")
+    expect(result).toContain("Saved")
   })
   it("distinguishes a lower replay medal from the retained best", () => {
     const result = render({ ...win, pieceHintsUsed: true, moveHintsUsed: true })
