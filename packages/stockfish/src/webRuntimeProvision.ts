@@ -23,7 +23,7 @@ import {
 
 const WEB_RUNTIME_MARKER_SCHEMA_VERSION = 1 as const
 const WEB_RUNTIME_MARKER_FILE_NAME = ".mapachess-stockfish-web.json"
-const WEB_RUNTIME_MIRROR_URL = "https://www.mapachess.com/stockfish-runtime/"
+const WEB_RUNTIME_MIRROR_URL = "https://mapachess.com/stockfish-runtime/"
 const DOWNLOAD_TIMEOUT_MS = 20_000
 const MAX_RETRY_AFTER_MS = 10_000
 const UPSTREAM_ATTEMPTS = 3

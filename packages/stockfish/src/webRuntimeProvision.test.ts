@@ -27,8 +27,7 @@ const fixtureArtifact = {
   ),
   downloadUrl: "https://example.invalid/fixture.wasm",
 }
-const fixtureMirrorUrl =
-  "https://www.mapachess.com/stockfish-runtime/fixture.wasm"
+const fixtureMirrorUrl = "https://mapachess.com/stockfish-runtime/fixture.wasm"
 
 afterEach(async () => {
   vi.useRealTimers()
@@ -122,7 +121,7 @@ describe("Stockfish web runtime pin", () => {
     expect(requestedUrls.sort()).toEqual(
       STOCKFISH_18_WEB_RUNTIME_ARTIFACTS.flatMap((artifact) => [
         artifact.downloadUrl,
-        `https://www.mapachess.com/stockfish-runtime/${artifact.fileName}`,
+        `https://mapachess.com/stockfish-runtime/${artifact.fileName}`,
       ]).sort(),
     )
     expect(await readdir(join(workspace, "apps", "web", "public"))).toEqual([])
