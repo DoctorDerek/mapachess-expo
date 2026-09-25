@@ -264,10 +264,22 @@ const expectModeMenu = async (page: Page): Promise<void> => {
 
 test("offers four direct modes with Challenge controls and saved hint preferences", async ({
   page,
+  baseURL,
 }) => {
-  await page.goto("/")
+  await page.goto("/?source=canonical-check")
 
   await expect(page).toHaveTitle("Mapachess")
+  await expect(page).toHaveURL(
+    new URL("/?source=canonical-check", baseURL).href,
+  )
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://mapachess.com",
+  )
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    "content",
+    "https://mapachess.com",
+  )
   await expectModeMenu(page)
   for (const name of modeNames) {
     await page.getByRole("button", { name, exact: true }).click()
