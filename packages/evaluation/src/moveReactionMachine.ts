@@ -1,26 +1,42 @@
-import { assign, setup, type SnapshotFrom } from "xstate"
+import {
+  assign,
+  enqueueActions,
+  setup,
+  type ActorRefFrom,
+  type SnapshotFrom,
+} from "xstate"
 import type { MatchColor } from "@mapachess/match/match-position"
 import type { MoveClassification } from "./moveClassification.js"
+import moveReactionCardMachine from "./moveReactionCardMachine.js"
 
-export const MOVE_REACTION_DURATION_MS = 5_000
+export { MOVE_REACTION_DURATION_MS } from "./moveReactionCardMachine.js"
 
 export type MoveReaction = Readonly<{
   id: string
+  ply: number
+  notation: string
   mover: MatchColor
-  san: string
   classification: MoveClassification
 }>
 
+export type MoveReactionCard = Readonly<{
+  presentationId: string
+  reaction: MoveReaction
+  actor: ActorRefFrom<typeof moveReactionCardMachine>
+}>
+
 type MoveReactionContext = Readonly<{
-  visible: MoveReaction | null
-  pending: readonly MoveReaction[]
+  cards: readonly MoveReactionCard[]
   receivedIds: readonly string[]
+  generation: number
 }>
 
 export type MoveReactionEvent =
   | Readonly<{ type: "MOVE_REACTION.RECEIVED"; reaction: MoveReaction }>
-  | Readonly<{ type: "MOVE_REACTION.DISMISSED"; id: string }>
-  | Readonly<{ type: "MOVE_REACTION.PRESENTED"; id: string }>
+  | Readonly<{
+      type: "MOVE_REACTION.DISMISSED" | "MOVE_REACTION.EXPIRED"
+      presentationId: string
+    }>
   | Readonly<{ type: "MOVE_REACTION.CLEARED" }>
 
 const moveReactionMachine = setup({
@@ -28,106 +44,80 @@ const moveReactionMachine = setup({
     context: {} as MoveReactionContext,
     events: {} as MoveReactionEvent,
   },
-  delays: { visibilityDuration: MOVE_REACTION_DURATION_MS },
+  actors: { card: moveReactionCardMachine },
   guards: {
-    hasPending: ({ context }) => context.pending.length > 0,
     isNewReaction: ({ context, event }) =>
       event.type === "MOVE_REACTION.RECEIVED" &&
       !context.receivedIds.includes(event.reaction.id),
-    dismissesVisible: ({ context, event }) =>
-      event.type === "MOVE_REACTION.DISMISSED" &&
-      event.id === context.visible?.id,
-    presentsVisible: ({ context, event }) =>
-      event.type === "MOVE_REACTION.PRESENTED" &&
-      event.id === context.visible?.id,
   },
   actions: {
-    show: assign(({ context, event }) => {
+    receive: assign(({ context, event, spawn }) => {
       if (event.type !== "MOVE_REACTION.RECEIVED")
-        throw new Error("Showing a reaction requires a received move.")
+        throw new Error("Receiving a card requires a completed move reaction.")
+      const presentationId = `${String(context.generation)}/${event.reaction.id}`
+      const card: MoveReactionCard = {
+        presentationId,
+        reaction: event.reaction,
+        actor: spawn("card", {
+          id: presentationId,
+          input: { presentationId },
+        }),
+      }
       return {
-        visible: event.reaction,
+        cards: [...context.cards, card].sort(
+          (left, right) => right.reaction.ply - left.reaction.ply,
+        ),
         receivedIds: [...context.receivedIds, event.reaction.id],
       }
     }),
-    queue: assign(({ context, event }) => {
-      if (event.type !== "MOVE_REACTION.RECEIVED")
-        throw new Error("Queuing a reaction requires a received move.")
-      return {
-        pending: [...context.pending, event.reaction],
-        receivedIds: [...context.receivedIds, event.reaction.id],
-      }
+    remove: enqueueActions(({ context, event, enqueue }) => {
+      if (
+        event.type !== "MOVE_REACTION.DISMISSED" &&
+        event.type !== "MOVE_REACTION.EXPIRED"
+      )
+        throw new Error("Removing a card requires its dismissal or expiry.")
+      const card = context.cards.find(
+        (current) => current.presentationId === event.presentationId,
+      )
+      if (card === undefined) return
+      enqueue.stopChild(card.actor)
+      enqueue.assign({
+        cards: context.cards.filter((current) => current !== card),
+      })
     }),
-    advance: assign(({ context }) => ({
-      visible: context.pending[0] ?? null,
-      pending: context.pending.slice(1),
-    })),
-    hide: assign({ visible: null }),
-    clear: assign({ visible: null, pending: [], receivedIds: [] }),
+    clear: enqueueActions(({ context, enqueue }) => {
+      for (const card of context.cards) enqueue.stopChild(card.actor)
+      enqueue.assign({
+        cards: [],
+        receivedIds: [],
+        generation: context.generation + 1,
+      })
+    }),
   },
 }).createMachine({
   id: "moveReaction",
-  initial: "idle",
-  context: { visible: null, pending: [], receivedIds: [] },
+  context: { cards: [], receivedIds: [], generation: 0 },
   on: {
-    "MOVE_REACTION.CLEARED": { actions: "clear", target: ".idle" },
-  },
-  states: {
-    idle: {
-      on: {
-        "MOVE_REACTION.RECEIVED": {
-          guard: "isNewReaction",
-          actions: "show",
-          target: "active",
-        },
-      },
-    },
-    active: {
-      initial: "awaitingPresentation",
-      states: {
-        awaitingPresentation: {
-          on: {
-            "MOVE_REACTION.PRESENTED": {
-              guard: "presentsVisible",
-              target: "displaying",
-            },
-          },
-        },
-        displaying: {
-          after: { visibilityDuration: "#moveReaction.advancing" },
-        },
-      },
-      on: {
-        "MOVE_REACTION.RECEIVED": { guard: "isNewReaction", actions: "queue" },
-        "MOVE_REACTION.DISMISSED": {
-          guard: "dismissesVisible",
-          target: "advancing",
-        },
-      },
-    },
-    advancing: {
-      always: [
-        { guard: "hasPending", actions: "advance", target: "active" },
-        { actions: "hide", target: "idle" },
-      ],
-    },
+    "MOVE_REACTION.RECEIVED": { guard: "isNewReaction", actions: "receive" },
+    "MOVE_REACTION.DISMISSED": { actions: "remove" },
+    "MOVE_REACTION.EXPIRED": { actions: "remove" },
+    "MOVE_REACTION.CLEARED": { actions: "clear" },
   },
 })
 
 export default moveReactionMachine
 
-export type MoveReactionWaitingCounts = Readonly<{
-  white: number
-  black: number
-}>
-
-export const selectMoveReactionWaitingCounts = (
+export const selectMoveReactionColumns = (
   snapshot: SnapshotFrom<typeof moveReactionMachine>,
-): MoveReactionWaitingCounts =>
-  snapshot.context.pending.reduce<MoveReactionWaitingCounts>(
-    (counts, reaction) => ({
-      white: counts.white + (reaction.mover === "white" ? 1 : 0),
-      black: counts.black + (reaction.mover === "black" ? 1 : 0),
-    }),
-    { white: 0, black: 0 },
-  )
+  playerColor: MatchColor,
+): Readonly<{
+  hero: readonly MoveReactionCard[]
+  opponent: readonly MoveReactionCard[]
+}> => ({
+  hero: snapshot.context.cards.filter(
+    (card) => card.reaction.mover === playerColor,
+  ),
+  opponent: snapshot.context.cards.filter(
+    (card) => card.reaction.mover !== playerColor,
+  ),
+})

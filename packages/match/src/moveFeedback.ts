@@ -22,8 +22,6 @@ export const MOVE_GRADE_LABELS: Readonly<Record<MoveGrade, string>> =
     blunder: "Blunder ??",
   })
 
-export const moveGradeText = (mover: MatchColor, grade: MoveGrade): string =>
-  `${mover === "white" ? "White" : "Black"} • ${MOVE_GRADE_LABELS[grade]}`
 export type PositionEvaluationBound = "exact" | "lower" | "upper"
 export type PositionEvaluation =
   | Readonly<{ kind: "draw" }>

@@ -88,6 +88,11 @@ export type AppliedMatchMove = LegalMatchMove &
     beforeFen: string
   }>
 
+export const formatMatchMoveNotation = (move: AppliedMatchMove): string => {
+  const setup = parseFen(move.beforeFen).unwrap()
+  return `${String(setup.fullmoves)}${setup.turn === "white" ? "." : "..."} ${move.san}`
+}
+
 export type MatchMoveTransition = Readonly<{
   after: MatchPosition
   before: MatchPosition

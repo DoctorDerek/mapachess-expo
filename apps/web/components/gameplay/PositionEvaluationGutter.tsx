@@ -3,14 +3,12 @@
 import { useSelector } from "@xstate/react"
 import type { CSSProperties } from "react"
 import type { ActorRefFrom } from "xstate"
-import moveReactionMachine from "@mapachess/evaluation/move-reaction-machine"
 import type { PositionEvaluation } from "@mapachess/evaluation/position-evaluation"
 import positionEvaluationMachine, {
   selectPositionEvaluation,
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
 import type { MatchColor } from "@mapachess/match/match-position"
-import MoveReactionFeedback from "./MoveReactionFeedback"
 
 const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
 
@@ -19,7 +17,6 @@ type EvaluationGutterStyle = CSSProperties &
 
 export type PositionEvaluationGutterProps = Readonly<{
   actor: ActorRefFrom<typeof positionEvaluationMachine>
-  reactionActor: ActorRefFrom<typeof moveReactionMachine>
   orientation: MatchColor
 }>
 
@@ -66,7 +63,6 @@ const whiteSharePercent = (evaluation: PositionEvaluation | null): number => {
 
 export default function PositionEvaluationGutter({
   actor,
-  reactionActor,
   orientation,
 }: PositionEvaluationGutterProps) {
   const snapshot = useSelector(actor, (current) => current)
@@ -129,13 +125,6 @@ export default function PositionEvaluationGutter({
           {scoreBound}
           {score}
         </span>
-        <div
-          className="pointer-events-none absolute inset-0 z-10 grid place-items-center"
-          role="status"
-          aria-atomic="true"
-        >
-          <MoveReactionFeedback actor={reactionActor} />
-        </div>
       </div>
     </>
   )

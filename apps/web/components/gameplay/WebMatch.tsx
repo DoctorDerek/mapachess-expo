@@ -24,10 +24,7 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { matchModeLabel } from "@mapachess/match/match-setup"
-import {
-  moveGradeText,
-  type MoveFeedbackRecord,
-} from "@mapachess/match/move-feedback"
+import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent, {
   type StockfishOpponentDefinition,
 } from "@mapachess/match/stockfish-opponent"
@@ -38,8 +35,10 @@ import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPr
 import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
+import ClassifiedMoveHistory from "./ClassifiedMoveHistory"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import MatchCommands from "./MatchCommands"
+import MoveReactionFeedback from "./MoveReactionFeedback"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 import ReactiveBattleStage from "./ReactiveBattleStage"
 
@@ -146,11 +145,7 @@ export default function WebMatch({
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
-  const reactionActor = useMoveReactions(
-    timeline,
-    moveFeedback,
-    reactionsPaused,
-  )
+  const reactions = useMoveReactions(timeline, moveFeedback, reactionsPaused)
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
   const opponentFailure = selectOpponentFailure(snapshot)
@@ -199,7 +194,7 @@ export default function WebMatch({
     >
       <section
         aria-labelledby="opponent-band-title"
-        className="text-mapachito-white flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center px-3 [grid-area:opponent] xl:px-0"
+        className="text-mapachito-white relative flex w-full max-w-(--playing-width) flex-wrap items-center justify-between gap-x-3 gap-y-1 justify-self-center px-3 [grid-area:opponent] xl:px-0"
       >
         <h1
           id="opponent-band-title"
@@ -218,12 +213,17 @@ export default function WebMatch({
             {runtime.playerColor === "white" ? "Black" : "White"}
           </span>
         </h1>
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
+          <MoveReactionFeedback
+            actor={reactions.actor}
+            playerColor={runtime.playerColor}
+          />
+        </div>
       </section>
 
       <div className="grid w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
         <div className="grid min-w-0 xl:grid-cols-[auto_minmax(0,1fr)] xl:items-stretch">
           <PositionEvaluationGutter
-            reactionActor={reactionActor}
             actor={evaluationActor}
             orientation={runtime.playerColor}
           />
@@ -275,6 +275,7 @@ export default function WebMatch({
           ) : null}
 
           <MatchCommands
+            onMenuOpened={reactions.clear}
             coach={
               <MapachitoCoachPortrait
                 presentationSnapshot={presentation.snapshot}
@@ -319,58 +320,10 @@ export default function WebMatch({
                       </dd>
                     </dl>
 
-                    <section
-                      aria-labelledby="move-history-title"
-                      className="bg-mapachito-white rounded-lg p-3 [grid-area:history]"
-                    >
-                      <div className="flex items-baseline justify-between gap-4">
-                        <h2
-                          className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-                          id="move-history-title"
-                        >
-                          Move History
-                        </h2>
-                        <span className="text-mapachito-charcoal font-mono text-xs leading-[1.55] font-semibold opacity-76">
-                          {activeTransitions.length === 1
-                            ? "1 ply"
-                            : `${String(activeTransitions.length)} plies`}
-                        </span>
-                      </div>
-                      {activeTransitions.length === 0 ? (
-                        <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-                          No moves yet.
-                        </p>
-                      ) : (
-                        <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 font-mono text-sm inset-shadow-[0.5rem_0_0]">
-                          {activeTransitions.map((transition, index) => (
-                            <li
-                              className="odd:bg-mapachito-charcoal/6 grid grid-cols-[3rem_1fr] gap-3 rounded-lg px-2 py-1.5"
-                              key={`${String(index)}-${transition.move.beforeFen}`}
-                            >
-                              <span className="text-mapachito-charcoal leading-[1.55] font-semibold opacity-76">
-                                {String(index + 1)}.
-                              </span>
-                              <span>
-                                {transition.move.san}
-                                {moveFeedback
-                                  .filter(
-                                    (entry) =>
-                                      entry.ply === index + 1 &&
-                                      entry.beforeFen ===
-                                        transition.before.fen &&
-                                      entry.afterFen === transition.after.fen,
-                                  )
-                                  .map((entry) => (
-                                    <span className="ml-2" key={entry.ply}>
-                                      {moveGradeText(entry.mover, entry.grade)}
-                                    </span>
-                                  ))}
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      )}
-                    </section>
+                    <ClassifiedMoveHistory
+                      transitions={activeTransitions}
+                      records={moveFeedback}
+                    />
                   </div>
                 </details>
               </>
