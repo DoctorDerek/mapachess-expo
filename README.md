@@ -105,9 +105,10 @@ build-time provisioning boundary are recorded in
 
 ## Production web deployment
 
-[Mapachess.com](https://www.mapachess.com/) is live at the canonical `www` origin;
-the bare domain redirects there. Automated Lighthouse reporting targets
-`https://www.mapachess.com/` directly. Vercel creates Preview
+[Mapachess.com](https://mapachess.com/) uses the bare domain as its canonical
+production origin. Vercel redirects `www.mapachess.com` to `mapachess.com` with
+HTTP 308, preserving paths and query strings. Automated Lighthouse reporting
+targets `https://mapachess.com/` directly. Vercel creates Preview
 deployments for pull requests and Production deployments from
 `main`. GitHub Actions runs Playwright against each trusted Preview deployment
 and waits for each merged commit's matching Production deployment. It then
@@ -115,6 +116,15 @@ publishes the run with the median Performance score from five standard mobile
 Lighthouse runs against Mapachess.com and rejects audits that leave that
 origin. The generated Vercel deployment URL verifies readiness of the matching
 commit; it is not the measurement target.
+
+The domain assignments belong to `mapachess-expo-web` in
+`doctordereks-projects`. Keep the bare domain connected to Production with no
+redirect before enabling the `www`-to-bare redirect; never configure both
+directions. Repository changes still require human PR review and merge before
+the existing Production deployment. After release, verify both HTTPS hostnames,
+redirected paths and queries, canonical/social metadata, and runtime assets.
+Local and Preview URLs remain environment-specific; canonical metadata does
+not redirect those environments or change their asset origins.
 
 The published Lighthouse report and dynamic scores are available through
 [GitHub Pages](https://doctorderek.github.io/mapachess-expo/). The application
