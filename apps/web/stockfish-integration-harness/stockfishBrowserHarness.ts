@@ -18,6 +18,11 @@ import type {
   StockfishUciSearchResult,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
+import { WEB_OPPONENT_ENGINE_CONFIGURATION } from "@mapachess/stockfish/web-opponent-policy"
+import {
+  resolveWebChallengePolicy,
+  type WebOpponentPolicy,
+} from "../lib/gameplay/webOpponentPolicy"
 import createWebStockfishSession from "../lib/stockfish/createWebStockfishSession"
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
@@ -89,7 +94,20 @@ export type BetterHintsBrowserProof = Readonly<{
 
 export type StockfishBrowserHarness = Readonly<{
   runBetterHintsProof(): Promise<BetterHintsBrowserProof>
+  runCalibratedOpponentProof(): Promise<CalibratedOpponentBrowserProof>
   runProof(): Promise<StockfishBrowserProof>
+}>
+
+export type CalibratedOpponentBrowserProof = Readonly<{
+  standard: CalibratedOpponentVariantProof
+  chess960: CalibratedOpponentVariantProof
+}>
+
+type CalibratedOpponentVariantProof = Readonly<{
+  finalState: StockfishEngineSessionState
+  identity: StockfishUciIdentity
+  policy: WebOpponentPolicy
+  search: StockfishUciSearchResult
 }>
 
 declare global {
@@ -281,4 +299,39 @@ async function runProof(): Promise<StockfishBrowserProof> {
   }
 }
 
-window.mapachessStockfishBrowserHarness = { runBetterHintsProof, runProof }
+async function runCalibratedOpponentProof(): Promise<CalibratedOpponentBrowserProof> {
+  const runVariant = async (
+    variant: "standard" | "chess960",
+  ): Promise<CalibratedOpponentVariantProof> => {
+    const policy = await resolveWebChallengePolicy(
+      "chicken-stockfish",
+      variant,
+      1000,
+    )
+    const result = await useClosedSession(
+      { ...WEB_OPPONENT_ENGINE_CONFIGURATION, variant },
+      async (session) => ({
+        identity: await session.boot(),
+        search: await session.search({
+          requestId: `calibrated-${variant}-search`,
+          nodeLimit: policy.nodeLimit,
+          position: {
+            fen: variant === "standard" ? STANDARD_FEN : CHESS960_FEN,
+            moves: [],
+          },
+        }),
+      }),
+    )
+    return { finalState: result.finalState, policy, ...result.value }
+  }
+  return {
+    standard: await runVariant("standard"),
+    chess960: await runVariant("chess960"),
+  }
+}
+
+window.mapachessStockfishBrowserHarness = {
+  runBetterHintsProof,
+  runCalibratedOpponentProof,
+  runProof,
+}
