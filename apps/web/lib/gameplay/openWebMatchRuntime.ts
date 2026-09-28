@@ -135,6 +135,7 @@ export default async function openWebMatchRuntime(
           opponentId,
           setup.variant,
           cryptography.subtle,
+          input.opponentPolicyFingerprint,
         )
   input.signal?.throwIfAborted()
   const matchSeed = input.matchSeed ?? generateWebMatchSeed(cryptography)

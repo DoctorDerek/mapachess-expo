@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test"
 import { STOCKFISH_WEB_WORKER_URL } from "../apps/web/lib/stockfish/createWebStockfishSession"
-import type { StockfishBrowserProof } from "../apps/web/stockfish-integration-harness/stockfishBrowserHarness"
+import type {
+  CalibratedOpponentBrowserProof,
+  StockfishBrowserProof,
+} from "../apps/web/stockfish-integration-harness/stockfishBrowserHarness"
+import { WEB_CALIBRATED_LADDER } from "../packages/stockfish/src/webOpponentPolicy"
 
 const UCI_MOVE = /^[a-h][1-8][a-h][1-8][qrbn]?$/
 const EXPECTED_OPTION_NAMES = [
@@ -115,4 +119,34 @@ test("runs and cleans up the real Stockfish Worker lifecycle", async ({
   )
   expect(failedRequests).toEqual([])
   expect(browserErrors).toEqual([])
+})
+
+test("runs both calibrated 1000-Elo policies through the real local web Worker", async ({
+  page,
+}) => {
+  await page.goto("/")
+  const proof = await page.evaluate<CalibratedOpponentBrowserProof>(() =>
+    window.mapachessStockfishBrowserHarness.runCalibratedOpponentProof(),
+  )
+  for (const variant of ["standard", "chess960"] as const) {
+    const result = proof[variant]
+    expect(result.policy).toMatchObject({
+      calibrationFingerprint:
+        WEB_CALIBRATED_LADDER[variant][9]?.calibrationFingerprint,
+      nodeLimit: 10_000,
+      opponentId: "chicken-stockfish",
+      randomMoveProbabilityBasisPoints:
+        WEB_CALIBRATED_LADDER[variant][9]?.randomMoveProbabilityBasisPoints,
+      targetElo: 1000,
+      variant,
+    })
+    expect(result.policy.fingerprint).not.toBe(
+      result.policy.calibrationFingerprint,
+    )
+    expect(result.identity.name).toBe("Stockfish 18 Lite WASM")
+    expect(result.search.requestId).toBe(`calibrated-${variant}-search`)
+    expect(result.search.bestMove).toMatch(UCI_MOVE)
+    expect(result.finalState).toBe("closed")
+  }
+  await expect.poll(() => page.workers().length).toBe(0)
 })

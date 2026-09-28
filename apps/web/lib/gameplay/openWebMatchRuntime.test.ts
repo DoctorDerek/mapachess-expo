@@ -249,6 +249,34 @@ describe("web match runtime ownership", () => {
     },
   )
 
+  it("keeps the exact saved provisional Story and Challenge identities on resume", async () => {
+    const storyFingerprint =
+      "sha256:c93b5f52dea763b3a0406c0bbf2b01e1ad4f816af037a5670934740988a4845b"
+    const challengeFingerprint =
+      "sha256:4f68664c63012a083d689189df672468815ca71148856b593f4bae3c700e819c"
+    const story = await openFixture({
+      opponentId: "chicken-stockfish",
+      opponentPolicyFingerprint: storyFingerprint,
+    })
+    const challenge = await openFixture({
+      mode: "challenge",
+      playerColor: "white",
+      opponentId: "raccoon-stockfish",
+      opponentPolicyFingerprint: challengeFingerprint,
+    })
+    try {
+      expect(story.runtime.opponentPolicyFingerprint).toBe(storyFingerprint)
+      expect(story.runtime.opponentTargetElo).toBe(100)
+      expect(challenge.runtime.opponentPolicyFingerprint).toBe(
+        challengeFingerprint,
+      )
+      expect(challenge.runtime.opponentTargetElo).toBe(1000)
+    } finally {
+      await story.runtime.close()
+      await challenge.runtime.close()
+    }
+  })
+
   it.each(["white", "black", "random"] as const)(
     "honors chosen %s with an explicit Chess960 Challenge layout in all three engine sessions",
     async (playerColor) => {

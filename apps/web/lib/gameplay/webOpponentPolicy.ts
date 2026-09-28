@@ -9,7 +9,7 @@ import {
   OPPONENT_POSITION_SEED_DERIVATION_VERSION,
 } from "@mapachess/stockfish/opponent-move-selection"
 import {
-  WEB_LADDER_RANDOM_BASIS_POINTS,
+  WEB_CALIBRATED_LADDER,
   WEB_OPPONENT_ENGINE_CONFIGURATION,
   WEB_OPPONENT_NODE_LIMIT,
 } from "@mapachess/stockfish/web-opponent-policy"
@@ -21,6 +21,7 @@ import {
 import webSha256, { type Sha256SubtleCrypto } from "../profile/webSha256"
 
 export type WebOpponentPolicy = Readonly<{
+  calibrationFingerprint?: `sha256:${string}`
   fingerprint: string
   nodeLimit: number
   opponentId: StockfishOpponentId
@@ -29,15 +30,62 @@ export type WebOpponentPolicy = Readonly<{
   targetElo: number
 }>
 
+const LEGACY_WEB_LADDER_RANDOM_PRESETS = [
+  { standard: 9_000, chess960: 8_350 },
+  8_000,
+  7_350,
+  6_550,
+  6_150,
+  5_500,
+  { standard: 5_000, chess960: 5_400 },
+  { standard: 4_450, chess960: 5_000 },
+  { standard: 3_850, chess960: 4_450 },
+  3_650,
+  3_200,
+  2_800,
+  2_550,
+  2_325,
+  2_000,
+  1_725,
+  1_350,
+  1_125,
+  825,
+  550,
+  400,
+  250,
+  80,
+] as const
+
+const legacyRandomBasisPoints = (
+  variant: MatchVariant,
+  storyPosition: number,
+): number => {
+  const preset = LEGACY_WEB_LADDER_RANDOM_PRESETS[storyPosition - 1]
+  if (preset === undefined)
+    throw new TypeError("The saved opponent has no prior web policy.")
+  return typeof preset === "number" ? preset : preset[variant]
+}
+
 const webChallengePresets = (
   variant: MatchVariant,
-): readonly Readonly<{ targetElo: number; randomBasisPoints: number }>[] =>
+): readonly Readonly<{
+  targetElo: number
+  storyPosition: number
+  randomBasisPoints: number
+  calibrationFingerprint: `sha256:${string}`
+}>[] =>
   STOCKFISH_OPPONENTS.flatMap(({ storyPosition, storyTargetElo }) => {
-    const randomBasisPoints =
-      WEB_LADDER_RANDOM_BASIS_POINTS[variant][storyPosition - 1]
-    return randomBasisPoints === undefined
+    const measured = WEB_CALIBRATED_LADDER[variant][storyPosition - 1]
+    return measured === undefined
       ? []
-      : [{ targetElo: storyTargetElo, randomBasisPoints }]
+      : [
+          {
+            targetElo: storyTargetElo,
+            storyPosition,
+            randomBasisPoints: measured.randomMoveProbabilityBasisPoints,
+            calibrationFingerprint: measured.calibrationFingerprint,
+          },
+        ]
   })
 
 export const webChallengeDifficultyTargets = (
@@ -49,23 +97,60 @@ export default async function resolveWebOpponentPolicy(
   opponentId: StockfishOpponentId,
   variant: MatchVariant,
   subtleCrypto: Sha256SubtleCrypto = globalThis.crypto.subtle,
+  savedFingerprint?: string,
 ): Promise<WebOpponentPolicy> {
   const opponent = stockfishOpponent(opponentId)
-  const randomMoveProbabilityBasisPoints =
-    WEB_LADDER_RANDOM_BASIS_POINTS[variant][opponent.storyPosition - 1]
-  if (randomMoveProbabilityBasisPoints === undefined) {
+  const measured = WEB_CALIBRATED_LADDER[variant][opponent.storyPosition - 1]
+  if (measured === undefined) {
     throw new TypeError("This opponent has no measured web policy.")
   }
 
-  return createWebPolicy(
+  if (savedFingerprint !== undefined) {
+    const legacy = await createWebPolicy(
+      opponentId,
+      variant,
+      opponent.storyTargetElo,
+      legacyRandomBasisPoints(variant, opponent.storyPosition),
+      ["mapachess-provisional-web-ladder-policy/v1", variant, opponentId],
+      subtleCrypto,
+    )
+    if (legacy.fingerprint === savedFingerprint) return legacy
+  }
+
+  return createCalibratedWebPolicy(
     opponentId,
     variant,
     opponent.storyTargetElo,
-    randomMoveProbabilityBasisPoints,
-    ["mapachess-provisional-web-ladder-policy/v1", variant, opponentId],
+    measured,
     subtleCrypto,
   )
 }
+
+const createCalibratedWebPolicy = (
+  opponentId: StockfishOpponentId,
+  variant: MatchVariant,
+  targetElo: number,
+  measured: Readonly<{
+    randomMoveProbabilityBasisPoints: number
+    calibrationFingerprint: `sha256:${string}`
+  }>,
+  subtleCrypto: Sha256SubtleCrypto,
+): Promise<WebOpponentPolicy> =>
+  createWebPolicy(
+    opponentId,
+    variant,
+    targetElo,
+    measured.randomMoveProbabilityBasisPoints,
+    [
+      "mapachess-calibrated-web-worker-policy/v1",
+      variant,
+      `target-elo/${String(targetElo)}`,
+      `calibration-policy/${measured.calibrationFingerprint}`,
+      "stockfish-web-worker-uci/v1",
+    ],
+    subtleCrypto,
+    measured.calibrationFingerprint,
+  )
 
 async function createWebPolicy(
   opponentId: StockfishOpponentId,
@@ -74,6 +159,7 @@ async function createWebPolicy(
   randomMoveProbabilityBasisPoints: number,
   identityPrefix: readonly string[],
   subtleCrypto: Sha256SubtleCrypto,
+  calibrationFingerprint?: `sha256:${string}`,
 ): Promise<WebOpponentPolicy> {
   const configuration = WEB_OPPONENT_ENGINE_CONFIGURATION
   const identity = [
@@ -95,6 +181,7 @@ async function createWebPolicy(
   ].join("|")
   const fingerprint = `sha256:${await webSha256(identity, subtleCrypto)}`
   return Object.freeze({
+    ...(calibrationFingerprint === undefined ? {} : { calibrationFingerprint }),
     fingerprint,
     nodeLimit: WEB_OPPONENT_NODE_LIMIT,
     opponentId,
@@ -113,14 +200,35 @@ export async function resolveWebChallengePolicy(
 ): Promise<WebOpponentPolicy> {
   const presets = webChallengePresets(variant)
   let defaultPolicy: WebOpponentPolicy | undefined
-  for (const { targetElo: target, randomBasisPoints } of presets) {
+  for (const {
+    targetElo: target,
+    storyPosition,
+    randomBasisPoints,
+    calibrationFingerprint,
+  } of presets) {
     if (difficultyTargetElo !== undefined && target !== difficultyTargetElo)
       continue
-    const policy = await createWebPolicy(
+    const policy = await createCalibratedWebPolicy(
       opponentId,
       variant,
       target,
-      randomBasisPoints,
+      {
+        randomMoveProbabilityBasisPoints: randomBasisPoints,
+        calibrationFingerprint,
+      },
+      subtleCrypto,
+    )
+    defaultPolicy ??= policy
+    if (
+      savedFingerprint === undefined ||
+      policy.fingerprint === savedFingerprint
+    )
+      return policy
+    const legacy = await createWebPolicy(
+      opponentId,
+      variant,
+      target,
+      legacyRandomBasisPoints(variant, storyPosition),
       [
         "mapachess-provisional-web-challenge-policy/v1",
         variant,
@@ -128,13 +236,7 @@ export async function resolveWebChallengePolicy(
       ],
       subtleCrypto,
     )
-    defaultPolicy ??= policy
-    if (
-      difficultyTargetElo !== undefined ||
-      savedFingerprint === undefined ||
-      policy.fingerprint === savedFingerprint
-    )
-      return policy
+    if (legacy.fingerprint === savedFingerprint) return legacy
   }
   if (defaultPolicy === undefined) {
     throw new TypeError(
