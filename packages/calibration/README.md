@@ -1,5 +1,54 @@
 # Web ladder calibration
 
+## Initial pinned web baseline — September 28, 2026
+
+The selected web roster has 23 targets per variant, 100–2300 Elo in 100-Elo steps. Its production probabilities and exact Node-calibration policy fingerprints are pinned in `packages/stockfish/src/webOpponentPolicy.ts` and independently checked against `test/webLadderAcceptanceFixture.ts`. Standard and Chess960 were fitted separately to 71,108 and 62,038 valid paired-game outcomes, respectively. Each color-reversed pair contributed both games or neither. The fixed working reference coordinate is Stockfish UCI_Elo 1320, with approximate CCRL lineage but unquantified absolute benchmark offset.
+
+The numbers below are **reused-opening tuning estimates**, not fresh held-out results. Parentheses show the 95% _diagnostic_ interval from 200 complete-pair, edge-stratified bootstrap replicates of the same games. Those intervals condition on the observed policy graph and opening pool; they do not include adaptive-selection effects, new-opening transfer, or external-reference uncertainty.
+
+| Target | Standard random bp | Standard fitted Elo (bootstrap 95%) | Chess960 random bp | Chess960 fitted Elo (bootstrap 95%) |
+| -----: | -----------------: | ----------------------------------: | -----------------: | ----------------------------------: |
+|    100 |               8425 |                      105 (48–165.1) |               8550 |                        110 (49–166) |
+|    200 |               7800 |                   207 (155.9–262.2) |               8100 |                   190 (133.9–247.1) |
+|    300 |               7225 |                     296 (242.9–353) |               7350 |                   307 (236.9–359.1) |
+|    400 |               6750 |                     405 (354.9–458) |               6875 |                     402 (340.9–452) |
+|    500 |               6225 |                     501 (456.9–556) |               6340 |                       494 (441–541) |
+|    600 |               5650 |                       598 (545–654) |               5625 |                   605 (543.9–656.1) |
+|    700 |               5200 |                       695 (642–755) |               5375 |                     703 (640–754.1) |
+|    800 |               4650 |                       798 (746–856) |               4850 |                     790 (744.9–836) |
+|    900 |               4140 |                     901 (860–938.1) |               4450 |                       903 (854–948) |
+|   1000 |               3700 |                      991 (950–1036) |               3945 |                    990 (946.9–1027) |
+|   1100 |               3216 |                  1108 (1065.9–1149) |               3500 |                    1109 (1063–1148) |
+|   1200 |               2850 |                  1207 (1164–1242.1) |               3000 |                  1205 (1158–1244.1) |
+|   1300 |               2550 |                    1295 (1264–1326) |               2625 |                  1294 (1248–1336.1) |
+|   1400 |               2225 |                1396 (1359.9–1435.1) |               2340 |                  1391 (1343.9–1438) |
+|   1500 |               1825 |                    1511 (1466–1556) |               1975 |                1498 (1454.9–1536.2) |
+|   1600 |               1600 |                  1593 (1538.8–1645) |               1690 |                1590 (1547.9–1629.1) |
+|   1700 |               1225 |                    1705 (1650–1756) |               1350 |                  1709 (1666.9–1753) |
+|   1800 |                975 |                  1791 (1743.9–1843) |               1100 |                  1791 (1739–1841.1) |
+|   1900 |                750 |                1900 (1846.8–1952.1) |                810 |                  1896 (1846–1940.1) |
+|   2000 |                500 |                2006 (1951.9–2060.2) |                550 |                  1994 (1955.9–2031) |
+|   2100 |                325 |                    2108 (2060–2163) |                388 |                  2110 (2057.9–2155) |
+|   2200 |                200 |                  2199 (2150.9–2257) |                217 |                  2194 (2141.9–2244) |
+|   2300 |                 80 |                  2289 (2239.9–2346) |                 80 |                2309 (2261.9–2355.1) |
+
+The selected probabilities decrease strictly as target difficulty increases, and fitted estimates increase strictly. Standard has 21/23 targets within ±10 fitted Elo; 1500→1511 and 2300→2289 are the two one-Elo-over-boundary exceptions. Chess960 has 23/23 within ±10. Selected bootstrap interval radii span 31.0–60.1 Elo in Standard and 38.1–70.1 in Chess960. None establishes the former ≤20-Elo precision criterion. GDD v4.3 explicitly accepts these measured limitations for this **one-time pinned initial web baseline only**; do not extrapolate it to native, untested custom settings, or >2300.
+
+The actual calibrated candidate used Stockfish 18 Lite single-thread WASM under the Node UCI adapter: pinned loader and WASM hashes, 10,000 nodes, one thread, 16 MiB hash, MultiPV 1, full strength, no pondering, no opening book or tablebases. Selection chooses Stockfish or a uniformly random canonical legal move at the listed probability using the shared position-derived deterministic algorithm. The browser uses the same pinned WASM and behavior but a distinct Worker UCI adapter. Its runtime fingerprint is therefore bound to, but not falsely identical with, the Node-calibration fingerprint; browser behavior must be checked before rated use. Story and matching Challenge target use the same selected policy irrespective of animal identity. Existing active matches retain their saved provisional policy on resume.
+
+| Evidence owner                       | Standard                                                           | Chess960                                                           |
+| ------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Valid games / complete pairs         | 71,108 / 35,554                                                    | 62,038 / 31,019                                                    |
+| Excluded complete pairs              | 6                                                                  | 1                                                                  |
+| Fitted policy identities             | 133                                                                | 140                                                                |
+| Merged BayesElo input SHA-256        | `1ea0d1c5d823c382075df9b9edd2aa6e88f2bd093d3951bddf444c976abecc00` | `5ade76fc08a0d0e389b34cdd2137e8e9b04fec5cb461f1a2990bf5dd9b614fce` |
+| Paired PGN SHA-256                   | `ed768ce89b19d111464e9d9cb576b30a89c743771e8edf8c8e80663d957ec5ba` | `f05d6625bb4aecb07ec305e42adaeb039a5321b5dcdfbd9890e1121ec4fcb0ca` |
+| 200-replicate bootstrap JSON SHA-256 | `ed135fbf510540d130b2342b08a9cf76874ecb69e8f347038d9e8d0b440048b5` | `94d75b47ab7489e8fbba856da8fbc5ab2b46cc6c137800d149e17d0b9e887925` |
+
+The calibration runner uses BayesElo 0056 with `minelo -4500`, `maxelo 4500`, `resolution 3001`, `exactdist`, then `offset 1320` on the reference alias. Stage10 Standard (seed61) and Stage9 Chess960 (seed60) cumulative fits include the preceding valid batches and seeds; they are **not** independent holdouts. Local raw PGNs, plans, complete results and analysis helpers are Git ignored; this report, pinned fingerprints, and acceptance fixture are the reviewable provenance. The campaign consumed more than five days of local computation/analysis. Future precision work needs an information-efficient graph, fresh reserved openings/seeds and explicit benchmark bridge rather than another same-opening batch.
+
+## Historical September 2026 playtesting ladder
+
 The September 11, 2026 playtesting ladder meets its approved stopping rule for
 all ten targets in Standard and Chess960: fitted estimates within 50 Elo of
 the target, reported 95% interval half-width at most 100 Elo, and strictly
