@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./global-xp": {
+      "types": "./src/globalXp.ts",
+      "default": "./dist/globalXp.js"
+    },
+    "./match-medal": {
+      "types": "./src/matchMedal.ts",
+      "default": "./dist/matchMedal.js"
+    },
     "./story-progress": {
       "types": "./src/storyProgress.ts",
       "default": "./dist/storyProgress.js"

@@ -1,6 +1,6 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import matchMachine from "@mapachess/match/match-machine"
@@ -68,6 +68,12 @@ describe("match composition", () => {
         createElement(WebMatch, {
           actor,
           evaluationActor,
+          initiallyConcluded: false,
+          savedMatch: null,
+          acceptedReward: null,
+          storyProgress: { standard: [], chess960: [] },
+          onSetupRequested: vi.fn(),
+          onReplayRequested: vi.fn(),
           mode: "challenge",
           playerElo: 500,
           runtime,
@@ -132,6 +138,12 @@ describe("match composition", () => {
         createElement(WebMatch, {
           actor,
           evaluationActor,
+          initiallyConcluded: false,
+          savedMatch: null,
+          acceptedReward: null,
+          storyProgress: { standard: [], chess960: [] },
+          onSetupRequested: vi.fn(),
+          onReplayRequested: vi.fn(),
           mode: "challenge",
           playerElo: 500,
           runtime,
@@ -172,6 +184,12 @@ describe("match composition", () => {
         <WebMatch
           actor={actor}
           evaluationActor={evaluationActor}
+          initiallyConcluded={false}
+          savedMatch={null}
+          acceptedReward={null}
+          storyProgress={{ standard: [], chess960: [] }}
+          onSetupRequested={vi.fn()}
+          onReplayRequested={vi.fn()}
           mode="challenge"
           playerElo={100}
           runtime={runtime}

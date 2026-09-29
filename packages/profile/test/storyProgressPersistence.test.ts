@@ -153,6 +153,8 @@ describe("Story progress in durable profiles", () => {
     expect(afterStandard?.processedMatchResultIds).toEqual([
       standard.completed.matchId,
     ])
+    expect(afterStandard?.totalXp).toBe(4)
+    expect(afterStandard?.lastAcceptedResultReward?.awardedXp).toBe(4)
     await persistProfileActiveMatch({
       actor,
       candidate: standard.completed,
@@ -186,10 +188,12 @@ describe("Story progress in durable profiles", () => {
       standard: 228,
       chess960: 100,
     })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(4)
     expect(selectPendingPlayerData(actor.getSnapshot())?.ratings).toEqual({
       standard: 228,
       chess960: 228,
     })
+    expect(selectPendingPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
     failWrite = false
     actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
     await savingChess960Result
@@ -197,6 +201,10 @@ describe("Story progress in durable profiles", () => {
       standard: 228,
       chess960: 228,
     })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.unlockedAchievementIds,
+    ).toEqual(["reach-level-5"])
 
     actor.send({ type: "PROFILE.ELO_RESET_CONFIRMED", variant: "standard" })
     await waitFor(
@@ -215,6 +223,8 @@ describe("Story progress in durable profiles", () => {
       standard.completed.matchId,
       chess960.completed.matchId,
     ])
+    expect(afterReset?.totalXp).toBe(8)
+    expect(afterReset?.unlockedAchievementIds).toEqual(["reach-level-5"])
     await persistProfileActiveMatch({
       actor,
       candidate: null,
@@ -231,6 +241,7 @@ describe("Story progress in durable profiles", () => {
       standard: 100,
       chess960: 228,
     })
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
     actor.stop()
   })
 

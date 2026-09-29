@@ -68,9 +68,12 @@ describe("durable Challenge history", () => {
     const {
       challengeHistory: omitted,
       legacyRatings,
+      lastAcceptedResultReward: _lastAcceptedResultReward,
       processedMatchResultIds: _processedMatchResultIds,
       ratedMatchCounts: _ratedMatchCounts,
       ratings: _ratings,
+      totalXp: _totalXp,
+      unlockedAchievementIds: _unlockedAchievementIds,
       ...current
     } = createInitialMapachessPlayerData()
     const old = { ...current, ratings: legacyRatings }

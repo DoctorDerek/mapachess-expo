@@ -28,6 +28,15 @@ import {
   decodeDurableMatch,
 } from "./durableMatchCodec.js"
 import {
+  COMPLETED_MATCH_XP,
+  GLOBAL_XP_QUANTUM,
+  LEVEL_ACHIEVEMENTS,
+  levelAchievementsCrossed,
+  levelFromTotalXp,
+  STRONGER_CALIBRATED_WIN_BONUS_XP,
+  type LevelAchievementId,
+} from "./globalXp.js"
+import {
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
   createInitialRatedMatchCounts,
@@ -40,10 +49,13 @@ import {
   PLAYER_ELO_RATING_IDS,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
+  TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
+  type AcceptedMatchReward,
   type LegacyPlayerEloRatings,
   type MapachessPlayerData,
   type MapachessPlayerDataV1,
   type MapachessPlayerDataV6,
+  type MapachessPlayerDataV7,
   type PlayerEloRatings,
   type RatedMatchCounts,
 } from "./playerData.js"
@@ -70,6 +82,7 @@ export type PlayerDataSource = Readonly<{
     | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION
     | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -150,10 +163,111 @@ const decodeProcessedMatchResultIds = (
   return Object.freeze(ids)
 }
 
+const decodeLevelAchievementIds = (
+  received: unknown,
+  path: string,
+  totalXp: number,
+): readonly LevelAchievementId[] => {
+  if (!Array.isArray(received)) return failData(path)
+  const availableLevel = levelFromTotalXp(totalXp)
+  const ids = received.map((value: unknown, index: number) => {
+    const achievement = LEVEL_ACHIEVEMENTS.find(({ id }) => id === value)
+    if (achievement === undefined || achievement.level > availableLevel) {
+      return failData(`${path}[${String(index)}]`)
+    }
+    return achievement.id
+  })
+  if (
+    new Set(ids).size !== ids.length ||
+    ids.some(
+      (id, index) =>
+        index > 0 &&
+        LEVEL_ACHIEVEMENTS.findIndex((entry) => entry.id === ids[index - 1]) >=
+          LEVEL_ACHIEVEMENTS.findIndex((entry) => entry.id === id),
+    )
+  ) {
+    return failData(path)
+  }
+  return Object.freeze(ids)
+}
+
+const decodeAcceptedMatchReward = (
+  received: unknown,
+  totalXp: number,
+  processedMatchResultIds: readonly string[],
+): AcceptedMatchReward | null => {
+  if (received === null) return null
+  const path = "$.lastAcceptedResultReward"
+  const object = requireObject(received, path)
+  requireExactKeys(
+    object,
+    [
+      "matchId",
+      "awardedXp",
+      "totalXpBefore",
+      "unlockedAchievementIds",
+      "ratedElo",
+    ],
+    path,
+  )
+  if (
+    typeof object.matchId !== "string" ||
+    !processedMatchResultIds.includes(object.matchId)
+  ) {
+    return failData(`${path}.matchId`)
+  }
+  const awardedXp = requireSafeRevision(object.awardedXp, `${path}.awardedXp`)
+  const totalXpBefore = requireSafeRevision(
+    object.totalXpBefore,
+    `${path}.totalXpBefore`,
+  )
+  if (
+    (awardedXp !== COMPLETED_MATCH_XP &&
+      awardedXp !== COMPLETED_MATCH_XP + STRONGER_CALIBRATED_WIN_BONUS_XP) ||
+    totalXpBefore + awardedXp !== totalXp
+  ) {
+    return failData(path)
+  }
+  const unlockedAchievementIds = decodeLevelAchievementIds(
+    object.unlockedAchievementIds,
+    `${path}.unlockedAchievementIds`,
+    totalXp,
+  )
+  const expectedUnlocks = levelAchievementsCrossed(totalXpBefore, totalXp)
+  if (
+    unlockedAchievementIds.length !== expectedUnlocks.length ||
+    unlockedAchievementIds.some((id, index) => id !== expectedUnlocks[index])
+  ) {
+    return failData(`${path}.unlockedAchievementIds`)
+  }
+  let ratedElo: AcceptedMatchReward["ratedElo"] = null
+  if (object.ratedElo !== null) {
+    const rated = requireObject(object.ratedElo, `${path}.ratedElo`)
+    requireExactKeys(rated, ["variant", "before", "after"], `${path}.ratedElo`)
+    ratedElo = Object.freeze({
+      variant: requireEnumValue(
+        rated.variant,
+        PLAYER_ELO_RATING_IDS,
+        `${path}.ratedElo.variant`,
+      ),
+      before: requirePlayerElo(rated.before, `${path}.ratedElo.before`),
+      after: requirePlayerElo(rated.after, `${path}.ratedElo.after`),
+    })
+  }
+  return Object.freeze({
+    matchId: object.matchId,
+    awardedXp,
+    totalXpBefore,
+    unlockedAchievementIds,
+    ratedElo,
+  })
+}
+
 const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
   Object.freeze({
     ...data,
     legacyRatings: data.ratings,
+    lastAcceptedResultReward: null,
     processedMatchResultIds: Object.freeze(
       data.activeMatch?.conclusion === null || data.activeMatch === null
         ? []
@@ -162,6 +276,8 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
     ratedMatchCounts: createInitialRatedMatchCounts(),
     ratings: createInitialPlayerEloRatings(),
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    totalXp: 0,
+    unlockedAchievementIds: Object.freeze([]),
   })
 
 const canonicalLegacyPlayerData = (data: MapachessPlayerDataV1): string =>
@@ -222,28 +338,52 @@ const canonicalModernPlayerData = (
   )
 }
 
+const canonicalTwoVariantFields = (
+  data: MapachessPlayerDataV7 | MapachessPlayerData,
+): readonly unknown[] => [
+  data.schema,
+  data.schemaVersion,
+  data.revision,
+  data.settings.autoHintMode,
+  PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
+  data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
+  [
+    data.settings.challengeSetup.variant,
+    data.settings.challengeSetup.playerColor,
+    data.settings.challengeSetup.chess960PositionId,
+    data.settings.challengeSetup.opponentId,
+    data.settings.challengeSetup.difficultyTargetElo,
+  ],
+  canonicalStoryProgress(data.storyProgress),
+  canonicalChallengeHistory(data.challengeHistory),
+  LEGACY_PLAYER_ELO_RATING_IDS.map((ratingId) => data.legacyRatings[ratingId]),
+  PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratedMatchCounts[ratingId]),
+  data.processedMatchResultIds,
+]
+
+const canonicalTwoVariantPlayerData = (data: MapachessPlayerDataV7): string =>
+  JSON.stringify(canonicalTwoVariantFields(data))
+
 export const canonicalPlayerData = (data: MapachessPlayerData): string =>
   JSON.stringify([
-    data.schema,
-    data.schemaVersion,
-    data.revision,
-    data.settings.autoHintMode,
-    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
-    data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
-    [
-      data.settings.challengeSetup.variant,
-      data.settings.challengeSetup.playerColor,
-      data.settings.challengeSetup.chess960PositionId,
-      data.settings.challengeSetup.opponentId,
-      data.settings.challengeSetup.difficultyTargetElo,
-    ],
-    canonicalStoryProgress(data.storyProgress),
-    canonicalChallengeHistory(data.challengeHistory),
-    LEGACY_PLAYER_ELO_RATING_IDS.map(
-      (ratingId) => data.legacyRatings[ratingId],
-    ),
-    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratedMatchCounts[ratingId]),
-    data.processedMatchResultIds,
+    ...canonicalTwoVariantFields(data),
+    data.totalXp,
+    data.unlockedAchievementIds,
+    data.lastAcceptedResultReward === null
+      ? null
+      : [
+          data.lastAcceptedResultReward.matchId,
+          data.lastAcceptedResultReward.awardedXp,
+          data.lastAcceptedResultReward.totalXpBefore,
+          data.lastAcceptedResultReward.unlockedAchievementIds,
+          data.lastAcceptedResultReward.ratedElo === null
+            ? null
+            : [
+                data.lastAcceptedResultReward.ratedElo.variant,
+                data.lastAcceptedResultReward.ratedElo.before,
+                data.lastAcceptedResultReward.ratedElo.after,
+              ],
+        ],
   ])
 
 const decodeLegacyPlayerData = (
@@ -404,6 +544,9 @@ const decodeModernPlayerData = (
 
 const decodeCurrentPlayerData = (
   object: JsonObject,
+  sourceSchemaVersion:
+    | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
     object,
@@ -419,6 +562,9 @@ const decodeCurrentPlayerData = (
       "schemaVersion",
       "settings",
       "storyProgress",
+      ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        ? ["totalXp", "unlockedAchievementIds", "lastAcceptedResultReward"]
+        : []),
     ],
     "$",
   )
@@ -446,6 +592,29 @@ const decodeCurrentPlayerData = (
   ) {
     return failData("$.processedMatchResultIds")
   }
+  const totalXp =
+    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? requireSafeRevision(object.totalXp, "$.totalXp")
+      : 0
+  if (totalXp % GLOBAL_XP_QUANTUM !== 0) {
+    return failData("$.totalXp")
+  }
+  const unlockedAchievementIds =
+    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? decodeLevelAchievementIds(
+          object.unlockedAchievementIds,
+          "$.unlockedAchievementIds",
+          totalXp,
+        )
+      : Object.freeze([])
+  const lastAcceptedResultReward =
+    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? decodeAcceptedMatchReward(
+          object.lastAcceptedResultReward,
+          totalXp,
+          processedMatchResultIds,
+        )
+      : null
   const data: MapachessPlayerData = Object.freeze({
     activeMatch,
     challengeHistory: decodeChallengeHistory(
@@ -456,6 +625,7 @@ const decodeCurrentPlayerData = (
       object.legacyRatings,
       "$.legacyRatings",
     ),
+    lastAcceptedResultReward,
     processedMatchResultIds,
     ratedMatchCounts: decodeRatedMatchCounts(
       object.ratedMatchCounts,
@@ -474,12 +644,20 @@ const decodeCurrentPlayerData = (
       challengeSetup: challengeSetup.setup,
     }),
     storyProgress,
+    totalXp,
+    unlockedAchievementIds,
   })
   return Object.freeze({
     data,
     source: Object.freeze({
-      canonical: canonicalPlayerData(data),
-      schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      canonical:
+        sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+          ? canonicalPlayerData(data)
+          : canonicalTwoVariantPlayerData({
+              ...data,
+              schemaVersion: TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
+            }),
+      schemaVersion: sourceSchemaVersion,
     }),
   })
 }
@@ -514,8 +692,9 @@ export const decodeMapachessPlayerDataWithSource = (
             object.schemaVersion ===
               LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
           ? decodeModernPlayerData(object, object.schemaVersion)
-          : object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
-            ? decodeCurrentPlayerData(object)
+          : object.schemaVersion === TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+            ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")
     return { ...decoded, ok: true }
   } catch (error) {

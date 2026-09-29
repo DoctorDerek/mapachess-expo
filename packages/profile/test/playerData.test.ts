@@ -35,6 +35,7 @@ describe("Mapachess player data", () => {
         standard: { animals: [], difficulties: [] },
         chess960: { animals: [], difficulties: [] },
       },
+      lastAcceptedResultReward: null,
       legacyRatings: {
         chess960Challenge: INITIAL_PLAYER_ELO,
         chess960Story: INITIAL_PLAYER_ELO,
@@ -51,6 +52,8 @@ describe("Mapachess player data", () => {
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
       storyProgress: { standard: [], chess960: [] },
+      totalXp: 0,
+      unlockedAchievementIds: [],
       settings: {
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
