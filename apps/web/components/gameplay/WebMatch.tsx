@@ -43,7 +43,7 @@ export type WebMatchProps = Readonly<{
   moveFeedback?: readonly MoveFeedbackRecord[]
   reactionsPaused?: boolean
   mode: MatchMode
-  playerEloAtStart: number
+  playerElo: number
   runtime: WebMatchRuntime
   menuActions?: ReactNode
   result?: (disabled: boolean) => ReactNode
@@ -55,7 +55,7 @@ export default function WebMatch({
   moveFeedback = [],
   reactionsPaused = false,
   mode,
-  playerEloAtStart,
+  playerElo,
   runtime,
   result,
   menuActions,
@@ -136,7 +136,7 @@ export default function WebMatch({
           <MatchIdentity
             headingRef={heading}
             playerColor={runtime.playerColor}
-            playerElo={playerEloAtStart}
+            playerElo={playerElo}
             opponentName={opponent.displayName}
             opponentElo={runtime.opponentTargetElo}
             reactions={
