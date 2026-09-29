@@ -66,6 +66,7 @@ const createSession = (
     }),
     opponentPolicyFingerprint: "web-session-test-policy",
     opponentTargetElo,
+    ratedOpponentElo: opponentTargetElo,
     opponentId,
     playerColor,
     startingPosition,

@@ -67,10 +67,8 @@ const openProfileRuntime = async (
       storyProgress: storyProgress ?? initial.storyProgress,
       ratings: {
         ...initial.ratings,
-        standardStory: 450,
-        chess960Story: chess960StoryElo ?? initial.ratings.chess960Story,
-        standardChallenge: 600,
-        chess960Challenge: 800,
+        standard: 600,
+        chess960: chess960StoryElo ?? initial.ratings.chess960,
       },
     })
     if (!saved.ok) throw new Error("Initial rating fixture must persist")
@@ -124,6 +122,7 @@ const createRuntime = (
     }),
     opponentPolicyFingerprint: policyFingerprint,
     opponentTargetElo,
+    ratedOpponentElo: opponentTargetElo,
     opponentId,
     playerColor:
       selection.mode === "challenge"
@@ -262,6 +261,8 @@ describe("web match session ownership", () => {
       const initialRatings = selectCurrentPlayerData(
         profile.actor.getSnapshot(),
       )?.ratings
+      if (initialRatings === undefined)
+        throw new Error("A playable profile must have variant Elo ratings.")
       for (const [
         index,
         opponentId,
@@ -390,7 +391,14 @@ describe("web match session ownership", () => {
         profile = await openProfileRuntime(undefined, indexedDb)
         const reloaded = selectCurrentPlayerData(profile.actor.getSnapshot())
         expect(reloaded?.storyProgress).toEqual(progress)
-        expect(reloaded?.ratings).toEqual(initialRatings)
+        const otherVariant = variant === "standard" ? "chess960" : "standard"
+        expect(reloaded?.ratings[otherVariant]).toBe(
+          initialRatings[otherVariant],
+        )
+        expect(reloaded?.ratings[variant]).toBeGreaterThan(
+          initialRatings[variant],
+        )
+        expect(reloaded?.ratedMatchCounts[variant]).toBe(index + 1)
         if (progress === undefined)
           throw new Error("Story progress must remain available")
         expect(selectDefaultStoryOpponent(progress, variant)).toBe(
@@ -574,6 +582,7 @@ describe("web match session ownership", () => {
       const currentMatch = {
         ...candidate,
         opponentPolicyFingerprint: policy.fingerprint,
+        ratedOpponentElo: null,
       }
       expect(resumed.match).toEqual(currentMatch)
       expect(
@@ -703,7 +712,7 @@ describe("web match session ownership", () => {
         opponentId: "bunny-stockfish",
         opponentPolicyFingerprint: policy.fingerprint,
         playerColor: "black",
-        playerEloAtStart: variant === "standard" ? 600 : 800,
+        playerEloAtStart: variant === "standard" ? 600 : 725,
       })
       await first.close()
       await waitFor(profile.actor, (snapshot) => snapshot.matches("ready"))
