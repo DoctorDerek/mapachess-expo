@@ -1,12 +1,22 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useEffect, useMemo, useRef, type ReactNode } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
-import type { MatchMode } from "@mapachess/match/durable-match-record"
+import type {
+  DurableMatchRecord,
+  MatchMode,
+} from "@mapachess/match/durable-match-record"
 import matchMachine, {
   selectHintStage,
   selectIsPersistingMutation,
@@ -19,8 +29,11 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { matchModeLabel } from "@mapachess/match/match-setup"
+import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
+import type { StoryProgress } from "@mapachess/profile/story-progress"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
@@ -28,7 +41,9 @@ import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPr
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import ClassifiedMoveHistory from "./ClassifiedMoveHistory"
+import LevelAchievementToasts from "./LevelAchievementToasts"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
+import MatchCelebration from "./MatchCelebration"
 import MatchCommands from "./MatchCommands"
 import MatchIdentity from "./MatchIdentity"
 import MatchOutcome from "./MatchOutcome"
@@ -40,7 +55,13 @@ import ReactiveBattleStage from "./ReactiveBattleStage"
 export type WebMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
+  initiallyConcluded: boolean
   moveFeedback?: readonly MoveFeedbackRecord[]
+  savedMatch: DurableMatchRecord | null
+  acceptedReward: AcceptedMatchReward | null
+  storyProgress: StoryProgress
+  onSetupRequested: (setup: MatchSetup) => void
+  onReplayRequested: () => void
   reactionsPaused?: boolean
   mode: MatchMode
   playerElo: number
@@ -52,7 +73,13 @@ export type WebMatchProps = Readonly<{
 export default function WebMatch({
   actor,
   evaluationActor,
+  initiallyConcluded,
   moveFeedback = [],
+  savedMatch,
+  acceptedReward,
+  storyProgress,
+  onSetupRequested,
+  onReplayRequested,
   reactionsPaused = false,
   mode,
   playerElo,
@@ -61,6 +88,21 @@ export default function WebMatch({
   menuActions,
 }: WebMatchProps) {
   const heading = useRef<HTMLHeadingElement>(null)
+  const menuSummary = useRef<HTMLElement>(null)
+  const [celebrationDismissed, setCelebrationDismissed] = useState(false)
+  const dismissCelebration = useCallback(
+    () => setCelebrationDismissed(true),
+    [],
+  )
+  const matchingReward =
+    savedMatch?.matchId === runtime.matchId &&
+    savedMatch.conclusion !== null &&
+    acceptedReward?.matchId === runtime.matchId
+      ? acceptedReward
+      : null
+  const newlyAccepted = !initiallyConcluded && matchingReward !== null
+  const celebrationPending = newlyAccepted && !celebrationDismissed
+  const celebrationOpen = celebrationPending && !reactionsPaused
   useEffect(() => {
     heading.current?.focus({ preventScroll: true })
     window.scrollTo({ top: 0, behavior: "instant" })
@@ -89,7 +131,11 @@ export default function WebMatch({
   const position = selectMatchPosition(snapshot)
   const modeLabel = matchModeLabel({ mode, variant: position.variant })
   const timeline = selectMatchTimeline(snapshot)
-  const reactions = useMoveReactions(timeline, moveFeedback, reactionsPaused)
+  const reactions = useMoveReactions(
+    timeline,
+    moveFeedback,
+    reactionsPaused || celebrationPending,
+  )
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
@@ -127,144 +173,165 @@ export default function WebMatch({
   }
 
   return (
-    <section
-      aria-label={`${modeLabel} match against ${opponent.displayName}`}
-      className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
-    >
-      <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
-        <div className="grid min-w-0 gap-2 [grid-area:playing] xl:[grid-area:auto]">
-          <MatchIdentity
-            headingRef={heading}
-            playerColor={runtime.playerColor}
-            playerElo={playerElo}
-            opponentName={opponent.displayName}
-            opponentElo={runtime.opponentTargetElo}
-            reactions={
-              <MoveReactionFeedback
-                actor={reactions.actor}
-                playerColor={runtime.playerColor}
-              />
-            }
-          />
-
-          <div className="grid min-w-0">
-            <PositionEvaluationGutter actor={evaluationActor} />
-            <CanonicalChessboard
-              disabled={!playerTurn}
-              hints={visibleHints}
-              lastMove={lastMove}
-              legalMoves={legalMoves}
-              onMove={(moveId) =>
-                actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
+    <>
+      <section
+        aria-label={`${modeLabel} match against ${opponent.displayName}`}
+        className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
+      >
+        <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
+          <div className="grid min-w-0 gap-2 [grid-area:playing] xl:[grid-area:auto]">
+            <MatchIdentity
+              headingRef={heading}
+              playerColor={runtime.playerColor}
+              playerElo={playerElo}
+              opponentName={opponent.displayName}
+              opponentElo={runtime.opponentTargetElo}
+              reactions={
+                <MoveReactionFeedback
+                  actor={reactions.actor}
+                  playerColor={runtime.playerColor}
+                />
               }
-              orientation={runtime.playerColor}
-              position={position}
-              showMoveHints={hintStage === "move-hints"}
+            />
+
+            <div className="grid min-w-0">
+              <PositionEvaluationGutter actor={evaluationActor} />
+              <CanonicalChessboard
+                disabled={!playerTurn}
+                hints={visibleHints}
+                lastMove={lastMove}
+                legalMoves={legalMoves}
+                onMove={(moveId) =>
+                  actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
+                }
+                orientation={runtime.playerColor}
+                position={position}
+                showMoveHints={hintStage === "move-hints"}
+              />
+            </div>
+          </div>
+          <div className="w-full [grid-area:battle] xl:[grid-area:auto]">
+            <ReactiveBattleStage
+              onParticipantAnimationCompleted={
+                presentation.notifyParticipantAnimationCompleted
+              }
+              opponentName={opponent.displayName}
+              opponentPresentation={opponentPresentation}
+              presentationSnapshot={presentation.snapshot}
             />
           </div>
         </div>
-        <div className="w-full [grid-area:battle] xl:[grid-area:auto]">
-          <ReactiveBattleStage
-            onParticipantAnimationCompleted={
-              presentation.notifyParticipantAnimationCompleted
-            }
-            opponentName={opponent.displayName}
-            opponentPresentation={opponentPresentation}
-            presentationSnapshot={presentation.snapshot}
-          />
-        </div>
-      </div>
 
-      <div className="contents xl:grid xl:min-w-0 xl:gap-2">
-        <section
-          aria-label="Core match actions"
-          className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
-        >
-          <MatchCommands
-            opponentName={opponent.displayName}
-            onMenuOpened={reactions.clear}
-            coach={
-              <MapachitoCoachPortrait
-                presentationSnapshot={presentation.snapshot}
-              />
-            }
-            hints={
-              <BetterHintsControl
-                busy={persisting}
-                disabled={persistenceFailure !== null}
-                hints={hints}
-                matchComplete={matchComplete}
-                onMoveHintsRequested={() =>
-                  actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-                }
-                onPieceHintsRequested={() =>
-                  actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-                }
-                stage={hintStage}
-              />
-            }
-            menuActions={
-              <>
-                {menuActions}{" "}
-                <details className="text-mapachito-white [grid-area:data]">
-                  <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
-                    Match details &amp; Move History
-                  </summary>
-                  <div className="text-mapachito-charcoal grid gap-3">
-                    <dl
-                      aria-label="Current match data"
-                      className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
-                    >
-                      <dt>Mode</dt>
-                      <dd>{modeLabel}</dd>
-                      <dt>Clock</dt>
-                      <dd>Untimed</dd>
-                      <dt>Privacy</dt>
-                      <dd>Local · Accountless</dd>
-                      <dt>Engine</dt>
-                      <dd className="truncate">
-                        {runtime.engineIdentity.name}
-                      </dd>
-                    </dl>
-
-                    <ClassifiedMoveHistory
-                      transitions={activeTransitions}
-                      records={moveFeedback}
-                    />
-                  </div>
-                </details>
-              </>
-            }
-            actor={actor}
-            drawAvailable={
-              drawOfferDecision !== null &&
-              !matchComplete &&
-              position.turn === runtime.playerColor
-            }
-            onOfferDraw={offerDraw}
-            snapshot={snapshot}
-          />
-
-          <MatchRecovery
-            actor={actor}
-            snapshot={snapshot}
-            evaluationActor={evaluationActor}
-            evaluationSnapshot={evaluationSnapshot}
-            opponentName={opponent.displayName}
-          />
-        </section>
-        {conclusion === null ? null : (
-          <div className="px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]">
-            <MatchOutcome
-              conclusion={conclusion}
-              playerColor={runtime.playerColor}
+        <div className="contents xl:grid xl:min-w-0 xl:gap-2">
+          <section
+            aria-label="Core match actions"
+            className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
+          >
+            <MatchCommands
               opponentName={opponent.displayName}
-            >
-              {result?.(persisting || persistenceFailure !== null)}
-            </MatchOutcome>
-          </div>
-        )}
-      </div>
-    </section>
+              onMenuOpened={reactions.clear}
+              coach={
+                <MapachitoCoachPortrait
+                  presentationSnapshot={presentation.snapshot}
+                />
+              }
+              hints={
+                <BetterHintsControl
+                  busy={persisting}
+                  disabled={persistenceFailure !== null}
+                  hints={hints}
+                  matchComplete={matchComplete}
+                  onMoveHintsRequested={() =>
+                    actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+                  }
+                  onPieceHintsRequested={() =>
+                    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+                  }
+                  stage={hintStage}
+                />
+              }
+              menuActions={
+                <>
+                  {menuActions}{" "}
+                  <details className="text-mapachito-white [grid-area:data]">
+                    <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+                      Match details &amp; Move History
+                    </summary>
+                    <div className="text-mapachito-charcoal grid gap-3">
+                      <dl
+                        aria-label="Current match data"
+                        className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
+                      >
+                        <dt>Mode</dt>
+                        <dd>{modeLabel}</dd>
+                        <dt>Clock</dt>
+                        <dd>Untimed</dd>
+                        <dt>Privacy</dt>
+                        <dd>Local · Accountless</dd>
+                        <dt>Engine</dt>
+                        <dd className="truncate">
+                          {runtime.engineIdentity.name}
+                        </dd>
+                      </dl>
+
+                      <ClassifiedMoveHistory
+                        transitions={activeTransitions}
+                        records={moveFeedback}
+                      />
+                    </div>
+                  </details>
+                </>
+              }
+              menuSummaryRef={menuSummary}
+              actor={actor}
+              drawAvailable={
+                drawOfferDecision !== null &&
+                !matchComplete &&
+                position.turn === runtime.playerColor
+              }
+              onOfferDraw={offerDraw}
+              snapshot={snapshot}
+            />
+
+            <MatchRecovery
+              actor={actor}
+              snapshot={snapshot}
+              evaluationActor={evaluationActor}
+              evaluationSnapshot={evaluationSnapshot}
+              opponentName={opponent.displayName}
+            />
+          </section>
+          {conclusion === null || celebrationPending ? null : (
+            <div className="px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]">
+              <MatchOutcome
+                conclusion={conclusion}
+                playerColor={runtime.playerColor}
+                opponentName={opponent.displayName}
+              >
+                {result?.(persisting || persistenceFailure !== null)}
+              </MatchOutcome>
+            </div>
+          )}
+        </div>
+      </section>
+      {celebrationOpen && savedMatch !== null && matchingReward !== null ? (
+        <MatchCelebration
+          disabled={persisting || persistenceFailure !== null}
+          match={savedMatch}
+          onDismiss={dismissCelebration}
+          onReplayRequested={onReplayRequested}
+          onSetupRequested={onSetupRequested}
+          restoreFocusRef={menuSummary}
+          reward={matchingReward}
+          storyProgress={storyProgress}
+        />
+      ) : null}
+      {newlyAccepted && celebrationDismissed && matchingReward !== null ? (
+        <LevelAchievementToasts
+          ids={matchingReward.unlockedAchievementIds}
+          paused={reactionsPaused}
+        />
+      ) : null}
+    </>
   )
 }

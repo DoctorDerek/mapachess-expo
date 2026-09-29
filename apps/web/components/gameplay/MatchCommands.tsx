@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { ReactNode, Ref } from "react"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectCanOfferDraw,
@@ -20,6 +20,7 @@ export default function MatchCommands({
   hints,
   coach,
   menuActions,
+  menuSummaryRef,
   drawAvailable,
   onOfferDraw,
   onMenuOpened,
@@ -29,6 +30,7 @@ export default function MatchCommands({
   hints: ReactNode
   coach: ReactNode
   menuActions?: ReactNode
+  menuSummaryRef?: Ref<HTMLElement>
   actor: ActorRefFrom<typeof matchMachine>
   drawAvailable: boolean
   onOfferDraw: () => void
@@ -77,6 +79,7 @@ export default function MatchCommands({
         <summary
           aria-label="Match menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
+          ref={menuSummaryRef}
         >
           <span aria-hidden="true">☰</span>Menu
         </summary>

@@ -11,6 +11,7 @@ import {
 import createMatchSetupForMode, {
   MATCH_SETUP_COPY,
 } from "@mapachess/match/match-setup"
+import type { MatchSetup } from "@mapachess/match/match-setup"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
@@ -34,6 +35,7 @@ import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import MatchModeMenu from "./MatchModeMenu"
+import MatchResultFacts from "./MatchResultFacts"
 import StoryMatchResult from "./StoryMatchResult"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
@@ -173,6 +175,28 @@ function MatchSessionExperience({
     throw new Error("Active web match state has no owned session.")
   }
 
+  const resultActionAvailable = (): boolean => {
+    if (!actor.getSnapshot().matches("active") || session === null) {
+      return false
+    }
+    const matchSnapshot = session.actor.getSnapshot()
+    return (
+      profileActor.getSnapshot().matches("ready") &&
+      !selectIsPersistingMutation(matchSnapshot) &&
+      selectPersistenceFailure(matchSnapshot) === null &&
+      selectMatchConclusion(matchSnapshot) !== null &&
+      !settingsOpen
+    )
+  }
+  const requestSetupAfterResult = (setup: MatchSetup): void => {
+    if (!resultActionAvailable()) return
+    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+  }
+  const requestReplayAfterResult = (): void => {
+    if (!resultActionAvailable()) return
+    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+  }
+
   if (snapshot.matches("openingCurrentMatch")) {
     return <MapachessLoadingSurface />
   }
@@ -289,6 +313,14 @@ function MatchSessionExperience({
           }
           actor={session.actor}
           evaluationActor={session.evaluationActor}
+          initiallyConcluded={session.match.conclusion !== null}
+          savedMatch={savedMatch}
+          acceptedReward={savedPlayerData?.lastAcceptedResultReward ?? null}
+          storyProgress={
+            savedPlayerData?.storyProgress ?? playerData.storyProgress
+          }
+          onSetupRequested={requestSetupAfterResult}
+          onReplayRequested={requestReplayAfterResult}
           moveFeedback={
             savedMatch?.matchId === session.match.matchId
               ? (savedMatch.moveFeedback ?? [])
@@ -306,29 +338,41 @@ function MatchSessionExperience({
             savedPlayerData !== null &&
             savedMatch !== null &&
             savedMatch.matchId === session.match.matchId ? (
-              <StoryMatchResult
-                match={savedMatch}
-                progress={savedPlayerData.storyProgress}
-                disabled={
-                  matchBusy || !profileSnapshot.matches("ready") || settingsOpen
-                }
-                opening={snapshot.matches("returningToMenu")}
-                onSetupRequested={(setup) => {
-                  const matchSnapshot = session.actor.getSnapshot()
-                  if (
-                    !profileActor.getSnapshot().matches("ready") ||
-                    selectIsPersistingMutation(matchSnapshot) ||
-                    selectPersistenceFailure(matchSnapshot) !== null ||
-                    selectMatchConclusion(matchSnapshot) === null ||
-                    settingsOpen
-                  )
-                    return
-                  actor.send({
-                    type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
-                    setup,
-                  })
-                }}
-              />
+              <>
+                <MatchResultFacts
+                  match={savedMatch}
+                  reward={
+                    savedPlayerData.lastAcceptedResultReward?.matchId ===
+                    savedMatch.matchId
+                      ? savedPlayerData.lastAcceptedResultReward
+                      : null
+                  }
+                />
+                {savedMatch.mode === "story" ? (
+                  <StoryMatchResult
+                    match={savedMatch}
+                    progress={savedPlayerData.storyProgress}
+                    disabled={
+                      matchBusy ||
+                      !profileSnapshot.matches("ready") ||
+                      settingsOpen
+                    }
+                    opening={snapshot.matches("returningToMenu")}
+                    onSetupRequested={requestSetupAfterResult}
+                  />
+                ) : (
+                  <MapachessButton
+                    disabled={
+                      matchBusy ||
+                      !profileSnapshot.matches("ready") ||
+                      settingsOpen
+                    }
+                    onClick={requestReplayAfterResult}
+                  >
+                    Replay match
+                  </MapachessButton>
+                )}
+              </>
             ) : null
           }
         />
