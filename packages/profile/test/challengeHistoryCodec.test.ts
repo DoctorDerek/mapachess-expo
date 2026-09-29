@@ -65,8 +65,15 @@ describe("durable Challenge history", () => {
   })
 
   it("migrates a version-five profile without inventing past records", () => {
-    const { challengeHistory: omitted, ...old } =
-      createInitialMapachessPlayerData()
+    const {
+      challengeHistory: omitted,
+      legacyRatings,
+      processedMatchResultIds: _processedMatchResultIds,
+      ratedMatchCounts: _ratedMatchCounts,
+      ratings: _ratings,
+      ...current
+    } = createInitialMapachessPlayerData()
+    const old = { ...current, ratings: legacyRatings }
     expect(omitted).toEqual(createInitialChallengeHistory())
     const result = decodeMapachessPlayerData({ ...old, schemaVersion: 5 })
     expect(result.ok).toBe(true)

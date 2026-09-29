@@ -29,16 +29,23 @@ import {
 } from "./durableMatchCodec.js"
 import {
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
+  createInitialPlayerEloRatings,
+  createInitialRatedMatchCounts,
   INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION,
+  LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+  LEGACY_PLAYER_ELO_RATING_IDS,
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
+  type LegacyPlayerEloRatings,
   type MapachessPlayerData,
   type MapachessPlayerDataV1,
+  type MapachessPlayerDataV6,
   type PlayerEloRatings,
+  type RatedMatchCounts,
 } from "./playerData.js"
 import applyStoryMatchResult, {
   createInitialStoryProgress,
@@ -62,6 +69,7 @@ export type PlayerDataSource = Readonly<{
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION
+    | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -73,12 +81,12 @@ export type PlayerDataDecodeWithSourceResult =
     }>
   | Readonly<{ issue: PlayerDataDecodeIssue; ok: false }>
 
-const decodePlayerEloRatings = (
+const decodeLegacyPlayerEloRatings = (
   received: unknown,
   path: string,
-): PlayerEloRatings => {
+): LegacyPlayerEloRatings => {
   const object = requireObject(received, path)
-  requireExactKeys(object, PLAYER_ELO_RATING_IDS, path)
+  requireExactKeys(object, LEGACY_PLAYER_ELO_RATING_IDS, path)
   return Object.freeze({
     chess960Challenge: requirePlayerElo(
       object.chess960Challenge,
@@ -99,6 +107,63 @@ const decodePlayerEloRatings = (
   })
 }
 
+const decodePlayerEloRatings = (
+  received: unknown,
+  path: string,
+): PlayerEloRatings => {
+  const object = requireObject(received, path)
+  requireExactKeys(object, PLAYER_ELO_RATING_IDS, path)
+  return Object.freeze({
+    chess960: requirePlayerElo(object.chess960, `${path}.chess960`),
+    standard: requirePlayerElo(object.standard, `${path}.standard`),
+  })
+}
+
+const decodeRatedMatchCounts = (
+  received: unknown,
+  path: string,
+): RatedMatchCounts => {
+  const object = requireObject(received, path)
+  requireExactKeys(object, PLAYER_ELO_RATING_IDS, path)
+  return Object.freeze({
+    chess960: requireSafeRevision(object.chess960, `${path}.chess960`),
+    standard: requireSafeRevision(object.standard, `${path}.standard`),
+  })
+}
+
+const decodeProcessedMatchResultIds = (
+  received: unknown,
+  path: string,
+): readonly string[] => {
+  if (!Array.isArray(received)) return failData(path)
+  const ids = received.map((value: unknown, index: number) => {
+    if (
+      typeof value !== "string" ||
+      value.length === 0 ||
+      value.length > 256 ||
+      value !== value.trim()
+    )
+      return failData(`${path}[${String(index)}]`)
+    return value
+  })
+  if (new Set(ids).size !== ids.length) return failData(path)
+  return Object.freeze(ids)
+}
+
+const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
+  Object.freeze({
+    ...data,
+    legacyRatings: data.ratings,
+    processedMatchResultIds: Object.freeze(
+      data.activeMatch?.conclusion === null || data.activeMatch === null
+        ? []
+        : [data.activeMatch.matchId],
+    ),
+    ratedMatchCounts: createInitialRatedMatchCounts(),
+    ratings: createInitialPlayerEloRatings(),
+    schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+  })
+
 const canonicalLegacyPlayerData = (data: MapachessPlayerDataV1): string =>
   JSON.stringify([
     data.schema,
@@ -106,27 +171,27 @@ const canonicalLegacyPlayerData = (data: MapachessPlayerDataV1): string =>
     data.revision,
     data.firstRun.autoHintsChoiceCompleted,
     data.settings.autoHintsEnabled,
-    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
+    LEGACY_PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
     data.activeMatch === null
       ? null
       : canonicalLegacyActiveMatch(data.activeMatch),
   ])
 
 const canonicalModernPlayerData = (
-  data: MapachessPlayerData,
+  data: MapachessPlayerDataV6,
   sourceSchemaVersion:
     | typeof THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION
-    | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
 ): string => {
   const fields: readonly unknown[] = [
     data.schema,
     sourceSchemaVersion,
     data.revision,
     data.settings.autoHintMode,
-    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
+    LEGACY_PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
     data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
   ]
   return JSON.stringify(
@@ -149,7 +214,8 @@ const canonicalModernPlayerData = (
           ...(sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
             ? [canonicalStoryProgress(data.storyProgress)]
             : []),
-          ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+          ...(sourceSchemaVersion ===
+          LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
             ? [canonicalChallengeHistory(data.challengeHistory)]
             : []),
         ],
@@ -157,7 +223,28 @@ const canonicalModernPlayerData = (
 }
 
 export const canonicalPlayerData = (data: MapachessPlayerData): string =>
-  canonicalModernPlayerData(data, MAPACHESS_PLAYER_DATA_SCHEMA_VERSION)
+  JSON.stringify([
+    data.schema,
+    data.schemaVersion,
+    data.revision,
+    data.settings.autoHintMode,
+    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
+    data.activeMatch === null ? null : canonicalActiveMatch(data.activeMatch),
+    [
+      data.settings.challengeSetup.variant,
+      data.settings.challengeSetup.playerColor,
+      data.settings.challengeSetup.chess960PositionId,
+      data.settings.challengeSetup.opponentId,
+      data.settings.challengeSetup.difficultyTargetElo,
+    ],
+    canonicalStoryProgress(data.storyProgress),
+    canonicalChallengeHistory(data.challengeHistory),
+    LEGACY_PLAYER_ELO_RATING_IDS.map(
+      (ratingId) => data.legacyRatings[ratingId],
+    ),
+    PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratedMatchCounts[ratingId]),
+    data.processedMatchResultIds,
+  ])
 
 const decodeLegacyPlayerData = (
   object: JsonObject,
@@ -191,7 +278,7 @@ const decodeLegacyPlayerData = (
         "$.firstRun.autoHintsChoiceCompleted",
       ),
     }),
-    ratings: decodePlayerEloRatings(object.ratings, "$.ratings"),
+    ratings: decodeLegacyPlayerEloRatings(object.ratings, "$.ratings"),
     revision: requireSafeRevision(object.revision, "$.revision"),
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -204,24 +291,26 @@ const decodeLegacyPlayerData = (
   })
 
   return Object.freeze({
-    data: Object.freeze({
-      activeMatch,
-      challengeHistory: createInitialChallengeHistory(),
-      ratings: legacyData.ratings,
-      revision: legacyData.revision,
-      schema: MAPACHESS_PLAYER_DATA_SCHEMA,
-      schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-      storyProgress: applyStoryMatchResult(
-        createInitialStoryProgress(),
+    data: migrateFourRatings(
+      Object.freeze({
         activeMatch,
-      ),
-      settings: Object.freeze({
-        challengeSetup: DEFAULT_CHALLENGE_SETUP,
-        autoHintMode: autoHintModeFromLegacyEnabled(
-          legacyData.settings.autoHintsEnabled,
+        challengeHistory: createInitialChallengeHistory(),
+        ratings: legacyData.ratings,
+        revision: legacyData.revision,
+        schema: MAPACHESS_PLAYER_DATA_SCHEMA,
+        schemaVersion: LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
+        storyProgress: applyStoryMatchResult(
+          createInitialStoryProgress(),
+          activeMatch,
         ),
+        settings: Object.freeze({
+          challengeSetup: DEFAULT_CHALLENGE_SETUP,
+          autoHintMode: autoHintModeFromLegacyEnabled(
+            legacyData.settings.autoHintsEnabled,
+          ),
+        }),
       }),
-    }),
+    ),
     source: Object.freeze({
       canonical: canonicalLegacyPlayerData(legacyData),
       schemaVersion: LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -236,7 +325,7 @@ const decodeModernPlayerData = (
     | typeof CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION
     | typeof STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION
-    | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
     object,
@@ -250,7 +339,7 @@ const decodeModernPlayerData = (
       ...(sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
         ? ["storyProgress"]
         : []),
-      ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ...(sourceSchemaVersion === LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
         ? ["challengeHistory"]
         : []),
     ],
@@ -280,16 +369,16 @@ const decodeModernPlayerData = (
       ? decodeStoryProgress(object.storyProgress, "$.storyProgress")
       : applyStoryMatchResult(createInitialStoryProgress(), activeMatch)
   requireRecordedStoryResult(storyProgress, activeMatch)
-  const data: MapachessPlayerData = Object.freeze({
+  const data: MapachessPlayerDataV6 = Object.freeze({
     activeMatch,
     challengeHistory:
-      sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      sourceSchemaVersion === LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
         ? decodeChallengeHistory(object.challengeHistory, "$.challengeHistory")
         : createInitialChallengeHistory(),
-    ratings: decodePlayerEloRatings(object.ratings, "$.ratings"),
+    ratings: decodeLegacyPlayerEloRatings(object.ratings, "$.ratings"),
     revision: requireSafeRevision(object.revision, "$.revision"),
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
-    schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    schemaVersion: LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
     storyProgress,
     settings: Object.freeze({
       challengeSetup: Object.freeze({
@@ -305,10 +394,92 @@ const decodeModernPlayerData = (
   })
 
   return Object.freeze({
-    data,
+    data: migrateFourRatings(data),
     source: Object.freeze({
       canonical: canonicalModernPlayerData(data, sourceSchemaVersion),
       schemaVersion: sourceSchemaVersion,
+    }),
+  })
+}
+
+const decodeCurrentPlayerData = (
+  object: JsonObject,
+): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
+  requireExactKeys(
+    object,
+    [
+      "activeMatch",
+      "challengeHistory",
+      "legacyRatings",
+      "processedMatchResultIds",
+      "ratedMatchCounts",
+      "ratings",
+      "revision",
+      "schema",
+      "schemaVersion",
+      "settings",
+      "storyProgress",
+    ],
+    "$",
+  )
+  const settings = requireObject(object.settings, "$.settings")
+  requireExactKeys(settings, ["autoHintMode", "challengeSetup"], "$.settings")
+  const challengeSetup = parseChallengeSetup(settings.challengeSetup)
+  if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
+  const activeMatch =
+    object.activeMatch === null
+      ? null
+      : decodeDurableMatch(object.activeMatch, "$.activeMatch")
+  const storyProgress = decodeStoryProgress(
+    object.storyProgress,
+    "$.storyProgress",
+  )
+  requireRecordedStoryResult(storyProgress, activeMatch)
+  const processedMatchResultIds = decodeProcessedMatchResultIds(
+    object.processedMatchResultIds,
+    "$.processedMatchResultIds",
+  )
+  if (
+    activeMatch?.conclusion !== null &&
+    activeMatch !== null &&
+    !processedMatchResultIds.includes(activeMatch.matchId)
+  ) {
+    return failData("$.processedMatchResultIds")
+  }
+  const data: MapachessPlayerData = Object.freeze({
+    activeMatch,
+    challengeHistory: decodeChallengeHistory(
+      object.challengeHistory,
+      "$.challengeHistory",
+    ),
+    legacyRatings: decodeLegacyPlayerEloRatings(
+      object.legacyRatings,
+      "$.legacyRatings",
+    ),
+    processedMatchResultIds,
+    ratedMatchCounts: decodeRatedMatchCounts(
+      object.ratedMatchCounts,
+      "$.ratedMatchCounts",
+    ),
+    ratings: decodePlayerEloRatings(object.ratings, "$.ratings"),
+    revision: requireSafeRevision(object.revision, "$.revision"),
+    schema: MAPACHESS_PLAYER_DATA_SCHEMA,
+    schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+    settings: Object.freeze({
+      autoHintMode: requireEnumValue(
+        settings.autoHintMode,
+        AUTO_HINT_MODES,
+        "$.settings.autoHintMode",
+      ),
+      challengeSetup: challengeSetup.setup,
+    }),
+    storyProgress,
+  })
+  return Object.freeze({
+    data,
+    source: Object.freeze({
+      canonical: canonicalPlayerData(data),
+      schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     }),
   })
 }
@@ -340,9 +511,12 @@ export const decodeMapachessPlayerDataWithSource = (
               STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION ||
             object.schemaVersion ===
               INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION ||
-            object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+            object.schemaVersion ===
+              LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
           ? decodeModernPlayerData(object, object.schemaVersion)
-          : failData("$.schemaVersion")
+          : object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+            ? decodeCurrentPlayerData(object)
+            : failData("$.schemaVersion")
     return { ...decoded, ok: true }
   } catch (error) {
     if (error instanceof PlayerDataDecodeProblem) {

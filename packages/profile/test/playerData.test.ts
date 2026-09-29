@@ -7,8 +7,25 @@ import createInitialMapachessPlayerData, {
   PLAYER_ELO_RATING_IDS,
 } from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
+import { playerResultScore, updatedPlayerElo } from "../src/playerElo.js"
 
 describe("Mapachess player data", () => {
+  it("uses the approved full-precision per-variant Elo coefficient and result scores", () => {
+    expect(updatedPlayerElo(100, 0, 100, 1)).toBe(228)
+    expect(updatedPlayerElo(100, 0, 100, 0.5)).toBe(100)
+    expect(updatedPlayerElo(100, 0, 100, 0)).toBe(100)
+    expect(updatedPlayerElo(100, 29, 100, 1)).toBeCloseTo(119.7333333333)
+    expect(updatedPlayerElo(100, 30, 100, 1)).toBe(116)
+    expect(updatedPlayerElo(100, 60, 100, 1)).toBe(116)
+    expect(
+      playerResultScore({ type: "checkmate", winner: "white" }, "white"),
+    ).toBe(1)
+    expect(
+      playerResultScore({ type: "resignation", winner: "black" }, "white"),
+    ).toBe(0)
+    expect(playerResultScore({ type: "stalemate" }, "white")).toBe(0.5)
+  })
+
   it("creates the canonical private player profile", () => {
     const playerData = createInitialMapachessPlayerData()
 
@@ -18,11 +35,17 @@ describe("Mapachess player data", () => {
         standard: { animals: [], difficulties: [] },
         chess960: { animals: [], difficulties: [] },
       },
-      ratings: {
+      legacyRatings: {
         chess960Challenge: INITIAL_PLAYER_ELO,
         chess960Story: INITIAL_PLAYER_ELO,
         standardChallenge: INITIAL_PLAYER_ELO,
         standardStory: INITIAL_PLAYER_ELO,
+      },
+      processedMatchResultIds: [],
+      ratedMatchCounts: { chess960: 0, standard: 0 },
+      ratings: {
+        chess960: INITIAL_PLAYER_ELO,
+        standard: INITIAL_PLAYER_ELO,
       },
       revision: 0,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
