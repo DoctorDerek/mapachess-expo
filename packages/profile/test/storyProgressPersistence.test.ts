@@ -108,10 +108,20 @@ describe("Story progress in durable profiles", () => {
   })
 
   it("applies each variant result once in its durable write and preserves receipts through reset", async () => {
-    const store = new SerializedPlayerDataStore(
-      new InMemoryDurableStoreAdapter(),
-      sha256,
-    )
+    const memory = new InMemoryDurableStoreAdapter()
+    let failWrite = false
+    const adapter: DurableStoreAdapter = {
+      read: () => memory.read(),
+      compareAndSwapVerified: async (write) =>
+        failWrite
+          ? {
+              ok: false,
+              type: "PROFILE.STORAGE_VERIFICATION_FAILED",
+              actual: await memory.read(),
+            }
+          : memory.compareAndSwapVerified(write),
+    }
+    const store = new SerializedPlayerDataStore(adapter, sha256)
     const actor = createActor(profileMachine, {
       input: {
         store,
@@ -164,12 +174,25 @@ describe("Story progress in durable profiles", () => {
       expectedActiveMatch: null,
       signal,
     })
-    await persistProfileActiveMatch({
+    failWrite = true
+    const savingChess960Result = persistProfileActiveMatch({
       actor,
       candidate: chess960.completed,
       expectedActiveMatch: chess960.opening,
       signal,
     })
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      standard: 228,
+      chess960: 100,
+    })
+    expect(selectPendingPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      standard: 228,
+      chess960: 228,
+    })
+    failWrite = false
+    actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    await savingChess960Result
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
       standard: 228,
       chess960: 228,
