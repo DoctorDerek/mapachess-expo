@@ -8,10 +8,12 @@ import {
   type ChallengeSetup,
 } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
   createInitialChallengeHistory,
   type ChallengeHistory,
 } from "./challengeHistory.js"
+import type { LevelAchievementId } from "./globalXp.js"
 import {
   createInitialStoryProgress,
   type StoryProgress,
@@ -24,7 +26,8 @@ export const CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION = 3 as const
 export const STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION = 4 as const
 export const INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION = 5 as const
 export const LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION = 6 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 7 as const
+export const TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION = 7 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 8 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -97,13 +100,34 @@ export type MapachessPlayerDataV6 = Readonly<
   }
 >
 
-export type MapachessPlayerData = Readonly<
+export type MapachessPlayerDataV7 = Readonly<
   Omit<MapachessPlayerDataV6, "schemaVersion" | "ratings"> & {
-    schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    schemaVersion: typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     legacyRatings: LegacyPlayerEloRatings
     processedMatchResultIds: readonly string[]
     ratedMatchCounts: RatedMatchCounts
     ratings: PlayerEloRatings
+  }
+>
+
+export type AcceptedMatchReward = Readonly<{
+  matchId: string
+  awardedXp: number
+  totalXpBefore: number
+  unlockedAchievementIds: readonly LevelAchievementId[]
+  ratedElo: Readonly<{
+    variant: MatchVariant
+    before: number
+    after: number
+  }> | null
+}>
+
+export type MapachessPlayerData = Readonly<
+  Omit<MapachessPlayerDataV7, "schemaVersion"> & {
+    schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    totalXp: number
+    unlockedAchievementIds: readonly LevelAchievementId[]
+    lastAcceptedResultReward: AcceptedMatchReward | null
   }
 >
 
@@ -129,6 +153,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
     activeMatch: null,
     challengeHistory: createInitialChallengeHistory(),
     legacyRatings: createInitialLegacyPlayerEloRatings(),
+    lastAcceptedResultReward: null,
     processedMatchResultIds: Object.freeze([]),
     ratedMatchCounts: createInitialRatedMatchCounts(),
     ratings: createInitialPlayerEloRatings(),
@@ -136,6 +161,8 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     storyProgress: createInitialStoryProgress(),
+    totalXp: 0,
+    unlockedAchievementIds: Object.freeze([]),
     settings: Object.freeze({
       autoHintMode: DEFAULT_AUTO_HINT_MODE,
       challengeSetup: DEFAULT_CHALLENGE_SETUP,
