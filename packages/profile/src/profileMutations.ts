@@ -6,6 +6,7 @@ import applyChallengeMatchResult, {
 } from "./challengeHistory.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
+import { completedMatchXpAward, levelAchievementsCrossed } from "./globalXp.js"
 import createInitialMapachessPlayerData, {
   INITIAL_PLAYER_ELO,
   type MapachessPlayerData,
@@ -72,15 +73,35 @@ export const replaceActiveMatch = (
       (current.activeMatch.matchId === activeMatch.matchId &&
         current.activeMatch.conclusion === null)) &&
     !current.processedMatchResultIds.includes(activeMatch.matchId)
-  const ratedVariant = activeMatch?.startingPosition.variant
-  const ratedOpponentElo = activeMatch?.ratedOpponentElo
-  const applyRatedResult =
+  const ratedResult =
     firstAcceptedResult &&
-    ratedVariant !== undefined &&
-    ratedOpponentElo !== undefined &&
-    ratedOpponentElo !== null &&
-    current.activeMatch?.matchId === activeMatch?.matchId &&
-    current.activeMatch.ratedOpponentElo === ratedOpponentElo
+    activeMatch !== null &&
+    activeMatch.conclusion !== null &&
+    typeof activeMatch.ratedOpponentElo === "number" &&
+    current.activeMatch?.matchId === activeMatch.matchId &&
+    current.activeMatch.ratedOpponentElo === activeMatch.ratedOpponentElo
+      ? Object.freeze({
+          variant: activeMatch.startingPosition.variant,
+          before: current.ratings[activeMatch.startingPosition.variant],
+          after: updatedPlayerElo(
+            current.ratings[activeMatch.startingPosition.variant],
+            current.ratedMatchCounts[activeMatch.startingPosition.variant],
+            activeMatch.ratedOpponentElo,
+            playerResultScore(activeMatch.conclusion, activeMatch.playerColor),
+          ),
+        })
+      : null
+  const awardedXp =
+    firstAcceptedResult && activeMatch !== null
+      ? completedMatchXpAward(activeMatch)
+      : 0
+  const totalXp = current.totalXp + awardedXp
+  if (!Number.isSafeInteger(totalXp)) {
+    throw new RangeError("Global XP exceeds the supported save range.")
+  }
+  const newlyUnlockedAchievements = firstAcceptedResult
+    ? levelAchievementsCrossed(current.totalXp, totalXp)
+    : Object.freeze([])
   return Object.freeze({
     ...current,
     activeMatch,
@@ -91,23 +112,39 @@ export const replaceActiveMatch = (
     processedMatchResultIds: firstAcceptedResult
       ? Object.freeze([...current.processedMatchResultIds, activeMatch.matchId])
       : current.processedMatchResultIds,
-    ratedMatchCounts: applyRatedResult
-      ? Object.freeze({
-          ...current.ratedMatchCounts,
-          [ratedVariant]: current.ratedMatchCounts[ratedVariant] + 1,
-        })
-      : current.ratedMatchCounts,
-    ratings: applyRatedResult
-      ? Object.freeze({
-          ...current.ratings,
-          [ratedVariant]: updatedPlayerElo(
-            current.ratings[ratedVariant],
-            current.ratedMatchCounts[ratedVariant],
-            ratedOpponentElo,
-            playerResultScore(activeMatch.conclusion, activeMatch.playerColor),
-          ),
-        })
-      : current.ratings,
+    lastAcceptedResultReward:
+      firstAcceptedResult && activeMatch !== null
+        ? Object.freeze({
+            matchId: activeMatch.matchId,
+            awardedXp,
+            totalXpBefore: current.totalXp,
+            unlockedAchievementIds: newlyUnlockedAchievements,
+            ratedElo: ratedResult,
+          })
+        : current.lastAcceptedResultReward,
+    totalXp,
+    unlockedAchievementIds:
+      newlyUnlockedAchievements.length > 0
+        ? Object.freeze([
+            ...current.unlockedAchievementIds,
+            ...newlyUnlockedAchievements,
+          ])
+        : current.unlockedAchievementIds,
+    ratedMatchCounts:
+      ratedResult !== null
+        ? Object.freeze({
+            ...current.ratedMatchCounts,
+            [ratedResult.variant]:
+              current.ratedMatchCounts[ratedResult.variant] + 1,
+          })
+        : current.ratedMatchCounts,
+    ratings:
+      ratedResult !== null
+        ? Object.freeze({
+            ...current.ratings,
+            [ratedResult.variant]: ratedResult.after,
+          })
+        : current.ratings,
     storyProgress: applyStoryMatchResult(
       applyStoryMatchResult(current.storyProgress, current.activeMatch),
       activeMatch,
