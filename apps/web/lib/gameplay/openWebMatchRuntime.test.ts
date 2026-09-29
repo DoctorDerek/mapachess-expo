@@ -175,6 +175,7 @@ describe("web match runtime ownership", () => {
           opponentId: "bunny-stockfish",
           opponentTargetElo: 1000,
           opponentPolicyFingerprint: policy.fingerprint,
+          ratedOpponentElo: 1000,
           playerColor: "black",
         })
         expect(fixture.openSession).toHaveBeenNthCalledWith(
@@ -267,10 +268,12 @@ describe("web match runtime ownership", () => {
     try {
       expect(story.runtime.opponentPolicyFingerprint).toBe(storyFingerprint)
       expect(story.runtime.opponentTargetElo).toBe(100)
+      expect(story.runtime.ratedOpponentElo).toBeNull()
       expect(challenge.runtime.opponentPolicyFingerprint).toBe(
         challengeFingerprint,
       )
       expect(challenge.runtime.opponentTargetElo).toBe(1000)
+      expect(challenge.runtime.ratedOpponentElo).toBeNull()
     } finally {
       await story.runtime.close()
       await challenge.runtime.close()

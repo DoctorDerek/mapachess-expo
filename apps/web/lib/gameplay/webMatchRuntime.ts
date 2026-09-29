@@ -19,6 +19,7 @@ export type WebMatchRuntime = Readonly<{
   opponentId: ImplementedDurableOpponentId
   opponentPolicyFingerprint: string
   opponentTargetElo: number
+  ratedOpponentElo: number | null
   playerColor: MatchColor
   positionEvaluator: PositionEvaluator
   startingPosition: MatchStartingPosition
