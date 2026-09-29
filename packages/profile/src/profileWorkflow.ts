@@ -4,7 +4,7 @@ import {
   durableStoreSnapshotsEqual,
   type LoadedDurablePlayerData,
 } from "./durableStore.js"
-import type { MapachessPlayerData } from "./playerData.js"
+import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import { canonicalPlayerData } from "./playerDataCodec.js"
 import type {
   MapachessPortableBackup,
@@ -22,6 +22,7 @@ import {
   createLastKnownGoodRecoveryData,
   prepareImportedPlayerData,
   replaceActiveMatch,
+  resetPlayerElo,
 } from "./profileMutations.js"
 
 export const storageRequestFailure = (): Readonly<{
@@ -108,6 +109,18 @@ export const prepareAutoHintModePending = (
   return pendingWrite(
     loaded,
     changeAutoHintMode(requireCurrentPlayerData(context), autoHintMode),
+    "commit",
+  )
+}
+
+export const prepareEloResetPending = (
+  context: ProfileMachineContext,
+  variant: PlayerEloRatingId,
+): PendingProfileWrite => {
+  const loaded = requireLoaded(context)
+  return pendingWrite(
+    loaded,
+    resetPlayerElo(requireCurrentPlayerData(context), variant),
     "commit",
   )
 }

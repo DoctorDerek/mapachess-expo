@@ -7,7 +7,7 @@ import type {
   DurablePlayerDataWriteResult,
   LoadedDurablePlayerData,
 } from "./durableStore.js"
-import type { MapachessPlayerData } from "./playerData.js"
+import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import type {
   MapachessPortableBackup,
   PortableBackupDecodeIssue,
@@ -59,6 +59,10 @@ export type ProfileMachineEvent =
   | Readonly<{
       autoHintMode: AutoHintMode
       type: "PROFILE.AUTO_HINT_MODE_CHANGED"
+    }>
+  | Readonly<{
+      type: "PROFILE.ELO_RESET_CONFIRMED"
+      variant: PlayerEloRatingId
     }>
   | Readonly<{ type: "PROFILE.BOOT_RETRY_REQUESTED" }>
   | Readonly<{ type: "PROFILE.IMPORT_CANCELLED" }>
