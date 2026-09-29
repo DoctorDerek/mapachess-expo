@@ -53,6 +53,7 @@ export type DurableMatchRecordV3 = DurableMatchRecordFields &
   Readonly<{
     moveFeedback?: readonly MoveFeedbackRecord[]
     opponentTargetElo?: number
+    ratedOpponentElo?: number | null
     autoHintMode: AutoHintMode
     conclusion: MatchConclusion | null
     recordVersion: typeof DURABLE_MATCH_RECORD_VERSION

@@ -166,6 +166,9 @@ export const decodeDurableMatch = (
           ...(object.opponentTargetElo === undefined
             ? []
             : ["opponentTargetElo"]),
+          ...(object.ratedOpponentElo === undefined
+            ? []
+            : ["ratedOpponentElo"]),
         ]
       : legacyRecordV2
         ? [
@@ -210,6 +213,17 @@ export const decodeDurableMatch = (
             object.opponentTargetElo,
             `${path}.opponentTargetElo`,
           ),
+        }
+      : {}),
+    ...(currentRecord && object.ratedOpponentElo !== undefined
+      ? {
+          ratedOpponentElo:
+            object.ratedOpponentElo === null
+              ? null
+              : requirePlayerElo(
+                  object.ratedOpponentElo,
+                  `${path}.ratedOpponentElo`,
+                ),
         }
       : {}),
     autoHintMode: currentRecord
@@ -263,6 +277,14 @@ export const decodeDurableMatch = (
     timeControl: Object.freeze({ type: "untimed" }),
   })
   const timeline = requireReconstructableTimeline(recordWithoutConclusion, path)
+  if (
+    recordWithoutConclusion.ratedOpponentElo !== undefined &&
+    recordWithoutConclusion.ratedOpponentElo !== null &&
+    recordWithoutConclusion.ratedOpponentElo !==
+      recordWithoutConclusion.opponentTargetElo
+  ) {
+    return failData(`${path}.ratedOpponentElo`)
+  }
   const conclusion = legacyRecord
     ? deriveRetainedBranchConclusion(timeline)
     : decodeConclusion(object.conclusion, `${path}.conclusion`)
@@ -339,4 +361,5 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
   ...(match.moveFeedback === undefined
     ? []
     : [match.moveFeedback.map(canonicalMoveFeedback)]),
+  ...(match.ratedOpponentElo === undefined ? [] : [match.ratedOpponentElo]),
 ]

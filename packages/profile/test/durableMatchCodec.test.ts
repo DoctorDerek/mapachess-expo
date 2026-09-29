@@ -44,9 +44,10 @@ const activeMatch = Object.freeze({
   recordVersion: DURABLE_MATCH_RECORD_VERSION,
 })
 
-const playerDataWithMatch = (match: unknown): unknown => ({
+const playerDataWithMatch = (match: unknown, processed = false): unknown => ({
   ...createInitialMapachessPlayerData(),
   activeMatch: match,
+  processedMatchResultIds: processed ? [activeMatchFields.matchId] : [],
 })
 
 describe("durable active-match decoding", () => {
@@ -99,13 +100,16 @@ describe("durable active-match decoding", () => {
   it("derives a retained terminal result while migrating record v1", () => {
     expect(
       decodeMapachessPlayerData(
-        playerDataWithMatch({
-          ...legacyActiveMatch,
-          currentFen:
-            "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
-          cursor: 4,
-          moveIds: ["f2f3", "e7e5", "g2g4", "d8h4"],
-        }),
+        playerDataWithMatch(
+          {
+            ...legacyActiveMatch,
+            currentFen:
+              "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3",
+            cursor: 4,
+            moveIds: ["f2f3", "e7e5", "g2g4", "d8h4"],
+          },
+          true,
+        ),
       ),
     ).toMatchObject({
       data: {
@@ -121,10 +125,13 @@ describe("durable active-match decoding", () => {
   it("accepts a current draw agreement on an active branch", () => {
     expect(
       decodeMapachessPlayerData(
-        playerDataWithMatch({
-          ...activeMatch,
-          conclusion: { type: "draw-agreement" },
-        }),
+        playerDataWithMatch(
+          {
+            ...activeMatch,
+            conclusion: { type: "draw-agreement" },
+          },
+          true,
+        ),
       ),
     ).toMatchObject({
       data: {
