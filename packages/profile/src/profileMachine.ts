@@ -24,6 +24,7 @@ import {
   persistenceFailureUpdate,
   prepareActiveMatchPending,
   prepareAutoHintModePending,
+  prepareEloResetPending,
   prepareFreshRecoveryPending,
   prepareImportPending,
   prepareInitialPending,
@@ -112,6 +113,15 @@ const profileMachineDefinition = setup({
       }
       return {
         pendingWrite: prepareAutoHintModePending(context, event.autoHintMode),
+        persistenceFailure: null,
+      }
+    }),
+    prepareEloResetWrite: assign(({ context, event }) => {
+      if (event.type !== "PROFILE.ELO_RESET_CONFIRMED") {
+        throw new Error("Elo-reset action received a non-reset event.")
+      }
+      return {
+        pendingWrite: prepareEloResetPending(context, event.variant),
         persistenceFailure: null,
       }
     }),
@@ -248,6 +258,10 @@ const profileMachineDefinition = setup({
         "PROFILE.AUTO_HINT_MODE_CHANGED": {
           actions: "prepareAutoHintModeWrite",
           guard: "autoHintModeIsStandalone",
+          target: "persisting",
+        },
+        "PROFILE.ELO_RESET_CONFIRMED": {
+          actions: "prepareEloResetWrite",
           target: "persisting",
         },
         "PROFILE.IMPORT_PREVIEW_REQUESTED": importRequestTransition,

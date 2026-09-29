@@ -1,7 +1,14 @@
 "use client"
 
+import { useRef, useState } from "react"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
+import {
+  PLAYER_ELO_RATING_IDS,
+  type PlayerEloRatingId,
+  type PlayerEloRatings,
+  type RatedMatchCounts,
+} from "@mapachess/profile/player-data"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -19,11 +26,14 @@ export type ProfileSettingsPanelProps = Readonly<{
   exporting?: boolean
   hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
+  ratings: PlayerEloRatings
+  ratedMatchCounts: RatedMatchCounts
   importIssue: ProfileImportIssue | null
   onAutoHintModeChanged: (autoHintMode: AutoHintMode) => void
   onBackupRead: (rawBackup: string) => void
   onClose: () => void
   onExportPlayerData: () => void
+  onEloResetConfirmed: (variant: PlayerEloRatingId) => void
 }>
 
 export default function ProfileSettingsPanel({
@@ -31,13 +41,21 @@ export default function ProfileSettingsPanel({
   exporting = false,
   hintChangesDisabled,
   autoHintMode,
+  ratings,
+  ratedMatchCounts,
   importIssue,
   onAutoHintModeChanged,
   onBackupRead,
   onClose,
   onExportPlayerData,
+  onEloResetConfirmed,
 }: ProfileSettingsPanelProps) {
   const busy = activityMessage !== null
+  const [resetVariant, setResetVariant] = useState<PlayerEloRatingId | null>(
+    null,
+  )
+  const resetTrigger = useRef<HTMLButtonElement | null>(null)
+  const resetLabel = resetVariant === "standard" ? "Standard" : "Chess960"
 
   return (
     <div
@@ -80,6 +98,101 @@ export default function ProfileSettingsPanel({
             onAutoHintModeChanged={onAutoHintModeChanged}
           />
         </div>
+
+        <section aria-labelledby="player-elo-settings-title" className="mt-7">
+          <h2
+            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+            id="player-elo-settings-title"
+          >
+            Your Elo ratings
+          </h2>
+          <div className="mt-4 grid gap-3">
+            {PLAYER_ELO_RATING_IDS.map((variant) => {
+              const label = variant === "standard" ? "Standard" : "Chess960"
+              return (
+                <div
+                  className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
+                  key={variant}
+                >
+                  <div>
+                    <p className="text-mapachito-charcoal font-bold">
+                      {label} · {Math.round(ratings[variant])} Elo
+                    </p>
+                    <p className="text-mapachito-charcoal text-sm opacity-76">
+                      {ratedMatchCounts[variant]} rated matches
+                    </p>
+                  </div>
+                  <MapachessButton
+                    disabled={busy}
+                    onClick={(event) => {
+                      resetTrigger.current = event.currentTarget
+                      setResetVariant(variant)
+                    }}
+                    type="button"
+                    variant="secondary"
+                  >
+                    Reset {label} Elo
+                  </MapachessButton>
+                </div>
+              )
+            })}
+          </div>
+          {resetVariant === null ? null : (
+            <div
+              aria-labelledby="player-elo-reset-title"
+              className="border-mapachito-charcoal bg-mapachito-white mt-4 rounded-lg border-3 p-4"
+              role="group"
+            >
+              <h3
+                className="text-mapachito-charcoal text-lg font-black"
+                id="player-elo-reset-title"
+              >
+                Reset {resetLabel} Elo?
+              </h3>
+              <p className="text-mapachito-charcoal mt-2 text-base leading-relaxed">
+                {resetLabel} Elo returns to 100 and its rated-match count to
+                zero. The other rating, Story progress, medals, Challenge
+                records, settings, and active match stay unchanged. Completed
+                matches cannot be rated again. Export your data first if you
+                want a backup.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <MapachessButton
+                  autoFocus
+                  onClick={() => {
+                    setResetVariant(null)
+                    resetTrigger.current?.focus()
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  Cancel
+                </MapachessButton>
+                <MapachessButton
+                  aria-busy={exporting}
+                  busyLabel={PREPARING_BACKUP_LABEL}
+                  onClick={onExportPlayerData}
+                  type="button"
+                  variant="secondary"
+                >
+                  Export Player Data
+                </MapachessButton>
+                <MapachessButton
+                  disabled={busy}
+                  onClick={() => {
+                    onEloResetConfirmed(resetVariant)
+                    setResetVariant(null)
+                    resetTrigger.current?.focus()
+                  }}
+                  type="button"
+                  variant="destructive"
+                >
+                  Reset {resetLabel} Elo to 100
+                </MapachessButton>
+              </div>
+            </div>
+          )}
+        </section>
 
         <section aria-labelledby="player-data-actions-title" className="mt-7">
           <h2

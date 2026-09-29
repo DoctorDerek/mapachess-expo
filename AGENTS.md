@@ -23,7 +23,7 @@ The GDD is a product baseline, not a suggestion. If code, a legacy implementatio
 - Better Hints means exactly three Piece Hints for each side followed by three Move Hints for those pieces for each side.
 - Opponent hints analyze the unchanged current position as though it were the opponent’s turn; they do not move the opponent, change actual turn ownership, or predict a reply to a proposed player move.
 - Story offers twenty-three `[Animal] Stockfish` opponents from 100 through 2300 Elo in 100-Elo steps, beginning with Chicken Stockfish; Challenge supports independently selected unlocked animals and calibrated difficulty through 3000+ Elo.
-- Standard and Chess960 each have Story and Challenge, producing four modes and four separately tracked player Elo ratings.
+- Standard and Chess960 each have Story and Challenge, producing four modes and two variant player Elo ratings shared by their respective Story and Challenge modes.
 - The Reactive Battle Stage and Mapachito coach portrait reactions are core presentation, not optional polish.
 - Medals measure hint use: Bronze permits Move Hints, Silver uses no Move Hints, and Gold uses no Piece Hints.
 - Mapachess is permanently free, accountless, offline-first, private, locally durable, and JSON portable.
@@ -162,7 +162,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 2. **QREAM:** A narrow loop is valid only when complete, stable, delightful, accessible, locally durable, and verified across real targets.
 3. **Power Fantasy:** Make the player feel like an increasingly capable chess thinker with agency over hints, difficulty, Undo/Redo, variant, and presentation.
 4. **Strategic Thinking:** Preserve meaningful Standard and Chess960 decisions; Better Hints illuminate thought rather than replace it.
-5. **Tycoon Goals:** XP, Levels, four Elo ratings, medals, unlocks, records, and achievements make earned mastery legible without currencies, shops, chores, or distorted incentives.
+5. **Tycoon Goals:** XP, Levels, two variant Elo ratings, medals, unlocks, records, and achievements make earned mastery legible without currencies, shops, chores, or distorted incentives.
 6. **Fun:** Board feedback, evaluation, battles, portraits, animation, and celebration make matches satisfying while respecting accessibility, Reduced Motion, and stopping at any time.
 7. **Ephemeralization:** Seek 90% of the value in 10% of the time through shared behavior/tests, evidenced platform specialization, proven salvage, and deferral of unapproved extras without cutting approved quality.
 

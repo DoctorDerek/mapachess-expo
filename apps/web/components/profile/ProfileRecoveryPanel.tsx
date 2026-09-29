@@ -77,9 +77,10 @@ export default function ProfileRecoveryPanel({
             Reset all local player data?
           </h2>
           <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-            This replaces the unreadable profile, removes the active match,
-            resets all four ratings to 100, and restores default settings. It
-            does not affect backup files you already exported.
+            This replaces all local player data, including the active match,
+            Story and Challenge records, both current Elo ratings and their
+            rated-match counts, historical rating values, and settings. It does
+            not affect backup files you already exported.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <MapachessButton

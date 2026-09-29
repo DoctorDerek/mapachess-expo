@@ -217,13 +217,21 @@ export async function openCurrentWebMatchSession({
     setup: activeMatch.startingPosition,
     signal,
   })
+  const ratedOpponentElo =
+    activeMatch.ratedOpponentElo === null ||
+    activeMatch.opponentPolicyFingerprint !== runtime.opponentPolicyFingerprint
+      ? null
+      : runtime.ratedOpponentElo
   let match = activeMatch
   if (
-    activeMatch.opponentPolicyFingerprint !== runtime.opponentPolicyFingerprint
+    activeMatch.opponentPolicyFingerprint !==
+      runtime.opponentPolicyFingerprint ||
+    activeMatch.ratedOpponentElo !== ratedOpponentElo
   ) {
     match = Object.freeze({
       ...activeMatch,
       opponentPolicyFingerprint: runtime.opponentPolicyFingerprint,
+      ratedOpponentElo,
     })
     try {
       await persistProfileActiveMatch({
@@ -355,14 +363,7 @@ export async function openFreshWebMatchSession(
   const freshMatch = buildFreshWebMatch({
     autoHintMode: playerData.settings.autoHintMode,
     mode,
-    playerEloAtStart:
-      runtime.startingPosition.variant === "standard"
-        ? mode === "story"
-          ? playerData.ratings.standardStory
-          : playerData.ratings.standardChallenge
-        : mode === "story"
-          ? playerData.ratings.chess960Story
-          : playerData.ratings.chess960Challenge,
+    playerEloAtStart: playerData.ratings[runtime.startingPosition.variant],
     runtime,
   })
 

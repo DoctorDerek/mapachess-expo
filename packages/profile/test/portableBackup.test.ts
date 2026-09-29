@@ -18,6 +18,84 @@ const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")
 
 describe("Mapachess portable backups", () => {
+  it("verifies v6 source bytes and preserves all four former ratings as history", async () => {
+    const initial = createInitialMapachessPlayerData()
+    const legacyRatings = {
+      standardStory: 314.25,
+      standardChallenge: 511,
+      chess960Story: 712.5,
+      chess960Challenge: 913,
+    }
+    const payload = {
+      activeMatch: null,
+      challengeHistory: initial.challengeHistory,
+      ratings: legacyRatings,
+      revision: 42,
+      schema: initial.schema,
+      schemaVersion: 6,
+      settings: initial.settings,
+      storyProgress: initial.storyProgress,
+    }
+    const originalCanonical = JSON.stringify([
+      initial.schema,
+      6,
+      42,
+      initial.settings.autoHintMode,
+      [314.25, 511, 712.5, 913],
+      null,
+      ["standard", "white", null, "chicken-stockfish", 100],
+      [[], []],
+      [
+        [[], []],
+        [[], []],
+      ],
+    ])
+    const backup = {
+      ...portableActiveChickenV2,
+      payload,
+      saveSchemaVersion: 6,
+      integrity: {
+        algorithm: "SHA-256",
+        payloadHash: await sha256(originalCanonical),
+      },
+    }
+    const decoded = await decodeMapachessPortableBackup(
+      JSON.stringify(backup),
+      sha256,
+    )
+    expect(decoded).toMatchObject({
+      ok: true,
+      backup: {
+        payload: {
+          legacyRatings,
+          ratings: { standard: 100, chess960: 100 },
+          ratedMatchCounts: { standard: 0, chess960: 0 },
+          processedMatchResultIds: [],
+          schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+        },
+      },
+    })
+    await expect(
+      decodeStoredPlayerData(
+        JSON.stringify({
+          format: "mapachess-stored-player-data",
+          formatVersion: 1,
+          integrity: backup.integrity,
+          payload,
+          saveSchemaVersion: 6,
+        }),
+        sha256,
+      ),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: {
+        legacyRatings,
+        ratings: { standard: 100, chess960: 100 },
+        ratedMatchCounts: { standard: 0, chess960: 0 },
+      },
+    })
+  })
+
   it.each([3, 4])(
     "verifies original v%i checksums before migrating remembered Challenge selections",
     async (version) => {
@@ -88,7 +166,8 @@ describe("Mapachess portable backups", () => {
       expect(decoded.backup.payload).toMatchObject({
         schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         activeMatch: match,
-        ratings: payload.ratings,
+        legacyRatings: payload.ratings,
+        ratings: { standard: 100, chess960: 100 },
         settings: {
           challengeSetup: { ...DEFAULT_CHALLENGE_SETUP, ...legacySetup },
         },
@@ -178,7 +257,8 @@ describe("Mapachess portable backups", () => {
               moveIds: ["e2e4", "e7e5"],
               pieceHintsUsed: true,
             },
-            ratings: fixture.payload.ratings,
+            legacyRatings: fixture.payload.ratings,
+            ratings: { standard: 100, chess960: 100 },
             schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
             settings: { autoHintMode: "no-auto-hints" },
           },

@@ -55,14 +55,12 @@ export default function ProfileImportPreviewPanel({
           <dd className="text-right">
             {data.activeMatch === null ? "None" : "Included"}
           </dd>
-          <dt>Standard Story Elo</dt>
-          <dd className="text-right">{data.ratings.standardStory}</dd>
-          <dt>Standard Challenge Elo</dt>
-          <dd className="text-right">{data.ratings.standardChallenge}</dd>
-          <dt>Chess960 Story Elo</dt>
-          <dd className="text-right">{data.ratings.chess960Story}</dd>
-          <dt>Chess960 Challenge Elo</dt>
-          <dd className="text-right">{data.ratings.chess960Challenge}</dd>
+          <dt>Standard Elo</dt>
+          <dd className="text-right">{Math.round(data.ratings.standard)}</dd>
+          <dt>Chess960 Elo</dt>
+          <dd className="text-right">{Math.round(data.ratings.chess960)}</dd>
+          <dt>Earlier four ratings</dt>
+          <dd className="text-right">Preserved in backup</dd>
           <dt>{STORY_PROGRESS_COPY.standard}</dt>
           <dd className="text-right">
             {formatStoryCompletion(completion.standard)}

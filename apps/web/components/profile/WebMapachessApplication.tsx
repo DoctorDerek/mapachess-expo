@@ -8,6 +8,7 @@ import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
+import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
@@ -50,16 +51,29 @@ type MatchActor = ActorRefFrom<typeof matchMachine>
 
 type ActiveMatchSettingsPanelProps = Omit<
   ProfileSettingsPanelProps,
-  "autoHintMode"
+  "autoHintMode" | "ratings" | "ratedMatchCounts"
 > &
-  Readonly<{ matchActor: MatchActor }>
+  Readonly<{
+    matchActor: MatchActor
+    ratings: ProfileSettingsPanelProps["ratings"]
+    ratedMatchCounts: ProfileSettingsPanelProps["ratedMatchCounts"]
+  }>
 
 function ActiveMatchSettingsPanel({
   matchActor,
+  ratings,
+  ratedMatchCounts,
   ...settingsProps
 }: ActiveMatchSettingsPanelProps) {
   const autoHintMode = useSelector(matchActor, selectAutoHintMode)
-  return <ProfileSettingsPanel {...settingsProps} autoHintMode={autoHintMode} />
+  return (
+    <ProfileSettingsPanel
+      {...settingsProps}
+      autoHintMode={autoHintMode}
+      ratings={ratings}
+      ratedMatchCounts={ratedMatchCounts}
+    />
+  )
 }
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
@@ -252,7 +266,13 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
       onBackupRead: requestImportPreview,
       onClose: closeSettings,
       onExportPlayerData: () => void exportPlayerData(),
-    } satisfies Omit<ProfileSettingsPanelProps, "autoHintMode">
+      onEloResetConfirmed: (variant: PlayerEloRatingId): void => {
+        actor.send({ type: "PROFILE.ELO_RESET_CONFIRMED", variant })
+      },
+    } satisfies Omit<
+      ProfileSettingsPanelProps,
+      "autoHintMode" | "ratings" | "ratedMatchCounts"
+    >
 
     return (
       <main>
@@ -267,12 +287,16 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
               autoHintMode={
                 (pendingPlayerData ?? currentPlayerData).settings.autoHintMode
               }
+              ratings={currentPlayerData.ratings}
+              ratedMatchCounts={currentPlayerData.ratedMatchCounts}
             />
           ) : (
             <ActiveMatchSettingsPanel
               {...settingsProps}
               hintChangesDisabled={false}
               matchActor={activeMatchActor}
+              ratings={currentPlayerData.ratings}
+              ratedMatchCounts={currentPlayerData.ratedMatchCounts}
             />
           )
         ) : null}

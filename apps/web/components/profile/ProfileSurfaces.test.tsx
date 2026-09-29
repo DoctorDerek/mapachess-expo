@@ -46,11 +46,14 @@ describe("web player-data controls", () => {
         activityMessage: "Saving your hint preference…",
         hintChangesDisabled: false,
         autoHintMode: "no-auto-hints",
+        ratings: playerData.ratings,
+        ratedMatchCounts: playerData.ratedMatchCounts,
         importIssue: null,
         onAutoHintModeChanged: vi.fn(),
         onBackupRead: vi.fn(),
         onClose: vi.fn(),
         onExportPlayerData: vi.fn(),
+        onEloResetConfirmed: vi.fn(),
       }),
     )
     const hintChoices = markup.match(/<input[^>]*type="radio"[^>]*>/g)
@@ -107,11 +110,14 @@ describe("web player-data controls", () => {
       createElement(ProfileSettingsPanel, {
         activityMessage: null,
         autoHintMode: playerData.settings.autoHintMode,
+        ratings: playerData.ratings,
+        ratedMatchCounts: playerData.ratedMatchCounts,
         importIssue: null,
         onAutoHintModeChanged: vi.fn(),
         onBackupRead: vi.fn(),
         onClose: vi.fn(),
         onExportPlayerData: vi.fn(),
+        onEloResetConfirmed: vi.fn(),
       }),
     )
 
@@ -131,6 +137,10 @@ describe("web player-data controls", () => {
       "Changing this setting never erases earlier hint use.",
     )
     expect(markup).toContain("changes take effect immediately")
+    expect(markup).toContain("Standard · 100 Elo")
+    expect(markup).toContain("Chess960 · 100 Elo")
+    expect(markup).toContain("Reset Standard Elo")
+    expect(markup).toContain("Reset Chess960 Elo")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("non-destructive preview")
   })
@@ -148,7 +158,7 @@ describe("web player-data controls", () => {
     expect(markup).toContain("Cancel Import")
     expect(markup).toContain('autofocus=""')
     expect(markup).toContain("Replace Local Player Data")
-    expect(markup).toContain("Standard Story Elo")
+    expect(markup).toContain("Standard Elo")
     expect(markup).toContain("Standard Story completion")
     expect(markup).toContain("Chess960 Story completion")
     expect(markup).toContain("Overall Story completion")

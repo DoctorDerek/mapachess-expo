@@ -297,7 +297,10 @@ function MatchSessionExperience({
           reactionsPaused={settingsOpen}
           key={session.match.matchId}
           mode={session.match.mode}
-          playerEloAtStart={session.match.playerEloAtStart}
+          playerElo={
+            savedPlayerData?.ratings[session.match.startingPosition.variant] ??
+            session.match.playerEloAtStart
+          }
           runtime={session.runtime}
           result={(matchBusy) =>
             savedPlayerData !== null &&

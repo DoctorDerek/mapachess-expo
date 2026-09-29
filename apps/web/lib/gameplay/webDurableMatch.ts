@@ -27,6 +27,7 @@ export type FreshWebMatchInput = Readonly<{
     | "opponentId"
     | "opponentTargetElo"
     | "opponentPolicyFingerprint"
+    | "ratedOpponentElo"
     | "playerColor"
     | "startingPosition"
   >
@@ -50,6 +51,7 @@ export function buildFreshWebMatch(
     moveIds: Object.freeze([]),
     opponentId: input.runtime.opponentId,
     opponentTargetElo: input.runtime.opponentTargetElo,
+    ratedOpponentElo: input.runtime.ratedOpponentElo,
     opponentPolicyFingerprint: input.runtime.opponentPolicyFingerprint,
     pieceHintsUsed: false,
     playerColor: input.runtime.playerColor,

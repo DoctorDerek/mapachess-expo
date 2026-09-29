@@ -7,8 +7,11 @@ import applyChallengeMatchResult, {
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
 import createInitialMapachessPlayerData, {
+  INITIAL_PLAYER_ELO,
   type MapachessPlayerData,
+  type PlayerEloRatingId,
 } from "./playerData.js"
+import { playerResultScore, updatedPlayerElo } from "./playerElo.js"
 import applyStoryMatchResult from "./storyProgress.js"
 
 const freezePlayerData = (
@@ -62,6 +65,22 @@ export const replaceActiveMatch = (
     current.activeMatch,
     historyMatch,
   )
+  const firstAcceptedResult =
+    activeMatch !== null &&
+    activeMatch.conclusion !== null &&
+    (current.activeMatch === null ||
+      (current.activeMatch.matchId === activeMatch.matchId &&
+        current.activeMatch.conclusion === null)) &&
+    !current.processedMatchResultIds.includes(activeMatch.matchId)
+  const ratedVariant = activeMatch?.startingPosition.variant
+  const ratedOpponentElo = activeMatch?.ratedOpponentElo
+  const applyRatedResult =
+    firstAcceptedResult &&
+    ratedVariant !== undefined &&
+    ratedOpponentElo !== undefined &&
+    ratedOpponentElo !== null &&
+    current.activeMatch?.matchId === activeMatch?.matchId &&
+    current.activeMatch.ratedOpponentElo === ratedOpponentElo
   return Object.freeze({
     ...current,
     activeMatch,
@@ -69,6 +88,26 @@ export const replaceActiveMatch = (
       challengeSetup !== undefined && historyMatch !== null
         ? recordChallengeStart(challengeHistory, historyMatch)
         : challengeHistory,
+    processedMatchResultIds: firstAcceptedResult
+      ? Object.freeze([...current.processedMatchResultIds, activeMatch.matchId])
+      : current.processedMatchResultIds,
+    ratedMatchCounts: applyRatedResult
+      ? Object.freeze({
+          ...current.ratedMatchCounts,
+          [ratedVariant]: current.ratedMatchCounts[ratedVariant] + 1,
+        })
+      : current.ratedMatchCounts,
+    ratings: applyRatedResult
+      ? Object.freeze({
+          ...current.ratings,
+          [ratedVariant]: updatedPlayerElo(
+            current.ratings[ratedVariant],
+            current.ratedMatchCounts[ratedVariant],
+            ratedOpponentElo,
+            playerResultScore(activeMatch.conclusion, activeMatch.playerColor),
+          ),
+        })
+      : current.ratings,
     storyProgress: applyStoryMatchResult(
       applyStoryMatchResult(current.storyProgress, current.activeMatch),
       activeMatch,
@@ -84,6 +123,23 @@ export const replaceActiveMatch = (
           }),
   })
 }
+
+export const resetPlayerElo = (
+  current: MapachessPlayerData,
+  variant: PlayerEloRatingId,
+): MapachessPlayerData =>
+  Object.freeze({
+    ...current,
+    ratedMatchCounts: Object.freeze({
+      ...current.ratedMatchCounts,
+      [variant]: 0,
+    }),
+    ratings: Object.freeze({
+      ...current.ratings,
+      [variant]: INITIAL_PLAYER_ELO,
+    }),
+    revision: current.revision + 1,
+  })
 
 export const createFreshRecoveryData = (
   lastKnownGood: DurablePlayerDataSlot,

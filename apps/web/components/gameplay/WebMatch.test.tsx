@@ -39,6 +39,7 @@ const runtime: WebMatchRuntime = {
   opponentId: "dog-stockfish",
   opponentPolicyFingerprint: "composition-fixture",
   opponentTargetElo: 600,
+  ratedOpponentElo: 600,
   playerColor: "white",
   positionEvaluator: async () => {
     throw new Error("Unavailable fixture evaluation")
@@ -68,7 +69,7 @@ describe("match composition", () => {
           actor,
           evaluationActor,
           mode: "challenge",
-          playerEloAtStart: 500,
+          playerElo: 500,
           runtime,
         }),
       )
@@ -132,7 +133,7 @@ describe("match composition", () => {
           actor,
           evaluationActor,
           mode: "challenge",
-          playerEloAtStart: 500,
+          playerElo: 500,
           runtime,
         }),
       )
@@ -172,7 +173,7 @@ describe("match composition", () => {
           actor={actor}
           evaluationActor={evaluationActor}
           mode="challenge"
-          playerEloAtStart={100}
+          playerElo={100}
           runtime={runtime}
         />,
       )

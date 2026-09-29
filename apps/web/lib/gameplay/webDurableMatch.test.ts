@@ -35,6 +35,7 @@ const runtime = Object.freeze({
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: "test-policy",
   opponentTargetElo: 100,
+  ratedOpponentElo: 100,
   playerColor: selectStoryPlayerColor(matchSeed),
   startingPosition: { variant: "standard", chess960PositionId: null } as const,
 }) satisfies FreshWebMatchInput["runtime"]
@@ -74,7 +75,7 @@ describe("web durable match mapping", () => {
           activeMatch: fresh,
         })
         if (!decoded.ok || decoded.data.activeMatch === null)
-          throw new Error("Challenge save must decode")
+          throw new Error("Challenge save must decode.")
         expect(decoded.data.activeMatch).toEqual(fresh)
         expect(resumeWebMatch(decoded.data.activeMatch).matchSeed).toBe(
           matchSeed,
@@ -124,7 +125,9 @@ describe("web durable match mapping", () => {
       )
       const decoded = decodeMapachessPlayerData(imported)
       if (!decoded.ok || decoded.data.activeMatch === null)
-        throw new Error("Chess960 profile must decode")
+        throw new Error(
+          `Chess960 profile must decode: ${JSON.stringify(decoded)}`,
+        )
       const resumed = resumeWebMatch(decoded.data.activeMatch)
       expect(resumed.timeline.cursor).toBe(0)
       expect(resumed.timeline.transitions).toHaveLength(2)

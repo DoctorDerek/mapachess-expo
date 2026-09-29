@@ -223,6 +223,8 @@ export default async function openWebMatchRuntime(
     opponentId,
     opponentPolicyFingerprint: policy.fingerprint,
     opponentTargetElo: policy.targetElo,
+    ratedOpponentElo:
+      policy.calibrationFingerprint === undefined ? null : policy.targetElo,
     playerColor,
     startingPosition,
     positionEvaluator: (request, signal) =>
