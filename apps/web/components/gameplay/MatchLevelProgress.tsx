@@ -8,11 +8,8 @@ import {
   xpAtLevel,
 } from "@mapachess/profile/global-xp"
 
-const LEVEL_FILL_DURATION_SECONDS = 0.36
-const MINIMUM_INTERMEDIATE_LEVEL_PRESENTATION_MS = 900
-const INTERMEDIATE_LEVEL_HOLD_MS =
-  MINIMUM_INTERMEDIATE_LEVEL_PRESENTATION_MS -
-  LEVEL_FILL_DURATION_SECONDS * 1000
+const MINIMUM_LEVEL_FILL_SECONDS = 0.9
+const MINIMUM_TOTAL_PROGRESS_SECONDS = 3.7
 
 export default function MatchLevelProgress({
   beforeXp,
@@ -31,45 +28,42 @@ export default function MatchLevelProgress({
     }
     if (displayXp >= afterXp || fill.current === null) return
 
+    const finalLevel = levelFromTotalXp(afterXp)
+    const crossedLevelCount = finalLevel - levelFromTotalXp(beforeXp)
+    const hasPartialFinalLevel = afterXp > xpAtLevel(finalLevel)
+    const fillSegmentCount = crossedLevelCount + Number(hasPartialFinalLevel)
+    const fillDurationSeconds = Math.max(
+      MINIMUM_LEVEL_FILL_SECONDS,
+      MINIMUM_TOTAL_PROGRESS_SECONDS / fillSegmentCount,
+    )
     const level = levelFromTotalXp(displayXp)
     const start = xpAtLevel(level)
     const next = xpAtLevel(level + 1)
     const boundary = Math.min(next, afterXp)
+    const bar = fill.current
+    const playback = animate(
+      bar,
+      {
+        scaleX: [
+          (displayXp - start) / (next - start),
+          (boundary - start) / (next - start),
+        ],
+      },
+      { duration: fillDurationSeconds, ease: "easeOut" },
+    )
     let active = true
-    let stopPlayback: (() => void) | undefined
-    const startFill = () => {
-      if (!active || fill.current === null) return
-      const bar = fill.current
-      const playback = animate(
-        bar,
-        {
-          scaleX: [
-            (displayXp - start) / (next - start),
-            (boundary - start) / (next - start),
-          ],
-        },
-        { duration: LEVEL_FILL_DURATION_SECONDS, ease: "easeOut" },
-      )
-      stopPlayback = () => playback.stop()
-      void playback.then(() => {
-        if (!active) return
-        if (boundary === next) {
-          // Motion's completed transform outlives React's unchanged zero-progress style.
-          bar.style.transform = "scaleX(0)"
-        }
-        setDisplayXp(boundary)
-      })
-    }
-    const holdIntermediateLevel = displayXp > beforeXp
-    const holdTimer = holdIntermediateLevel
-      ? setTimeout(startFill, INTERMEDIATE_LEVEL_HOLD_MS)
-      : undefined
-    if (!holdIntermediateLevel) startFill()
+    void playback.then(() => {
+      if (!active) return
+      if (boundary === next) {
+        // Motion's completed transform outlives React's unchanged zero-progress style.
+        bar.style.transform = "scaleX(0)"
+      }
+      setDisplayXp(boundary)
+    })
 
     return () => {
       active = false
-      if (holdTimer !== undefined) clearTimeout(holdTimer)
-      stopPlayback?.()
+      playback.stop()
     }
   }, [afterXp, animate, beforeXp, displayXp, fill, reduceMotion])
 
