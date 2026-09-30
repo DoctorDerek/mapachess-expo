@@ -8,6 +8,9 @@ import {
   xpAtLevel,
 } from "@mapachess/profile/global-xp"
 
+const MINIMUM_LEVEL_FILL_SECONDS = 0.9
+const MINIMUM_TOTAL_PROGRESS_SECONDS = 3.7
+
 export default function MatchLevelProgress({
   beforeXp,
   afterXp,
@@ -25,29 +28,44 @@ export default function MatchLevelProgress({
     }
     if (displayXp >= afterXp || fill.current === null) return
 
+    const finalLevel = levelFromTotalXp(afterXp)
+    const crossedLevelCount = finalLevel - levelFromTotalXp(beforeXp)
+    const hasPartialFinalLevel = afterXp > xpAtLevel(finalLevel)
+    const fillSegmentCount = crossedLevelCount + Number(hasPartialFinalLevel)
+    const fillDurationSeconds = Math.max(
+      MINIMUM_LEVEL_FILL_SECONDS,
+      MINIMUM_TOTAL_PROGRESS_SECONDS / fillSegmentCount,
+    )
     const level = levelFromTotalXp(displayXp)
     const start = xpAtLevel(level)
     const next = xpAtLevel(level + 1)
     const boundary = Math.min(next, afterXp)
+    const bar = fill.current
     const playback = animate(
-      fill.current,
+      bar,
       {
         scaleX: [
           (displayXp - start) / (next - start),
           (boundary - start) / (next - start),
         ],
       },
-      { duration: 0.36, ease: "easeOut" },
+      { duration: fillDurationSeconds, ease: "easeOut" },
     )
     let active = true
     void playback.then(() => {
-      if (active) setDisplayXp(boundary)
+      if (!active) return
+      if (boundary === next) {
+        // Motion's completed transform outlives React's unchanged zero-progress style.
+        bar.style.transform = "scaleX(0)"
+      }
+      setDisplayXp(boundary)
     })
+
     return () => {
       active = false
       playback.stop()
     }
-  }, [afterXp, animate, displayXp, fill, reduceMotion])
+  }, [afterXp, animate, beforeXp, displayXp, fill, reduceMotion])
 
   return (
     <section
