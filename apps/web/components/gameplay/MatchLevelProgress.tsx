@@ -39,8 +39,9 @@ export default function MatchLevelProgress({
     let stopPlayback: (() => void) | undefined
     const startFill = () => {
       if (!active || fill.current === null) return
+      const bar = fill.current
       const playback = animate(
-        fill.current,
+        bar,
         {
           scaleX: [
             (displayXp - start) / (next - start),
@@ -51,7 +52,12 @@ export default function MatchLevelProgress({
       )
       stopPlayback = () => playback.stop()
       void playback.then(() => {
-        if (active) setDisplayXp(boundary)
+        if (!active) return
+        if (boundary === next) {
+          // Motion's completed transform outlives React's unchanged zero-progress style.
+          bar.style.transform = "scaleX(0)"
+        }
+        setDisplayXp(boundary)
       })
     }
     const holdIntermediateLevel = displayXp > beforeXp
