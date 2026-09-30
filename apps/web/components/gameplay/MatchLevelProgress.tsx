@@ -8,6 +8,12 @@ import {
   xpAtLevel,
 } from "@mapachess/profile/global-xp"
 
+const LEVEL_FILL_DURATION_SECONDS = 0.36
+const MINIMUM_INTERMEDIATE_LEVEL_PRESENTATION_MS = 900
+const INTERMEDIATE_LEVEL_HOLD_MS =
+  MINIMUM_INTERMEDIATE_LEVEL_PRESENTATION_MS -
+  LEVEL_FILL_DURATION_SECONDS * 1000
+
 export default function MatchLevelProgress({
   beforeXp,
   afterXp,
@@ -29,25 +35,37 @@ export default function MatchLevelProgress({
     const start = xpAtLevel(level)
     const next = xpAtLevel(level + 1)
     const boundary = Math.min(next, afterXp)
-    const playback = animate(
-      fill.current,
-      {
-        scaleX: [
-          (displayXp - start) / (next - start),
-          (boundary - start) / (next - start),
-        ],
-      },
-      { duration: 0.36, ease: "easeOut" },
-    )
     let active = true
-    void playback.then(() => {
-      if (active) setDisplayXp(boundary)
-    })
+    let stopPlayback: (() => void) | undefined
+    const startFill = () => {
+      if (!active || fill.current === null) return
+      const playback = animate(
+        fill.current,
+        {
+          scaleX: [
+            (displayXp - start) / (next - start),
+            (boundary - start) / (next - start),
+          ],
+        },
+        { duration: LEVEL_FILL_DURATION_SECONDS, ease: "easeOut" },
+      )
+      stopPlayback = () => playback.stop()
+      void playback.then(() => {
+        if (active) setDisplayXp(boundary)
+      })
+    }
+    const holdIntermediateLevel = displayXp > beforeXp
+    const holdTimer = holdIntermediateLevel
+      ? setTimeout(startFill, INTERMEDIATE_LEVEL_HOLD_MS)
+      : undefined
+    if (!holdIntermediateLevel) startFill()
+
     return () => {
       active = false
-      playback.stop()
+      if (holdTimer !== undefined) clearTimeout(holdTimer)
+      stopPlayback?.()
     }
-  }, [afterXp, animate, displayXp, fill, reduceMotion])
+  }, [afterXp, animate, beforeXp, displayXp, fill, reduceMotion])
 
   return (
     <section
