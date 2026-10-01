@@ -52,6 +52,7 @@ export type OpenWebMatchSessionInput = Readonly<{
 export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
   Readonly<{
     previousSession: WebMatchSession | null
+    replacementSession?: WebMatchSession | null
   }> &
   (
     | Readonly<{
@@ -259,6 +260,7 @@ export async function openFreshWebMatchSession(
   const {
     openRuntime = openWebMatchRuntime,
     previousSession,
+    replacementSession = null,
     profileActor,
     signal,
   } = input
@@ -270,8 +272,9 @@ export async function openFreshWebMatchSession(
   const activeMatch = playerData.activeMatch
   if (
     activeMatch !== null &&
-    (previousSession === null ||
-      activeMatch.matchId !== previousSession.match.matchId)
+    ((previousSession ?? replacementSession) === null ||
+      activeMatch.matchId !==
+        (previousSession ?? replacementSession)?.match.matchId)
   ) {
     return openCurrentWebMatchSession({
       openRuntime,
@@ -405,6 +408,7 @@ export async function openFreshWebMatchSession(
         signal,
       })
     }
+    await replacementSession?.close()
     return session
   } catch (error) {
     await session.close()

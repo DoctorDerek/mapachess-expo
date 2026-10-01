@@ -145,6 +145,81 @@ const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
 describe("web match session ownership", () => {
+  it("starts selected setup rather than silently resuming a retained session, closing the old actor only after acceptance", async () => {
+    const profile = await openProfileRuntime()
+    const firstRuntime = createRuntime(FIRST_MATCH_SEED)
+    const first = await openFreshWebMatchSession({
+      variant: "standard",
+      previousSession: null,
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+      openRuntime: runtimeOpener(firstRuntime.runtime),
+    })
+    const nextRuntime = createRuntime(
+      SECOND_MATCH_SEED,
+      { variant: "standard", chess960PositionId: null },
+      { mode: "challenge", playerColor: "white" },
+    )
+    const gate = Promise.withResolvers<WebMatchRuntime>()
+    const opening = openFreshWebMatchSession({
+      mode: "challenge",
+      challengeSetup: DEFAULT_CHALLENGE_SETUP,
+      previousSession: null,
+      replacementSession: first,
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+      openRuntime: () => gate.promise,
+    })
+    expect(first.actor.getSnapshot().status).toBe("active")
+    expect(firstRuntime.close).not.toHaveBeenCalled()
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch
+        ?.matchId,
+    ).toBe(first.match.matchId)
+    gate.resolve(nextRuntime.runtime)
+    const next = await opening
+    expect(next.match.mode).toBe("challenge")
+    expect(next.match.matchId).not.toBe(first.match.matchId)
+    expect(firstRuntime.close).toHaveBeenCalledOnce()
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch
+        ?.matchId,
+    ).toBe(next.match.matchId)
+    await next.close()
+    await profile.close()
+  })
+
+  it("retains the existing session and accepted save when a replacement cannot open", async () => {
+    const profile = await openProfileRuntime()
+    const firstRuntime = createRuntime(FIRST_MATCH_SEED)
+    const first = await openFreshWebMatchSession({
+      variant: "standard",
+      previousSession: null,
+      profileActor: profile.actor,
+      signal: new AbortController().signal,
+      openRuntime: runtimeOpener(firstRuntime.runtime),
+    })
+    await expect(
+      openFreshWebMatchSession({
+        variant: "chess960",
+        previousSession: null,
+        replacementSession: first,
+        profileActor: profile.actor,
+        signal: new AbortController().signal,
+        openRuntime: async () => {
+          throw new Error("Unavailable engine")
+        },
+      }),
+    ).rejects.toThrow("Unavailable engine")
+    expect(firstRuntime.close).not.toHaveBeenCalled()
+    expect(first.actor.getSnapshot().status).toBe("active")
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch,
+    ).toEqual(first.match)
+    await first.close()
+    await profile.close()
+  })
+
   it("prepares a match during a preference write and starts with the latest choice", async () => {
     const profile = await openProfileRuntime()
     const store = profile.actor.getSnapshot().context.store
