@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef } from "react"
 import {
   MOVE_CLASSIFICATION_TABLE,
   MOVE_MATE_CLASSIFICATION_TABLE,
@@ -48,25 +47,25 @@ function ClassificationTable({
   )
 }
 
-export default function MoveClassificationFaq() {
-  const panel = useRef<HTMLDetailsElement>(null)
-  const trigger = useRef<HTMLElement>(null)
+export default function MoveClassificationFaq({
+  open,
+  onOpen,
+  onClose,
+}: Readonly<{ open: boolean; onOpen: () => void; onClose: () => void }>) {
   return (
-    <details ref={panel} className="text-mapachito-charcoal mt-7 text-base">
+    <details open={open} className="text-mapachito-charcoal mt-7 text-base">
       <summary
-        ref={trigger}
+        onClick={(event) => {
+          event.preventDefault()
+          if (open) onClose()
+          else onOpen()
+        }}
         className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
       >
         How are moves classified?
       </summary>
       <div className="grid gap-6 py-3">
-        <MapachessButton
-          variant="secondary"
-          onClick={() => {
-            if (panel.current) panel.current.open = false
-            trigger.current?.focus()
-          }}
-        >
+        <MapachessButton variant="secondary" onClick={onClose}>
           Close move classifications
         </MapachessButton>
         <ClassificationTable
