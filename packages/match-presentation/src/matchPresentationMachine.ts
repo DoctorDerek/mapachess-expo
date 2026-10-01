@@ -6,6 +6,7 @@ import advanceMatchPresentationVariation, {
 } from "./matchPresentationVariation.js"
 import {
   MATCH_PRESENTATION_PARTICIPANTS,
+  type MatchParticipantReaction,
   type MatchPresentationParticipant,
   type MatchPresentationPhase,
 } from "./matchReaction.js"
@@ -42,6 +43,7 @@ const noParticipants: readonly MatchPresentationParticipant[] = Object.freeze(
   [],
 )
 const allParticipants = MATCH_PRESENTATION_PARTICIPANTS
+const idleAnimalReaction = Object.freeze({ family: "idle" } as const)
 
 const requireTerminalPhase = (
   phase: MatchPresentationPhase | undefined,
@@ -135,6 +137,12 @@ const matchPresentationMachine = setup({
     input: {} as MatchPresentationMachineInput,
   },
   actions: {
+    appendRequestedReactions: assign(({ context, event }) => ({
+      remainingPhases: Object.freeze([
+        ...context.remainingPhases,
+        ...requireRequestedReactions(event).phases,
+      ]),
+    })),
     startNextBeat: assign(({ context }) => ({
       pendingParticipants: allParticipants,
       phaseIndex: context.phaseIndex + 1,
@@ -272,6 +280,9 @@ const matchPresentationMachine = setup({
     reacting: {
       initial: "approach",
       on: {
+        "MATCH_PRESENTATION.REACTIONS_REQUESTED": {
+          actions: "appendRequestedReactions",
+        },
         "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED": {
           actions: "recordParticipantCompletion",
           guard: "completionMatchesCurrentPhase",
@@ -338,6 +349,17 @@ export type MatchPresentationMachineSnapshot = SnapshotFrom<
 
 export type MatchPresentationBeat =
   "idle" | "approach" | "strike" | "reaction" | "recovery" | "conclusion"
+
+export const selectMatchPresentationAnimalReaction = (
+  snapshot: MatchPresentationMachineSnapshot,
+  participant: MatchPresentationParticipant,
+): MatchParticipantReaction => {
+  const phase = snapshot.context.currentPhase
+  const reaction = phase?.[participant] ?? idleAnimalReaction
+  return phase?.terminalDefeat === false && reaction.family === "defeat"
+    ? idleAnimalReaction
+    : reaction
+}
 
 export const selectMatchPresentationVariationOrdinal = (
   snapshot: MatchPresentationMachineSnapshot,
