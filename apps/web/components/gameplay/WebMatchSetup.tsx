@@ -42,6 +42,10 @@ export type WebMatchSetupProps = Readonly<{
   onStart: (setup: MatchSetup) => void
   setup: MatchSetup
   storyProgress: StoryProgress
+  visible: boolean
+  editing: SetupEditor | null
+  onEditorOpened: (editor: SetupEditor) => void
+  onEditorClosed: () => void
 }>
 
 type SetupEditor = "opponent" | "difficulty" | "hints"
@@ -56,6 +60,10 @@ export default function WebMatchSetup({
   onStart,
   setup,
   storyProgress,
+  visible,
+  editing,
+  onEditorOpened,
+  onEditorClosed,
 }: WebMatchSetupProps) {
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
@@ -73,13 +81,12 @@ export default function WebMatchSetup({
     ),
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
-  const [editing, setEditing] = useState<SetupEditor | null>(null)
   const openEditor = (
     editor: SetupEditor,
     trigger: HTMLButtonElement,
   ): void => {
     trigger.focus({ preventScroll: true })
-    setEditing(editor)
+    onEditorOpened(editor)
   }
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
@@ -101,8 +108,8 @@ export default function WebMatchSetup({
       : canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
-    heading.current?.focus()
-  }, [])
+    if (visible) heading.current?.focus()
+  }, [visible])
 
   const startMatch = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
@@ -175,7 +182,7 @@ export default function WebMatchSetup({
             <span className="block h-26 w-24 shrink-0">
               <ChallengeAnimalPortrait
                 key={opponent.id}
-                active={editing === null}
+                active={visible && editing === null}
                 opponent={opponent}
               />
             </span>
@@ -275,7 +282,7 @@ export default function WebMatchSetup({
 
         {editing === null ? null : (
           <MatchSetupPicker
-            onDone={() => setEditing(null)}
+            onDone={onEditorClosed}
             title={
               editing === "hints"
                 ? "Better Hints"

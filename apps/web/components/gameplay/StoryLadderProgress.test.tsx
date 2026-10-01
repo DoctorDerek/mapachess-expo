@@ -72,6 +72,10 @@ describe("Story ladder presentation structure", () => {
     (challengeSetup) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
+          visible
+          editing={null}
+          onEditorOpened={vi.fn()}
+          onEditorClosed={vi.fn()}
           challengeHistory={createInitialMapachessPlayerData().challengeHistory}
           autoHintMode="no-auto-hints"
           disabled={false}
@@ -95,6 +99,10 @@ describe("Story ladder presentation structure", () => {
     (variant) => {
       const markup = renderToStaticMarkup(
         <WebMatchSetup
+          visible
+          editing={null}
+          onEditorOpened={vi.fn()}
+          onEditorClosed={vi.fn()}
           challengeHistory={createInitialMapachessPlayerData().challengeHistory}
           autoHintMode="no-auto-hints"
           disabled={false}
@@ -136,6 +144,10 @@ describe("Story ladder presentation structure", () => {
   it("offers earned opponents as named choices and defaults setup to the next unlocked animal", () => {
     const markup = renderToStaticMarkup(
       <WebMatchSetup
+        visible
+        editing={null}
+        onEditorOpened={vi.fn()}
+        onEditorClosed={vi.fn()}
         challengeHistory={createInitialMapachessPlayerData().challengeHistory}
         autoHintMode="no-auto-hints"
         disabled={false}
@@ -181,6 +193,10 @@ describe("Story ladder presentation structure", () => {
 
   it("composes Story progress only into Story setup", () => {
     const props = {
+      visible: true,
+      editing: null,
+      onEditorOpened: vi.fn(),
+      onEditorClosed: vi.fn(),
       autoHintMode: "auto-move-hints" as const,
       disabled: false,
       onAutoHintModeChanged: vi.fn(),

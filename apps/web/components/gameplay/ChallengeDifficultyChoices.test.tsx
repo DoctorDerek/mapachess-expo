@@ -54,6 +54,10 @@ describe("Challenge difficulty history presentation", () => {
       const data = createInitialMapachessPlayerData()
       const markup = renderToStaticMarkup(
         <WebMatchSetup
+          visible
+          editing={null}
+          onEditorOpened={vi.fn()}
+          onEditorClosed={vi.fn()}
           autoHintMode="no-auto-hints"
           challengeHistory={{
             standard: history,

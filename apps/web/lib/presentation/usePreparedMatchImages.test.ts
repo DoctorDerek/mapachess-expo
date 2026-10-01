@@ -42,6 +42,10 @@ describe("selected match image preparation", () => {
   it("emits selected image preloads while Start Match is still on screen", () => {
     const markup = renderToStaticMarkup(
       createElement(WebMatchSetup, {
+        visible: true,
+        editing: null,
+        onEditorOpened: vi.fn(),
+        onEditorClosed: vi.fn(),
         challengeHistory: createInitialMapachessPlayerData().challengeHistory,
         autoHintMode: "auto-move-hints",
         disabled: false,
