@@ -12,7 +12,10 @@ import {
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
-import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
+import {
+  selectMatchPresentationAnimalReaction,
+  selectMatchPresentationVariationOrdinal,
+} from "@mapachess/match-presentation/match-presentation-machine"
 import type {
   DurableMatchRecord,
   MatchMode,
@@ -38,6 +41,7 @@ import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import BattleStageSurface from "./BattleStageSurface"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import ClassifiedMoveHistory from "./ClassifiedMoveHistory"
@@ -50,7 +54,6 @@ import MatchOutcome from "./MatchOutcome"
 import MatchRecovery from "./MatchRecovery"
 import MoveReactionFeedback from "./MoveReactionFeedback"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
-import ReactiveBattleStage from "./ReactiveBattleStage"
 
 export type WebMatchProps = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
@@ -90,6 +93,8 @@ export default function WebMatch({
   const heading = useRef<HTMLHeadingElement>(null)
   const menuSummary = useRef<HTMLElement>(null)
   const [celebrationDismissed, setCelebrationDismissed] = useState(false)
+  const [celebrationStageSlot, setCelebrationStageSlot] =
+    useState<HTMLDivElement | null>(null)
   const dismissCelebration = useCallback(
     () => setCelebrationDismissed(true),
     [],
@@ -114,7 +119,10 @@ export default function WebMatch({
     runtime.playerColor,
   )
   const opponent = stockfishOpponent(runtime.opponentId)
-  const opponentReaction = presentation.snapshot.context.currentPhase?.opponent
+  const opponentReaction = selectMatchPresentationAnimalReaction(
+    presentation.snapshot,
+    "opponent",
+  )
   const opponentVariationOrdinal = selectMatchPresentationVariationOrdinal(
     presentation.snapshot,
     "opponent",
@@ -210,16 +218,15 @@ export default function WebMatch({
               />
             </div>
           </div>
-          <div className="w-full [grid-area:battle] xl:[grid-area:auto]">
-            <ReactiveBattleStage
-              onParticipantAnimationCompleted={
-                presentation.notifyParticipantAnimationCompleted
-              }
-              opponentName={opponent.displayName}
-              opponentPresentation={opponentPresentation}
-              presentationSnapshot={presentation.snapshot}
-            />
-          </div>
+          <BattleStageSurface
+            celebrationSlot={celebrationStageSlot}
+            onParticipantAnimationCompleted={
+              presentation.notifyParticipantAnimationCompleted
+            }
+            opponentName={opponent.displayName}
+            opponentPresentation={opponentPresentation}
+            presentationSnapshot={presentation.snapshot}
+          />
         </div>
 
         <div className="contents xl:grid xl:min-w-0 xl:gap-2">
@@ -316,6 +323,7 @@ export default function WebMatch({
       </section>
       {celebrationOpen && savedMatch !== null && matchingReward !== null ? (
         <MatchCelebration
+          battleStageRef={setCelebrationStageSlot}
           disabled={persisting || persistenceFailure !== null}
           match={savedMatch}
           onDismiss={dismissCelebration}
