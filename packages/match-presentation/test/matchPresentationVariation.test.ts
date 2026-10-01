@@ -54,18 +54,23 @@ describe("participant-scoped battle variation", () => {
     const actor = start()
     request(actor, capture)
     expect(ordinals(actor)).toEqual([0, 0])
+    finishPhase(actor)
     request(actor, capture)
     expect(ordinals(actor)).toEqual([1, 1])
+    finishPhase(actor)
     request(actor, check)
     expect(ordinals(actor)).toEqual([0, 0])
+    finishPhase(actor)
     request(actor, {
       kind: "capture",
       player: capture.opponent,
       opponent: capture.player,
     })
     expect(ordinals(actor)).toEqual([0, 0])
+    finishPhase(actor)
     request(actor, capture)
     expect(ordinals(actor)).toEqual([2, 2])
+    finishPhase(actor)
     request(actor, victory)
     expect(ordinals(actor)).toEqual([0, 0])
     request(actor, victory)

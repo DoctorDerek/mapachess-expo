@@ -1,6 +1,12 @@
 "use client"
 
-import { useEffect, useId, useRef, type RefObject } from "react"
+import {
+  useEffect,
+  useId,
+  useRef,
+  type RefCallback,
+  type RefObject,
+} from "react"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
@@ -15,11 +21,11 @@ import {
 import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
 import MatchLevelProgress from "./MatchLevelProgress"
-import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
 const displayElo = (elo: number): string => Math.round(elo).toLocaleString("en")
 
 export default function MatchCelebration({
+  battleStageRef,
   disabled,
   match,
   onDismiss,
@@ -29,6 +35,7 @@ export default function MatchCelebration({
   reward,
   storyProgress,
 }: Readonly<{
+  battleStageRef: RefCallback<HTMLDivElement>
   disabled: boolean
   match: DurableMatchRecord
   onDismiss: () => void
@@ -48,6 +55,9 @@ export default function MatchCelebration({
   const opponent = stockfishOpponent(match.opponentId)
   const medal = matchVictoryMedal(match)
   const variant = match.startingPosition.variant
+  const playerWon =
+    (conclusion.type === "checkmate" || conclusion.type === "resignation") &&
+    conclusion.winner === match.playerColor
   const next =
     match.mode === "story" && medal !== null
       ? selectStoryLadder(storyProgress, variant).find(
@@ -101,29 +111,34 @@ export default function MatchCelebration({
       }}
       ref={dialog}
     >
-      <div className="bg-mapachito-orange grid gap-3 p-4 text-center sm:p-5">
-        <div className="flex items-center justify-center gap-3">
-          <StoryOpponentPortrait locked={false} opponent={opponent} />
-          {medal === null ? null : (
-            <span className="border-mapachito-charcoal bg-mapachito-white rounded-lg border-2 px-3 py-2 text-lg font-black">
-              <MedalSymbol medal={medal} />
-              {STORY_PROGRESS_COPY.medals[medal]}
-            </span>
-          )}
-        </div>
+      <div ref={battleStageRef} />
+      <div className="grid gap-3 p-4 text-center sm:p-5">
         <h2
           className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance"
           id={titleId}
         >
-          {matchConclusionText(
-            conclusion,
-            match.playerColor,
-            opponent.displayName,
-          )}
+          {playerWon
+            ? `You defeated ${opponent.displayName}!`
+            : matchConclusionText(
+                conclusion,
+                match.playerColor,
+                opponent.displayName,
+              )}
         </h2>
-        <p className="font-display text-3xl font-black tabular-nums">
-          +{reward.awardedXp} XP
-        </p>
+        {playerWon && conclusion.type === "resignation" ? (
+          <p className="text-base">Opponent resigned.</p>
+        ) : null}
+        <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
+          {medal === null ? null : (
+            <span className="text-lg font-black">
+              <MedalSymbol medal={medal} />
+              {STORY_PROGRESS_COPY.medals[medal]}
+            </span>
+          )}
+          <p className="font-display text-3xl font-black tabular-nums">
+            +{reward.awardedXp} XP
+          </p>
+        </div>
       </div>
       <div className="grid gap-3 p-4 sm:p-5">
         <MatchLevelProgress
@@ -142,12 +157,8 @@ export default function MatchCelebration({
             </strong>
           </p>
         )}
-        {match.mode === "story" && medal !== null ? (
-          <p className="text-sm font-bold">
-            {next === undefined
-              ? "Story complete!"
-              : `Next: ${next.opponent.displayName}`}
-          </p>
+        {match.mode === "story" && medal !== null && next === undefined ? (
+          <p className="text-sm font-bold">Story complete!</p>
         ) : null}
         <div className="grid grid-cols-2 gap-2">
           <MapachessButton
@@ -167,6 +178,11 @@ export default function MatchCelebration({
             type="button"
           >
             {actionLabel}
+            {next !== undefined && match.mode === "story" && medal !== null ? (
+              <span className="mt-1 block text-base font-normal">
+                {next.opponent.displayName} · {next.opponent.storyTargetElo} Elo
+              </span>
+            ) : null}
           </MapachessButton>
         </div>
       </div>

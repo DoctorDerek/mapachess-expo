@@ -42,6 +42,7 @@ const CHECK_PHASE = Object.freeze({
 
 const PLAYER_VICTORY_PHASE = Object.freeze({
   kind: "conclusion",
+  terminalDefeat: true,
   opponent: Object.freeze({ family: "defeat" }),
   player: Object.freeze({ family: "victory" }),
 }) satisfies MatchPresentationPhase
@@ -257,6 +258,7 @@ describe("match presentation contracts", () => {
         completeParticipant(actor, "opponent")
       }
       const previous = actor.getSnapshot().context
+      actor.send({ type: "MATCH_PRESENTATION.RESET_REQUESTED" })
       actor.send({
         phases: [CHECK_PHASE],
         type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",

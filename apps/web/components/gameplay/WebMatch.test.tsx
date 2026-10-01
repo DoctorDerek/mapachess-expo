@@ -48,7 +48,7 @@ const runtime: WebMatchRuntime = {
 }
 
 describe("match composition", () => {
-  it("keeps one board, meter and battle in reading order with all core actions", () => {
+  it("keeps one board, meter and client battle allocation with all core actions", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintMode: "no-auto-hints",
@@ -82,7 +82,7 @@ describe("match composition", () => {
       for (const token of [
         'role="grid"',
         'role="meter"',
-        'id="reactive-battle-stage-title"',
+        "[grid-area:battle]",
         'id="opponent-band-title"',
       ]) {
         expect(markup.split(token)).toHaveLength(2)
@@ -91,7 +91,7 @@ describe("match composition", () => {
         markup.indexOf('role="grid"'),
       )
       expect(markup.indexOf('role="meter"')).toBeLessThan(
-        markup.indexOf('id="reactive-battle-stage-title"'),
+        markup.indexOf("[grid-area:battle]"),
       )
       expect(markup).not.toContain('aria-label="Match result"')
       for (const label of [

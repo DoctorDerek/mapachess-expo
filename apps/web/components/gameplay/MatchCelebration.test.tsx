@@ -45,6 +45,7 @@ describe("accepted match celebration composition", () => {
   it("shows earned Story facts and safe actions without an invented Elo row", () => {
     const markup = renderToStaticMarkup(
       <MatchCelebration
+        battleStageRef={vi.fn()}
         disabled={false}
         match={completed}
         onDismiss={vi.fn()}
@@ -59,19 +60,22 @@ describe("accepted match celebration composition", () => {
       />,
     )
 
-    expect(markup).toContain("You won!")
+    expect(markup).toContain("You defeated Chicken Stockfish!")
     expect(markup).toContain("Gold")
     expect(markup).toContain("+4 XP")
     expect(markup).toContain("Level 3")
     expect(markup).toContain("Review board")
     expect(markup).toContain("Next opponent")
-    expect(markup).not.toContain("Elo")
+    expect(markup).toContain("Bunny Stockfish · 200 Elo")
+    expect(markup).not.toContain("Standard Elo")
+    expect(markup).not.toContain("Next:")
     expect(markup).not.toContain("Estimated")
   })
 
   it("shows a Challenge replay and only the variant Elo actually awarded", () => {
     const markup = renderToStaticMarkup(
       <MatchCelebration
+        battleStageRef={vi.fn()}
         disabled={false}
         match={{ ...completed, mode: "challenge" }}
         onDismiss={vi.fn()}

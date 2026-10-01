@@ -13,6 +13,7 @@ export type MatchParticipantReaction =
 
 export type MatchPresentationPhase = Readonly<{
   kind: "capture" | "check" | "conclusion"
+  terminalDefeat?: boolean
   opponent: MatchParticipantReaction
   player: MatchParticipantReaction
 }>

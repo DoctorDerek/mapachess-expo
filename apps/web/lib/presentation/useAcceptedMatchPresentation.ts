@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
 import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationMachineSnapshot } from "@mapachess/match-presentation/match-presentation-machine"
-import deriveAcceptedMovePresentationPhases, {
+import {
+  deriveAcceptedMatchPresentationUpdate,
   deriveConclusionPresentationPhase,
+  type AcceptedMatchPresentationObservation,
 } from "@mapachess/match-presentation/match-presentation-observation"
 import type {
   MatchPresentationParticipant,
@@ -18,12 +20,6 @@ import {
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import type { MatchColor } from "@mapachess/match/match-position"
-import type { MatchTimeline } from "@mapachess/match/match-timeline"
-
-type ObservedMatchPresentationState = Readonly<{
-  conclusion: ReturnType<typeof selectMatchConclusion>
-  timeline: MatchTimeline
-}>
 
 export type AcceptedMatchPresentation = Readonly<{
   notifyParticipantAnimationCompleted: (
@@ -49,12 +45,7 @@ const requestPresentationPhases = (
   phases: readonly MatchPresentationPhase[],
 ): void => {
   const [firstPhase, ...remainingPhases] = phases
-  if (firstPhase === undefined) {
-    presentationActor.send({
-      type: "MATCH_PRESENTATION.RESET_REQUESTED",
-    })
-    return
-  }
+  if (firstPhase === undefined) return
 
   presentationActor.send({
     phases: Object.freeze([firstPhase, ...remainingPhases]),
@@ -86,51 +77,22 @@ export default function useAcceptedMatchPresentation(
       }),
     [currentConclusion, currentTimeline],
   )
-  const previousObservation = useRef(currentObservation)
+  const previousObservation =
+    useRef<AcceptedMatchPresentationObservation>(currentObservation)
 
   useEffect(() => {
-    const previous = previousObservation.current
-    const current = currentObservation
-    const transitionsChanged =
-      current.timeline.transitions !== previous.timeline.transitions
-    const cursorChanged = current.timeline.cursor !== previous.timeline.cursor
-
-    if (
-      transitionsChanged &&
-      current.timeline.cursor > 0 &&
-      current.timeline.cursor === current.timeline.transitions.length
-    ) {
-      const transition = current.timeline.transitions.at(-1)
-      if (transition === undefined) {
-        throw new Error("Accepted presentation move has no transition.")
-      }
-      const phases = deriveAcceptedMovePresentationPhases({
-        conclusion: current.conclusion,
-        playerColor,
-        transition,
-      })
-      if (phases.length > 0 || current.conclusion !== null) {
-        requestPresentationPhases(presentationActor, phases)
-      }
-    } else if (transitionsChanged || cursorChanged) {
+    const update = deriveAcceptedMatchPresentationUpdate(
+      previousObservation.current,
+      currentObservation,
+      playerColor,
+    )
+    previousObservation.current = currentObservation
+    if (update.reset) {
       presentationActor.send({
         type: "MATCH_PRESENTATION.RESET_REQUESTED",
       })
-    } else if (current.conclusion !== previous.conclusion) {
-      const conclusionPhase =
-        current.conclusion === null
-          ? null
-          : deriveConclusionPresentationPhase({
-              conclusion: current.conclusion,
-              playerColor,
-            })
-      requestPresentationPhases(
-        presentationActor,
-        conclusionPhase === null ? [] : [conclusionPhase],
-      )
     }
-
-    previousObservation.current = current
+    requestPresentationPhases(presentationActor, update.phases)
   }, [currentObservation, playerColor, presentationActor])
 
   const notifyParticipantAnimationCompleted = useCallback(
