@@ -1,6 +1,7 @@
 import type { MatchConclusion } from "@mapachess/match/match-conclusion"
 import type { MatchMoveTransition } from "@mapachess/match/match-move"
 import type { MatchColor } from "@mapachess/match/match-position"
+import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import type {
   MatchParticipantReaction,
   MatchPresentationParticipant,
@@ -16,6 +17,16 @@ export type AcceptedMovePresentationInput = Readonly<{
 export type ConclusionPresentationInput = Readonly<{
   conclusion: MatchConclusion
   playerColor: MatchColor
+}>
+
+export type AcceptedMatchPresentationObservation = Readonly<{
+  conclusion: MatchConclusion | null
+  timeline: MatchTimeline
+}>
+
+export type AcceptedMatchPresentationUpdate = Readonly<{
+  phases: readonly MatchPresentationPhase[]
+  reset: boolean
 }>
 
 const participantForColor = (
@@ -72,6 +83,7 @@ export const deriveConclusionPresentationPhase = ({
 
   return Object.freeze({
     kind: "conclusion",
+    terminalDefeat: conclusion.type === "checkmate",
     opponent: winner === "opponent" ? victory : defeat,
     player: winner === "player" ? victory : defeat,
   })
@@ -115,4 +127,58 @@ export default function deriveAcceptedMovePresentationPhases(
 
   appendConclusionPhase(phases, input)
   return Object.freeze(phases)
+}
+
+export const deriveAcceptedMatchPresentationUpdate = (
+  previous: AcceptedMatchPresentationObservation,
+  current: AcceptedMatchPresentationObservation,
+  playerColor: MatchColor,
+): AcceptedMatchPresentationUpdate => {
+  const before = previous.timeline
+  const after = current.timeline
+  const transitionsChanged = before.transitions !== after.transitions
+  const appended =
+    transitionsChanged &&
+    before.initialPosition === after.initialPosition &&
+    after.cursor === after.transitions.length &&
+    after.cursor > before.cursor &&
+    before.transitions
+      .slice(0, before.cursor)
+      .every((transition, index) => transition === after.transitions[index])
+
+  if (appended) {
+    const phases = after.transitions
+      .slice(before.cursor)
+      .flatMap((transition, index, transitions) =>
+        deriveAcceptedMovePresentationPhases({
+          conclusion:
+            index === transitions.length - 1 ? current.conclusion : null,
+          playerColor,
+          transition,
+        }),
+      )
+    return Object.freeze({
+      phases: Object.freeze(phases),
+      reset: before.cursor !== before.transitions.length,
+    })
+  }
+
+  if (transitionsChanged || before.cursor !== after.cursor) {
+    return Object.freeze({ phases: Object.freeze([]), reset: true })
+  }
+
+  if (current.conclusion !== previous.conclusion) {
+    const phase =
+      current.conclusion === null
+        ? null
+        : deriveConclusionPresentationPhase({
+            conclusion: current.conclusion,
+            playerColor,
+          })
+    return Object.freeze({
+      phases: Object.freeze(phase === null ? [] : [phase]),
+      reset: current.conclusion === null,
+    })
+  }
+  return Object.freeze({ phases: Object.freeze([]), reset: false })
 }
