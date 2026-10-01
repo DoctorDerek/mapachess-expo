@@ -23,9 +23,14 @@ import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
   selectWebMatchSession,
   selectWebMatchSessionFailure,
+  selectWebNavigationDestination,
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
+import {
+  eligibleWebNavigationOverlays,
+  parseWebNavigationDestination,
+} from "./webNavigationDestination"
 import { webMatchId } from "./webOpponent"
 
 const createSession = (
@@ -115,6 +120,159 @@ const operations = (
 })
 
 describe("web match session machine", () => {
+  it("invalidates retained navigation after a confirmed profile replacement", async () => {
+    const actor = createActor(webMatchSessionMachine, {
+      input: { activeMatchExists: true, operations: operations() },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    const destination = selectWebNavigationDestination(actor.getSnapshot())
+    if (destination === null) throw new Error("Expected active navigation")
+    actor.send({
+      type: "WEB_MATCH_SESSION.PROFILE_REPLACED",
+      activeMatchExists: false,
+    })
+    expect(selectWebMatchSession(actor.getSnapshot())).toBeNull()
+    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.stop()
+  })
+  it("navigates away and resumes the same owned match without any session operation", async () => {
+    const ops = operations()
+    const actor = createActor(webMatchSessionMachine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    const session = selectWebMatchSession(actor.getSnapshot())
+    const destination = selectWebNavigationDestination(actor.getSnapshot())
+    if (destination === null) throw new Error("Expected active navigation")
+    actor.send({
+      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: { ...destination, screen: "menu" },
+    })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(selectWebMatchSession(actor.getSnapshot())).toBe(session)
+    actor.send({ type: "WEB_MATCH_SESSION.RESUME_REQUESTED" })
+    expect(actor.getSnapshot().matches("active")).toBe(true)
+    expect(selectWebMatchSession(actor.getSnapshot())).toBe(session)
+    expect(session?.close).not.toHaveBeenCalled()
+    expect(ops.returnToMenu).not.toHaveBeenCalled()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    actor.stop()
+  })
+
+  it("closes nested surfaces in order and rejects consumed rewards and stale match destinations", async () => {
+    const actor = createActor(webMatchSessionMachine, {
+      input: { activeMatchExists: true, operations: operations() },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({
+      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "classifications",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({
+      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "match-menu",
+    })
+    actor.send({
+      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "settings",
+    })
+    actor.send({
+      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "classifications",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([
+      "match-menu",
+      "settings",
+      "classifications",
+    ])
+    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
+    expect(actor.getSnapshot().context.overlays).toEqual([
+      "match-menu",
+      "settings",
+    ])
+    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
+    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
+    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    const destination = selectWebNavigationDestination(actor.getSnapshot())
+    if (destination === null) throw new Error("Expected active navigation")
+    actor.send({
+      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: { ...destination, overlays: [] },
+    })
+    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({
+      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: {
+        ...destination,
+        matchId: "obsolete-match",
+        overlays: ["match-menu"],
+      },
+    })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({
+      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: {
+        ...destination,
+        screen: "setup",
+        matchId: "obsolete-match",
+      },
+    })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    actor.stop()
+  })
+
+  it("does not let history bypass pending opening or a failed operation", async () => {
+    const gate = Promise.withResolvers<WebMatchSession>()
+    const actor = createActor(webMatchSessionMachine, {
+      input: {
+        activeMatchExists: true,
+        operations: operations({ openCurrentMatch: () => gate.promise }),
+      },
+    }).start()
+    const destination = {
+      screen: "menu",
+      matchId: null,
+      setupKey: "story:standard",
+      overlays: [],
+    } as const
+    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().matches("openingCurrentMatch")).toBe(true)
+    gate.reject(new Error("Opening failed"))
+    await waitFor(actor, (snapshot) => snapshot.matches("failed"))
+    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().matches("failed")).toBe(true)
+    actor.stop()
+  })
+
+  it("validates history boundaries and filters disclosures without their parent", () => {
+    const destination = {
+      screen: "match",
+      matchId: "current",
+      setupKey: "story:standard",
+      overlays: ["match-details", "classifications", "match-menu", "rewards"],
+    } as const
+    expect(parseWebNavigationDestination(destination)).toEqual(destination)
+    expect(eligibleWebNavigationOverlays(destination, false)).toEqual([
+      "match-menu",
+    ])
+    for (const invalid of [
+      null,
+      {},
+      { ...destination, matchId: null },
+      { ...destination, screen: "invalid" },
+      { ...destination, setupKey: "invalid" },
+      { ...destination, overlays: ["settings", "settings"] },
+      { ...destination, overlays: ["fake"] },
+    ])
+      expect(parseWebNavigationDestination(invalid)).toBeNull()
+  })
+
   it("opens selected Story setup only after closing the saved session, without starting a match", async () => {
     const menu = Promise.withResolvers<void>()
     const ops = operations({ returnToMenu: vi.fn(() => menu.promise) })

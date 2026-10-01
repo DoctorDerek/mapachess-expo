@@ -12,6 +12,12 @@ import createMatchSetupForMode, {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import type { WebMatchRuntime } from "./webMatchRuntime"
+import {
+  eligibleWebNavigationOverlays,
+  type WebNavigationDestination,
+  type WebNavigationOverlay,
+  type WebNavigationSetupKey,
+} from "./webNavigationDestination"
 
 export type WebMatchSession = Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
@@ -50,6 +56,9 @@ type WebMatchSessionMachineContext = Readonly<{
   operations: WebMatchSessionOperations
   requestedSetup: MatchSetup
   session: WebMatchSession | null
+  overlays: readonly WebNavigationOverlay[]
+  dismissedRewardMatchId: string | null
+  presentedRewardMatchId: string | null
 }>
 
 export type WebMatchSessionMachineEvent =
@@ -62,6 +71,20 @@ export type WebMatchSessionMachineEvent =
   | Readonly<{ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" }>
   | Readonly<{ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" }>
+  | Readonly<{ type: "WEB_MATCH_SESSION.RESUME_REQUESTED" }>
+  | Readonly<{
+      type: "WEB_MATCH_SESSION.PROFILE_REPLACED"
+      activeMatchExists: boolean
+    }>
+  | Readonly<{
+      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED"
+      destination: WebNavigationDestination
+    }>
+  | Readonly<{
+      type: "WEB_MATCH_SESSION.OVERLAY_OPENED"
+      overlay: WebNavigationOverlay
+    }>
+  | Readonly<{ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" }>
 
 type OpenCurrentMatchInput = Readonly<{
   operations: WebMatchSessionOperations
@@ -92,6 +115,18 @@ const failure = (
   cause: unknown,
 ): WebMatchSessionFailure => Object.freeze({ cause, operation })
 
+const setupKey = (
+  context: WebMatchSessionMachineContext,
+): WebNavigationSetupKey =>
+  `${context.requestedSetup.mode}:${context.requestedSetup.mode === "story" ? context.requestedSetup.variant : context.requestedSetup.challengeSetup.variant}`
+
+const ownsDestination = (
+  context: WebMatchSessionMachineContext,
+  destination: WebNavigationDestination,
+): boolean =>
+  destination.matchId === (context.session?.match.matchId ?? null) &&
+  destination.setupKey === setupKey(context)
+
 const webMatchSessionMachineDefinition = setup({
   types: {
     context: {} as WebMatchSessionMachineContext,
@@ -118,6 +153,7 @@ const webMatchSessionMachineDefinition = setup({
     rememberRequestedSetup: assign(
       (_, params: Readonly<{ setup: MatchSetup }>) => ({
         requestedSetup: params.setup,
+        overlays: [],
       }),
     ),
     acceptOpenedSession: assign(
@@ -136,12 +172,65 @@ const webMatchSessionMachineDefinition = setup({
           },
         ),
         session: params.session,
+        overlays: [],
       }),
     ),
     captureFailure: assign((_, params: WebMatchSessionFailure) => ({
       failure: failure(params.operation, params.cause),
     })),
-    clearSession: assign({ failure: null, session: null }),
+    clearSession: assign({ failure: null, session: null, overlays: [] }),
+    openOverlay: assign(({ context, event }) => {
+      if (event.type !== "WEB_MATCH_SESSION.OVERLAY_OPENED") return {}
+      return {
+        overlays: context.overlays.includes(event.overlay)
+          ? context.overlays
+          : [...context.overlays, event.overlay],
+        presentedRewardMatchId:
+          event.overlay === "rewards"
+            ? requireSession(context).match.matchId
+            : context.presentedRewardMatchId,
+      }
+    }),
+    closeOverlay: assign(({ context }) => ({
+      overlays: context.overlays.slice(0, -1),
+      dismissedRewardMatchId:
+        context.overlays.at(-1) === "rewards"
+          ? requireSession(context).match.matchId
+          : context.dismissedRewardMatchId,
+    })),
+    restoreNavigation: assign(({ context, event }) => {
+      if (event.type !== "WEB_MATCH_SESSION.NAVIGATION_RESTORED") return {}
+      const matchId = context.session?.match.matchId ?? null
+      const rewardAvailable =
+        context.presentedRewardMatchId === matchId &&
+        context.dismissedRewardMatchId !== matchId
+      const overlays = eligibleWebNavigationOverlays(
+        ownsDestination(context, event.destination)
+          ? event.destination
+          : { ...event.destination, screen: "menu", overlays: [] },
+        rewardAvailable,
+      )
+      return {
+        overlays,
+        dismissedRewardMatchId:
+          context.overlays.includes("rewards") && !overlays.includes("rewards")
+            ? matchId
+            : context.dismissedRewardMatchId,
+      }
+    }),
+    clearOverlays: assign({ overlays: [] }),
+    acceptProfileReplacement: assign(({ event }) =>
+      event.type === "WEB_MATCH_SESSION.PROFILE_REPLACED"
+        ? {
+            activeMatchExists: event.activeMatchExists,
+            session: null,
+            overlays: [],
+            failure: null,
+            dismissedRewardMatchId: null,
+            presentedRewardMatchId: null,
+          }
+        : {},
+    ),
   },
   guards: {
     activeMatchExists: ({ context }) => context.activeMatchExists,
@@ -153,6 +242,32 @@ const webMatchSessionMachineDefinition = setup({
       context.failure?.operation === "return-to-menu",
     failureWasStart: ({ context }) =>
       context.failure?.operation === "start-match",
+    hasSession: ({ context }) => context.session !== null,
+    restoresOwnedMatch: ({ context, event }) =>
+      event.type === "WEB_MATCH_SESSION.NAVIGATION_RESTORED" &&
+      event.destination.screen === "match" &&
+      context.session !== null &&
+      context.session.match.matchId === event.destination.matchId,
+    restoresSetup: ({ context, event }) =>
+      event.type === "WEB_MATCH_SESSION.NAVIGATION_RESTORED" &&
+      event.destination.screen === "setup" &&
+      ownsDestination(context, event.destination),
+    canOpenOverlay: (
+      { context, event },
+      params: Readonly<{ screen: WebNavigationDestination["screen"] }>,
+    ) => {
+      if (event.type !== "WEB_MATCH_SESSION.OVERLAY_OPENED") return false
+      return eligibleWebNavigationOverlays(
+        {
+          screen: params.screen,
+          matchId: context.session?.match.matchId ?? null,
+          setupKey: setupKey(context),
+          overlays: [...context.overlays, event.overlay],
+        },
+        context.session !== null &&
+          context.dismissedRewardMatchId !== context.session.match.matchId,
+      ).includes(event.overlay)
+    },
   },
 }).createMachine({
   id: "webMatchSession",
@@ -163,6 +278,9 @@ const webMatchSessionMachineDefinition = setup({
     operations: input.operations,
     requestedSetup: { mode: "story", variant: "standard" },
     session: null,
+    overlays: [],
+    dismissedRewardMatchId: null,
+    presentedRewardMatchId: null,
   }),
   states: {
     routing: {
@@ -173,6 +291,35 @@ const webMatchSessionMachineDefinition = setup({
     },
     menu: {
       initial: "choosingMode",
+      on: {
+        "WEB_MATCH_SESSION.PROFILE_REPLACED": {
+          actions: "acceptProfileReplacement",
+          target: "routing",
+        },
+        "WEB_MATCH_SESSION.RESUME_REQUESTED": {
+          guard: "hasSession",
+          actions: "clearOverlays",
+          target: "active",
+        },
+        "WEB_MATCH_SESSION.OVERLAY_OPENED": {
+          guard: { type: "canOpenOverlay", params: { screen: "menu" } },
+          actions: "openOverlay",
+        },
+        "WEB_MATCH_SESSION.OVERLAY_CLOSED": { actions: "closeOverlay" },
+        "WEB_MATCH_SESSION.NAVIGATION_RESTORED": [
+          {
+            guard: "restoresOwnedMatch",
+            actions: "restoreNavigation",
+            target: "active",
+          },
+          {
+            guard: "restoresSetup",
+            actions: "restoreNavigation",
+            target: ".setup",
+          },
+          { actions: "restoreNavigation", target: ".choosingMode" },
+        ],
+      },
       states: {
         choosingMode: {
           on: {
@@ -187,6 +334,10 @@ const webMatchSessionMachineDefinition = setup({
         },
         setup: {
           on: {
+            "WEB_MATCH_SESSION.OVERLAY_OPENED": {
+              guard: { type: "canOpenOverlay", params: { screen: "setup" } },
+              actions: "openOverlay",
+            },
             "WEB_MATCH_SESSION.MATCH_REQUESTED": {
               actions: {
                 type: "rememberRequestedSetup",
@@ -253,6 +404,28 @@ const webMatchSessionMachineDefinition = setup({
     },
     active: {
       on: {
+        "WEB_MATCH_SESSION.PROFILE_REPLACED": {
+          actions: "acceptProfileReplacement",
+          target: "routing",
+        },
+        "WEB_MATCH_SESSION.OVERLAY_OPENED": {
+          guard: { type: "canOpenOverlay", params: { screen: "match" } },
+          actions: "openOverlay",
+        },
+        "WEB_MATCH_SESSION.OVERLAY_CLOSED": { actions: "closeOverlay" },
+        "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED": {
+          actions: "clearOverlays",
+          target: "menu.choosingMode",
+        },
+        "WEB_MATCH_SESSION.NAVIGATION_RESTORED": [
+          { guard: "restoresOwnedMatch", actions: "restoreNavigation" },
+          {
+            guard: "restoresSetup",
+            actions: "restoreNavigation",
+            target: "menu.setup",
+          },
+          { actions: "restoreNavigation", target: "menu.choosingMode" },
+        ],
         "WEB_MATCH_SESSION.SETUP_REQUESTED": {
           actions: {
             type: "rememberRequestedSetup",
@@ -339,6 +512,25 @@ const webMatchSessionMachineDefinition = setup({
 export type WebMatchSessionMachineSnapshot = SnapshotFrom<
   typeof webMatchSessionMachineDefinition
 >
+export type WebMatchSessionActor = ActorRefFrom<
+  typeof webMatchSessionMachineDefinition
+>
+
+export function selectWebNavigationDestination(
+  snapshot: WebMatchSessionMachineSnapshot,
+): WebNavigationDestination | null {
+  if (!snapshot.matches("active") && !snapshot.matches("menu")) return null
+  return {
+    screen: snapshot.matches("active")
+      ? "match"
+      : snapshot.matches({ menu: "setup" })
+        ? "setup"
+        : "menu",
+    matchId: snapshot.context.session?.match.matchId ?? null,
+    setupKey: setupKey(snapshot.context),
+    overlays: snapshot.context.overlays,
+  }
+}
 
 export const selectWebMatchSession = (
   snapshot: WebMatchSessionMachineSnapshot,
