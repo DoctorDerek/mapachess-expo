@@ -2,12 +2,12 @@
 
 import { useMemo } from "react"
 import {
+  selectMatchPresentationAnimalReaction,
   selectMatchPresentationBeat,
   selectMatchPresentationVariationOrdinal,
   type MatchPresentationMachineSnapshot,
 } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
-  MatchParticipantReaction,
   MatchPresentationParticipant,
   MatchPresentationPhase,
 } from "@mapachess/match-presentation/match-reaction"
@@ -21,10 +21,6 @@ import {
   MAPACHITO_SPRITE_MANIFEST,
 } from "../../lib/presentation/webPresentationAssets"
 import BattleFighter from "./BattleFighter"
-
-const IDLE_REACTION = Object.freeze({
-  family: "idle",
-}) satisfies MatchParticipantReaction
 
 export type ReactiveBattleStageProps = Readonly<{
   opponentName: StockfishOpponentDefinition["displayName"]
@@ -81,7 +77,10 @@ export default function ReactiveBattleStage({
 }: ReactiveBattleStageProps) {
   const { currentPhase, pendingParticipants, phaseIndex, reactionSequence } =
     presentationSnapshot.context
-  const playerReaction = currentPhase?.player ?? IDLE_REACTION
+  const playerReaction = selectMatchPresentationAnimalReaction(
+    presentationSnapshot,
+    "player",
+  )
   const playerVariationOrdinal = selectMatchPresentationVariationOrdinal(
     presentationSnapshot,
     "player",
