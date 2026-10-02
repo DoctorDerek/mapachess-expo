@@ -36,26 +36,28 @@ const render = (match = win, records = progress) =>
 describe("saved Story result presentation", () => {
   it("shows the earned medal and next opponent without repeating an equal best", () => {
     const result = render()
-    expect(result).toContain("Gold this match")
+    expect(result).toContain("Gold</strong>")
     expect(result).not.toContain("Your best:")
-    expect(result).toContain("Up next:")
+    expect(result).not.toContain("Up next:")
+    expect(result).toContain("Bunny Stockfish · 200 Elo")
+    expect(result).toContain("Chicken Stockfish · 100 Elo")
     expect(result).toContain("Next opponent")
     expect(result).toContain(
       "Chicken Stockfish is available in both Challenge modes",
     )
     expect(result).not.toContain("XP")
     expect(result).not.toContain("You won!")
-    expect(result).toContain("Saved")
+    expect(result).not.toContain("Saved")
   })
   it("distinguishes a lower replay medal from the retained best", () => {
     const result = render({ ...win, pieceHintsUsed: true, moveHintsUsed: true })
-    expect(result).toContain("Bronze this match")
+    expect(result).toContain("Bronze</strong>")
     expect(result).toContain("Your best: Gold")
   })
   it("explains Silver without implying Piece Hints prevent a medal", () => {
     const result = render({ ...win, pieceHintsUsed: true })
-    expect(result).toContain("Silver this match")
-    expect(result).toContain("Piece Hints used · no Move Hints.")
+    expect(result).toContain("Silver</strong>")
+    expect(result).toContain("Piece Hints used · no Move Hints")
     expect(result).toContain("Your best: Gold")
   })
   it("uses the matching variant's ladder", () => {
@@ -71,7 +73,7 @@ describe("saved Story result presentation", () => {
       },
       { standard: [], chess960: progress.standard },
     )
-    expect(result).toContain("Gold this match")
+    expect(result).toContain("Gold</strong>")
     expect(result).toContain("Next opponent")
   })
   it.each([

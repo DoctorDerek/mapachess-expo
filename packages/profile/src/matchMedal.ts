@@ -3,6 +3,12 @@ import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 export const MATCH_MEDALS = ["bronze", "silver", "gold"] as const
 export type MatchMedal = (typeof MATCH_MEDALS)[number]
 
+export const MATCH_MEDAL_HINT_USE = Object.freeze({
+  bronze: "Move Hints used",
+  silver: "Piece Hints used · no Move Hints",
+  gold: "No hints used",
+} satisfies Readonly<Record<MatchMedal, string>>)
+
 type MedalResult = Pick<
   DurableMatchRecord,
   "conclusion" | "playerColor" | "moveHintsUsed" | "pieceHintsUsed"
