@@ -1,71 +1,66 @@
 "use client"
 
-import { useAnimate, useReducedMotion } from "motion/react"
+import { animate, useReducedMotion } from "motion/react"
 import { useEffect, useState } from "react"
-import {
-  levelFromTotalXp,
-  levelProgress,
-  xpAtLevel,
-} from "@mapachess/profile/global-xp"
+import { levelProgress, xpAtLevel } from "@mapachess/profile/global-xp"
+import levelProgressionSpans, {
+  easeOutQuad,
+} from "@mapachess/profile/level-progression"
 
-const MINIMUM_LEVEL_FILL_SECONDS = 0.9
-const MINIMUM_TOTAL_PROGRESS_SECONDS = 3.7
+const progressFrame = (xp: number) => {
+  const progress = levelProgress(xp)
+  return { ...progress, fraction: progress.current / progress.required }
+}
 
 export default function MatchLevelProgress({
   beforeXp,
   afterXp,
 }: Readonly<{ beforeXp: number; afterXp: number }>) {
-  const [displayXp, setDisplayXp] = useState(beforeXp)
-  const [fill, animate] = useAnimate<HTMLSpanElement>()
+  const [displayed, setDisplayed] = useState(() => progressFrame(beforeXp))
   const reduceMotion = useReducedMotion() === true
-  const displayed = levelProgress(displayXp)
   const final = levelProgress(afterXp)
 
   useEffect(() => {
     if (reduceMotion) {
-      setDisplayXp(afterXp)
+      setDisplayed(progressFrame(afterXp))
       return
     }
-    if (displayXp >= afterXp || fill.current === null) return
-
-    const finalLevel = levelFromTotalXp(afterXp)
-    const crossedLevelCount = finalLevel - levelFromTotalXp(beforeXp)
-    const hasPartialFinalLevel = afterXp > xpAtLevel(finalLevel)
-    const fillSegmentCount = crossedLevelCount + Number(hasPartialFinalLevel)
-    const fillDurationSeconds = Math.max(
-      MINIMUM_LEVEL_FILL_SECONDS,
-      MINIMUM_TOTAL_PROGRESS_SECONDS / fillSegmentCount,
-    )
-    const level = levelFromTotalXp(displayXp)
-    const start = xpAtLevel(level)
-    const next = xpAtLevel(level + 1)
-    const boundary = Math.min(next, afterXp)
-    const bar = fill.current
-    const playback = animate(
-      bar,
-      {
-        scaleX: [
-          (displayXp - start) / (next - start),
-          (boundary - start) / (next - start),
-        ],
-      },
-      { duration: fillDurationSeconds, ease: "easeOut" },
-    )
     let active = true
-    void playback.then(() => {
-      if (!active) return
-      if (boundary === next) {
-        // Motion's completed transform outlives React's unchanged zero-progress style.
-        bar.style.transform = "scaleX(0)"
+    let playback: ReturnType<typeof animate> | undefined
+    setDisplayed(progressFrame(beforeXp))
+    const traverse = async (): Promise<void> => {
+      for (const span of levelProgressionSpans(beforeXp, afterXp)) {
+        if (!active) return
+        const start = xpAtLevel(span.level)
+        const required = xpAtLevel(span.level + 1) - start
+        playback = animate(0, 1, {
+          duration: span.durationMs / 1000,
+          ease: easeOutQuad,
+          onUpdate: (fraction) => {
+            if (!active) return
+            const xp = span.fromXp + (span.toXp - span.fromXp) * fraction
+            setDisplayed({
+              level: span.level,
+              current: Math.floor(xp) - start,
+              required,
+              fraction:
+                span.fromFraction +
+                (span.toFraction - span.fromFraction) * fraction,
+            })
+          },
+        })
+        await playback
+        if (!active) return
+        setDisplayed(progressFrame(span.toXp))
       }
-      setDisplayXp(boundary)
-    })
+    }
+    void traverse()
 
     return () => {
       active = false
-      playback.stop()
+      playback?.stop()
     }
-  }, [afterXp, animate, beforeXp, displayXp, fill, reduceMotion])
+  }, [afterXp, beforeXp, reduceMotion])
 
   return (
     <section
@@ -88,10 +83,9 @@ export default function MatchLevelProgress({
         className="border-mapachito-charcoal bg-mapachito-charcoal/15 h-3 overflow-hidden rounded-full border-2"
       >
         <span
-          ref={fill}
           className="bg-mapachito-green block h-full w-full origin-left"
           style={{
-            transform: `scaleX(${String(displayed.current / displayed.required)})`,
+            transform: `scaleX(${String(displayed.fraction)})`,
           }}
         />
       </div>
