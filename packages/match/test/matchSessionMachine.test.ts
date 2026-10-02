@@ -22,6 +22,107 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
+  it("restores the pre-match setup and retains the session through Back and Forward", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: false, operations: ops },
+    }).start()
+    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup: session.setup })
+    const predecessor = selectMatchNavigationDestination(actor.getSnapshot())
+    if (predecessor === null) throw new Error("Expected setup destination")
+    expect(predecessor.matchId).toBeNull()
+    actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup: session.setup })
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    const match = selectMatchNavigationDestination(actor.getSnapshot())
+    if (match === null) throw new Error("Expected match destination")
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: predecessor,
+    })
+    expect(actor.getSnapshot().matches({ menu: "setup" })).toBe(true)
+    expect(actor.getSnapshot().context.session).toBe(session)
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: match,
+    })
+    expect(actor.getSnapshot().matches("active")).toBe(true)
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "match-menu" })
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().matches("active")).toBe(true)
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().matches({ menu: "setup" })).toBe(true)
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
+    expect(actor.getSnapshot().context.session).toBe(session)
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(ops.openFreshMatch).toHaveBeenCalledOnce()
+    expect(ops.openCurrentMatch).not.toHaveBeenCalled()
+    expect(ops.returnToMenu).not.toHaveBeenCalled()
+    actor.stop()
+  })
+
+  it("admits only the latest match's setup predecessor and invalidates it on profile replacement", async () => {
+    type Session = MatchSessionIdentity & Readonly<{ platformHandle: symbol }>
+    const replacement: Session = {
+      ...session,
+      match: { matchId: "replacement-match" },
+    }
+    const actor = createActor(createMatchSessionMachine<Session>(), {
+      input: {
+        activeMatchExists: false,
+        operations: {
+          canNavigate: () => true,
+          openCurrentMatch: async () => session,
+          returnToMenu: async () => undefined,
+          openFreshMatch: vi
+            .fn<MatchSessionOperations<Session>["openFreshMatch"]>()
+            .mockResolvedValueOnce(session)
+            .mockResolvedValueOnce(replacement),
+        },
+      },
+    }).start()
+    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup: session.setup })
+    const original = selectMatchNavigationDestination(actor.getSnapshot())
+    if (original === null) throw new Error("Expected original setup")
+    actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup: session.setup })
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    const latest = selectMatchNavigationDestination(actor.getSnapshot())
+    if (latest === null) throw new Error("Expected replacement setup")
+    actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup: session.setup })
+    await waitFor(
+      actor,
+      (snapshot) =>
+        snapshot.matches("active") && snapshot.context.session === replacement,
+    )
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: original,
+    })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: latest,
+    })
+    expect(actor.getSnapshot().matches({ menu: "setup" })).toBe(true)
+    expect(actor.getSnapshot().context.session).toBe(replacement)
+    actor.send({
+      type: "MATCH_SESSION.PROFILE_REPLACED",
+      activeMatchExists: false,
+    })
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: latest,
+    })
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(actor.getSnapshot().context.matchSetupPredecessor).toBeNull()
+    expect(actor.getSnapshot().context.session).toBeNull()
+    actor.stop()
+  })
+
   it("protects recovery from both system Back and restored destinations through the injected canonical policy", async () => {
     let navigationAllowed = true
     const actor = createActor(machine, {
