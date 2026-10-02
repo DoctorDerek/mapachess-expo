@@ -53,6 +53,7 @@ describe("accepted match celebration composition", () => {
         onSetupRequested={vi.fn()}
         restoreFocusRef={{ current: null }}
         reward={reward}
+        showSaveConfirmation={true}
         storyProgress={applyStoryMatchResult(
           createInitialStoryProgress(),
           completed,
@@ -70,6 +71,8 @@ describe("accepted match celebration composition", () => {
     expect(markup).not.toContain("Standard Elo")
     expect(markup).not.toContain("Next:")
     expect(markup).not.toContain("Estimated")
+    expect(markup).toContain("No hints used")
+    expect(markup).toContain("Saved locally")
   })
 
   it("shows a Challenge replay and only the variant Elo actually awarded", () => {
@@ -77,7 +80,7 @@ describe("accepted match celebration composition", () => {
       <MatchCelebration
         battleStageRef={vi.fn()}
         disabled={false}
-        match={{ ...completed, mode: "challenge" }}
+        match={{ ...completed, mode: "challenge", opponentTargetElo: 900 }}
         onDismiss={vi.fn()}
         onReplayRequested={vi.fn()}
         onSetupRequested={vi.fn()}
@@ -86,12 +89,17 @@ describe("accepted match celebration composition", () => {
           ...reward,
           ratedElo: { variant: "standard", before: 100, after: 228 },
         }}
+        showSaveConfirmation={false}
         storyProgress={createInitialStoryProgress()}
       />,
     )
-    expect(markup).toContain("Replay match")
+    expect(markup).toContain("Replay opponent")
     expect(markup).toContain("Standard")
     expect(markup).toContain("100 → 228")
     expect(markup).not.toContain("Next opponent")
+    expect(markup).not.toContain("Saved locally")
+    expect(markup).toContain("Chicken Stockfish")
+    expect(markup).toContain("900 Elo")
+    expect(markup).not.toContain("Chicken Stockfish · 100 Elo")
   })
 })

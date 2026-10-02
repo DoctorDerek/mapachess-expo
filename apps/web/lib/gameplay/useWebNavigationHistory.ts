@@ -128,13 +128,20 @@ export default function useWebNavigationHistory(
         destination.screen === entry.destination.screen &&
         destination.matchId === entry.destination.matchId &&
         destination.overlays.length < entry.destination.overlays.length
+      const replacingConcludingMenu =
+        destination.screen === "match" &&
+        destination.matchId === entry.destination.matchId &&
+        destination.overlays.at(-1) === "rewards" &&
+        entry.destination.overlays.at(-1) === "match-menu" &&
+        destination.overlays.length === entry.destination.overlays.length
+      const replaceCurrentEntry = closingOverlay || replacingConcludingMenu
       writeEntry(
         {
           scope: currentScope,
-          index: closingOverlay ? entry.index : nextIndex,
+          index: replaceCurrentEntry ? entry.index : nextIndex,
           destination,
         },
-        closingOverlay,
+        replaceCurrentEntry,
       )
     }
     const restore = (event: PopStateEvent): void => {
