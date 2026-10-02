@@ -64,14 +64,56 @@ export default function useWebNavigationHistory(
   useEffect(() => {
     scope.current ??= globalThis.crypto.randomUUID()
     const currentScope = scope.current
+    let disposed = false
     let restoring = false
+    let restoringInitialEntry = false
+    let traversalPending = false
+    let lastDestination = selectWebNavigationDestination(actor.getSnapshot())
     let focusFrame: number | null = null
     const returnFocus = new Map<number, HTMLElement>()
+    const restoreFocus = (index: number): void => {
+      const trigger = returnFocus.get(index + 1)
+      if (focusFrame !== null) cancelAnimationFrame(focusFrame)
+      focusFrame = requestAnimationFrame(() => {
+        focusFrame = null
+        if (
+          trigger?.isConnected &&
+          trigger.closest("[hidden], [inert]") === null
+        )
+          trigger.focus()
+      })
+    }
     const synchronize = (): void => {
       const destination = selectWebNavigationDestination(actor.getSnapshot())
-      if (destination === null || restoring) return
+      if (destination === null || restoring || disposed) return
+      lastDestination = destination
       const entry = entryFromState(window.history.state)
+      if (traversalPending) {
+        writeEntry(
+          {
+            scope: currentScope,
+            index: entry?.scope === currentScope ? entry.index : 0,
+            destination,
+          },
+          true,
+        )
+        traversalPending = false
+        restoreFocus(entry?.scope === currentScope ? entry.index : -1)
+        return
+      }
       if (entry?.scope !== currentScope) {
+        if (entry !== null && !restoringInitialEntry) {
+          restoringInitialEntry = true
+          restoring = true
+          actor.send({
+            type: "MATCH_SESSION.NAVIGATION_RESTORED",
+            destination: entry.destination,
+          })
+          restoring = false
+          queueMicrotask(synchronize)
+          return
+        }
+        restoringInitialEntry = false
         const root = { ...destination, screen: "menu" as const, overlays: [] }
         writeEntry({ scope: currentScope, index: 0, destination: root }, true)
         if (!sameDestination(root, destination))
@@ -96,18 +138,24 @@ export default function useWebNavigationHistory(
       )
     }
     const restore = (event: PopStateEvent): void => {
-      const current = selectWebNavigationDestination(actor.getSnapshot())
-      if (current === null) return
+      const current =
+        selectWebNavigationDestination(actor.getSnapshot()) ?? lastDestination
       const entry = entryFromState(event.state)
       const destination =
         entry?.scope === currentScope
           ? entry.destination
-          : { ...current, screen: "menu" as const, overlays: [] }
+          : current === null
+            ? null
+            : { ...current, screen: "menu" as const, overlays: [] }
+      if (destination === null) return
+      traversalPending = true
       restoring = true
       actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
       restoring = false
       const accepted = selectWebNavigationDestination(actor.getSnapshot())
-      if (accepted !== null)
+      if (accepted !== null) {
+        lastDestination = accepted
+        traversalPending = false
         writeEntry(
           {
             scope: currentScope,
@@ -116,21 +164,14 @@ export default function useWebNavigationHistory(
           },
           true,
         )
-      const trigger = returnFocus.get((entry?.index ?? -1) + 1)
-      if (focusFrame !== null) cancelAnimationFrame(focusFrame)
-      focusFrame = requestAnimationFrame(() => {
-        focusFrame = null
-        if (
-          trigger?.isConnected &&
-          trigger.closest("[hidden], [inert]") === null
-        )
-          trigger.focus()
-      })
+        restoreFocus(entry?.scope === currentScope ? entry.index : -1)
+      }
     }
     window.addEventListener("popstate", restore)
     const subscription = actor.subscribe(synchronize)
     synchronize()
     return () => {
+      disposed = true
       subscription.unsubscribe()
       window.removeEventListener("popstate", restore)
       if (focusFrame !== null) cancelAnimationFrame(focusFrame)
