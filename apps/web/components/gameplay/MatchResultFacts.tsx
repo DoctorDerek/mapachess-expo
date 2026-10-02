@@ -2,8 +2,7 @@ import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
-import { STORY_PROGRESS_COPY } from "@mapachess/profile/story-progress"
-import MedalSymbol from "../presentation/MedalSymbol"
+import MedalWithHintUse from "./MedalWithHintUse"
 
 export default function MatchResultFacts({
   match,
@@ -19,10 +18,7 @@ export default function MatchResultFacts({
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold">
       {challengeMedal === null ? null : (
-        <span>
-          <MedalSymbol medal={challengeMedal} />
-          {STORY_PROGRESS_COPY.medals[challengeMedal]}
-        </span>
+        <MedalWithHintUse medal={challengeMedal} />
       )}
       {reward === null ? null : (
         <>

@@ -8,6 +8,7 @@ import matchMachine, {
   selectPersistenceFailure,
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
+import LocalSaveError from "../presentation/LocalSaveError"
 import MapachessButton from "../presentation/MapachessButton"
 
 export default function MatchRecovery({
@@ -59,7 +60,11 @@ export default function MatchRecovery({
       {persistenceFailure === null ? null : (
         <div className="grid gap-2">
           <p role="status" className="text-mapachito-white">
-            Your last action is paused because its local save was not verified.
+            <LocalSaveError />
+            <span className="mt-1 block">
+              Your pending change is retained but not yet saved. Retry save to
+              continue.
+            </span>
           </p>
           <MapachessButton
             onClick={() =>
@@ -67,7 +72,7 @@ export default function MatchRecovery({
             }
             type="button"
           >
-            Retry local save
+            Retry save
           </MapachessButton>
         </div>
       )}

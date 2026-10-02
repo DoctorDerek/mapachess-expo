@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { type ReactNode, type Ref } from "react"
+import { useEffect, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
 import {
   selectIsPersistingMutation,
@@ -13,6 +13,8 @@ import createMatchSetupForMode, {
   MATCH_SETUP_COPY,
 } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
+import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
@@ -160,6 +162,28 @@ export default function WebGame({
           selectDefaultStoryOpponent(playerData.storyProgress, variant),
         )
   const session = selectWebMatchSession(snapshot)
+  useEffect(() => {
+    if (
+      session !== null &&
+      savedMatch?.matchId === session.match.matchId &&
+      savedMatch.conclusion === null &&
+      (snapshot.context.presentedRewardMatchId === session.match.matchId ||
+        snapshot.context.dismissedRewardMatchId === session.match.matchId ||
+        (session.match.conclusion !== null && !snapshot.context.resultReopened))
+    )
+      actor.send({
+        type: "MATCH_SESSION.RESULT_REOPENED",
+        matchId: session.match.matchId,
+      })
+  }, [
+    actor,
+    session,
+    savedMatch?.matchId,
+    savedMatch?.conclusion,
+    snapshot.context.presentedRewardMatchId,
+    snapshot.context.dismissedRewardMatchId,
+    snapshot.context.resultReopened,
+  ])
   const failure = selectWebMatchSessionFailure(snapshot)
   if (snapshot.matches("active") && session === null) {
     throw new Error("Active web match state has no owned session.")
@@ -314,6 +338,13 @@ export default function WebGame({
             celebrationDismissed={
               snapshot.context.dismissedRewardMatchId === session.match.matchId
             }
+            rewardsReplaySequence={snapshot.context.rewardsReplaySequence}
+            onRewardsReplayRequested={() =>
+              actor.send({
+                type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+                matchId: session.match.matchId,
+              })
+            }
             menuActions={
               <>
                 <MapachessButton
@@ -351,7 +382,10 @@ export default function WebGame({
             }
             actor={session.actor}
             evaluationActor={session.evaluationActor}
-            initiallyConcluded={session.match.conclusion !== null}
+            initiallyConcluded={
+              session.match.conclusion !== null &&
+              !snapshot.context.resultReopened
+            }
             savedMatch={savedMatch}
             acceptedReward={savedPlayerData?.lastAcceptedResultReward ?? null}
             storyProgress={
@@ -385,8 +419,10 @@ export default function WebGame({
                   <MatchResultFacts
                     match={savedMatch}
                     reward={
-                      savedPlayerData.lastAcceptedResultReward?.matchId ===
-                      savedMatch.matchId
+                      acceptedRewardMatchesEnding(
+                        savedPlayerData.lastAcceptedResultReward,
+                        savedMatch,
+                      )
                         ? savedPlayerData.lastAcceptedResultReward
                         : null
                     }
@@ -412,7 +448,13 @@ export default function WebGame({
                       }
                       onClick={requestReplayAfterResult}
                     >
-                      Replay match
+                      Replay opponent
+                      <span className="mt-1 block text-base font-normal">
+                        {stockfishOpponent(savedMatch.opponentId).displayName}
+                        {savedMatch.opponentTargetElo === undefined
+                          ? null
+                          : ` · ${String(savedMatch.opponentTargetElo)} Elo`}
+                      </span>
                     </MapachessButton>
                   )}
                 </>

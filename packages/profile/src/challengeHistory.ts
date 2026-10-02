@@ -77,10 +77,52 @@ export const recordChallengeStart = (
   })
 }
 
+export const adjustChallengeResultCount = (
+  history: ChallengeHistory,
+  variant: MatchVariant,
+  opponentId: StockfishOpponentId,
+  outcome: "win" | "loss",
+  adjustment: -1 | 1,
+): ChallengeHistory => {
+  const current = history[variant]
+  const previous = current.animals.find(
+    (entry) => entry.opponentId === opponentId,
+  )
+  const wins =
+    (previous?.lifetimeWins ?? 0) + (outcome === "win" ? adjustment : 0)
+  const losses =
+    (previous?.lifetimeLosses ?? 0) + (outcome === "loss" ? adjustment : 0)
+  if (
+    wins < 0 ||
+    losses < 0 ||
+    !Number.isSafeInteger(wins) ||
+    !Number.isSafeInteger(losses)
+  )
+    throw new RangeError(
+      "Challenge result count does not match its accepted contribution.",
+    )
+  return Object.freeze({
+    ...history,
+    [variant]: Object.freeze({
+      ...current,
+      animals: Object.freeze([
+        ...current.animals.filter((entry) => entry.opponentId !== opponentId),
+        Object.freeze({
+          opponentId,
+          lifetimeWins: wins,
+          lifetimeLosses: losses,
+          highestMedal: previous?.highestMedal ?? null,
+        }),
+      ]),
+    }),
+  })
+}
+
 export default function applyChallengeMatchResult(
   history: ChallengeHistory,
   previousMatch: Pick<DurableMatchRecord, "matchId" | "conclusion"> | null,
   match: ChallengeHistoryMatch | null,
+  countResult = true,
 ): ChallengeHistory {
   if (
     match === null ||
@@ -102,8 +144,9 @@ export default function applyChallengeMatchResult(
   const medal = matchVictoryMedal(match)
   const record: ChallengeAnimalRecord = Object.freeze({
     opponentId: match.opponentId,
-    lifetimeWins: (previous?.lifetimeWins ?? 0) + (won ? 1 : 0),
-    lifetimeLosses: (previous?.lifetimeLosses ?? 0) + (won ? 0 : 1),
+    lifetimeWins: (previous?.lifetimeWins ?? 0) + (countResult && won ? 1 : 0),
+    lifetimeLosses:
+      (previous?.lifetimeLosses ?? 0) + (countResult && !won ? 1 : 0),
     highestMedal: highestMatchMedal(previous?.highestMedal ?? null, medal),
   })
   return Object.freeze({

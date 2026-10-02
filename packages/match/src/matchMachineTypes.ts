@@ -7,6 +7,7 @@ import type {
 import type {
   MatchConclusion,
   MatchDrawOfferDecision,
+  RetainedMatchConclusion,
 } from "./matchConclusion.js"
 import type {
   AppliedMatchMove,
@@ -72,6 +73,7 @@ type MatchMachineSharedInput = Readonly<{
 }>
 
 export type ResumedMatchState = Readonly<{
+  retainedConclusion?: RetainedMatchConclusion | null
   conclusion: MatchConclusion | null
   moveHintsUsed: boolean
   pieceHintsUsed: boolean
@@ -91,6 +93,7 @@ export type MatchMachineInput =
       }>)
 
 export type MatchMachineContext = Readonly<{
+  retainedConclusion: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   requestedAutoHintMode: AutoHintMode | null

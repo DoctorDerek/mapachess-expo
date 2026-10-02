@@ -9,6 +9,10 @@
       "types": "./src/globalXp.ts",
       "default": "./dist/globalXp.js"
     },
+    "./level-progression": {
+      "types": "./src/levelProgression.ts",
+      "default": "./dist/levelProgression.js"
+    },
     "./match-medal": {
       "types": "./src/matchMedal.ts",
       "default": "./dist/matchMedal.js"

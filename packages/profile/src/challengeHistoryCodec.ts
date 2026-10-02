@@ -61,6 +61,7 @@ const decodeDifficulties = (
 const decodeAnimals = (
   received: unknown,
   path: string,
+  historicalMedals: boolean,
 ): readonly ChallengeAnimalRecord[] => {
   if (
     !Array.isArray(received) ||
@@ -96,7 +97,11 @@ const decodeAnimals = (
         item.highestMedal,
         `${itemPath}.highestMedal`,
       )
-      if ((lifetimeWins === 0) !== (highestMedal === null))
+      if (
+        historicalMedals
+          ? lifetimeWins > 0 && highestMedal === null
+          : (lifetimeWins === 0) !== (highestMedal === null)
+      )
         return failData(`${itemPath}.highestMedal`)
       return Object.freeze({
         opponentId,
@@ -111,6 +116,7 @@ const decodeAnimals = (
 const decodeVariant = (
   received: unknown,
   path: string,
+  historicalMedals: boolean,
 ): ChallengeVariantHistory => {
   const object = requireObject(received, path)
   requireExactKeys(object, ["difficulties", "animals"], path)
@@ -119,19 +125,28 @@ const decodeVariant = (
       object.difficulties,
       `${path}.difficulties`,
     ),
-    animals: decodeAnimals(object.animals, `${path}.animals`),
+    animals: decodeAnimals(object.animals, `${path}.animals`, historicalMedals),
   })
 }
 
 export default function decodeChallengeHistory(
   received: unknown,
   path: string,
+  historicalMedals = false,
 ): ChallengeHistory {
   const object = requireObject(received, path)
   requireExactKeys(object, MATCH_VARIANTS, path)
   return Object.freeze({
-    standard: decodeVariant(object.standard, `${path}.standard`),
-    chess960: decodeVariant(object.chess960, `${path}.chess960`),
+    standard: decodeVariant(
+      object.standard,
+      `${path}.standard`,
+      historicalMedals,
+    ),
+    chess960: decodeVariant(
+      object.chess960,
+      `${path}.chess960`,
+      historicalMedals,
+    ),
   })
 }
 

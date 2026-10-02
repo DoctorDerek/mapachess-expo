@@ -425,6 +425,7 @@ describe("Story progress in durable profiles", () => {
 
     const rewound = {
       ...winner,
+      conclusion: null,
       cursor: 0,
       currentFen: createInitialMatchPosition(winner.startingPosition).fen,
     }

@@ -61,6 +61,8 @@ type MatchSessionMachineContext<Session extends MatchSessionIdentity> =
     overlays: readonly MatchNavigationOverlay[]
     dismissedRewardMatchId: string | null
     presentedRewardMatchId: string | null
+    rewardsReplaySequence: number
+    resultReopened: boolean
   }>
 
 export type MatchSessionMachineEvent =
@@ -88,6 +90,11 @@ export type MatchSessionMachineEvent =
       overlay: MatchNavigationOverlay
     }>
   | Readonly<{ type: "MATCH_SESSION.OVERLAY_CLOSED" }>
+  | Readonly<{ type: "MATCH_SESSION.RESULT_REOPENED"; matchId: string }>
+  | Readonly<{
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED"
+      matchId: string
+    }>
 
 type OpenCurrentMatchInput<Session extends MatchSessionIdentity> = Readonly<{
   operations: MatchSessionOperations<Session>
@@ -225,6 +232,10 @@ export default function createMatchSessionMachine<
           requestedSetup: params.session.setup,
           session: params.session,
           overlays: [],
+          rewardsReplaySequence: 0,
+          dismissedRewardMatchId: null,
+          presentedRewardMatchId: null,
+          resultReopened: false,
         }),
       ),
       captureFailure: assign((_, params: MatchSessionFailure) => ({
@@ -242,7 +253,13 @@ export default function createMatchSessionMachine<
         return {
           overlays: context.overlays.includes(event.overlay)
             ? context.overlays
-            : [...context.overlays, event.overlay],
+            : [
+                ...context.overlays.filter(
+                  (overlay) =>
+                    event.overlay !== "rewards" || overlay !== "match-menu",
+                ),
+                event.overlay,
+              ],
           presentedRewardMatchId:
             event.overlay === "rewards"
               ? requireSession(context).match.matchId
@@ -255,6 +272,18 @@ export default function createMatchSessionMachine<
           context.overlays.at(-1) === "rewards"
             ? requireSession(context).match.matchId
             : context.dismissedRewardMatchId,
+      })),
+      replayRewards: assign(({ context }) => ({
+        overlays: ["rewards"] as const,
+        dismissedRewardMatchId: requireSession(context).match.matchId,
+        rewardsReplaySequence: context.rewardsReplaySequence + 1,
+      })),
+      reopenResult: assign(({ context }) => ({
+        resultReopened: true,
+        dismissedRewardMatchId: null,
+        presentedRewardMatchId: null,
+        rewardsReplaySequence: 0,
+        overlays: context.overlays.filter((overlay) => overlay !== "rewards"),
       })),
       restoreNavigation: assign(({ context, event }) => {
         if (event.type !== "MATCH_SESSION.NAVIGATION_RESTORED") return {}
@@ -291,6 +320,8 @@ export default function createMatchSessionMachine<
               failure: null,
               dismissedRewardMatchId: null,
               presentedRewardMatchId: null,
+              rewardsReplaySequence: 0,
+              resultReopened: false,
             }
           : {},
       ),
@@ -310,6 +341,11 @@ export default function createMatchSessionMachine<
         context.operations.canNavigate() && context.session !== null,
       hasOverlays: ({ context }) =>
         context.operations.canNavigate() && context.overlays.length > 0,
+      canReplayRewards: ({ context, event }) =>
+        context.operations.canNavigate() &&
+        event.type === "MATCH_SESSION.REWARDS_REPLAY_REQUESTED" &&
+        context.session?.match.matchId === event.matchId &&
+        context.overlays.length === 0,
       returnsToMatchSetup: ({ context }) =>
         context.operations.canNavigate() &&
         context.matchBackScreen === "setup" &&
@@ -361,6 +397,8 @@ export default function createMatchSessionMachine<
       overlays: [],
       dismissedRewardMatchId: null,
       presentedRewardMatchId: null,
+      resultReopened: false,
+      rewardsReplaySequence: 0,
     }),
     states: {
       routing: {
@@ -510,6 +548,15 @@ export default function createMatchSessionMachine<
       },
       active: {
         on: {
+          "MATCH_SESSION.RESULT_REOPENED": {
+            guard: ({ context, event }) =>
+              context.session?.match.matchId === event.matchId,
+            actions: "reopenResult",
+          },
+          "MATCH_SESSION.REWARDS_REPLAY_REQUESTED": {
+            guard: "canReplayRewards",
+            actions: "replayRewards",
+          },
           "MATCH_SESSION.BACK_REQUESTED": [
             { guard: "hasOverlays", actions: "closeOverlay" },
             {

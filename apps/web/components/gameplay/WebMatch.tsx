@@ -32,12 +32,16 @@ import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
-import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
+import {
+  acceptedRewardMatchesEnding,
+  type AcceptedMatchReward,
+} from "@mapachess/profile/player-data"
 import type { StoryProgress } from "@mapachess/profile/story-progress"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import MapachessButton from "../presentation/MapachessButton"
 import BattleStageSurface from "./BattleStageSurface"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
@@ -71,6 +75,8 @@ export type WebMatchProps = Readonly<{
   navigation: MatchNavigationCommands
   overlays: readonly MatchNavigationOverlay[]
   celebrationDismissed: boolean
+  rewardsReplaySequence: number
+  onRewardsReplayRequested: () => void
   visible: boolean
 }>
 
@@ -93,22 +99,27 @@ export default function WebMatch({
   navigation,
   overlays,
   celebrationDismissed,
+  rewardsReplaySequence,
+  onRewardsReplayRequested,
   visible,
 }: WebMatchProps) {
   const heading = useRef<HTMLHeadingElement>(null)
   const menuSummary = useRef<HTMLElement>(null)
+  const rewardsButton = useRef<HTMLButtonElement>(null)
   const [celebrationStageSlot, setCelebrationStageSlot] =
     useState<HTMLDivElement | null>(null)
   const matchingReward =
     savedMatch?.matchId === runtime.matchId &&
     savedMatch.conclusion !== null &&
-    acceptedReward?.matchId === runtime.matchId
+    acceptedRewardMatchesEnding(acceptedReward, savedMatch)
       ? acceptedReward
       : null
-  const newlyAccepted = !initiallyConcluded && matchingReward !== null
+  const completedSavedMatch =
+    savedMatch?.matchId === runtime.matchId && savedMatch.conclusion !== null
+  const newlyAccepted = !initiallyConcluded && completedSavedMatch
   const celebrationPending = newlyAccepted && !celebrationDismissed
   const celebrationOpen =
-    celebrationPending &&
+    completedSavedMatch &&
     visible &&
     overlays.includes("rewards") &&
     !overlays.includes("settings")
@@ -116,11 +127,11 @@ export default function WebMatch({
     if (
       celebrationPending &&
       visible &&
-      !reactionsPaused &&
+      !overlays.includes("settings") &&
       !overlays.includes("rewards")
     )
       navigation.open("rewards")
-  }, [celebrationPending, visible, reactionsPaused, overlays, navigation.open])
+  }, [celebrationPending, visible, overlays, navigation.open])
   useEffect(() => {
     if (!visible) return
     heading.current?.focus({ preventScroll: true })
@@ -131,6 +142,7 @@ export default function WebMatch({
   const presentation = useAcceptedMatchPresentation(
     snapshot,
     runtime.playerColor,
+    rewardsReplaySequence,
   )
   const opponent = stockfishOpponent(runtime.opponentId)
   const opponentReaction = selectMatchPresentationAnimalReaction(
@@ -156,7 +168,7 @@ export default function WebMatch({
   const reactions = useMoveReactions(
     timeline,
     moveFeedback,
-    reactionsPaused || celebrationPending,
+    reactionsPaused || celebrationPending || celebrationOpen,
   )
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
@@ -339,19 +351,32 @@ export default function WebMatch({
             />
           </section>
           {conclusion === null || celebrationPending ? null : (
-            <div className="px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]">
+            <div
+              className={`px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto] ${celebrationOpen ? "invisible" : ""}`}
+              inert={celebrationOpen}
+            >
               <MatchOutcome
                 conclusion={conclusion}
                 playerColor={runtime.playerColor}
                 opponentName={opponent.displayName}
               >
                 {result?.(persisting || persistenceFailure !== null)}
+                {!completedSavedMatch ? null : (
+                  <MapachessButton
+                    disabled={persisting || persistenceFailure !== null}
+                    onClick={onRewardsReplayRequested}
+                    variant="secondary"
+                    ref={rewardsButton}
+                  >
+                    View rewards
+                  </MapachessButton>
+                )}
               </MatchOutcome>
             </div>
           )}
         </div>
       </section>
-      {celebrationOpen && savedMatch !== null && matchingReward !== null ? (
+      {celebrationOpen && savedMatch !== null ? (
         <MatchCelebration
           battleStageRef={setCelebrationStageSlot}
           disabled={persisting || persistenceFailure !== null}
@@ -359,15 +384,18 @@ export default function WebMatch({
           onDismiss={navigation.back}
           onReplayRequested={onReplayRequested}
           onSetupRequested={onSetupRequested}
-          restoreFocusRef={menuSummary}
+          restoreFocusRef={
+            rewardsReplaySequence > 0 ? rewardsButton : menuSummary
+          }
           reward={matchingReward}
           storyProgress={storyProgress}
+          showSaveConfirmation={newlyAccepted && rewardsReplaySequence === 0}
         />
       ) : null}
       {newlyAccepted && celebrationDismissed && matchingReward !== null ? (
         <LevelAchievementToasts
           ids={matchingReward.unlockedAchievementIds}
-          paused={reactionsPaused}
+          paused={reactionsPaused || celebrationOpen}
         />
       ) : null}
     </>

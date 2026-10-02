@@ -8,7 +8,7 @@ import {
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
-import MedalSymbol from "../presentation/MedalSymbol"
+import MedalWithHintUse from "./MedalWithHintUse"
 
 export default function StoryMatchResult({
   match,
@@ -36,45 +36,28 @@ export default function StoryMatchResult({
     onSetupRequested({ mode: "story", variant, opponentId })
 
   return (
-    <section aria-label="Saved Story result" className="grid gap-3">
-      <div className="flex items-center gap-3">
-        {medal === null ? null : (
-          <span className="text-3xl">
-            <MedalSymbol medal={medal} />
-          </span>
-        )}
-        <div>
-          {medal !== null && next === undefined ? (
-            <h3 className="font-display text-xl font-black">Story complete!</h3>
-          ) : null}
-          <p className="text-sm">
-            {medal === null
-              ? "No new medal"
-              : `${STORY_PROGRESS_COPY.medals[medal]} this match`}{" "}
-            · Saved
-          </p>
-        </div>
+    <section aria-label="Story result" className="grid gap-3">
+      <div>
+        {medal !== null && next === undefined ? (
+          <h3 className="font-display text-xl font-black">Story complete!</h3>
+        ) : null}
+        <p className="text-base">
+          {medal === null ? "No new medal" : <MedalWithHintUse medal={medal} />}
+        </p>
       </div>
       {medal === null ? (
         <p className="text-sm">Your Story progress is unchanged.</p>
-      ) : (
+      ) : best !== undefined && best !== medal ? (
         <p className="text-sm">
-          {medal === "gold"
-            ? "No hints used."
-            : medal === "silver"
-              ? "Piece Hints used · no Move Hints."
-              : "Move Hints used."}
-          {best === undefined || best === medal
-            ? ""
-            : ` Your best: ${STORY_PROGRESS_COPY.medals[best]}.`}
+          Your best: {STORY_PROGRESS_COPY.medals[best]}.
         </p>
-      )}
+      ) : null}
       {medal !== null ? (
         <p className="text-sm">
           {opponent.displayName} is available in both Challenge modes.
           {next === undefined
             ? ` All ${ladder.length} opponents in this Story defeated.`
-            : ` Up next: ${next.opponent.displayName}.`}
+            : ""}
         </p>
       ) : null}
       {medal !== null && next !== undefined ? (
@@ -85,6 +68,9 @@ export default function StoryMatchResult({
           onClick={() => setup(next.opponent.id)}
         >
           Next opponent
+          <span className="mt-1 block text-base font-normal">
+            {next.opponent.displayName} · {next.opponent.storyTargetElo} Elo
+          </span>
         </MapachessButton>
       ) : null}
       {medal !== null && next === undefined ? (
@@ -105,6 +91,9 @@ export default function StoryMatchResult({
         onClick={() => setup()}
       >
         Replay opponent
+        <span className="mt-1 block text-base font-normal">
+          {opponent.displayName} · {opponent.storyTargetElo} Elo
+        </span>
       </MapachessButton>
       <p className="text-xs">Choose your settings before playing again.</p>
     </section>

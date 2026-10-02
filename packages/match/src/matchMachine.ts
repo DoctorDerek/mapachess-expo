@@ -4,6 +4,7 @@ import {
   createDrawAgreementConclusion,
   createPlayerResignationConclusion,
   deriveRetainedBranchConclusion,
+  retainManualConclusion,
 } from "./matchConclusion.js"
 import type {
   MatchHintsActorInput,
@@ -35,13 +36,13 @@ import {
   pendingMoveHintsMutation,
   pendingPositionMutation,
   persistenceRequestFailure,
-  redoToNextPlayerDecision,
+  redoMatchDecision,
   requireAppliedTimelineMove,
   requireHintAnalyst,
   requireMatchPersistence,
   requirePendingMutation,
   stalePersistenceReceiptFailure,
-  undoToPreviousPlayerDecision,
+  undoMatchDecision,
 } from "./matchWorkflow.js"
 
 export type {
@@ -115,6 +116,7 @@ const matchMachineDefinition = setup({
       )
       return {
         conclusion: deriveRetainedBranchConclusion(timeline),
+        retainedConclusion: null,
         drawOfferResponse: null,
         hintFailure: null,
         hints: null,
@@ -122,15 +124,23 @@ const matchMachineDefinition = setup({
         timeline,
       }
     }),
-    applyAcceptedDrawOffer: assign({
+    applyAcceptedDrawOffer: assign(({ context }) => ({
       conclusion: createDrawAgreementConclusion(),
+      retainedConclusion: retainManualConclusion(
+        createDrawAgreementConclusion(),
+        context.timeline.cursor,
+      ),
       drawOfferResponse: null,
       hintFailure: null,
       hints: null,
       opponentFailure: null,
-    }),
+    })),
     applyResignation: assign(({ context }) => ({
       conclusion: createPlayerResignationConclusion(context.playerColor),
+      retainedConclusion: retainManualConclusion(
+        createPlayerResignationConclusion(context.playerColor),
+        context.timeline.cursor,
+      ),
       drawOfferResponse: null,
       hintFailure: null,
       hints: null,
@@ -169,15 +179,12 @@ const matchMachineDefinition = setup({
       persistenceFailure: null,
     })),
     prepareRedoMutation: assign(({ context }) => {
-      const timeline = redoToNextPlayerDecision(
-        context.timeline,
-        context.playerColor,
-      )
+      const timeline = redoMatchDecision(context)
       if (timeline === undefined) {
         throw new Error("Guarded durable Redo became unavailable.")
       }
       return {
-        pendingMutation: pendingPositionMutation(context, timeline),
+        pendingMutation: pendingPositionMutation(context, timeline, "redo"),
         persistenceFailure: null,
       }
     }),
@@ -201,27 +208,25 @@ const matchMachineDefinition = setup({
       persistenceFailure: null,
     })),
     prepareUndoMutation: assign(({ context }) => {
-      const timeline = undoToPreviousPlayerDecision(
-        context.timeline,
-        context.playerColor,
-      )
+      const timeline = undoMatchDecision(context)
       if (timeline === undefined) {
         throw new Error("Guarded durable Undo became unavailable.")
       }
       return {
-        pendingMutation: pendingPositionMutation(context, timeline),
+        pendingMutation: pendingPositionMutation(context, timeline, "undo"),
         persistenceFailure: null,
       }
     }),
     redoToPlayerDecision: assign(({ context }) => {
-      const timeline = redoToNextPlayerDecision(
-        context.timeline,
-        context.playerColor,
-      )
+      const timeline = redoMatchDecision(context)
 
       return timeline === undefined
         ? {}
         : {
+            conclusion:
+              context.retainedConclusion?.cursor === timeline.cursor
+                ? context.retainedConclusion.conclusion
+                : deriveRetainedBranchConclusion(timeline),
             hintFailure: null,
             hints: null,
             drawOfferResponse: null,
@@ -230,14 +235,12 @@ const matchMachineDefinition = setup({
           }
     }),
     undoToPlayerDecision: assign(({ context }) => {
-      const timeline = undoToPreviousPlayerDecision(
-        context.timeline,
-        context.playerColor,
-      )
+      const timeline = undoMatchDecision(context)
 
       return timeline === undefined
         ? {}
         : {
+            conclusion: deriveRetainedBranchConclusion(timeline),
             hintFailure: null,
             hints: null,
             drawOfferResponse: null,
@@ -277,20 +280,16 @@ const matchMachineDefinition = setup({
       context.durability.type === "durable" && !context.moveHintsUsed,
     canRedoDurably: ({ context }) =>
       context.durability.type === "durable" &&
-      redoToNextPlayerDecision(context.timeline, context.playerColor) !==
-        undefined,
+      redoMatchDecision(context) !== undefined,
     canRedoEphemerally: ({ context }) =>
       context.durability.type === "ephemeral" &&
-      redoToNextPlayerDecision(context.timeline, context.playerColor) !==
-        undefined,
+      redoMatchDecision(context) !== undefined,
     canUndoDurably: ({ context }) =>
       context.durability.type === "durable" &&
-      undoToPreviousPlayerDecision(context.timeline, context.playerColor) !==
-        undefined,
+      undoMatchDecision(context) !== undefined,
     canUndoEphemerally: ({ context }) =>
       context.durability.type === "ephemeral" &&
-      undoToPreviousPlayerDecision(context.timeline, context.playerColor) !==
-        undefined,
+      undoMatchDecision(context) !== undefined,
     requestedDurableMoveIsLegal: ({ context, event }) =>
       context.durability.type === "durable" &&
       event.type === "MATCH.MOVE_REQUESTED" &&
@@ -726,7 +725,7 @@ const matchMachineDefinition = setup({
           {
             actions: "redoToPlayerDecision",
             guard: "canRedoEphemerally",
-            target: "complete",
+            target: "resolving",
           },
         ],
         "MATCH.UNDO_REQUESTED": [
@@ -738,7 +737,7 @@ const matchMachineDefinition = setup({
           {
             actions: "undoToPlayerDecision",
             guard: "canUndoEphemerally",
-            target: "complete",
+            target: "resolving",
           },
         ],
       },

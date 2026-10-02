@@ -15,12 +15,12 @@ import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import {
   selectStoryLadder,
-  STORY_PROGRESS_COPY,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
-import MedalSymbol from "../presentation/MedalSymbol"
 import MatchLevelProgress from "./MatchLevelProgress"
+import MatchSaveConfirmation from "./MatchSaveConfirmation"
+import MedalWithHintUse from "./MedalWithHintUse"
 
 const displayElo = (elo: number): string => Math.round(elo).toLocaleString("en")
 
@@ -34,6 +34,7 @@ export default function MatchCelebration({
   restoreFocusRef,
   reward,
   storyProgress,
+  showSaveConfirmation,
 }: Readonly<{
   battleStageRef: RefCallback<HTMLDivElement>
   disabled: boolean
@@ -42,8 +43,9 @@ export default function MatchCelebration({
   onReplayRequested: () => void
   onSetupRequested: (setup: MatchSetup) => void
   restoreFocusRef: RefObject<HTMLElement | null>
-  reward: AcceptedMatchReward
+  reward: AcceptedMatchReward | null
   storyProgress: StoryProgress
+  showSaveConfirmation: boolean
 }>) {
   const conclusion = match.conclusion
   if (conclusion === null) {
@@ -96,10 +98,22 @@ export default function MatchCelebration({
   }
   const actionLabel =
     match.mode === "challenge" || medal === null
-      ? "Replay match"
+      ? "Replay opponent"
       : next === undefined
         ? "Story ladder"
         : "Next opponent"
+  const actionOpponent =
+    actionLabel === "Next opponent"
+      ? next?.opponent
+      : actionLabel === "Replay opponent"
+        ? opponent
+        : undefined
+  const actionElo =
+    actionLabel === "Next opponent"
+      ? next?.opponent.storyTargetElo
+      : match.mode === "story"
+        ? opponent.storyTargetElo
+        : match.opponentTargetElo
 
   return (
     <dialog
@@ -129,23 +143,25 @@ export default function MatchCelebration({
           <p className="text-base">Opponent resigned.</p>
         ) : null}
         <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
-          {medal === null ? null : (
-            <span className="text-lg font-black">
-              <MedalSymbol medal={medal} />
-              {STORY_PROGRESS_COPY.medals[medal]}
-            </span>
-          )}
-          <p className="font-display text-3xl font-black tabular-nums">
-            +{reward.awardedXp} XP
-          </p>
+          {medal === null ? null : <MedalWithHintUse medal={medal} />}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {reward === null ? null : (
+              <p className="font-display text-3xl font-black tabular-nums">
+                +{reward.awardedXp} XP
+              </p>
+            )}
+            {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
+          </div>
         </div>
       </div>
       <div className="grid gap-3 p-4 sm:p-5">
-        <MatchLevelProgress
-          afterXp={reward.totalXpBefore + reward.awardedXp}
-          beforeXp={reward.totalXpBefore}
-        />
-        {reward.ratedElo === null ? null : (
+        {reward === null ? null : (
+          <MatchLevelProgress
+            afterXp={reward.totalXpBefore + reward.awardedXp}
+            beforeXp={reward.totalXpBefore}
+          />
+        )}
+        {reward === null || reward.ratedElo === null ? null : (
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-base">
             <span className="font-bold">
               {reward.ratedElo.variant === "standard" ? "Standard" : "Chess960"}{" "}
@@ -178,9 +194,10 @@ export default function MatchCelebration({
             type="button"
           >
             {actionLabel}
-            {next !== undefined && match.mode === "story" && medal !== null ? (
+            {actionOpponent !== undefined ? (
               <span className="mt-1 block text-base font-normal">
-                {next.opponent.displayName} · {next.opponent.storyTargetElo} Elo
+                {actionOpponent.displayName}
+                {actionElo === undefined ? null : ` · ${String(actionElo)} Elo`}
               </span>
             ) : null}
           </MapachessButton>

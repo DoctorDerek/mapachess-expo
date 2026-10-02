@@ -4,10 +4,16 @@ import {
   DEFAULT_CHALLENGE_SETUP,
   type ChallengeSetup,
 } from "@mapachess/match/challenge-setup"
+import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
+import matchMachine, {
+  selectCanRedo,
+  selectIsPlayerTurn,
+  selectMatchConclusion,
+} from "@mapachess/match/match-machine"
 import {
   applyMatchMove,
   listLegalMatchMoves,
@@ -84,6 +90,79 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it.each(["resignation", "draw-agreement"] as const)(
+    "restores %s Redo after a durable reopen and actor replacement",
+    async (type) => {
+      const profile = await openProfile()
+      const initial = {
+        ...durableMatch(),
+        autoHintMode: "no-auto-hints" as const,
+      }
+      const bridge = new ProfileMatchPersistenceBridge({
+        actor: profile,
+        initialMatch: initial,
+        expectedActiveMatch: null,
+      })
+      const signal = new AbortController().signal
+      await bridge.establish(signal)
+      const input = {
+        autoHintMode: initial.autoHintMode,
+        matchId: initial.matchId,
+        playerColor: initial.playerColor,
+        opponent: {
+          selectMove: async () => {
+            throw new Error("No opponent move expected")
+          },
+        },
+        durability: { type: "durable" as const, persistence: bridge },
+      }
+      const actor = createActor(matchMachine, {
+        input: { ...input, initialPosition },
+      }).start()
+      if (type === "resignation") actor.send({ type: "MATCH.RESIGN_REQUESTED" })
+      else
+        actor.send({
+          type: "MATCH.DRAW_OFFER_REQUESTED",
+          decision: { outcome: "accepted", positionFen: initial.currentFen },
+        })
+      await waitFor(actor, (snapshot) => snapshot.matches("complete"))
+      actor.send({ type: "MATCH.UNDO_REQUESTED" })
+      await waitFor(actor, selectIsPlayerTurn)
+      expect(selectCurrentPlayerData(profile.getSnapshot())?.totalXp).toBe(0)
+      actor.stop()
+      const saved = selectCurrentPlayerData(profile.getSnapshot())?.activeMatch
+      if (saved === undefined || saved === null)
+        throw new Error("Reopened match must be saved")
+      const rebuilt = reconstructDurableMatch(saved)
+      if (!rebuilt.ok) throw new Error("Reopened match must reconstruct")
+      const replacementBridge = new ProfileMatchPersistenceBridge({
+        actor: profile,
+        initialMatch: saved,
+        expectedActiveMatch: saved,
+      })
+      await replacementBridge.establish(signal)
+      const resumed = createActor(matchMachine, {
+        input: {
+          ...input,
+          durability: { type: "durable", persistence: replacementBridge },
+          resumedState: {
+            conclusion: saved.conclusion,
+            retainedConclusion: saved.retainedConclusion ?? null,
+            moveHintsUsed: saved.moveHintsUsed,
+            pieceHintsUsed: saved.pieceHintsUsed,
+            timeline: rebuilt.timeline,
+          },
+        },
+      }).start()
+      expect(selectCanRedo(resumed.getSnapshot())).toBe(true)
+      resumed.send({ type: "MATCH.REDO_REQUESTED" })
+      await waitFor(resumed, (snapshot) => snapshot.matches("complete"))
+      expect(selectMatchConclusion(resumed.getSnapshot())?.type).toBe(type)
+      expect(selectCurrentPlayerData(profile.getSnapshot())?.totalXp).toBe(4)
+      resumed.stop()
+      profile.stop()
+    },
+  )
   it("orders feedback with moves, round-trips backups, and trims only an abandoned branch", async () => {
     const actor = await openProfile()
     const initial = durableMatch()
@@ -409,7 +488,7 @@ describe("profile-owned match persistence bridge", () => {
     actor.stop()
   })
 
-  it("accepts one conclusion and rejects every later result change", async () => {
+  it("requires a retained-ending Undo before replacing a conclusion", async () => {
     const actor = await openProfile()
     const initialMatch = durableMatch()
     const bridge = new ProfileMatchPersistenceBridge({
@@ -477,7 +556,9 @@ describe("profile-owned match persistence bridge", () => {
         },
         controller.signal,
       ),
-    ).rejects.toThrow("Persisted match conclusion cannot change")
+    ).rejects.toThrow(
+      "Completed match must reopen through its retained timeline",
+    )
     await expect(
       bridge.persist(
         {
@@ -487,7 +568,35 @@ describe("profile-owned match persistence bridge", () => {
         },
         controller.signal,
       ),
-    ).rejects.toThrow("Persisted match conclusion cannot change")
+    ).rejects.toThrow(
+      "Completed match must reopen through its retained timeline",
+    )
+    await bridge.persist(
+      {
+        ...changedConclusionRequest,
+        conclusion: null,
+        retainedConclusion: {
+          conclusion: { type: "draw-agreement" },
+          cursor: 0,
+        },
+        requestId: `${initialMatch.matchId}/undo-draw`,
+      },
+      controller.signal,
+    )
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(0)
+    await bridge.persist(
+      {
+        ...changedConclusionRequest,
+        conclusion: { type: "resignation", winner: "black" },
+        retainedConclusion: {
+          conclusion: { type: "resignation", winner: "black" },
+          cursor: 0,
+        },
+        requestId: `${initialMatch.matchId}/replacement-loss`,
+      },
+      controller.signal,
+    )
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(4)
     actor.stop()
   })
 

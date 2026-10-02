@@ -1,10 +1,14 @@
 import type { AutoHintMode } from "./autoHintMode.js"
 import type { BetterHintsResult } from "./betterHints.js"
-import type { MatchConclusion } from "./matchConclusion.js"
+import type {
+  MatchConclusion,
+  RetainedMatchConclusion,
+} from "./matchConclusion.js"
 import type { MatchMoveId } from "./matchMove.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
 export type MatchPersistenceRequest = Readonly<{
+  retainedConclusion?: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   currentFen: string
@@ -57,6 +61,7 @@ export type PendingMatchMutation = Readonly<{
 }>
 
 export type CreatePendingMatchMutationInput = Readonly<{
+  retainedConclusion?: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
   hints: BetterHintsResult | null
@@ -91,6 +96,7 @@ export const createPendingMatchMutation = (
     request: Object.freeze({
       autoHintMode: input.autoHintMode,
       conclusion: input.conclusion,
+      retainedConclusion: input.retainedConclusion ?? null,
       currentFen: position.fen,
       cursor: input.timeline.cursor,
       matchId: input.matchId,

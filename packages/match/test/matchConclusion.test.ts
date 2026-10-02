@@ -109,7 +109,7 @@ describe("canonical match conclusions", () => {
     })
   })
 
-  it("keeps a terminal result tied to the retained branch during review", () => {
+  it("derives the result from the current cursor, not its retained future", () => {
     const completedTimeline = applyMoves(createStandardTimeline(), [
       "f2f3",
       "e7e5",
@@ -121,23 +121,20 @@ describe("canonical match conclusions", () => {
       cursor: 0,
     })
 
-    expect(deriveRetainedBranchConclusion(reviewTimeline)).toEqual({
-      type: "checkmate",
-      winner: "black",
-    })
+    expect(deriveRetainedBranchConclusion(reviewTimeline)).toBeNull()
     expect(
       conclusionMatchesRetainedBranch(
         { type: "checkmate", winner: "black" },
         reviewTimeline,
       ),
-    ).toBe(true)
+    ).toBe(false)
     expect(
       conclusionMatchesRetainedBranch(
         { type: "draw-agreement" },
         reviewTimeline,
       ),
-    ).toBe(false)
-    expect(conclusionMatchesRetainedBranch(null, reviewTimeline)).toBe(false)
+    ).toBe(true)
+    expect(conclusionMatchesRetainedBranch(null, reviewTimeline)).toBe(true)
   })
 
   it("permits only voluntary conclusions on an active branch", () => {

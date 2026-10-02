@@ -10,10 +10,7 @@ import type {
 import type { MatchPersistenceFailure } from "./matchPersistence.js"
 import type { MatchPosition } from "./matchPosition.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
-import {
-  redoToNextPlayerDecision,
-  undoToPreviousPlayerDecision,
-} from "./matchWorkflow.js"
+import { redoMatchDecision, undoMatchDecision } from "./matchWorkflow.js"
 
 export const selectMatchPosition = (
   snapshot: MatchMachineSnapshot,
@@ -48,19 +45,13 @@ export const selectCanUndo = (snapshot: MatchMachineSnapshot): boolean =>
   !selectAreMatchMutationsFrozen(snapshot) && selectHasUndoHistory(snapshot)
 
 export const selectHasUndoHistory = (snapshot: MatchMachineSnapshot): boolean =>
-  undoToPreviousPlayerDecision(
-    snapshot.context.timeline,
-    snapshot.context.playerColor,
-  ) !== undefined
+  undoMatchDecision(snapshot.context) !== undefined
 
 export const selectCanRedo = (snapshot: MatchMachineSnapshot): boolean =>
   !selectAreMatchMutationsFrozen(snapshot) && selectHasRedoHistory(snapshot)
 
 export const selectHasRedoHistory = (snapshot: MatchMachineSnapshot): boolean =>
-  redoToNextPlayerDecision(
-    snapshot.context.timeline,
-    snapshot.context.playerColor,
-  ) !== undefined
+  redoMatchDecision(snapshot.context) !== undefined
 
 export const selectCanOfferDraw = (snapshot: MatchMachineSnapshot): boolean =>
   selectIsPlayerTurn(snapshot) &&

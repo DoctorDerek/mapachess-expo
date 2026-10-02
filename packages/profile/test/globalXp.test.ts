@@ -82,7 +82,7 @@ describe("global match XP", () => {
     expect(levelFromTotalXp(accepted.totalXp)).toBe(5)
     expect(accepted.unlockedAchievementIds).toEqual(["reach-level-5"])
     expect(accepted.processedMatchResultIds).toEqual([activeResult.matchId])
-    expect(accepted.lastAcceptedResultReward).toEqual({
+    expect(accepted.lastAcceptedResultReward).toMatchObject({
       matchId: activeResult.matchId,
       awardedXp: 8,
       totalXpBefore: 0,
@@ -172,10 +172,7 @@ describe("global match XP", () => {
         ...initial,
         unlockedAchievementIds: ["reach-level-5"],
       }),
-    ).toMatchObject({
-      ok: false,
-      issue: { path: "$.unlockedAchievementIds[0]" },
-    })
+    ).toMatchObject({ ok: true })
     expect(
       decodeMapachessPlayerData({
         ...initial,

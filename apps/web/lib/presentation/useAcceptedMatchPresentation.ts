@@ -7,6 +7,7 @@ import matchPresentationMachine from "@mapachess/match-presentation/match-presen
 import type { MatchPresentationMachineSnapshot } from "@mapachess/match-presentation/match-presentation-machine"
 import {
   deriveAcceptedMatchPresentationUpdate,
+  deriveConcludingMatchPresentationPhases,
   deriveConclusionPresentationPhase,
   type AcceptedMatchPresentationObservation,
 } from "@mapachess/match-presentation/match-presentation-observation"
@@ -56,6 +57,7 @@ const requestPresentationPhases = (
 export default function useAcceptedMatchPresentation(
   matchSnapshot: MatchMachineSnapshot,
   playerColor: MatchColor,
+  rewardsReplaySequence: number,
 ): AcceptedMatchPresentation {
   const [startingConclusionPhase] = useState(() =>
     initialConclusionPhase(matchSnapshot, playerColor),
@@ -79,6 +81,7 @@ export default function useAcceptedMatchPresentation(
   )
   const previousObservation =
     useRef<AcceptedMatchPresentationObservation>(currentObservation)
+  const previousReplaySequence = useRef(rewardsReplaySequence)
 
   useEffect(() => {
     const update = deriveAcceptedMatchPresentationUpdate(
@@ -94,6 +97,22 @@ export default function useAcceptedMatchPresentation(
     }
     requestPresentationPhases(presentationActor, update.phases)
   }, [currentObservation, playerColor, presentationActor])
+
+  useEffect(() => {
+    if (previousReplaySequence.current === rewardsReplaySequence) return
+    previousReplaySequence.current = rewardsReplaySequence
+    if (rewardsReplaySequence === 0) return
+    presentationActor.send({ type: "MATCH_PRESENTATION.RESET_REQUESTED" })
+    requestPresentationPhases(
+      presentationActor,
+      deriveConcludingMatchPresentationPhases(currentObservation, playerColor),
+    )
+  }, [
+    currentObservation,
+    playerColor,
+    presentationActor,
+    rewardsReplaySequence,
+  ])
 
   const notifyParticipantAnimationCompleted = useCallback(
     (

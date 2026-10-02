@@ -8,7 +8,10 @@ import type {
   MatchPersistenceRequest,
 } from "@mapachess/match/match-persistence"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
-import { canonicalActiveMatch } from "./durableMatchCodec.js"
+import {
+  canonicalActiveMatch,
+  decodeDurableMatch,
+} from "./durableMatchCodec.js"
 import decodeMoveFeedback from "./moveFeedbackCodec.js"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -173,6 +176,7 @@ const candidateFromRequest = (
         }),
     autoHintMode: request.autoHintMode,
     conclusion: request.conclusion,
+    retainedConclusion: request.retainedConclusion ?? null,
     currentFen: request.currentFen,
     cursor: request.cursor,
     moveHintsUsed: request.moveHintsUsed,
@@ -202,15 +206,32 @@ const conclusionsEqual = (
     ? true
     : right?.type === left.type && right.winner === left.winner)
 
-const requireMonotonicConclusion = (
+const requireValidConclusionMutation = (
   accepted: DurableMatchRecord,
   candidate: DurableMatchRecord,
 ): void => {
   if (
     accepted.conclusion !== null &&
-    !conclusionsEqual(accepted.conclusion, candidate.conclusion)
+    !conclusionsEqual(accepted.conclusion, candidate.conclusion) &&
+    !(
+      candidate.conclusion === null &&
+      candidate.moveIds.length === accepted.moveIds.length &&
+      candidate.moveIds.every(
+        (moveId, index) => moveId === accepted.moveIds[index],
+      ) &&
+      (candidate.cursor < accepted.cursor ||
+        (candidate.cursor === accepted.cursor &&
+          (accepted.conclusion.type === "resignation" ||
+            accepted.conclusion.type === "draw-agreement") &&
+          conclusionsEqual(
+            accepted.conclusion,
+            candidate.retainedConclusion?.conclusion ?? null,
+          )))
+    )
   ) {
-    throw new TypeError("Persisted match conclusion cannot change.")
+    throw new TypeError(
+      "Completed match must reopen through its retained timeline.",
+    )
   }
 }
 
@@ -258,9 +279,12 @@ export default class ProfileMatchPersistenceBridge implements MatchPersistence {
         throw new Error("Match persistence bridge is not established.")
       }
 
-      const candidate = candidateFromRequest(this.#acceptedMatch, request)
+      const candidate = decodeDurableMatch(
+        candidateFromRequest(this.#acceptedMatch, request),
+        "activeMatch",
+      )
       requireMonotonicHintUse(this.#acceptedMatch, candidate)
-      requireMonotonicConclusion(this.#acceptedMatch, candidate)
+      requireValidConclusionMutation(this.#acceptedMatch, candidate)
       await this.#persistCandidate(candidate, signal)
       return Object.freeze({
         requestId: request.requestId,

@@ -143,6 +143,7 @@ const openActorSession = async ({
         opponent: runtime.opponent,
         playerColor: match.playerColor,
         resumedState: {
+          retainedConclusion: match.retainedConclusion ?? null,
           conclusion: match.conclusion,
           moveHintsUsed: match.moveHintsUsed,
           pieceHintsUsed: match.pieceHintsUsed,

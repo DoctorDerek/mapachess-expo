@@ -129,6 +129,24 @@ export default function deriveAcceptedMovePresentationPhases(
   return Object.freeze(phases)
 }
 
+export const deriveConcludingMatchPresentationPhases = (
+  observation: AcceptedMatchPresentationObservation,
+  playerColor: MatchColor,
+): readonly MatchPresentationPhase[] => {
+  const { conclusion, timeline } = observation
+  if (conclusion === null) return Object.freeze([])
+  const finishingMove = timeline.transitions[timeline.cursor - 1]
+  if (conclusion.type === "checkmate" && finishingMove !== undefined) {
+    return deriveAcceptedMovePresentationPhases({
+      conclusion,
+      playerColor,
+      transition: finishingMove,
+    })
+  }
+  const phase = deriveConclusionPresentationPhase({ conclusion, playerColor })
+  return Object.freeze(phase === null ? [] : [phase])
+}
+
 export const deriveAcceptedMatchPresentationUpdate = (
   previous: AcceptedMatchPresentationObservation,
   current: AcceptedMatchPresentationObservation,

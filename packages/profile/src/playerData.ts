@@ -8,7 +8,10 @@ import {
   type ChallengeSetup,
 } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import type { MatchConclusion } from "@mapachess/match/match-conclusion"
+import type { MatchMoveId } from "@mapachess/match/match-move"
 import type { MatchVariant } from "@mapachess/match/match-variant"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   createInitialChallengeHistory,
   type ChallengeHistory,
@@ -27,7 +30,8 @@ export const STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION = 4 as const
 export const INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION = 5 as const
 export const LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION = 6 as const
 export const TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION = 7 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 8 as const
+export const GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION = 8 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 9 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -111,6 +115,20 @@ export type MapachessPlayerDataV7 = Readonly<
 >
 
 export type AcceptedMatchReward = Readonly<{
+  contribution?: Readonly<{
+    applied: boolean
+    ending: Readonly<{
+      conclusion: MatchConclusion
+      cursor: number
+      currentFen: string
+      moveIds: readonly MatchMoveId[]
+    }>
+    variant: MatchVariant
+    opponentId: StockfishOpponentId
+    challengeOutcome: "win" | "loss" | null
+    ratedMatchCountBefore: number | null
+    eloState: "active" | "superseded" | "rebase"
+  }>
   matchId: string
   awardedXp: number
   totalXpBefore: number
@@ -121,6 +139,27 @@ export type AcceptedMatchReward = Readonly<{
     after: number
   }> | null
 }>
+
+export const acceptedRewardMatchesEnding = (
+  reward: AcceptedMatchReward | null,
+  match: DurableMatchRecord,
+): boolean =>
+  reward !== null &&
+  reward.matchId === match.matchId &&
+  match.conclusion !== null &&
+  (reward.contribution === undefined ||
+    (reward.contribution.applied &&
+      reward.contribution.ending.cursor === match.cursor &&
+      reward.contribution.ending.currentFen === match.currentFen &&
+      reward.contribution.ending.moveIds.length === match.cursor &&
+      reward.contribution.ending.moveIds.every(
+        (id, index) => id === match.moveIds[index],
+      ) &&
+      reward.contribution.ending.conclusion.type === match.conclusion.type &&
+      (!("winner" in reward.contribution.ending.conclusion) ||
+        ("winner" in match.conclusion &&
+          reward.contribution.ending.conclusion.winner ===
+            match.conclusion.winner))))
 
 export type MapachessPlayerData = Readonly<
   Omit<MapachessPlayerDataV7, "schemaVersion"> & {

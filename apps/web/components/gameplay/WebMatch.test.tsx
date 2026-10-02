@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
@@ -48,6 +49,97 @@ const runtime: WebMatchRuntime = {
 }
 
 describe("match composition", () => {
+  it.each(["accepted", "missing", "stale"] as const)(
+    "offers truthful current-ending replay with a %s receipt",
+    (receipt) => {
+      const conclusion = { type: "resignation", winner: "black" } as const
+      const completed: DurableMatchRecord = {
+        autoHintMode: "no-auto-hints",
+        conclusion,
+        currentFen: position.fen,
+        cursor: 0,
+        matchId: runtime.matchId,
+        matchSeed: "0123456789abcdef0123456789abcdef",
+        mode: "challenge",
+        moveHintsUsed: false,
+        moveIds: [],
+        opponentId: runtime.opponentId,
+        opponentPolicyFingerprint: "composition-fixture",
+        pieceHintsUsed: false,
+        playerColor: "white",
+        playerEloAtStart: 100,
+        recordVersion: 3,
+        startingPosition,
+        timeControl: { type: "untimed" },
+      }
+      const actor = createActor(matchMachine, {
+        input: {
+          autoHintMode: "no-auto-hints",
+          matchId: runtime.matchId,
+          opponent: runtime.opponent,
+          playerColor: "white",
+          durability: {
+            type: "durable",
+            persistence: {
+              persist: async ({ requestId }) => ({
+                requestId,
+                type: "MATCH.MUTATION_PERSISTED",
+              }),
+            },
+          },
+          resumedState: {
+            conclusion,
+            moveHintsUsed: false,
+            pieceHintsUsed: false,
+            timeline: { cursor: 0, initialPosition: position, transitions: [] },
+          },
+        },
+      }).start()
+      const evaluationActor = createActor(positionEvaluationMachine, {
+        input: { evaluator: runtime.positionEvaluator },
+      }).start()
+      try {
+        const markup = renderToStaticMarkup(
+          <WebMatch
+            actor={actor}
+            evaluationActor={evaluationActor}
+            initiallyConcluded
+            savedMatch={completed}
+            acceptedReward={
+              receipt === "missing"
+                ? null
+                : {
+                    matchId: receipt === "accepted" ? runtime.matchId : "stale",
+                    awardedXp: 4,
+                    totalXpBefore: 0,
+                    unlockedAchievementIds: [],
+                    ratedElo: null,
+                  }
+            }
+            storyProgress={{ standard: [], chess960: [] }}
+            onSetupRequested={vi.fn()}
+            onReplayRequested={vi.fn()}
+            mode="challenge"
+            playerElo={100}
+            runtime={runtime}
+            navigation={{ open: vi.fn(), back: vi.fn() }}
+            overlays={[]}
+            celebrationDismissed
+            rewardsReplaySequence={0}
+            onRewardsReplayRequested={vi.fn()}
+            visible
+          />,
+        )
+        expect(markup).toContain("View rewards")
+        expect(markup).not.toContain("Saved locally")
+        expect(markup).not.toContain("Achievement unlocked")
+        expect(markup).not.toContain("<dialog")
+      } finally {
+        actor.stop()
+        evaluationActor.stop()
+      }
+    },
+  )
   it("keeps one board, meter and client battle allocation with all core actions", () => {
     const actor = createActor(matchMachine, {
       input: {
@@ -69,6 +161,8 @@ describe("match composition", () => {
           navigation: { open: vi.fn(), back: vi.fn() },
           overlays: [],
           celebrationDismissed: false,
+          rewardsReplaySequence: 0,
+          onRewardsReplayRequested: vi.fn(),
           visible: true,
           actor,
           evaluationActor,
@@ -143,6 +237,8 @@ describe("match composition", () => {
           navigation: { open: vi.fn(), back: vi.fn() },
           overlays: [],
           celebrationDismissed: false,
+          rewardsReplaySequence: 0,
+          onRewardsReplayRequested: vi.fn(),
           visible: true,
           actor,
           evaluationActor,
@@ -193,6 +289,8 @@ describe("match composition", () => {
           navigation={{ open: vi.fn(), back: vi.fn() }}
           overlays={[]}
           celebrationDismissed={false}
+          rewardsReplaySequence={0}
+          onRewardsReplayRequested={vi.fn()}
           visible
           actor={actor}
           evaluationActor={evaluationActor}

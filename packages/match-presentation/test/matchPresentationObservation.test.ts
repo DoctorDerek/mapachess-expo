@@ -8,6 +8,7 @@ import {
 } from "@mapachess/match/match-timeline"
 import {
   deriveAcceptedMatchPresentationUpdate,
+  deriveConcludingMatchPresentationPhases,
   deriveConclusionPresentationPhase,
 } from "../src/matchPresentationObservation"
 
@@ -29,6 +30,70 @@ const beforeCaptures = advance(initial, ["e2e4", "d7d5"])
 const captures = advance(beforeCaptures, ["e4d5", "d8d5"])
 
 describe("accepted animal-performance observation", () => {
+  it("replays only the finishing capture/check and actual conclusion", () => {
+    const mate = advance(initial, [
+      "e2e4",
+      "e7e5",
+      "f1c4",
+      "b8c6",
+      "d1h5",
+      "g8f6",
+      "h5f7",
+    ])
+    const phases = deriveConcludingMatchPresentationPhases(
+      {
+        timeline: mate,
+        conclusion: { type: "checkmate", winner: "white" },
+      },
+      "black",
+    )
+    expect(phases.map((phase) => phase.kind)).toEqual([
+      "capture",
+      "check",
+      "conclusion",
+    ])
+    expect(phases[0]?.opponent).toEqual({ family: "capture", role: "attacker" })
+    expect(phases.at(-1)).toMatchObject({
+      terminalDefeat: true,
+      player: { family: "defeat" },
+    })
+    expect(
+      deriveConcludingMatchPresentationPhases(
+        {
+          timeline: captures,
+          conclusion: { type: "resignation", winner: "white" },
+        },
+        "white",
+      ),
+    ).toEqual([
+      deriveConclusionPresentationPhase({
+        conclusion: { type: "resignation", winner: "white" },
+        playerColor: "white",
+      }),
+    ])
+    expect(
+      deriveConcludingMatchPresentationPhases(
+        { timeline: captures, conclusion: { type: "draw-agreement" } },
+        "white",
+      ),
+    ).toEqual([])
+    expect(
+      deriveConcludingMatchPresentationPhases(
+        { timeline: captures, conclusion: null },
+        "white",
+      ),
+    ).toEqual([])
+  })
+
+  it("does not fabricate a capture for a quiet finishing checkmate", () => {
+    const mate = advance(initial, ["f2f3", "e7e5", "g2g4", "d8h4"])
+    expect(
+      deriveConcludingMatchPresentationPhases(
+        { timeline: mate, conclusion: { type: "checkmate", winner: "black" } },
+        "white",
+      ).map((phase) => phase.kind),
+    ).toEqual(["check", "conclusion"])
+  })
   it("includes both captures delivered in one snapshot, in move order", () => {
     const update = deriveAcceptedMatchPresentationUpdate(
       { timeline: beforeCaptures, conclusion: null },

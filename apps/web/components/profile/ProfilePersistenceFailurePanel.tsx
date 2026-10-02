@@ -2,6 +2,7 @@
 
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machine"
+import LocalSaveError from "../presentation/LocalSaveError"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import {
@@ -32,18 +33,15 @@ export default function ProfilePersistenceFailurePanel({
   return (
     <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
-        <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-          Local save paused
-        </p>
         <h2
-          className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase"
+          className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance"
           id="profile-persistence-failure-title"
         >
-          This change was not marked saved.
+          <LocalSaveError />
         </h2>
         <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
-          {persistenceFailureMessage(failure)} Later state-changing actions are
-          frozen until Retry succeeds.
+          {persistenceFailureMessage(failure)} It is not yet saved. Later
+          state-changing actions are frozen until Retry succeeds.
         </MapachessNotice>
         <div className="mt-6 flex flex-wrap gap-3">
           <MapachessButton
@@ -53,7 +51,7 @@ export default function ProfilePersistenceFailurePanel({
             onClick={onRetry}
             type="button"
           >
-            Retry Save
+            Retry save
           </MapachessButton>
           {exportablePlayerData === null ? null : (
             <MapachessButton

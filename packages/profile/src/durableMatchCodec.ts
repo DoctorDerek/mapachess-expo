@@ -80,7 +80,7 @@ const decodeStartingPosition = (
   return failData(path)
 }
 
-const decodeMoveIds = (received: unknown, path: string) => {
+export const decodeMoveIds = (received: unknown, path: string) => {
   if (
     !Array.isArray(received) ||
     received.length > MAX_DURABLE_MATCH_PLY_COUNT
@@ -96,7 +96,7 @@ const decodeMoveIds = (received: unknown, path: string) => {
   )
 }
 
-const decodeConclusion = (
+export const decodeConclusion = (
   received: unknown,
   path: string,
 ): MatchConclusion | null => {
@@ -162,6 +162,9 @@ export const decodeDurableMatch = (
           "autoHintMode",
           "conclusion",
           "recordVersion",
+          ...(object.retainedConclusion === undefined
+            ? []
+            : ["retainedConclusion"]),
           ...(object.moveFeedback === undefined ? [] : ["moveFeedback"]),
           ...(object.opponentTargetElo === undefined
             ? []
@@ -296,9 +299,47 @@ export const decodeDurableMatch = (
     return failData(`${path}.conclusion`)
   }
 
+  let retainedConclusion: DurableMatchRecord["retainedConclusion"]
+  if (object.retainedConclusion !== undefined) {
+    if (object.retainedConclusion === null) retainedConclusion = null
+    else {
+      const retained = requireObject(
+        object.retainedConclusion,
+        `${path}.retainedConclusion`,
+      )
+      requireExactKeys(
+        retained,
+        ["conclusion", "cursor"],
+        `${path}.retainedConclusion`,
+      )
+      const ending = decodeConclusion(
+        retained.conclusion,
+        `${path}.retainedConclusion.conclusion`,
+      )
+      const retainedCursor = requireSafeRevision(
+        retained.cursor,
+        `${path}.retainedConclusion.cursor`,
+      )
+      if (
+        (ending?.type !== "resignation" && ending?.type !== "draw-agreement") ||
+        retainedCursor > moveIds.length ||
+        retainedCursor < cursor ||
+        (ending.type === "resignation" &&
+          ending.winner === recordWithoutConclusion.playerColor) ||
+        (conclusion !== null &&
+          JSON.stringify(ending) !== JSON.stringify(conclusion))
+      )
+        return failData(`${path}.retainedConclusion`)
+      retainedConclusion = Object.freeze({
+        conclusion: ending,
+        cursor: retainedCursor,
+      })
+    }
+  }
   return Object.freeze({
     ...recordWithoutConclusion,
     conclusion,
+    ...(retainedConclusion === undefined ? {} : { retainedConclusion }),
     ...(object.moveFeedback === undefined
       ? {}
       : {
@@ -362,4 +403,5 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
     ? []
     : [match.moveFeedback.map(canonicalMoveFeedback)]),
   ...(match.ratedOpponentElo === undefined ? [] : [match.ratedOpponentElo]),
+  ...(match.retainedConclusion === undefined ? [] : [match.retainedConclusion]),
 ]
