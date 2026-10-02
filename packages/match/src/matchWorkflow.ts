@@ -7,6 +7,7 @@ import type {
 import {
   conclusionMatchesRetainedBranch,
   deriveRetainedBranchConclusion,
+  retainManualConclusion,
   type MatchConclusion,
 } from "./matchConclusion.js"
 import type {
@@ -59,7 +60,9 @@ export const createInitialContext = (
   const pieceHintsUsed = resumedState?.pieceHintsUsed ?? false
   const moveHintsUsed = resumedState?.moveHintsUsed ?? false
   const conclusion =
-    resumedState?.conclusion ?? deriveRetainedBranchConclusion(timeline)
+    resumedState === undefined
+      ? deriveRetainedBranchConclusion(timeline)
+      : resumedState.conclusion
   if (!conclusionMatchesRetainedBranch(conclusion, timeline)) {
     throw new TypeError("Match conclusion does not match its retained branch.")
   }
@@ -68,6 +71,9 @@ export const createInitialContext = (
     autoHintMode: input.autoHintMode,
     requestedAutoHintMode: null,
     conclusion,
+    retainedConclusion:
+      resumedState?.retainedConclusion ??
+      retainManualConclusion(conclusion, timeline.cursor),
     durability: input.durability,
     drawOfferResponse: null,
     hintAnalyst: input.hintAnalyst ?? null,
@@ -193,6 +199,25 @@ export const requireMatchPersistence = (
   return context.durability.persistence
 }
 
+export const undoMatchDecision = (
+  context: MatchMachineContext,
+): MatchTimeline | undefined =>
+  context.conclusion?.type === "resignation" ||
+  context.conclusion?.type === "draw-agreement"
+    ? currentMatchPosition(context.timeline).turn === context.playerColor
+      ? context.timeline
+      : (undoToPreviousPlayerDecision(context.timeline, context.playerColor) ??
+        context.timeline)
+    : undoToPreviousPlayerDecision(context.timeline, context.playerColor)
+
+export const redoMatchDecision = (
+  context: MatchMachineContext,
+): MatchTimeline | undefined =>
+  context.conclusion === null &&
+  context.retainedConclusion?.cursor === context.timeline.cursor
+    ? context.timeline
+    : redoToNextPlayerDecision(context.timeline, context.playerColor)
+
 export const requirePendingMutation = (
   context: MatchMachineContext,
 ): PendingMatchMutation => {
@@ -205,10 +230,16 @@ export const requirePendingMutation = (
 export const pendingPositionMutation = (
   context: MatchMachineContext,
   timeline: MatchTimeline,
+  operation: "move" | "undo" | "redo" = "move",
 ): PendingMatchMutation => {
   const conclusion =
-    context.conclusion ?? deriveRetainedBranchConclusion(timeline)
+    operation === "redo" &&
+    context.retainedConclusion?.cursor === timeline.cursor
+      ? context.retainedConclusion.conclusion
+      : deriveRetainedBranchConclusion(timeline)
   return createPendingMatchMutation({
+    retainedConclusion:
+      operation === "move" ? null : context.retainedConclusion,
     autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
@@ -230,6 +261,10 @@ export const pendingConclusionMutation = (
   }
 
   return createPendingMatchMutation({
+    retainedConclusion: retainManualConclusion(
+      conclusion,
+      context.timeline.cursor,
+    ),
     autoHintMode: context.autoHintMode,
     conclusion,
     hints: null,
@@ -250,6 +285,7 @@ export const pendingAcceptedHintsMutation = (
     context.moveHintsUsed || context.autoHintMode === "auto-move-hints"
 
   return createPendingMatchMutation({
+    retainedConclusion: context.retainedConclusion,
     autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints,
@@ -266,6 +302,7 @@ export const pendingMoveHintsMutation = (
   context: MatchMachineContext,
 ): PendingMatchMutation =>
   createPendingMatchMutation({
+    retainedConclusion: context.retainedConclusion,
     autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
     hints: context.hints,
@@ -311,6 +348,7 @@ export const pendingAutoHintModeMutation = (
 ): PendingMatchMutation => {
   const state = autoHintModeState(context, autoHintMode)
   return createPendingMatchMutation({
+    retainedConclusion: context.retainedConclusion,
     autoHintMode: state.autoHintMode,
     conclusion: context.conclusion,
     hints: state.hints,
@@ -337,6 +375,7 @@ export const acceptedPendingMutation = (
     autoHintMode: pending.request.autoHintMode,
     requestedAutoHintMode: null,
     conclusion: pending.conclusion,
+    retainedConclusion: pending.request.retainedConclusion ?? null,
     drawOfferResponse: null,
     hintFailure: null,
     hints: pending.hints,

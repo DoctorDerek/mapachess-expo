@@ -1,5 +1,5 @@
 import type { MatchColor, MatchPositionStatus } from "./matchPosition.js"
-import type { MatchTimeline } from "./matchTimeline.js"
+import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
 export type MatchConclusion =
   | Readonly<{
@@ -18,6 +18,22 @@ export type MatchDrawOfferDecision = Readonly<{
   outcome: "accepted" | "rejected"
   positionFen: string
 }>
+
+export type RetainedMatchConclusion = Readonly<{
+  conclusion: Extract<
+    MatchConclusion,
+    { type: "resignation" | "draw-agreement" }
+  >
+  cursor: number
+}>
+
+export const retainManualConclusion = (
+  conclusion: MatchConclusion | null,
+  cursor: number,
+): RetainedMatchConclusion | null =>
+  conclusion?.type === "resignation" || conclusion?.type === "draw-agreement"
+    ? Object.freeze({ conclusion, cursor })
+    : null
 
 export const matchConclusionText = (
   conclusion: MatchConclusion,
@@ -71,9 +87,7 @@ export const createDrawAgreementConclusion = (): MatchConclusion =>
 export const deriveRetainedBranchConclusion = (
   timeline: MatchTimeline,
 ): MatchConclusion | null =>
-  deriveTerminalMatchConclusion(
-    (timeline.transitions.at(-1)?.after ?? timeline.initialPosition).status,
-  )
+  deriveTerminalMatchConclusion(currentMatchPosition(timeline).status)
 
 export const conclusionMatchesRetainedBranch = (
   conclusion: MatchConclusion | null,

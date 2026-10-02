@@ -1,5 +1,8 @@
 import type { AutoHintMode } from "./autoHintMode.js"
-import type { MatchConclusion } from "./matchConclusion.js"
+import type {
+  MatchConclusion,
+  RetainedMatchConclusion,
+} from "./matchConclusion.js"
 import type { MatchMoveId } from "./matchMove.js"
 import type { MatchColor, MatchStartingPosition } from "./matchPosition.js"
 import type { MoveFeedbackRecord } from "./moveFeedback.js"
@@ -51,6 +54,7 @@ export type DurableMatchRecordV2 = DurableMatchRecordFields &
 
 export type DurableMatchRecordV3 = DurableMatchRecordFields &
   Readonly<{
+    retainedConclusion?: RetainedMatchConclusion | null
     moveFeedback?: readonly MoveFeedbackRecord[]
     opponentTargetElo?: number
     ratedOpponentElo?: number | null
