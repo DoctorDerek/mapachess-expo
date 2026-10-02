@@ -70,8 +70,9 @@ describe("actionable match recovery", () => {
         expect(markup).toContain('role="status"')
         expect(markup).not.toContain("private")
         if (failure === "save") {
-          expect(markup).toContain("local save was not verified")
-          expect(markup).toContain("Retry local save")
+          expect(markup).toContain("Local save error")
+          expect(markup).toContain("retained but not yet saved")
+          expect(markup).toContain("Retry save")
           expect(markup).not.toContain("Saved")
         } else {
           expect(markup).toContain(

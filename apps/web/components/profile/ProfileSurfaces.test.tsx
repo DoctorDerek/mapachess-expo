@@ -179,8 +179,8 @@ describe("web player-data controls", () => {
       }),
     )
 
-    expect(markup).toContain("not marked saved")
-    expect(markup).toContain("Retry Save")
+    expect(markup).toContain("Local save error")
+    expect(markup).toContain("Retry save")
     expect(markup).toContain("Export Pending Player Data")
     expect(markup).toContain("Export Unreadable Data")
   })
