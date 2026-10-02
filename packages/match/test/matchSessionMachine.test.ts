@@ -22,6 +22,93 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
+  it("replaces the concluding match menu with rewards instead of reopening it after dismissal", async () => {
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: operations() },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "match-menu" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["rewards"])
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.stop()
+  })
+
+  it("invalidates consumed rewards when the owned result reopens", async () => {
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: operations() },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    actor.send({
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+      matchId: session.match.matchId,
+    })
+    actor.send({ type: "MATCH_SESSION.RESULT_REOPENED", matchId: "unowned" })
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(1)
+    actor.send({
+      type: "MATCH_SESSION.RESULT_REOPENED",
+      matchId: session.match.matchId,
+    })
+    expect(actor.getSnapshot().context).toMatchObject({
+      overlays: [],
+      rewardsReplaySequence: 0,
+      resultReopened: true,
+      presentedRewardMatchId: null,
+      dismissedRewardMatchId: null,
+    })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["rewards"])
+    actor.stop()
+  })
+  it("opens explicit rewards replay without reviving consumed history or invoking lifecycle operations", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    actor.send({
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+      matchId: "stale-match",
+    })
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(0)
+    actor.send({
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+      matchId: session.match.matchId,
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual(["rewards"])
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(1)
+    actor.send({
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+      matchId: session.match.matchId,
+    })
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(1)
+    const replayDestination = selectMatchNavigationDestination(
+      actor.getSnapshot(),
+    )
+    if (replayDestination === null)
+      throw new Error("Missing replay destination")
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    actor.send({
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
+      destination: replayDestination,
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(1)
+    actor.send({
+      type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+      matchId: session.match.matchId,
+    })
+    expect(actor.getSnapshot().context.rewardsReplaySequence).toBe(2)
+    expect(ops.openCurrentMatch).toHaveBeenCalledTimes(1)
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    expect(ops.returnToMenu).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it.each(["system-back", "stale-forward"] as const)(
     "settles a restart safely after %s",
     async (navigation) => {
