@@ -1,26 +1,21 @@
 "use client"
 
 import { useCallback, useEffect, useRef } from "react"
-import type { ActorRefFrom } from "xstate"
-import profileMachine from "@mapachess/profile/profile-machine"
+import {
+  parseMatchNavigationDestination,
+  type MatchNavigationCommands,
+  type MatchNavigationDestination,
+  type MatchNavigationOverlay,
+} from "@mapachess/match/match-navigation"
 import {
   selectWebNavigationDestination,
   type WebMatchSessionActor,
 } from "./webMatchSessionMachine"
-import {
-  parseWebNavigationDestination,
-  type WebNavigationDestination,
-  type WebNavigationOverlay,
-} from "./webNavigationDestination"
 
 type NavigationEntry = Readonly<{
   scope: string
   index: number
-  destination: WebNavigationDestination
-}>
-export type WebNavigationCommands = Readonly<{
-  back: () => void
-  open: (overlay: WebNavigationOverlay) => void
+  destination: MatchNavigationDestination
 }>
 
 const entryFromState = (state: unknown): NavigationEntry | null => {
@@ -43,15 +38,15 @@ const entryFromState = (state: unknown): NavigationEntry | null => {
     !("destination" in entry)
   )
     return null
-  const destination = parseWebNavigationDestination(entry.destination)
+  const destination = parseMatchNavigationDestination(entry.destination)
   return destination === null
     ? null
     : { scope: entry.scope, index: entry.index, destination }
 }
 
 const sameDestination = (
-  left: WebNavigationDestination,
-  right: WebNavigationDestination,
+  left: MatchNavigationDestination,
+  right: MatchNavigationDestination,
 ): boolean => JSON.stringify(left) === JSON.stringify(right)
 
 const writeEntry = (entry: NavigationEntry, replace: boolean): void => {
@@ -64,8 +59,7 @@ const writeEntry = (entry: NavigationEntry, replace: boolean): void => {
 
 export default function useWebNavigationHistory(
   actor: WebMatchSessionActor,
-  profileActor: ActorRefFrom<typeof profileMachine>,
-): WebNavigationCommands {
+): MatchNavigationCommands {
   const scope = useRef<string | null>(null)
   useEffect(() => {
     scope.current ??= globalThis.crypto.randomUUID()
@@ -104,31 +98,13 @@ export default function useWebNavigationHistory(
     const restore = (event: PopStateEvent): void => {
       const current = selectWebNavigationDestination(actor.getSnapshot())
       if (current === null) return
-      const profile = profileActor.getSnapshot()
       const entry = entryFromState(event.state)
-      if (
-        profile.matches("recovery") ||
-        profile.matches("importPreview") ||
-        profile.matches("persistenceFailure") ||
-        profile.matches("retryingPersistence") ||
-        profile.matches("loadFailure")
-      ) {
-        writeEntry(
-          {
-            scope: currentScope,
-            index: entry?.scope === currentScope ? entry.index : 0,
-            destination: current,
-          },
-          true,
-        )
-        return
-      }
       const destination =
         entry?.scope === currentScope
           ? entry.destination
           : { ...current, screen: "menu" as const, overlays: [] }
       restoring = true
-      actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+      actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
       restoring = false
       const accepted = selectWebNavigationDestination(actor.getSnapshot())
       if (accepted !== null)
@@ -159,17 +135,15 @@ export default function useWebNavigationHistory(
       window.removeEventListener("popstate", restore)
       if (focusFrame !== null) cancelAnimationFrame(focusFrame)
     }
-  }, [actor, profileActor])
+  }, [actor])
   const back = useCallback(() => {
     const entry = entryFromState(window.history.state)
     if (entry?.scope === scope.current && entry.index > 0) window.history.back()
-    else if (actor.getSnapshot().context.overlays.length > 0)
-      actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
-    else actor.send({ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" })
+    else actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
   }, [actor])
   const open = useCallback(
-    (overlay: WebNavigationOverlay) =>
-      actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_OPENED", overlay }),
+    (overlay: MatchNavigationOverlay) =>
+      actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay }),
     [actor],
   )
   return { back, open }

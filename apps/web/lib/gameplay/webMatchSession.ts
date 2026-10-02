@@ -13,6 +13,7 @@ import {
 import matchMachine, {
   selectMatchTimeline,
 } from "@mapachess/match/match-machine"
+import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -188,6 +189,15 @@ const openActorSession = async ({
       evaluationActor: openedEvaluationActor,
       match,
       runtime,
+      setup: createMatchSetupForMode(
+        { mode: match.mode, variant: match.startingPosition.variant },
+        {
+          ...match.startingPosition,
+          playerColor: match.playerColor,
+          opponentId: match.opponentId,
+          difficultyTargetElo: runtime.opponentTargetElo,
+        },
+      ),
     })
   } catch (error) {
     evaluationBinding?.disconnect()

@@ -1,6 +1,10 @@
 "use client"
 
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import type {
+  MatchNavigationCommands,
+  MatchNavigationOverlay,
+} from "@mapachess/match/match-navigation"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import {
   PLAYER_ELO_RATING_IDS,
@@ -9,8 +13,6 @@ import {
   type RatedMatchCounts,
 } from "@mapachess/profile/player-data"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
-import type { WebNavigationCommands } from "../../lib/gameplay/useWebNavigationHistory"
-import type { WebNavigationOverlay } from "../../lib/gameplay/webNavigationDestination"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "./AutoHintModeChoices"
@@ -35,8 +37,8 @@ export type ProfileSettingsPanelProps = Readonly<{
   onClose: () => void
   onExportPlayerData: () => void
   onEloResetConfirmed: (variant: PlayerEloRatingId) => void
-  overlays: readonly WebNavigationOverlay[]
-  navigation: WebNavigationCommands
+  overlays: readonly MatchNavigationOverlay[]
+  navigation: MatchNavigationCommands
 }>
 
 export default function ProfileSettingsPanel({

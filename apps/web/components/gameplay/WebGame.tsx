@@ -8,6 +8,7 @@ import {
   selectMatchConclusion,
   selectPersistenceFailure,
 } from "@mapachess/match/match-machine"
+import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
 import createMatchSetupForMode, {
   MATCH_SETUP_COPY,
 } from "@mapachess/match/match-setup"
@@ -18,7 +19,6 @@ import profileMachine, {
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
-import type { WebNavigationCommands } from "../../lib/gameplay/useWebNavigationHistory"
 import {
   selectWebMatchSession,
   selectWebMatchSessionFailure,
@@ -38,7 +38,7 @@ import WebMatchSetup from "./WebMatchSetup"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
-  navigation: WebNavigationCommands
+  navigation: MatchNavigationCommands
   onSettingsRequested: () => void
   profileActor: ActorRefFrom<typeof profileMachine>
   settingsButtonRef: Ref<HTMLButtonElement>
@@ -180,11 +180,11 @@ export default function WebGame({
   }
   const requestSetupAfterResult = (setup: MatchSetup): void => {
     if (!resultActionAvailable()) return
-    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
   }
   const requestReplayAfterResult = (): void => {
     if (!resultActionAvailable()) return
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
   }
 
   if (snapshot.matches("openingCurrentMatch")) {
@@ -211,7 +211,7 @@ export default function WebGame({
             <div className="mx-auto mb-4 max-w-6xl">
               <MapachessButton
                 onClick={() =>
-                  actor.send({ type: "WEB_MATCH_SESSION.RESUME_REQUESTED" })
+                  actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
                 }
                 disabled={settingsOpen}
               >
@@ -239,7 +239,7 @@ export default function WebGame({
                 ),
               )
               actor.send({
-                type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
+                type: "MATCH_SESSION.SETUP_REQUESTED",
                 setup:
                   setup.mode === "challenge" &&
                   setup.challengeSetup.variant === "chess960"
@@ -299,7 +299,7 @@ export default function WebGame({
               settingsOpen
             )
               return
-            actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+            actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
           }}
           setup={initialSetup}
           storyProgress={playerData.storyProgress}
@@ -321,7 +321,7 @@ export default function WebGame({
                   busyLabel={MATCH_SETUP_COPY.restartingMatch}
                   variant="secondary"
                   onClick={() =>
-                    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+                    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
                   }
                 >
                   Restart Match
@@ -332,7 +332,7 @@ export default function WebGame({
                   variant="secondary"
                   onClick={() =>
                     actor.send({
-                      type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED",
+                      type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED",
                     })
                   }
                 >
@@ -437,7 +437,7 @@ export default function WebGame({
             <MapachessButton
               className="mt-6"
               onClick={() =>
-                actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
+                actor.send({ type: "MATCH_SESSION.RETRY_REQUESTED" })
               }
               type="button"
             >

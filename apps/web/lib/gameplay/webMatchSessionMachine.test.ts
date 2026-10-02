@@ -9,6 +9,10 @@ import type {
 } from "@mapachess/match/durable-match-record"
 import matchMachine from "@mapachess/match/match-machine"
 import {
+  eligibleMatchNavigationOverlays,
+  parseMatchNavigationDestination,
+} from "@mapachess/match/match-navigation"
+import {
   createInitialMatchPosition,
   type MatchColor,
   type MatchStartingPosition,
@@ -27,10 +31,6 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
-import {
-  eligibleWebNavigationOverlays,
-  parseWebNavigationDestination,
-} from "./webNavigationDestination"
 import { webMatchId } from "./webOpponent"
 
 const createSession = (
@@ -103,12 +103,22 @@ const createSession = (
     }),
     match,
     runtime,
+    setup: createMatchSetupForMode(
+      { mode, variant: startingPosition.variant },
+      {
+        ...startingPosition,
+        playerColor,
+        opponentId,
+        difficultyTargetElo: opponentTargetElo,
+      },
+    ),
   })
 }
 
 const operations = (
   overrides: Partial<WebMatchSessionOperations> = {},
 ): WebMatchSessionOperations => ({
+  canNavigate: () => true,
   openCurrentMatch: vi.fn(async () =>
     createSession("00000001000000020000000300000004"),
   ),
@@ -128,11 +138,11 @@ describe("web match session machine", () => {
     const destination = selectWebNavigationDestination(actor.getSnapshot())
     if (destination === null) throw new Error("Expected active navigation")
     actor.send({
-      type: "WEB_MATCH_SESSION.PROFILE_REPLACED",
+      type: "MATCH_SESSION.PROFILE_REPLACED",
       activeMatchExists: false,
     })
     expect(selectWebMatchSession(actor.getSnapshot())).toBeNull()
-    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
     expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
     expect(actor.getSnapshot().context.overlays).toEqual([])
     actor.stop()
@@ -147,12 +157,12 @@ describe("web match session machine", () => {
     const destination = selectWebNavigationDestination(actor.getSnapshot())
     if (destination === null) throw new Error("Expected active navigation")
     actor.send({
-      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
       destination: { ...destination, screen: "menu" },
     })
     expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
     expect(selectWebMatchSession(actor.getSnapshot())).toBe(session)
-    actor.send({ type: "WEB_MATCH_SESSION.RESUME_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
     expect(actor.getSnapshot().matches("active")).toBe(true)
     expect(selectWebMatchSession(actor.getSnapshot())).toBe(session)
     expect(session?.close).not.toHaveBeenCalled()
@@ -168,20 +178,20 @@ describe("web match session machine", () => {
     }).start()
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
     actor.send({
-      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      type: "MATCH_SESSION.OVERLAY_OPENED",
       overlay: "classifications",
     })
     expect(actor.getSnapshot().context.overlays).toEqual([])
     actor.send({
-      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      type: "MATCH_SESSION.OVERLAY_OPENED",
       overlay: "match-menu",
     })
     actor.send({
-      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      type: "MATCH_SESSION.OVERLAY_OPENED",
       overlay: "settings",
     })
     actor.send({
-      type: "WEB_MATCH_SESSION.OVERLAY_OPENED",
+      type: "MATCH_SESSION.OVERLAY_OPENED",
       overlay: "classifications",
     })
     expect(actor.getSnapshot().context.overlays).toEqual([
@@ -189,24 +199,24 @@ describe("web match session machine", () => {
       "settings",
       "classifications",
     ])
-    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED" })
     expect(actor.getSnapshot().context.overlays).toEqual([
       "match-menu",
       "settings",
     ])
-    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
-    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_CLOSED" })
-    actor.send({ type: "WEB_MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "rewards" })
     const destination = selectWebNavigationDestination(actor.getSnapshot())
     if (destination === null) throw new Error("Expected active navigation")
     actor.send({
-      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
       destination: { ...destination, overlays: [] },
     })
-    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
     expect(actor.getSnapshot().context.overlays).toEqual([])
     actor.send({
-      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
       destination: {
         ...destination,
         matchId: "obsolete-match",
@@ -216,7 +226,7 @@ describe("web match session machine", () => {
     expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
     expect(actor.getSnapshot().context.overlays).toEqual([])
     actor.send({
-      type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED",
+      type: "MATCH_SESSION.NAVIGATION_RESTORED",
       destination: {
         ...destination,
         screen: "setup",
@@ -241,11 +251,11 @@ describe("web match session machine", () => {
       setupKey: "story:standard",
       overlays: [],
     } as const
-    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
     expect(actor.getSnapshot().matches("openingCurrentMatch")).toBe(true)
     gate.reject(new Error("Opening failed"))
     await waitFor(actor, (snapshot) => snapshot.matches("failed"))
-    actor.send({ type: "WEB_MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
     expect(actor.getSnapshot().matches("failed")).toBe(true)
     actor.stop()
   })
@@ -257,8 +267,8 @@ describe("web match session machine", () => {
       setupKey: "story:standard",
       overlays: ["match-details", "classifications", "match-menu", "rewards"],
     } as const
-    expect(parseWebNavigationDestination(destination)).toEqual(destination)
-    expect(eligibleWebNavigationOverlays(destination, false)).toEqual([
+    expect(parseMatchNavigationDestination(destination)).toEqual(destination)
+    expect(eligibleMatchNavigationOverlays(destination, false)).toEqual([
       "match-menu",
     ])
     for (const invalid of [
@@ -270,7 +280,7 @@ describe("web match session machine", () => {
       { ...destination, overlays: ["settings", "settings"] },
       { ...destination, overlays: ["fake"] },
     ])
-      expect(parseWebNavigationDestination(invalid)).toBeNull()
+      expect(parseMatchNavigationDestination(invalid)).toBeNull()
   })
 
   it("opens selected Story setup only after closing the saved session, without starting a match", async () => {
@@ -285,9 +295,9 @@ describe("web match session machine", () => {
       variant: "chess960",
       opponentId: "bunny-stockfish",
     } as const
-    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
     actor.send({
-      type: "WEB_MATCH_SESSION.SETUP_REQUESTED",
+      type: "MATCH_SESSION.SETUP_REQUESTED",
       setup: { mode: "story", variant: "standard" },
     })
     expect(actor.getSnapshot().matches("returningToMenu")).toBe(true)
@@ -321,21 +331,21 @@ describe("web match session machine", () => {
       { mode: "story", variant: "standard" },
       DEFAULT_CHALLENGE_SETUP,
     )
-    actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
-    actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
-    actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
+    actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
     expect(openFreshMatch).toHaveBeenCalledTimes(1)
     expect(actor.getSnapshot().matches("openingFreshMatch")).toBe(true)
     start.resolve(opened)
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
     expect(openFreshMatch).toHaveBeenCalledTimes(2)
     expect(actor.getSnapshot().context.session).toBe(opened)
     restart.resolve(opened)
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
-    actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
-    actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
     expect(returnToMenu).toHaveBeenCalledOnce()
     expect(actor.getSnapshot().context.session).toBe(opened)
     menu.resolve()
@@ -387,13 +397,13 @@ describe("web match session machine", () => {
           operations: operations({ openFreshMatch }),
         },
       }).start()
-      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
       actor.send({
-        type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+        type: "MATCH_SESSION.MATCH_REQUESTED",
         setup,
       })
       await waitFor(actor, (snapshot) => snapshot.matches("failed"))
-      actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
+      actor.send({ type: "MATCH_SESSION.RETRY_REQUESTED" })
       await waitFor(actor, (snapshot) => snapshot.matches("active"))
       expect(openFreshMatch).toHaveBeenNthCalledWith(
         1,
@@ -407,7 +417,7 @@ describe("web match session machine", () => {
         setup,
         expect.any(AbortSignal),
       )
-      actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+      actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
       await waitFor(
         actor,
         (snapshot) =>
@@ -457,17 +467,17 @@ describe("web match session machine", () => {
         },
       }).start()
 
-      actor.send({ type: "WEB_MATCH_SESSION.MATCH_REQUESTED", setup })
+      actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
       expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
       expect(openFreshMatch).not.toHaveBeenCalled()
-      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
       expect(actor.getSnapshot().matches({ menu: "setup" })).toBe(true)
       expect(openFreshMatch).not.toHaveBeenCalled()
-      actor.send({ type: "WEB_MATCH_SESSION.MAIN_MENU_REQUESTED" })
+      actor.send({ type: "MATCH_SESSION.MAIN_MENU_REQUESTED" })
       expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
-      actor.send({ type: "WEB_MATCH_SESSION.SETUP_REQUESTED", setup })
+      actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
       actor.send({
-        type: "WEB_MATCH_SESSION.MATCH_REQUESTED",
+        type: "MATCH_SESSION.MATCH_REQUESTED",
         setup,
       })
       await waitFor(actor, (snapshot) => snapshot.matches("active"))
@@ -520,7 +530,7 @@ describe("web match session machine", () => {
     }).start()
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
     await waitFor(
       actor,
       (snapshot) =>
@@ -549,7 +559,7 @@ describe("web match session machine", () => {
     }).start()
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
-    actor.send({ type: "WEB_MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
     await waitFor(actor, (snapshot) => snapshot.matches({ menu: "setup" }))
 
     expect(returnToMenu).toHaveBeenCalledWith(
@@ -584,14 +594,14 @@ describe("web match session machine", () => {
     }).start()
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
 
-    actor.send({ type: "WEB_MATCH_SESSION.RESTART_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
     await waitFor(actor, (snapshot) => snapshot.matches("failed"))
     expect(selectWebMatchSessionFailure(actor.getSnapshot())).toEqual({
       cause: restartFailure,
       operation: "restart-match",
     })
 
-    actor.send({ type: "WEB_MATCH_SESSION.RETRY_REQUESTED" })
+    actor.send({ type: "MATCH_SESSION.RETRY_REQUESTED" })
     await waitFor(
       actor,
       (snapshot) =>

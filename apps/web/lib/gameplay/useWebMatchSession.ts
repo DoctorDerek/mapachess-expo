@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createActor, type ActorRefFrom } from "xstate"
 import profileMachine, {
+  selectCanNavigateProfile,
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
 import {
@@ -42,6 +43,8 @@ export default function useWebMatchSession(
       input: {
         activeMatchExists: playerData.activeMatch !== null,
         operations: {
+          canNavigate: () =>
+            selectCanNavigateProfile(profileActor.getSnapshot()),
           openCurrentMatch: (signal) =>
             captureSession(
               openCurrentWebMatchSession({ profileActor, signal }),
@@ -91,7 +94,7 @@ export default function useWebMatchSession(
       latestSession = null
       if (replaced !== null) void replaced.close().catch(() => undefined)
       actor.send({
-        type: "WEB_MATCH_SESSION.PROFILE_REPLACED",
+        type: "MATCH_SESSION.PROFILE_REPLACED",
         activeMatchExists: current.activeMatch !== null,
       })
     })

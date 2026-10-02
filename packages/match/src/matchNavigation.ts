@@ -1,4 +1,4 @@
-export type WebNavigationOverlay =
+export type MatchNavigationOverlay =
   | "match-menu"
   | "match-details"
   | "settings"
@@ -11,21 +11,21 @@ export type WebNavigationOverlay =
   | "setup-hints"
   | "rewards"
 
-export type WebNavigationScreen = "menu" | "setup" | "match"
-export type WebNavigationSetupKey =
+export type MatchNavigationScreen = "menu" | "setup" | "match"
+export type MatchNavigationSetupKey =
   | "story:standard"
   | "story:chess960"
   | "challenge:standard"
   | "challenge:chess960"
 
-export type WebNavigationDestination = Readonly<{
-  screen: WebNavigationScreen
+export type MatchNavigationDestination = Readonly<{
+  screen: MatchNavigationScreen
   matchId: string | null
-  setupKey: WebNavigationSetupKey
-  overlays: readonly WebNavigationOverlay[]
+  setupKey: MatchNavigationSetupKey
+  overlays: readonly MatchNavigationOverlay[]
 }>
 
-const overlayNames: readonly WebNavigationOverlay[] = [
+const overlayNames: readonly MatchNavigationOverlay[] = [
   "match-menu",
   "match-details",
   "settings",
@@ -39,9 +39,9 @@ const overlayNames: readonly WebNavigationOverlay[] = [
   "rewards",
 ]
 
-export function parseWebNavigationDestination(
+export function parseMatchNavigationDestination(
   value: unknown,
-): WebNavigationDestination | null {
+): MatchNavigationDestination | null {
   if (typeof value !== "object" || value === null) return null
   if (
     !("screen" in value) ||
@@ -61,7 +61,7 @@ export function parseWebNavigationDestination(
       (typeof value.matchId !== "string" || value.matchId.length === 0))
   )
     return null
-  const overlays: WebNavigationOverlay[] = []
+  const overlays: MatchNavigationOverlay[] = []
   for (const candidate of value.overlays) {
     const overlay = overlayNames.find((name) => name === candidate)
     if (overlay === undefined || overlays.includes(overlay)) return null
@@ -75,11 +75,11 @@ export function parseWebNavigationDestination(
   }
 }
 
-export function eligibleWebNavigationOverlays(
-  destination: WebNavigationDestination,
+export function eligibleMatchNavigationOverlays(
+  destination: MatchNavigationDestination,
   rewardAvailable: boolean,
-): readonly WebNavigationOverlay[] {
-  const result: WebNavigationOverlay[] = []
+): readonly MatchNavigationOverlay[] {
+  const result: MatchNavigationOverlay[] = []
   for (const overlay of destination.overlays) {
     const eligible =
       overlay === "settings" ||
@@ -98,3 +98,8 @@ export function eligibleWebNavigationOverlays(
   }
   return result
 }
+
+export type MatchNavigationCommands = Readonly<{
+  back: () => void
+  open: (overlay: MatchNavigationOverlay) => void
+}>

@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./match-navigation": {
+      "types": "./src/matchNavigation.ts",
+      "default": "./dist/matchNavigation.js"
+    },
+    "./match-session-machine": {
+      "types": "./src/matchSessionMachine.ts",
+      "default": "./dist/matchSessionMachine.js"
+    },
     "./move-feedback": {
       "types": "./src/moveFeedback.ts",
       "default": "./dist/moveFeedback.js"

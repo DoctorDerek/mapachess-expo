@@ -52,7 +52,7 @@ function ReadyPlayExperience({
 }: ProfilePlayExperienceProps & Readonly<{ actor: WebMatchSessionActor }>) {
   const snapshot = useSelector(actor, (current) => current)
   const profile = useSelector(profileActor, (current) => current)
-  const navigation = useWebNavigationHistory(actor, profileActor)
+  const navigation = useWebNavigationHistory(actor)
   const settingsButton = useRef<HTMLButtonElement>(null)
   const settingsOpen =
     snapshot.context.overlays.includes("settings") && !blocked

@@ -24,6 +24,10 @@ import matchMachine, {
   selectPersistenceFailure,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import type {
+  MatchNavigationCommands,
+  MatchNavigationOverlay,
+} from "@mapachess/match/match-navigation"
 import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
@@ -31,9 +35,7 @@ import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import type { StoryProgress } from "@mapachess/profile/story-progress"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
-import type { WebNavigationCommands } from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
-import type { WebNavigationOverlay } from "../../lib/gameplay/webNavigationDestination"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import BattleStageSurface from "./BattleStageSurface"
@@ -66,8 +68,8 @@ export type WebMatchProps = Readonly<{
   runtime: WebMatchRuntime
   menuActions?: ReactNode
   result?: (disabled: boolean) => ReactNode
-  navigation: WebNavigationCommands
-  overlays: readonly WebNavigationOverlay[]
+  navigation: MatchNavigationCommands
+  overlays: readonly MatchNavigationOverlay[]
   celebrationDismissed: boolean
   visible: boolean
 }>
