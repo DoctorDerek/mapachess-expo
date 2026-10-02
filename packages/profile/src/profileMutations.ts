@@ -1,18 +1,17 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import accountActiveResult from "./activeResultAccounting.js"
 import applyChallengeMatchResult, {
   recordChallengeStart,
 } from "./challengeHistory.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
-import { completedMatchXpAward, levelAchievementsCrossed } from "./globalXp.js"
 import createInitialMapachessPlayerData, {
   INITIAL_PLAYER_ELO,
   type MapachessPlayerData,
   type PlayerEloRatingId,
 } from "./playerData.js"
-import { playerResultScore, updatedPlayerElo } from "./playerElo.js"
 import applyStoryMatchResult from "./storyProgress.js"
 
 const freezePlayerData = (
@@ -61,90 +60,21 @@ export const replaceActiveMatch = (
           ...activeMatch,
           opponentTargetElo: activeMatch.opponentTargetElo ?? null,
         }
+  const balances = accountActiveResult(current, activeMatch)
   const challengeHistory = applyChallengeMatchResult(
-    current.challengeHistory,
+    balances.challengeHistory,
     current.activeMatch,
     historyMatch,
+    false,
   )
-  const firstAcceptedResult =
-    activeMatch !== null &&
-    activeMatch.conclusion !== null &&
-    (current.activeMatch === null ||
-      (current.activeMatch.matchId === activeMatch.matchId &&
-        current.activeMatch.conclusion === null)) &&
-    !current.processedMatchResultIds.includes(activeMatch.matchId)
-  const ratedResult =
-    firstAcceptedResult &&
-    activeMatch !== null &&
-    activeMatch.conclusion !== null &&
-    typeof activeMatch.ratedOpponentElo === "number" &&
-    current.activeMatch?.matchId === activeMatch.matchId &&
-    current.activeMatch.ratedOpponentElo === activeMatch.ratedOpponentElo
-      ? Object.freeze({
-          variant: activeMatch.startingPosition.variant,
-          before: current.ratings[activeMatch.startingPosition.variant],
-          after: updatedPlayerElo(
-            current.ratings[activeMatch.startingPosition.variant],
-            current.ratedMatchCounts[activeMatch.startingPosition.variant],
-            activeMatch.ratedOpponentElo,
-            playerResultScore(activeMatch.conclusion, activeMatch.playerColor),
-          ),
-        })
-      : null
-  const awardedXp =
-    firstAcceptedResult && activeMatch !== null
-      ? completedMatchXpAward(activeMatch)
-      : 0
-  const totalXp = current.totalXp + awardedXp
-  if (!Number.isSafeInteger(totalXp)) {
-    throw new RangeError("Global XP exceeds the supported save range.")
-  }
-  const newlyUnlockedAchievements = firstAcceptedResult
-    ? levelAchievementsCrossed(current.totalXp, totalXp)
-    : Object.freeze([])
   return Object.freeze({
     ...current,
+    ...balances,
     activeMatch,
     challengeHistory:
       challengeSetup !== undefined && historyMatch !== null
         ? recordChallengeStart(challengeHistory, historyMatch)
         : challengeHistory,
-    processedMatchResultIds: firstAcceptedResult
-      ? Object.freeze([...current.processedMatchResultIds, activeMatch.matchId])
-      : current.processedMatchResultIds,
-    lastAcceptedResultReward:
-      firstAcceptedResult && activeMatch !== null
-        ? Object.freeze({
-            matchId: activeMatch.matchId,
-            awardedXp,
-            totalXpBefore: current.totalXp,
-            unlockedAchievementIds: newlyUnlockedAchievements,
-            ratedElo: ratedResult,
-          })
-        : current.lastAcceptedResultReward,
-    totalXp,
-    unlockedAchievementIds:
-      newlyUnlockedAchievements.length > 0
-        ? Object.freeze([
-            ...current.unlockedAchievementIds,
-            ...newlyUnlockedAchievements,
-          ])
-        : current.unlockedAchievementIds,
-    ratedMatchCounts:
-      ratedResult !== null
-        ? Object.freeze({
-            ...current.ratedMatchCounts,
-            [ratedResult.variant]:
-              current.ratedMatchCounts[ratedResult.variant] + 1,
-          })
-        : current.ratedMatchCounts,
-    ratings:
-      ratedResult !== null
-        ? Object.freeze({
-            ...current.ratings,
-            [ratedResult.variant]: ratedResult.after,
-          })
-        : current.ratings,
     storyProgress: applyStoryMatchResult(
       applyStoryMatchResult(current.storyProgress, current.activeMatch),
       activeMatch,
@@ -167,6 +97,20 @@ export const resetPlayerElo = (
 ): MapachessPlayerData =>
   Object.freeze({
     ...current,
+    lastAcceptedResultReward:
+      current.lastAcceptedResultReward?.contribution?.variant === variant
+        ? Object.freeze({
+            ...current.lastAcceptedResultReward,
+            ratedElo: null,
+            contribution: Object.freeze({
+              ...current.lastAcceptedResultReward.contribution,
+              ratedMatchCountBefore: null,
+              eloState: current.lastAcceptedResultReward.contribution.applied
+                ? "superseded"
+                : "rebase",
+            }),
+          })
+        : current.lastAcceptedResultReward,
     ratedMatchCounts: Object.freeze({
       ...current.ratedMatchCounts,
       [variant]: 0,

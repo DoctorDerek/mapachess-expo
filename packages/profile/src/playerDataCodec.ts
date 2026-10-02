@@ -29,6 +29,7 @@ import {
 } from "./durableMatchCodec.js"
 import {
   COMPLETED_MATCH_XP,
+  completedMatchXpAward,
   GLOBAL_XP_QUANTUM,
   LEVEL_ACHIEVEMENTS,
   levelAchievementsCrossed,
@@ -37,9 +38,11 @@ import {
   type LevelAchievementId,
 } from "./globalXp.js"
 import {
+  acceptedRewardMatchesEnding,
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
   createInitialRatedMatchCounts,
+  GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
   INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -59,6 +62,7 @@ import {
   type PlayerEloRatings,
   type RatedMatchCounts,
 } from "./playerData.js"
+import decodeResultContribution from "./resultContributionCodec.js"
 import applyStoryMatchResult, {
   createInitialStoryProgress,
 } from "./storyProgress.js"
@@ -83,6 +87,7 @@ export type PlayerDataSource = Readonly<{
     | typeof INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION
     | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -167,12 +172,16 @@ const decodeLevelAchievementIds = (
   received: unknown,
   path: string,
   totalXp: number,
+  historical = false,
 ): readonly LevelAchievementId[] => {
   if (!Array.isArray(received)) return failData(path)
   const availableLevel = levelFromTotalXp(totalXp)
   const ids = received.map((value: unknown, index: number) => {
     const achievement = LEVEL_ACHIEVEMENTS.find(({ id }) => id === value)
-    if (achievement === undefined || achievement.level > availableLevel) {
+    if (
+      achievement === undefined ||
+      (!historical && achievement.level > availableLevel)
+    ) {
       return failData(`${path}[${String(index)}]`)
     }
     return achievement.id
@@ -195,6 +204,7 @@ const decodeAcceptedMatchReward = (
   received: unknown,
   totalXp: number,
   processedMatchResultIds: readonly string[],
+  reversible = false,
 ): AcceptedMatchReward | null => {
   if (received === null) return null
   const path = "$.lastAcceptedResultReward"
@@ -207,6 +217,9 @@ const decodeAcceptedMatchReward = (
       "totalXpBefore",
       "unlockedAchievementIds",
       "ratedElo",
+      ...(reversible && object.contribution !== undefined
+        ? ["contribution"]
+        : []),
     ],
     path,
   )
@@ -221,22 +234,31 @@ const decodeAcceptedMatchReward = (
     object.totalXpBefore,
     `${path}.totalXpBefore`,
   )
+  const contribution =
+    reversible && object.contribution !== undefined
+      ? decodeResultContribution(object.contribution, `${path}.contribution`)
+      : undefined
   if (
     (awardedXp !== COMPLETED_MATCH_XP &&
       awardedXp !== COMPLETED_MATCH_XP + STRONGER_CALIBRATED_WIN_BONUS_XP) ||
-    totalXpBefore + awardedXp !== totalXp
+    totalXpBefore % GLOBAL_XP_QUANTUM !== 0 ||
+    totalXpBefore + (contribution?.applied === false ? 0 : awardedXp) !==
+      totalXp
   ) {
     return failData(path)
   }
   const unlockedAchievementIds = decodeLevelAchievementIds(
     object.unlockedAchievementIds,
     `${path}.unlockedAchievementIds`,
-    totalXp,
+    totalXpBefore + awardedXp,
   )
-  const expectedUnlocks = levelAchievementsCrossed(totalXpBefore, totalXp)
+  const expectedUnlocks = levelAchievementsCrossed(
+    totalXpBefore,
+    totalXpBefore + awardedXp,
+  )
   if (
-    unlockedAchievementIds.length !== expectedUnlocks.length ||
-    unlockedAchievementIds.some((id, index) => id !== expectedUnlocks[index])
+    (!reversible && unlockedAchievementIds.length !== expectedUnlocks.length) ||
+    unlockedAchievementIds.some((id) => !expectedUnlocks.includes(id))
   ) {
     return failData(`${path}.unlockedAchievementIds`)
   }
@@ -254,7 +276,16 @@ const decodeAcceptedMatchReward = (
       after: requirePlayerElo(rated.after, `${path}.ratedElo.after`),
     })
   }
+  if (
+    contribution !== undefined &&
+    ((ratedElo === null) !== (contribution.ratedMatchCountBefore === null) ||
+      (ratedElo !== null &&
+        (ratedElo.variant !== contribution.variant ||
+          contribution.eloState !== "active")))
+  )
+    return failData(`${path}.contribution`)
   return Object.freeze({
+    ...(contribution === undefined ? {} : { contribution }),
     matchId: object.matchId,
     awardedXp,
     totalXpBefore,
@@ -340,9 +371,10 @@ const canonicalModernPlayerData = (
 
 const canonicalTwoVariantFields = (
   data: MapachessPlayerDataV7 | MapachessPlayerData,
+  sourceSchemaVersion: number = data.schemaVersion,
 ): readonly unknown[] => [
   data.schema,
-  data.schemaVersion,
+  sourceSchemaVersion,
   data.revision,
   data.settings.autoHintMode,
   PLAYER_ELO_RATING_IDS.map((ratingId) => data.ratings[ratingId]),
@@ -364,9 +396,12 @@ const canonicalTwoVariantFields = (
 const canonicalTwoVariantPlayerData = (data: MapachessPlayerDataV7): string =>
   JSON.stringify(canonicalTwoVariantFields(data))
 
-export const canonicalPlayerData = (data: MapachessPlayerData): string =>
+export const canonicalPlayerData = (
+  data: MapachessPlayerData,
+  sourceSchemaVersion: number = data.schemaVersion,
+): string =>
   JSON.stringify([
-    ...canonicalTwoVariantFields(data),
+    ...canonicalTwoVariantFields(data, sourceSchemaVersion),
     data.totalXp,
     data.unlockedAchievementIds,
     data.lastAcceptedResultReward === null
@@ -383,6 +418,10 @@ export const canonicalPlayerData = (data: MapachessPlayerData): string =>
                 data.lastAcceptedResultReward.ratedElo.before,
                 data.lastAcceptedResultReward.ratedElo.after,
               ],
+          ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION &&
+          data.lastAcceptedResultReward.contribution !== undefined
+            ? [data.lastAcceptedResultReward.contribution]
+            : []),
         ],
   ])
 
@@ -546,6 +585,7 @@ const decodeCurrentPlayerData = (
   object: JsonObject,
   sourceSchemaVersion:
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -562,7 +602,7 @@ const decodeCurrentPlayerData = (
       "schemaVersion",
       "settings",
       "storyProgress",
-      ...(sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ...(sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
         ? ["totalXp", "unlockedAchievementIds", "lastAcceptedResultReward"]
         : []),
     ],
@@ -593,26 +633,28 @@ const decodeCurrentPlayerData = (
     return failData("$.processedMatchResultIds")
   }
   const totalXp =
-    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
       ? requireSafeRevision(object.totalXp, "$.totalXp")
       : 0
   if (totalXp % GLOBAL_XP_QUANTUM !== 0) {
     return failData("$.totalXp")
   }
   const unlockedAchievementIds =
-    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
       ? decodeLevelAchievementIds(
           object.unlockedAchievementIds,
           "$.unlockedAchievementIds",
           totalXp,
+          sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         )
       : Object.freeze([])
   const lastAcceptedResultReward =
-    sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
       ? decodeAcceptedMatchReward(
           object.lastAcceptedResultReward,
           totalXp,
           processedMatchResultIds,
+          sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         )
       : null
   const data: MapachessPlayerData = Object.freeze({
@@ -620,6 +662,7 @@ const decodeCurrentPlayerData = (
     challengeHistory: decodeChallengeHistory(
       object.challengeHistory,
       "$.challengeHistory",
+      sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     ),
     legacyRatings: decodeLegacyPlayerEloRatings(
       object.legacyRatings,
@@ -647,12 +690,74 @@ const decodeCurrentPlayerData = (
     totalXp,
     unlockedAchievementIds,
   })
+  const contribution = lastAcceptedResultReward?.contribution
+  if (contribution !== undefined && lastAcceptedResultReward !== null) {
+    if (
+      lastAcceptedResultReward.unlockedAchievementIds.some(
+        (id) => !unlockedAchievementIds.includes(id),
+      ) ||
+      (contribution.eloState === "rebase" && contribution.applied)
+    )
+      return failData("$.lastAcceptedResultReward")
+    if (activeMatch?.matchId === lastAcceptedResultReward.matchId) {
+      const endingMatch = decodeDurableMatch(
+        {
+          ...activeMatch,
+          ...contribution.ending,
+          retainedConclusion: null,
+          moveFeedback: [],
+        },
+        "$.lastAcceptedResultReward.contribution.ending",
+      )
+      const outcome =
+        endingMatch.mode === "challenge" &&
+        endingMatch.conclusion !== null &&
+        "winner" in endingMatch.conclusion
+          ? endingMatch.conclusion.winner === endingMatch.playerColor
+            ? "win"
+            : "loss"
+          : null
+      if (
+        contribution.variant !== activeMatch.startingPosition.variant ||
+        contribution.opponentId !== activeMatch.opponentId ||
+        contribution.challengeOutcome !== outcome ||
+        completedMatchXpAward(endingMatch) !==
+          lastAcceptedResultReward.awardedXp ||
+        (contribution.applied
+          ? !acceptedRewardMatchesEnding(lastAcceptedResultReward, activeMatch)
+          : activeMatch.conclusion !== null)
+      )
+        return failData("$.lastAcceptedResultReward.contribution")
+      const rated = lastAcceptedResultReward.ratedElo
+      if (
+        rated !== null &&
+        (data.ratings[rated.variant] !==
+          (contribution.applied ? rated.after : rated.before) ||
+          data.ratedMatchCounts[rated.variant] !==
+            (contribution.ratedMatchCountBefore ?? 0) +
+              Number(contribution.applied))
+      )
+        return failData("$.lastAcceptedResultReward.ratedElo")
+      if (contribution.challengeOutcome !== null && contribution.applied) {
+        const animal = data.challengeHistory[contribution.variant].animals.find(
+          (entry) => entry.opponentId === contribution.opponentId,
+        )
+        if (
+          animal === undefined ||
+          (contribution.challengeOutcome === "win"
+            ? animal.lifetimeWins
+            : animal.lifetimeLosses) < 1
+        )
+          return failData("$.challengeHistory")
+      }
+    }
+  }
   return Object.freeze({
     data,
     source: Object.freeze({
       canonical:
-        sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
-          ? canonicalPlayerData(data)
+        sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
+          ? canonicalPlayerData(data, sourceSchemaVersion)
           : canonicalTwoVariantPlayerData({
               ...data,
               schemaVersion: TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
@@ -693,6 +798,7 @@ export const decodeMapachessPlayerDataWithSource = (
               LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
           ? decodeModernPlayerData(object, object.schemaVersion)
           : object.schemaVersion === TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion === GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")
