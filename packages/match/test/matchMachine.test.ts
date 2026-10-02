@@ -69,6 +69,50 @@ const standardInitialPosition = () =>
   })
 
 describe("scoped XState match flow", () => {
+  it.each(["resignation", "draw-agreement"] as const)(
+    "reopens and restores %s without needing a chess move",
+    (type) => {
+      const scripted = createScriptedOpponent([])
+      const actor = createActor(matchMachine, {
+        input: {
+          autoHintMode: "no-auto-hints",
+          durability: { type: "ephemeral" },
+          initialPosition: standardInitialPosition(),
+          matchId: `manual-${type}`,
+          opponent: scripted.opponent,
+          playerColor: "white",
+        },
+      }).start()
+      if (type === "resignation") actor.send({ type: "MATCH.RESIGN_REQUESTED" })
+      else
+        actor.send({
+          type: "MATCH.DRAW_OFFER_REQUESTED",
+          decision: {
+            outcome: "accepted",
+            positionFen: selectMatchPosition(actor.getSnapshot()).fen,
+          },
+        })
+      expect(selectCanUndo(actor.getSnapshot())).toBe(true)
+      actor.send({ type: "MATCH.UNDO_REQUESTED" })
+      expect(selectIsPlayerTurn(actor.getSnapshot())).toBe(true)
+      expect(selectMatchConclusion(actor.getSnapshot())).toBeNull()
+      expect(selectCanRedo(actor.getSnapshot())).toBe(true)
+      actor.send({ type: "MATCH.REDO_REQUESTED" })
+      expect(actor.getSnapshot().matches("complete")).toBe(true)
+      expect(selectMatchConclusion(actor.getSnapshot())?.type).toBe(type)
+      actor.send({ type: "MATCH.UNDO_REQUESTED" })
+      actor.send({
+        type: "MATCH.MOVE_REQUESTED",
+        moveId: requireLegalMove(
+          selectMatchPosition(actor.getSnapshot()),
+          "e2e4",
+        ).id,
+      })
+      expect(actor.getSnapshot().context.retainedConclusion).toBeNull()
+      expect(selectMatchConclusion(actor.getSnapshot())).toBeNull()
+      actor.stop()
+    },
+  )
   it("reveals staged hints once and preserves monotonic use evidence", async () => {
     const scripted = createScriptedOpponent(["e7e5"])
     const hintRequests: BetterHintsRequest[] = []
@@ -580,7 +624,7 @@ describe("scoped XState match flow", () => {
     actor.stop()
   })
 
-  it("keeps a completed result immutable during timeline review", async () => {
+  it("reopens a completed position and restores its ending on Redo", async () => {
     const scripted = createScriptedOpponent(["e7e5", "d8h4"])
     const actor = createActor(matchMachine, {
       input: {
@@ -620,13 +664,10 @@ describe("scoped XState match flow", () => {
     expect(selectCanUndo(actor.getSnapshot())).toBe(true)
 
     actor.send({ type: "MATCH.UNDO_REQUESTED" })
-    expect(actor.getSnapshot().matches("complete")).toBe(true)
+    expect(selectIsPlayerTurn(actor.getSnapshot())).toBe(true)
     expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(2)
     expect(selectCanRedo(actor.getSnapshot())).toBe(true)
-    expect(selectMatchConclusion(actor.getSnapshot())).toEqual({
-      type: "checkmate",
-      winner: "black",
-    })
+    expect(selectMatchConclusion(actor.getSnapshot())).toBeNull()
 
     actor.send({ type: "MATCH.REDO_REQUESTED" })
     expect(actor.getSnapshot().matches("complete")).toBe(true)
