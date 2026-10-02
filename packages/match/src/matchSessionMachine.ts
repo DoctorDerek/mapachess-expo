@@ -51,6 +51,11 @@ type MatchSessionMachineContext<Session extends MatchSessionIdentity> =
     operations: MatchSessionOperations<Session>
     requestedSetup: MatchSetup
     session: Session | null
+    matchSetupPredecessor: Pick<
+      MatchNavigationDestination,
+      "matchId" | "setupKey"
+    > | null
+    matchBackScreen: "menu" | "setup"
     overlays: readonly MatchNavigationOverlay[]
     dismissedRewardMatchId: string | null
     presentedRewardMatchId: string | null
@@ -121,8 +126,12 @@ export default function createMatchSessionMachine<
     context: MatchSessionMachineContext<Session>,
     destination: MatchNavigationDestination,
   ): boolean =>
-    destination.matchId === (context.session?.match.matchId ?? null) &&
-    destination.setupKey === setupKey(context)
+    destination.setupKey === setupKey(context) &&
+    (destination.matchId === (context.session?.match.matchId ?? null) ||
+      (destination.screen === "setup" &&
+        context.matchSetupPredecessor !== null &&
+        destination.matchId === context.matchSetupPredecessor.matchId &&
+        destination.setupKey === context.matchSetupPredecessor.setupKey))
 
   return setup({
     types: {
@@ -148,6 +157,13 @@ export default function createMatchSessionMachine<
       ),
     },
     actions: {
+      rememberMatchSetupPredecessor: assign(({ context }) => ({
+        matchBackScreen: "setup" as const,
+        matchSetupPredecessor: {
+          matchId: context.session?.match.matchId ?? null,
+          setupKey: setupKey(context),
+        },
+      })),
       rememberRequestedSetup: assign(
         (_, params: Readonly<{ setup: MatchSetup }>) => ({
           requestedSetup: params.setup,
@@ -165,7 +181,13 @@ export default function createMatchSessionMachine<
       captureFailure: assign((_, params: MatchSessionFailure) => ({
         failure: failure(params.operation, params.cause),
       })),
-      clearSession: assign({ failure: null, session: null, overlays: [] }),
+      clearSession: assign({
+        failure: null,
+        session: null,
+        matchSetupPredecessor: null,
+        matchBackScreen: "menu",
+        overlays: [],
+      }),
       openOverlay: assign(({ context, event }) => {
         if (event.type !== "MATCH_SESSION.OVERLAY_OPENED") return {}
         return {
@@ -207,11 +229,14 @@ export default function createMatchSessionMachine<
         }
       }),
       clearOverlays: assign({ overlays: [] }),
+      rememberResumePredecessor: assign({ matchBackScreen: "menu" }),
       acceptProfileReplacement: assign(({ event }) =>
         event.type === "MATCH_SESSION.PROFILE_REPLACED"
           ? {
               activeMatchExists: event.activeMatchExists,
               session: null,
+              matchSetupPredecessor: null,
+              matchBackScreen: "menu",
               overlays: [],
               failure: null,
               dismissedRewardMatchId: null,
@@ -235,6 +260,10 @@ export default function createMatchSessionMachine<
         context.operations.canNavigate() && context.session !== null,
       hasOverlays: ({ context }) =>
         context.operations.canNavigate() && context.overlays.length > 0,
+      returnsToMatchSetup: ({ context }) =>
+        context.operations.canNavigate() &&
+        context.matchBackScreen === "setup" &&
+        context.matchSetupPredecessor !== null,
       restoresOwnedMatch: ({ context, event }) =>
         context.operations.canNavigate() &&
         event.type === "MATCH_SESSION.NAVIGATION_RESTORED" &&
@@ -276,6 +305,8 @@ export default function createMatchSessionMachine<
       operations: input.operations,
       requestedSetup: { mode: "story", variant: "standard" },
       session: null,
+      matchSetupPredecessor: null,
+      matchBackScreen: "menu",
       overlays: [],
       dismissedRewardMatchId: null,
       presentedRewardMatchId: null,
@@ -300,7 +331,7 @@ export default function createMatchSessionMachine<
           },
           "MATCH_SESSION.RESUME_REQUESTED": {
             guard: "hasSession",
-            actions: "clearOverlays",
+            actions: ["clearOverlays", "rememberResumePredecessor"],
             target: "active",
           },
           "MATCH_SESSION.OVERLAY_OPENED": {
@@ -352,10 +383,13 @@ export default function createMatchSessionMachine<
                 actions: "openOverlay",
               },
               "MATCH_SESSION.MATCH_REQUESTED": {
-                actions: {
-                  type: "rememberRequestedSetup",
-                  params: ({ event }) => ({ setup: event.setup }),
-                },
+                actions: [
+                  "rememberMatchSetupPredecessor",
+                  {
+                    type: "rememberRequestedSetup",
+                    params: ({ event }) => ({ setup: event.setup }),
+                  },
+                ],
                 target: "#matchSession.openingFreshMatch",
               },
               "MATCH_SESSION.MAIN_MENU_REQUESTED": { target: "choosingMode" },
@@ -419,6 +453,11 @@ export default function createMatchSessionMachine<
         on: {
           "MATCH_SESSION.BACK_REQUESTED": [
             { guard: "hasOverlays", actions: "closeOverlay" },
+            {
+              guard: "returnsToMatchSetup",
+              actions: "clearOverlays",
+              target: "menu.setup",
+            },
             {
               guard: "navigationAllowed",
               actions: "clearOverlays",
