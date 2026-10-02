@@ -1,5 +1,6 @@
 import {
   assign,
+  enqueueActions,
   fromPromise,
   setup,
   type ActorRefFrom,
@@ -51,6 +52,12 @@ type MatchSessionMachineContext<Session extends MatchSessionIdentity> =
     operations: MatchSessionOperations<Session>
     requestedSetup: MatchSetup
     session: Session | null
+    matchSetupPredecessor: Pick<
+      MatchNavigationDestination,
+      "matchId" | "setupKey"
+    > | null
+    matchBackScreen: "menu" | "setup"
+    deferredNavigation: MatchNavigationDestination | null
     overlays: readonly MatchNavigationOverlay[]
     dismissedRewardMatchId: string | null
     presentedRewardMatchId: string | null
@@ -121,8 +128,19 @@ export default function createMatchSessionMachine<
     context: MatchSessionMachineContext<Session>,
     destination: MatchNavigationDestination,
   ): boolean =>
-    destination.matchId === (context.session?.match.matchId ?? null) &&
-    destination.setupKey === setupKey(context)
+    destination.setupKey === setupKey(context) &&
+    (destination.matchId === (context.session?.match.matchId ?? null) ||
+      (destination.screen === "setup" &&
+        context.matchSetupPredecessor !== null &&
+        destination.matchId === context.matchSetupPredecessor.matchId &&
+        destination.setupKey === context.matchSetupPredecessor.setupKey))
+
+  const lifecycleNavigation = {
+    "MATCH_SESSION.NAVIGATION_RESTORED": {
+      actions: "deferRestoredNavigation",
+    },
+    "MATCH_SESSION.BACK_REQUESTED": { actions: "deferBackNavigation" },
+  } as const
 
   return setup({
     types: {
@@ -148,6 +166,53 @@ export default function createMatchSessionMachine<
       ),
     },
     actions: {
+      deferRestoredNavigation: assign(({ event }) =>
+        event.type === "MATCH_SESSION.NAVIGATION_RESTORED"
+          ? { deferredNavigation: event.destination }
+          : {},
+      ),
+      deferBackNavigation: assign(({ context }) => {
+        const destination = context.deferredNavigation ?? {
+          screen: "match" as const,
+          matchId: context.session?.match.matchId ?? null,
+          setupKey: setupKey(context),
+          overlays: [],
+        }
+        const screen =
+          destination.overlays.length > 0
+            ? destination.screen
+            : destination.screen === "match"
+              ? context.matchBackScreen
+              : "menu"
+        return {
+          deferredNavigation: {
+            ...destination,
+            screen,
+            matchId:
+              destination.screen === "match" &&
+              screen === "setup" &&
+              context.matchSetupPredecessor !== null
+                ? context.matchSetupPredecessor.matchId
+                : destination.matchId,
+            overlays: destination.overlays.slice(0, -1),
+          },
+        }
+      }),
+      applyDeferredNavigation: enqueueActions(({ context, enqueue }) => {
+        if (context.deferredNavigation === null) return
+        enqueue.raise({
+          type: "MATCH_SESSION.NAVIGATION_RESTORED",
+          destination: context.deferredNavigation,
+        })
+        enqueue.assign({ deferredNavigation: null })
+      }),
+      rememberMatchSetupPredecessor: assign(({ context }) => ({
+        matchBackScreen: "setup" as const,
+        matchSetupPredecessor: {
+          matchId: context.session?.match.matchId ?? null,
+          setupKey: setupKey(context),
+        },
+      })),
       rememberRequestedSetup: assign(
         (_, params: Readonly<{ setup: MatchSetup }>) => ({
           requestedSetup: params.setup,
@@ -165,7 +230,13 @@ export default function createMatchSessionMachine<
       captureFailure: assign((_, params: MatchSessionFailure) => ({
         failure: failure(params.operation, params.cause),
       })),
-      clearSession: assign({ failure: null, session: null, overlays: [] }),
+      clearSession: assign({
+        failure: null,
+        session: null,
+        matchSetupPredecessor: null,
+        matchBackScreen: "menu",
+        overlays: [],
+      }),
       openOverlay: assign(({ context, event }) => {
         if (event.type !== "MATCH_SESSION.OVERLAY_OPENED") return {}
         return {
@@ -207,11 +278,15 @@ export default function createMatchSessionMachine<
         }
       }),
       clearOverlays: assign({ overlays: [] }),
+      rememberResumePredecessor: assign({ matchBackScreen: "menu" }),
       acceptProfileReplacement: assign(({ event }) =>
         event.type === "MATCH_SESSION.PROFILE_REPLACED"
           ? {
               activeMatchExists: event.activeMatchExists,
               session: null,
+              matchSetupPredecessor: null,
+              matchBackScreen: "menu",
+              deferredNavigation: null,
               overlays: [],
               failure: null,
               dismissedRewardMatchId: null,
@@ -235,6 +310,10 @@ export default function createMatchSessionMachine<
         context.operations.canNavigate() && context.session !== null,
       hasOverlays: ({ context }) =>
         context.operations.canNavigate() && context.overlays.length > 0,
+      returnsToMatchSetup: ({ context }) =>
+        context.operations.canNavigate() &&
+        context.matchBackScreen === "setup" &&
+        context.matchSetupPredecessor !== null,
       restoresOwnedMatch: ({ context, event }) =>
         context.operations.canNavigate() &&
         event.type === "MATCH_SESSION.NAVIGATION_RESTORED" &&
@@ -276,6 +355,9 @@ export default function createMatchSessionMachine<
       operations: input.operations,
       requestedSetup: { mode: "story", variant: "standard" },
       session: null,
+      matchSetupPredecessor: null,
+      matchBackScreen: "menu",
+      deferredNavigation: null,
       overlays: [],
       dismissedRewardMatchId: null,
       presentedRewardMatchId: null,
@@ -300,7 +382,7 @@ export default function createMatchSessionMachine<
           },
           "MATCH_SESSION.RESUME_REQUESTED": {
             guard: "hasSession",
-            actions: "clearOverlays",
+            actions: ["clearOverlays", "rememberResumePredecessor"],
             target: "active",
           },
           "MATCH_SESSION.OVERLAY_OPENED": {
@@ -352,10 +434,13 @@ export default function createMatchSessionMachine<
                 actions: "openOverlay",
               },
               "MATCH_SESSION.MATCH_REQUESTED": {
-                actions: {
-                  type: "rememberRequestedSetup",
-                  params: ({ event }) => ({ setup: event.setup }),
-                },
+                actions: [
+                  "rememberMatchSetupPredecessor",
+                  {
+                    type: "rememberRequestedSetup",
+                    params: ({ event }) => ({ setup: event.setup }),
+                  },
+                ],
                 target: "#matchSession.openingFreshMatch",
               },
               "MATCH_SESSION.MAIN_MENU_REQUESTED": { target: "choosingMode" },
@@ -364,15 +449,19 @@ export default function createMatchSessionMachine<
         },
       },
       openingCurrentMatch: {
+        on: lifecycleNavigation,
         invoke: {
           id: "matchSession.openCurrentMatch",
           src: "openCurrentMatch",
           input: ({ context }) => ({ operations: context.operations }),
           onDone: {
-            actions: {
-              type: "acceptOpenedSession",
-              params: ({ event }) => ({ session: event.output }),
-            },
+            actions: [
+              {
+                type: "acceptOpenedSession",
+                params: ({ event }) => ({ session: event.output }),
+              },
+              "applyDeferredNavigation",
+            ],
             target: "active",
           },
           onError: {
@@ -388,6 +477,7 @@ export default function createMatchSessionMachine<
         },
       },
       openingFreshMatch: {
+        on: lifecycleNavigation,
         invoke: {
           id: "matchSession.openFreshMatch",
           src: "openFreshMatch",
@@ -397,10 +487,13 @@ export default function createMatchSessionMachine<
             setup: context.requestedSetup,
           }),
           onDone: {
-            actions: {
-              type: "acceptOpenedSession",
-              params: ({ event }) => ({ session: event.output }),
-            },
+            actions: [
+              {
+                type: "acceptOpenedSession",
+                params: ({ event }) => ({ session: event.output }),
+              },
+              "applyDeferredNavigation",
+            ],
             target: "active",
           },
           onError: {
@@ -419,6 +512,11 @@ export default function createMatchSessionMachine<
         on: {
           "MATCH_SESSION.BACK_REQUESTED": [
             { guard: "hasOverlays", actions: "closeOverlay" },
+            {
+              guard: "returnsToMatchSetup",
+              actions: "clearOverlays",
+              target: "menu.setup",
+            },
             {
               guard: "navigationAllowed",
               actions: "clearOverlays",
@@ -471,6 +569,7 @@ export default function createMatchSessionMachine<
         },
       },
       restartingMatch: {
+        on: lifecycleNavigation,
         invoke: {
           id: "matchSession.restartMatch",
           src: "openFreshMatch",
@@ -480,10 +579,13 @@ export default function createMatchSessionMachine<
             setup: context.requestedSetup,
           }),
           onDone: {
-            actions: {
-              type: "acceptOpenedSession",
-              params: ({ event }) => ({ session: event.output }),
-            },
+            actions: [
+              {
+                type: "acceptOpenedSession",
+                params: ({ event }) => ({ session: event.output }),
+              },
+              "applyDeferredNavigation",
+            ],
             target: "active",
           },
           onError: {
@@ -499,6 +601,7 @@ export default function createMatchSessionMachine<
         },
       },
       returningToMenu: {
+        on: lifecycleNavigation,
         invoke: {
           id: "matchSession.returnToMenu",
           src: "returnToMenu",
@@ -507,7 +610,7 @@ export default function createMatchSessionMachine<
             session: requireSession(context),
           }),
           onDone: {
-            actions: "clearSession",
+            actions: ["clearSession", "applyDeferredNavigation"],
             target: "menu.setup",
           },
           onError: {
@@ -524,6 +627,7 @@ export default function createMatchSessionMachine<
       },
       failed: {
         on: {
+          ...lifecycleNavigation,
           "MATCH_SESSION.RETRY_REQUESTED": [
             {
               guard: "failureWasOpenCurrent",
