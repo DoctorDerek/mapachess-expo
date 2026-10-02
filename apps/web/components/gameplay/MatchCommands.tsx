@@ -24,6 +24,8 @@ export default function MatchCommands({
   drawAvailable,
   onOfferDraw,
   onMenuOpened,
+  onMenuClosed,
+  menuOpen,
   snapshot,
   opponentName,
 }: Readonly<{
@@ -35,6 +37,8 @@ export default function MatchCommands({
   drawAvailable: boolean
   onOfferDraw: () => void
   onMenuOpened: () => void
+  onMenuClosed: () => void
+  menuOpen: boolean
   snapshot: MatchMachineSnapshot
   opponentName: string
 }>) {
@@ -71,15 +75,17 @@ export default function MatchCommands({
       {hints}
       <details
         className="relative z-40 min-w-0 flex-1 basis-12"
-        onToggle={(event) => {
-          if (event.target === event.currentTarget && event.currentTarget.open)
-            onMenuOpened()
-        }}
+        open={menuOpen}
       >
         <summary
           aria-label="Match menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
           ref={menuSummaryRef}
+          onClick={(event) => {
+            event.preventDefault()
+            if (menuOpen) onMenuClosed()
+            else onMenuOpened()
+          }}
         >
           <span aria-hidden="true">☰</span>Menu
         </summary>

@@ -13,6 +13,7 @@ import {
 import matchMachine, {
   selectMatchTimeline,
 } from "@mapachess/match/match-machine"
+import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -52,6 +53,7 @@ export type OpenWebMatchSessionInput = Readonly<{
 export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
   Readonly<{
     previousSession: WebMatchSession | null
+    replacementSession?: WebMatchSession | null
   }> &
   (
     | Readonly<{
@@ -187,6 +189,15 @@ const openActorSession = async ({
       evaluationActor: openedEvaluationActor,
       match,
       runtime,
+      setup: createMatchSetupForMode(
+        { mode: match.mode, variant: match.startingPosition.variant },
+        {
+          ...match.startingPosition,
+          playerColor: match.playerColor,
+          opponentId: match.opponentId,
+          difficultyTargetElo: runtime.opponentTargetElo,
+        },
+      ),
     })
   } catch (error) {
     evaluationBinding?.disconnect()
@@ -259,6 +270,7 @@ export async function openFreshWebMatchSession(
   const {
     openRuntime = openWebMatchRuntime,
     previousSession,
+    replacementSession = null,
     profileActor,
     signal,
   } = input
@@ -270,8 +282,9 @@ export async function openFreshWebMatchSession(
   const activeMatch = playerData.activeMatch
   if (
     activeMatch !== null &&
-    (previousSession === null ||
-      activeMatch.matchId !== previousSession.match.matchId)
+    ((previousSession ?? replacementSession) === null ||
+      activeMatch.matchId !==
+        (previousSession ?? replacementSession)?.match.matchId)
   ) {
     return openCurrentWebMatchSession({
       openRuntime,
@@ -405,6 +418,7 @@ export async function openFreshWebMatchSession(
         signal,
       })
     }
+    await replacementSession?.close()
     return session
   } catch (error) {
     await session.close()

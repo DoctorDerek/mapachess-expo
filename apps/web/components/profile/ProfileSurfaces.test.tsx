@@ -43,6 +43,8 @@ describe("web player-data controls", () => {
   it("keeps hint choices and closing available while a standalone preference saves", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        overlays: ["settings"],
+        navigation: { open: vi.fn(), back: vi.fn() },
         activityMessage: "Saving your hint preference…",
         hintChangesDisabled: false,
         autoHintMode: "no-auto-hints",
@@ -108,6 +110,8 @@ describe("web player-data controls", () => {
   it("offers all three automatic hint modes during play", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        overlays: ["settings"],
+        navigation: { open: vi.fn(), back: vi.fn() },
         activityMessage: null,
         autoHintMode: playerData.settings.autoHintMode,
         ratings: playerData.ratings,

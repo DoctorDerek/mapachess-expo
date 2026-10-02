@@ -66,6 +66,10 @@ describe("match composition", () => {
     try {
       const markup = renderToStaticMarkup(
         createElement(WebMatch, {
+          navigation: { open: vi.fn(), back: vi.fn() },
+          overlays: [],
+          celebrationDismissed: false,
+          visible: true,
           actor,
           evaluationActor,
           initiallyConcluded: false,
@@ -136,6 +140,10 @@ describe("match composition", () => {
       await waitFor(evaluationActor, (snapshot) => snapshot.matches("failure"))
       const markup = renderToStaticMarkup(
         createElement(WebMatch, {
+          navigation: { open: vi.fn(), back: vi.fn() },
+          overlays: [],
+          celebrationDismissed: false,
+          visible: true,
           actor,
           evaluationActor,
           initiallyConcluded: false,
@@ -182,6 +190,10 @@ describe("match composition", () => {
       })
       const markup = renderToStaticMarkup(
         <WebMatch
+          navigation={{ open: vi.fn(), back: vi.fn() }}
+          overlays={[]}
+          celebrationDismissed={false}
+          visible
           actor={actor}
           evaluationActor={evaluationActor}
           initiallyConcluded={false}

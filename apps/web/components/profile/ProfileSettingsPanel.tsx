@@ -1,7 +1,10 @@
 "use client"
 
-import { useRef, useState } from "react"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
+import type {
+  MatchNavigationCommands,
+  MatchNavigationOverlay,
+} from "@mapachess/match/match-navigation"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import {
   PLAYER_ELO_RATING_IDS,
@@ -34,6 +37,8 @@ export type ProfileSettingsPanelProps = Readonly<{
   onClose: () => void
   onExportPlayerData: () => void
   onEloResetConfirmed: (variant: PlayerEloRatingId) => void
+  overlays: readonly MatchNavigationOverlay[]
+  navigation: MatchNavigationCommands
 }>
 
 export default function ProfileSettingsPanel({
@@ -49,12 +54,19 @@ export default function ProfileSettingsPanel({
   onClose,
   onExportPlayerData,
   onEloResetConfirmed,
+  overlays,
+  navigation,
 }: ProfileSettingsPanelProps) {
   const busy = activityMessage !== null
-  const [resetVariant, setResetVariant] = useState<PlayerEloRatingId | null>(
-    null,
+  const resetOverlay = overlays.findLast(
+    (overlay) => overlay === "reset-standard" || overlay === "reset-chess960",
   )
-  const resetTrigger = useRef<HTMLButtonElement | null>(null)
+  const resetVariant =
+    resetOverlay === "reset-standard"
+      ? "standard"
+      : resetOverlay === "reset-chess960"
+        ? "chess960"
+        : null
   const resetLabel = resetVariant === "standard" ? "Standard" : "Chess960"
 
   return (
@@ -124,10 +136,7 @@ export default function ProfileSettingsPanel({
                   </div>
                   <MapachessButton
                     disabled={busy}
-                    onClick={(event) => {
-                      resetTrigger.current = event.currentTarget
-                      setResetVariant(variant)
-                    }}
+                    onClick={() => navigation.open(`reset-${variant}`)}
                     type="button"
                     variant="secondary"
                   >
@@ -159,10 +168,7 @@ export default function ProfileSettingsPanel({
               <div className="mt-4 flex flex-wrap gap-3">
                 <MapachessButton
                   autoFocus
-                  onClick={() => {
-                    setResetVariant(null)
-                    resetTrigger.current?.focus()
-                  }}
+                  onClick={navigation.back}
                   type="button"
                   variant="secondary"
                 >
@@ -181,8 +187,7 @@ export default function ProfileSettingsPanel({
                   disabled={busy}
                   onClick={() => {
                     onEloResetConfirmed(resetVariant)
-                    setResetVariant(null)
-                    resetTrigger.current?.focus()
+                    navigation.back()
                   }}
                   type="button"
                   variant="destructive"
@@ -219,9 +224,23 @@ export default function ProfileSettingsPanel({
           </div>
         </section>
 
-        <MoveClassificationFaq />
-        <details className="text-mapachito-charcoal mt-7 text-base">
-          <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+        <MoveClassificationFaq
+          open={overlays.includes("classifications")}
+          onOpen={() => navigation.open("classifications")}
+          onClose={navigation.back}
+        />
+        <details
+          open={overlays.includes("about-elo")}
+          className="text-mapachito-charcoal mt-7 text-base"
+        >
+          <summary
+            onClick={(event) => {
+              event.preventDefault()
+              if (overlays.includes("about-elo")) navigation.back()
+              else navigation.open("about-elo")
+            }}
+            className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+          >
             About Elo ratings
           </summary>
           <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>

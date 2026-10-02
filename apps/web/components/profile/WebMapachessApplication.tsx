@@ -1,16 +1,11 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
-import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
-import matchMachine, {
-  selectAutoHintMode,
-} from "@mapachess/match/match-machine"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
-  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
   selectHasLastKnownGoodSave,
   selectImportIssue,
@@ -29,7 +24,6 @@ import {
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
-import WebGame from "../gameplay/WebGame"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -37,9 +31,10 @@ import MapachessShell from "../presentation/MapachessShell"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
+import ProfilePlayExperience, {
+  type ProfilePlayExperienceProps,
+} from "./ProfilePlayExperience"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
-import ProfileSettingsPanel from "./ProfileSettingsPanel"
-import type { ProfileSettingsPanelProps } from "./ProfileSettingsPanel"
 
 type ProfileRuntimeState =
   | Readonly<{ status: "opening" }>
@@ -47,42 +42,8 @@ type ProfileRuntimeState =
   | Readonly<{ status: "unsupported" }>
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
-type MatchActor = ActorRefFrom<typeof matchMachine>
-
-type ActiveMatchSettingsPanelProps = Omit<
-  ProfileSettingsPanelProps,
-  "autoHintMode" | "ratings" | "ratedMatchCounts"
-> &
-  Readonly<{
-    matchActor: MatchActor
-    ratings: ProfileSettingsPanelProps["ratings"]
-    ratedMatchCounts: ProfileSettingsPanelProps["ratedMatchCounts"]
-  }>
-
-function ActiveMatchSettingsPanel({
-  matchActor,
-  ratings,
-  ratedMatchCounts,
-  ...settingsProps
-}: ActiveMatchSettingsPanelProps) {
-  const autoHintMode = useSelector(matchActor, selectAutoHintMode)
-  return (
-    <ProfileSettingsPanel
-      {...settingsProps}
-      autoHintMode={autoHintMode}
-      ratings={ratings}
-      ratedMatchCounts={ratedMatchCounts}
-    />
-  )
-}
-
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [activeMatchActor, setActiveMatchActor] = useState<MatchActor | null>(
-    null,
-  )
-  const settingsButton = useRef<HTMLButtonElement>(null)
   const [exportFailed, setExportFailed] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportOperation = useRef<AbortController | null>(null)
@@ -106,18 +67,6 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     : snapshot.matches("persisting") || snapshot.matches("retryingPersistence")
       ? "Saving and verifying your local data…"
       : null
-
-  const closeSettings = (): void => {
-    setSettingsOpen(false)
-    settingsButton.current?.focus()
-  }
-
-  const trackActiveMatchActor = useCallback(
-    (matchActor: MatchActor | null): void => {
-      setActiveMatchActor(matchActor)
-    },
-    [],
-  )
 
   const requestImportPreview = (rawBackup: string): void => {
     actor.send({ rawBackup, type: "PROFILE.IMPORT_PREVIEW_REQUESTED" })
@@ -240,72 +189,29 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
         }
       />
     ) : null
-  const settingsPanelVisible =
-    settingsOpen &&
-    importPreviewPanel === null &&
-    persistenceFailurePanel === null
-
   if (playableProfile) {
     const settingsProps = {
       exporting,
       activityMessage: profileActivityMessage,
       importIssue,
-      onAutoHintModeChanged: (autoHintMode: AutoHintMode): void => {
-        if (activeMatchActor === null) {
-          actor.send({
-            autoHintMode,
-            type: "PROFILE.AUTO_HINT_MODE_CHANGED",
-          })
-          return
-        }
-        activeMatchActor.send({
-          autoHintMode,
-          type: "MATCH.AUTO_HINT_MODE_CHANGED",
-        })
-      },
       onBackupRead: requestImportPreview,
-      onClose: closeSettings,
       onExportPlayerData: () => void exportPlayerData(),
       onEloResetConfirmed: (variant: PlayerEloRatingId): void => {
         actor.send({ type: "PROFILE.ELO_RESET_CONFIRMED", variant })
       },
-    } satisfies Omit<
-      ProfileSettingsPanelProps,
-      "autoHintMode" | "ratings" | "ratedMatchCounts"
-    >
+    } satisfies ProfilePlayExperienceProps["settings"]
 
     return (
       <main>
         {exportFailure}
         {importPreviewPanel}
         {persistenceFailurePanel}
-        {settingsPanelVisible ? (
-          activeMatchActor === null ? (
-            <ProfileSettingsPanel
-              {...settingsProps}
-              hintChangesDisabled={!selectCanChangeAutoHintMode(snapshot)}
-              autoHintMode={
-                (pendingPlayerData ?? currentPlayerData).settings.autoHintMode
-              }
-              ratings={currentPlayerData.ratings}
-              ratedMatchCounts={currentPlayerData.ratedMatchCounts}
-            />
-          ) : (
-            <ActiveMatchSettingsPanel
-              {...settingsProps}
-              hintChangesDisabled={false}
-              matchActor={activeMatchActor}
-              ratings={currentPlayerData.ratings}
-              ratedMatchCounts={currentPlayerData.ratedMatchCounts}
-            />
-          )
-        ) : null}
-        <WebGame
-          onActiveMatchActorChanged={trackActiveMatchActor}
-          onSettingsRequested={() => setSettingsOpen(true)}
+        <ProfilePlayExperience
           profileActor={actor}
-          settingsButtonRef={settingsButton}
-          settingsOpen={settingsPanelVisible}
+          settings={settingsProps}
+          blocked={
+            importPreviewPanel !== null || persistenceFailurePanel !== null
+          }
         />
       </main>
     )

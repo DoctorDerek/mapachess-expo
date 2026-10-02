@@ -1,14 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
@@ -31,6 +24,10 @@ import matchMachine, {
   selectPersistenceFailure,
 } from "@mapachess/match/match-machine"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
+import type {
+  MatchNavigationCommands,
+  MatchNavigationOverlay,
+} from "@mapachess/match/match-navigation"
 import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
@@ -71,6 +68,10 @@ export type WebMatchProps = Readonly<{
   runtime: WebMatchRuntime
   menuActions?: ReactNode
   result?: (disabled: boolean) => ReactNode
+  navigation: MatchNavigationCommands
+  overlays: readonly MatchNavigationOverlay[]
+  celebrationDismissed: boolean
+  visible: boolean
 }>
 
 export default function WebMatch({
@@ -89,16 +90,15 @@ export default function WebMatch({
   runtime,
   result,
   menuActions,
+  navigation,
+  overlays,
+  celebrationDismissed,
+  visible,
 }: WebMatchProps) {
   const heading = useRef<HTMLHeadingElement>(null)
   const menuSummary = useRef<HTMLElement>(null)
-  const [celebrationDismissed, setCelebrationDismissed] = useState(false)
   const [celebrationStageSlot, setCelebrationStageSlot] =
     useState<HTMLDivElement | null>(null)
-  const dismissCelebration = useCallback(
-    () => setCelebrationDismissed(true),
-    [],
-  )
   const matchingReward =
     savedMatch?.matchId === runtime.matchId &&
     savedMatch.conclusion !== null &&
@@ -107,11 +107,25 @@ export default function WebMatch({
       : null
   const newlyAccepted = !initiallyConcluded && matchingReward !== null
   const celebrationPending = newlyAccepted && !celebrationDismissed
-  const celebrationOpen = celebrationPending && !reactionsPaused
+  const celebrationOpen =
+    celebrationPending &&
+    visible &&
+    overlays.includes("rewards") &&
+    !overlays.includes("settings")
   useEffect(() => {
+    if (
+      celebrationPending &&
+      visible &&
+      !reactionsPaused &&
+      !overlays.includes("rewards")
+    )
+      navigation.open("rewards")
+  }, [celebrationPending, visible, reactionsPaused, overlays, navigation.open])
+  useEffect(() => {
+    if (!visible) return
     heading.current?.focus({ preventScroll: true })
     window.scrollTo({ top: 0, behavior: "instant" })
-  }, [actor])
+  }, [actor, visible])
   const snapshot = useSelector(actor, (current) => current)
   const evaluationSnapshot = useSelector(evaluationActor, (current) => current)
   const presentation = useAcceptedMatchPresentation(
@@ -236,7 +250,12 @@ export default function WebMatch({
           >
             <MatchCommands
               opponentName={opponent.displayName}
-              onMenuOpened={reactions.clear}
+              menuOpen={overlays.includes("match-menu")}
+              onMenuOpened={() => {
+                reactions.clear()
+                navigation.open("match-menu")
+              }}
+              onMenuClosed={navigation.back}
               coach={
                 <MapachitoCoachPortrait
                   presentationSnapshot={presentation.snapshot}
@@ -260,8 +279,19 @@ export default function WebMatch({
               menuActions={
                 <>
                   {menuActions}{" "}
-                  <details className="text-mapachito-white [grid-area:data]">
-                    <summary className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2">
+                  <details
+                    open={overlays.includes("match-details")}
+                    className="text-mapachito-white [grid-area:data]"
+                  >
+                    <summary
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (overlays.includes("match-details"))
+                          navigation.back()
+                        else navigation.open("match-details")
+                      }}
+                      className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+                    >
                       Match details &amp; Move History
                     </summary>
                     <div className="text-mapachito-charcoal grid gap-3">
@@ -326,7 +356,7 @@ export default function WebMatch({
           battleStageRef={setCelebrationStageSlot}
           disabled={persisting || persistenceFailure !== null}
           match={savedMatch}
-          onDismiss={dismissCelebration}
+          onDismiss={navigation.back}
           onReplayRequested={onReplayRequested}
           onSetupRequested={onSetupRequested}
           restoreFocusRef={menuSummary}

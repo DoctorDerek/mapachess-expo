@@ -443,6 +443,15 @@ export const selectCanChangeAutoHintMode = (
   )
 }
 
+export const selectCanNavigateProfile = (
+  snapshot: ProfileMachineSnapshot,
+): boolean =>
+  !snapshot.matches("recovery") &&
+  !snapshot.matches("importPreview") &&
+  !snapshot.matches("persistenceFailure") &&
+  !snapshot.matches("retryingPersistence") &&
+  !snapshot.matches("loadFailure")
+
 export const selectUnreadablePlayerData = (
   snapshot: ProfileMachineSnapshot,
 ): string | null =>
