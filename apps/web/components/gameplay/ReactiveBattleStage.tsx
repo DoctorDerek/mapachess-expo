@@ -31,6 +31,7 @@ export type ReactiveBattleStageProps = Readonly<{
     reactionSequence: number,
   ) => void
   presentationSnapshot: MatchPresentationMachineSnapshot
+  pauseTransientOnBackground?: boolean
 }>
 
 const participantWithRole = (
@@ -74,6 +75,7 @@ export default function ReactiveBattleStage({
   opponentName,
   opponentPresentation,
   presentationSnapshot,
+  pauseTransientOnBackground = false,
 }: ReactiveBattleStageProps) {
   const { currentPhase, pendingParticipants, phaseIndex, reactionSequence } =
     presentationSnapshot.context
@@ -122,6 +124,7 @@ export default function ReactiveBattleStage({
           onAnimationCompleted={onParticipantAnimationCompleted}
           opposingPresentation={opponentPresentation}
           participant="player"
+          pauseTransientOnBackground={pauseTransientOnBackground}
           phaseIndex={phaseIndex}
           presentation={playerPresentation}
           reactionSequence={reactionSequence}
@@ -137,6 +140,7 @@ export default function ReactiveBattleStage({
           onAnimationCompleted={onParticipantAnimationCompleted}
           opposingPresentation={playerPresentation}
           participant="opponent"
+          pauseTransientOnBackground={pauseTransientOnBackground}
           phaseIndex={phaseIndex}
           presentation={opponentPresentation}
           reactionSequence={reactionSequence}

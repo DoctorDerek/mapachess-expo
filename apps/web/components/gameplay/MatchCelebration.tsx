@@ -72,18 +72,13 @@ export default function MatchCelebration({
     if (element === null) return
     element.showModal()
     reviewButton.current?.focus({ preventScroll: true })
-    const onVisibilityChange = (): void => {
-      if (document.hidden) onDismiss()
-    }
-    document.addEventListener("visibilitychange", onVisibilityChange)
     return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange)
       if (element.open) element.close()
       if (restoreFocusRef.current?.isConnected) {
         restoreFocusRef.current.focus({ preventScroll: true })
       }
     }
-  }, [onDismiss, restoreFocusRef])
+  }, [restoreFocusRef])
 
   const nextAction = (): void => {
     if (match.mode === "challenge") {
@@ -125,7 +120,10 @@ export default function MatchCelebration({
       }}
       ref={dialog}
     >
-      <div ref={battleStageRef} />
+      <div className="relative">
+        <div ref={battleStageRef} />
+        {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
+      </div>
       <div className="grid gap-3 p-4 text-center sm:p-5">
         <h2
           className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance"
@@ -144,14 +142,11 @@ export default function MatchCelebration({
         ) : null}
         <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
           {medal === null ? null : <MedalWithHintUse medal={medal} />}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {reward === null ? null : (
-              <p className="font-display text-3xl font-black tabular-nums">
-                +{reward.awardedXp} XP
-              </p>
-            )}
-            {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
-          </div>
+          {reward === null ? null : (
+            <p className="font-display text-3xl font-black tabular-nums">
+              +{reward.awardedXp} XP
+            </p>
+          )}
         </div>
       </div>
       <div className="grid gap-3 p-4 sm:p-5">

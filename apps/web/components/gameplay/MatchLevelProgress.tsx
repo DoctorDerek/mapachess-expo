@@ -6,6 +6,7 @@ import { levelProgress, xpAtLevel } from "@mapachess/profile/global-xp"
 import levelProgressionSpans, {
   easeOutQuad,
 } from "@mapachess/profile/level-progression"
+import pausePresentationWhileHidden from "../../lib/presentation/pausePresentationWhileHidden"
 
 const progressFrame = (xp: number) => {
   const progress = levelProgress(xp)
@@ -27,6 +28,7 @@ export default function MatchLevelProgress({
     }
     let active = true
     let playback: ReturnType<typeof animate> | undefined
+    let stopFollowingVisibility: (() => void) | undefined
     setDisplayed(progressFrame(beforeXp))
     const traverse = async (): Promise<void> => {
       for (const span of levelProgressionSpans(beforeXp, afterXp)) {
@@ -49,7 +51,9 @@ export default function MatchLevelProgress({
             })
           },
         })
+        stopFollowingVisibility = pausePresentationWhileHidden(playback)
         await playback
+        stopFollowingVisibility()
         if (!active) return
         setDisplayed(progressFrame(span.toXp))
       }
@@ -58,6 +62,7 @@ export default function MatchLevelProgress({
 
     return () => {
       active = false
+      stopFollowingVisibility?.()
       playback?.stop()
     }
   }, [afterXp, beforeXp, reduceMotion])
