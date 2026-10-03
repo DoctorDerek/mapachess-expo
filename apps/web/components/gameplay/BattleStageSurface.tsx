@@ -36,7 +36,13 @@ export default function BattleStageSurface({
       />
       {host === null
         ? null
-        : createPortal(<ReactiveBattleStage {...props} />, host)}
+        : createPortal(
+            <ReactiveBattleStage
+              {...props}
+              pauseTransientOnBackground={celebrationSlot !== null}
+            />,
+            host,
+          )}
     </>
   )
 }

@@ -32,6 +32,7 @@ export type BattleFighterProps = Readonly<{
   ) => void
   opposingPresentation: ResolvedSpritePresentation<string, string>
   participant: MatchPresentationParticipant
+  pauseTransientOnBackground: boolean
   phaseIndex: number
   presentation: ResolvedSpritePresentation<string, string>
   reactionSequence: number
@@ -45,6 +46,7 @@ export default function BattleFighter({
   onAnimationCompleted,
   opposingPresentation,
   participant,
+  pauseTransientOnBackground,
   phaseIndex,
   presentation,
   reactionSequence,
@@ -77,6 +79,9 @@ export default function BattleFighter({
         onAnimationCompleted(participant, completedPhase, completedSequence)
       }
     },
+  )
+  const skipHiddenTransient = useEffectEvent(
+    (isTransient: boolean) => isTransient && !pauseTransientOnBackground,
   )
 
   useEffect(
@@ -147,12 +152,14 @@ export default function BattleFighter({
           ease: "linear",
         },
       )
+      if (document.hidden && !shouldReduceMotion) movement.pause()
       await movement
+      movement = null
       if (!cancelled) settledTravelTarget.current = target
     }
 
     const play = async (): Promise<void> => {
-      if (document.visibilityState === "hidden" && isTransient) {
+      if (document.hidden && skipHiddenTransient(isTransient)) {
         reportCompletion(phaseIndex, reactionSequence)
         return
       }
@@ -205,7 +212,7 @@ export default function BattleFighter({
 
     const handleVisibility = (): void => {
       if (document.visibilityState === "hidden") {
-        if (isTransient) {
+        if (skipHiddenTransient(isTransient)) {
           cancelled = true
           holdFrame()
           movement?.stop()
