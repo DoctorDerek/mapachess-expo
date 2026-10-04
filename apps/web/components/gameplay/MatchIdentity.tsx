@@ -27,13 +27,13 @@ export default function MatchIdentity({
         tabIndex={-1}
         className="text-center text-base leading-tight"
       >
-        <strong>Mapachito</strong> · {playerElo}
+        <strong>Mapachito</strong> · {Math.round(playerElo)}
         <span className="sr-only">
           {" "}
           ({playerColor === "white" ? "White" : "Black"})
         </span>
         {" vs. "}
-        <strong>{opponentName}</strong> · {opponentElo}
+        <strong>{opponentName}</strong> · {Math.round(opponentElo)}
         <span className="sr-only">
           {" "}
           ({playerColor === "white" ? "Black" : "White"})
