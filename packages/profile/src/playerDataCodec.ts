@@ -38,6 +38,10 @@ import {
   type LevelAchievementId,
 } from "./globalXp.js"
 import {
+  decodePlayerAppearance,
+  DEFAULT_PLAYER_APPEARANCE,
+} from "./playerAppearance.js"
+import {
   acceptedRewardMatchesEnding,
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
@@ -50,6 +54,7 @@ import {
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
+  REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
   TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
@@ -88,6 +93,7 @@ export type PlayerDataSource = Readonly<{
     | typeof LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
+    | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -297,6 +303,7 @@ const decodeAcceptedMatchReward = (
 const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
   Object.freeze({
     ...data,
+    appearance: DEFAULT_PLAYER_APPEARANCE,
     legacyRatings: data.ratings,
     lastAcceptedResultReward: null,
     processedMatchResultIds: Object.freeze(
@@ -418,11 +425,15 @@ export const canonicalPlayerData = (
                 data.lastAcceptedResultReward.ratedElo.before,
                 data.lastAcceptedResultReward.ratedElo.after,
               ],
-          ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION &&
+          ...(sourceSchemaVersion >=
+            REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION &&
           data.lastAcceptedResultReward.contribution !== undefined
             ? [data.lastAcceptedResultReward.contribution]
             : []),
         ],
+    ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ? [data.appearance]
+      : []),
   ])
 
 const decodeLegacyPlayerData = (
@@ -586,6 +597,7 @@ const decodeCurrentPlayerData = (
   sourceSchemaVersion:
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
+    | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -602,6 +614,9 @@ const decodeCurrentPlayerData = (
       "schemaVersion",
       "settings",
       "storyProgress",
+      ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        ? ["appearance"]
+        : []),
       ...(sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
         ? ["totalXp", "unlockedAchievementIds", "lastAcceptedResultReward"]
         : []),
@@ -645,7 +660,7 @@ const decodeCurrentPlayerData = (
           object.unlockedAchievementIds,
           "$.unlockedAchievementIds",
           totalXp,
-          sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+          sourceSchemaVersion >= REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
         )
       : Object.freeze([])
   const lastAcceptedResultReward =
@@ -654,15 +669,23 @@ const decodeCurrentPlayerData = (
           object.lastAcceptedResultReward,
           totalXp,
           processedMatchResultIds,
-          sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+          sourceSchemaVersion >= REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
         )
       : null
   const data: MapachessPlayerData = Object.freeze({
     activeMatch,
+    appearance:
+      sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        ? decodePlayerAppearance(
+            object.appearance,
+            storyProgress,
+            "$.appearance",
+          )
+        : DEFAULT_PLAYER_APPEARANCE,
     challengeHistory: decodeChallengeHistory(
       object.challengeHistory,
       "$.challengeHistory",
-      sourceSchemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      sourceSchemaVersion >= REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
     ),
     legacyRatings: decodeLegacyPlayerEloRatings(
       object.legacyRatings,
@@ -799,6 +822,8 @@ export const decodeMapachessPlayerDataWithSource = (
           ? decodeModernPlayerData(object, object.schemaVersion)
           : object.schemaVersion === TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")

@@ -18,6 +18,10 @@ import {
 } from "./challengeHistory.js"
 import type { LevelAchievementId } from "./globalXp.js"
 import {
+  DEFAULT_PLAYER_APPEARANCE,
+  type PlayerAppearance,
+} from "./playerAppearance.js"
+import {
   createInitialStoryProgress,
   type StoryProgress,
 } from "./storyProgress.js"
@@ -31,7 +35,8 @@ export const INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION = 5 as const
 export const LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION = 6 as const
 export const TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION = 7 as const
 export const GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION = 8 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 9 as const
+export const REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION = 9 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 10 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -167,6 +172,7 @@ export type MapachessPlayerData = Readonly<
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
     lastAcceptedResultReward: AcceptedMatchReward | null
+    appearance: PlayerAppearance
   }
 >
 
@@ -190,6 +196,7 @@ export const createInitialRatedMatchCounts = (): RatedMatchCounts =>
 export default function createInitialMapachessPlayerData(): MapachessPlayerData {
   return Object.freeze({
     activeMatch: null,
+    appearance: DEFAULT_PLAYER_APPEARANCE,
     challengeHistory: createInitialChallengeHistory(),
     legacyRatings: createInitialLegacyPlayerEloRatings(),
     lastAcceptedResultReward: null,

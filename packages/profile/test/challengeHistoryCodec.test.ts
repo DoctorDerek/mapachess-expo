@@ -67,6 +67,7 @@ describe("durable Challenge history", () => {
   it("migrates a version-five profile without inventing past records", () => {
     const {
       challengeHistory: omitted,
+      appearance: _appearance,
       legacyRatings,
       lastAcceptedResultReward: _lastAcceptedResultReward,
       processedMatchResultIds: _processedMatchResultIds,

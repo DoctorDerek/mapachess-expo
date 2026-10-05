@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./player-appearance": {
+      "types": "./src/playerAppearance.ts",
+      "default": "./dist/playerAppearance.js"
+    },
+    "./hero-catalog": {
+      "types": "./src/heroCatalog.ts",
+      "default": "./dist/heroCatalog.js"
+    },
     "./global-xp": {
       "types": "./src/globalXp.ts",
       "default": "./dist/globalXp.js"
