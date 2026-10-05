@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import { useState } from "react"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import { HERO_CATALOG } from "@mapachess/profile/hero-catalog"
@@ -173,7 +174,11 @@ export default function ProfileDressingRoom({
                   setCategory(name)
                   setColors(false)
                 }}
-                className={`bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052] ${category === name ? "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]" : ""}`}
+                className={cx(
+                  "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]",
+                  category === name &&
+                    "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
+                )}
               >
                 {name}
               </ProfileAction>
@@ -214,7 +219,10 @@ export default function ProfileDressingRoom({
               disabled={busy}
               aria-pressed={selected}
               onClick={() => change(appearance)}
-              className={`text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold ${selected ? "ring-3 ring-[#71dfe7]" : ""}`}
+              className={cx(
+                "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
+                selected && "ring-3 ring-[#71dfe7]",
+              )}
             >
               <ProfileArtwork
                 input={{

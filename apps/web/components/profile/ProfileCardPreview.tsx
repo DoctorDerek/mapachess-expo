@@ -1,6 +1,7 @@
 "use client"
 
 import { useActorRef, useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useMemo, useState } from "react"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
@@ -72,7 +73,11 @@ export default function ProfileCardPreview({
             aria-pressed={format === choice}
             onClick={() => setFormat(choice)}
             disabled={sharing}
-            className={`bg-mapachito-blue shadow-[0.375rem_0.375rem_0_#008b8b] ${format === choice ? "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]" : ""}`}
+            className={cx(
+              "bg-mapachito-blue shadow-[0.375rem_0.375rem_0_#008b8b]",
+              format === choice &&
+                "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
+            )}
           >
             {choice === "GIF" ? "GIF · Animated" : "PNG · Still"}
           </ProfileAction>
