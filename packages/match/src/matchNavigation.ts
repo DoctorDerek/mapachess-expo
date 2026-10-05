@@ -10,6 +10,8 @@ export type MatchNavigationOverlay =
   | "setup-difficulty"
   | "setup-hints"
   | "rewards"
+  | "dressing-room"
+  | "profile-card"
 
 export type MatchNavigationScreen = "menu" | "setup" | "match"
 export type MatchNavigationSetupKey =
@@ -37,6 +39,8 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "setup-difficulty",
   "setup-hints",
   "rewards",
+  "dressing-room",
+  "profile-card",
 ]
 
 export function parseMatchNavigationDestination(
@@ -83,6 +87,8 @@ export function eligibleMatchNavigationOverlays(
   for (const overlay of destination.overlays) {
     const eligible =
       overlay === "settings" ||
+      overlay === "dressing-room" ||
+      overlay === "profile-card" ||
       ((overlay === "classifications" ||
         overlay === "about-elo" ||
         overlay === "reset-standard" ||
