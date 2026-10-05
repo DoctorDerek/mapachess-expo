@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
@@ -92,7 +93,12 @@ export function ProfileArtwork({
         width={exportPreview ? PROFILE_CARD_WIDTH : PROFILE_ARTWORK_WIDTH}
         height={exportPreview ? PROFILE_CARD_HEIGHT : PROFILE_ARTWORK_HEIGHT}
         aria-hidden="true"
-        className={`block [image-rendering:pixelated] ${fitStage ? "absolute inset-0 h-full w-full object-contain" : "h-auto w-full"}`}
+        className={cx(
+          "block [image-rendering:pixelated]",
+          fitStage
+            ? "absolute inset-0 h-full w-full object-contain"
+            : "h-auto w-full",
+        )}
       />
       {failure ? (
         <div role="alert" className="p-3 text-base">
@@ -133,7 +139,12 @@ export default function ProfileCard({
           ].map(([label, value]) => (
             <div
               key={label}
-              className={`flex min-w-0 ${label === "Level" ? "flex-wrap items-baseline gap-x-1" : "flex-col-reverse"}`}
+              className={cx(
+                "flex min-w-0",
+                label === "Level"
+                  ? "flex-wrap items-baseline gap-x-1"
+                  : "flex-col-reverse",
+              )}
             >
               <dt className="text-[max(1rem,3.6cqw)] leading-tight font-bold">
                 {label}

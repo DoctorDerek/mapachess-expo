@@ -24,6 +24,7 @@
     "@mapachess/stockfish": "workspace:*",
     "@vercel/analytics": "^2",
     "@xstate/react": "^6",
+    "classix": "^2",
     "gifenc": "^1",
     "motion": "^13",
     "next": "^16",

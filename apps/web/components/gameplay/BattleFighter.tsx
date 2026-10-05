@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import { animate } from "motion"
 import { useReducedMotion } from "motion/react"
 import { useEffect, useEffectEvent, useRef, useState } from "react"
@@ -252,7 +253,12 @@ export default function BattleFighter({
     <div className="relative z-2 grid min-w-0 justify-items-center">
       <div
         aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
-        className={`relative flex h-[max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))] w-full items-end justify-center pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)] ${participant === "player" ? "[--battle-anchor:0%] [--battle-direction:1]" : "[--battle-anchor:100%] [--battle-direction:-1]"}`}
+        className={cx(
+          "relative flex h-[max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))] w-full items-end justify-center pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)]",
+          participant === "player"
+            ? "[--battle-anchor:0%] [--battle-direction:1]"
+            : "[--battle-anchor:100%] [--battle-direction:-1]",
+        )}
         role="img"
         style={battleSpriteAnchorStyle(presentation, opposingPresentation)}
       >
@@ -262,7 +268,12 @@ export default function BattleFighter({
         >
           <span
             aria-hidden="true"
-            className={`relative left-(--battle-anchor) block size-0 ${presentation.kind === "sprite" && displayedFacing !== presentation.sourceFacing ? "-scale-x-100" : ""}`}
+            className={cx(
+              "relative left-(--battle-anchor) block size-0",
+              presentation.kind === "sprite" &&
+                displayedFacing !== presentation.sourceFacing &&
+                "-scale-x-100",
+            )}
           >
             <span
               ref={spriteRef}
@@ -273,7 +284,12 @@ export default function BattleFighter({
           {presentation.kind === "authored-fallback" || imageUnavailable ? (
             <span
               aria-hidden="true"
-              className={`border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-(--battle-anchor) grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black ${participant === "player" ? "bg-mapachito-orange" : "bg-mapachito-white"}`}
+              className={cx(
+                "border-mapachito-charcoal font-display text-mapachito-charcoal absolute bottom-0 left-(--battle-anchor) grid size-(--battle-fallback-size) -translate-x-1/2 place-items-center border-4 text-4xl font-black",
+                participant === "player"
+                  ? "bg-mapachito-orange"
+                  : "bg-mapachito-white",
+              )}
             >
               {displayName.slice(0, 1)}
             </span>

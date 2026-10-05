@@ -1,6 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
@@ -356,7 +357,10 @@ export default function WebMatch({
           </section>
           {conclusion === null || celebrationPending ? null : (
             <div
-              className={`px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto] ${celebrationOpen ? "invisible" : ""}`}
+              className={cx(
+                "px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]",
+                celebrationOpen && "invisible",
+              )}
               inert={celebrationOpen}
             >
               <MatchOutcome

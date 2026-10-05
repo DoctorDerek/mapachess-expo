@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import { useAnimate } from "motion/react"
 import { useLayoutEffect } from "react"
 import {
@@ -34,7 +35,12 @@ export default function MoveReactionCard({
   return (
     <button
       type="button"
-      className={`font-body pointer-events-auto relative min-h-10 w-full rounded px-2 py-2 text-base leading-tight wrap-anywhere shadow-sm ring-1 ring-current/40 focus-visible:outline-2 focus-visible:-outline-offset-2 ${mover === "white" ? "bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-charcoal" : "bg-mapachito-charcoal text-mapachito-white focus-visible:outline-mapachito-white"}`}
+      className={cx(
+        "font-body pointer-events-auto relative min-h-10 w-full rounded px-2 py-2 text-base leading-tight wrap-anywhere shadow-sm ring-1 ring-current/40 focus-visible:outline-2 focus-visible:-outline-offset-2",
+        mover === "white"
+          ? "bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-charcoal"
+          : "bg-mapachito-charcoal text-mapachito-white focus-visible:outline-mapachito-white",
+      )}
       aria-label={`Dismiss ${color} ${notation} ${MOVE_GRADE_LABELS[classification.grade]}`}
       onClick={(event) => {
         event.stopPropagation()
