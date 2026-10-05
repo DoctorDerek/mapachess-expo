@@ -72,6 +72,17 @@ describe("selected match image preparation", () => {
     expect(initialMatchPresentationSources(null)).toEqual([])
   })
 
+  it("prepares the selected Story player animal rather than the default raccoon", () => {
+    const selected = resolveWebOpponentPresentation("chicken-stockfish")
+    if (selected.kind !== "sprite") throw new Error("Expected licensed sprite")
+    expect(
+      initialMatchPresentationSources("chicken-stockfish", "chicken-stockfish"),
+    ).toEqual([
+      selected.steps[0].animation.sourceId,
+      "/generated/presentation-assets/coach/neutral.png",
+    ])
+  })
+
   it("does not request unavailable licensed images in a public clone", async () => {
     vi.stubEnv("MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS", "false")
     vi.resetModules()
