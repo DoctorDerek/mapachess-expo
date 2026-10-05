@@ -1,5 +1,17 @@
 PROPRIETARY THIRD-PARTY ASSETS
 
+HEROES99 PERSONAL AVATAR IDLE LAYERS
+
+Creator: AU_pixel
+Source: https://au-pixel.itch.io/heroes99
+Attribution: Heroes99 character artwork by AU_pixel.
+Source terms verified October 4, 2026. Purchased assets may be used and
+modified in free and commercial game projects. Repackaging or reselling
+the source pack, NFTs and AI-training use are prohibited. The profile
+inventory contains only six synchronized idle frames for supported skin,
+face, hair and clothing layers; it is not the complete animation pack.
+Player exports are composed game images, never source layers or atlases.
+
 The encrypted archive in this directory contains purchased third-party assets
 used under their original licenses. The archive and its contents are not
 covered by the GNU General Public License applied to Mapachess source code.

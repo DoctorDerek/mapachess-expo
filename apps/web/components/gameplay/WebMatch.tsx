@@ -32,6 +32,7 @@ import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
@@ -57,6 +58,7 @@ import MoveReactionFeedback from "./MoveReactionFeedback"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 
 export type WebMatchProps = Readonly<{
+  playerAnimal?: StockfishOpponentId
   actor: ActorRefFrom<typeof matchMachine>
   evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
   initiallyConcluded: boolean
@@ -102,6 +104,7 @@ export default function WebMatch({
   rewardsReplaySequence,
   onRewardsReplayRequested,
   visible,
+  playerAnimal = "raccoon-stockfish",
 }: WebMatchProps) {
   const heading = useRef<HTMLHeadingElement>(null)
   const menuSummary = useRef<HTMLElement>(null)
@@ -245,6 +248,7 @@ export default function WebMatch({
             </div>
           </div>
           <BattleStageSurface
+            playerAnimal={playerAnimal}
             celebrationSlot={celebrationStageSlot}
             onParticipantAnimationCompleted={
               presentation.notifyParticipantAnimationCompleted

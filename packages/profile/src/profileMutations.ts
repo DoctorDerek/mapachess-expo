@@ -7,12 +7,30 @@ import applyChallengeMatchResult, {
 } from "./challengeHistory.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
+import {
+  decodePlayerAppearance,
+  type PlayerAppearance,
+} from "./playerAppearance.js"
 import createInitialMapachessPlayerData, {
   INITIAL_PLAYER_ELO,
   type MapachessPlayerData,
   type PlayerEloRatingId,
 } from "./playerData.js"
 import applyStoryMatchResult from "./storyProgress.js"
+
+export const changePlayerAppearance = (
+  current: MapachessPlayerData,
+  appearance: PlayerAppearance,
+): MapachessPlayerData =>
+  Object.freeze({
+    ...current,
+    appearance: decodePlayerAppearance(
+      appearance,
+      current.storyProgress,
+      "$.appearance",
+    ),
+    revision: current.revision + 1,
+  })
 
 const freezePlayerData = (
   data: MapachessPlayerData,

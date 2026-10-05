@@ -253,7 +253,7 @@ const expectModeMenu = async (page: Page): Promise<void> => {
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Choose your game",
+      name: "Mapachess",
       exact: true,
     }),
   ).toBeVisible()

@@ -31,6 +31,15 @@ describe("Mapachess player data", () => {
 
     expect(playerData).toEqual({
       activeMatch: null,
+      appearance: {
+        skin: 1,
+        face: 2,
+        hair: "m4",
+        hairColor: 2,
+        cloth: "cloth13",
+        clothColor: 3,
+        animal: "raccoon-stockfish",
+      },
       challengeHistory: {
         standard: { animals: [], difficulties: [] },
         chess960: { animals: [], difficulties: [] },

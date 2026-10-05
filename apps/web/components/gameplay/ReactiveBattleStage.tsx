@@ -11,18 +11,17 @@ import type {
   MatchPresentationParticipant,
   MatchPresentationPhase,
 } from "@mapachess/match-presentation/match-reaction"
-import resolveSpritePresentation, {
-  type ResolvedSpritePresentation,
-} from "@mapachess/match-presentation/presentation-asset-manifest"
-import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import { type ResolvedSpritePresentation } from "@mapachess/match-presentation/presentation-asset-manifest"
+import type {
+  StockfishOpponentDefinition,
+  StockfishOpponentId,
+} from "@mapachess/match/stockfish-opponent"
 import { battleStageStyle } from "../../lib/presentation/battleSpriteFrames"
-import {
-  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-  MAPACHITO_SPRITE_MANIFEST,
-} from "../../lib/presentation/webPresentationAssets"
+import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import BattleFighter from "./BattleFighter"
 
 export type ReactiveBattleStageProps = Readonly<{
+  playerAnimal?: StockfishOpponentId
   opponentName: StockfishOpponentDefinition["displayName"]
   opponentPresentation: ResolvedSpritePresentation<string, string>
   onParticipantAnimationCompleted: (
@@ -76,6 +75,7 @@ export default function ReactiveBattleStage({
   opponentPresentation,
   presentationSnapshot,
   pauseTransientOnBackground = false,
+  playerAnimal = "raccoon-stockfish",
 }: ReactiveBattleStageProps) {
   const { currentPhase, pendingParticipants, phaseIndex, reactionSequence } =
     presentationSnapshot.context
@@ -89,13 +89,12 @@ export default function ReactiveBattleStage({
   )
   const playerPresentation = useMemo(
     () =>
-      resolveSpritePresentation(
-        MAPACHITO_SPRITE_MANIFEST,
+      resolveWebOpponentPresentation(
+        playerAnimal,
         playerReaction,
-        AVAILABLE_MAPACHITO_SPRITE_SOURCES,
         playerVariationOrdinal,
       ),
-    [playerReaction, playerVariationOrdinal],
+    [playerAnimal, playerReaction, playerVariationOrdinal],
   )
   const beat = selectMatchPresentationBeat(presentationSnapshot)
   const isReacting = presentationSnapshot.matches("reacting")

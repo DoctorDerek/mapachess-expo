@@ -16,6 +16,7 @@ import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
 import WebGame from "../gameplay/WebGame"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
+import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
   type ProfileSettingsPanelProps,
 } from "./ProfileSettingsPanel"
@@ -56,6 +57,9 @@ function ReadyPlayExperience({
   const settingsButton = useRef<HTMLButtonElement>(null)
   const settingsOpen =
     snapshot.context.overlays.includes("settings") && !blocked
+  const personalOpen = snapshot.context.overlays.some(
+    (overlay) => overlay === "dressing-room" || overlay === "profile-card",
+  )
   const matchActor = snapshot.context.session?.actor ?? null
   const playerData = selectCurrentPlayerData(profile)
   if (playerData === null)
@@ -98,6 +102,12 @@ function ReadyPlayExperience({
   }
   return (
     <>
+      <ProfileCardJourney
+        blocked={blocked}
+        profileActor={profileActor}
+        overlays={snapshot.context.overlays}
+        navigation={navigation}
+      />
       {settingsOpen ? (
         matchActor === null ? (
           <ProfileSettingsPanel {...settingsProps} />
@@ -105,7 +115,7 @@ function ReadyPlayExperience({
           <MatchSettings {...settingsProps} actor={matchActor} />
         )
       ) : null}
-      <div inert={blocked || settingsOpen}>
+      <div inert={blocked || settingsOpen || personalOpen}>
         <WebGame
           actor={actor}
           navigation={navigation}

@@ -11,6 +11,11 @@ import {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
+import {
+  eligiblePlayerAnimals,
+  type PlayerAppearance,
+} from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
   canPlayStoryOpponent,
@@ -33,6 +38,8 @@ import MatchSetupPicker from "./MatchSetupPicker"
 import StoryLadderProgress from "./StoryLadderProgress"
 
 export type WebMatchSetupProps = Readonly<{
+  playerAppearance?: PlayerAppearance
+  onPlayerAnimalChanged?: (animal: StockfishOpponentId) => void
   autoHintMode: AutoHintMode
   challengeHistory: MapachessPlayerData["challengeHistory"]
   disabled: boolean
@@ -64,6 +71,8 @@ export default function WebMatchSetup({
   editing,
   onEditorOpened,
   onEditorClosed,
+  playerAppearance,
+  onPlayerAnimalChanged,
 }: WebMatchSetupProps) {
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
@@ -99,7 +108,10 @@ export default function WebMatchSetup({
   )
   const challengeOpponents = selectChallengeUnlockedOpponents(storyProgress)
   const opponent = stockfishOpponent(selectedOpponentId)
-  usePreparedMatchImages(selectedOpponentId)
+  usePreparedMatchImages(
+    selectedOpponentId,
+    setup.mode === "story" ? playerAppearance?.animal : "raccoon-stockfish",
+  )
   const selectionAvailable =
     setup.mode === "challenge"
       ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&
@@ -172,6 +184,29 @@ export default function WebMatchSetup({
         </h1>
       </div>
       <form onSubmit={startMatch} className="grid gap-3 text-base">
+        {setup.mode === "story" &&
+        playerAppearance !== undefined &&
+        onPlayerAnimalChanged !== undefined ? (
+          <fieldset className="mb-3">
+            <legend className="text-mapachito-white mb-2 text-base font-bold">
+              Your battle animal
+            </legend>
+            <div className="flex flex-wrap gap-3">
+              {eligiblePlayerAnimals(storyProgress).map((id) => (
+                <MapachessButton
+                  key={id}
+                  type="button"
+                  disabled={disabled || opening}
+                  aria-pressed={playerAppearance.animal === id}
+                  onClick={() => onPlayerAnimalChanged(id)}
+                  variant="secondary"
+                >
+                  {stockfishOpponent(id).displayName.replace(" Stockfish", "")}
+                </MapachessButton>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
         <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
           <button
             className="focus-visible:outline-mapachito-violet flex min-w-0 flex-wrap items-center justify-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"

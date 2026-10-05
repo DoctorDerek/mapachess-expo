@@ -4,6 +4,7 @@ import {
   durableStoreSnapshotsEqual,
   type LoadedDurablePlayerData,
 } from "./durableStore.js"
+import type { PlayerAppearance } from "./playerAppearance.js"
 import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import { canonicalPlayerData } from "./playerDataCodec.js"
 import type {
@@ -18,12 +19,23 @@ import type {
 } from "./profileMachineTypes.js"
 import {
   changeAutoHintMode,
+  changePlayerAppearance,
   createFreshRecoveryData,
   createLastKnownGoodRecoveryData,
   prepareImportedPlayerData,
   replaceActiveMatch,
   resetPlayerElo,
 } from "./profileMutations.js"
+
+export const prepareAppearancePending = (
+  context: ProfileMachineContext,
+  appearance: PlayerAppearance,
+): PendingProfileWrite =>
+  pendingWrite(
+    requireLoaded(context),
+    changePlayerAppearance(requireCurrentPlayerData(context), appearance),
+    "commit",
+  )
 
 export const storageRequestFailure = (): Readonly<{
   type: "PROFILE.STORAGE_REQUEST_FAILED"
