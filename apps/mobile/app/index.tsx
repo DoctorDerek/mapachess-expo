@@ -1,3 +1,4 @@
+import cx from "classix"
 import { useEffect, useState } from "react"
 import { ScrollView, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -66,12 +67,12 @@ function ProofStep({
       accessibilityLabel={`${label}: ${presentation.label}`}
       className="flex-row items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-4"
     >
-      <Text className={`text-xl font-bold ${presentation.classes}`}>
+      <Text className={cx("text-xl font-bold", presentation.classes)}>
         {presentation.symbol}
       </Text>
       <View className="flex-1">
         <Text className="text-base font-semibold text-slate-100">{label}</Text>
-        <Text className={`mt-1 text-sm ${presentation.classes}`}>
+        <Text className={cx("mt-1 text-sm", presentation.classes)}>
           {presentation.label}
         </Text>
       </View>
