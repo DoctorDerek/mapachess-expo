@@ -7,6 +7,7 @@ import type {
   DurablePlayerDataWriteResult,
   LoadedDurablePlayerData,
 } from "./durableStore.js"
+import type { PlayerAppearance } from "./playerAppearance.js"
 import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import type {
   MapachessPortableBackup,
@@ -51,6 +52,10 @@ export type ProfileMachineContext = Readonly<{
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{
+      type: "PROFILE.APPEARANCE_SAVE_REQUESTED"
+      appearance: PlayerAppearance
+    }>
   | Readonly<{
       activeMatch: DurableMatchRecord | null
       challengeSetup?: ChallengeSetup

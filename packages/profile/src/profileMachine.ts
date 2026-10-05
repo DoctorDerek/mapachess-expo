@@ -23,6 +23,7 @@ import {
   executePendingWrite,
   persistenceFailureUpdate,
   prepareActiveMatchPending,
+  prepareAppearancePending,
   prepareAutoHintModePending,
   prepareEloResetPending,
   prepareFreshRecoveryPending,
@@ -74,6 +75,14 @@ const profileMachineDefinition = setup({
     >(({ input }) => retryPendingWrite(input)),
   },
   actions: {
+    prepareAppearanceWrite: assign(({ context, event }) => {
+      if (event.type !== "PROFILE.APPEARANCE_SAVE_REQUESTED")
+        throw new Error("Appearance save requires an appearance event.")
+      return {
+        pendingWrite: prepareAppearancePending(context, event.appearance),
+        persistenceFailure: null,
+      }
+    }),
     captureImportRequest: assign(({ event }) => {
       if (event.type !== "PROFILE.IMPORT_PREVIEW_REQUESTED") {
         throw new Error("Import action received a non-import event.")
@@ -253,6 +262,10 @@ const profileMachineDefinition = setup({
       on: {
         "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED": {
           actions: "prepareActiveMatchWrite",
+          target: "persisting",
+        },
+        "PROFILE.APPEARANCE_SAVE_REQUESTED": {
+          actions: "prepareAppearanceWrite",
           target: "persisting",
         },
         "PROFILE.AUTO_HINT_MODE_CHANGED": {
