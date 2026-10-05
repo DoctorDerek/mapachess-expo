@@ -1,6 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useRef, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
 import {
@@ -102,7 +103,10 @@ function GameFrame({
       {matchSessionActive ? null : (
         <header
           inert={activityMessage !== null}
-          className={`mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between ${matchSessionActive ? "mb-2 gap-2 px-3 xl:px-0" : "mb-4 gap-3"}`}
+          className={cx(
+            "mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between",
+            matchSessionActive ? "mb-2 gap-2 px-3 xl:px-0" : "mb-4 gap-3",
+          )}
         >
           {home ? (
             <h1
