@@ -14,10 +14,10 @@ describe("action button feedback", () => {
       expect(markup).toContain('aria-busy="' + String(busy) + '"')
       expect(markup.includes('disabled=""')).toBe(busy)
       expect(markup).toContain(
-        `aria-hidden="${String(busy)}" class="col-start-1 row-start-1 ${busy ? "invisible" : ""}">Start match`,
+        `aria-hidden="${String(busy)}" class="col-start-1 row-start-1${busy ? " invisible" : ""}">Start match`,
       )
       expect(markup).toContain(
-        `aria-hidden="${String(!busy)}" class="col-start-1 row-start-1 ${busy ? "" : "invisible"}">Opening match…`,
+        `aria-hidden="${String(!busy)}" class="col-start-1 row-start-1${busy ? "" : " invisible"}">Opening match…`,
       )
     },
   )
