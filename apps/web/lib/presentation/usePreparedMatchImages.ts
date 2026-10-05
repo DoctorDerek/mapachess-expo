@@ -1,25 +1,18 @@
 import { useEffect, useMemo, useState } from "react"
 import { preload } from "react-dom"
 import { NEUTRAL_COACH_PORTRAIT_LABEL } from "@mapachess/match-presentation/coach-portrait"
-import resolveSpritePresentation from "@mapachess/match-presentation/presentation-asset-manifest"
 import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
+import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import createPresentationImages from "./presentationImages"
 import resolveWebOpponentPresentation from "./webOpponentPresentation"
-import {
-  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-  coachPortraitSource,
-  MAPACHITO_SPRITE_MANIFEST,
-} from "./webPresentationAssets"
+import { coachPortraitSource } from "./webPresentationAssets"
 
 export const initialMatchPresentationSources = (
   opponentId: ImplementedDurableOpponentId | null,
+  playerAnimal: StockfishOpponentId = "raccoon-stockfish",
 ): readonly string[] => {
   if (opponentId === null) return []
-  const player = resolveSpritePresentation(
-    MAPACHITO_SPRITE_MANIFEST,
-    { family: "idle" },
-    AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-  )
+  const player = resolveWebOpponentPresentation(playerAnimal)
   const opponent = resolveWebOpponentPresentation(opponentId)
   const coach = coachPortraitSource(NEUTRAL_COACH_PORTRAIT_LABEL)
   return [
@@ -35,10 +28,11 @@ export const initialMatchPresentationSources = (
 
 export default function usePreparedMatchImages(
   opponentId: ImplementedDurableOpponentId | null,
+  playerAnimal: StockfishOpponentId = "raccoon-stockfish",
 ): void {
   const sources = useMemo(
-    () => initialMatchPresentationSources(opponentId),
-    [opponentId],
+    () => initialMatchPresentationSources(opponentId, playerAnimal),
+    [opponentId, playerAnimal],
   )
   const [images] = useState(() => createPresentationImages())
   for (const source of sources)

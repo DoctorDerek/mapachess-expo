@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useEffect, type ReactNode, type Ref } from "react"
+import { useEffect, useRef, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
 import {
   selectIsPersistingMutation,
@@ -14,6 +14,7 @@ import createMatchSetupForMode, {
 } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import { samePlayerAppearance } from "@mapachess/profile/player-appearance"
 import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCanChangeAutoHintMode,
@@ -47,6 +48,19 @@ export type WebGameProps = Readonly<{
   settingsOpen: boolean
 }>
 
+const profileAllowsMatchOpening = (
+  snapshot: ReturnType<ActorRefFrom<typeof profileMachine>["getSnapshot"]>,
+): boolean => {
+  const current = selectCurrentPlayerData(snapshot)
+  const pending = selectPendingPlayerData(snapshot)
+  return (
+    (snapshot.matches("ready") || selectCanChangeAutoHintMode(snapshot)) &&
+    current !== null &&
+    (pending === null ||
+      samePlayerAppearance(current.appearance, pending.appearance))
+  )
+}
+
 type GameFrameProps = Omit<
   WebGameProps,
   "actor" | "navigation" | "profileActor"
@@ -55,16 +69,22 @@ type GameFrameProps = Omit<
     children: ReactNode
     activityMessage?: string | null
     matchSessionActive: boolean
+    home?: boolean
   }>
 
 function GameFrame({
   children,
   activityMessage = null,
   matchSessionActive,
+  home = false,
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
 }: GameFrameProps) {
+  const homeTitle = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (home) homeTitle.current?.focus({ preventScroll: true })
+  }, [home])
   const settingsButton = (
     <MapachessButton
       variant="secondary"
@@ -84,7 +104,18 @@ function GameFrame({
           inert={activityMessage !== null}
           className={`mx-auto flex w-full max-w-[96rem] flex-wrap items-center justify-between ${matchSessionActive ? "mb-2 gap-2 px-3 xl:px-0" : "mb-4 gap-3"}`}
         >
-          <MapachessWordmark />
+          {home ? (
+            <h1
+              id="game-modes-title"
+              ref={homeTitle}
+              tabIndex={-1}
+              className="text-mapachito-white text-2xl leading-tight font-black outline-none"
+            >
+              Mapachess
+            </h1>
+          ) : (
+            <MapachessWordmark />
+          )}
           {settingsButton}
         </header>
       )}
@@ -144,9 +175,7 @@ export default function WebGame({
   if (playerData === null)
     throw new Error("Match setup requires a valid player profile.")
   const profileReady =
-    (profileSnapshot.matches("ready") ||
-      selectCanChangeAutoHintMode(profileSnapshot)) &&
-    !settingsOpen
+    profileAllowsMatchOpening(profileSnapshot) && !settingsOpen
   const requestedSetup = snapshot.context.requestedSetup
   const variant =
     requestedSetup.mode === "story"
@@ -225,6 +254,7 @@ export default function WebGame({
     <GameFrame
       activityMessage={openingTitle(actor)}
       matchSessionActive={retainingMatch}
+      home={snapshot.matches({ menu: "choosingMode" })}
       onSettingsRequested={onSettingsRequested}
       settingsButtonRef={settingsButtonRef}
       settingsOpen={settingsOpen}
@@ -244,13 +274,13 @@ export default function WebGame({
             </div>
           )}
           <MatchModeMenu
+            playerData={playerData}
+            onCustomize={() => navigation.open("dressing-room")}
+            onShare={() => navigation.open("profile-card")}
             disabled={!profileReady}
             onModeSelected={(selection) => {
               if (
-                !(
-                  profileActor.getSnapshot().matches("ready") ||
-                  selectCanChangeAutoHintMode(profileActor.getSnapshot())
-                ) ||
+                !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
                 settingsOpen
               )
                 return
@@ -284,6 +314,14 @@ export default function WebGame({
         inert={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
       >
         <WebMatchSetup
+          playerAppearance={playerData.appearance}
+          onPlayerAnimalChanged={(animal) => {
+            if (profileActor.getSnapshot().matches("ready"))
+              profileActor.send({
+                type: "PROFILE.APPEARANCE_SAVE_REQUESTED",
+                appearance: { ...playerData.appearance, animal },
+              })
+          }}
           visible={snapshot.matches({ menu: "setup" }) || openingFreshMatch}
           editing={
             snapshot.context.overlays.includes("setup-opponent")
@@ -316,10 +354,7 @@ export default function WebGame({
           onBack={navigation.back}
           onStart={(setup) => {
             if (
-              !(
-                profileActor.getSnapshot().matches("ready") ||
-                selectCanChangeAutoHintMode(profileActor.getSnapshot())
-              ) ||
+              !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
               settingsOpen
             )
               return
@@ -332,6 +367,11 @@ export default function WebGame({
       {session !== null ? (
         <div hidden={!retainingMatch} inert={!retainingMatch}>
           <WebMatch
+            playerAnimal={
+              session.match.mode === "story"
+                ? playerData.appearance.animal
+                : "raccoon-stockfish"
+            }
             visible={retainingMatch}
             overlays={snapshot.context.overlays}
             navigation={navigation}
