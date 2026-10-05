@@ -1,3 +1,4 @@
+import cx from "classix"
 import {
   MATCH_MODE_CHOICES,
   type MatchModeSelection,
@@ -55,7 +56,16 @@ export default function MatchModeMenu({
               disabled={disabled}
               onClick={() => onModeSelected({ mode, variant })}
               aria-label={title}
-              className={`flex min-h-24 min-w-0 flex-[1_1_max(9.5rem,calc((100%-1rem)/2))] flex-col items-stretch justify-center gap-2 px-4 text-left xl:min-h-32 ${variant === "standard" ? (mode === "story" ? "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#008ec1]" : "bg-mapachito-orange shadow-[0.375rem_0.375rem_0_#a77e18]") : mode === "story" ? "bg-mapachito-deep-cyan shadow-[0.375rem_0.375rem_0_#008000]" : "bg-mapachito-raspberry shadow-[0.375rem_0.375rem_0_#ff0000]"}`}
+              className={cx(
+                "flex min-h-24 min-w-0 flex-[1_1_max(9.5rem,calc((100%-1rem)/2))] flex-col items-stretch justify-center gap-2 px-4 text-left xl:min-h-32",
+                variant === "standard"
+                  ? mode === "story"
+                    ? "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#008ec1]"
+                    : "bg-mapachito-orange shadow-[0.375rem_0.375rem_0_#a77e18]"
+                  : mode === "story"
+                    ? "bg-mapachito-deep-cyan shadow-[0.375rem_0.375rem_0_#008000]"
+                    : "bg-mapachito-raspberry shadow-[0.375rem_0.375rem_0_#ff0000]",
+              )}
             >
               <strong className="text-xl xl:text-2xl">
                 {variant === "standard" ? "Standard" : "Chess960"}

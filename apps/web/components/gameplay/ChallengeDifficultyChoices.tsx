@@ -1,3 +1,4 @@
+import cx from "classix"
 import { useId, useState } from "react"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
@@ -45,7 +46,10 @@ export default function ChallengeDifficultyChoices({
                 if (event.pointerType !== "touch") setHoveredTarget(target)
               }}
               onPointerLeave={() => setHoveredTarget(null)}
-              className={`group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid min-h-14 cursor-pointer gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60 ${animal === null ? "content-center" : "grid-rows-[auto_6.5rem]"}`}
+              className={cx(
+                "group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid min-h-14 cursor-pointer gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60",
+                animal === null ? "content-center" : "grid-rows-[auto_6.5rem]",
+              )}
             >
               <input
                 aria-describedby={explanationId}
