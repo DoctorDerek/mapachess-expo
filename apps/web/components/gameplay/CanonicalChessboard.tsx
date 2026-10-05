@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type {
@@ -307,7 +308,15 @@ export default function CanonicalChessboard({
                       hintDescriptionsForSquare(hints, showMoveHints, square),
                     )}
                     aria-selected={selected}
-                    className={`${baseSquareClasses} ${checkedKing ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset" : squareColorClasses(rowIndex, columnIndex)} ${selected ? "ring-mapachito-raspberry ring-4 ring-inset" : ""} ${partOfLastMove ? "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]" : ""}`}
+                    className={cx(
+                      baseSquareClasses,
+                      checkedKing
+                        ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset"
+                        : squareColorClasses(rowIndex, columnIndex),
+                      selected && "ring-mapachito-raspberry ring-4 ring-inset",
+                      partOfLastMove &&
+                        "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]",
+                    )}
                     data-square={square}
                     key={square}
                     onClick={() => chooseSquare(square)}
@@ -325,7 +334,10 @@ export default function CanonicalChessboard({
                     {piece === undefined ? null : (
                       <span
                         aria-hidden="true"
-                        className={`relative z-10 select-none ${pieceColorClasses(piece.color)}`}
+                        className={cx(
+                          "relative z-10 select-none",
+                          pieceColorClasses(piece.color),
+                        )}
                       >
                         {PIECE_GLYPHS[piece.color][piece.role]}
                       </span>
@@ -404,7 +416,10 @@ export default function CanonicalChessboard({
                 : `Choose your move to ${pendingChoice.to}`}
             </h2>
             <div
-              className={`mt-4 grid gap-3 ${choosingPromotion ? "grid-cols-4" : "grid-cols-1"}`}
+              className={cx(
+                "mt-4 grid gap-3",
+                choosingPromotion ? "grid-cols-4" : "grid-cols-1",
+              )}
             >
               {choiceMoves.map((move, index) => (
                 <MapachessButton
