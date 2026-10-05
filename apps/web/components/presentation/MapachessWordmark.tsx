@@ -13,7 +13,7 @@ export default function MapachessWordmark() {
       </span>
       <span
         aria-hidden="true"
-        className="font-display grid text-3xl leading-[0.78] font-black tracking-[0.055em] uppercase xl:text-4xl"
+        className="font-display grid text-xl leading-[0.78] font-black tracking-[0.055em] uppercase"
       >
         <span>Mapa</span>
         <strong className="text-mapachito-deep-gold [font:inherit]">
