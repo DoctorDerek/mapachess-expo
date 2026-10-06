@@ -41,14 +41,16 @@ export function ProfileArtwork({
       return
     }
     const motion = matchMedia("(prefers-reduced-motion: reduce)")
-    let cancelled = false,
-      handle = 0,
-      last = -1
+    let cancelled = false
+    let handle: number | undefined
+    let last = -1
+    let cleanup: (() => void) | undefined
     setFailure(false)
     void loadCardArtwork(input.appearance, input.content.animal)
       .then((artwork) => {
         if (cancelled) return
         const tick = (time: number): void => {
+          handle = undefined
           const frame =
             input.format === "GIF" && !motion.matches
               ? Math.floor(time / CARD_IDLE_FRAME_MILLISECONDS)
@@ -66,24 +68,31 @@ export function ProfileArtwork({
                 element.height,
               )
           }
-          if (!document.hidden) handle = requestAnimationFrame(tick)
+          if (input.format === "GIF" && !motion.matches && !document.hidden)
+            handle = requestAnimationFrame(tick)
         }
         const resume = (): void => {
-          cancelAnimationFrame(handle)
-          if (!document.hidden) handle = requestAnimationFrame(tick)
+          if (handle !== undefined) cancelAnimationFrame(handle)
+          handle = undefined
+          if (!document.hidden) tick(performance.now())
         }
-        document.addEventListener("visibilitychange", resume)
-        handle = requestAnimationFrame(tick)
-        cleanup = () => document.removeEventListener("visibilitychange", resume)
+        if (input.format === "GIF") {
+          document.addEventListener("visibilitychange", resume)
+          motion.addEventListener("change", resume)
+          cleanup = () => {
+            document.removeEventListener("visibilitychange", resume)
+            motion.removeEventListener("change", resume)
+          }
+        }
+        tick(performance.now())
       })
       .catch(() => {
         if (!cancelled) setFailure(true)
       })
-    let cleanup = (): void => {}
     return () => {
       cancelled = true
-      cancelAnimationFrame(handle)
-      cleanup()
+      if (handle !== undefined) cancelAnimationFrame(handle)
+      cleanup?.()
     }
   }, [input, exportPreview, retry])
   return (
@@ -94,7 +103,7 @@ export function ProfileArtwork({
         height={exportPreview ? PROFILE_CARD_HEIGHT : PROFILE_ARTWORK_HEIGHT}
         aria-hidden="true"
         className={cx(
-          "block [image-rendering:pixelated]",
+          "pointer-events-none block [image-rendering:pixelated]",
           fitStage
             ? "absolute inset-0 h-full w-full object-contain"
             : "h-auto w-full",
