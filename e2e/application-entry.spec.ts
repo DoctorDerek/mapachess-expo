@@ -22,7 +22,7 @@ test("retains save recovery while retrying and restores settings after success",
     }
   })
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).click()
-  const retry = page.getByRole("button", { name: "Retry Save", exact: true })
+  const retry = page.getByRole("button", { name: "Retry save", exact: true })
   await expect(retry).toBeVisible()
   const button = await retry.elementHandle()
   if (button === null) throw new Error("Retry button must exist")
@@ -53,7 +53,10 @@ test("retains save recovery while retrying and restores settings after success",
   expect(await button.isDisabled()).toBe(true)
   await expect.poll(() => button.boundingBox()).toEqual(before)
   await expect(
-    page.getByText("This change was not marked saved."),
+    page.getByRole("alert").filter({
+      hasText:
+        "It is not yet saved. Later state-changing actions are frozen until Retry succeeds.",
+    }),
   ).toBeVisible()
   await expect(
     page.getByRole("button", {
@@ -71,7 +74,9 @@ test("retains save recovery while retrying and restores settings after success",
     page.getByRole("radio", { name: "No Auto Hints", exact: true }),
   ).toBeChecked()
   await page.reload()
-  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Close Settings", exact: true }),
+  ).toBeVisible()
   await expect(
     page.getByRole("radio", { name: "No Auto Hints", exact: true }),
   ).toBeChecked()
@@ -384,6 +389,19 @@ test("offers four direct modes with Challenge controls and saved hint preference
     page.getByRole("button", { name: "Start match", exact: true }),
   ).toBeEnabled()
   await page.reload()
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: "Standard Story",
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Start match", exact: true }),
+  ).toBeEnabled()
+  await page
+    .getByRole("button", { name: "All game modes", exact: true })
+    .click()
   await expectModeMenu(page)
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await expect(
@@ -415,9 +433,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
   await page
     .getByRole("button", { name: "Replace Local Player Data", exact: true })
     .click()
-  await page
-    .getByRole("button", { name: "Close Settings", exact: true })
-    .click()
+  await expectModeMenu(page)
   await page
     .getByRole("button", { name: "Standard Challenge", exact: true })
     .click()
