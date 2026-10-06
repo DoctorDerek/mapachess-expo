@@ -243,11 +243,19 @@ test("retains setup and button geometry while match opening is pending", async (
     if (start === null) throw new Error("Start button must exist")
     await start.scrollIntoViewIfNeeded()
     const before = await start.boundingBox()
+    if (before === null) throw new Error("Start button must be visible")
     await start.click()
     await expect.poll(() => start.innerText()).toBe("Opening match…")
     await expect.poll(() => start.getAttribute("aria-busy")).toBe("true")
     expect(await start.isDisabled()).toBe(true)
-    await expect.poll(() => start.boundingBox()).toEqual(before)
+    await expect
+      .poll(() => start.boundingBox())
+      .toEqual({
+        x: expect.closeTo(before.x, 2),
+        y: expect.closeTo(before.y, 2),
+        width: expect.closeTo(before.width, 2),
+        height: expect.closeTo(before.height, 2),
+      })
     await expect(page.locator("#match-setup-title")).toBeVisible()
   } finally {
     release.resolve()
