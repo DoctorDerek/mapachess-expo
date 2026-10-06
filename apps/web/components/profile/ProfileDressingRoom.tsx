@@ -42,9 +42,6 @@ export default function ProfileDressingRoom({
 }>) {
   const [category, setCategory] = useState<Category>("Clothes")
   const [colors, setColors] = useState(false)
-  const change = (appearance: PlayerAppearance): void => {
-    onChange(appearance)
-  }
   const clothing = HERO_CATALOG.cloth.find(({ id }) => id === draft.cloth)
   const hair = HERO_CATALOG.hair.find(({ id }) => id === draft.hair)
   if (clothing === undefined || hair === undefined)
@@ -218,7 +215,7 @@ export default function ProfileDressingRoom({
               key={label}
               disabled={busy}
               aria-pressed={selected}
-              onClick={() => change(appearance)}
+              onClick={() => onChange(appearance)}
               className={cx(
                 "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
                 selected && "ring-3 ring-[#71dfe7]",
