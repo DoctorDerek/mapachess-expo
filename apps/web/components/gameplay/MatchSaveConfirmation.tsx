@@ -30,13 +30,13 @@ export default function MatchSaveConfirmation() {
     <motion.span
       animate={{ opacity: visible ? 1 : 0 }}
       aria-hidden={!visible}
-      className="bg-mapachito-white text-mapachito-charcoal pointer-events-none absolute top-2 right-2 z-3 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full px-2 py-1 text-base font-normal shadow-sm"
+      className="text-mapachito-green-ink pointer-events-none absolute right-4 bottom-1 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 text-sm leading-normal font-normal"
       role="status"
       transition={{ duration: reduceMotion ? 0 : 0.2 }}
     >
       <svg
         aria-hidden="true"
-        className="bg-mapachito-green h-5 w-5 shrink-0 rounded-full p-0.5"
+        className="size-[1.125em] shrink-0"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

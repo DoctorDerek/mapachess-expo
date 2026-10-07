@@ -2,22 +2,20 @@
 
 import cx from "classix"
 import { useState } from "react"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import { HERO_CATALOG } from "@mapachess/profile/hero-catalog"
-import {
-  eligiblePlayerAnimals,
-  type PlayerAppearance,
-} from "@mapachess/profile/player-appearance"
+import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
   cardFacts,
   INITIAL_CARD_CONTENT,
 } from "../../lib/presentation/profileCardArtwork"
+import PlayerAnimalChoices from "./PlayerAnimalChoices"
 import ProfileAction from "./ProfileAction"
 import ProfileCard, { ProfileArtwork } from "./ProfileCard"
 
 type Category = "Clothes" | "Hair" | "Skin" | "Face" | "Animal"
 export default function ProfileDressingRoom({
+  active,
   data,
   draft,
   dirty,
@@ -29,6 +27,7 @@ export default function ProfileDressingRoom({
   onShare,
   onRetry,
 }: Readonly<{
+  active: boolean
   data: MapachessPlayerData
   draft: PlayerAppearance
   dirty: boolean
@@ -99,14 +98,7 @@ export default function ProfileDressingRoom({
                 selected: face === draft.face,
                 appearance: { ...draft, face },
               }))
-            : eligiblePlayerAnimals(data.storyProgress).map((animal) => ({
-                label: stockfishOpponent(animal).displayName.replace(
-                  " Stockfish",
-                  "",
-                ),
-                selected: animal === draft.animal,
-                appearance: { ...draft, animal },
-              }))
+            : []
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="min-w-0">
@@ -204,38 +196,50 @@ export default function ProfileDressingRoom({
             </ProfileAction>
           </div>
         ) : null}
-        <div
-          role="group"
-          aria-label={`${category} selection`}
-          className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-3"
-        >
-          {options.map(({ label, selected, appearance }) => (
-            <button
-              type="button"
-              key={label}
+        {category === "Animal" ? (
+          <div className="mt-5">
+            <PlayerAnimalChoices
+              active={active}
               disabled={busy}
-              aria-pressed={selected}
-              onClick={() => onChange(appearance)}
-              className={cx(
-                "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
-                selected && "ring-3 ring-[#71dfe7]",
-              )}
-            >
-              <ProfileArtwork
-                input={{
-                  appearance,
-                  facts: cardFacts(data),
-                  content: {
-                    ...INITIAL_CARD_CONTENT,
-                    animal: category === "Animal",
-                  },
-                  format: "PNG",
-                }}
-              />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
+              onSelected={(animal) => onChange({ ...draft, animal })}
+              selectedId={draft.animal}
+              storyProgress={data.storyProgress}
+            />
+          </div>
+        ) : (
+          <div
+            role="group"
+            aria-label={`${category} selection`}
+            className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-3"
+          >
+            {options.map(({ label, selected, appearance }) => (
+              <button
+                type="button"
+                key={label}
+                disabled={busy}
+                aria-pressed={selected}
+                onClick={() => onChange(appearance)}
+                className={cx(
+                  "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
+                  selected && "ring-3 ring-[#71dfe7]",
+                )}
+              >
+                <ProfileArtwork
+                  input={{
+                    appearance,
+                    facts: cardFacts(data),
+                    content: {
+                      ...INITIAL_CARD_CONTENT,
+                      animal: false,
+                    },
+                    format: "PNG",
+                  }}
+                />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

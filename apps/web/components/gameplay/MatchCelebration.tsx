@@ -120,11 +120,8 @@ export default function MatchCelebration({
       }}
       ref={dialog}
     >
-      <div className="relative">
-        <div ref={battleStageRef} />
-        {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
-      </div>
-      <div className="grid gap-3 p-4 text-center sm:p-5">
+      <div ref={battleStageRef} />
+      <div className="grid gap-3 p-[clamp(1rem,3vw,1.25rem)] text-center">
         <h2
           className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance"
           id={titleId}
@@ -149,7 +146,7 @@ export default function MatchCelebration({
           )}
         </div>
       </div>
-      <div className="grid gap-3 p-4 sm:p-5">
+      <div className="relative grid gap-3 p-[clamp(1rem,3vw,1.25rem)] pb-10">
         {reward === null ? null : (
           <MatchLevelProgress
             afterXp={reward.totalXpBefore + reward.awardedXp}
@@ -171,10 +168,10 @@ export default function MatchCelebration({
         {match.mode === "story" && medal !== null && next === undefined ? (
           <p className="text-sm font-bold">Story complete!</p>
         ) : null}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-2">
           <MapachessButton
             autoFocus
-            className="min-h-12 px-2! text-base"
+            className="min-h-12 min-w-0 px-2! text-base wrap-break-word"
             onClick={onDismiss}
             ref={reviewButton}
             type="button"
@@ -183,7 +180,7 @@ export default function MatchCelebration({
             Review board
           </MapachessButton>
           <MapachessButton
-            className="min-h-12 px-2! text-base"
+            className="min-h-12 min-w-0 px-2! text-base wrap-break-word"
             disabled={disabled}
             onClick={nextAction}
             type="button"
@@ -197,6 +194,7 @@ export default function MatchCelebration({
             ) : null}
           </MapachessButton>
         </div>
+        {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
       </div>
     </dialog>
   )

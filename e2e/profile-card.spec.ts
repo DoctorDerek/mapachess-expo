@@ -1,6 +1,16 @@
 import { readFile } from "node:fs/promises"
 import { expect, test } from "@playwright/test"
+import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
+
+const earnedChickenProfile = {
+  ...createInitialMapachessPlayerData(),
+  storyProgress: {
+    standard: [{ opponentId: "chicken-stockfish", highestMedal: "bronze" }],
+    chess960: [],
+  },
+} as const
 
 for (const mode of [
   "Standard Story",
@@ -13,11 +23,12 @@ for (const mode of [
   }) => {
     test.setTimeout(90000)
     await page.goto("/")
+    await importPlayerData(page, earnedChickenProfile)
     await page
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
     await page.getByRole("button", { name: "Animal", exact: true }).click()
-    await page.getByRole("button", { name: "Chicken", exact: true }).click()
+    await page.getByRole("radio", { name: "Chicken", exact: true }).check()
     await page
       .getByRole("button", { name: "Save appearance", exact: true })
       .click()
@@ -138,6 +149,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
 }) => {
   test.setTimeout(90000)
   await page.goto("/")
+  await importPlayerData(page, earnedChickenProfile)
   await expect(
     page.getByRole("button", { name: "Customize profile card" }),
   ).toBeEnabled()
@@ -177,9 +189,9 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await page.getByRole("button", { name: "Animal", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: "Raccoon", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("button", { name: "Chicken", exact: true }).click()
+    page.getByRole("radio", { name: "Raccoon Selected", exact: true }),
+  ).toBeChecked()
+  await page.getByRole("radio", { name: "Chicken", exact: true }).check()
   await page.getByRole("button", { name: "Back", exact: true }).click()
   await expect(
     page.getByRole("alertdialog", { name: "Keep your appearance changes?" }),

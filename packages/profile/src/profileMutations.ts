@@ -28,6 +28,7 @@ export const changePlayerAppearance = (
       appearance,
       current.storyProgress,
       "$.appearance",
+      current.appearance.animal === "chicken-stockfish" ? "preserve" : "reject",
     ),
     revision: current.revision + 1,
   })
