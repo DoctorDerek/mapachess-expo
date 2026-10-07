@@ -12,6 +12,7 @@ import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
 import profileCardEditorMachine from "../../lib/presentation/profileCardEditorMachine"
+import RecoverableView from "../presentation/RecoverableView"
 import ProfileAction from "./ProfileAction"
 import ProfileCardPreview from "./ProfileCardPreview"
 import ProfileDressingRoom from "./ProfileDressingRoom"
@@ -135,39 +136,49 @@ export default function ProfileCardJourney({
           </div>
         ) : null}
         {preview ? (
-          <ProfileCardPreview
-            data={data}
-            appearance={dressing ? snapshot.context.draft : data.appearance}
-            unsaved={dressing && dirty}
-          />
+          <RecoverableView
+            title="The profile-card preview could not be displayed."
+            description="Your appearance changes are still here. Try again or use Back to return."
+          >
+            <ProfileCardPreview
+              data={data}
+              appearance={dressing ? snapshot.context.draft : data.appearance}
+              unsaved={dressing && dirty}
+            />
+          </RecoverableView>
         ) : null}
         {dressing ? (
           <div
             hidden={preview || snapshot.matches("confirmingDiscard")}
             inert={preview || snapshot.matches("confirmingDiscard")}
           >
-            <ProfileDressingRoom
-              data={data}
-              draft={snapshot.context.draft}
-              dirty={dirty}
-              busy={busy}
-              failed={snapshot.matches("failed")}
-              onChange={(appearance) =>
-                editor.send({ type: "CARD.APPEARANCE_CHANGED", appearance })
-              }
-              onSave={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
-              onCancel={() => {
-                editor.send({ type: "CARD.DISCARD_REQUESTED" })
-                navigation.back()
-              }}
-              onShare={() => navigation.open("profile-card")}
-              onRetry={() => {
-                editor.send({ type: "CARD.RETRY_REQUESTED" })
-                profileActor.send({
-                  type: "PROFILE.PERSISTENCE_RETRY_REQUESTED",
-                })
-              }}
-            />
+            <RecoverableView
+              title="Customization could not be displayed."
+              description="Your appearance changes are still here. Try again to keep editing."
+            >
+              <ProfileDressingRoom
+                data={data}
+                draft={snapshot.context.draft}
+                dirty={dirty}
+                busy={busy}
+                failed={snapshot.matches("failed")}
+                onChange={(appearance) =>
+                  editor.send({ type: "CARD.APPEARANCE_CHANGED", appearance })
+                }
+                onSave={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
+                onCancel={() => {
+                  editor.send({ type: "CARD.DISCARD_REQUESTED" })
+                  navigation.back()
+                }}
+                onShare={() => navigation.open("profile-card")}
+                onRetry={() => {
+                  editor.send({ type: "CARD.RETRY_REQUESTED" })
+                  profileActor.send({
+                    type: "PROFILE.PERSISTENCE_RETRY_REQUESTED",
+                  })
+                }}
+              />
+            </RecoverableView>
           </div>
         ) : null}
       </div>

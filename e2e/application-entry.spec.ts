@@ -12,13 +12,19 @@ const modeNames = [
 test("retains save recovery while retrying and restores settings after success", async ({
   page,
 }) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put
-    IDBObjectStore.prototype.put = function () {
-      IDBObjectStore.prototype.put = put
-      throw new DOMException("Test storage failure", "QuotaExceededError")
+    let writes = 0
+    IDBObjectStore.prototype.put = function (value, key) {
+      if (++writes === 2) {
+        IDBObjectStore.prototype.put = put
+        throw new DOMException("Test storage failure", "QuotaExceededError")
+      }
+      return put.call(this, value, key)
     }
   })
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).click()
@@ -80,6 +86,7 @@ test("retains save recovery while retrying and restores settings after success",
   await expect(
     page.getByRole("radio", { name: "No Auto Hints", exact: true }),
   ).toBeChecked()
+  expect(errors).toEqual([])
 })
 
 test("backup failures release their controls for another attempt", async ({

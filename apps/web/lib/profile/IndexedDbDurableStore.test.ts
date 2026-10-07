@@ -1,6 +1,10 @@
 import { webcrypto } from "node:crypto"
-import { IDBFactory } from "fake-indexeddb"
-import { describe, expect, it } from "vitest"
+import {
+  IDBFactory,
+  IDBObjectStore,
+  IDBVersionChangeEvent,
+} from "fake-indexeddb"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import {
   EMPTY_DURABLE_STORE_SNAPSHOT,
@@ -19,6 +23,116 @@ const snapshot = (
   Object.freeze({ current, lastKnownGood, preImportBackup })
 
 describe("IndexedDB durable player-data storage", () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it("rolls back every slot when a later write throws, then retries the same candidate", async () => {
+    const adapter = new IndexedDbDurableStore(new IDBFactory())
+    const before = snapshot("current", "known-good", "pre-import")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    const put = IDBObjectStore.prototype.put
+    let writes = 0
+    const failure = new DOMException("Storage full", "QuotaExceededError")
+    vi.spyOn(IDBObjectStore.prototype, "put").mockImplementation(function (
+      this: IDBObjectStore,
+      value,
+      key,
+    ) {
+      if (++writes === 2) throw failure
+      return put.call(this, value, key)
+    })
+    const next = snapshot("next", "next-known-good", "next-backup")
+    await expect(
+      adapter.compareAndSwapVerified({ expected: before, next }),
+    ).rejects.toBe(failure)
+    expect(await adapter.read()).toEqual(before)
+    vi.restoreAllMocks()
+    await expect(
+      adapter.compareAndSwapVerified({ expected: before, next }),
+    ).resolves.toEqual({ ok: true, snapshot: next })
+    await adapter.close()
+  })
+
+  it("observes a request's asynchronous abort without an unhandled transaction rejection", async () => {
+    const adapter = new IndexedDbDurableStore(new IDBFactory())
+    const before = snapshot("preserved", "backup")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    const get = IDBObjectStore.prototype.get
+    const injected = vi
+      .spyOn(IDBObjectStore.prototype, "get")
+      .mockImplementationOnce(function (this: IDBObjectStore, key) {
+        const request = get.call(this, key)
+        queueMicrotask(() => this.transaction.abort())
+        return request
+      })
+    await expect(adapter.read()).rejects.toMatchObject({ name: "AbortError" })
+    injected.mockRestore()
+    await expect(adapter.read()).resolves.toEqual(before)
+    await adapter.close()
+  })
+
+  it("forgets a connection closed by versionchange without resetting its data", async () => {
+    const factory = new IDBFactory()
+    const open = factory.open.bind(factory)
+    let connection: IDBDatabase | undefined
+    vi.spyOn(factory, "open").mockImplementation((...args) => {
+      const request = open(...args)
+      request.addEventListener("success", () => {
+        connection = request.result
+      })
+      return request
+    })
+    const adapter = new IndexedDbDurableStore(factory)
+    const before = snapshot("preserved", "known-good", "pre-import")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    if (connection === undefined) throw new Error("Expected an open database")
+    connection.dispatchEvent(
+      new IDBVersionChangeEvent("versionchange", {
+        oldVersion: 1,
+        newVersion: 2,
+      }),
+    )
+    await expect(adapter.read()).resolves.toEqual(before)
+    expect(factory.open).toHaveBeenCalledTimes(2)
+    await adapter.close()
+  })
+
+  it("rolls back an aborted write and preserves every backup for retry", async () => {
+    const adapter = new IndexedDbDurableStore(new IDBFactory())
+    const before = snapshot("current", "good", "import")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    const put = IDBObjectStore.prototype.put
+    vi.spyOn(IDBObjectStore.prototype, "put").mockImplementationOnce(function (
+      this: IDBObjectStore,
+      value,
+      key,
+    ) {
+      const request = put.call(this, value, key)
+      queueMicrotask(() => this.transaction.abort())
+      return request
+    })
+    const next = snapshot("replacement")
+    await expect(
+      adapter.compareAndSwapVerified({ expected: before, next }),
+    ).rejects.toMatchObject({ name: "AbortError" })
+    expect(await adapter.read()).toEqual(before)
+    await expect(
+      adapter.compareAndSwapVerified({ expected: before, next }),
+    ).resolves.toEqual({ ok: true, snapshot: next })
+    await adapter.close()
+  })
+
   it("imports the shared portable match fixture without semantic loss", async () => {
     const sha256 = (canonicalValue: string) =>
       webSha256(canonicalValue, webcrypto.subtle)

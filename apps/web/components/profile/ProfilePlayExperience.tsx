@@ -15,7 +15,9 @@ import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
 import WebGame from "../gameplay/WebGame"
+import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
+import RecoverableView from "../presentation/RecoverableView"
 import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
   type ProfileSettingsPanelProps,
@@ -109,21 +111,44 @@ function ReadyPlayExperience({
         navigation={navigation}
       />
       {settingsOpen ? (
-        matchActor === null ? (
-          <ProfileSettingsPanel {...settingsProps} />
-        ) : (
-          <MatchSettings {...settingsProps} actor={matchActor} />
-        )
+        <RecoverableView
+          title="Settings could not be displayed."
+          description="Your player data has not been reset. Try again or close Settings."
+          actions={
+            <MapachessButton onClick={navigation.back}>
+              Close Settings
+            </MapachessButton>
+          }
+        >
+          {matchActor === null ? (
+            <ProfileSettingsPanel {...settingsProps} />
+          ) : (
+            <MatchSettings {...settingsProps} actor={matchActor} />
+          )}
+        </RecoverableView>
       ) : null}
       <div inert={blocked || settingsOpen || personalOpen}>
-        <WebGame
-          actor={actor}
-          navigation={navigation}
-          profileActor={profileActor}
-          onSettingsRequested={() => navigation.open("settings")}
-          settingsButtonRef={settingsButton}
-          settingsOpen={settingsOpen}
-        />
+        <RecoverableView
+          title="This screen could not be displayed."
+          description="Your player data is still held in memory. Try again without refreshing, or export it."
+          actions={
+            <MapachessButton
+              disabled={settings.exporting}
+              onClick={settings.onExportPlayerData}
+            >
+              Export player data
+            </MapachessButton>
+          }
+        >
+          <WebGame
+            actor={actor}
+            navigation={navigation}
+            profileActor={profileActor}
+            onSettingsRequested={() => navigation.open("settings")}
+            settingsButtonRef={settingsButton}
+            settingsOpen={settingsOpen}
+          />
+        </RecoverableView>
       </div>
     </>
   )

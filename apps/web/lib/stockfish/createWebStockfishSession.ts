@@ -1,4 +1,5 @@
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
+import createRecoverableStockfishSession from "@mapachess/stockfish/recoverable-session"
 import createStockfishUciSession, {
   type StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
@@ -20,13 +21,14 @@ export default function createWebStockfishSession(
   configuration: StockfishEngineConfiguration,
   options: CreateWebStockfishSessionOptions = {},
 ): StockfishUciSession {
-  const worker = new Worker(STOCKFISH_WEB_WORKER_URL, {
-    name: options.workerName ?? STOCKFISH_WEB_WORKER_NAME,
-  })
-
-  return createStockfishUciSession({
-    configuration,
-    expectedIdentity: STOCKFISH_18_WEB_UCI_EXPECTATION,
-    transport: createWebWorkerUciTransport(worker),
+  return createRecoverableStockfishSession(() => {
+    const worker = new Worker(STOCKFISH_WEB_WORKER_URL, {
+      name: options.workerName ?? STOCKFISH_WEB_WORKER_NAME,
+    })
+    return createStockfishUciSession({
+      configuration,
+      expectedIdentity: STOCKFISH_18_WEB_UCI_EXPECTATION,
+      transport: createWebWorkerUciTransport(worker),
+    })
   })
 }

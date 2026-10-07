@@ -15,6 +15,20 @@ import profileCardExportMachine from "../../lib/presentation/profileCardExportMa
 import ProfileAction from "./ProfileAction"
 import { ProfileArtwork } from "./ProfileCard"
 
+const canShareProfileCard = (file: File | null): boolean => {
+  try {
+    return (
+      file !== null &&
+      typeof navigator !== "undefined" &&
+      typeof navigator.canShare === "function" &&
+      typeof navigator.share === "function" &&
+      navigator.canShare({ files: [file] })
+    )
+  } catch {
+    return false
+  }
+}
+
 export default function ProfileCardPreview({
   data,
   appearance,
@@ -39,26 +53,20 @@ export default function ProfileCardPreview({
     actor.send({ type: "CARD.PREVIEW_CHANGED", input })
   }, [actor, input])
   const file = snapshot.matches("ready") ? snapshot.context.file : null
-  const shareAvailable =
-    file !== null &&
-    typeof navigator !== "undefined" &&
-    typeof navigator.canShare === "function" &&
-    typeof navigator.share === "function" &&
-    navigator.canShare({ files: [file] })
-  const share = (): void => {
+  const shareAvailable = canShareProfileCard(file)
+  const share = async (): Promise<void> => {
     if (file === null || !shareAvailable || sharing) return
     setSharing(true)
     setMessage("")
-    void navigator
-      .share({ files: [file] })
-      .then(() => setMessage("Shared."))
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError"))
-          setMessage(
-            "Sharing did not complete. You can retry or save the file.",
-          )
-      })
-      .finally(() => setSharing(false))
+    try {
+      await navigator.share({ files: [file] })
+      setMessage("Shared.")
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError"))
+        setMessage("Sharing did not complete. You can retry or save the file.")
+    } finally {
+      setSharing(false)
+    }
   }
   return (
     <div className="mx-auto max-w-5xl">
@@ -126,8 +134,14 @@ export default function ProfileCardPreview({
         <ProfileAction
           onClick={() => {
             if (file !== null) {
-              saveProfileCardFile(file)
-              setMessage(`${format} download requested.`)
+              try {
+                saveProfileCardFile(file)
+                setMessage(`${format} download requested.`)
+              } catch {
+                setMessage(
+                  "The download could not start. Your card is still ready; try saving again.",
+                )
+              }
             }
           }}
           disabled={file === null || sharing}
@@ -136,7 +150,7 @@ export default function ProfileCardPreview({
           <span aria-hidden="true">↓</span> Save {format}
         </ProfileAction>
         <ProfileAction
-          onClick={share}
+          onClick={() => void share()}
           disabled={!shareAvailable || sharing}
           className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
         >
