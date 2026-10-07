@@ -1,4 +1,8 @@
-import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
+import { MATCH_VARIANTS } from "@mapachess/match/match-variant"
+import {
+  STOCKFISH_OPPONENTS,
+  type StockfishOpponentId,
+} from "@mapachess/match/stockfish-opponent"
 import {
   failData,
   requireEnumValue,
@@ -10,10 +14,7 @@ import {
   type HeroClothId,
   type HeroHairId,
 } from "./heroCatalog.js"
-import {
-  selectChallengeUnlockedOpponents,
-  type StoryProgress,
-} from "./storyProgress.js"
+import type { StoryProgress } from "./storyProgress.js"
 
 export type PlayerAppearance = Readonly<{
   skin: number
@@ -51,10 +52,14 @@ export const eligiblePlayerAnimals = (
   progress: StoryProgress,
 ): readonly StockfishOpponentId[] =>
   Object.freeze([
-    ...new Set<StockfishOpponentId>([
-      "raccoon-stockfish",
-      ...selectChallengeUnlockedOpponents(progress).map(({ id }) => id),
-    ]),
+    DEFAULT_PLAYER_APPEARANCE.animal,
+    ...STOCKFISH_OPPONENTS.filter(
+      ({ id }) =>
+        id !== DEFAULT_PLAYER_APPEARANCE.animal &&
+        MATCH_VARIANTS.some((variant) =>
+          progress[variant].some(({ opponentId }) => opponentId === id),
+        ),
+    ).map(({ id }) => id),
   ])
 
 const catalogNumber = (
@@ -67,6 +72,7 @@ export function decodePlayerAppearance(
   value: unknown,
   progress: StoryProgress,
   path: string,
+  legacyChicken: "preserve" | "reject" = "reject",
 ): PlayerAppearance {
   const received = requireObject(value, path)
   requireExactKeys(
@@ -97,7 +103,9 @@ export function decodePlayerAppearance(
     ),
     animal: requireEnumValue(
       received.animal,
-      eligiblePlayerAnimals(progress),
+      legacyChicken === "preserve"
+        ? [...eligiblePlayerAnimals(progress), "chicken-stockfish"]
+        : eligiblePlayerAnimals(progress),
       `${path}.animal`,
     ),
   })

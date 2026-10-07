@@ -680,6 +680,7 @@ const decodeCurrentPlayerData = (
             object.appearance,
             storyProgress,
             "$.appearance",
+            "preserve",
           )
         : DEFAULT_PLAYER_APPEARANCE,
     challengeHistory: decodeChallengeHistory(

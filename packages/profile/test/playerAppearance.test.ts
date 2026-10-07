@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { createActor, waitFor } from "xstate"
+import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import SerializedPlayerDataStore from "../src/durableStore.js"
 import { HERO_CATALOG } from "../src/heroCatalog.js"
 import {
@@ -18,6 +19,7 @@ import profileMachine, {
   selectCurrentPlayerData,
 } from "../src/profileMachine.js"
 import { changePlayerAppearance } from "../src/profileMutations.js"
+import { selectChallengeUnlockedOpponents } from "../src/storyProgress.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
 describe("the saved personal appearance", () => {
@@ -25,11 +27,12 @@ describe("the saved personal appearance", () => {
     const data = createInitialMapachessPlayerData()
     expect(eligiblePlayerAnimals(data.storyProgress)).toEqual([
       "raccoon-stockfish",
-      "chicken-stockfish",
     ])
+    expect(
+      selectChallengeUnlockedOpponents(data.storyProgress).map(({ id }) => id),
+    ).toEqual(["chicken-stockfish"])
     const changed = changePlayerAppearance(data, {
       ...data.appearance,
-      animal: "chicken-stockfish",
       hair: "f9",
       hairColor: 10,
     })
@@ -43,6 +46,7 @@ describe("the saved personal appearance", () => {
   })
 
   it.each([
+    { animal: "chicken-stockfish" },
     { animal: "dragonfly-stockfish" },
     { skin: 7 },
     { face: 0 },
@@ -60,6 +64,68 @@ describe("the saved personal appearance", () => {
         "$.appearance",
       ),
     ).toThrow()
+  })
+
+  it.each(["standard", "chess960"] as const)(
+    "uses historical %s Story victories without duplicating raccoon",
+    (variant) => {
+      const data = createInitialMapachessPlayerData()
+      const storyProgress = {
+        ...data.storyProgress,
+        [variant]: STOCKFISH_OPPONENTS.map(({ id }) => ({
+          opponentId: id,
+          highestMedal: "bronze" as const,
+        })),
+      }
+      expect(eligiblePlayerAnimals(storyProgress)).toEqual([
+        "raccoon-stockfish",
+        ...STOCKFISH_OPPONENTS.filter(
+          ({ id }) => id !== "raccoon-stockfish",
+        ).map(({ id }) => id),
+      ])
+      const changed = changePlayerAppearance(
+        { ...data, storyProgress },
+        { ...data.appearance, animal: "dragonfly-stockfish" },
+      )
+      expect(changed.appearance.animal).toBe("dragonfly-stockfish")
+      expect(changed.storyProgress).toBe(storyProgress)
+    },
+  )
+
+  it("preserves a legacy Chicken save and backup without permitting new unearned selections", async () => {
+    const initial = createInitialMapachessPlayerData()
+    const legacy = {
+      ...initial,
+      appearance: {
+        ...initial.appearance,
+        animal: "chicken-stockfish" as const,
+      },
+    }
+    const decoded = decodeMapachessPlayerDataWithSource(legacy)
+    expect(decoded.ok).toBe(true)
+    if (!decoded.ok) throw new Error("Expected compatible saved appearance")
+    expect(decoded.data).toEqual(legacy)
+    const changed = changePlayerAppearance(decoded.data, {
+      ...legacy.appearance,
+      face: 5,
+    })
+    expect(changed.appearance.animal).toBe("chicken-stockfish")
+    const backup = await createMapachessPortableBackup({
+      playerData: changed,
+      sha256,
+      applicationVersion: "test",
+      gddRevision: "5.0",
+    })
+    const restored = await decodeMapachessPortableBackup(backup, sha256)
+    expect(restored.ok).toBe(true)
+    if (!restored.ok) throw new Error("Expected valid legacy backup")
+    expect(restored.backup.payload).toEqual(changed)
+    const raccoon = changePlayerAppearance(changed, {
+      ...changed.appearance,
+      animal: "raccoon-stockfish",
+    })
+    expect(() => changePlayerAppearance(raccoon, legacy.appearance)).toThrow()
+    expect(() => changePlayerAppearance(initial, legacy.appearance)).toThrow()
   })
 
   it("has six synchronized layer paths for every supported style/color", () => {
@@ -134,7 +200,7 @@ describe("the saved personal appearance", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     const appearance = {
       ...DEFAULT_PLAYER_APPEARANCE,
-      animal: "chicken-stockfish" as const,
+      face: 5,
     }
     actor.send({ type: "PROFILE.APPEARANCE_SAVE_REQUESTED", appearance })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.appearance).toEqual(
