@@ -73,8 +73,8 @@ describe("accepted match celebration composition", () => {
     expect(markup).not.toContain("Estimated")
     expect(markup).toContain("No hints used")
     expect(markup).toContain("Saved locally")
-    expect(markup.indexOf("Saved locally")).toBeLessThan(
-      markup.indexOf("You defeated Chicken Stockfish!"),
+    expect(markup.indexOf("Saved locally")).toBeGreaterThan(
+      markup.indexOf("Next opponent"),
     )
   })
 
