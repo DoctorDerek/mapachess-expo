@@ -11,7 +11,7 @@ test("shows the entire locked roster and keeps it keyboard-scrollable on a narro
   await page.setViewportSize({ width: 320, height: 915 })
   await page.goto("/")
   await page
-    .getByRole("button", { name: "Standard Story", exact: true })
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
     .click()
   const gallery = page.getByRole("region", {
     name: "Player animals",
@@ -62,7 +62,7 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   })
   const before = await savedProfile(page)
   await page
-    .getByRole("button", { name: "Standard Story", exact: true })
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
     .click()
   const gallery = page.getByRole("region", {
     name: "Player animals",
@@ -144,7 +144,7 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
     appearance: { ...initial.appearance, animal: "chicken-stockfish" },
   })
   await page
-    .getByRole("button", { name: "Standard Story", exact: true })
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
     .click()
   const gallery = page.getByRole("region", {
     name: "Player animals",

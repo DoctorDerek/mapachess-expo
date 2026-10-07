@@ -39,6 +39,7 @@ describe("Mapachess player data", () => {
         cloth: "cloth13",
         clothColor: 3,
         animal: "raccoon-stockfish",
+        weapon: "none",
       },
       challengeHistory: {
         standard: { animals: [], difficulties: [] },

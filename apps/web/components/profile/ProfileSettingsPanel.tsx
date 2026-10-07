@@ -6,6 +6,7 @@ import type {
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import {
   PLAYER_ELO_RATING_IDS,
   type PlayerEloRatingId,
@@ -67,7 +68,8 @@ export default function ProfileSettingsPanel({
       : resetOverlay === "reset-chess960"
         ? "chess960"
         : null
-  const resetLabel = resetVariant === "standard" ? "Standard" : "Chess960"
+  const resetLabel =
+    resetVariant === null ? "" : MATCH_VARIANT_LABELS[resetVariant]
 
   return (
     <div
@@ -120,7 +122,7 @@ export default function ProfileSettingsPanel({
           </h2>
           <div className="mt-4 grid gap-3">
             {PLAYER_ELO_RATING_IDS.map((variant) => {
-              const label = variant === "standard" ? "Standard" : "Chess960"
+              const label = MATCH_VARIANT_LABELS[variant]
               return (
                 <div
                   className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"

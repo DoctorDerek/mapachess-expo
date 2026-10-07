@@ -2,6 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { DEFAULT_PLAYER_APPEARANCE } from "@mapachess/profile/player-appearance"
 import type { CardInput } from "./profileCardArtwork"
 import createProfileCardFile, { saveProfileCardFile } from "./profileCardExport"
+import {
+  CARD_IDLE_FRAME_MILLISECONDS,
+  PROFILE_CARD_HEIGHT,
+  PROFILE_CARD_WIDTH,
+} from "./profileCardFormat"
 
 vi.mock("./profileCardArtwork", () => ({
   drawProfileCard: vi.fn(),
@@ -147,5 +152,69 @@ describe("profile image export failure ownership", () => {
     expect(create).toHaveBeenCalledOnce()
     expect(remove).toHaveBeenCalledOnce()
     expect(revoke).toHaveBeenCalledWith("blob:recovery-test")
+  })
+
+  it("keeps a stationary footer color stable when animation colors share a quantizer bucket", async () => {
+    const footerColors: number[][] = []
+    vi.doMock("gifenc", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("gifenc")>()
+      return {
+        ...actual,
+        GIFEncoder: () => {
+          const encoder = actual.GIFEncoder()
+          const writeFrame: typeof encoder.writeFrame = (
+            indices,
+            width,
+            height,
+            options,
+          ) => {
+            const footerIndex = indices.at(-1)
+            if (footerIndex === undefined)
+              throw new Error("Expected a full encoded frame")
+            footerColors.push(options.palette[footerIndex] ?? [])
+            encoder.writeFrame(indices, width, height, options)
+          }
+          return { ...encoder, writeFrame }
+        },
+      }
+    })
+    const receiver = new EventTarget()
+    const postMessage = vi.fn()
+    vi.stubGlobal("self", {
+      addEventListener: receiver.addEventListener.bind(receiver),
+      postMessage,
+    })
+    try {
+      await import("./profileGif.worker")
+      const first = new Uint8Array(
+        PROFILE_CARD_WIDTH * PROFILE_CARD_HEIGHT * 4,
+      ).fill(255)
+      new Uint32Array(first.buffer).fill(
+        0xfff8fcf8,
+        0,
+        (PROFILE_CARD_WIDTH * PROFILE_CARD_HEIGHT) / 2,
+      )
+      const second = new Uint8Array(first.length).fill(255)
+      receiver.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            width: PROFILE_CARD_WIDTH,
+            height: PROFILE_CARD_HEIGHT,
+            delay: CARD_IDLE_FRAME_MILLISECONDS,
+            frames: [first, second],
+          },
+        }),
+      )
+      expect(postMessage).toHaveBeenCalledWith(
+        { ok: true, buffer: expect.any(ArrayBuffer) },
+        expect.any(Object),
+      )
+      expect(footerColors).toHaveLength(2)
+      expect(footerColors[0]).toHaveLength(3)
+      expect(footerColors[1]).toEqual(footerColors[0])
+    } finally {
+      vi.doUnmock("gifenc")
+      vi.resetModules()
+    }
   })
 })

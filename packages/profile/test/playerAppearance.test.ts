@@ -8,6 +8,7 @@ import {
   DEFAULT_PLAYER_APPEARANCE,
   eligiblePlayerAnimals,
   heroLayerPaths,
+  samePlayerAppearance,
 } from "../src/playerAppearance.js"
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import { decodeMapachessPlayerDataWithSource } from "../src/playerDataCodec.js"
@@ -19,6 +20,7 @@ import profileMachine, {
   selectCurrentPlayerData,
 } from "../src/profileMachine.js"
 import { changePlayerAppearance } from "../src/profileMutations.js"
+import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
 import { selectChallengeUnlockedOpponents } from "../src/storyProgress.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
@@ -54,6 +56,11 @@ describe("the saved personal appearance", () => {
     { hairColor: 11 },
     { cloth: "cloth18" },
     { clothColor: 9 },
+    { weapon: "weapon6" },
+    { weapon: "weapon5" },
+    { weapon: "weapon1_c1" },
+    { weapon: "weapon5_c5" },
+    { weapon: null },
     { playerName: "unexpected" },
   ])("rejects unsupported or locked choices %j", (change) => {
     const data = createInitialMapachessPlayerData()
@@ -164,6 +171,118 @@ describe("the saved personal appearance", () => {
     expect(decoded.source.canonical).not.toContain("skin")
   })
 
+  it.each(["raccoon-stockfish", "chicken-stockfish"] as const)(
+    "authenticates schema10 saves and backups before adding None for %s",
+    async (animal) => {
+      const current = createInitialMapachessPlayerData()
+      const appearance = {
+        skin: 1,
+        face: 2,
+        hair: "m4",
+        hairColor: 2,
+        cloth: "cloth13",
+        clothColor: 3,
+        animal,
+      }
+      const payload = { ...current, schemaVersion: 10, appearance }
+      const canonical = `["mapachess-player-data",10,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(appearance)}]`
+      const integrity = {
+        algorithm: "SHA-256",
+        payloadHash: await sha256(canonical),
+      }
+      const stored = {
+        format: "mapachess-stored-player-data",
+        formatVersion: 1,
+        saveSchemaVersion: 10,
+        payload,
+        integrity,
+      }
+      const expected = {
+        ...current,
+        appearance: { ...appearance, weapon: "none" },
+      }
+      expect(
+        await decodeStoredPlayerData(JSON.stringify(stored), sha256),
+      ).toEqual({ ok: true, data: expected })
+      const backup = {
+        ...stored,
+        format: "mapachess-portable-backup",
+        applicationVersion: "test",
+        gddRevision: "5.0",
+      }
+      const restored = await decodeMapachessPortableBackup(
+        JSON.stringify(backup),
+        sha256,
+      )
+      expect(restored.ok).toBe(true)
+      if (!restored.ok)
+        throw new Error("Expected an authenticated schema10 backup")
+      expect(restored.backup.payload).toEqual(expected)
+      expect(restored.backup.saveSchemaVersion).toBe(11)
+      expect(restored.backup.integrity.payloadHash).not.toBe(
+        integrity.payloadHash,
+      )
+      const tamperedPayload = {
+        ...payload,
+        appearance: { ...appearance, face: 3 },
+      }
+      expect(
+        await decodeStoredPlayerData(
+          JSON.stringify({ ...stored, payload: tamperedPayload }),
+          sha256,
+        ),
+      ).toMatchObject({
+        ok: false,
+        issue: { type: "PROFILE.STORED_DATA_INTEGRITY_MISMATCH" },
+      })
+      expect(
+        await decodeMapachessPortableBackup(
+          JSON.stringify({ ...backup, payload: tamperedPayload }),
+          sha256,
+        ),
+      ).toMatchObject({
+        ok: false,
+        issue: { type: "PROFILE.BACKUP_INTEGRITY_MISMATCH" },
+      })
+    },
+  )
+
+  it("validates all weapon palettes with back-to-front layers and None", () => {
+    const data = createInitialMapachessPlayerData()
+    const unarmed = heroLayerPaths(data.appearance)
+    for (const style of HERO_CATALOG.weapons) {
+      for (const weapon of style.variants) {
+        const appearance = { ...data.appearance, weapon }
+        expect(
+          decodePlayerAppearance(
+            appearance,
+            data.storyProgress,
+            "$.appearance",
+          ),
+        ).toEqual(appearance)
+        expect(samePlayerAppearance(data.appearance, appearance)).toBe(
+          weapon === "none",
+        )
+        const paths = heroLayerPaths(appearance)
+        if (weapon === "none") expect(paths).toEqual(unarmed)
+        else {
+          expect(paths).toHaveLength(8)
+          expect(paths[0]).toBe(
+            `profile/hero/weapon/${style.id}/${style.id}_bot/${weapon}_bot.png`,
+          )
+          expect(paths.slice(1, -1)).toEqual(unarmed)
+          expect(paths.at(-1)).toBe(
+            `profile/hero/weapon/${style.id}/${style.id}_top/${weapon}_top.png`,
+          )
+        }
+      }
+    }
+    const { weapon: _weapon, ...missingWeapon } = data.appearance
+    expect(() =>
+      decodePlayerAppearance(missingWeapon, data.storyProgress, "$.appearance"),
+    ).toThrow()
+  })
+
   it("round-trips appearance in authenticated portable backup", async () => {
     const current = createInitialMapachessPlayerData()
     const changed = changePlayerAppearance(current, {
@@ -172,6 +291,7 @@ describe("the saved personal appearance", () => {
       face: 7,
       cloth: "cloth17",
       clothColor: 8,
+      weapon: "weapon5_c4",
     })
     const backup = await createMapachessPortableBackup({
       playerData: changed,
@@ -200,7 +320,7 @@ describe("the saved personal appearance", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     const appearance = {
       ...DEFAULT_PLAYER_APPEARANCE,
-      face: 5,
+      weapon: "weapon4" as const,
     }
     actor.send({ type: "PROFILE.APPEARANCE_SAVE_REQUESTED", appearance })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.appearance).toEqual(

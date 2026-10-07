@@ -10,6 +10,7 @@ import {
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
@@ -156,8 +157,7 @@ export default function MatchCelebration({
         {reward === null || reward.ratedElo === null ? null : (
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-base">
             <span className="font-bold">
-              {reward.ratedElo.variant === "standard" ? "Standard" : "Chess960"}{" "}
-              Elo
+              {MATCH_VARIANT_LABELS[reward.ratedElo.variant]} Elo
             </span>
             <strong className="font-display text-xl tabular-nums">
               {displayElo(reward.ratedElo.before)} →{" "}

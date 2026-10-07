@@ -3,8 +3,8 @@ import { expect, test, type Page } from "@playwright/test"
 import challengeHistoryBackup from "./fixtures/challenge-history.json" with { type: "json" }
 
 const modeNames = [
-  "Standard Story",
-  "Standard Challenge",
+  "Standard Chess Story",
+  "Standard Chess Challenge",
   "Chess960 Story",
   "Chess960 Challenge",
 ] as const
@@ -242,7 +242,7 @@ test("retains setup and button geometry while match opening is pending", async (
   try {
     await page.goto("/")
     await page
-      .getByRole("button", { name: "Standard Challenge", exact: true })
+      .getByRole("button", { name: "Standard Chess Challenge", exact: true })
       .click()
     const start = await page
       .getByRole("button", { name: "Start match", exact: true })
@@ -395,7 +395,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
   }
 
   await page
-    .getByRole("button", { name: "Standard Story", exact: true })
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
     .click()
   await page.getByRole("button", { name: /Change hints/ }).click()
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
@@ -407,7 +407,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Standard Story",
+      name: "Standard Chess Story",
       exact: true,
     }),
   ).toBeVisible()
@@ -450,7 +450,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     .click()
   await expectModeMenu(page)
   await page
-    .getByRole("button", { name: "Standard Challenge", exact: true })
+    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
     .click()
   await page.getByRole("button", { name: /Change difficulty/ }).click()
   const choice = page.getByRole("radio", {

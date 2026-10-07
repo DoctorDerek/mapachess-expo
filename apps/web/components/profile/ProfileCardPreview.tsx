@@ -3,6 +3,7 @@
 import { useActorRef, useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, useMemo, useState } from "react"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
@@ -103,8 +104,8 @@ export default function ProfileCardPreview({
         {(
           [
             ["level", "Level"],
-            ["standard", "Standard Elo"],
-            ["chess960", "Chess960 Elo"],
+            ["standard", `${MATCH_VARIANT_LABELS.standard} Elo`],
+            ["chess960", `${MATCH_VARIANT_LABELS.chess960} Elo`],
             ["animal", "Animal companion"],
           ] as const
         ).map(([key, label]) => (

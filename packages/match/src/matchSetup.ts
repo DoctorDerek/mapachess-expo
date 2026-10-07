@@ -5,7 +5,11 @@ import {
   type ImplementedDurableOpponentId,
   type MatchMode,
 } from "./durableMatchRecord.js"
-import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
+import {
+  MATCH_VARIANT_LABELS,
+  MATCH_VARIANTS,
+  type MatchVariant,
+} from "./matchVariant.js"
 
 export type MatchSetup =
   | Readonly<{
@@ -62,23 +66,23 @@ export const MATCH_SETUP_COPY = Object.freeze({
 const MATCH_MODE_PRESENTATION = {
   standard: {
     story: {
-      title: "Standard Story",
+      title: `${MATCH_VARIANT_LABELS.standard} Story`,
       description:
         "The classic starting position. Your side is chosen at random.",
     },
     challenge: {
-      title: "Standard Challenge",
+      title: `${MATCH_VARIANT_LABELS.standard} Challenge`,
       description:
         "The classic starting position. Choose White, Black, or Random.",
     },
   },
   chess960: {
     story: {
-      title: "Chess960 Story",
+      title: `${MATCH_VARIANT_LABELS.chess960} Story`,
       description: "A fresh starting position and a randomly chosen side.",
     },
     challenge: {
-      title: "Chess960 Challenge",
+      title: `${MATCH_VARIANT_LABELS.chess960} Challenge`,
       description:
         "Choose your side and a random or numbered starting position.",
     },

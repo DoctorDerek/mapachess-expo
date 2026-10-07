@@ -4,6 +4,7 @@ import {
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
 import {
+  MATCH_VARIANT_LABELS,
   MATCH_VARIANTS,
   type MatchVariant,
 } from "@mapachess/match/match-variant"
@@ -49,8 +50,8 @@ export type StoryLadderStep = Readonly<{
 
 export const STORY_PROGRESS_COPY = Object.freeze({
   title: "Your Story ladder",
-  standard: "Standard Story completion",
-  chess960: "Chess960 Story completion",
+  standard: `${MATCH_VARIANT_LABELS.standard} Story completion`,
+  chess960: `${MATCH_VARIANT_LABELS.chess960} Story completion`,
   overall: "Overall Story completion",
   defeated: "Defeated",
   unlocked: "Unlocked",
@@ -63,7 +64,7 @@ export const STORY_PROGRESS_COPY = Object.freeze({
   challengeUnlocked: "Unlocked for both Challenge modes",
   allDefeated: "Every opponent defeated",
   replay: "Replay wins to improve your medals. Your highest medal is kept.",
-  independence: "Standard and Chess960 keep separate victories and medals.",
+  independence: `${MATCH_VARIANT_LABELS.standard} and ${MATCH_VARIANT_LABELS.chess960} keep separate victories and medals.`,
   medals: Object.freeze({ bronze: "Bronze", silver: "Silver", gold: "Gold" }),
 })
 

@@ -13,9 +13,9 @@ const earnedChickenProfile = {
 } as const
 
 for (const mode of [
-  "Standard Story",
+  "Standard Chess Story",
   "Chess960 Story",
-  "Standard Challenge",
+  "Standard Chess Challenge",
   "Chess960 Challenge",
 ] as const) {
   test(`${mode} preserves its actual match through customization, export and Resume`, async ({
@@ -198,7 +198,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   ).toBeVisible()
   await page.getByRole("button", { name: "Discard changes" }).click()
   await expect(
-    page.getByRole("button", { name: "Standard Story", exact: true }),
+    page.getByRole("button", { name: "Standard Chess Story", exact: true }),
   ).toBeVisible()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
 })
@@ -210,8 +210,17 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
-  await page.getByRole("button", { name: "Share profile card" }).click()
+  await page
+    .getByRole("button", { name: "Customize profile card", exact: true })
+    .click()
   const before = await savedProfile(page)
+  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await page.getByRole("button", { name: "Axe", exact: true }).click()
+  await page
+    .getByRole("region", { name: "Customize profile card", exact: true })
+    .getByRole("button", { name: "Share profile card", exact: true })
+    .click()
+  await expect(page.getByText(/Previewing unsaved appearance/)).toBeVisible()
   await expect(page.getByRole("button", { name: "Save GIF" })).toBeEnabled({
     timeout: 60000,
   })
@@ -256,6 +265,8 @@ test("recovers a failed appearance save without losing the draft", async ({
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await page.getByRole("button", { name: "Skin", exact: true }).click()
   await page.getByRole("button", { name: "Skin 4", exact: true }).click()
+  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await page.getByRole("button", { name: "Sword", exact: true }).click()
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put
     IDBObjectStore.prototype.put = function () {
@@ -269,9 +280,82 @@ test("recovers a failed appearance save without losing the draft", async ({
     page.getByText("Saved appearance", { exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByRole("button", { name: "Skin 4", exact: true }),
+    page.getByRole("button", { name: "Sword", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
   expect((await savedProfile(page)).appearance.skin).toBe(4)
+  expect((await savedProfile(page)).appearance.weapon).toBe("weapon1")
+})
+
+test("previews every weapon and dagger palette, then preserves only saved equipment", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await page
+    .getByRole("button", { name: "Customize profile card", exact: true })
+    .click()
+  const before = await savedProfile(page)
+  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  const artwork = page
+    .getByRole("region", { name: "Customize profile card", exact: true })
+    .getByRole("region", { name: /^Your profile card:/ })
+    .locator("canvas")
+  const fingerprint = () =>
+    artwork.evaluate((canvas) => {
+      if (!(canvas instanceof HTMLCanvasElement))
+        throw new Error("Expected the live character preview")
+      return canvas.toDataURL()
+    })
+  let previous = await fingerprint()
+  for (const name of ["Sword", "Spear", "Wand", "Axe", "Dagger", "None"]) {
+    await page.getByRole("button", { name, exact: true }).click()
+    await expect(
+      page.getByRole("button", { name, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true")
+    await expect.poll(fingerprint).not.toBe(previous)
+    previous = await fingerprint()
+  }
+  await expect(
+    page.getByRole("button", { name: "Save appearance", exact: true }),
+  ).toBeDisabled()
+  await page.getByRole("button", { name: "Dagger", exact: true }).click()
+  await page.getByRole("button", { name: "Colors", exact: true }).click()
+  previous = await fingerprint()
+  for (const color of [2, 3, 4, 1, 4]) {
+    const choice = page.getByRole("button", {
+      name: `Dagger color ${color}`,
+      exact: true,
+    })
+    await choice.click()
+    await expect(choice).toHaveAttribute("aria-pressed", "true")
+    await expect.poll(fingerprint).not.toBe(previous)
+    previous = await fingerprint()
+  }
+  expect(await savedProfile(page)).toEqual(before)
+  await page
+    .getByRole("button", { name: "Save appearance", exact: true })
+    .click()
+  await expect(
+    page.getByText("Saved appearance", { exact: true }),
+  ).toBeVisible()
+  await page.getByRole("button", { name: "Back", exact: true }).click()
+  await page.reload()
+  expect((await savedProfile(page)).appearance.weapon).toBe("weapon5_c4")
+  await page
+    .getByRole("button", { name: "Customize profile card", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Dagger", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true")
+  await page.getByRole("button", { name: "Axe", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Cancel changes", exact: true })
+    .click()
+  await expect(
+    page.getByRole("button", { name: "Customize profile card", exact: true }),
+  ).toBeVisible()
+  expect((await savedProfile(page)).appearance.weapon).toBe("weapon5_c4")
 })
 
 test("retries failed artwork through the visible recovery control", async ({

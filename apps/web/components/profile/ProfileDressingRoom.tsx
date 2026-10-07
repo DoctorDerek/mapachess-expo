@@ -2,7 +2,10 @@
 
 import cx from "classix"
 import { useState } from "react"
-import { HERO_CATALOG } from "@mapachess/profile/hero-catalog"
+import {
+  HERO_CATALOG,
+  heroWeaponDefinition,
+} from "@mapachess/profile/hero-catalog"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
@@ -13,7 +16,7 @@ import PlayerAnimalChoices from "./PlayerAnimalChoices"
 import ProfileAction from "./ProfileAction"
 import ProfileCard, { ProfileArtwork } from "./ProfileCard"
 
-type Category = "Clothes" | "Hair" | "Skin" | "Face" | "Animal"
+type Category = "Clothes" | "Weapons" | "Hair" | "Skin" | "Face" | "Animal"
 export default function ProfileDressingRoom({
   active,
   data,
@@ -43,6 +46,7 @@ export default function ProfileDressingRoom({
   const [colors, setColors] = useState(false)
   const clothing = HERO_CATALOG.cloth.find(({ id }) => id === draft.cloth)
   const hair = HERO_CATALOG.hair.find(({ id }) => id === draft.hair)
+  const weapon = heroWeaponDefinition(draft.weapon)
   if (clothing === undefined || hair === undefined)
     throw new Error("The editor requires a validated appearance.")
   const options: readonly {
@@ -50,55 +54,72 @@ export default function ProfileDressingRoom({
     selected: boolean
     appearance: PlayerAppearance
   }[] =
-    category === "Clothes"
-      ? colors
-        ? clothing.colors.map((color) => ({
-            label: `Clothing color ${color}`,
-            selected: color === draft.clothColor,
-            appearance: { ...draft, clothColor: color },
+    category === "Weapons"
+      ? colors && weapon.variants.length > 1
+        ? weapon.variants.map((variant, index) => ({
+            label: `${weapon.label} color ${index + 1}`,
+            selected: variant === draft.weapon,
+            appearance: { ...draft, weapon: variant },
           }))
-        : HERO_CATALOG.cloth.map((item) => ({
-            label: `Outfit ${item.id.slice(5)}`,
-            selected: item.id === draft.cloth,
+        : HERO_CATALOG.weapons.map((item) => ({
+            label: item.label,
+            selected: item.id === weapon.id,
             appearance: {
               ...draft,
-              cloth: item.id,
-              clothColor:
-                item.colors.find((color) => color === draft.clothColor) ??
-                item.colors[0],
+              weapon:
+                item.variants.find((variant) => variant === draft.weapon) ??
+                item.variants[0],
             },
           }))
-      : category === "Hair"
+      : category === "Clothes"
         ? colors
-          ? hair.colors.map((color) => ({
-              label: `Hair color ${color}`,
-              selected: color === draft.hairColor,
-              appearance: { ...draft, hairColor: color },
+          ? clothing.colors.map((color) => ({
+              label: `Clothing color ${color}`,
+              selected: color === draft.clothColor,
+              appearance: { ...draft, clothColor: color },
             }))
-          : HERO_CATALOG.hair.map((item) => ({
-              label: `Hairstyle ${item.id}`,
-              selected: item.id === draft.hair,
+          : HERO_CATALOG.cloth.map((item) => ({
+              label: `Outfit ${item.id.slice(5)}`,
+              selected: item.id === draft.cloth,
               appearance: {
                 ...draft,
-                hair: item.id,
-                hairColor:
-                  item.colors.find((color) => color === draft.hairColor) ??
+                cloth: item.id,
+                clothColor:
+                  item.colors.find((color) => color === draft.clothColor) ??
                   item.colors[0],
               },
             }))
-        : category === "Skin"
-          ? HERO_CATALOG.skin.map((skin) => ({
-              label: `Skin ${skin}`,
-              selected: skin === draft.skin,
-              appearance: { ...draft, skin },
-            }))
-          : category === "Face"
-            ? HERO_CATALOG.face.map((face) => ({
-                label: `Face ${face}`,
-                selected: face === draft.face,
-                appearance: { ...draft, face },
+        : category === "Hair"
+          ? colors
+            ? hair.colors.map((color) => ({
+                label: `Hair color ${color}`,
+                selected: color === draft.hairColor,
+                appearance: { ...draft, hairColor: color },
               }))
-            : []
+            : HERO_CATALOG.hair.map((item) => ({
+                label: `Hairstyle ${item.id}`,
+                selected: item.id === draft.hair,
+                appearance: {
+                  ...draft,
+                  hair: item.id,
+                  hairColor:
+                    item.colors.find((color) => color === draft.hairColor) ??
+                    item.colors[0],
+                },
+              }))
+          : category === "Skin"
+            ? HERO_CATALOG.skin.map((skin) => ({
+                label: `Skin ${skin}`,
+                selected: skin === draft.skin,
+                appearance: { ...draft, skin },
+              }))
+            : category === "Face"
+              ? HERO_CATALOG.face.map((face) => ({
+                  label: `Face ${face}`,
+                  selected: face === draft.face,
+                  appearance: { ...draft, face },
+                }))
+              : []
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="min-w-0">
@@ -153,30 +174,32 @@ export default function ProfileDressingRoom({
           aria-label="Appearance categories"
           className="flex flex-wrap gap-3"
         >
-          {(["Clothes", "Hair", "Skin", "Face", "Animal"] as const).map(
-            (name) => (
-              <ProfileAction
-                key={name}
-                disabled={busy}
-                aria-pressed={category === name}
-                onClick={() => {
-                  setCategory(name)
-                  setColors(false)
-                }}
-                className={cx(
-                  "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]",
-                  category === name &&
-                    "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
-                )}
-              >
-                {name}
-              </ProfileAction>
-            ),
-          )}
+          {(
+            ["Clothes", "Weapons", "Hair", "Skin", "Face", "Animal"] as const
+          ).map((name) => (
+            <ProfileAction
+              key={name}
+              disabled={busy}
+              aria-pressed={category === name}
+              onClick={() => {
+                setCategory(name)
+                setColors(false)
+              }}
+              className={cx(
+                "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]",
+                category === name &&
+                  "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
+              )}
+            >
+              {name}
+            </ProfileAction>
+          ))}
         </div>
-        {category === "Clothes" || category === "Hair" ? (
+        {category === "Clothes" ||
+        category === "Hair" ||
+        (category === "Weapons" && weapon.variants.length > 1) ? (
           <div
-            className="my-4 flex gap-3"
+            className="my-4 flex flex-wrap gap-3"
             role="group"
             aria-label={`${category} choices`}
           >

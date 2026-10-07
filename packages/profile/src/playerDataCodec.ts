@@ -38,8 +38,10 @@ import {
   type LevelAchievementId,
 } from "./globalXp.js"
 import {
+  decodeLegacyPlayerAppearance,
   decodePlayerAppearance,
   DEFAULT_PLAYER_APPEARANCE,
+  legacyPlayerAppearance,
 } from "./playerAppearance.js"
 import {
   acceptedRewardMatchesEnding,
@@ -53,6 +55,7 @@ import {
   LEGACY_PLAYER_ELO_RATING_IDS,
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+  PLAYER_APPEARANCE_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
   REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -94,6 +97,7 @@ export type PlayerDataSource = Readonly<{
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -431,8 +435,12 @@ export const canonicalPlayerData = (
             ? [data.lastAcceptedResultReward.contribution]
             : []),
         ],
-    ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
-      ? [data.appearance]
+    ...(sourceSchemaVersion >= PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
+      ? [
+          sourceSchemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
+            ? legacyPlayerAppearance(data.appearance)
+            : data.appearance,
+        ]
       : []),
   ])
 
@@ -598,6 +606,7 @@ const decodeCurrentPlayerData = (
     | typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -614,7 +623,7 @@ const decodeCurrentPlayerData = (
       "schemaVersion",
       "settings",
       "storyProgress",
-      ...(sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+      ...(sourceSchemaVersion >= PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
         ? ["appearance"]
         : []),
       ...(sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
@@ -675,14 +684,20 @@ const decodeCurrentPlayerData = (
   const data: MapachessPlayerData = Object.freeze({
     activeMatch,
     appearance:
-      sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
-        ? decodePlayerAppearance(
+      sourceSchemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
+        ? decodeLegacyPlayerAppearance(
             object.appearance,
             storyProgress,
             "$.appearance",
-            "preserve",
           )
-        : DEFAULT_PLAYER_APPEARANCE,
+        : sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+          ? decodePlayerAppearance(
+              object.appearance,
+              storyProgress,
+              "$.appearance",
+              "preserve",
+            )
+          : DEFAULT_PLAYER_APPEARANCE,
     challengeHistory: decodeChallengeHistory(
       object.challengeHistory,
       "$.challengeHistory",
@@ -825,6 +840,7 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion === GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")

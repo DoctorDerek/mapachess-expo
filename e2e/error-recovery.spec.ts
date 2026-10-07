@@ -56,7 +56,7 @@ test("recovers the match view without discarding its owned game", async ({
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   await page
-    .getByRole("button", { name: "Standard Challenge", exact: true })
+    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
     .click()
   await page.getByRole("radio", { name: "White", exact: true }).check()
   await page.getByRole("button", { name: "Start match", exact: true }).click()
@@ -325,7 +325,7 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
     await page
-      .getByRole("button", { name: "Standard Challenge", exact: true })
+      .getByRole("button", { name: "Standard Chess Challenge", exact: true })
       .click()
     await page.getByRole("button", { name: /Change difficulty/ }).click()
     await page

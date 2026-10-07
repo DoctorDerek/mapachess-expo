@@ -11,8 +11,10 @@ import {
 } from "./decodePrimitives.js"
 import {
   HERO_CATALOG,
+  heroWeaponDefinition,
   type HeroClothId,
   type HeroHairId,
+  type HeroWeaponId,
 } from "./heroCatalog.js"
 import type { StoryProgress } from "./storyProgress.js"
 
@@ -24,6 +26,7 @@ export type PlayerAppearance = Readonly<{
   cloth: HeroClothId
   clothColor: number
   animal: StockfishOpponentId
+  weapon: HeroWeaponId
 }>
 
 export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = Object.freeze({
@@ -34,6 +37,7 @@ export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = Object.freeze({
   cloth: "cloth13",
   clothColor: 3,
   animal: "raccoon-stockfish",
+  weapon: "none",
 })
 
 export const samePlayerAppearance = (
@@ -46,7 +50,8 @@ export const samePlayerAppearance = (
   left.hairColor === right.hairColor &&
   left.cloth === right.cloth &&
   left.clothColor === right.clothColor &&
-  left.animal === right.animal
+  left.animal === right.animal &&
+  left.weapon === right.weapon
 
 export const eligiblePlayerAnimals = (
   progress: StoryProgress,
@@ -77,7 +82,16 @@ export function decodePlayerAppearance(
   const received = requireObject(value, path)
   requireExactKeys(
     received,
-    ["skin", "face", "hair", "hairColor", "cloth", "clothColor", "animal"],
+    [
+      "skin",
+      "face",
+      "hair",
+      "hairColor",
+      "cloth",
+      "clothColor",
+      "animal",
+      "weapon",
+    ],
     path,
   )
   const hair =
@@ -108,19 +122,55 @@ export function decodePlayerAppearance(
         : eligiblePlayerAnimals(progress),
       `${path}.animal`,
     ),
+    weapon: requireEnumValue(
+      received.weapon,
+      HERO_CATALOG.weapons.flatMap(({ variants }) => [...variants]),
+      `${path}.weapon`,
+    ),
   })
+}
+
+export function decodeLegacyPlayerAppearance(
+  value: unknown,
+  progress: StoryProgress,
+  path: string,
+): PlayerAppearance {
+  const received = requireObject(value, path)
+  requireExactKeys(
+    received,
+    ["skin", "face", "hair", "hairColor", "cloth", "clothColor", "animal"],
+    path,
+  )
+  return decodePlayerAppearance(
+    { ...received, weapon: "none" },
+    progress,
+    path,
+    "preserve",
+  )
+}
+
+export function legacyPlayerAppearance(
+  appearance: PlayerAppearance,
+): Omit<PlayerAppearance, "weapon"> {
+  const { weapon: _weapon, ...legacy } = appearance
+  return legacy
 }
 
 export function heroLayerPaths(
   appearance: PlayerAppearance,
 ): readonly string[] {
-  const { skin, face, hair, hairColor, cloth, clothColor } = appearance
+  const { skin, face, hair, hairColor, cloth, clothColor, weapon } = appearance
+  const weaponStyle = heroWeaponDefinition(weapon)
+  const weaponPath = (side: "bot" | "top"): string =>
+    `profile/hero/weapon/${weaponStyle.id}/${weaponStyle.id}_${side}/${weapon}_${side}.png`
   return [
+    ...(weapon === "none" ? [] : [weaponPath("bot")]),
     `profile/hero/skin/skin_c${skin}.png`,
     `profile/hero/hair/${hair}/${hair}_bot/${hair}_c${hairColor}_bot.png`,
     `profile/hero/face/face_c${face}.png`,
     `profile/hero/cloth/${cloth}/${cloth}_bot/${cloth}_c${clothColor}_bot.png`,
     `profile/hero/cloth/${cloth}/${cloth}_top/${cloth}_c${clothColor}_top.png`,
     `profile/hero/hair/${hair}/${hair}_top/${hair}_c${hairColor}_top.png`,
+    ...(weapon === "none" ? [] : [weaponPath("top")]),
   ]
 }
