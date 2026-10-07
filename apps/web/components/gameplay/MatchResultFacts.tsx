@@ -1,4 +1,5 @@
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
@@ -28,8 +29,8 @@ export default function MatchResultFacts({
           </span>
           {reward.ratedElo === null ? null : (
             <span>
-              {reward.ratedElo.variant === "standard" ? "Standard" : "Chess960"}{" "}
-              Elo {Math.round(reward.ratedElo.after)}
+              {MATCH_VARIANT_LABELS[reward.ratedElo.variant]} Elo{" "}
+              {Math.round(reward.ratedElo.after)}
             </span>
           )}
         </>

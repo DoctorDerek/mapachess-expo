@@ -3,6 +3,7 @@ import {
   MATCH_MODE_CHOICES,
   type MatchModeSelection,
 } from "@mapachess/match/match-setup"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import ProfileAction from "../profile/ProfileAction"
 import ProfileCard from "../profile/ProfileCard"
@@ -68,7 +69,7 @@ export default function MatchModeMenu({
               )}
             >
               <strong className="text-xl xl:text-2xl">
-                {variant === "standard" ? "Standard" : "Chess960"}
+                {MATCH_VARIANT_LABELS[variant]}
               </strong>
               <span className="flex items-center justify-between gap-2">
                 {mode === "story" ? "Story" : "Challenge"}

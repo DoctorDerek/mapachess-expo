@@ -1,4 +1,5 @@
 import type { SpriteAnimationDefinition } from "@mapachess/match-presentation/presentation-asset-manifest"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import { HERO_IDLE_GEOMETRY } from "@mapachess/profile/hero-catalog"
 import {
@@ -215,10 +216,20 @@ export function drawProfileCard(
     const items = [
       ...(content.level ? [{ value: facts.level, label: "Level" }] : []),
       ...(content.standard
-        ? [{ value: facts.standard, label: "Standard Elo" }]
+        ? [
+            {
+              value: facts.standard,
+              label: `${MATCH_VARIANT_LABELS.standard} Elo`,
+            },
+          ]
         : []),
       ...(content.chess960
-        ? [{ value: facts.chess960, label: "Chess960 Elo" }]
+        ? [
+            {
+              value: facts.chess960,
+              label: `${MATCH_VARIANT_LABELS.chess960} Elo`,
+            },
+          ]
         : []),
     ]
     context.fillStyle = CARD_PALETTE.ink

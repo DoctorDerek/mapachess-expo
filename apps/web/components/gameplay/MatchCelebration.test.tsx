@@ -68,7 +68,7 @@ describe("accepted match celebration composition", () => {
     expect(markup).toContain("Review board")
     expect(markup).toContain("Next opponent")
     expect(markup).toContain("Bunny Stockfish · 200 Elo")
-    expect(markup).not.toContain("Standard Elo")
+    expect(markup).not.toContain("Standard Chess Elo")
     expect(markup).not.toContain("Next:")
     expect(markup).not.toContain("Estimated")
     expect(markup).toContain("No hints used")

@@ -38,8 +38,8 @@ describe("match setup choices", () => {
   })
   it("names the four independently tracked combinations of mode and variant", () => {
     expect(MATCH_MODE_CHOICES.map(matchModeLabel)).toEqual([
-      "Standard Story",
-      "Standard Challenge",
+      "Standard Chess Story",
+      "Standard Chess Challenge",
       "Chess960 Story",
       "Chess960 Challenge",
     ])

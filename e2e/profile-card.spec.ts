@@ -13,9 +13,9 @@ const earnedChickenProfile = {
 } as const
 
 for (const mode of [
-  "Standard Story",
+  "Standard Chess Story",
   "Chess960 Story",
-  "Standard Challenge",
+  "Standard Chess Challenge",
   "Chess960 Challenge",
 ] as const) {
   test(`${mode} preserves its actual match through customization, export and Resume`, async ({
@@ -198,7 +198,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   ).toBeVisible()
   await page.getByRole("button", { name: "Discard changes" }).click()
   await expect(
-    page.getByRole("button", { name: "Standard Story", exact: true }),
+    page.getByRole("button", { name: "Standard Chess Story", exact: true }),
   ).toBeVisible()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
 })

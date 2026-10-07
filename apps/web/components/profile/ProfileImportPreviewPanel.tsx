@@ -1,6 +1,7 @@
 "use client"
 
 import { autoHintModeLabel } from "@mapachess/match/auto-hint-mode"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import {
   formatStoryCompletion,
@@ -55,9 +56,9 @@ export default function ProfileImportPreviewPanel({
           <dd className="text-right">
             {data.activeMatch === null ? "None" : "Included"}
           </dd>
-          <dt>Standard Elo</dt>
+          <dt>{MATCH_VARIANT_LABELS.standard} Elo</dt>
           <dd className="text-right">{Math.round(data.ratings.standard)}</dd>
-          <dt>Chess960 Elo</dt>
+          <dt>{MATCH_VARIANT_LABELS.chess960} Elo</dt>
           <dd className="text-right">{Math.round(data.ratings.chess960)}</dd>
           <dt>Earlier four ratings</dt>
           <dd className="text-right">Preserved in backup</dd>

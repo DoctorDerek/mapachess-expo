@@ -2,6 +2,7 @@
 
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
@@ -142,15 +143,15 @@ export default function ProfileCard({
   )
   return (
     <section
-      aria-label={`Your profile card: Level ${facts.level}, Standard Elo ${facts.standard}, Chess960 Elo ${facts.chess960}`}
+      aria-label={`Your profile card: Level ${facts.level}, ${MATCH_VARIANT_LABELS.standard} Elo ${facts.standard}, ${MATCH_VARIANT_LABELS.chess960} Elo ${facts.chess960}`}
       className="[container-type:inline-size] shadow-[0.375rem_0.375rem_0_#009dae]"
     >
       <div className="grid min-h-[max(15rem,56cqw)] grid-cols-[minmax(0,2fr)_minmax(0,3fr)] overflow-hidden text-[#1e1e1e]">
         <dl className="flex flex-col justify-evenly gap-4 bg-[#ffe652] p-[max(0.75rem,3cqw)]">
           {[
             ["Level", facts.level],
-            ["Standard Elo", facts.standard],
-            ["Chess960 Elo", facts.chess960],
+            [`${MATCH_VARIANT_LABELS.standard} Elo`, facts.standard],
+            [`${MATCH_VARIANT_LABELS.chess960} Elo`, facts.chess960],
           ].map(([label, value]) => (
             <div
               key={label}
