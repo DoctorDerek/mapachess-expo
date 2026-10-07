@@ -97,10 +97,21 @@ for (const mode of [
         { timeout: 30000 },
       )
       .toBe(record.playerColor === "white" ? "w" : "b")
+    await expect
+      .poll(async () => (await savedProfile(page)).activeMatch?.moveHintsUsed, {
+        timeout: 30000,
+      })
+      .toBe(true)
     await page.goBack()
+    await expect(
+      page.getByRole("heading", { level: 1, name: mode, exact: true }),
+    ).toBeVisible()
     await page
       .getByRole("button", { name: "All game modes", exact: true })
       .click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Mapachess", exact: true }),
+    ).toBeVisible()
     await expect(
       page.getByRole("button", { name: "Resume match", exact: true }),
     ).toBeEnabled()
@@ -281,4 +292,102 @@ test("recovers a failed appearance save without losing the draft", async ({
     page.getByRole("button", { name: "Skin 4", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
   expect((await savedProfile(page)).appearance.skin).toBe(4)
+})
+
+test("retries failed artwork through the visible recovery control", async ({
+  page,
+}) => {
+  let failedAsset: string | undefined
+  await page.route(
+    "**/generated/presentation-assets/profile/hero/**",
+    async (route) => {
+      if (failedAsset === undefined) {
+        failedAsset = route.request().url()
+        await route.fulfill({
+          status: 503,
+          headers: { "cache-control": "no-store" },
+          contentType: "text/plain",
+          body: "Artwork is temporarily unavailable.",
+        })
+      } else await route.continue()
+    },
+  )
+  await page.goto("/")
+  const failure = page.getByText("Profile artwork could not load.", {
+    exact: true,
+  })
+  await expect(failure).toBeVisible()
+  expect(failedAsset).toBeDefined()
+  await page.getByRole("button", { name: "Retry artwork", exact: true }).click()
+  await expect(failure).toBeHidden()
+  await expect
+    .poll(() =>
+      page
+        .getByRole("region", { name: /^Your profile card:/ })
+        .locator("canvas")
+        .evaluate((element) => {
+          if (!(element instanceof HTMLCanvasElement))
+            throw new Error("Expected the profile artwork canvas")
+          const context = element.getContext("2d")
+          if (context === null)
+            throw new Error("Expected the profile artwork context")
+          return context
+            .getImageData(0, 0, element.width, element.height)
+            .data.some((value) => value !== 0)
+        }),
+    )
+    .toBe(true)
+})
+
+test("keeps Reduced Motion actions stationary and switches preview animation live", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  const customize = page.getByRole("button", {
+    name: "Customize profile card",
+    exact: true,
+  })
+  await customize.scrollIntoViewIfNeeded()
+  await page.mouse.move(0, 0)
+  const restingBounds = await customize.boundingBox()
+  await customize.hover()
+  await expect(customize).toHaveCSS("translate", "none")
+  expect(await customize.boundingBox()).toEqual(restingBounds)
+  await page.mouse.down()
+  await expect(customize).toHaveCSS("translate", "none")
+  expect(await customize.boundingBox()).toEqual(restingBounds)
+  await page.mouse.move(0, 0)
+  await page.mouse.up()
+
+  await page.getByRole("button", { name: "Share profile card" }).click()
+  await expect(page.getByRole("button", { name: "Save GIF" })).toBeEnabled({
+    timeout: 60000,
+  })
+  const fingerprint = async (): Promise<string> =>
+    page
+      .getByRole("img", { name: /Profile card (GIF|PNG) preview/ })
+      .locator("canvas")
+      .evaluate(async (element) => {
+        if (!(element instanceof HTMLCanvasElement))
+          throw new Error("Expected the profile preview canvas")
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(element.toDataURL()),
+        )
+        return Array.from(new Uint8Array(digest), (byte) =>
+          byte.toString(16).padStart(2, "0"),
+        ).join("")
+      })
+  const still = await fingerprint()
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await expect.poll(fingerprint).not.toBe(still)
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await expect.poll(fingerprint).toBe(still)
+  await page.getByRole("button", { name: "PNG · Still" }).click()
+  await expect(page.getByRole("button", { name: "Save PNG" })).toBeEnabled()
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await expect.poll(fingerprint).toBe(still)
+  await page.getByRole("button", { name: "GIF · Animated" }).click()
+  await expect.poll(fingerprint).not.toBe(still)
 })
