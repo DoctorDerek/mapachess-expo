@@ -36,7 +36,8 @@ export const LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION = 6 as const
 export const TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION = 7 as const
 export const GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION = 8 as const
 export const REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION = 9 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 10 as const
+export const PLAYER_APPEARANCE_DATA_SCHEMA_VERSION = 10 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 11 as const
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",

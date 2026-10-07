@@ -1,7 +1,10 @@
 import type { SpriteAnimationDefinition } from "@mapachess/match-presentation/presentation-asset-manifest"
 import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
-import { HERO_IDLE_GEOMETRY } from "@mapachess/profile/hero-catalog"
+import {
+  HERO_IDLE_GEOMETRY,
+  heroWeaponDefinition,
+} from "@mapachess/profile/hero-catalog"
 import {
   heroLayerPaths,
   type PlayerAppearance,
@@ -50,6 +53,7 @@ export const cardFacts = (data: MapachessPlayerData): CardFacts => ({
 })
 export type CardArtwork = Readonly<{
   hero: readonly HTMLImageElement[]
+  heroBounds: Readonly<{ x: number; y: number; width: number; height: number }>
   animal: Readonly<{
     image: HTMLImageElement
     animation: SpriteAnimationDefinition<string>
@@ -92,7 +96,11 @@ export async function loadCardArtwork(
       ? loadImage(animation.sourceId).then((image) => ({ image, animation }))
       : null,
   ])
-  return { hero, animal }
+  return {
+    hero,
+    heroBounds: heroWeaponDefinition(appearance.weapon).bounds,
+    animal,
+  }
 }
 
 export function drawCardCharacters(
@@ -103,18 +111,18 @@ export function drawCardCharacters(
   height: number,
 ): void {
   context.imageSmoothingEnabled = false
+  const bounds = artwork.heroBounds
   const heroScale = Math.max(
     1,
     Math.floor(
       Math.min(
-        (height * 0.76) / HERO_IDLE_GEOMETRY.height,
-        (width * (artwork.animal === null ? 0.9 : 0.7)) /
-          HERO_IDLE_GEOMETRY.width,
+        (height * 0.76) / bounds.height,
+        (width * (artwork.animal === null ? 0.9 : 0.7)) / bounds.width,
       ),
     ),
   )
-  const heroWidth = HERO_IDLE_GEOMETRY.width * heroScale
-  const heroHeight = HERO_IDLE_GEOMETRY.height * heroScale
+  const heroWidth = bounds.width * heroScale
+  const heroHeight = bounds.height * heroScale
   const hasAnimal = artwork.animal !== null
   const heroX = Math.round(width * (hasAnimal ? 0.4 : 0.5) - heroWidth / 2)
   const floor = Math.round(height * 0.88)
@@ -135,10 +143,11 @@ export function drawCardCharacters(
   for (const image of artwork.hero)
     context.drawImage(
       image,
-      (frame % HERO_IDLE_GEOMETRY.frameCount) * HERO_IDLE_GEOMETRY.width,
-      0,
-      HERO_IDLE_GEOMETRY.width,
-      HERO_IDLE_GEOMETRY.height,
+      (frame % HERO_IDLE_GEOMETRY.frameCount) * HERO_IDLE_GEOMETRY.width +
+        bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
       heroX,
       floor - heroHeight,
       heroWidth,

@@ -1,9 +1,48 @@
 export const HERO_IDLE_GEOMETRY = {
-  width: 25,
-  height: 31,
+  width: 45,
+  height: 32,
   frameCount: 6,
 } as const
+const HERO_BODY_IDLE_BOUNDS = { x: 9, y: 0, width: 25, height: 31 } as const
 export const HERO_CATALOG = {
+  weapons: [
+    {
+      id: "none",
+      label: "None",
+      variants: ["none"],
+      bounds: HERO_BODY_IDLE_BOUNDS,
+    },
+    {
+      id: "weapon1",
+      label: "Sword",
+      variants: ["weapon1"],
+      bounds: HERO_BODY_IDLE_BOUNDS,
+    },
+    {
+      id: "weapon2",
+      label: "Spear",
+      variants: ["weapon2"],
+      bounds: { ...HERO_BODY_IDLE_BOUNDS, height: 32 },
+    },
+    {
+      id: "weapon3",
+      label: "Wand",
+      variants: ["weapon3"],
+      bounds: HERO_BODY_IDLE_BOUNDS,
+    },
+    {
+      id: "weapon4",
+      label: "Axe",
+      variants: ["weapon4"],
+      bounds: { x: 0, y: 0, width: 45, height: 31 },
+    },
+    {
+      id: "weapon5",
+      label: "Dagger",
+      variants: ["weapon5_c1", "weapon5_c2", "weapon5_c3", "weapon5_c4"],
+      bounds: { x: 6, y: 0, width: 30, height: 31 },
+    },
+  ],
   skin: [1, 2, 3, 4, 5, 6],
   face: [1, 2, 3, 4, 5, 6, 7],
   cloth: [
@@ -53,3 +92,16 @@ export const HERO_CATALOG = {
 } as const
 export type HeroHairId = (typeof HERO_CATALOG.hair)[number]["id"]
 export type HeroClothId = (typeof HERO_CATALOG.cloth)[number]["id"]
+export type HeroWeaponId =
+  (typeof HERO_CATALOG.weapons)[number]["variants"][number]
+
+export function heroWeaponDefinition(
+  id: HeroWeaponId,
+): (typeof HERO_CATALOG.weapons)[number] {
+  const definition = HERO_CATALOG.weapons.find(({ variants }) =>
+    variants.some((variant) => variant === id),
+  )
+  if (definition === undefined)
+    throw new Error("Appearance requires a supported weapon.")
+  return definition
+}
