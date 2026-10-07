@@ -58,7 +58,11 @@ export default function MatchLevelProgress({
         setDisplayed(progressFrame(span.toXp))
       }
     }
-    void traverse()
+    void traverse().catch(() => {
+      stopFollowingVisibility?.()
+      playback?.stop()
+      if (active) setDisplayed(progressFrame(afterXp))
+    })
 
     return () => {
       active = false

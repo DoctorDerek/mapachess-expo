@@ -261,18 +261,19 @@ export default function WebMapachessApplication() {
   const [runtimeState, setRuntimeState] = useState<ProfileRuntimeState>({
     status: "opening",
   })
+  const [openingAttempt, setOpeningAttempt] = useState(0)
 
   useEffect(() => {
-    if (
-      globalThis.indexedDB === undefined ||
-      globalThis.crypto?.subtle === undefined
-    ) {
-      setRuntimeState({ status: "unsupported" })
-      return
-    }
-
     let runtime: WebProfileRuntime | null = null
     try {
+      if (
+        globalThis.indexedDB === undefined ||
+        globalThis.crypto?.subtle === undefined
+      ) {
+        setRuntimeState({ status: "unsupported" })
+        return
+      }
+
       runtime = openWebProfileRuntime({
         indexedDb: globalThis.indexedDB,
         subtleCrypto: globalThis.crypto.subtle,
@@ -285,7 +286,7 @@ export default function WebMapachessApplication() {
     return () => {
       if (runtime !== null) void runtime.close().catch(() => undefined)
     }
-  }, [])
+  }, [openingAttempt])
 
   if (runtimeState.status === "ready") {
     return <ProfileExperience actor={runtimeState.runtime.actor} />
@@ -299,6 +300,16 @@ export default function WebMapachessApplication() {
       eyebrow="Local profile"
       live="assertive"
       title="Local saves are unavailable."
-    />
+    >
+      <MapachessButton
+        className="mt-7"
+        onClick={() => {
+          setRuntimeState({ status: "opening" })
+          setOpeningAttempt((attempt) => attempt + 1)
+        }}
+      >
+        Try Again
+      </MapachessButton>
+    </FullPageProfilePanel>
   )
 }
