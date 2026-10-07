@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./recoverable-session": {
+      "types": "./src/recoverableSession.ts",
+      "default": "./dist/recoverableSession.js"
+    },
     "./engine-session": {
       "types": "./src/engineSession.ts",
       "default": "./dist/engineSession.js"
