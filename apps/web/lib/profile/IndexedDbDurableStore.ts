@@ -27,8 +27,8 @@ const requestResult = <Result>(request: IDBRequest<Result>): Promise<Result> =>
     )
   })
 
-const transactionCompletion = (transaction: IDBTransaction): Promise<void> =>
-  new Promise((resolve, reject) => {
+const transactionCompletion = (transaction: IDBTransaction): Promise<void> => {
+  const completion = new Promise<void>((resolve, reject) => {
     transaction.addEventListener("complete", () => resolve(), { once: true })
     transaction.addEventListener(
       "abort",
@@ -38,13 +38,23 @@ const transactionCompletion = (transaction: IDBTransaction): Promise<void> =>
         ),
       { once: true },
     )
-    transaction.addEventListener(
-      "error",
-      () =>
-        reject(transaction.error ?? new Error("IndexedDB transaction failed.")),
-      { once: true },
-    )
   })
+  void completion.catch(() => undefined)
+  return completion
+}
+
+const abortTransaction = async (
+  transaction: IDBTransaction,
+  completion: Promise<void>,
+): Promise<void> => {
+  try {
+    transaction.abort()
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === "InvalidStateError"))
+      throw error
+  }
+  await completion.catch(() => undefined)
+}
 
 const storedString = (received: unknown): string | null => {
   if (received === undefined) return null
@@ -57,11 +67,13 @@ const storedString = (received: unknown): string | null => {
 const readSnapshot = async (
   objectStore: IDBObjectStore,
 ): Promise<DurableStoreSnapshot> => {
-  const [current, lastKnownGood, preImportBackup] = await Promise.all([
-    requestResult(objectStore.get(MAPACHESS_INDEXED_DB_CURRENT_KEY)),
-    requestResult(objectStore.get(LAST_KNOWN_GOOD_KEY)),
-    requestResult(objectStore.get(PRE_IMPORT_BACKUP_KEY)),
-  ])
+  const [current, lastKnownGood, preImportBackup] = await Promise.all(
+    [
+      MAPACHESS_INDEXED_DB_CURRENT_KEY,
+      LAST_KNOWN_GOOD_KEY,
+      PRE_IMPORT_BACKUP_KEY,
+    ].map(async (key) => requestResult(objectStore.get(key))),
+  )
 
   return Object.freeze({
     current: storedString(current),
@@ -83,29 +95,31 @@ const writeSnapshot = (
   objectStore: IDBObjectStore,
   snapshot: DurableStoreSnapshot,
 ): Promise<readonly (IDBValidKey | undefined)[]> =>
-  Promise.all([
-    writeStoredValue(
-      objectStore,
-      MAPACHESS_INDEXED_DB_CURRENT_KEY,
-      snapshot.current,
-    ),
-    writeStoredValue(objectStore, LAST_KNOWN_GOOD_KEY, snapshot.lastKnownGood),
-    writeStoredValue(
-      objectStore,
-      PRE_IMPORT_BACKUP_KEY,
-      snapshot.preImportBackup,
-    ),
-  ])
+  Promise.all(
+    (
+      [
+        [MAPACHESS_INDEXED_DB_CURRENT_KEY, snapshot.current],
+        [LAST_KNOWN_GOOD_KEY, snapshot.lastKnownGood],
+        [PRE_IMPORT_BACKUP_KEY, snapshot.preImportBackup],
+      ] as const
+    ).map(async ([key, value]) => writeStoredValue(objectStore, key, value)),
+  )
 
 const openDatabase = (
   indexedDb: IDBFactory,
   databaseName: string,
+  onClosed: () => void,
 ): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
+    let blocked = false
     const request = indexedDb.open(databaseName, DATABASE_VERSION)
     request.addEventListener(
       "upgradeneeded",
       () => {
+        if (blocked) {
+          request.transaction?.abort()
+          return
+        }
         if (
           !request.result.objectStoreNames.contains(
             MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
@@ -122,7 +136,19 @@ const openDatabase = (
       "success",
       () => {
         const database = request.result
-        database.addEventListener("versionchange", () => database.close())
+        if (blocked) {
+          database.close()
+          return
+        }
+        database.addEventListener("close", onClosed, { once: true })
+        database.addEventListener(
+          "versionchange",
+          () => {
+            database.close()
+            onClosed()
+          },
+          { once: true },
+        )
         resolve(database)
       },
       { once: true },
@@ -134,7 +160,10 @@ const openDatabase = (
     )
     request.addEventListener(
       "blocked",
-      () => reject(new Error("IndexedDB upgrade is blocked.")),
+      () => {
+        blocked = true
+        reject(new Error("IndexedDB upgrade is blocked."))
+      },
       { once: true },
     )
   })
@@ -159,11 +188,15 @@ export default class IndexedDbDurableStore implements DurableStoreAdapter {
       "readonly",
     )
     const completion = transactionCompletion(transaction)
-    const snapshot = await readSnapshot(
-      transaction.objectStore(MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE),
-    )
-    await completion
-    return snapshot
+    try {
+      const snapshot = await readSnapshot(
+        transaction.objectStore(MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE),
+      )
+      await completion
+      return snapshot
+    } finally {
+      await completion.catch(() => undefined)
+    }
   }
 
   async compareAndSwapVerified(
@@ -178,26 +211,30 @@ export default class IndexedDbDurableStore implements DurableStoreAdapter {
     const objectStore = transaction.objectStore(
       MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
     )
-    const actual = await readSnapshot(objectStore)
-    if (!durableStoreSnapshotsEqual(actual, write.expected)) {
-      await completion
-      return { actual, ok: false, type: "PROFILE.STORAGE_CONFLICT" }
-    }
-
-    await writeSnapshot(objectStore, write.next)
-    const readback = await readSnapshot(objectStore)
-    if (!durableStoreSnapshotsEqual(readback, write.next)) {
-      transaction.abort()
-      await completion.catch(() => undefined)
-      return {
-        actual: await this.read(),
-        ok: false,
-        type: "PROFILE.STORAGE_VERIFICATION_FAILED",
+    try {
+      const actual = await readSnapshot(objectStore)
+      if (!durableStoreSnapshotsEqual(actual, write.expected)) {
+        await completion
+        return { actual, ok: false, type: "PROFILE.STORAGE_CONFLICT" }
       }
-    }
 
-    await completion
-    return { ok: true, snapshot: readback }
+      await writeSnapshot(objectStore, write.next)
+      const readback = await readSnapshot(objectStore)
+      if (!durableStoreSnapshotsEqual(readback, write.next)) {
+        await abortTransaction(transaction, completion)
+        return {
+          actual: await this.read(),
+          ok: false,
+          type: "PROFILE.STORAGE_VERIFICATION_FAILED",
+        }
+      }
+
+      await completion
+      return { ok: true, snapshot: readback }
+    } catch (error) {
+      await abortTransaction(transaction, completion)
+      throw error
+    }
   }
 
   async close(): Promise<void> {
@@ -207,13 +244,14 @@ export default class IndexedDbDurableStore implements DurableStoreAdapter {
   }
 
   #database(): Promise<IDBDatabase> {
-    this.#databasePromise ??= openDatabase(
-      this.#indexedDb,
-      this.#databaseName,
-    ).catch((error: unknown) => {
-      this.#databasePromise = null
+    if (this.#databasePromise !== null) return this.#databasePromise
+    const opening = openDatabase(this.#indexedDb, this.#databaseName, () => {
+      if (this.#databasePromise === opening) this.#databasePromise = null
+    }).catch((error: unknown) => {
+      if (this.#databasePromise === opening) this.#databasePromise = null
       throw error
     })
-    return this.#databasePromise
+    this.#databasePromise = opening
+    return opening
   }
 }
