@@ -12,10 +12,7 @@ import {
 } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
-import {
-  eligiblePlayerAnimals,
-  type PlayerAppearance,
-} from "@mapachess/profile/player-appearance"
+import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
   canPlayStoryOpponent,
@@ -29,6 +26,7 @@ import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImage
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
 import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
@@ -187,25 +185,13 @@ export default function WebMatchSetup({
         {setup.mode === "story" &&
         playerAppearance !== undefined &&
         onPlayerAnimalChanged !== undefined ? (
-          <fieldset className="mb-3">
-            <legend className="text-mapachito-white mb-2 text-base font-bold">
-              Your battle animal
-            </legend>
-            <div className="flex flex-wrap gap-3">
-              {eligiblePlayerAnimals(storyProgress).map((id) => (
-                <MapachessButton
-                  key={id}
-                  type="button"
-                  disabled={disabled || opening}
-                  aria-pressed={playerAppearance.animal === id}
-                  onClick={() => onPlayerAnimalChanged(id)}
-                  variant="secondary"
-                >
-                  {stockfishOpponent(id).displayName.replace(" Stockfish", "")}
-                </MapachessButton>
-              ))}
-            </div>
-          </fieldset>
+          <PlayerAnimalChoices
+            active={visible && editing === null}
+            disabled={disabled || opening}
+            onSelected={onPlayerAnimalChanged}
+            selectedId={playerAppearance.animal}
+            storyProgress={storyProgress}
+          />
         ) : null}
         <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
           <button

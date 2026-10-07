@@ -157,6 +157,9 @@ export default function ProfileCardJourney({
               description="Your appearance changes are still here. Try again to keep editing."
             >
               <ProfileDressingRoom
+                active={
+                  !preview && !snapshot.matches("confirmingDiscard") && !blocked
+                }
                 data={data}
                 draft={snapshot.context.draft}
                 dirty={dirty}
