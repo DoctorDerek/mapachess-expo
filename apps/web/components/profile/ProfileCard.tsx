@@ -51,25 +51,31 @@ export function ProfileArtwork({
         if (cancelled) return
         const tick = (time: number): void => {
           handle = undefined
-          const frame =
-            input.format === "GIF" && !motion.matches
-              ? Math.floor(time / CARD_IDLE_FRAME_MILLISECONDS)
-              : 0
-          if (frame !== last) {
-            last = frame
-            context.clearRect(0, 0, element.width, element.height)
-            if (exportPreview) drawProfileCard(context, artwork, input, frame)
-            else
-              drawCardCharacters(
-                context,
-                artwork,
-                frame,
-                element.width,
-                element.height,
-              )
+          if (cancelled) return
+          try {
+            const frame =
+              input.format === "GIF" && !motion.matches
+                ? Math.floor(time / CARD_IDLE_FRAME_MILLISECONDS)
+                : 0
+            if (frame !== last) {
+              last = frame
+              context.clearRect(0, 0, element.width, element.height)
+              if (exportPreview) drawProfileCard(context, artwork, input, frame)
+              else
+                drawCardCharacters(
+                  context,
+                  artwork,
+                  frame,
+                  element.width,
+                  element.height,
+                )
+            }
+            if (input.format === "GIF" && !motion.matches && !document.hidden)
+              handle = requestAnimationFrame(tick)
+          } catch {
+            cleanup?.()
+            setFailure(true)
           }
-          if (input.format === "GIF" && !motion.matches && !document.hidden)
-            handle = requestAnimationFrame(tick)
         }
         const resume = (): void => {
           if (handle !== undefined) cancelAnimationFrame(handle)

@@ -32,37 +32,40 @@ async function encodeGif(
 ): Promise<ArrayBuffer> {
   signal.throwIfAborted()
   const worker = new Worker(new URL("./profileGif.worker.ts", import.meta.url))
+  const { promise, resolve, reject } = Promise.withResolvers<ArrayBuffer>()
+  const abort = (): void => reject(signal.reason)
+  signal.addEventListener("abort", abort, { once: true })
+  worker.onmessage = (event: MessageEvent<unknown>) => {
+    const result = event.data
+    if (
+      typeof result === "object" &&
+      result !== null &&
+      "ok" in result &&
+      result.ok === true &&
+      "buffer" in result &&
+      result.buffer instanceof ArrayBuffer
+    )
+      resolve(result.buffer)
+    else reject(new Error("GIF encoding failed."))
+  }
+  worker.onerror = (event) => {
+    event.preventDefault()
+    reject(new Error("GIF encoder could not start."))
+  }
+  const messageError = (): void =>
+    reject(new Error("GIF encoder returned unreadable data."))
+  worker.addEventListener("messageerror", messageError)
   try {
-    return await new Promise<ArrayBuffer>((resolve, reject) => {
-      const abort = (): void => {
-        reject(signal.reason)
-      }
-      signal.addEventListener("abort", abort, { once: true })
-      const finish = (): void => signal.removeEventListener("abort", abort)
-      worker.onmessage = (event: MessageEvent<unknown>) => {
-        finish()
-        const result = event.data
-        if (
-          typeof result === "object" &&
-          result !== null &&
-          "ok" in result &&
-          result.ok === true &&
-          "buffer" in result &&
-          result.buffer instanceof ArrayBuffer
-        )
-          resolve(result.buffer)
-        else reject(new Error("GIF encoding failed."))
-      }
-      worker.onerror = () => {
-        finish()
-        reject(new Error("GIF encoder could not start."))
-      }
-      worker.postMessage(
-        request,
-        request.frames.map((frame) => frame.buffer),
-      )
-    })
+    worker.postMessage(
+      request,
+      request.frames.map((frame) => frame.buffer),
+    )
+    return await promise
   } finally {
+    signal.removeEventListener("abort", abort)
+    worker.onmessage = null
+    worker.onerror = null
+    worker.removeEventListener("messageerror", messageError)
     worker.terminate()
   }
 }
@@ -129,8 +132,11 @@ export function saveProfileCardFile(file: File): void {
   const link = document.createElement("a")
   link.href = url
   link.download = file.name
-  document.body.append(link)
-  link.click()
-  link.remove()
-  requestAnimationFrame(() => URL.revokeObjectURL(url))
+  try {
+    document.body.append(link)
+    link.click()
+  } finally {
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 }
