@@ -46,7 +46,10 @@ describe("licensed presentation asset preparation", () => {
   beforeEach(async () => {
     repositoryRoot = await mkdtemp(join(tmpdir(), "mapachess-assets-"))
     localSource = join(repositoryRoot, "vendor/presentation-assets")
-    archivePath = join(repositoryRoot, "ghost_assets/presentation-assets.zip")
+    archivePath = join(
+      repositoryRoot,
+      "ghost_assets/seethingswarm-captainskolot-heroes99.zip",
+    )
     manifestPath = join(
       repositoryRoot,
       "ghost_assets/presentation-assets.manifest.json",
@@ -230,9 +233,13 @@ describe("licensed presentation asset preparation", () => {
       const result = await runAssetLauncher("create", key)
 
       expect(result.stdout).toBe(
-        "Created ghost_assets/presentation-assets.zip.\n",
+        "Created ghost_assets/seethingswarm-captainskolot-heroes99.zip.\n",
       )
       expect(result.stderr).toBe("")
+      expect((await readdir(dirname(archivePath))).sort()).toEqual([
+        "presentation-assets.manifest.json",
+        "seethingswarm-captainskolot-heroes99.zip",
+      ])
       await rm(localSource, { recursive: true })
       vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, key)
       await prepareLicensedPresentationAssets(repositoryRoot)

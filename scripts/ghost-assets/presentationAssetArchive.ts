@@ -22,6 +22,8 @@ import {
 
 export const LICENSED_PRESENTATION_ASSET_KEY_VARIABLE =
   "GHOST_ASSET_KEY_MAPACHESS"
+export const LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH =
+  "ghost_assets/seethingswarm-captainskolot-heroes99.zip"
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "../..")
@@ -41,7 +43,7 @@ const resolvePresentationAssetPaths = (repositoryRoot: string) => ({
     repositoryRoot,
     "ghost_assets/presentation-assets.manifest.json",
   ),
-  archive: join(repositoryRoot, "ghost_assets/presentation-assets.zip"),
+  archive: join(repositoryRoot, LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH),
   localEnvironment: join(repositoryRoot, "apps/web/.env.local"),
   localSource: join(repositoryRoot, "vendor/presentation-assets"),
   archiveSource: join(repositoryRoot, "vendor/presentation-assets-archive"),

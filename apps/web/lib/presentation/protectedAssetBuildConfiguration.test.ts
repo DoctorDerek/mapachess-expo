@@ -18,7 +18,7 @@ const rootGitIgnore = await readFile(
 )
 const FIXTURE_KEY = "fixture asset password"
 const ROOT_INPUTS = [
-  "ghost_assets/presentation-assets.zip",
+  "ghost_assets/seethingswarm-captainskolot-heroes99.zip",
   "ghost_assets/presentation-assets.manifest.json",
   "scripts/decrypt-assets.ts",
   "scripts/ghost-assets/presentationAssetArchive.ts",
@@ -38,7 +38,7 @@ await appendFile("../../preparations.txt", "prepared\\n");
 await rm("public/generated/presentation-assets", { recursive: true, force: true });
 if (licensed) {
   await mkdir("public/generated/presentation-assets", { recursive: true });
-  await writeFile("public/generated/presentation-assets/fixture.png", await readFile(hasLocalAssets ? localSource : "../../ghost_assets/presentation-assets.zip"));
+  await writeFile("public/generated/presentation-assets/fixture.png", await readFile(hasLocalAssets ? localSource : "../../ghost_assets/seethingswarm-captainskolot-heroes99.zip"));
 }
 `
 
