@@ -80,6 +80,62 @@ class FailFirstWriteAdapter implements DurableStoreAdapter {
 }
 
 describe("XState durable profile orchestration", () => {
+  it("retains a boot exception without replacing saved data and clears it after retry", async () => {
+    const store = createStore()
+    const saved = await seedProfile(store)
+    const failure = { message: "Storage temporarily locked", code: "BUSY" }
+    vi.spyOn(store, "load").mockRejectedValueOnce(failure)
+    const actor = createProfileActor(store)
+    await waitFor(actor, (snapshot) => snapshot.matches("loadFailure"))
+    expect(actor.getSnapshot().context.loadFailure).toEqual({
+      type: "PROFILE.STORAGE_REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
+    })
+    expect(actor.getSnapshot().context.loadFailure?.diagnostic.cause).toBe(
+      failure,
+    )
+    actor.send({ type: "PROFILE.BOOT_RETRY_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(saved)
+    expect(actor.getSnapshot().context.loadFailure).toBeNull()
+    actor.stop()
+  })
+
+  it("retains an import exception without importing anything and recovers on another preview", async () => {
+    const store = createStore()
+    const saved = await seedProfile(store)
+    const failure = new Error("Backup reader unavailable")
+    const decode = vi
+      .fn((rawBackup: string) =>
+        decodeMapachessPortableBackup(rawBackup, sha256),
+      )
+      .mockRejectedValueOnce(failure)
+    const actor = createActor(profileMachine, {
+      input: { store, decodePortableBackup: decode },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const rawBackup = await createMapachessPortableBackup({
+      applicationVersion: "0.0.0-test",
+      gddRevision: "test-gdd",
+      playerData: saved,
+      sha256,
+    })
+    actor.send({ type: "PROFILE.IMPORT_PREVIEW_REQUESTED", rawBackup })
+    await waitFor(actor, (snapshot) => selectImportIssue(snapshot) !== null)
+    expect(selectImportIssue(actor.getSnapshot())).toEqual({
+      type: "PROFILE.BACKUP_READ_FAILED",
+      path: "$",
+      diagnostic: { message: failure.message, cause: failure },
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(saved)
+    actor.send({ type: "PROFILE.IMPORT_PREVIEW_REQUESTED", rawBackup })
+    await waitFor(actor, (snapshot) => snapshot.matches("importPreview"))
+    expect(selectImportIssue(actor.getSnapshot())).toBeNull()
+    expect(selectImportPreview(actor.getSnapshot())?.payload).toEqual(saved)
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(saved)
+    actor.stop()
+  })
+
   it("accepts the latest preference while an earlier write is still pending", async () => {
     const store = createStore()
     await seedProfile(store)
@@ -132,9 +188,10 @@ describe("XState durable profile orchestration", () => {
     const actor = createProfileActor(store)
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     const gate = Promise.withResolvers<void>()
+    const failure = new Error("Controlled write failure")
     vi.spyOn(store, "commitCurrent").mockImplementationOnce(async () => {
       await gate.promise
-      throw new Error("Controlled write failure")
+      throw failure
     })
     actor.send({
       type: "PROFILE.AUTO_HINT_MODE_CHANGED",
@@ -146,15 +203,33 @@ describe("XState durable profile orchestration", () => {
     })
     gate.resolve()
     await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectPersistenceFailure(actor.getSnapshot())).toEqual({
+      type: "PROFILE.STORAGE_REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
+    })
     expect(selectCanChangeAutoHintMode(actor.getSnapshot())).toBe(false)
     expect(
       selectPendingPlayerData(actor.getSnapshot())?.settings.autoHintMode,
     ).toBe("no-auto-hints")
+    const pendingWrite = actor.getSnapshot().context.pendingWrite
+    const readFailure = new Error("Retry read failed")
+    vi.spyOn(store, "load").mockRejectedValueOnce(readFailure)
+    actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(actor.getSnapshot().context.pendingWrite).toBe(pendingWrite)
+    expect(selectPersistenceFailure(actor.getSnapshot())).toEqual({
+      type: "PROFILE.STORAGE_REQUEST_FAILED",
+      diagnostic: { message: readFailure.message, cause: readFailure },
+    })
     actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
     expect(
       selectCurrentPlayerData(actor.getSnapshot())?.settings.autoHintMode,
     ).toBe("no-auto-hints")
+    expect(selectPersistenceFailure(actor.getSnapshot())).toBeNull()
+    expect(
+      JSON.stringify(selectCurrentPlayerData(actor.getSnapshot())),
+    ).not.toContain("diagnostic")
     actor.stop()
   })
 

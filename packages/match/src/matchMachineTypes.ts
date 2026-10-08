@@ -1,3 +1,4 @@
+import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
 import type { AutoHintMode } from "./autoHintMode.js"
 import type {
   BetterHintsAnalyst,
@@ -39,9 +40,12 @@ export type MatchOpponent = Readonly<{
   ) => Promise<MatchMoveId>
 }>
 
-export type MatchOpponentFailure = Readonly<{
-  type: "MATCH.OPPONENT_MOVE_ILLEGAL" | "MATCH.OPPONENT_REQUEST_FAILED"
-}>
+export type MatchOpponentFailure =
+  | Readonly<{ type: "MATCH.OPPONENT_MOVE_ILLEGAL" }>
+  | Readonly<{
+      type: "MATCH.OPPONENT_REQUEST_FAILED"
+      diagnostic: ErrorDiagnostic
+    }>
 
 export type MatchMachineEvent =
   | Readonly<{
@@ -115,6 +119,7 @@ export type MatchMachineContext = Readonly<{
 }>
 
 export type MatchHintFailure = Readonly<{
+  diagnostic?: ErrorDiagnostic
   type: "MATCH.HINT_REQUEST_FAILED"
 }>
 

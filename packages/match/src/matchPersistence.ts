@@ -1,3 +1,4 @@
+import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
 import type { AutoHintMode } from "./autoHintMode.js"
 import type { BetterHintsResult } from "./betterHints.js"
 import type {
@@ -25,9 +26,12 @@ export type MatchPersistenceReceipt = Readonly<{
   type: "MATCH.MUTATION_PERSISTED"
 }>
 
-export type MatchPersistenceFailure = Readonly<{
-  type: "MATCH.PERSISTENCE_RECEIPT_STALE" | "MATCH.PERSISTENCE_REQUEST_FAILED"
-}>
+export type MatchPersistenceFailure =
+  | Readonly<{ type: "MATCH.PERSISTENCE_RECEIPT_STALE" }>
+  | Readonly<{
+      type: "MATCH.PERSISTENCE_REQUEST_FAILED"
+      diagnostic: ErrorDiagnostic
+    }>
 
 export type MatchPersistence = Readonly<{
   persist: (

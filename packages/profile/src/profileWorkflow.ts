@@ -1,3 +1,4 @@
+import captureError from "@mapachess/diagnostics/error-diagnostic"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import {
@@ -16,6 +17,7 @@ import type {
   PersistenceActorInput,
   PersistenceAttemptResult,
   ProfileMachineContext,
+  ProfileStorageRequestFailure,
 } from "./profileMachineTypes.js"
 import {
   changeAutoHintMode,
@@ -37,12 +39,18 @@ export const prepareAppearancePending = (
     "commit",
   )
 
-export const storageRequestFailure = (): Readonly<{
-  type: "PROFILE.STORAGE_REQUEST_FAILED"
-}> => Object.freeze({ type: "PROFILE.STORAGE_REQUEST_FAILED" })
+export const storageRequestFailure = (
+  error: unknown,
+): ProfileStorageRequestFailure =>
+  Object.freeze({
+    diagnostic: captureError(error),
+    type: "PROFILE.STORAGE_REQUEST_FAILED",
+  })
 
-const persistenceRequestFailure = (): PersistenceAttemptResult => ({
-  failure: storageRequestFailure(),
+const persistenceRequestFailure = (
+  error: unknown,
+): PersistenceAttemptResult => ({
+  failure: storageRequestFailure(error),
   ok: false,
 })
 
@@ -210,8 +218,8 @@ export const executePendingWrite = async (
           input.pendingWrite.candidate,
         )
     }
-  } catch {
-    return persistenceRequestFailure()
+  } catch (error) {
+    return persistenceRequestFailure(error)
   }
 }
 
@@ -221,8 +229,8 @@ export const retryPendingWrite = async (
   let reloaded: LoadedDurablePlayerData
   try {
     reloaded = await input.store.load()
-  } catch {
-    return persistenceRequestFailure()
+  } catch (error) {
+    return persistenceRequestFailure(error)
   }
 
   if (

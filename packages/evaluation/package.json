@@ -53,6 +53,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/diagnostics": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "xstate": "^5"

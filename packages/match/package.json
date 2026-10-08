@@ -85,6 +85,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/diagnostics": "workspace:*",
     "chessops": "^0.15.1",
     "xstate": "^5"
   }

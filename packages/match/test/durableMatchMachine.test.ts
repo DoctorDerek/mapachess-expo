@@ -378,6 +378,7 @@ describe("verified durable match mutation gate", () => {
 
     expect(selectPersistenceFailure(actor.getSnapshot())).toEqual({
       type: "MATCH.PERSISTENCE_REQUEST_FAILED",
+      diagnostic: { message: "storage unavailable", cause: expect.any(Error) },
     })
     expect(selectMatchPosition(actor.getSnapshot()).fen).toBe(initialFen)
     expect(selectMove).not.toHaveBeenCalled()

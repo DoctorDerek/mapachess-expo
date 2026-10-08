@@ -1,3 +1,4 @@
+import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
@@ -24,13 +25,21 @@ export type ProfileMachineInput = Readonly<{
   store: DurablePlayerDataStore
 }>
 
+export type ProfileStorageRequestFailure = Readonly<{
+  diagnostic: ErrorDiagnostic
+  type: "PROFILE.STORAGE_REQUEST_FAILED"
+}>
+
 export type ProfilePersistenceFailure =
-  | DurablePlayerDataWriteFailure
-  | Readonly<{ type: "PROFILE.STORAGE_REQUEST_FAILED" }>
+  DurablePlayerDataWriteFailure | ProfileStorageRequestFailure
 
 export type ProfileImportIssue =
   | PortableBackupDecodeIssue
-  | Readonly<{ path: "$"; type: "PROFILE.BACKUP_READ_FAILED" }>
+  | Readonly<{
+      diagnostic: ErrorDiagnostic
+      path: "$"
+      type: "PROFILE.BACKUP_READ_FAILED"
+    }>
 
 export type PendingProfileWrite = Readonly<{
   candidate: MapachessPlayerData
@@ -43,7 +52,7 @@ export type ProfileMachineContext = Readonly<{
   importIssue: ProfileImportIssue | null
   importPreview: MapachessPortableBackup | null
   importRaw: string | null
-  loadFailure: Readonly<{ type: "PROFILE.STORAGE_REQUEST_FAILED" }> | null
+  loadFailure: ProfileStorageRequestFailure | null
   loaded: LoadedDurablePlayerData | null
   pendingWrite: PendingProfileWrite | null
   persistenceFailure: ProfilePersistenceFailure | null
@@ -97,6 +106,6 @@ export type ImportActorInput = Readonly<{
 export type PersistenceAttemptResult =
   | DurablePlayerDataWriteResult
   | Readonly<{
-      failure: Readonly<{ type: "PROFILE.STORAGE_REQUEST_FAILED" }>
+      failure: ProfileStorageRequestFailure
       ok: false
     }>

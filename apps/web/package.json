@@ -16,6 +16,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/diagnostics": "workspace:*",
     "@mapachess/evaluation": "workspace:*",
     "@mapachess/hints": "workspace:*",
     "@mapachess/match": "workspace:*",

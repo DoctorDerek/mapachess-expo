@@ -18,6 +18,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/diagnostics": "workspace:*",
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@mapachess/stockfish-native": "workspace:*",

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { MAX_DIAGNOSTIC_CHARACTERS } from "@mapachess/diagnostics/error-diagnostic"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import createStockfishUciSession from "@mapachess/stockfish/uci-session"
 import { STOCKFISH_18_WEB_UCI_EXPECTATION } from "@mapachess/stockfish/web-runtime-identity"
@@ -181,6 +182,43 @@ describe("Stockfish web Worker transport", () => {
     expect(worker.preventedWorkerError).toBe(true)
     expect(worker.terminated).toBe(true)
     expect(session.state()).toBe("failed")
+  })
+
+  it("retains command failure causes for both waiting consumers and bounds diagnostic text", async () => {
+    const worker = new FakeStockfishWorker()
+    const cause = {
+      message: "engine unavailable " + "x".repeat(MAX_DIAGNOSTIC_CHARACTERS),
+    }
+    vi.spyOn(worker, "postMessage").mockImplementation(() => {
+      throw cause
+    })
+    const transport = createWebWorkerUciTransport(worker)
+    const next = transport.lines[Symbol.asyncIterator]().next()
+    const rejectedLine = expect(next).rejects.toMatchObject({ cause })
+    const rejectedExit = expect(transport.waitForExit()).rejects.toMatchObject({
+      cause,
+    })
+    await expect(transport.writeLine("uci")).rejects.toMatchObject({ cause })
+    await rejectedLine
+    await rejectedExit
+    expect(transport.diagnosticText()).toHaveLength(MAX_DIAGNOSTIC_CHARACTERS)
+    await transport.terminate()
+    expect(worker.terminated).toBe(true)
+  })
+
+  it("preserves the Worker error event and its source location", async () => {
+    const worker = new FakeStockfishWorker()
+    const transport = createWebWorkerUciTransport(worker)
+    const event = new FakeWorkerErrorEvent()
+    const rejected = expect(transport.waitForExit()).rejects.toMatchObject({
+      cause: event,
+    })
+    worker.dispatchEvent(event)
+    await rejected
+    expect(transport.diagnosticText()).toContain(
+      "stockfish-18-lite-single.js:27:9",
+    )
+    await transport.terminate()
   })
 
   it("rejects non-string Worker messages without leaking the Worker", async () => {

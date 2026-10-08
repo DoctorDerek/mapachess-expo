@@ -372,11 +372,12 @@ describe("scoped XState match flow", () => {
 
   it("retries failed and stale hint output without counting failed use", async () => {
     let attempt = 0
+    const failure = new Error("hint engine unavailable")
     const hintAnalyst: BetterHintsAnalyst = {
       analyze: (request) => {
         attempt += 1
         if (attempt === 1) {
-          return Promise.reject(new Error("hint engine unavailable"))
+          return Promise.reject(failure)
         }
         const result = createHintResult(request)
         return Promise.resolve(
@@ -401,11 +402,15 @@ describe("scoped XState match flow", () => {
     await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "failure")
     expect(selectHintFailure(actor.getSnapshot())).toEqual({
       type: "MATCH.HINT_REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
     })
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(false)
 
     actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
     await waitFor(actor, (snapshot) => selectHintStage(snapshot) === "failure")
+    expect(selectHintFailure(actor.getSnapshot())).toEqual({
+      type: "MATCH.HINT_REQUEST_FAILED",
+    })
     expect(selectPieceHintsUsed(actor.getSnapshot())).toBe(false)
 
     actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
@@ -598,7 +603,8 @@ describe("scoped XState match flow", () => {
   })
 
   it("surfaces request failure without inventing a fallback move", async () => {
-    const scripted = createScriptedOpponent([new Error("engine unavailable")])
+    const failure = new Error("engine unavailable")
+    const scripted = createScriptedOpponent([failure])
     const actor = createActor(matchMachine, {
       input: {
         autoHintMode: "no-auto-hints",
@@ -618,6 +624,7 @@ describe("scoped XState match flow", () => {
 
     expect(selectOpponentFailure(actor.getSnapshot())).toEqual({
       type: "MATCH.OPPONENT_REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
     })
     expect(selectMatchTimeline(actor.getSnapshot()).cursor).toBe(1)
     expect(selectIsOpponentTurn(actor.getSnapshot())).toBe(true)

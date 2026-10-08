@@ -1,4 +1,5 @@
 import type { ActorRefFrom } from "xstate"
+import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
@@ -139,7 +140,7 @@ export const persistProfileActiveMatch = ({
     subscription = actor.subscribe({
       complete: () => settle(actorStopped()),
       error: (error: unknown) =>
-        settle(error instanceof Error ? error : actorStopped()),
+        settle(new Error(getErrorMessage(error), { cause: error })),
       next: inspect,
     })
     if (settled) subscription.unsubscribe()

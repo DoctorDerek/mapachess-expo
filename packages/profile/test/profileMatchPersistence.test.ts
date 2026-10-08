@@ -90,6 +90,49 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it.each([new Error("Actor failed"), { message: "Foreign actor failure" }])(
+    "retains a stopped actor's original failure as the rejection cause",
+    async (failure) => {
+      const store = new SerializedPlayerDataStore(
+        new InMemoryDurableStoreAdapter(),
+        sha256,
+      )
+      const actor = createActor(
+        profileMachine.provide({
+          actions: {
+            prepareActiveMatchWrite: () => {
+              throw failure
+            },
+          },
+        }),
+        {
+          input: {
+            store,
+            decodePortableBackup: (raw) =>
+              decodeMapachessPortableBackup(raw, sha256),
+          },
+        },
+      ).start()
+      await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+      const rejected: unknown = await persistProfileActiveMatch({
+        actor,
+        candidate: durableMatch(),
+        expectedActiveMatch: null,
+        signal: new AbortController().signal,
+      }).catch((error: unknown) => error)
+      expect(rejected).toBeInstanceOf(Error)
+      if (!(rejected instanceof Error))
+        throw new Error("Expected a persistence rejection")
+      expect(rejected.message).toBe(failure.message)
+      expect(rejected.cause).toBe(failure)
+      expect((await store.load()).current).toMatchObject({
+        type: "valid",
+        data: { activeMatch: null },
+      })
+      actor.stop()
+    },
+  )
+
   it.each(["resignation", "draw-agreement"] as const)(
     "restores %s Redo after a durable reopen and actor replacement",
     async (type) => {

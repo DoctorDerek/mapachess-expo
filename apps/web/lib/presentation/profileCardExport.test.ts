@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { createActor, fromPromise, waitFor } from "xstate"
+import { MAX_DIAGNOSTIC_CHARACTERS } from "@mapachess/diagnostics/error-diagnostic"
 import { DEFAULT_PLAYER_APPEARANCE } from "@mapachess/profile/player-appearance"
 import type { CardInput } from "./profileCardArtwork"
 import createProfileCardFile, { saveProfileCardFile } from "./profileCardExport"
+import profileCardExportMachine from "./profileCardExportMachine"
 import {
   CARD_IDLE_FRAME_MILLISECONDS,
   PROFILE_CARD_HEIGHT,
@@ -58,6 +61,96 @@ describe("profile image export failure ownership", () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it("retains a bounded encoder message as the cause without changing recovery copy", async () => {
+    const worker = setup()
+    const exporting = createProfileCardFile(input, new AbortController().signal)
+    const message = "Encoder failed " + "x".repeat(MAX_DIAGNOSTIC_CHARACTERS)
+    const rejected = expect(exporting).rejects.toMatchObject({
+      message: "GIF encoding failed.",
+      cause: message.slice(0, MAX_DIAGNOSTIC_CHARACTERS),
+    })
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledOnce())
+    worker.onmessage?.(
+      new MessageEvent("message", { data: { ok: false, message } }),
+    )
+    await rejected
+    expect(worker.terminate).toHaveBeenCalledOnce()
+  })
+
+  it("retains the export actor's original failure until retry without changing the card input", async () => {
+    const failure = { message: "Image decode failed" }
+    const render = vi
+      .fn<() => Promise<File>>()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(new File(["PNG"], "profile.png"))
+    const actor = createActor(
+      profileCardExportMachine.provide({
+        actors: { render: fromPromise<File, CardInput>(render) },
+      }),
+      { input },
+    ).start()
+    actor.send({ type: "CARD.PREVIEW_CHANGED", input })
+    await waitFor(actor, (snapshot) => snapshot.matches("failed"))
+    expect(actor.getSnapshot().context.failure).toEqual({
+      message: failure.message,
+      cause: failure,
+    })
+    expect(actor.getSnapshot().context.failure?.cause).toBe(failure)
+    expect(actor.getSnapshot().context.input).toBe(input)
+    expect(actor.getSnapshot().context.file).toBeNull()
+    actor.send({ type: "CARD.RETRY_REQUESTED" })
+    expect(actor.getSnapshot().context.failure).toBeNull()
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(actor.getSnapshot().context.file?.name).toBe("profile.png")
+    expect(actor.getSnapshot().context.failure).toBeNull()
+    actor.stop()
+  })
+
+  it("discards a canceled preview failure without reporting it on the replacement", async () => {
+    const obsolete = Promise.withResolvers<File>()
+    const current = Promise.withResolvers<File>()
+    const render = vi
+      .fn<() => Promise<File>>()
+      .mockReturnValueOnce(obsolete.promise)
+      .mockReturnValueOnce(current.promise)
+    const actor = createActor(
+      profileCardExportMachine.provide({
+        actors: { render: fromPromise<File, CardInput>(render) },
+      }),
+      { input },
+    ).start()
+    actor.send({ type: "CARD.PREVIEW_CHANGED", input })
+    actor.send({
+      type: "CARD.PREVIEW_CHANGED",
+      input: { ...input, format: "PNG" },
+    })
+    obsolete.reject(new Error("Obsolete preview was aborted"))
+    const file = new File(["PNG"], "current.png")
+    current.resolve(file)
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(actor.getSnapshot().context.file).toBe(file)
+    expect(actor.getSnapshot().context.failure).toBeNull()
+    actor.stop()
+  })
+
+  it("returns only a clone-safe diagnostic from the GIF Worker after a malformed request", async () => {
+    const worker = new EventTarget()
+    const postMessage = vi.fn()
+    vi.stubGlobal("self", Object.assign(worker, { postMessage }))
+    vi.resetModules()
+    await import("./profileGif.worker")
+    worker.dispatchEvent(new MessageEvent("message", { data: {} }))
+    expect(postMessage).toHaveBeenCalledWith({
+      ok: false,
+      message: "Invalid GIF encoding request.",
+    })
+    expect(structuredClone(postMessage.mock.calls[0]?.[0])).toEqual({
+      ok: false,
+      message: "Invalid GIF encoding request.",
+    })
+    vi.resetModules()
   })
 
   it.each(["messageerror", "error", "invalid"] as const)(

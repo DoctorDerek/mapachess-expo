@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
 import nativeStockfishModule from "@mapachess/stockfish-native/native-module"
 import NativeStockfishSession from "@mapachess/stockfish-native/session"
 import {
@@ -58,10 +59,6 @@ function searchRequest(
     position: { fen: STANDARD_STARTING_FEN, moves: [] },
     requestId,
   }
-}
-
-function messageFromUnknown(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown native engine error."
 }
 
 function assertNotAborted(signal: AbortSignal): void {
@@ -140,7 +137,7 @@ export default async function runNativeStockfishProof(
     return {
       completedSteps,
       failedStep: failure.step,
-      message: messageFromUnknown(failure.error),
+      message: getErrorMessage(failure.error),
       status: "failed",
     }
   }

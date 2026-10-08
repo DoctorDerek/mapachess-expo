@@ -1,0 +1,19 @@
+{
+  "name": "@mapachess/diagnostics",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./error-diagnostic": {
+      "types": "./src/errorDiagnostic.ts",
+      "default": "./dist/errorDiagnostic.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}

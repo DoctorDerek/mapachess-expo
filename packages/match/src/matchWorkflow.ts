@@ -1,3 +1,6 @@
+import captureError, {
+  type ErrorDiagnostic,
+} from "@mapachess/diagnostics/error-diagnostic"
 import type { AutoHintMode } from "./autoHintMode.js"
 import type {
   BetterHintsAnalyst,
@@ -392,14 +395,27 @@ export const acceptedPendingMutation = (
 export const illegalOpponentMoveFailure = (): MatchOpponentFailure =>
   Object.freeze({ type: "MATCH.OPPONENT_MOVE_ILLEGAL" })
 
-export const opponentRequestFailure = (): MatchOpponentFailure =>
-  Object.freeze({ type: "MATCH.OPPONENT_REQUEST_FAILED" })
+export const opponentRequestFailure = (error: unknown): MatchOpponentFailure =>
+  Object.freeze({
+    type: "MATCH.OPPONENT_REQUEST_FAILED",
+    diagnostic: captureError(error),
+  })
 
-export const hintRequestFailure = (): MatchHintFailure =>
-  Object.freeze({ type: "MATCH.HINT_REQUEST_FAILED" })
+export const hintRequestFailure = (
+  diagnostic?: ErrorDiagnostic,
+): MatchHintFailure =>
+  Object.freeze({
+    type: "MATCH.HINT_REQUEST_FAILED",
+    ...(diagnostic === undefined ? {} : { diagnostic }),
+  })
 
-export const persistenceRequestFailure = (): MatchPersistenceFailure =>
-  Object.freeze({ type: "MATCH.PERSISTENCE_REQUEST_FAILED" })
+export const persistenceRequestFailure = (
+  error: unknown,
+): MatchPersistenceFailure =>
+  Object.freeze({
+    type: "MATCH.PERSISTENCE_REQUEST_FAILED",
+    diagnostic: captureError(error),
+  })
 
 export const stalePersistenceReceiptFailure = (): MatchPersistenceFailure =>
   Object.freeze({ type: "MATCH.PERSISTENCE_RECEIPT_STALE" })

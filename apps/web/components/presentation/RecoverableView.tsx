@@ -1,6 +1,9 @@
 "use client"
 
 import { Component, useEffect, useRef, type ReactNode } from "react"
+import captureError, {
+  type ErrorDiagnostic,
+} from "@mapachess/diagnostics/error-diagnostic"
 import MapachessButton from "./MapachessButton"
 
 type RecoveryProps = Readonly<{
@@ -40,19 +43,23 @@ function Recovery({
 
 export default class RecoverableView extends Component<
   RecoveryProps & Readonly<{ children: ReactNode }>,
-  Readonly<{ failed: boolean }>
+  Readonly<{ failure: ErrorDiagnostic | null }>
 > {
-  override state = { failed: false }
+  override state: Readonly<{ failure: ErrorDiagnostic | null }> = {
+    failure: null,
+  }
 
-  static getDerivedStateFromError(): Readonly<{ failed: boolean }> {
-    return { failed: true }
+  static getDerivedStateFromError(
+    error: unknown,
+  ): Readonly<{ failure: ErrorDiagnostic }> {
+    return { failure: captureError(error) }
   }
 
   override render() {
-    return this.state.failed ? (
+    return this.state.failure !== null ? (
       <Recovery
         {...this.props}
-        onRetry={() => this.setState({ failed: false })}
+        onRetry={() => this.setState({ failure: null })}
       />
     ) : (
       this.props.children

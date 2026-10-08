@@ -71,6 +71,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@mapachess/diagnostics':
+        specifier: workspace:*
+        version: link:../../packages/diagnostics
       '@mapachess/profile':
         specifier: workspace:*
         version: link:../../packages/profile
@@ -168,6 +171,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/diagnostics':
+        specifier: workspace:*
+        version: link:../../packages/diagnostics
       '@mapachess/evaluation':
         specifier: workspace:*
         version: link:../../packages/evaluation
@@ -248,8 +254,13 @@ importers:
         specifier: ^1
         version: 1.4.0
 
+  packages/diagnostics: {}
+
   packages/evaluation:
     dependencies:
+      '@mapachess/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match
@@ -274,6 +285,9 @@ importers:
 
   packages/match:
     dependencies:
+      '@mapachess/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       chessops:
         specifier: ^0.15.1
         version: 0.15.1
@@ -292,6 +306,9 @@ importers:
 
   packages/profile:
     dependencies:
+      '@mapachess/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match
