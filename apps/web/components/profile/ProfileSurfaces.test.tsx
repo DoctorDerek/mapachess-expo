@@ -6,6 +6,7 @@ import createInitialMapachessPlayerData, {
 } from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
+import RecoverableView from "../presentation/RecoverableView"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
@@ -28,6 +29,23 @@ const backup = Object.freeze({
 }) satisfies MapachessPortableBackup
 
 describe("web player-data controls", () => {
+  it("retains a render exception locally while keeping technical details out of recovery copy", () => {
+    const error = new Error("Private render diagnostic")
+    const view = new RecoverableView({
+      title: "Try this screen again",
+      description: "Your saved data is unchanged.",
+      children: "Player content",
+    })
+    view.state = RecoverableView.getDerivedStateFromError(error)
+    expect(view.state.failure?.cause).toBe(error)
+    expect(view.state.failure?.message).toBe(error.message)
+    const markup = renderToStaticMarkup(view.render())
+    expect(markup).toContain("Try this screen again")
+    expect(markup).toContain("Your saved data is unchanged.")
+    expect(markup).not.toContain(error.message)
+    expect(markup).not.toContain("Player content")
+  })
+
   it("emits the canonical engine preload during the first application render", () => {
     const markup = renderToStaticMarkup(createElement(WebMapachessApplication))
     expect(markup).toContain(
