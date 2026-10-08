@@ -1,17 +1,23 @@
 # Licensed presentation assets
 
 Mapachess keeps purchased source art outside Git while allowing authorized
-builds to reproduce the Battle Stage and coach presentation.
+builds to reproduce the Battle Stage, coach portraits, and player avatars.
 
 - `presentation-assets.manifest.json` allowlists every runtime file and its
   SHA-256 digest.
-- `presentation-assets.zip` contains only those files, encrypted as AES-256
-  AE-2 data.
+- `seethingswarm-captainskolot-heroes99.zip` contains only those files, encrypted
+  as AES-256 AE-2 data: SeethingSwarm animal sprites, CaptainSkolot coach portraits,
+  and Heroes99 avatar layers by AU_pixel.
 - `LICENSE.txt` records provenance, attribution, and the controlling source
   terms. The encrypted archive does not grant permission to reuse its contents.
 - `vendor/presentation-assets/` is the ignored local source directory used to
   author a replacement archive.
 - `apps/web/public/generated/presentation-assets/` is ignored build output.
+
+The archive's filename identifies its source families; the existing manifest,
+authoring directory, and generated browser URLs retain their presentation-domain
+names. A filename-only migration does not re-encrypt the archive or change its
+password, inventory, or runtime paths.
 
 Asset preparation selects its source automatically:
 
@@ -114,7 +120,8 @@ normalization. Missing or empty creation passwords fail instead of producing
 plaintext. Choose and retain a strong, unique password privately.
 
 The command validates `vendor/presentation-assets/` against the manifest and
-writes or replaces `ghost_assets/presentation-assets.zip` with encrypted data.
+writes or replaces `ghost_assets/seethingswarm-captainskolot-heroes99.zip` with
+encrypted data.
 An existing ZIP does not need to be deleted first, and its old password is not
 needed when the verified local source files are available. Re-encrypting unchanged
 files does not require changing the manifest; update its digests only when the
