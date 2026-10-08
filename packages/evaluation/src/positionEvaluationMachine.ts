@@ -1,4 +1,7 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
+import captureError, {
+  type ErrorDiagnostic,
+} from "@mapachess/diagnostics/error-diagnostic"
 import type { PositionEvaluation } from "./positionEvaluation.js"
 import type {
   PositionEvaluationRequest,
@@ -6,10 +9,13 @@ import type {
   PositionEvaluator,
 } from "./positionEvaluator.js"
 
-export type PositionEvaluationFailure = Readonly<{
-  requestId: string
-  type: "EVALUATION.REQUEST_FAILED" | "EVALUATION.RESPONSE_STALE"
-}>
+export type PositionEvaluationFailure =
+  | Readonly<{ requestId: string; type: "EVALUATION.RESPONSE_STALE" }>
+  | Readonly<{
+      requestId: string
+      type: "EVALUATION.REQUEST_FAILED"
+      diagnostic: ErrorDiagnostic
+    }>
 
 export type PositionEvaluationMachineEvent =
   | Readonly<{
@@ -92,13 +98,16 @@ const positionEvaluationMachineDefinition = setup({
       remainingRequests: context.remainingRequests.slice(1),
     })),
     clearFailure: assign({ failure: null }),
-    markRequestFailed: assign(({ context }) => ({
-      failure: Object.freeze({
-        requestId: requirePendingRequest(context).requestId,
-        type: "EVALUATION.REQUEST_FAILED" as const,
+    markRequestFailed: assign(
+      ({ context }, { error }: Readonly<{ error: unknown }>) => ({
+        failure: Object.freeze({
+          diagnostic: captureError(error),
+          requestId: requirePendingRequest(context).requestId,
+          type: "EVALUATION.REQUEST_FAILED" as const,
+        }),
+        result: null,
       }),
-      result: null,
-    })),
+    ),
     markResponseStale: assign(({ context }) => ({
       failure: Object.freeze({
         requestId: requirePendingRequest(context).requestId,
@@ -188,7 +197,10 @@ const positionEvaluationMachineDefinition = setup({
             target: "analyzing",
           },
           {
-            actions: "markRequestFailed",
+            actions: {
+              type: "markRequestFailed",
+              params: ({ event }) => ({ error: event.error }),
+            },
             target: "failure",
           },
         ],

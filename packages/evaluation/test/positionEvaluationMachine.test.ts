@@ -150,6 +150,7 @@ describe("position evaluation lifecycle", () => {
 
     attempts[0]?.deferredResult.reject(new Error("superseded failure"))
     await waitFor(actor, () => attempts.length === 2)
+    expect(selectPositionEvaluationFailure(actor.getSnapshot())).toBeNull()
     expect(
       attempts.map(({ request: attempted }) => attempted.requestId),
     ).toEqual([first.requestId, skipped.requestId])
@@ -158,11 +159,13 @@ describe("position evaluation lifecycle", () => {
     await waitFor(actor, () => attempts.length === 3)
     expect(attempts[2]?.request).toBe(latest)
 
-    attempts[2]?.deferredResult.reject(new Error("latest failure"))
+    const failure = new Error("latest failure")
+    attempts[2]?.deferredResult.reject(failure)
     await waitFor(actor, (snapshot) => snapshot.matches("failure"))
     expect(selectPositionEvaluationFailure(actor.getSnapshot())).toEqual({
       requestId: latest.requestId,
       type: "EVALUATION.REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
     })
 
     actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
@@ -250,10 +253,11 @@ describe("position evaluation lifecycle", () => {
 
   it("retains a failed request and retries it deterministically", async () => {
     const receivedRequestIds: string[] = []
+    const failure = { message: "scripted engine failure", code: "IO" }
     const evaluator: PositionEvaluator = async (received) => {
       receivedRequestIds.push(received.requestId)
       if (receivedRequestIds.length === 1) {
-        throw new Error("scripted engine failure")
+        throw failure
       }
       return result(received, 7)
     }
@@ -267,11 +271,13 @@ describe("position evaluation lifecycle", () => {
     expect(selectPositionEvaluationFailure(actor.getSnapshot())).toEqual({
       requestId: "evaluation/retry",
       type: "EVALUATION.REQUEST_FAILED",
+      diagnostic: { message: failure.message, cause: failure },
     })
     actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
     await waitFor(actor, (snapshot) => snapshot.matches("ready"))
 
     expect(receivedRequestIds).toEqual(["evaluation/retry", "evaluation/retry"])
+    expect(selectPositionEvaluationFailure(actor.getSnapshot())).toBeNull()
     expect(selectPositionEvaluation(actor.getSnapshot())).toMatchObject({
       whiteCentipawns: 7,
     })

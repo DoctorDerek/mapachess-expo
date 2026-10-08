@@ -1,4 +1,5 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
+import captureError from "@mapachess/diagnostics/error-diagnostic"
 import type { BetterHintsResult } from "./betterHints.js"
 import {
   createDrawAgreementConclusion,
@@ -448,7 +449,9 @@ const matchMachineDefinition = setup({
               },
             ],
             onError: {
-              actions: assign({ hintFailure: hintRequestFailure() }),
+              actions: assign(({ event }) => ({
+                hintFailure: hintRequestFailure(captureError(event.error)),
+              })),
               target: "hintFailure",
             },
           },
@@ -575,7 +578,9 @@ const matchMachineDefinition = setup({
           },
         ],
         onError: {
-          actions: assign({ opponentFailure: opponentRequestFailure() }),
+          actions: assign(({ event }) => ({
+            opponentFailure: opponentRequestFailure(event.error),
+          })),
           target: "opponentFailure",
         },
       },
@@ -680,9 +685,9 @@ const matchMachineDefinition = setup({
           },
         ],
         onError: {
-          actions: assign({
-            persistenceFailure: persistenceRequestFailure(),
-          }),
+          actions: assign(({ event }) => ({
+            persistenceFailure: persistenceRequestFailure(event.error),
+          })),
           target: "persistenceFailure",
         },
       },

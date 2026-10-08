@@ -1,10 +1,12 @@
 import {
+  getErrorMessage,
+  MAX_DIAGNOSTIC_CHARACTERS,
+} from "@mapachess/diagnostics/error-diagnostic"
+import {
   StockfishProtocolError,
   type StockfishUciTransport,
   type StockfishUciTransportExit,
 } from "@mapachess/stockfish/uci-session"
-
-const MAX_DIAGNOSTIC_CHARACTERS = 4_096
 
 export type StockfishWebWorker = Readonly<{
   addEventListener: EventTarget["addEventListener"]
@@ -135,6 +137,7 @@ export default function createWebWorkerUciTransport(
     fail(
       new StockfishProtocolError(
         `Stockfish Worker failed: ${workerErrorMessage(event)}.`,
+        { cause: event },
       ),
     )
   }
@@ -181,7 +184,8 @@ export default function createWebWorkerUciTransport(
         worker.postMessage(line)
       } catch (error) {
         const protocolError = new StockfishProtocolError(
-          `Stockfish Worker command failed: ${error instanceof Error ? error.message : String(error)}.`,
+          `Stockfish Worker command failed: ${getErrorMessage(error)}.`,
+          { cause: error },
         )
         fail(protocolError)
         throw protocolError
