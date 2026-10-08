@@ -1,4 +1,5 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
+import captureError from "@mapachess/diagnostics/error-diagnostic"
 import type { LoadedDurablePlayerData } from "./durableStore.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type {
@@ -94,15 +95,20 @@ const profileMachineDefinition = setup({
       }
     }),
     clearImportPreview: assign({ importPreview: null, importRaw: null }),
-    markImportReadFailure: assign({
-      importIssue: Object.freeze({
-        path: "$" as const,
-        type: "PROFILE.BACKUP_READ_FAILED" as const,
+    markImportReadFailure: assign(
+      (_, { error }: Readonly<{ error: unknown }>) => ({
+        importIssue: Object.freeze({
+          diagnostic: captureError(error),
+          path: "$" as const,
+          type: "PROFILE.BACKUP_READ_FAILED" as const,
+        }),
+        importPreview: null,
+        importRaw: null,
       }),
-      importPreview: null,
-      importRaw: null,
-    }),
-    markLoadFailure: assign({ loadFailure: storageRequestFailure() }),
+    ),
+    markLoadFailure: assign((_, { error }: Readonly<{ error: unknown }>) => ({
+      loadFailure: storageRequestFailure(error),
+    })),
     prepareActiveMatchWrite: assign(({ context, event }) => {
       if (event.type !== "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED") {
         throw new Error("Match-save action received a non-match event.")
@@ -224,7 +230,10 @@ const profileMachineDefinition = setup({
           target: "routing",
         },
         onError: {
-          actions: "markLoadFailure",
+          actions: {
+            type: "markLoadFailure",
+            params: ({ event }) => ({ error: event.error }),
+          },
           target: "loadFailure",
         },
       },
@@ -321,7 +330,10 @@ const profileMachineDefinition = setup({
           },
         ],
         onError: {
-          actions: "markImportReadFailure",
+          actions: {
+            type: "markImportReadFailure",
+            params: ({ event }) => ({ error: event.error }),
+          },
           target: "routing",
         },
       },
