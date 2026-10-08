@@ -1,3 +1,4 @@
+import { MAX_DIAGNOSTIC_CHARACTERS } from "@mapachess/diagnostics/error-diagnostic"
 import { HERO_IDLE_GEOMETRY } from "@mapachess/profile/hero-catalog"
 import {
   drawProfileCard,
@@ -46,11 +47,24 @@ async function encodeGif(
       result.buffer instanceof ArrayBuffer
     )
       resolve(result.buffer)
+    else if (
+      typeof result === "object" &&
+      result !== null &&
+      "ok" in result &&
+      result.ok === false &&
+      "message" in result &&
+      typeof result.message === "string"
+    )
+      reject(
+        new Error("GIF encoding failed.", {
+          cause: result.message.slice(0, MAX_DIAGNOSTIC_CHARACTERS),
+        }),
+      )
     else reject(new Error("GIF encoding failed."))
   }
   worker.onerror = (event) => {
     event.preventDefault()
-    reject(new Error("GIF encoder could not start."))
+    reject(new Error("GIF encoder could not start.", { cause: event }))
   }
   const messageError = (): void =>
     reject(new Error("GIF encoder returned unreadable data."))

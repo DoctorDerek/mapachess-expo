@@ -1,4 +1,5 @@
 import { applyPalette, GIFEncoder, quantize } from "gifenc"
+import captureError from "@mapachess/diagnostics/error-diagnostic"
 import {
   CARD_IDLE_FRAME_MILLISECONDS,
   PROFILE_CARD_HEIGHT,
@@ -93,7 +94,7 @@ self.addEventListener("message", (event: MessageEvent<unknown>) => {
       { ok: true, buffer: bytes.buffer },
       { transfer: [bytes.buffer] },
     )
-  } catch {
-    self.postMessage({ ok: false })
+  } catch (error) {
+    self.postMessage({ ok: false, message: captureError(error).message })
   }
 })
