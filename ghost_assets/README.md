@@ -3,8 +3,10 @@
 ## Independent chess-art bundle
 
 The existing presentation archive and its manifest remain unchanged. The
-separate `backterria-toffeecraft-chess.zip` contains 200 runtime PNGs: 186
-authored piece cells and 14 playable board images. `chess-assets.manifest.json`
+separate `backterria-toffeecraft-chess.zip` contains 213 runtime PNGs: 198
+authored piece cells and 15 playable board images. Its existing filename is
+retained; the inventory now also includes Cosunosuke's twelve gold/blue piece
+cells and frameless board. `chess-assets.manifest.json`
 allowlists their SHA-256 digests; `chess-assets.provenance.json` records source
 file identities, crop rectangles, transformations and runtime geometry for
 these images and the public-license chess artwork. Full private source packs
@@ -30,10 +32,12 @@ Public-license Chessnut and Skoll SVGs and Cat chess PNGs are under
 `apps/web/public/chess-assets/`, each with source and license notices. The shared
 catalog records role, side, native dimensions and delivery ownership, not player
 preferences. Settings exposes Credits for both existing and prepared artwork.
-The default board is unchanged; independent selectors and actual gameplay
-readability validation belong to the following integration PR. Catalog inclusion
-alone does not certify every board/piece combination for release. Cosunosuke and
-GreyFox are not part of either runtime catalog or this chess archive.
+The default board and pieces are unchanged; Settings offers independent artwork
+selectors. Catalog inclusion alone does not certify every board/piece combination
+for release. Cosunosuke's source-linked notice records the creator's game-use
+permission and prohibition on standalone raw-asset redistribution. The framed
+board and selection indicator remain private: Mapachess keeps its own coordinates
+and interaction overlays. GreyFox is not part of the runtime catalogs or this archive.
 
 ## Existing animal, portrait and avatar bundle
 
