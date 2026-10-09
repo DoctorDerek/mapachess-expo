@@ -3,6 +3,10 @@ import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type {
+  ChessAppearanceChange,
+  ChessAppearanceSettings,
+} from "./chessAppearanceSettings.js"
+import type {
   DurablePlayerDataStore,
   DurablePlayerDataWriteFailure,
   DurablePlayerDataWriteResult,
@@ -57,10 +61,15 @@ export type ProfileMachineContext = Readonly<{
   pendingWrite: PendingProfileWrite | null
   persistenceFailure: ProfilePersistenceFailure | null
   requestedAutoHintMode: AutoHintMode | null
+  requestedChessAppearance: ChessAppearanceSettings | null
   store: DurablePlayerDataStore
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{
+      type: "PROFILE.CHESS_APPEARANCE_CHANGED"
+      change: ChessAppearanceChange
+    }>
   | Readonly<{
       type: "PROFILE.APPEARANCE_SAVE_REQUESTED"
       appearance: PlayerAppearance
