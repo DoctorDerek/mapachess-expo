@@ -1,0 +1,2 @@
+Copyright 2015 Alexis Luengas
+Source: https://github.com/LexLuengas/chessnut-pieces

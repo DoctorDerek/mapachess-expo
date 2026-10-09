@@ -1,0 +1,15 @@
+Chess icons — Skoll, via Game-icons.net
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+License URL: https://creativecommons.org/licenses/by/3.0/
+Legal code: https://creativecommons.org/licenses/by/3.0/legalcode
+Verified: October 8, 2026
+
+Individual sources:
+https://game-icons.net/1x1/skoll/chess-king.html
+https://game-icons.net/1x1/skoll/chess-queen.html
+https://game-icons.net/1x1/skoll/chess-rook.html
+https://game-icons.net/1x1/skoll/chess-bishop.html
+https://game-icons.net/1x1/skoll/chess-knight.html
+https://game-icons.net/1x1/skoll/chess-pawn.html
+
+Retain creator, title, source and license attribution. Identify adaptations; do not imply creator endorsement. Catalog source SVGs are the site's supplied black/transparent and white/transparent downloads. Runtime rendering adds a contrasting outline so silhouettes remain visible on both square colors; any such treatment is a Mapachess adaptation, not part of the original download. No restrictive ghost-asset encryption is proposed for these permissively redistributable icons.

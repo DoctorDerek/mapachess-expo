@@ -1,0 +1,13 @@
+Cat chess set — OgreofWart / DarkEvil ink.
+Source: https://opengameart.org/content/cat-chess-set
+Download: https://opengameart.org/sites/default/files/catchess.zip
+License: CC0 1.0 Universal
+License URL: https://creativecommons.org/publicdomain/zero/1.0/
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Verified: October 8, 2026
+
+Preserve the source credit “by OgreofWart @ DarkEvil ink.” in repository documentation and in-game Credits. Mapachess credits all art, including CC0. The catalog scales the supplied transparent PNGs for inspection without replacing the originals.
+
+Runtime modifications: transparent margins are trimmed into a common 653px
+bottom-aligned canvas without scaling. The board playable area is cropped to
+744x744 and rotated 90 degrees. Source originals remain in private custody.
