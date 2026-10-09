@@ -64,6 +64,8 @@ describe("web player-data controls", () => {
       createElement(ProfileSettingsPanel, {
         chessAppearance: playerData.settings.chessAppearance,
         chessAppearanceDisabled: false,
+        coachCollection: playerData.settings.coachCollection,
+        onCoachCollectionChanged: vi.fn(),
         onChessAppearanceChanged: vi.fn(),
         overlays: ["settings"],
         navigation: { open: vi.fn(), back: vi.fn() },
@@ -80,7 +82,9 @@ describe("web player-data controls", () => {
         onEloResetConfirmed: vi.fn(),
       }),
     )
-    const hintChoices = markup.match(/<input[^>]*type="radio"[^>]*>/g)
+    const hintChoices = markup.match(
+      /<input[^>]*type="radio"[^>]*value="(?:auto-move-hints|auto-piece-hints|no-auto-hints)"[^>]*>/g,
+    )
     expect(hintChoices).toHaveLength(3)
     expect(markup).not.toMatch(/<fieldset[^>]* disabled=""/)
     for (const choice of hintChoices ?? [])
@@ -130,6 +134,8 @@ describe("web player-data controls", () => {
       "ToffeeCraft",
       "Backterria",
       "OgreofWart",
+      "GreyFox",
+      "Kashir0",
     ])
       expect(markup).toContain(creator)
     expect(markup).toContain("CC0 1.0")
@@ -160,6 +166,8 @@ describe("web player-data controls", () => {
       createElement(ProfileSettingsPanel, {
         chessAppearance: playerData.settings.chessAppearance,
         chessAppearanceDisabled: false,
+        coachCollection: playerData.settings.coachCollection,
+        onCoachCollectionChanged: vi.fn(),
         onChessAppearanceChanged: vi.fn(),
         overlays: ["settings"],
         navigation: { open: vi.fn(), back: vi.fn() },

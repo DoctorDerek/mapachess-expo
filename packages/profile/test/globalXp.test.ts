@@ -107,7 +107,11 @@ describe("global match XP", () => {
     )
     const {
       totalXp: _totalXp,
-      settings: { chessAppearance: _chessAppearance, ...settings },
+      settings: {
+        chessAppearance: _chessAppearance,
+        coachCollection: _coachCollection,
+        ...settings
+      },
       appearance: _appearance,
       unlockedAchievementIds: _unlockedAchievementIds,
       lastAcceptedResultReward: _lastAcceptedResultReward,

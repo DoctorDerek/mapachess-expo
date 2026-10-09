@@ -68,6 +68,7 @@ describe("Mapachess player data", () => {
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
         chessAppearance: { boardId: "current", pieceSetId: "current" },
+        coachCollection: "mapachito",
       },
     })
     expect(Object.keys(playerData.ratings).sort()).toEqual(

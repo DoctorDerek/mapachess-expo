@@ -78,3 +78,20 @@ Attribution: “Racoon Portrait Pack” by CaptainSkolot.
 Receipts and purchase records remain outside source control. Anyone creating or
 deploying this archive must independently possess the required licenses and
 review the current source terms.
+
+GREYFOX / KASHIR0 CHESS-ANIMALS FACES
+
+Creators: GreyFox and Kashir0
+Source and license: https://frfgreyfox.itch.io/chess-animal-asset-free
+Source terms reviewed October 9, 2026 permit personal and commercial project
+use with attribution. Reselling or distributing the downloaded or modified
+asset pack is prohibited. This is licensed game artwork, not open-source art.
+
+Fifteen unmodified static face PNGs supply the optional Animal faces coach.
+The sixteen-slot expression contract uses neutral Chimpanzee for Tiny Hurt;
+there is no dedicated Tiny Hurt asset. Mole is not included.
+Runtime filenames express Mapachess's interpreted reactions, not the creators'
+emotion labels. Exact source-to-runtime mapping is in
+greyfox-coach.provenance.json. Original packs, unused faces and source sheets
+remain private; this encrypted bundle is not a standalone asset distribution.
+The original archive filename is retained for delivery compatibility.

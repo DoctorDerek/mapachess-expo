@@ -454,6 +454,7 @@ describe("profile-owned match persistence bridge", () => {
       autoHintMode: "auto-piece-hints",
       challengeSetup,
       chessAppearance: { boardId: "current", pieceSetId: "current" },
+      coachCollection: "mapachito",
     })
     await persistProfileActiveMatch({
       actor,

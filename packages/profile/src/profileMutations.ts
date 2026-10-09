@@ -5,9 +5,6 @@ import accountActiveResult from "./activeResultAccounting.js"
 import applyChallengeMatchResult, {
   recordChallengeStart,
 } from "./challengeHistory.js"
-import decodeChessAppearance, {
-  type ChessAppearanceSettings,
-} from "./chessAppearanceSettings.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
 import {
@@ -19,6 +16,9 @@ import createInitialMapachessPlayerData, {
   type MapachessPlayerData,
   type PlayerEloRatingId,
 } from "./playerData.js"
+import validatePresentationPreferences, {
+  type PresentationPreferences,
+} from "./presentationPreferences.js"
 import applyStoryMatchResult from "./storyProgress.js"
 
 export const changePlayerAppearance = (
@@ -36,16 +36,16 @@ export const changePlayerAppearance = (
     revision: current.revision + 1,
   })
 
-export const changeChessAppearance = (
+export const changePresentationPreferences = (
   current: MapachessPlayerData,
-  chessAppearance: ChessAppearanceSettings,
+  preferences: PresentationPreferences,
 ): MapachessPlayerData =>
   Object.freeze({
     ...current,
     revision: current.revision + 1,
     settings: Object.freeze({
       ...current.settings,
-      chessAppearance: decodeChessAppearance(chessAppearance),
+      ...validatePresentationPreferences(preferences),
     }),
   })
 

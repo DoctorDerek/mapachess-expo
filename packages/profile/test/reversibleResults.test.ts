@@ -262,7 +262,11 @@ describe("one reversible active result", () => {
     const { contribution: _contribution, ...legacyReward } = reward
     const {
       appearance: _appearance,
-      settings: { chessAppearance: _chessAppearance, ...settings },
+      settings: {
+        chessAppearance: _chessAppearance,
+        coachCollection: _coachCollection,
+        ...settings
+      },
       ...legacyFields
     } = accepted
     const payload = {

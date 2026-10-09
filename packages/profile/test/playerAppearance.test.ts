@@ -165,7 +165,11 @@ describe("the saved personal appearance", () => {
     const current = createInitialMapachessPlayerData()
     const {
       appearance: _appearance,
-      settings: { chessAppearance: _chessAppearance, ...settings },
+      settings: {
+        chessAppearance: _chessAppearance,
+        coachCollection: _coachCollection,
+        ...settings
+      },
       ...fields
     } = current
     const legacy = { ...fields, settings, schemaVersion: 9 }
@@ -190,8 +194,11 @@ describe("the saved personal appearance", () => {
         clothColor: 3,
         animal,
       }
-      const { chessAppearance: _chessAppearance, ...settings } =
-        current.settings
+      const {
+        chessAppearance: _chessAppearance,
+        coachCollection: _coachCollection,
+        ...settings
+      } = current.settings
       const payload = { ...current, settings, schemaVersion: 10, appearance }
       const canonical = `["mapachess-player-data",10,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(appearance)}]`
       const integrity = {

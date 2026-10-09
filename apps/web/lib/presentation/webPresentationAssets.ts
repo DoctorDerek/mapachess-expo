@@ -1,4 +1,8 @@
-import { COACH_PORTRAITS } from "@mapachess/match-presentation/coach-portrait"
+import {
+  COACH_COLLECTIONS,
+  DEFAULT_COACH_COLLECTION,
+  type CoachCollectionId,
+} from "@mapachess/match-presentation/coach-portrait"
 import type { CoachPortraitLabel } from "@mapachess/match-presentation/coach-portrait"
 import createCelebrationRecipe from "@mapachess/match-presentation/create-celebration-recipe"
 import {
@@ -516,14 +520,19 @@ export const AVAILABLE_MAPACHITO_SPRITE_SOURCES: readonly MapachitoSpriteSourceI
       ])
     : Object.freeze([])
 
-export const AVAILABLE_COACH_PORTRAITS: readonly CoachPortraitLabel[] =
+export const availableCoachPortraits = (
+  collection: CoachCollectionId = DEFAULT_COACH_COLLECTION,
+): readonly CoachPortraitLabel[] =>
   LICENSED_PRESENTATION_ASSETS_ENABLED
-    ? Object.freeze(COACH_PORTRAITS.map(({ label }) => label))
+    ? COACH_COLLECTIONS[collection].portraits
     : Object.freeze([])
 
 export const coachPortraitSource = (
   label: CoachPortraitLabel,
+  collection: CoachCollectionId = DEFAULT_COACH_COLLECTION,
 ): string | null =>
-  LICENSED_PRESENTATION_ASSETS_ENABLED
-    ? presentationAssetSource(`coach/${label}.png`)
+  availableCoachPortraits(collection).includes(label)
+    ? presentationAssetSource(
+        `${COACH_COLLECTIONS[collection].directory}/${label}.png`,
+      )
     : null

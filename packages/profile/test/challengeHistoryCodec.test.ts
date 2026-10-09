@@ -67,7 +67,11 @@ describe("durable Challenge history", () => {
   it("migrates a version-five profile without inventing past records", () => {
     const {
       challengeHistory: omitted,
-      settings: { chessAppearance: _chessAppearance, ...settings },
+      settings: {
+        chessAppearance: _chessAppearance,
+        coachCollection: _coachCollection,
+        ...settings
+      },
       appearance: _appearance,
       legacyRatings,
       lastAcceptedResultReward: _lastAcceptedResultReward,
@@ -89,6 +93,7 @@ describe("durable Challenge history", () => {
     expect(result.data.settings).toEqual({
       ...old.settings,
       chessAppearance: { boardId: "current", pieceSetId: "current" },
+      coachCollection: "mapachito",
     })
   })
 
