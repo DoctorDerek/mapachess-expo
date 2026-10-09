@@ -247,6 +247,15 @@ export const CHESS_PIECE_SETS = Object.freeze([
     48,
   ),
   pieceSet(
+    "cosunosuke",
+    "Cosunosuke · gold / blue",
+    "cosunosuke",
+    "protected-chess",
+    ["white", "black"],
+    32,
+    32,
+  ),
+  pieceSet(
     "cat-chess",
     "Cat chess",
     "cat-chess",
@@ -299,6 +308,7 @@ export const CHESS_BOARDS = Object.freeze([
       128,
     ),
   ),
+  board("cosunosuke", "Cosunosuke · slate", "cosunosuke", 256),
   board("cat-chess", "Cat chess · green / white", "cat-chess", 744, "public"),
 ] as const)
 

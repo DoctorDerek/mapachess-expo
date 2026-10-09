@@ -243,6 +243,21 @@ export const ART_CREDITS = Object.freeze({
     ]),
     modifications: "Playable board areas and authored sprite cells extracted.",
   }),
+  cosunosuke: Object.freeze({
+    title: "32-bit Chess Asset Pack",
+    creator: "Cosunosuke",
+    contribution: "Gold and blue pixel-art chess pieces and slate board",
+    license: "Creator-authorized game use; no standalone asset redistribution",
+    licenseUrl: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
+    sources: Object.freeze([
+      Object.freeze({
+        label: "32-bit Chess Asset Pack",
+        url: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
+      }),
+    ]),
+    modifications:
+      "Individual piece cells extracted; original colors and frameless board retained.",
+  }),
   "cat-chess": Object.freeze({
     title: "Cat chess set",
     creator: "OgreofWart @ DarkEvil ink.",
