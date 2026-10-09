@@ -116,8 +116,25 @@ export default function useWebNavigationHistory(
         restoringInitialEntry = false
         const root = { ...destination, screen: "menu" as const, overlays: [] }
         writeEntry({ scope: currentScope, index: 0, destination: root }, true)
-        if (!sameDestination(root, destination))
-          writeEntry({ scope: currentScope, index: 1, destination }, false)
+        const base = { ...destination, overlays: [] }
+        let index = 0
+        if (!sameDestination(root, base))
+          writeEntry(
+            { scope: currentScope, index: ++index, destination: base },
+            false,
+          )
+        for (const [overlayIndex] of destination.overlays.entries())
+          writeEntry(
+            {
+              scope: currentScope,
+              index: ++index,
+              destination: {
+                ...destination,
+                overlays: destination.overlays.slice(0, overlayIndex + 1),
+              },
+            },
+            false,
+          )
         return
       }
       if (sameDestination(entry.destination, destination)) return
