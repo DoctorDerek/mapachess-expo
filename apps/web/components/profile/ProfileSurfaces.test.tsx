@@ -7,6 +7,7 @@ import createInitialMapachessPlayerData, {
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import RecoverableView from "../presentation/RecoverableView"
+import ArtCredits from "./ArtCredits"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
@@ -108,6 +109,32 @@ describe("web player-data controls", () => {
     expect(markup).toContain("Review Full Local Reset")
   })
 
+  it("credits both existing and prepared art with safe external source and license links", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ArtCredits, {
+        open: true,
+        onOpen: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    )
+    expect(markup).toContain("<details open=")
+    for (const creator of [
+      "SeethingSwarm",
+      "CaptainSkolot",
+      "AU_pixel",
+      "Alexis Luengas",
+      "Skoll",
+      "ToffeeCraft",
+      "Backterria",
+      "OgreofWart",
+    ])
+      expect(markup).toContain(creator)
+    expect(markup).toContain("CC0 1.0")
+    expect(markup).toContain("Close Credits")
+    expect(markup).toContain('rel="noopener noreferrer"')
+    expect(markup).toContain("opens in a new tab")
+  })
+
   it("omits last-known-good recovery when no valid copy exists", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileRecoveryPanel, {
@@ -165,6 +192,7 @@ describe("web player-data controls", () => {
     expect(markup).toContain("Reset Chess960 Elo")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("non-destructive preview")
+    expect(markup).toContain("Credits")
   })
 
   it("previews replacement data and defaults focus to cancellation", () => {
