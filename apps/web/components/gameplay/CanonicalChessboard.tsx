@@ -10,7 +10,6 @@ import type {
 } from "@mapachess/match/match-move"
 import type {
   MatchBoardPiece,
-  MatchColor,
   MatchPieceRole,
   MatchPosition,
   MatchSquare,
@@ -23,27 +22,7 @@ import {
 } from "../../lib/board/boardPresentation"
 import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsOverlay from "./BetterHintsOverlay"
-
-const PIECE_GLYPHS = Object.freeze({
-  black: Object.freeze({
-    bishop: "♝",
-    king: "♚",
-    knight: "♞",
-    pawn: "♟",
-    queen: "♛",
-    rook: "♜",
-  }),
-  white: Object.freeze({
-    bishop: "♗",
-    king: "♔",
-    knight: "♘",
-    pawn: "♙",
-    queen: "♕",
-    rook: "♖",
-  }),
-}) satisfies Readonly<
-  Record<MatchColor, Readonly<Record<MatchPieceRole, string>>>
->
+import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
 
 const PIECE_NAMES = Object.freeze({
   bishop: "bishop",
@@ -161,16 +140,6 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
 const baseSquareClasses =
   "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1rem,8cqw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-mapachito-orange focus-visible:ring-inset aria-disabled:cursor-default"
 
-const squareColorClasses = (rowIndex: number, columnIndex: number): string =>
-  (rowIndex + columnIndex) % 2 === 0
-    ? "bg-[var(--mapachess-board-light-square)] text-mapachito-charcoal"
-    : "bg-[var(--mapachess-board-dark-square)] text-mapachito-charcoal"
-
-const pieceColorClasses = (color: MatchColor): string =>
-  color === "white"
-    ? "text-mapachito-white [filter:drop-shadow(0_2px_1px_rgb(30_30_30/0.95))]"
-    : "text-mapachito-charcoal [filter:drop-shadow(0_1px_0_rgb(255_255_255/0.75))]"
-
 export default function CanonicalChessboard({
   disabled,
   hints,
@@ -277,9 +246,10 @@ export default function CanonicalChessboard({
       <div className="relative">
         <div
           aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
-          className="border-mapachito-charcoal grid aspect-square w-full grid-rows-8 overflow-hidden border"
+          className="border-mapachito-charcoal relative grid aspect-square w-full grid-rows-8 overflow-hidden border"
           role="grid"
         >
+          <ChessBoardArtwork orientation={orientation} />
           {rows.map((row, rowIndex) => (
             <div className="grid grid-cols-8" key={row[0]} role="row">
               {row.map((square, columnIndex) => {
@@ -312,10 +282,11 @@ export default function CanonicalChessboard({
                       baseSquareClasses,
                       checkedKing
                         ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset"
-                        : squareColorClasses(rowIndex, columnIndex),
-                      selected && "ring-mapachito-raspberry ring-4 ring-inset",
+                        : "text-mapachito-charcoal bg-transparent",
+                      selected &&
+                        "ring-mapachito-raspberry z-10 shadow-[inset_0_0_0_6px_var(--color-mapachito-white)] ring-4 ring-inset",
                       partOfLastMove &&
-                        "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)]",
+                        "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:shadow-[0_0_0_1px_var(--color-mapachito-charcoal),0_0_0_2px_var(--color-mapachito-white)]",
                     )}
                     data-square={square}
                     key={square}
@@ -334,25 +305,22 @@ export default function CanonicalChessboard({
                     {piece === undefined ? null : (
                       <span
                         aria-hidden="true"
-                        className={cx(
-                          "relative z-10 select-none",
-                          pieceColorClasses(piece.color),
-                        )}
+                        className="pointer-events-none relative z-10 size-full select-none"
                       >
-                        {PIECE_GLYPHS[piece.color][piece.role]}
+                        <ChessPiece color={piece.color} role={piece.role} />
                       </span>
                     )}
                     {legalDestination ? (
                       <span
                         aria-hidden="true"
-                        className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline)]"
+                        className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline),0_0_0_3px_var(--color-mapachito-white)]"
                         data-legal-destination-shape="square-outline"
                       />
                     ) : null}
                     {columnIndex === 0 ? (
                       <span
                         aria-hidden="true"
-                        className="text-mapachito-charcoal absolute top-1 left-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
+                        className="text-mapachito-charcoal bg-mapachito-white/90 pointer-events-none absolute top-0.5 left-0.5 z-10 rounded-sm px-0.5 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black"
                       >
                         {rank}
                       </span>
@@ -360,7 +328,7 @@ export default function CanonicalChessboard({
                     {rowIndex === 7 ? (
                       <span
                         aria-hidden="true"
-                        className="text-mapachito-charcoal absolute right-1 bottom-1 z-10 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black opacity-75"
+                        className="text-mapachito-charcoal bg-mapachito-white/90 pointer-events-none absolute right-0.5 bottom-0.5 z-10 rounded-sm px-0.5 font-mono text-[clamp(0.55rem,1.4vw,0.75rem)] font-black"
                       >
                         {file}
                       </span>
@@ -427,7 +395,7 @@ export default function CanonicalChessboard({
                   aria-label={moveChoiceLabel(move)}
                   className={
                     choosingPromotion
-                      ? "grid aspect-square place-items-center text-5xl"
+                      ? "grid aspect-square place-items-center p-1 text-5xl"
                       : "w-full"
                   }
                   disabled={disabled}
@@ -437,9 +405,7 @@ export default function CanonicalChessboard({
                   type="button"
                 >
                   {move.kind === "normal" && move.promotion !== null ? (
-                    <span aria-hidden="true">
-                      {PIECE_GLYPHS[position.turn][move.promotion]}
-                    </span>
+                    <ChessPiece color={position.turn} role={move.promotion} />
                   ) : (
                     moveChoiceLabel(move)
                   )}
