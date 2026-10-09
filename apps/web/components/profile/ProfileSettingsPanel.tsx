@@ -16,6 +16,7 @@ import {
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
+import ArtCredits from "./ArtCredits"
 import AutoHintModeChoices from "./AutoHintModeChoices"
 import MoveClassificationFaq from "./MoveClassificationFaq"
 import {
@@ -247,6 +248,12 @@ export default function ProfileSettingsPanel({
           </summary>
           <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
         </details>
+
+        <ArtCredits
+          open={overlays.includes("credits")}
+          onOpen={() => navigation.open("credits")}
+          onClose={navigation.back}
+        />
 
         {importIssue === null ? null : (
           <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">

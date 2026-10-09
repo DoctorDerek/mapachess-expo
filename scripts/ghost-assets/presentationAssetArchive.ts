@@ -19,11 +19,14 @@ import {
   ZipReader,
   ZipWriter,
 } from "@zip.js/zip.js/index-native.js"
+import {
+  LICENSED_ASSET_BUNDLE_USAGE,
+  LICENSED_ASSET_BUNDLES,
+  type LicensedAssetBundleId,
+} from "./licensedAssetBundles"
 
 export const LICENSED_PRESENTATION_ASSET_KEY_VARIABLE =
   "GHOST_ASSET_KEY_MAPACHESS"
-export const LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH =
-  "ghost_assets/seethingswarm-captainskolot-heroes99.zip"
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "../..")
@@ -36,21 +39,29 @@ const ASSET_FAILURE_MESSAGES = Object.freeze({
   incompleteArchive: "The licensed presentation archive is incomplete.",
   key: `${LICENSED_PRESENTATION_ASSET_KEY_VARIABLE} is required to encrypt or decrypt the presentation archive.`,
   missingArchive: "The licensed presentation asset archive is required.",
+  bundle: LICENSED_ASSET_BUNDLE_USAGE,
 })
 
-const resolvePresentationAssetPaths = (repositoryRoot: string) => ({
-  manifest: join(
-    repositoryRoot,
-    "ghost_assets/presentation-assets.manifest.json",
-  ),
-  archive: join(repositoryRoot, LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH),
+const resolvePresentationAssetPaths = (
+  repositoryRoot: string,
+  bundleId: LicensedAssetBundleId = "presentation",
+) => ({
+  bundleId,
+  manifest: join(repositoryRoot, LICENSED_ASSET_BUNDLES[bundleId].manifest),
+  archive: join(repositoryRoot, LICENSED_ASSET_BUNDLES[bundleId].archive),
   localEnvironment: join(repositoryRoot, "apps/web/.env.local"),
-  localSource: join(repositoryRoot, "vendor/presentation-assets"),
-  archiveSource: join(repositoryRoot, "vendor/presentation-assets-archive"),
+  localSource: join(
+    repositoryRoot,
+    LICENSED_ASSET_BUNDLES[bundleId].localSource,
+  ),
+  archiveSource: join(
+    repositoryRoot,
+    LICENSED_ASSET_BUNDLES[bundleId].archiveSource,
+  ),
   vendor: join(repositoryRoot, "vendor"),
   publicAssets: join(
     repositoryRoot,
-    "apps/web/public/generated/presentation-assets",
+    LICENSED_ASSET_BUNDLES[bundleId].publicAssets,
   ),
 })
 
@@ -66,7 +77,13 @@ const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
 
 export const describeLicensedPresentationAssetFailure = (
   error: unknown,
+  bundleId: LicensedAssetBundleId = "presentation",
 ): string => {
+  if (bundleId === "chess")
+    return describeLicensedPresentationAssetFailure(error).replaceAll(
+      "presentation",
+      "chess",
+    )
   if (error instanceof Error) {
     const knownMessage = Object.values(ASSET_FAILURE_MESSAGES).find(
       (message) => message === error.message,
@@ -259,7 +276,7 @@ const prepareArchiveSource = async (
 
   const temporaryExtractionRoot = join(
     paths.vendor,
-    `.presentation-assets-${process.pid}`,
+    `.${paths.bundleId}-assets-${process.pid}`,
   )
   await mkdir(paths.vendor, { recursive: true })
   await rm(temporaryExtractionRoot, { force: true, recursive: true })
@@ -297,8 +314,9 @@ const publishAssetFiles = async (
 
 export const prepareLicensedPresentationAssets = async (
   repositoryRoot: string = REPOSITORY_ROOT,
+  bundleId: LicensedAssetBundleId = "presentation",
 ): Promise<void> => {
-  const paths = resolvePresentationAssetPaths(repositoryRoot)
+  const paths = resolvePresentationAssetPaths(repositoryRoot, bundleId)
   loadLocalEnvironment(paths.localEnvironment)
 
   try {
@@ -324,16 +342,18 @@ export const prepareLicensedPresentationAssets = async (
 
 export const hasPublishedLicensedPresentationAssets = async (
   repositoryRoot: string = REPOSITORY_ROOT,
+  bundleId: LicensedAssetBundleId = "presentation",
 ): Promise<boolean> => {
-  const paths = resolvePresentationAssetPaths(repositoryRoot)
+  const paths = resolvePresentationAssetPaths(repositoryRoot, bundleId)
   const manifest = await readLicensedPresentationAssetManifest(paths.manifest)
   return hasValidAssetFiles(paths.publicAssets, manifest)
 }
 
 export const createLicensedPresentationAssetArchive = async (
   repositoryRoot: string = REPOSITORY_ROOT,
+  bundleId: LicensedAssetBundleId = "presentation",
 ): Promise<void> => {
-  const paths = resolvePresentationAssetPaths(repositoryRoot)
+  const paths = resolvePresentationAssetPaths(repositoryRoot, bundleId)
   loadLocalEnvironment(paths.localEnvironment)
   const assetKey = requireAssetKey()
   const manifest = await readLicensedPresentationAssetManifest(paths.manifest)

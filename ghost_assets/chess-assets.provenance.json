@@ -1,0 +1,4205 @@
+{
+  "prepared": "2026-10-08",
+  "files": [
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "king",
+      "source": "chessnut/wK.svg",
+      "sourceSha256": "e50809e91a15790c8d81d3f199bf569f0eb5a09c472a0415944e8c9e3cfcddd0",
+      "runtime": "chessnut/pieces/white-king.svg",
+      "sha256": "e50809e91a15790c8d81d3f199bf569f0eb5a09c472a0415944e8c9e3cfcddd0",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "queen",
+      "source": "chessnut/wQ.svg",
+      "sourceSha256": "2395664337bea8f13093858320cce6075d80f8086e6aa47e122ce556262b4d6b",
+      "runtime": "chessnut/pieces/white-queen.svg",
+      "sha256": "2395664337bea8f13093858320cce6075d80f8086e6aa47e122ce556262b4d6b",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "rook",
+      "source": "chessnut/wR.svg",
+      "sourceSha256": "e7fb8605a9318ef50e497a97680e4722d3eabc1e9ab6e4e9f594b8f2ca2022e5",
+      "runtime": "chessnut/pieces/white-rook.svg",
+      "sha256": "e7fb8605a9318ef50e497a97680e4722d3eabc1e9ab6e4e9f594b8f2ca2022e5",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "bishop",
+      "source": "chessnut/wB.svg",
+      "sourceSha256": "14cd4828240708d4d8431034537e2a5fb662d5054246fef681b172680cae9fcd",
+      "runtime": "chessnut/pieces/white-bishop.svg",
+      "sha256": "14cd4828240708d4d8431034537e2a5fb662d5054246fef681b172680cae9fcd",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "knight",
+      "source": "chessnut/wN.svg",
+      "sourceSha256": "adc921896bb6e6547828f2a6eb3d5195dd1b7ac8e8c1d2a9085583e4d4d81b68",
+      "runtime": "chessnut/pieces/white-knight.svg",
+      "sha256": "adc921896bb6e6547828f2a6eb3d5195dd1b7ac8e8c1d2a9085583e4d4d81b68",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "white",
+      "role": "pawn",
+      "source": "chessnut/wP.svg",
+      "sourceSha256": "0cf9dfe2f7b3ab11a7fdb13bf350f32e7a6c94e193fc023933e129ec02eeed8d",
+      "runtime": "chessnut/pieces/white-pawn.svg",
+      "sha256": "0cf9dfe2f7b3ab11a7fdb13bf350f32e7a6c94e193fc023933e129ec02eeed8d",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "king",
+      "source": "chessnut/bK.svg",
+      "sourceSha256": "220d75890b4368f0309bab0be40ac1dac6809508f5e1ecb119d35d225bf01f90",
+      "runtime": "chessnut/pieces/black-king.svg",
+      "sha256": "220d75890b4368f0309bab0be40ac1dac6809508f5e1ecb119d35d225bf01f90",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "queen",
+      "source": "chessnut/bQ.svg",
+      "sourceSha256": "0308426c9cfafabdce64600cbe90c193fc6ef7665f072b43d4dc82b5c1047670",
+      "runtime": "chessnut/pieces/black-queen.svg",
+      "sha256": "0308426c9cfafabdce64600cbe90c193fc6ef7665f072b43d4dc82b5c1047670",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "rook",
+      "source": "chessnut/bR.svg",
+      "sourceSha256": "ad18856a97edf53281acc40e1e6e4f7021ed01fad380fff7e09e63465b3bb462",
+      "runtime": "chessnut/pieces/black-rook.svg",
+      "sha256": "ad18856a97edf53281acc40e1e6e4f7021ed01fad380fff7e09e63465b3bb462",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "bishop",
+      "source": "chessnut/bB.svg",
+      "sourceSha256": "f835819861774dcacef7370ed2c23d4022ef6c2b17383a6a79c5f683d105e8b6",
+      "runtime": "chessnut/pieces/black-bishop.svg",
+      "sha256": "f835819861774dcacef7370ed2c23d4022ef6c2b17383a6a79c5f683d105e8b6",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "knight",
+      "source": "chessnut/bN.svg",
+      "sourceSha256": "acabd5a82666927d850a9eaab6f3766ef196a999dd3c6de0f927a8f12dacd356",
+      "runtime": "chessnut/pieces/black-knight.svg",
+      "sha256": "acabd5a82666927d850a9eaab6f3766ef196a999dd3c6de0f927a8f12dacd356",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "chessnut",
+      "color": "black",
+      "role": "pawn",
+      "source": "chessnut/bP.svg",
+      "sourceSha256": "073fb7b38b2ebe66ee54854fa492da6cc04e6d92bc679c860b77c254fa1d46ce",
+      "runtime": "chessnut/pieces/black-pawn.svg",
+      "sha256": "073fb7b38b2ebe66ee54854fa492da6cc04e6d92bc679c860b77c254fa1d46ce",
+      "width": 800,
+      "height": 800,
+      "crop": null,
+      "operation": "unchanged SVG"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "king",
+      "source": "skoll/ffffff-king.svg",
+      "sourceSha256": "9998abad05d237584dd973abf668d2b0465c61b22ee0c5417fe5b3d05544c33f",
+      "runtime": "skoll/pieces/white-king.svg",
+      "sha256": "90aff57cdc8bd664d8836abdd150ac4cd68dc434710fcd4671059fe0e5842c63",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "queen",
+      "source": "skoll/ffffff-queen.svg",
+      "sourceSha256": "08c71768438e3ce62dd552028e16f0878bb5706dcf70cab18982c90179268d9b",
+      "runtime": "skoll/pieces/white-queen.svg",
+      "sha256": "b4320bab87d1e23085de4e20939b6f8a921a2b588ceeaf11847c10d3f79be50b",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "rook",
+      "source": "skoll/ffffff-rook.svg",
+      "sourceSha256": "ba7cbc164c7f746f27986b84b54d21d853fef53d903f8c1b31d831e655b20a58",
+      "runtime": "skoll/pieces/white-rook.svg",
+      "sha256": "7c5b8688dea021c927e19cb60e231a1db7213be8b53e57dcdd81c78d39468251",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "bishop",
+      "source": "skoll/ffffff-bishop.svg",
+      "sourceSha256": "61ea728da4bef74698143c4869d5f9632ea8441d516e02996da530d6d1a3801b",
+      "runtime": "skoll/pieces/white-bishop.svg",
+      "sha256": "8a3b9842dcc669723d07f270559c87ac277d6ad7095316df32334bc3e478adb3",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "knight",
+      "source": "skoll/ffffff-knight.svg",
+      "sourceSha256": "191ff7f80cb83759cbd2ebcb998d9025d7e964dbb3b0d1b429c21d4be34827bc",
+      "runtime": "skoll/pieces/white-knight.svg",
+      "sha256": "159af5188abcd855e51f383b158f878299ac47ea7fce8a1dd4d79eba70feb42f",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "white",
+      "role": "pawn",
+      "source": "skoll/ffffff-pawn.svg",
+      "sourceSha256": "5be94fca1c081a823dac502abe6d82f65ba4d49e9f6906b94eeca571d64d55c1",
+      "runtime": "skoll/pieces/white-pawn.svg",
+      "sha256": "ab8c9bddbe8d256eb04f043b4e6332683925a61acefe4bd8cc2ab98d22d566f7",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "king",
+      "source": "skoll/000000-king.svg",
+      "sourceSha256": "a9fcbf6e00bf520273b8669ad2d1c9afed99e967c37b7ed4aa55a100cf62e9b6",
+      "runtime": "skoll/pieces/black-king.svg",
+      "sha256": "d0835471f881254f2ebe18addfa4d392a3fea28998e974bbab95cad5f07008b6",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "queen",
+      "source": "skoll/000000-queen.svg",
+      "sourceSha256": "af0e524e0c5f8e2aa25a59f978fef615c3b5361cb58f98e59394054287e5e003",
+      "runtime": "skoll/pieces/black-queen.svg",
+      "sha256": "1840e34c3a90c25cafe03b5a23039389e34243d40ce6781dba121f1f1563b375",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "rook",
+      "source": "skoll/000000-rook.svg",
+      "sourceSha256": "f49544c6e039ae0d9b97dc96140ad3554e004fe8878490492a8cd7569631f2bd",
+      "runtime": "skoll/pieces/black-rook.svg",
+      "sha256": "44cf3a4173cd934dacbf46045eeb59ee7ca96ca5f3848aeeb57c79fce303c129",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "bishop",
+      "source": "skoll/000000-bishop.svg",
+      "sourceSha256": "c33caffd37c636e74de95f308487228038a07d5bb772cfab1e129a96081c6261",
+      "runtime": "skoll/pieces/black-bishop.svg",
+      "sha256": "bb72e173c72a3ee6cb25cbf68eacd3b9c860ad8bb5c6521f8d31090b6e2cb14c",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "knight",
+      "source": "skoll/000000-knight.svg",
+      "sourceSha256": "4deda80ff90429c26b5c55f149b6d4ba084e25acd456e9e02b0d0181f6521e04",
+      "runtime": "skoll/pieces/black-knight.svg",
+      "sha256": "dc1f9f512a8a0ef26f6602736d6f987f09f6c624600b84e5dd984ee3e2b78063",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "skoll",
+      "color": "black",
+      "role": "pawn",
+      "source": "skoll/000000-pawn.svg",
+      "sourceSha256": "44a75152ecd97987b4a83e2e721222e84be562f8b726b01ece9fe7ef0057d2f3",
+      "runtime": "skoll/pieces/black-pawn.svg",
+      "sha256": "6376e506e2a25ddbf1695c253b9e3b3f20779a7efc66a9bf50f91f3d7ee14f7e",
+      "width": 512,
+      "height": 512,
+      "crop": null,
+      "operation": "contrasting 12-unit outline; original silhouette retained"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingWhite.png",
+      "sourceSha256": "703ab0ef4c721bc01a0e429d570abb79434b09dd17e12eca82bd92e8d8f86e9b",
+      "runtime": "toffee-classical/pieces/white-king.png",
+      "sha256": "d7e04ec0f8b3facb79974d20c33a7fc6295f5e02564e8a8478c8797d319ac445",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenWhite.png",
+      "sourceSha256": "faa0db19f3793f879d7db59c73e1b2dc6bb2933e8ab932ece67ed2d9f31156ed",
+      "runtime": "toffee-classical/pieces/white-queen.png",
+      "sha256": "b51b10054e735825204d1573a5ce4b00e2a3a6cd664a18c6d36a5af50d8aa68f",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookWhite.png",
+      "sourceSha256": "a77e63ca706103fd6983ab4bcb386eccde7d7cf9ed06799ca23893e835c3d61b",
+      "runtime": "toffee-classical/pieces/white-rook.png",
+      "sha256": "cbc0787e3a332887339d9998252105c086c9dcae48e6e77fbc24596c596bae5b",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopWhite.png",
+      "sourceSha256": "65e3d81a1e87211203505143566edc9454fb1348e4e5abcd0dd8f495db30d790",
+      "runtime": "toffee-classical/pieces/white-bishop.png",
+      "sha256": "516032c98b6f9b8bf02ccef58d80028777e09d7c02c1b44eddfcaf0e33461629",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightWhite.png",
+      "sourceSha256": "0e6d508abde970771801cebdb58e809703a4b2afb20847ac30c0d5d789de8760",
+      "runtime": "toffee-classical/pieces/white-knight.png",
+      "sha256": "5e7896eddbbcfb54654fe9c2f7dcb2abf841c2473c30992cb8d7609790996605",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "white",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnWhite.png",
+      "sourceSha256": "00895d6dfe5f6841094141f62e33e2c1a41f3fa716cffc32e2cb155a33d94ad4",
+      "runtime": "toffee-classical/pieces/white-pawn.png",
+      "sha256": "3ff566d46c4f02c9cd4743e675297134bbde6f10d133f5cab87ad4e4e42d1dc7",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingBlack.png",
+      "sourceSha256": "ba141662712b8affcdbe98c15e0f75c7773fb55655eee9cc6c3d782ca2b9dcc0",
+      "runtime": "toffee-classical/pieces/black-king.png",
+      "sha256": "95cc30ca96072bbf7a72eade6e9180b4f7d24d6c73c1a78621957fbe19ceb4dd",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenBlack.png",
+      "sourceSha256": "e23484bea256f40a9f99462e897f876d8e04bf770d4a83c83296a0ece8388af8",
+      "runtime": "toffee-classical/pieces/black-queen.png",
+      "sha256": "2423742ac761a0851434aaeb8991ad2623782b81ef0f74259dee324898f572fc",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookBlack.png",
+      "sourceSha256": "d0e762050beeac18bd9704b5891c7e713e9399df885cbc66c43d5a15f198f9c4",
+      "runtime": "toffee-classical/pieces/black-rook.png",
+      "sha256": "2a3568377479fc7563f0d516b83c6a7d08e00b863b7922c1b47b6ea540185b99",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopBlack.png",
+      "sourceSha256": "713ce6376c67472963675ba21006ba2151bbcff34dbe564c0f90c9c6dcdbb125",
+      "runtime": "toffee-classical/pieces/black-bishop.png",
+      "sha256": "c42e0b80450499cdb91ed0f578655e391b61432f06904cde83baaef19ca38132",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightBlack.png",
+      "sourceSha256": "d98a6dbf80cad43aab1006d380add7853c9d0e88e9bb3c37f0eb00fb043da262",
+      "runtime": "toffee-classical/pieces/black-knight.png",
+      "sha256": "98836a661edc6565ab8187db57a3ba7924477aa659440e76c34c0b508dbd0ab1",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical",
+      "color": "black",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnBlack.png",
+      "sourceSha256": "52e02787edb1458460c305f39320cf669e4a3fc713cb7c75298171f81e651984",
+      "runtime": "toffee-classical/pieces/black-pawn.png",
+      "sha256": "46d94ed5d600976b7dc6ca4ab61d75ced0cb62938216b7497fefb27cf5b7b8cb",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingWhite.png",
+      "sourceSha256": "703ab0ef4c721bc01a0e429d570abb79434b09dd17e12eca82bd92e8d8f86e9b",
+      "runtime": "toffee-classical/pieces/white-king.png",
+      "sha256": "d7e04ec0f8b3facb79974d20c33a7fc6295f5e02564e8a8478c8797d319ac445",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenWhite.png",
+      "sourceSha256": "faa0db19f3793f879d7db59c73e1b2dc6bb2933e8ab932ece67ed2d9f31156ed",
+      "runtime": "toffee-classical/pieces/white-queen.png",
+      "sha256": "b51b10054e735825204d1573a5ce4b00e2a3a6cd664a18c6d36a5af50d8aa68f",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookWhite.png",
+      "sourceSha256": "a77e63ca706103fd6983ab4bcb386eccde7d7cf9ed06799ca23893e835c3d61b",
+      "runtime": "toffee-classical/pieces/white-rook.png",
+      "sha256": "cbc0787e3a332887339d9998252105c086c9dcae48e6e77fbc24596c596bae5b",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopWhite.png",
+      "sourceSha256": "65e3d81a1e87211203505143566edc9454fb1348e4e5abcd0dd8f495db30d790",
+      "runtime": "toffee-classical/pieces/white-bishop.png",
+      "sha256": "516032c98b6f9b8bf02ccef58d80028777e09d7c02c1b44eddfcaf0e33461629",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightWhite.png",
+      "sourceSha256": "0e6d508abde970771801cebdb58e809703a4b2afb20847ac30c0d5d789de8760",
+      "runtime": "toffee-classical/pieces/white-knight.png",
+      "sha256": "5e7896eddbbcfb54654fe9c2f7dcb2abf841c2473c30992cb8d7609790996605",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "white",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnWhite.png",
+      "sourceSha256": "00895d6dfe5f6841094141f62e33e2c1a41f3fa716cffc32e2cb155a33d94ad4",
+      "runtime": "toffee-classical/pieces/white-pawn.png",
+      "sha256": "3ff566d46c4f02c9cd4743e675297134bbde6f10d133f5cab87ad4e4e42d1dc7",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingDarkBrown.png",
+      "sourceSha256": "bcd4cbecb7657e524857e85fea5ff102e41566628b69c071f2dc4969abba879e",
+      "runtime": "toffee-classical/pieces/darkbrown-king.png",
+      "sha256": "d4e742ec8e64dfda932d85d68d914f003d395aebbf2a4ec75daa4972fb84ac56",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenDarkBrown.png",
+      "sourceSha256": "7e322b8ca8abef5a774f802d0fb0ea9bda5ba16517ed8a2da86b011b846a5e9b",
+      "runtime": "toffee-classical/pieces/darkbrown-queen.png",
+      "sha256": "1bc59e4ce46d65054386dc203a1a81bc6cc6ac7cca564058090d0f7175af3512",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookDarkBrown.png",
+      "sourceSha256": "2ff389725d690f645d3e635bf69b7e48e31b75f5fdc090772f2cd3b7b625a74d",
+      "runtime": "toffee-classical/pieces/darkbrown-rook.png",
+      "sha256": "9d6709fbee0177bd8973bd9644c3d5bc42adb325510ec46c3488a28b32bb657d",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopDarkBrown.png",
+      "sourceSha256": "1dccb19e7b7fbda4b39eebcba545ac111a06ba339b2558d8a7bc70ecb4d5d5c7",
+      "runtime": "toffee-classical/pieces/darkbrown-bishop.png",
+      "sha256": "1c5c817c870285aecfc28efceda767443999f50eb12ff851a420f4e6f10e8eea",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightDarkBrown.png",
+      "sourceSha256": "6f457c4e27ecb6896cd4b1e7b9c0d88819610b1585415e17cb644add2f6366dd",
+      "runtime": "toffee-classical/pieces/darkbrown-knight.png",
+      "sha256": "9225428acbe7a2ed46ef5639ca002658e49e1e5910391d483794b10d117520b5",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-brown",
+      "color": "black",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnDarkBrown.png",
+      "sourceSha256": "4bfedb4604eec7c5ab62a56adc875b160b02c9c75ec4bffe8334ba264458278a",
+      "runtime": "toffee-classical/pieces/darkbrown-pawn.png",
+      "sha256": "72acd9943ffdf6c4fc87b3faa07fd192f16e75c0efdb5a3d374de9da11d65316",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingDarkBrown.png",
+      "sourceSha256": "bcd4cbecb7657e524857e85fea5ff102e41566628b69c071f2dc4969abba879e",
+      "runtime": "toffee-classical/pieces/darkbrown-king.png",
+      "sha256": "d4e742ec8e64dfda932d85d68d914f003d395aebbf2a4ec75daa4972fb84ac56",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenDarkBrown.png",
+      "sourceSha256": "7e322b8ca8abef5a774f802d0fb0ea9bda5ba16517ed8a2da86b011b846a5e9b",
+      "runtime": "toffee-classical/pieces/darkbrown-queen.png",
+      "sha256": "1bc59e4ce46d65054386dc203a1a81bc6cc6ac7cca564058090d0f7175af3512",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookDarkBrown.png",
+      "sourceSha256": "2ff389725d690f645d3e635bf69b7e48e31b75f5fdc090772f2cd3b7b625a74d",
+      "runtime": "toffee-classical/pieces/darkbrown-rook.png",
+      "sha256": "9d6709fbee0177bd8973bd9644c3d5bc42adb325510ec46c3488a28b32bb657d",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopDarkBrown.png",
+      "sourceSha256": "1dccb19e7b7fbda4b39eebcba545ac111a06ba339b2558d8a7bc70ecb4d5d5c7",
+      "runtime": "toffee-classical/pieces/darkbrown-bishop.png",
+      "sha256": "1c5c817c870285aecfc28efceda767443999f50eb12ff851a420f4e6f10e8eea",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightDarkBrown.png",
+      "sourceSha256": "6f457c4e27ecb6896cd4b1e7b9c0d88819610b1585415e17cb644add2f6366dd",
+      "runtime": "toffee-classical/pieces/darkbrown-knight.png",
+      "sha256": "9225428acbe7a2ed46ef5639ca002658e49e1e5910391d483794b10d117520b5",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "white",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnDarkBrown.png",
+      "sourceSha256": "4bfedb4604eec7c5ab62a56adc875b160b02c9c75ec4bffe8334ba264458278a",
+      "runtime": "toffee-classical/pieces/darkbrown-pawn.png",
+      "sha256": "72acd9943ffdf6c4fc87b3faa07fd192f16e75c0efdb5a3d374de9da11d65316",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "king",
+      "source": "toffee-classical/ChessZip/Pieces/KingBlack.png",
+      "sourceSha256": "ba141662712b8affcdbe98c15e0f75c7773fb55655eee9cc6c3d782ca2b9dcc0",
+      "runtime": "toffee-classical/pieces/black-king.png",
+      "sha256": "95cc30ca96072bbf7a72eade6e9180b4f7d24d6c73c1a78621957fbe19ceb4dd",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "queen",
+      "source": "toffee-classical/ChessZip/Pieces/QueenBlack.png",
+      "sourceSha256": "e23484bea256f40a9f99462e897f876d8e04bf770d4a83c83296a0ece8388af8",
+      "runtime": "toffee-classical/pieces/black-queen.png",
+      "sha256": "2423742ac761a0851434aaeb8991ad2623782b81ef0f74259dee324898f572fc",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "rook",
+      "source": "toffee-classical/ChessZip/Pieces/RookBlack.png",
+      "sourceSha256": "d0e762050beeac18bd9704b5891c7e713e9399df885cbc66c43d5a15f198f9c4",
+      "runtime": "toffee-classical/pieces/black-rook.png",
+      "sha256": "2a3568377479fc7563f0d516b83c6a7d08e00b863b7922c1b47b6ea540185b99",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "bishop",
+      "source": "toffee-classical/ChessZip/Pieces/BishopBlack.png",
+      "sourceSha256": "713ce6376c67472963675ba21006ba2151bbcff34dbe564c0f90c9c6dcdbb125",
+      "runtime": "toffee-classical/pieces/black-bishop.png",
+      "sha256": "c42e0b80450499cdb91ed0f578655e391b61432f06904cde83baaef19ca38132",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "knight",
+      "source": "toffee-classical/ChessZip/Pieces/NightBlack.png",
+      "sourceSha256": "d98a6dbf80cad43aab1006d380add7853c9d0e88e9bb3c37f0eb00fb043da262",
+      "runtime": "toffee-classical/pieces/black-knight.png",
+      "sha256": "98836a661edc6565ab8187db57a3ba7924477aa659440e76c34c0b508dbd0ab1",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "classical-earth",
+      "color": "black",
+      "role": "pawn",
+      "source": "toffee-classical/ChessZip/Pieces/PawnBlack.png",
+      "sourceSha256": "52e02787edb1458460c305f39320cf669e4a3fc713cb7c75298171f81e651984",
+      "runtime": "toffee-classical/pieces/black-pawn.png",
+      "sha256": "46d94ed5d600976b7dc6ca4ab61d75ced0cb62938216b7497fefb27cf5b7b8cb",
+      "width": 32,
+      "height": 32,
+      "crop": null,
+      "operation": "preserve authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "king",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-king.png",
+      "sha256": "e146a3c1316126d6867924b78111d9760a36e4bf466feab89e741eb58ddbc8c7",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "queen",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-queen.png",
+      "sha256": "c689bb12229d9149bc072cfcc33eb337f5df3a846963e2d641877fa806b41cb3",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "rook",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-rook.png",
+      "sha256": "e9801c535a49c8ff9cee11c46f6d0804f140048e349f42d623ed4f0f2464f3a6",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "bishop",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-bishop.png",
+      "sha256": "6ecd6ec7d555b517a063777241b5936e465acdce856ea0172f71c9ff6b401205",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "knight",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-knight.png",
+      "sha256": "9cd72957f61f1ccb7a9d633c0b00279182e423681b612370459fa9daad04d6b9",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "white",
+      "role": "pawn",
+      "source": "toffee-wood/WoodChess/Pieces/LightWoodPieces.png",
+      "sourceSha256": "a7e3abdbe8fd9cdb2e2f1015ea5d17c0ddabf193000f081a35b57d432d1faea8",
+      "runtime": "toffee-wood/pieces/toffee-wood/white-pawn.png",
+      "sha256": "dcdf8cc0967c24441a3c489c2370a849a95987c161c84469f0dba3ec50096109",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "king",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-king.png",
+      "sha256": "0285241601f9c47f205a13126128645cc0d416548e009cadd1293ab80269d844",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "queen",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-queen.png",
+      "sha256": "a265c42c2c3c3a1a8e0af92e7f801cce6b547299dadf3b5e8b3cec719c98aad1",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "rook",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-rook.png",
+      "sha256": "727fe1302d0c115f9d7d089f4820bad6ca873bb807381d6cdafdf4283c3a3b62",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "bishop",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-bishop.png",
+      "sha256": "bbbf3a0e5be2ed15311689f6771a76bc66f92d1959fa6bffba9346399b9008cd",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "knight",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-knight.png",
+      "sha256": "e1f88a5b66b2fde2ccb9b97841dbe27de9a9a73f87007a5dec7c1214a3ea7f8a",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-wood",
+      "color": "black",
+      "role": "pawn",
+      "source": "toffee-wood/WoodChess/Pieces/DarkWoodPieces.png",
+      "sourceSha256": "9819c6d575e7ba48425fc75fee4afd1546829f5399832bf7d16422abca760abe",
+      "runtime": "toffee-wood/pieces/toffee-wood/black-pawn.png",
+      "sha256": "e982ed3ca0134a9ab4a42d3c30c51fb6b8a26a642c20b279acc07fe88776eef4",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "king",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-king.png",
+      "sha256": "aa6b9091c3fb06ab7b7fc80efa7a0b7ea36815506525a368c92612e655ccb54e",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "queen",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-queen.png",
+      "sha256": "6c8d083646ee32ee65b8f599e87e539eb4eb6d179d2705d31ef924713eb145d5",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "rook",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-rook.png",
+      "sha256": "8275a847b9ee73896d1a91cceca2f6d8d2bbae13de40e68859758ba28b620265",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "bishop",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-bishop.png",
+      "sha256": "3fdd7749c23d9a19d1b0fd1b972245f90dcb55bb51a4a6c15ead0e2a4dfe61ac",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "knight",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-knight.png",
+      "sha256": "99d8ce231f176ab092a1301e4646009797f09f3b16ecc79eae6f5f696be302bb",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "white",
+      "role": "pawn",
+      "source": "toffee-ice/IceChess/Pieces/LightIcePieces.png",
+      "sourceSha256": "1fecde66b49eac9b33420f8caa5af6202121f50fd981f0e649f9d11a2cf0206d",
+      "runtime": "toffee-ice/pieces/toffee-ice/white-pawn.png",
+      "sha256": "b6112eb4af18953d639373afffdf66d32fb3a055ac8e98679c6eabb42138a4a8",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "king",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-king.png",
+      "sha256": "8f7ec4d235adb0278e8379a92e0b34901255571afdcff13c65c27232b859228e",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "queen",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-queen.png",
+      "sha256": "79cc3784d4eff54b5c45b7b6241f244cfde351f8fa0d46f6bae9429527a70a44",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "rook",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-rook.png",
+      "sha256": "1aedcd8f41716daef6cbce343bb43a32c5401773f368cd72d61a563ab78a11c7",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "bishop",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-bishop.png",
+      "sha256": "97753c7d4e462e4509c41a8040fe842d9eca989f421e2e196e54f074b9dd0587",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "knight",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-knight.png",
+      "sha256": "4c56722a540f42162bab8ddfa158e3a23fbd2ebeac16a75c7ec61c0c2817004b",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "toffee-ice",
+      "color": "black",
+      "role": "pawn",
+      "source": "toffee-ice/IceChess/Pieces/DarkIcePieces.png",
+      "sourceSha256": "d42c88e09841b3f1bcead58a073468663348b7f09ce686ca1bb8329a99bf2681",
+      "runtime": "toffee-ice/pieces/toffee-ice/black-pawn.png",
+      "sha256": "ddc0984c361f4d5fb28e0e998e8197465243223cad25e629089c0f4e975235d1",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-king.png",
+      "sha256": "dd5a71429a2d3d34fc284bb4f5dabcee1c9311dac466d02bf0175291d0d09071",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-queen.png",
+      "sha256": "8341242388cc20136ea92f04c55a4acb9368c8c11d0fccb285c6163e7a36795f",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-rook.png",
+      "sha256": "e3dca9171d8e38d3122ab13cb7ea82f08a25cf44ae0974f210c09ef0b8968f37",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-bishop.png",
+      "sha256": "6dabd408d6952025e6420d3b9d8be9f2a6c05d0c2eaf7ae5527544e7a8414759",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-knight.png",
+      "sha256": "885f3c8d8ba1771559d6fcdca1d7e2e6ceb063e8f3a66e40e8603b775130fa41",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/white-pawn.png",
+      "sha256": "3011c4f4ff111c8823c3488a21a2db655fd2ce32688a88e922ee9effe0a4c738",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-king.png",
+      "sha256": "9e5e87805a9685e98493d41a36361c134a2a6c5755db25bd7d232eaecbb4280f",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-queen.png",
+      "sha256": "47d6a0115c58d5034647685c4055334c4ed76e4e2b9244f7a8304fbdb1ae0ba1",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-rook.png",
+      "sha256": "84876859cab6cfb0d1e70fb866f162eebec08414e1f3c538bf950066567ad54f",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-bishop.png",
+      "sha256": "532da33481eeaf0dc0b2f468f9324b259f4f9a2dd0aa55d1d693132812f44ee9",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-knight.png",
+      "sha256": "aa79901279bec5ce5781fbb8be62c1d45b0a190e6cf3e50e48b974c756c1822d",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-1-bit",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess 1-Bit.png",
+      "sourceSha256": "aac20a9759a5e55c1c96074b7fabe48f166691e902644382864798faa85cdcc7",
+      "runtime": "backterria/pieces/back-1-bit/black-pawn.png",
+      "sha256": "121dac2d5731ddbf98c7c28dc24abdb5b50d91cb5726efcd055a5833fa6e339b",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-king.png",
+      "sha256": "a4a30fa14287c4084a0cf73b406ab844d952f7a5155b262cc76bb6d927c78017",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-queen.png",
+      "sha256": "cea92832bd66b501101e679deb94e0ab7710371ecfe042d6723532bf2549ed5e",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-rook.png",
+      "sha256": "00fb46677c7ca4ffaea6265ce7874fdadacae29778ed407e242acdab9e8a0d3b",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-bishop.png",
+      "sha256": "0967ceb05d5f5eea72d5dada6eb004774fbd1273f3003acf73af700f97ba2e69",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-knight.png",
+      "sha256": "3bff49cf4b127ea8b8df8da80463c9dbbf81b0e0821d38071f218fb6c75b00a4",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/white-pawn.png",
+      "sha256": "dedaa23cce6edb8334d3eacb2a3655281b3f72617badf77cdb6c8f9afcfee2af",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-king.png",
+      "sha256": "298ebd17cc081113418a70011ffeb7a0e1de11e1ebd9168177a5f99cc9dd5aa4",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-queen.png",
+      "sha256": "3897fc30a16d66907600a4d0ca3802f7c4231823265e187bf977c24c94c49a3c",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-rook.png",
+      "sha256": "f10589f67e0df5e68baffed08f28f04f696fc9f6d53af964ecbd50554ef54997",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-bishop.png",
+      "sha256": "a2d4cfa7de3323f7b4250a241569d650a4548840137d8cd1a05d87ec1f427a63",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-knight.png",
+      "sha256": "f3c78d10416d471b6a4501d6c2f0a8b11f509626b2a66e28c01ddcbbc36b60a0",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-plain",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - PlainI.png",
+      "sourceSha256": "66269ef40663e48ce79386bf29e1a2517f0979a820839205cc6c280c2a9b3f3a",
+      "runtime": "backterria/pieces/back-plain/black-pawn.png",
+      "sha256": "9717ccbd8983c4e8f05e5de215c6e9ebd30d3ebd62a38c8321038bce405827f6",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-king.png",
+      "sha256": "db30397565b2f43f06b4d52a2f36c5335779e71baa4759764ad673e014afc00a",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-queen.png",
+      "sha256": "11fcf46f0e39ad843f5bccfb73ca43a68acaa6e3fbb04bdff575b1bca3cb8076",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-rook.png",
+      "sha256": "5fd70772961daf0fde2d333e7666c076b9a09ddc5469dcb74d28dcc5fc1947ee",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-bishop.png",
+      "sha256": "20e422283d94a27c880b68e34a369667ee9cd86039c02126cfbfd36c57cc9953",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-knight.png",
+      "sha256": "7fa95e6d1b4a0157b614a0850dffbaa155c799ccbf4a6cc028490c7b319ef909",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/white-pawn.png",
+      "sha256": "f7fcd664aeab3d5262a5a01419be79066bda2043dc11997d630cbb34c82e8733",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-king.png",
+      "sha256": "63b60e5f55babfe49d0e887757c0619777b6b6a0e79ba1f8504b8e2f61b7c68b",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-queen.png",
+      "sha256": "8272783a682403e00916eb4945799edbd1f2124ee3d45d76c6c478de86152f5a",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-rook.png",
+      "sha256": "e10381b353f134cce62fc591c7f2a6cd8ac8ba3787483d33c7304a63c6c9e036",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-bishop.png",
+      "sha256": "5d6d55e72b5c21c7befb855fdd55ab4e5716a0e92e44ef28d3e12e4d5e98f3c8",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-knight.png",
+      "sha256": "cb04e50a75ab8383fc97bcaa5bae96c36eaef87c59f4f290bfb68b9a2311c6a6",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-wood",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Wood.png",
+      "sourceSha256": "894c236be2c058014148859605bf87a4aa8e4450fcada6a0837c75f8176e8110",
+      "runtime": "backterria/pieces/back-wood/black-pawn.png",
+      "sha256": "9d3b3db70c9ba0a03c582daacaaada53bd4f38e407c3d7adb584078676c4bede",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-king.png",
+      "sha256": "0dcb4511ef292df111e83dc21bc4f5802225a84f0c750ea79dd667c2dd214b97",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-queen.png",
+      "sha256": "5cd08bca472cc3e0713567f7bf75154e417b56ca75106c3ff4c7df4d79aae92e",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-rook.png",
+      "sha256": "e413b614a70e2867ed35ca27dcfb5c0e8a5b88e9436dc7e12d98f7cfe0dbfc4d",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-bishop.png",
+      "sha256": "ae28fd34b6a30ac1e73687da54069e4970ca44d0e298ae15bf73d3b358bb7f71",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-knight.png",
+      "sha256": "7631a603963a29adebf9d2c622e53f56562f06c5e66ddf219611b19e8e496c43",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/white-pawn.png",
+      "sha256": "9f1459738ad9069bc44db538df62ded5489c200e8254a78c00b1a89fcfcf78e8",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-king.png",
+      "sha256": "3467a9a13cae28b137910db0e2ae30216fccf5347a81d374ace73eb22c3fac01",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-queen.png",
+      "sha256": "fb1efc6ba52ca5f791001f9f8fea2fe1596f86fbd0daa48db8f3d72c6138dff4",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-rook.png",
+      "sha256": "bd17e22792abd27edae74f2215c0cadd160d345e76a945dddfb385175db36a97",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-bishop.png",
+      "sha256": "79fc1c72c0e9d0d7eb716cf958806448749f4d368148b1c1ce9490923bec4473",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-knight.png",
+      "sha256": "f09362c9047b0106bd9707b9c19adfe85a993a966a1c2dc7f910ad602b15213a",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-gold-bronze",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Gold-BronzeI.png",
+      "sourceSha256": "486e6dca16bb9b9f62f72e72a4753c095ea88394606bc83f3eb0ad595c06b07d",
+      "runtime": "backterria/pieces/back-gold-bronze/black-pawn.png",
+      "sha256": "91676a36bf847aecef6e220264038c933ce6007d837ab0364f702d4e2de30ebc",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-king.png",
+      "sha256": "274479733f05a8d71e92ebb19b9c30029ac31950a1b948e2a2f93c176cf64a2a",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-queen.png",
+      "sha256": "40ba9b297ed4d3d3bd9617edaf29399b229766f0ecf3555cc45a1e6164c9aa81",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-rook.png",
+      "sha256": "49a99dcee0265c430c31beaea89caa470e413b5d401c5c4169144a84059804c4",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-bishop.png",
+      "sha256": "a3841751ebe86effdc540bf29dd3564424a12d60a2e40c7ea6d873f266209b47",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-knight.png",
+      "sha256": "ee930656aca518f6596cee50ce0177e70fc522d916bc751e4051c3dbc7775c98",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/white-pawn.png",
+      "sha256": "281a96b4ee42d1e61b03c3eda163afe843b53aae72e0563e91aa27a1435630cd",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-king.png",
+      "sha256": "942e73b11da3a3481addf5a52f1763b220ff2c7846536725db0c60bfa9701912",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-queen.png",
+      "sha256": "307f9a0b5886de76dc9d223afc6ee9986ddf125436a93202f5f2ed35040394fe",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-rook.png",
+      "sha256": "fc5b07567291a6d74857899d9bd9deba1bd0c80df7ccae279110ec43624f5a8e",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-bishop.png",
+      "sha256": "1e976b6d92d249c5036a5f322b2e4e4439f513f342a4d95d6e3527c85c6cc223",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-knight.png",
+      "sha256": "2f1bac98ef0287cb5543b89997e5954c3e993f410e03f15d5835ea2564c5b8ae",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-glass",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Glass.png",
+      "sourceSha256": "f490d97b28222462b820962c66cb12c90caaf3a2ddb3179950ad5c1b9162f52c",
+      "runtime": "backterria/pieces/back-glass/black-pawn.png",
+      "sha256": "a978474a9a46b45c3770bc20f795fd86e6857d1306ad2ae35650b64d6b8de309",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-king.png",
+      "sha256": "8279619cb405427f52c20af77636182c56a0350de066bf3eb9f1aa57c7429f15",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-queen.png",
+      "sha256": "f5c636e45fab1f6d994735876d7b1355adfbdbce1390246092ea40ffa38c7076",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-rook.png",
+      "sha256": "e6c44fcddefc5c9e67462e14530dce692f7b1dc651e10240a90c661585554330",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-bishop.png",
+      "sha256": "da1f10e5de298c1cf1be83f76775559f865d2c2d9b56055f0520dd4314ee9f60",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-knight.png",
+      "sha256": "81e30ba2bcf36b64b99dbb2e08e372186aeca942f490e9361ddcfa012672f176",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/white-pawn.png",
+      "sha256": "ae73dedfae969ee8f0c6c84b32ae84ccae6b850d336091bf6667d4b54f36d07f",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-king.png",
+      "sha256": "4bfef3752bce0a8754cfbb1787e98aa407bd94eddfe52a27d48d20cbd0f02756",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-queen.png",
+      "sha256": "fbc8a4849313297e5a6a4ab39e270ed53ecafa2d8d3eb747a5aeb149cacce944",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-rook.png",
+      "sha256": "b25cea729af247850d8dd7ecaa986d6302a0985b65e28abd1eb09e00af063a94",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-bishop.png",
+      "sha256": "fb462dd3f9a5aec3c7356125dc48bcb9935c886f798a4de9cd7dca2368bba0a5",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-knight.png",
+      "sha256": "2001cbc4ad00e25e586a1e01a6c6309839c377fdfeeda990468a4ce1bf07a12e",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-stone",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Stone.png",
+      "sourceSha256": "3ee423a1a0243c2baca8fbabacadda9dcbc81b5c614e189501e2b4017342220f",
+      "runtime": "backterria/pieces/back-stone/black-pawn.png",
+      "sha256": "a431734575bbf51e3c162a0af721bf7dea4f42c7415a4036073041959b32263b",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-king.png",
+      "sha256": "57539e45a8dbaa5c65740b2af619d655e8b9ad6e3ac8d37eb730da9310959df0",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-queen.png",
+      "sha256": "437b30b3c9eb357e5126c04076a02edc7a18e7e65adf96e93732ddd9227c62ea",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-rook.png",
+      "sha256": "f70114d173ad81593c47aee1b768c51a0cc829f77d55f9f5d06723d2f0ed7358",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-bishop.png",
+      "sha256": "4a29c433e0467055ba3b03c31f3f2f6e9af6766edf3688273b0998f98a28c735",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-knight.png",
+      "sha256": "aa50c9daf92ddec0eb1fa34846afa9878617e4e76f7b10887c3b0eac6bd2f143",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/white-pawn.png",
+      "sha256": "a31828e8278184ae06317216b2a4f3500c7c1bd584ff30773871d63cbaedc68b",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-king.png",
+      "sha256": "43ae934003cfc15474f0b2fd81ad1351ca11368a6daf4f6401e876c798089389",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-queen.png",
+      "sha256": "03778851f598ffa0f92023cc4bbcc9abf3788d80579a56f85af0307d62a137cb",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-rook.png",
+      "sha256": "3c29fb1e15a570122f133cecf76b5a7e2d0393b2db45f6c151b655b57231c818",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-bishop.png",
+      "sha256": "45631417cf8b93bbf3c985dae415683d39f4265fc800e11f0feee95585cb785d",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-knight.png",
+      "sha256": "79fd996cd658daf1a18f3fa74863932f87d761ad79fea8b305137b052bf99abb",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-elegant",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess - Elegant.png",
+      "sourceSha256": "ca1faf566c5f1d3542f6c20e2396fd275b6e656ab1b299bfbb3105a0918476dd",
+      "runtime": "backterria/pieces/back-elegant/black-pawn.png",
+      "sha256": "70c92d629208b7056b6ac571421e6738c107a0f434b1fbef38a930c6db547e62",
+      "width": 16,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-king.png",
+      "sha256": "5cbc7a1bf7ec6a537f1a323b3bcbb01102ff0059b35ecb3f8277a06e591d1784",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-queen.png",
+      "sha256": "69946f7126d0608267c75165d7a615c5e85879b6b97c76045437645b916b91f9",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-rook.png",
+      "sha256": "a76fc72bcf5e5902b31e1af55d5107aec46364ca9f0f8cad91fa0adfbaec12e8",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-bishop.png",
+      "sha256": "1a9fed2e3517568507ef8a2703954f0939bd2647513d497c8f2f080d3e6c5a00",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-knight.png",
+      "sha256": "adf28d11a3dac52fdb11b1592d3da0d142c6fc3f5ba5187da61f654630b9318f",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/white-pawn.png",
+      "sha256": "4e237d49646e0abebb0989165938ac6fa7e842f80fbddcf5a750a1c1916d4fa5",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 16,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-king.png",
+      "sha256": "68b9f83cada8c9657feb8482a7b1949cb858618c5b9aedf31d5d4bf0862d3e4d",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-queen.png",
+      "sha256": "28c7de15e63fcd6349c1a1108093ba17fe8a269159283fea4135582e79cac9ae",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-rook.png",
+      "sha256": "243e7601e5494dfe29797c62da6b08d2dfef1a5d6e19e5bc231b63d4bf92d8c2",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-bishop.png",
+      "sha256": "8a912c90104cb80d1ab9e25db9a86cde6b3a0dd22d7f00c520b821987cb71bcf",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-knight.png",
+      "sha256": "2c7a4171ca8695a525c7401ddff7621cbbdbe5548c3b8d39e12ea2b503f6cf6e",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-mono",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-mono/black-pawn.png",
+      "sha256": "4f3ae294cfa69eef0a796ae5b993f8a2d95e3a762f16d4e96688a8491ee1c0e1",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-king.png",
+      "sha256": "776a8cb9764b4d0c80453de03b17d79f72c5c24ef989c3f5257ea21d77694849",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-queen.png",
+      "sha256": "3028fbced9db09a28fa664f199725ff6cd2cdb89b8db04b21091157fb99594ab",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-rook.png",
+      "sha256": "f1853ef8ff265c13e178b7948aeff9c8d8c2311cd9a2de32864e679aa113dac5",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-bishop.png",
+      "sha256": "219b7845e0f1ecc4e9457ab7a4e3d5287238aea76249a2bcd51ecf15dbe5b7e0",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-knight.png",
+      "sha256": "4b84fa98db8a5dcadd6958bb34b03ab3155a3e921b5d131b0604dbbe4ecb4155",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/white-pawn.png",
+      "sha256": "aa06f1fdbe3d06f0d0a2ec9aeae1b4d35f54410afce3e727bbf7f758b290802e",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 48,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-king.png",
+      "sha256": "28d8d76f38465568fc8f77baefcae1c81344dee44065a3e951c14724734c1d27",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-queen.png",
+      "sha256": "09107376af555a4bf7d80661c7eaffa56daf6392b49c24773f5e99c0482ecb00",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-rook.png",
+      "sha256": "b3f95ee7fa1d5dc9078b82c73bb30ff1e40900f795bb731988dde9c4485226c9",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-bishop.png",
+      "sha256": "224503a1ec13b888dc4a473bcd297166fe52c05b0034ffb7b34868606e5664de",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-knight.png",
+      "sha256": "0912423c24951631e506a76a1116fcc9476a7e5014a7a8d1b5056d6d8ece8a84",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-color",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-color/black-pawn.png",
+      "sha256": "f815afff8b7315bed3ba75c4842f132e926051a5bb10036240e33f171715499a",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-king.png",
+      "sha256": "5ab8d0c7df04611b227f2621d20fd07bf57ccd36c8c6ec5db4d2434a97f29935",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-queen.png",
+      "sha256": "50aaa62376a558b2ed20fbd6cf56cf877f8c5aa74043085c1933c8f69e1d32aa",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-rook.png",
+      "sha256": "318548bb04513f3e73f85abb9b7ad20e63a7a3475ca9e67abdf1ee745e1736c0",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-bishop.png",
+      "sha256": "d32436d01d7b46feacc6278fdbe8aef7fac672ec3a3900951c519225fda958b7",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-knight.png",
+      "sha256": "79a8d86b115722365bfed04f69a9b5cca50be23d1f45d15f9abad1ed37e577ca",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/white-pawn.png",
+      "sha256": "620b0f59d773f24e616dd62f57b0490cfd746c29e3629feb9a16734ccab0ef64",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 64,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-king.png",
+      "sha256": "a97ae24b46930115def3d06068055115e52d83c1e2f3706a8d949bce3c9b1152",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 80,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-queen.png",
+      "sha256": "761fc8298646b4bc2bfbf9d78525fa9df942897b8b0082a91ef8697e0b2c8ee6",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 64,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-rook.png",
+      "sha256": "6f475deb90e42054529298e0bf1d32dfe1569402f93ff8e241a4554402021a4d",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 16,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-bishop.png",
+      "sha256": "a2095c5075f443a59bb22df07c8cea8a8c21f1eb42c679839bebe27e5e27e35d",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 48,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-knight.png",
+      "sha256": "e823e3a3d07ac4ccf5bd9432c6eaba095ed365f4f30212e2fd5463931362d9f5",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 32,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-i-earth",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy I.png",
+      "sourceSha256": "1584a5bf693932404a98362f5fbc287d97dc6eb22cacde366a4086eeb2f6a89c",
+      "runtime": "backterria/pieces/back-fantasy-i-earth/black-pawn.png",
+      "sha256": "6e14db2a56e5ee6f3f6a528fc1d13d944f2a7e744331eb9d5157a0ca96708dde",
+      "width": 16,
+      "height": 16,
+      "crop": {
+        "left": 0,
+        "top": 80,
+        "width": 16,
+        "height": 16
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-king.png",
+      "sha256": "41a307c970f909caca3f8574d23ade8987b9a5bafda8103e667508fbf721897c",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 80,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-queen.png",
+      "sha256": "75f3ddca09144b41a264c6175762b215bd8a2884e05cd006c0c9199c7d88738e",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-rook.png",
+      "sha256": "afe77925a32c25013efb4fa746020d5ad5190a09528afef6ba1069cb70473ded",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 16,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-bishop.png",
+      "sha256": "275773500f7bed3216eb517156aa77d109d7f53a3f856fe733716723692f7200",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 48,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-knight.png",
+      "sha256": "c37005d0ad9a47cc1dfedda67358047c953461ab0f395e96178b7058e425e6fb",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/white-pawn.png",
+      "sha256": "60b14dc020356964745a78f5a7f171c0aac77cd468dbc70cc9f052a50acdf30a",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-king.png",
+      "sha256": "1cce7e4d8c6e9df22862e6098dea528f3adcba2fdfbcdf42048f4592682bc344",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 176,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-queen.png",
+      "sha256": "634ccec83a99db2a9fa6b9a9cbb7c5c3d71c66b3aba619fe0f19ee91143fc40e",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-rook.png",
+      "sha256": "68d702ae83816b9afdfd3f55c65abc00ce4065cc7e6c1716f8a7fdbe2beb734b",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 112,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-bishop.png",
+      "sha256": "65b3a38fe3b80c68b580ac3cd151c58001cf9d3e2fe8e7b8ead05d8d1528b11c",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 144,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-knight.png",
+      "sha256": "277fcfd87fb03f7e997aa51690ac9d5075a6a93cf81a6bd8760106dc0e44fc04",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-plain",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-plain/black-pawn.png",
+      "sha256": "051182648d3c98a2427b2fe6a473e7d1ec446f448206d4224a720fa0e9cffcf6",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-king.png",
+      "sha256": "6a43e4e1d983df68020ad06af00870e2542bf6ce87df91acb5405dffad577d7a",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 80,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-queen.png",
+      "sha256": "ded0c0f28e90acb919bb4fcf515cfcee3b0f617fac3693d08b0808bf2ae3453b",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 64,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-rook.png",
+      "sha256": "5ae85ebd32a90d12380533d56cc5248857fd0100c1c766c555f3620d3b46325b",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 16,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-bishop.png",
+      "sha256": "73ef6570a4c2362ff746b002ac67d34d08bf95ce85b933b03791dbb60c632890",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 48,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-knight.png",
+      "sha256": "842544f283f6b79cbce4b173c9bf450f2fd97d0cbd3fc491a96bede68ab969d6",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 32,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "white",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/white-pawn.png",
+      "sha256": "4c6d12142eee22fe41b767f1c5b52a250b5f3162e56dc8895c04c4ea45f1a7de",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 0,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "king",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-king.png",
+      "sha256": "b95a120d693c3e0564611737eaf421c56c78a8a595fdf6e0de0224ed606eed85",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 176,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "queen",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-queen.png",
+      "sha256": "2a566de64473b29453ccfaca8fa6c30bda87de297b16eb747adf4f0673eadd5d",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 160,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "rook",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-rook.png",
+      "sha256": "cb2c54a526b93cdf5604f39b9fd383171dc477ea2be3d9966a9508672e42d1a1",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 112,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "bishop",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-bishop.png",
+      "sha256": "29d743aba08fc5863b2e44d800441538d1121df521b16198cc6bb25ea68e9fb4",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 144,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "knight",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-knight.png",
+      "sha256": "58fd6f54589e74cf2a5d43b41d04074c0bc0f27a25e388744e3c1e99590b9574",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 128,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "back-fantasy-ii-gold",
+      "color": "black",
+      "role": "pawn",
+      "source": "backterria/The Chess/The Chess Fantasy II.png",
+      "sourceSha256": "2325b78794547535c8e9bc9ab84ed69ec5a30a3ea76e9cb3fd3e0b79fc3e81ac",
+      "runtime": "backterria/pieces/back-fantasy-ii-gold/black-pawn.png",
+      "sha256": "ac5bc7fe1774966ddaf8239b1d317c2fc240ca19265cf1a229c96e37bca3c500",
+      "width": 16,
+      "height": 48,
+      "crop": {
+        "left": 96,
+        "top": 48,
+        "width": 16,
+        "height": 48
+      },
+      "operation": "extract authored sprite cell; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "king",
+      "source": "cat-chess/whtking.png",
+      "sourceSha256": "949a8495061ef8e7c1766439670cf750ac80929296bd3fbea1d6d388ef8b0ca1",
+      "runtime": "cat-chess/pieces/white-king.png",
+      "sha256": "36253045d8c5f3f31a2587de9de81dcca68de7052de4577e99635a9d00792dd1",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "queen",
+      "source": "cat-chess/whtqueen.png",
+      "sourceSha256": "f063111cd3ed24cc6b70039668b55ee0c274d19bae2919cf735d8ac5ddca1f56",
+      "runtime": "cat-chess/pieces/white-queen.png",
+      "sha256": "ef8e4111c04c0f6f8fee3ceb90effcc0a0681605edf7e0018ef7f3d4c966c810",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "rook",
+      "source": "cat-chess/whtrook.png",
+      "sourceSha256": "2011c8f0cc8c87fd734f929b567d27c6738e69f8047841afc6f50c4f4b5b82da",
+      "runtime": "cat-chess/pieces/white-rook.png",
+      "sha256": "23e4161b87f287a563146666eab228b3bfc7bbfb75a48a5e17ee1d4be2bf3216",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "bishop",
+      "source": "cat-chess/whtbish.png",
+      "sourceSha256": "bc765014a9e375179eb97981a551f3a67323282ae801dcff5f224899e6f775d6",
+      "runtime": "cat-chess/pieces/white-bishop.png",
+      "sha256": "cff216d7f0dae295676ba9995ceb595937a1c2d8180dd7563f4e46fa304f7840",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "knight",
+      "source": "cat-chess/whtknight.png",
+      "sourceSha256": "cf20cd598c91dce6bfff5b4725e196eac3ffa53ed396655c3f512bbab1aae06d",
+      "runtime": "cat-chess/pieces/white-knight.png",
+      "sha256": "135f0b838689a7443b03cfc05e41e620b5d9403f8997faf17865b57582ace835",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "white",
+      "role": "pawn",
+      "source": "cat-chess/whtpawn.png",
+      "sourceSha256": "b174745edb851cb406fe9741673a3e0928e4c3f03fd55948e9b49a2d092ca6c7",
+      "runtime": "cat-chess/pieces/white-pawn.png",
+      "sha256": "2423e2a4390c407be27f2552fb618e84a2c38b6127ca27c308c637b057405ef3",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "king",
+      "source": "cat-chess/blkking.png",
+      "sourceSha256": "6038cf0c539e303be5c5983072c0b7034a3c15bd1bbeb7607085699f4046b003",
+      "runtime": "cat-chess/pieces/black-king.png",
+      "sha256": "f4c957f52da6adf42c42d682af27f68a2f9d489ef8f224f7912ae128b4e6a986",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "queen",
+      "source": "cat-chess/blkqueen.png",
+      "sourceSha256": "01c52f10c37b7324407845378f6cedb06655a0eb24d15cd90e24a4f83513e970",
+      "runtime": "cat-chess/pieces/black-queen.png",
+      "sha256": "a68b0edb40aca4f737e7bc55602e57c01d4b22ebfb898f9137c0acd0f3ba73e2",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "rook",
+      "source": "cat-chess/blkrook.png",
+      "sourceSha256": "e0ed73e6881483805b36be43abc3329400e08b6051094faeec6a4a2851107f82",
+      "runtime": "cat-chess/pieces/black-rook.png",
+      "sha256": "2cd03b03fae72f9c38fe748b71b73521770bd5be3d55bb31cd78f500556eb864",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "bishop",
+      "source": "cat-chess/blkbish.png",
+      "sourceSha256": "a5ce4aa45e76b8ffed24544a281d20d398a98d7eabe58b813ad1f192648d64f8",
+      "runtime": "cat-chess/pieces/black-bishop.png",
+      "sha256": "f6ef6868ac9449f21a72eab88e0397a15eb6f34462a1901b7a9e8ec03b744e0c",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "knight",
+      "source": "cat-chess/blkknight.png",
+      "sourceSha256": "0dad066a3ddd5479c38cd937c1d43d611bdc8519f0ed56b6a64812f893c66967",
+      "runtime": "cat-chess/pieces/black-knight.png",
+      "sha256": "478e9f81329b0ffdf0b4744aa4b0c716bc3367d9faeba47758213bca4f36e5fa",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "set": "cat-chess",
+      "color": "black",
+      "role": "pawn",
+      "source": "cat-chess/blkpawn.png",
+      "sourceSha256": "41885eaca9207c4dbf7cee2cae8e6acd162a3edf197aeb177131b6c0621e50ec",
+      "runtime": "cat-chess/pieces/black-pawn.png",
+      "sha256": "47a95e37047ca279452df6957110d5471f754bf795f771a1c58321f60064f508",
+      "width": 653,
+      "height": 653,
+      "crop": null,
+      "operation": "trim transparent margin; shared native-pixel canvas and bottom-center anchor; no scaling"
+    },
+    {
+      "board": "toffee-brown",
+      "source": "toffee-classical/ChessZip/Boards/Board.png",
+      "sourceSha256": "bc427763816697607f09477ddf2f9334ef7ad4ae6188fa89a6503f5f21810db0",
+      "runtime": "toffee-classical/boards/toffee-brown.png",
+      "sha256": "a77b1a4e2c980007aa1bf5ebc4c827d571395d22a57be2e524990088104f427b",
+      "width": 256,
+      "height": 256,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 256,
+        "height": 256
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "toffee-mono",
+      "source": "toffee-classical/ChessZip/Boards/BoardBlack.png",
+      "sourceSha256": "e381e467f197e92a11f853a6eb07db4b16f7ea626c3948cc7e7d0b88abc0c84a",
+      "runtime": "toffee-classical/boards/toffee-mono.png",
+      "sha256": "9eb47980b507e57c48bedadc7e74fab1915433622b8a4e346ae272ec2f1018a5",
+      "width": 256,
+      "height": 256,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 256,
+        "height": 256
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "toffee-green",
+      "source": "toffee-classical/ChessZip/Boards/BoardGreenYellow.png",
+      "sourceSha256": "2b460adcd1cfe11722208403c319c4beadf2d05ab21e9c4b84e68ca164ade1ba",
+      "runtime": "toffee-classical/boards/toffee-green.png",
+      "sha256": "4f48e059a3cb9006e8c9ac7cbebd83347107d47a372ec6a2894e310231b735b5",
+      "width": 256,
+      "height": 256,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 256,
+        "height": 256
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "toffee-wood",
+      "source": "toffee-wood/WoodChess/Boards/WoodBoard.png",
+      "sourceSha256": "d67fa395cfd53b78b82e6171f9f1805ba3193ba5b3dff58493acead35822cd0b",
+      "runtime": "toffee-wood/boards/toffee-wood.png",
+      "sha256": "fd613080315963722e0e6bc61aeadc764a9544eb33077b4ff533560ae52de3ca",
+      "width": 256,
+      "height": 256,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 256,
+        "height": 256
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "toffee-ice",
+      "source": "toffee-ice/IceChess/Boards/IceBoard.png",
+      "sourceSha256": "351c0236440dd15a96f439d34c7fb73b534f60a78fea626833b49f7b0af158e1",
+      "runtime": "toffee-ice/boards/toffee-ice.png",
+      "sha256": "f65541bd8b0842f7c5f22067320547ab76e4ab2783d2ff37384304e64650d53d",
+      "width": 256,
+      "height": 256,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 256,
+        "height": 256
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-A",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board A.png",
+      "sourceSha256": "e5b2e659a5d710289ab7c555e80ee45715735ff34efd70659380216842e1ee5d",
+      "runtime": "backterria/boards/back-a.png",
+      "sha256": "9608abf13e6400880de87a395dedffe55c6ba3ad1f80c9381038b91ee4c2835b",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 3,
+        "top": 3,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-B",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board B.png",
+      "sourceSha256": "6191ede53a9c9cc547f6c66b81a0adc62275784dcecc4665cc570186104950b1",
+      "runtime": "backterria/boards/back-b.png",
+      "sha256": "3aac425ead1ae6e9789778dc66097cf2037df172f839d629c4203ca520ab5add",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 3,
+        "top": 3,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-C",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board C.png",
+      "sourceSha256": "1ac6dc09cb85b7a943fc152661baa17d56a904f720f4d01dba45f0e8813a4d61",
+      "runtime": "backterria/boards/back-c.png",
+      "sha256": "487b2b68d95f95c9895d9057ea3d0135c09393df89b147f2e4f8a68653a77a6b",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 3,
+        "top": 3,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-D",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board D.png",
+      "sourceSha256": "ad7c48bf32e0ace1562075cf0a059e70e94821bb86f0597755b636a8a7b618f7",
+      "runtime": "backterria/boards/back-d.png",
+      "sha256": "b00952506bf72e1c7d66cf472e7a49ff4566d5a61a50323f9dba642e01ff67d2",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 3,
+        "top": 3,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-E",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board E.png",
+      "sourceSha256": "91e0ce97d34182caf2ffae39502feda42499ee2d3fbe45506ae1e0b6a7a6f3dd",
+      "runtime": "backterria/boards/back-e.png",
+      "sha256": "3e92ea38c4034c6a9a1fe693e61460bf23f63d4c5b8e4a37ca211661ca8db087",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 2,
+        "top": 2,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-F",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board F.png",
+      "sourceSha256": "a103506087eee8dde5be9b14c0d0ff695f7ae419973ef73c08850ec7243e6a5f",
+      "runtime": "backterria/boards/back-f.png",
+      "sha256": "c3f79cbdfe7eda5e6f2c19ffa2b53f3024b60fd458d6ce2ebc1fa06e7c796597",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 3,
+        "top": 4,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-G",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board G.png",
+      "sourceSha256": "77c07aaf1d85de1e20392bb5b795fb8995246b192aeb5553b3ce2887e555f892",
+      "runtime": "backterria/boards/back-g.png",
+      "sha256": "e65eddf9d45d97d479f465e6caec54c1055d866b02163383e5b879932122af8b",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 2,
+        "top": 2,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-H",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board H.png",
+      "sourceSha256": "406fb2e76061607857c655d0cf544669ebab4ea50c5d9e4973a5bd531c4d0bb9",
+      "runtime": "backterria/boards/back-h.png",
+      "sha256": "b16e0e0b2fe90b1aa18435e8ea498f2c9af90e98e32a470456640e9860e5e43d",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 2,
+        "top": 2,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "back-I",
+      "source": "backterria/The Chess/The Chess Boards/The Chess Board I.png",
+      "sourceSha256": "3d6c66ba34ce12627c25328f572276ffdbd177e70188bfe1860547046e6367c8",
+      "runtime": "backterria/boards/back-i.png",
+      "sha256": "82bd1c616d04151a9c7032c9ac94acecffcabaf5a208cfc675ca84b5d32f6853",
+      "width": 128,
+      "height": 128,
+      "crop": {
+        "left": 2,
+        "top": 2,
+        "width": 128,
+        "height": 128
+      },
+      "operation": "crop playable 8x8 area"
+    },
+    {
+      "board": "cat-chess",
+      "source": "cat-chess/chessboard.png",
+      "sourceSha256": "1b884269274e3f0368a20ca6d46d375033188b666f6e99b4ab4bb78709e3435a",
+      "runtime": "cat-chess/boards/cat-chess.png",
+      "sha256": "d0b71ce50b95d58a3acfca6364801656d4f3e86e2d594bf2596576a25cb7104a",
+      "width": 744,
+      "height": 744,
+      "crop": {
+        "left": 378,
+        "top": 155,
+        "width": 744,
+        "height": 744
+      },
+      "operation": "crop playable 8x8 area; rotate 90 degrees"
+    }
+  ]
+}

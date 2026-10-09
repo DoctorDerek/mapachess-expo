@@ -1,0 +1,12 @@
+Chess Pixel - Ice — ToffeeCraft
+Source: https://toffeecraft.itch.io/chess-pixel-ice
+Terms checked: October 8, 2026 during the prior source-page intake audit.
+
+Source-page usage terms, recorded in summary (not a new license grant):
+Personal and commercial creative-project use is permitted, including games. Modification is permitted. Asset redistribution and resale are prohibited. The linked creator terms remain authoritative.
+
+Runtime use: cropped chess-piece cells and playable board rectangles only.
+Source ZIPs, examples, spare frames, and source sheets remain private.
+Authorized builds use the encrypted backterria-toffeecraft-chess.zip bundle;
+its contents remain under the creator's terms, not the application GPL.
+Encryption grants no additional rights. No standalone asset redistribution.

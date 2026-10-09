@@ -1,0 +1,12 @@
+The Chess v1-5 — Backterria
+Source: https://backterria.itch.io/the-chess
+Terms checked: October 8, 2026
+
+Source-page usage terms, recorded in summary (not a new license grant):
+The creator permits use in free and commercial projects and modification for the project's needs. Redistribution, resale, printed media and physical-product use are excluded. The linked creator terms remain authoritative.
+
+Runtime use: cropped chess-piece cells and playable board rectangles only.
+Source ZIPs, examples, spare frames, and source sheets remain private.
+Authorized builds use the encrypted backterria-toffeecraft-chess.zip bundle;
+its contents remain under the creator's terms, not the application GPL.
+Encryption grants no additional rights. No standalone asset redistribution.

@@ -9,6 +9,33 @@ const modeNames = [
   "Chess960 Challenge",
 ] as const
 
+test("retains nested Credits Back and Forward after reloading Settings", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  const credits = page
+    .locator("details")
+    .filter({ has: page.locator("summary").filter({ hasText: /^Credits$/ }) })
+  await page.getByText("Credits", { exact: true }).click()
+  await expect(credits).toHaveAttribute("open", "")
+  await page.reload()
+  await expect(credits).toHaveAttribute("open", "")
+  await page.getByRole("button", { name: "Close Credits", exact: true }).click()
+  await expect(credits).not.toHaveAttribute("open")
+  await expect(
+    page.getByRole("button", { name: "Close Settings", exact: true }),
+  ).toBeVisible()
+  await page.goForward()
+  await expect(credits).toHaveAttribute("open", "")
+  await page.goBack()
+  await expect(credits).not.toHaveAttribute("open")
+  await page.goBack()
+  await expect(
+    page.getByRole("button", { name: "Settings", exact: true }),
+  ).toBeVisible()
+})
+
 test("retains save recovery while retrying and restores settings after success", async ({
   page,
 }) => {

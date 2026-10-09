@@ -4,6 +4,7 @@ export type MatchNavigationOverlay =
   | "settings"
   | "classifications"
   | "about-elo"
+  | "credits"
   | "reset-standard"
   | "reset-chess960"
   | "setup-opponent"
@@ -33,6 +34,7 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "settings",
   "classifications",
   "about-elo",
+  "credits",
   "reset-standard",
   "reset-chess960",
   "setup-opponent",
@@ -90,6 +92,7 @@ export function eligibleMatchNavigationOverlays(
       overlay === "dressing-room" ||
       overlay === "profile-card" ||
       ((overlay === "classifications" ||
+        overlay === "credits" ||
         overlay === "about-elo" ||
         overlay === "reset-standard" ||
         overlay === "reset-chess960") &&

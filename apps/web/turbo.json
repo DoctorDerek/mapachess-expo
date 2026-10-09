@@ -8,10 +8,14 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/ghost_assets/seethingswarm-captainskolot-heroes99.zip",
         "$TURBO_ROOT$/ghost_assets/presentation-assets.manifest.json",
+        "$TURBO_ROOT$/ghost_assets/backterria-toffeecraft-chess.zip",
+        "$TURBO_ROOT$/ghost_assets/chess-assets.manifest.json",
         "$TURBO_ROOT$/scripts/decrypt-assets.ts",
         "$TURBO_ROOT$/scripts/ghost-assets/presentationAssetArchive.ts",
+        "$TURBO_ROOT$/scripts/ghost-assets/licensedAssetBundles.ts",
         "$TURBO_ROOT$/tsconfig.json",
         "$TURBO_ROOT$/vendor/presentation-assets/**",
+        "$TURBO_ROOT$/vendor/chess-runtime-assets/**",
         ".env.local"
       ]
     },

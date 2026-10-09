@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./art-credits": {
+      "types": "./src/artCredits.ts",
+      "default": "./dist/artCredits.js"
+    },
+    "./chess-appearance-catalog": {
+      "types": "./src/chessAppearanceCatalog.ts",
+      "default": "./dist/chessAppearanceCatalog.js"
+    },
     "./create-celebration-recipe": {
       "types": "./src/createCelebrationRecipe.ts",
       "default": "./dist/createCelebrationRecipe.js"

@@ -1,5 +1,42 @@
 # Licensed presentation assets
 
+## Independent chess-art bundle
+
+The existing presentation archive and its manifest remain unchanged. The
+separate `backterria-toffeecraft-chess.zip` contains 200 runtime PNGs: 186
+authored piece cells and 14 playable board images. `chess-assets.manifest.json`
+allowlists their SHA-256 digests; `chess-assets.provenance.json` records source
+file identities, crop rectangles, transformations and runtime geometry for
+these images and the public-license chess artwork. Full private source packs
+are not shipped. Source-linked notices live in `licenses/<source>/LICENSE.txt`.
+
+The two immutable descriptors in `scripts/ghost-assets/licensedAssetBundles.ts`
+own archive, manifest, input, staging and generated-output paths. Both use the
+existing private key. Preparation validates them independently; missing
+keyless chess inputs cannot disable the animal, coach or avatar bundle.
+`MAPACHESS_BUILD_HAS_CHESS_ASSETS` reports validated chess-file availability,
+separately from `MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS`; neither exposes a key.
+
+The chess authoring directory is ignored `vendor/chess-runtime-assets/` and its
+generated output is ignored `apps/web/public/generated/chess-assets/`. Rebuild
+only the chess archive from verified authoring files with:
+
+```powershell
+pnpm assets:create-encrypted-archive --bundle=chess
+```
+
+Omitting the argument preserves the existing presentation-archive command.
+Public-license Chessnut and Skoll SVGs and Cat chess PNGs are under
+`apps/web/public/chess-assets/`, each with source and license notices. The shared
+catalog records role, side, native dimensions and delivery ownership, not player
+preferences. Settings exposes Credits for both existing and prepared artwork.
+The default board is unchanged; independent selectors and actual gameplay
+readability validation belong to the following integration PR. Catalog inclusion
+alone does not certify every board/piece combination for release. Cosunosuke and
+GreyFox are not part of either runtime catalog or this chess archive.
+
+## Existing animal, portrait and avatar bundle
+
 Mapachess keeps purchased source art outside Git while allowing authorized
 builds to reproduce the Battle Stage, coach portraits, and player avatars.
 

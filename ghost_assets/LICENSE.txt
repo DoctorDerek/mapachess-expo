@@ -36,6 +36,23 @@ https://seethingswarm.itch.io/turtlepack
 https://seethingswarm.itch.io/pandapack
 https://seethingswarm.itch.io/lil-otter
 https://seethingswarm.itch.io/raccoonpack
+https://seethingswarm.itch.io/lil-axolotl
+https://seethingswarm.itch.io/parrotpack
+https://seethingswarm.itch.io/lil-hedgehog
+https://seethingswarm.itch.io/deerpack
+https://seethingswarm.itch.io/foxpack
+https://seethingswarm.itch.io/wolfpack
+https://seethingswarm.itch.io/falconpack
+https://seethingswarm.itch.io/cranepack
+https://seethingswarm.itch.io/crowpack
+https://seethingswarm.itch.io/batpack
+https://seethingswarm.itch.io/lil-ninja
+https://seethingswarm.itch.io/lil-war-hero
+https://seethingswarm.itch.io/dragonflypack
+
+The additional thirteen source links were reconciled October 8, 2026 with
+the existing per-pack license records reviewed September 11, 2026. This
+attribution correction does not change the protected archive or its rights.
 
 Catset uses the orange Cat03 variant; Mousepack uses the light-gray Mouse03
 variant. Raccoonpack supplies both Mapachito and Raccoon Stockfish without

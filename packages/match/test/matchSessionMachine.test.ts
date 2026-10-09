@@ -22,6 +22,32 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
+  it("keeps Credits inside Settings through Back and restored Forward without replacing the match", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "credits" })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "settings" })
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "credits" })
+    const destination = selectMatchNavigationDestination(actor.getSnapshot())
+    if (destination === null)
+      throw new Error("Expected an active navigation destination")
+    expect(destination.overlays).toEqual(["settings", "credits"])
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["settings"])
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().context.overlays).toEqual([
+      "settings",
+      "credits",
+    ])
+    expect(actor.getSnapshot().context.session).toBe(session)
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it("replaces the concluding match menu with rewards instead of reopening it after dismissal", async () => {
     const actor = createActor(machine, {
       input: { activeMatchExists: true, operations: operations() },

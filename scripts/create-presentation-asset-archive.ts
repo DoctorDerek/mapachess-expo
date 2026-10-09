@@ -1,13 +1,21 @@
 import {
+  LICENSED_ASSET_BUNDLES,
+  parseLicensedAssetBundleArgument,
+  type LicensedAssetBundleId,
+} from "./ghost-assets/licensedAssetBundles.js"
+import {
   createLicensedPresentationAssetArchive,
   describeLicensedPresentationAssetFailure,
-  LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH,
 } from "./ghost-assets/presentationAssetArchive.js"
 
+let bundleId: LicensedAssetBundleId = "presentation"
 try {
-  await createLicensedPresentationAssetArchive()
-  process.stdout.write(`Created ${LICENSED_PRESENTATION_ASSET_ARCHIVE_PATH}.\n`)
+  bundleId = parseLicensedAssetBundleArgument(process.argv.slice(3))
+  await createLicensedPresentationAssetArchive(undefined, bundleId)
+  process.stdout.write(`Created ${LICENSED_ASSET_BUNDLES[bundleId].archive}.\n`)
 } catch (error: unknown) {
-  process.stderr.write(`${describeLicensedPresentationAssetFailure(error)}\n`)
+  process.stderr.write(
+    `${describeLicensedPresentationAssetFailure(error, bundleId)}\n`,
+  )
   process.exitCode = 1
 }

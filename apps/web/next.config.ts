@@ -6,6 +6,9 @@ const nextConfig = async (): Promise<NextConfig> => ({
     MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS: String(
       await hasPublishedLicensedPresentationAssets(),
     ),
+    MAPACHESS_BUILD_HAS_CHESS_ASSETS: String(
+      await hasPublishedLicensedPresentationAssets(undefined, "chess"),
+    ),
   },
   reactStrictMode: true,
 })

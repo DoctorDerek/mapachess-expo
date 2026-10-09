@@ -4,3 +4,5 @@
 packages/stockfish-native/third_party/** -whitespace linguist-vendored
 packages/stockfish-native/android/generated/** -whitespace linguist-generated
 packages/stockfish-native/ios/generated/** -whitespace linguist-generated
+
+apps/web/public/chess-assets/chessnut/pieces/*.svg -text -whitespace linguist-vendored
