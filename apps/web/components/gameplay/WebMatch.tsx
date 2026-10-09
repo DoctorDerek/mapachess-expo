@@ -174,6 +174,10 @@ export default function WebMatch({
     moveFeedback,
     reactionsPaused || celebrationPending || celebrationOpen,
   )
+  const coachMove = useSelector(
+    reactions.actor,
+    (current) => current.context.cards[0]?.reaction ?? null,
+  )
   const playerTurn = selectIsPlayerTurn(snapshot)
   const persisting = selectIsPersistingMutation(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
@@ -276,6 +280,18 @@ export default function WebMatch({
               coach={
                 <MapachitoCoachPortrait
                   presentationSnapshot={presentation.snapshot}
+                  moveReaction={
+                    coachMove === null
+                      ? null
+                      : {
+                          family: "move",
+                          grade: coachMove.classification.grade,
+                          role:
+                            coachMove.mover === runtime.playerColor
+                              ? "player"
+                              : "opponent",
+                        }
+                  }
                 />
               }
               hints={
