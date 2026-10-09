@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./chess-appearance-settings": {
+      "types": "./src/chessAppearanceSettings.ts",
+      "default": "./dist/chessAppearanceSettings.js"
+    },
     "./player-appearance": {
       "types": "./src/playerAppearance.ts",
       "default": "./dist/playerAppearance.js"
@@ -67,6 +71,7 @@
   "dependencies": {
     "@mapachess/diagnostics": "workspace:*",
     "@mapachess/match": "workspace:*",
+    "@mapachess/match-presentation": "workspace:*",
     "xstate": "^5"
   }
 }

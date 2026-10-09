@@ -107,6 +107,7 @@ describe("global match XP", () => {
     )
     const {
       totalXp: _totalXp,
+      settings: { chessAppearance: _chessAppearance, ...settings },
       appearance: _appearance,
       unlockedAchievementIds: _unlockedAchievementIds,
       lastAcceptedResultReward: _lastAcceptedResultReward,
@@ -114,6 +115,7 @@ describe("global match XP", () => {
     } = completedOldProfile
     const versionSeven = {
       ...previousFields,
+      settings,
       schemaVersion: TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
     }
     const decoded = decodeMapachessPlayerDataWithSource(versionSeven)
