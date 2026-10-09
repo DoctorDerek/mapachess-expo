@@ -4200,6 +4200,234 @@
         "height": 744
       },
       "operation": "crop playable 8x8 area; rotate 90 degrees"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "king",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-king.png",
+      "sha256": "4dc6d9e1c45508b6cb2e54f4b9878b311feebc1c19052dc60b50025b75e82cde",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "queen",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-queen.png",
+      "sha256": "1fcd021586df8a320113f5026011ef98d688f3092af8f90194705f24a97a6706",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "bishop",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-bishop.png",
+      "sha256": "46b307f4d71634d03fe510f2d12aaea2b7bc5327de759cd49dce1ac02f8ded1e",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "knight",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-knight.png",
+      "sha256": "50856a1cbc3ee9100a0e2a30d268e592cf0cda01493107ef37b6e081f09459d9",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "rook",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-rook.png",
+      "sha256": "405c864673eca7e4fa1714af012ec53fe1ba1a0a2ad9f63655d36e018356414b",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "white",
+      "role": "pawn",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/white-pawn.png",
+      "sha256": "002b6a297313d51d8931b5c968a8fb4ced04a4916eca827f90555cbc2e9055cc",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 0,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "king",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-king.png",
+      "sha256": "d195adaeb262adc5d4c02c5d0bf5931fdf48622c5b6bc0d5c1fdfc51546ba046",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 0,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "queen",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-queen.png",
+      "sha256": "7fc73b186d037728d66c23728b44a82db3847534e334eee4fdf5644c03c29ba2",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 32,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "bishop",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-bishop.png",
+      "sha256": "a2f818b230f6299f50d6358aef157d8f2487203335cbf16b4e0433fe137000e8",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 64,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "knight",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-knight.png",
+      "sha256": "a1e83f77cc8c180f52a42f235ac1ec1c8287ae9d5b79610aa2b95706ed2567ce",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 96,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "rook",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-rook.png",
+      "sha256": "eeb9d85cb47ecc230a2f924389cc3f0f13f8d4dfb98fc4f9911eab04d668f10f",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 128,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "set": "cosunosuke",
+      "color": "black",
+      "role": "pawn",
+      "source": "cosunosuke/32-bit chess/pieces.png",
+      "sourceSha256": "9ac8f2eba8636db36bd175412c18d6ccba1682a3d83fb34d13f41d4a75cb7b7b",
+      "runtime": "cosunosuke/pieces/black-pawn.png",
+      "sha256": "a824e40dd7329d7084dc38bb40df06a4700736bb701de7d50fc659b60203d3a1",
+      "width": 32,
+      "height": 32,
+      "crop": {
+        "left": 160,
+        "top": 32,
+        "width": 32,
+        "height": 32
+      },
+      "operation": "extract authored sprite cell; no scaling or recoloring"
+    },
+    {
+      "board": "cosunosuke",
+      "source": "cosunosuke/32-bit chess/board_frameless.png",
+      "sourceSha256": "db4e32545d5f4e0048aca03c603f57433845dd48b8f06bb1fe02247d647a963c",
+      "runtime": "cosunosuke/boards/cosunosuke.png",
+      "sha256": "db4e32545d5f4e0048aca03c603f57433845dd48b8f06bb1fe02247d647a963c",
+      "width": 256,
+      "height": 256,
+      "crop": null,
+      "operation": "unchanged authored frameless 8x8 board"
     }
-  ]
+  ],
+  "updated": "2026-10-09"
 }

@@ -613,6 +613,58 @@
       "sha256": "5fd70772961daf0fde2d333e7666c076b9a09ddc5469dcb74d28dcc5fc1947ee"
     },
     {
+      "path": "cosunosuke/boards/cosunosuke.png",
+      "sha256": "db4e32545d5f4e0048aca03c603f57433845dd48b8f06bb1fe02247d647a963c"
+    },
+    {
+      "path": "cosunosuke/pieces/black-bishop.png",
+      "sha256": "a2f818b230f6299f50d6358aef157d8f2487203335cbf16b4e0433fe137000e8"
+    },
+    {
+      "path": "cosunosuke/pieces/black-king.png",
+      "sha256": "d195adaeb262adc5d4c02c5d0bf5931fdf48622c5b6bc0d5c1fdfc51546ba046"
+    },
+    {
+      "path": "cosunosuke/pieces/black-knight.png",
+      "sha256": "a1e83f77cc8c180f52a42f235ac1ec1c8287ae9d5b79610aa2b95706ed2567ce"
+    },
+    {
+      "path": "cosunosuke/pieces/black-pawn.png",
+      "sha256": "a824e40dd7329d7084dc38bb40df06a4700736bb701de7d50fc659b60203d3a1"
+    },
+    {
+      "path": "cosunosuke/pieces/black-queen.png",
+      "sha256": "7fc73b186d037728d66c23728b44a82db3847534e334eee4fdf5644c03c29ba2"
+    },
+    {
+      "path": "cosunosuke/pieces/black-rook.png",
+      "sha256": "eeb9d85cb47ecc230a2f924389cc3f0f13f8d4dfb98fc4f9911eab04d668f10f"
+    },
+    {
+      "path": "cosunosuke/pieces/white-bishop.png",
+      "sha256": "46b307f4d71634d03fe510f2d12aaea2b7bc5327de759cd49dce1ac02f8ded1e"
+    },
+    {
+      "path": "cosunosuke/pieces/white-king.png",
+      "sha256": "4dc6d9e1c45508b6cb2e54f4b9878b311feebc1c19052dc60b50025b75e82cde"
+    },
+    {
+      "path": "cosunosuke/pieces/white-knight.png",
+      "sha256": "50856a1cbc3ee9100a0e2a30d268e592cf0cda01493107ef37b6e081f09459d9"
+    },
+    {
+      "path": "cosunosuke/pieces/white-pawn.png",
+      "sha256": "002b6a297313d51d8931b5c968a8fb4ced04a4916eca827f90555cbc2e9055cc"
+    },
+    {
+      "path": "cosunosuke/pieces/white-queen.png",
+      "sha256": "1fcd021586df8a320113f5026011ef98d688f3092af8f90194705f24a97a6706"
+    },
+    {
+      "path": "cosunosuke/pieces/white-rook.png",
+      "sha256": "405c864673eca7e4fa1714af012ec53fe1ba1a0a2ad9f63655d36e018356414b"
+    },
+    {
       "path": "toffee-classical/boards/toffee-brown.png",
       "sha256": "a77b1a4e2c980007aa1bf5ebc4c827d571395d22a57be2e524990088104f427b"
     },

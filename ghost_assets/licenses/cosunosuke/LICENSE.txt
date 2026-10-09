@@ -1,0 +1,29 @@
+32-bit Chess Asset Pack — Cosunosuke
+Source: https://cosunosuke.itch.io/31-bir-chess-asset-pack
+Creator permission recorded: October 9, 2026
+
+DoctorDerek asked the creator whether purchasers may use this chess pack
+in commercial projects without redistributing the pack as-is, identifying
+the intended use as integration into his free-to-play chess game.
+
+Cosunosuke replied:
+"Hi! Yes, absolutely!
+
+Integrating the pack into your game is completely fine as long as the raw
+asset files aren't redistributed as a standalone package.
+
+Good luck with your project!"
+
+This reply was supplied by the purchasing project owner from the source
+page's comment thread. It is specific creator permission, not a grant under
+MIT, CC0, Apache, or the application's GPL license.
+
+Runtime use: twelve 32×32 piece cells extracted from the supplied sheet,
+preserving the original gold and blue colors, and the unmodified 256×256
+frameless board. The source sheet, framed board, selection indicator and
+original source ZIP remain private; they are not included in the runtime bundle.
+
+Authorized builds use the existing encrypted chess-art bundle. Encryption
+does not grant additional rights. Do not redistribute raw assets as a
+standalone package. Creator attribution and this source link are retained
+in repository notices and in-game Credits.

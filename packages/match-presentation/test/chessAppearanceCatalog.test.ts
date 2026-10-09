@@ -34,7 +34,7 @@ describe("prepared chess appearance", () => {
       for (const entry of catalog) {
         expect(Object.isFrozen(entry)).toBe(true)
         expect(entry).not.toHaveProperty("unlock")
-        expect(entry.id).not.toMatch(/cosunosuke|greyfox/)
+        expect(entry.id).not.toMatch(/greyfox/)
       }
     }
   })
@@ -88,7 +88,7 @@ describe("prepared chess appearance", () => {
         provenance.files.find((entry) => entry.runtime === file.path)?.sha256,
       ).toBe(file.sha256)
       expect(file.path).toMatch(
-        /^(backterria|toffee-(classical|wood|ice))\/.+\.png$/,
+        /^(backterria|toffee-(classical|wood|ice)|cosunosuke)\/.+\.png$/,
       )
     }
     for (const file of provenance.files) {
@@ -103,6 +103,47 @@ describe("prepared chess appearance", () => {
     }
   })
 
+  it("keeps Cosunosuke's two authored sides, exact role cells and frameless board", () => {
+    const pieces = CHESS_PIECE_SETS.find(({ id }) => id === "cosunosuke")
+    expect(pieces).toMatchObject({
+      credit: "cosunosuke",
+      delivery: "protected-chess",
+      rendering: "pixelated",
+    })
+    const roles = ["king", "queen", "bishop", "knight", "rook", "pawn"]
+    for (const [row, color] of ["white", "black"].entries())
+      for (const [column, role] of roles.entries())
+        expect(
+          provenance.files.find(
+            (file) =>
+              "set" in file &&
+              file.set === "cosunosuke" &&
+              file.color === color &&
+              file.role === role,
+          ),
+        ).toMatchObject({
+          source: "cosunosuke/32-bit chess/pieces.png",
+          runtime: `cosunosuke/pieces/${color}-${role}.png`,
+          width: 32,
+          height: 32,
+          crop: { left: column * 32, top: row * 32, width: 32, height: 32 },
+        })
+    const board = provenance.files.find(
+      (file) => "board" in file && file.board === "cosunosuke",
+    )
+    expect(board).toMatchObject({
+      source: "cosunosuke/32-bit chess/board_frameless.png",
+      runtime: "cosunosuke/boards/cosunosuke.png",
+      width: 256,
+      height: 256,
+      crop: null,
+    })
+    expect(board?.sha256).toBe(board?.sourceSha256)
+    expect(
+      manifest.files.filter(({ path }) => path.startsWith("cosunosuke/")),
+    ).toHaveLength(13)
+  })
+
   it("retains source and license links for every artist, including CC0", () => {
     for (const credit of Object.values(ART_CREDITS)) {
       expect(credit.creator.length).toBeGreaterThan(0)
@@ -115,6 +156,22 @@ describe("prepared chess appearance", () => {
     }
     expect(ART_CREDITS["cat-chess"].license).toBe("CC0 1.0")
     expect(ART_CREDITS.skoll.modifications).toContain("outlines")
+  })
+
+  it("records Cosunosuke's permission and attribution without relicensing the art", async () => {
+    const credit = ART_CREDITS.cosunosuke
+    expect(credit.creator).toBe("Cosunosuke")
+    expect(credit.license).toContain("no standalone asset redistribution")
+    const notice = await readFile(
+      new URL(
+        "../../../ghost_assets/licenses/cosunosuke/LICENSE.txt",
+        import.meta.url,
+      ),
+      "utf8",
+    )
+    expect(notice).toContain(credit.licenseUrl)
+    expect(notice).toContain("Cosunosuke replied:")
+    expect(notice).toContain("aren't redistributed as a standalone package")
   })
 
   it("credits every shipped animal source in game and in the repository notice", async () => {

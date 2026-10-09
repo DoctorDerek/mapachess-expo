@@ -98,32 +98,41 @@ describe("independent saved chess artwork", () => {
     })
   })
 
-  it("round-trips independent preferences in checksummed portable data", async () => {
-    const original = replaceActiveMatch(
-      createInitialMapachessPlayerData(),
-      completedStoryMatch(),
-    )
-    const changed = changeChessAppearance(original, {
-      pieceSetId: "skoll",
-      boardId: "toffee-ice",
-    })
-    expect({
-      ...changed,
-      revision: original.revision,
-      settings: original.settings,
-    }).toEqual(original)
-    expect(canonicalPlayerData(changed)).not.toBe(canonicalPlayerData(original))
-    const backup = await createMapachessPortableBackup({
-      playerData: changed,
-      applicationVersion: "test",
-      gddRevision: "5.1",
-      sha256,
-    })
-    expect(await decodeMapachessPortableBackup(backup, sha256)).toMatchObject({
-      ok: true,
-      backup: { payload: changed },
-    })
-  })
+  it.each([
+    { pieceSetId: "skoll", boardId: "toffee-ice" },
+    { pieceSetId: "cosunosuke", boardId: "current" },
+    { pieceSetId: "current", boardId: "cosunosuke" },
+    { pieceSetId: "cosunosuke", boardId: "cosunosuke" },
+  ] as const)(
+    "round-trips $pieceSetId pieces and $boardId board in checksummed portable data",
+    async (appearance) => {
+      const original = replaceActiveMatch(
+        createInitialMapachessPlayerData(),
+        completedStoryMatch(),
+      )
+      const changed = changeChessAppearance(original, appearance)
+      expect({
+        ...changed,
+        revision: original.revision,
+        settings: original.settings,
+      }).toEqual(original)
+      expect(canonicalPlayerData(changed)).not.toBe(
+        canonicalPlayerData(original),
+      )
+      const backup = await createMapachessPortableBackup({
+        playerData: changed,
+        applicationVersion: "test",
+        gddRevision: "5.1",
+        sha256,
+      })
+      expect(await decodeMapachessPortableBackup(backup, sha256)).toMatchObject(
+        {
+          ok: true,
+          backup: { payload: changed },
+        },
+      )
+    },
+  )
 
   it.each([
     { fail: false, matchFirst: false },
