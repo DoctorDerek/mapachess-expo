@@ -1,4 +1,8 @@
 import {
+  COACH_COLLECTION_IDS,
+  DEFAULT_COACH_COLLECTION,
+} from "@mapachess/match-presentation/coach-portrait"
+import {
   AUTO_HINT_MODES,
   autoHintModeFromLegacyEnabled,
 } from "@mapachess/match/auto-hint-mode"
@@ -50,6 +54,7 @@ import {
   acceptedRewardMatchesEnding,
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION,
+  COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
   createInitialRatedMatchCounts,
   GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
@@ -104,6 +109,7 @@ export type PlayerDataSource = Readonly<{
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -316,6 +322,7 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
     settings: Object.freeze({
       ...data.settings,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
+      coachCollection: DEFAULT_COACH_COLLECTION,
     }),
     appearance: DEFAULT_PLAYER_APPEARANCE,
     legacyRatings: data.ratings,
@@ -459,6 +466,9 @@ export const canonicalPlayerData = (
             data.settings.chessAppearance.pieceSetId,
           ],
         ]
+      : []),
+    ...(sourceSchemaVersion >= COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+      ? [data.settings.coachCollection]
       : []),
   ])
 
@@ -626,6 +636,7 @@ const decodeCurrentPlayerData = (
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -659,6 +670,9 @@ const decodeCurrentPlayerData = (
       "challengeSetup",
       ...(sourceSchemaVersion >= CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
         ? ["chessAppearance"]
+        : []),
+      ...(sourceSchemaVersion >= COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+        ? ["coachCollection"]
         : []),
     ],
     "$.settings",
@@ -757,6 +771,14 @@ const decodeCurrentPlayerData = (
         sourceSchemaVersion >= CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
           ? decodeChessAppearance(settings.chessAppearance)
           : DEFAULT_CHESS_APPEARANCE,
+      coachCollection:
+        sourceSchemaVersion >= COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+          ? requireEnumValue(
+              settings.coachCollection,
+              COACH_COLLECTION_IDS,
+              "$.settings.coachCollection",
+            )
+          : DEFAULT_COACH_COLLECTION,
     }),
     storyProgress,
     totalXp,
@@ -876,7 +898,9 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
-              object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+              object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")
     return { ...decoded, ok: true }

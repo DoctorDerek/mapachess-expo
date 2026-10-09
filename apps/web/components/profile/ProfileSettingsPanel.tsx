@@ -1,5 +1,6 @@
 "use client"
 
+import type { CoachCollectionId } from "@mapachess/match-presentation/coach-portrait"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type {
   MatchNavigationCommands,
@@ -23,6 +24,7 @@ import MapachessNotice from "../presentation/MapachessNotice"
 import ArtCredits from "./ArtCredits"
 import AutoHintModeChoices from "./AutoHintModeChoices"
 import ChessAppearanceChoices from "./ChessAppearanceChoices"
+import CoachCollectionChoices from "./CoachCollectionChoices"
 import MoveClassificationFaq from "./MoveClassificationFaq"
 import {
   ImportBackupButton,
@@ -38,6 +40,8 @@ export type ProfileSettingsPanelProps = Readonly<{
   autoHintMode: AutoHintMode
   chessAppearance: ChessAppearanceSettings
   chessAppearanceDisabled: boolean
+  coachCollection: CoachCollectionId
+  onCoachCollectionChanged: (collection: CoachCollectionId) => void
   onChessAppearanceChanged: (change: ChessAppearanceChange) => void
   ratings: PlayerEloRatings
   ratedMatchCounts: RatedMatchCounts
@@ -58,6 +62,8 @@ export default function ProfileSettingsPanel({
   autoHintMode,
   chessAppearance,
   chessAppearanceDisabled,
+  coachCollection,
+  onCoachCollectionChanged,
   onChessAppearanceChanged,
   ratings,
   ratedMatchCounts,
@@ -124,6 +130,12 @@ export default function ProfileSettingsPanel({
             onAutoHintModeChanged={onAutoHintModeChanged}
           />
         </div>
+
+        <CoachCollectionChoices
+          collection={coachCollection}
+          disabled={chessAppearanceDisabled}
+          onChange={onCoachCollectionChanged}
+        />
 
         <ChessAppearanceChoices
           appearance={chessAppearance}

@@ -1,4 +1,8 @@
 import {
+  DEFAULT_COACH_COLLECTION,
+  type CoachCollectionId,
+} from "@mapachess/match-presentation/coach-portrait"
+import {
   DEFAULT_AUTO_HINT_MODE,
   type AutoHintMode,
 } from "@mapachess/match/auto-hint-mode"
@@ -43,8 +47,9 @@ export const REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION = 9 as const
 export const PLAYER_APPEARANCE_DATA_SCHEMA_VERSION = 10 as const
 export const HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION = 11 as const
 export const CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION = 12 as const
+export const COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION = 13 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+  COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -180,6 +185,7 @@ export type MapachessPlayerData = Readonly<
     settings: MapachessPlayerDataV7["settings"] &
       Readonly<{
         chessAppearance: ChessAppearanceSettings
+        coachCollection: CoachCollectionId
       }>
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
@@ -225,6 +231,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
       autoHintMode: DEFAULT_AUTO_HINT_MODE,
       challengeSetup: DEFAULT_CHALLENGE_SETUP,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
+      coachCollection: DEFAULT_COACH_COLLECTION,
     }),
   })
 }

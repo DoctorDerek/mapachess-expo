@@ -8,13 +8,14 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import profileMachine, {
   selectCanChangeAutoHintMode,
-  selectCanChangeChessAppearance,
+  selectCanChangePresentationPreferences,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
+import CoachCollectionContext from "../../lib/presentation/CoachCollectionContext"
 import ChessAppearanceProvider from "../gameplay/ChessArtwork"
 import WebGame from "../gameplay/WebGame"
 import MapachessButton from "../presentation/MapachessButton"
@@ -33,6 +34,8 @@ export type ProfilePlayExperienceProps = Readonly<{
     | "autoHintMode"
     | "chessAppearance"
     | "chessAppearanceDisabled"
+    | "coachCollection"
+    | "onCoachCollectionChanged"
     | "onChessAppearanceChanged"
     | "ratings"
     | "ratedMatchCounts"
@@ -90,7 +93,14 @@ function ReadyPlayExperience({
     ...settings,
     chessAppearance: (selectPendingPlayerData(profile) ?? playerData).settings
       .chessAppearance,
-    chessAppearanceDisabled: !selectCanChangeChessAppearance(profile),
+    chessAppearanceDisabled: !selectCanChangePresentationPreferences(profile),
+    coachCollection: (selectPendingPlayerData(profile) ?? playerData).settings
+      .coachCollection,
+    onCoachCollectionChanged: (coachCollection) =>
+      profileActor.send({
+        type: "PROFILE.COACH_COLLECTION_CHANGED",
+        coachCollection,
+      }),
     onChessAppearanceChanged: (change) =>
       profileActor.send({ type: "PROFILE.CHESS_APPEARANCE_CHANGED", change }),
     autoHintMode: (selectPendingPlayerData(profile) ?? playerData).settings
@@ -114,52 +124,54 @@ function ReadyPlayExperience({
   }
   return (
     <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
-      <ProfileCardJourney
-        blocked={blocked}
-        profileActor={profileActor}
-        overlays={snapshot.context.overlays}
-        navigation={navigation}
-      />
-      {settingsOpen ? (
-        <RecoverableView
-          title="Settings could not be displayed."
-          description="Your player data has not been reset. Try again or close Settings."
-          actions={
-            <MapachessButton onClick={navigation.back}>
-              Close Settings
-            </MapachessButton>
-          }
-        >
-          {matchActor === null ? (
-            <ProfileSettingsPanel {...settingsProps} />
-          ) : (
-            <MatchSettings {...settingsProps} actor={matchActor} />
-          )}
-        </RecoverableView>
-      ) : null}
-      <div inert={blocked || settingsOpen || personalOpen}>
-        <RecoverableView
-          title="This screen could not be displayed."
-          description="Your player data is still held in memory. Try again without refreshing, or export it."
-          actions={
-            <MapachessButton
-              disabled={settings.exporting}
-              onClick={settings.onExportPlayerData}
-            >
-              Export player data
-            </MapachessButton>
-          }
-        >
-          <WebGame
-            actor={actor}
-            navigation={navigation}
-            profileActor={profileActor}
-            onSettingsRequested={() => navigation.open("settings")}
-            settingsButtonRef={settingsButton}
-            settingsOpen={settingsOpen}
-          />
-        </RecoverableView>
-      </div>
+      <CoachCollectionContext value={settingsProps.coachCollection}>
+        <ProfileCardJourney
+          blocked={blocked}
+          profileActor={profileActor}
+          overlays={snapshot.context.overlays}
+          navigation={navigation}
+        />
+        {settingsOpen ? (
+          <RecoverableView
+            title="Settings could not be displayed."
+            description="Your player data has not been reset. Try again or close Settings."
+            actions={
+              <MapachessButton onClick={navigation.back}>
+                Close Settings
+              </MapachessButton>
+            }
+          >
+            {matchActor === null ? (
+              <ProfileSettingsPanel {...settingsProps} />
+            ) : (
+              <MatchSettings {...settingsProps} actor={matchActor} />
+            )}
+          </RecoverableView>
+        ) : null}
+        <div inert={blocked || settingsOpen || personalOpen}>
+          <RecoverableView
+            title="This screen could not be displayed."
+            description="Your player data is still held in memory. Try again without refreshing, or export it."
+            actions={
+              <MapachessButton
+                disabled={settings.exporting}
+                onClick={settings.onExportPlayerData}
+              >
+                Export player data
+              </MapachessButton>
+            }
+          >
+            <WebGame
+              actor={actor}
+              navigation={navigation}
+              profileActor={profileActor}
+              onSettingsRequested={() => navigation.open("settings")}
+              settingsButtonRef={settingsButton}
+              settingsOpen={settingsOpen}
+            />
+          </RecoverableView>
+        </div>
+      </CoachCollectionContext>
     </ChessAppearanceProvider>
   )
 }

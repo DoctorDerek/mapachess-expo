@@ -1,11 +1,9 @@
 import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
+import type { CoachCollectionId } from "@mapachess/match-presentation/coach-portrait"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import type {
-  ChessAppearanceChange,
-  ChessAppearanceSettings,
-} from "./chessAppearanceSettings.js"
+import type { ChessAppearanceChange } from "./chessAppearanceSettings.js"
 import type {
   DurablePlayerDataStore,
   DurablePlayerDataWriteFailure,
@@ -19,6 +17,7 @@ import type {
   PortableBackupDecodeIssue,
   PortableBackupDecodeResult,
 } from "./portableBackup.js"
+import type { PresentationPreferences } from "./presentationPreferences.js"
 
 export type PortableBackupDecoder = (
   rawBackup: string,
@@ -61,11 +60,15 @@ export type ProfileMachineContext = Readonly<{
   pendingWrite: PendingProfileWrite | null
   persistenceFailure: ProfilePersistenceFailure | null
   requestedAutoHintMode: AutoHintMode | null
-  requestedChessAppearance: ChessAppearanceSettings | null
+  requestedPresentationPreferences: PresentationPreferences | null
   store: DurablePlayerDataStore
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{
+      type: "PROFILE.COACH_COLLECTION_CHANGED"
+      coachCollection: CoachCollectionId
+    }>
   | Readonly<{
       type: "PROFILE.CHESS_APPEARANCE_CHANGED"
       change: ChessAppearanceChange

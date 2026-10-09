@@ -1,7 +1,6 @@
 import captureError from "@mapachess/diagnostics/error-diagnostic"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import type { ChessAppearanceSettings } from "./chessAppearanceSettings.js"
 import {
   durableStoreSnapshotsEqual,
   type LoadedDurablePlayerData,
@@ -13,6 +12,7 @@ import type {
   MapachessPortableBackup,
   PortableBackupDecodeResult,
 } from "./portableBackup.js"
+import type { PresentationPreferences } from "./presentationPreferences.js"
 import type {
   PendingProfileWrite,
   PersistenceActorInput,
@@ -22,8 +22,8 @@ import type {
 } from "./profileMachineTypes.js"
 import {
   changeAutoHintMode,
-  changeChessAppearance,
   changePlayerAppearance,
+  changePresentationPreferences,
   createFreshRecoveryData,
   createLastKnownGoodRecoveryData,
   prepareImportedPlayerData,
@@ -41,13 +41,16 @@ export const prepareAppearancePending = (
     "commit",
   )
 
-export const prepareChessAppearancePending = (
+export const preparePresentationPreferencesPending = (
   context: ProfileMachineContext,
-  appearance: ChessAppearanceSettings,
+  preferences: PresentationPreferences,
 ): PendingProfileWrite =>
   pendingWrite(
     requireLoaded(context),
-    changeChessAppearance(requireCurrentPlayerData(context), appearance),
+    changePresentationPreferences(
+      requireCurrentPlayerData(context),
+      preferences,
+    ),
     "commit",
   )
 

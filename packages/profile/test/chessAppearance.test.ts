@@ -18,13 +18,13 @@ import {
   decodeMapachessPortableBackup,
 } from "../src/portableBackup.js"
 import profileMachine, {
-  selectCanChangeChessAppearance,
+  selectCanChangePresentationPreferences,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "../src/profileMachine.js"
 import { persistProfileActiveMatch } from "../src/profileMatchPersistence.js"
 import {
-  changeChessAppearance,
+  changePresentationPreferences,
   replaceActiveMatch,
 } from "../src/profileMutations.js"
 import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
@@ -32,6 +32,49 @@ import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 describe("independent saved chess artwork", () => {
+  it("authenticates schema12 before defaulting its missing coach preference", async () => {
+    const current = createInitialMapachessPlayerData()
+    const { coachCollection: _coachCollection, ...settings } = current.settings
+    const payload = { ...current, schemaVersion: 12, settings }
+    const canonical = `["mapachess-player-data",12,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(current.appearance)},["current","current"]]`
+    const decoded = decodeMapachessPlayerDataWithSource(payload)
+    expect(decoded.ok).toBe(true)
+    if (!decoded.ok) throw new Error("Schema12 must migrate")
+    expect(decoded.source.canonical).toBe(canonical)
+    expect(decoded.data).toEqual(current)
+    const stored = {
+      format: "mapachess-stored-player-data",
+      formatVersion: 1,
+      saveSchemaVersion: 12,
+      payload,
+      integrity: { algorithm: "SHA-256", payloadHash: await sha256(canonical) },
+    }
+    expect(
+      await decodeStoredPlayerData(JSON.stringify(stored), sha256),
+    ).toEqual({ ok: true, data: current })
+    expect(
+      await decodeMapachessPortableBackup(
+        JSON.stringify({
+          ...stored,
+          format: "mapachess-portable-backup",
+          applicationVersion: "test",
+          gddRevision: "5.1",
+        }),
+        sha256,
+      ),
+    ).toMatchObject({ ok: true, backup: { payload: current } })
+  })
+
+  it("rejects unknown, missing or mistyped current coach preferences", () => {
+    const current = createInitialMapachessPlayerData()
+    for (const coachCollection of ["mole", "", null, undefined, 1])
+      expect(
+        decodeMapachessPlayerDataWithSource({
+          ...current,
+          settings: { ...current.settings, coachCollection },
+        }).ok,
+      ).toBe(false)
+  })
   it("accepts every catalog combination and rejects unknown or incomplete preferences", () => {
     for (const board of CHESS_BOARDS)
       for (const pieces of CHESS_PIECE_SETS) {
@@ -50,7 +93,11 @@ describe("independent saved chess artwork", () => {
 
   it("authenticates unchanged v11 bytes before migrating without losing avatar equipment", async () => {
     const current = createInitialMapachessPlayerData()
-    const { chessAppearance: _chessAppearance, ...settings } = current.settings
+    const {
+      chessAppearance: _chessAppearance,
+      coachCollection: _coachCollection,
+      ...settings
+    } = current.settings
     const appearance = { ...current.appearance, face: 7, weapon: "weapon5_c4" }
     const payload = { ...current, schemaVersion: 11, settings, appearance }
     const canonical = `["mapachess-player-data",11,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(appearance)}]`
@@ -110,7 +157,10 @@ describe("independent saved chess artwork", () => {
         createInitialMapachessPlayerData(),
         completedStoryMatch(),
       )
-      const changed = changeChessAppearance(original, appearance)
+      const changed = changePresentationPreferences(original, {
+        chessAppearance: appearance,
+        coachCollection: "greyfox",
+      })
       expect({
         ...changed,
         revision: original.revision,
@@ -196,7 +246,17 @@ describe("independent saved chess artwork", () => {
         type: "PROFILE.CHESS_APPEARANCE_CHANGED",
         change: { pieceSetId: "chessnut" },
       })
-      expect(selectCanChangeChessAppearance(actor.getSnapshot())).toBe(true)
+      expect(selectCanChangePresentationPreferences(actor.getSnapshot())).toBe(
+        true,
+      )
+      actor.send({
+        type: "PROFILE.COACH_COLLECTION_CHANGED",
+        coachCollection: "greyfox",
+      })
+      actor.send({
+        type: "PROFILE.COACH_COLLECTION_CHANGED",
+        coachCollection: "mapachito",
+      })
       actor.send({
         type: "PROFILE.CHESS_APPEARANCE_CHANGED",
         change: { boardId: "toffee-wood" },
@@ -206,6 +266,13 @@ describe("independent saved chess artwork", () => {
         change: { pieceSetId: "cat-chess" },
       })
       const expected = { boardId: "toffee-wood", pieceSetId: "cat-chess" }
+      actor.send({
+        type: "PROFILE.COACH_COLLECTION_CHANGED",
+        coachCollection: "greyfox",
+      })
+      expect(
+        selectPendingPlayerData(actor.getSnapshot())?.settings.coachCollection,
+      ).toBe("greyfox")
       expect(
         selectPendingPlayerData(actor.getSnapshot())?.settings.chessAppearance,
       ).toEqual(expected)
@@ -215,7 +282,9 @@ describe("independent saved chess artwork", () => {
         await waitFor(actor, (snapshot) =>
           snapshot.matches("persistenceFailure"),
         )
-        expect(selectCanChangeChessAppearance(actor.getSnapshot())).toBe(false)
+        expect(
+          selectCanChangePresentationPreferences(actor.getSnapshot()),
+        ).toBe(false)
         expect(
           selectPendingPlayerData(actor.getSnapshot())?.settings
             .chessAppearance,
@@ -226,6 +295,7 @@ describe("independent saved chess artwork", () => {
       await waitFor(actor, (snapshot) => snapshot.matches("ready"))
       const accepted = selectCurrentPlayerData(actor.getSnapshot())
       expect(accepted?.settings.chessAppearance).toEqual(expected)
+      expect(accepted?.settings.coachCollection).toBe("greyfox")
       expect(accepted?.activeMatch).toEqual(updatedMatch)
       expect(accepted?.totalXp).toBe(initial.totalXp)
       expect(accepted?.lastAcceptedResultReward).toEqual(
@@ -237,6 +307,10 @@ describe("independent saved chess artwork", () => {
         loaded.current.type === "valid" &&
           loaded.current.data.settings.chessAppearance,
       ).toEqual(expected)
+      expect(
+        loaded.current.type === "valid" &&
+          loaded.current.data.settings.coachCollection,
+      ).toBe("greyfox")
       actor.stop()
     },
   )
