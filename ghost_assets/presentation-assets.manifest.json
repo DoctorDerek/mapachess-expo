@@ -4639,6 +4639,66 @@
     {
       "path": "profile/hero/weapon/weapon5/weapon5_top/weapon5_c4_top.png",
       "sha256": "268ab5ea608cad3634b171f2c2d191af6e7d1143be5c137adeba571124ef1324"
+    },
+    {
+      "path": "coach/greyfox/brilliance.png",
+      "sha256": "1af79efd61853ce5b5f6ebed18d3e7cdd6a73471d6234b66076adce8b8adc6df"
+    },
+    {
+      "path": "coach/greyfox/eager_high.png",
+      "sha256": "c87f22b206fbff3ca177e06850a80097491d710e92fdeafd5e1d6c005d17d00a"
+    },
+    {
+      "path": "coach/greyfox/eager_low.png",
+      "sha256": "38f1a626247285b4aa648b709925b87c140715c756fca40bb3b2e65d3f81560e"
+    },
+    {
+      "path": "coach/greyfox/eager_peak.png",
+      "sha256": "941b4cd13abc19ea5a0b8042a6e86a404a864cf6815d67155adfd37cd31a1c2a"
+    },
+    {
+      "path": "coach/greyfox/happy_high.png",
+      "sha256": "3886c8f8f3f861682d0531f7f44e5741ac11dacd9700ff73c1cc3bd67ef0d25d"
+    },
+    {
+      "path": "coach/greyfox/happy_low.png",
+      "sha256": "1d8529b2acf56053aa840159bdc92245ac77d1a324f0456e5cf2ed40c03fc63a"
+    },
+    {
+      "path": "coach/greyfox/hurt_high.png",
+      "sha256": "6f974b25c1236d09b4061fd7f8d1b169c97bafa664c0dd9adcb9de9e5cec823f"
+    },
+    {
+      "path": "coach/greyfox/hurt_medium.png",
+      "sha256": "0ef527470de97df2ea6adbfaeda191c5b343a166c583ae8c0664efb575dad4c0"
+    },
+    {
+      "path": "coach/greyfox/impressed_1.png",
+      "sha256": "55aeb444486c57e9cac95df626ba824ff46f0150a371f765bacf072e4080457c"
+    },
+    {
+      "path": "coach/greyfox/impressed_2.png",
+      "sha256": "389afedbc8dd822826c6f33d302178733b4c077c45e91071de9fe8c8e324c730"
+    },
+    {
+      "path": "coach/greyfox/neutral.png",
+      "sha256": "56860a9a8d3ff0be6fa09cc33402da64c972ae43855fd18f686a1b44ee4b7c7d"
+    },
+    {
+      "path": "coach/greyfox/sad_high.png",
+      "sha256": "4632b3603928964d71a790d5f162430708357a703067e0ea8d2e8f5f2629a03d"
+    },
+    {
+      "path": "coach/greyfox/sad_low.png",
+      "sha256": "89b77eeaa8cd55d7fa7d598bc675ab0329843b4d813da619e6046f94cac645b6"
+    },
+    {
+      "path": "coach/greyfox/satisfied_high.png",
+      "sha256": "59dc68537e0a7bcc3e382072b95f23180305a8891b9ccae5b247d5d1cf10da0e"
+    },
+    {
+      "path": "coach/greyfox/wow_great.png",
+      "sha256": "140c5956b2598d2f014ecc3f3cbe0a93454dfe5462fbf3595a613cf1f8b3c5ef"
     }
   ]
 }

@@ -1,0 +1,83 @@
+{
+  "source": "https://frfgreyfox.itch.io/chess-animal-asset-free",
+  "creators": ["GreyFox", "Kashir0"],
+  "modifications": "Unmodified standalone face PNGs renamed to existing semantic expression IDs. Emotion assignments are project interpretations, not creator-supplied labels.",
+  "fallbacks": { "hurt_low": "neutral" },
+  "files": [
+    {
+      "path": "coach/greyfox/happy_high.png",
+      "source": "ground animals/Mountain ground squirrel/Mountain ground squirrel face.png",
+      "animal": "Mountain ground squirrel"
+    },
+    {
+      "path": "coach/greyfox/happy_low.png",
+      "source": "ground animals/Altai mouse/Altai mouse face.png",
+      "animal": "Altai mouse"
+    },
+    {
+      "path": "coach/greyfox/sad_high.png",
+      "source": "ground animals/Bison/Bison face.png",
+      "animal": "Bison"
+    },
+    {
+      "path": "coach/greyfox/sad_low.png",
+      "source": "flying animals/crow/crow face.png",
+      "animal": "crow"
+    },
+    {
+      "path": "coach/greyfox/brilliance.png",
+      "source": "ground animals/common fox/common fox face.png",
+      "animal": "common fox"
+    },
+    {
+      "path": "coach/greyfox/wow_great.png",
+      "source": "ground animals/beaver/curva face.png",
+      "animal": "beaver"
+    },
+    {
+      "path": "coach/greyfox/eager_high.png",
+      "source": "ground animals/wolf/wolf face.png",
+      "animal": "wolf"
+    },
+    {
+      "path": "coach/greyfox/eager_low.png",
+      "source": "ground animals/reindeer/reindeer face.png",
+      "animal": "reindeer"
+    },
+    {
+      "path": "coach/greyfox/satisfied_high.png",
+      "source": "ground animals/Pallas's cat/Pallas's cat face.png",
+      "animal": "Pallas's cat"
+    },
+    {
+      "path": "coach/greyfox/impressed_1.png",
+      "source": "ground animals/white hare/white hare face.png",
+      "animal": "white hare"
+    },
+    {
+      "path": "coach/greyfox/hurt_medium.png",
+      "source": "ground animals/boar/boar face.png",
+      "animal": "boar"
+    },
+    {
+      "path": "coach/greyfox/neutral.png",
+      "source": "ground animals/Chimpanzee/Chimpanzee face.png",
+      "animal": "Chimpanzee"
+    },
+    {
+      "path": "coach/greyfox/impressed_2.png",
+      "source": "ground animals/Amur tiger/Amur tiger face.png",
+      "animal": "Amur tiger"
+    },
+    {
+      "path": "coach/greyfox/hurt_high.png",
+      "source": "ground animals/bear/bear face.png",
+      "animal": "bear"
+    },
+    {
+      "path": "coach/greyfox/eager_peak.png",
+      "source": "ground animals/wolverine/wolverine face.png",
+      "animal": "wolverine"
+    }
+  ]
+}

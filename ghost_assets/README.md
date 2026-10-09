@@ -2,8 +2,7 @@
 
 ## Independent chess-art bundle
 
-The existing presentation archive and its manifest remain unchanged. The
-separate `backterria-toffeecraft-chess.zip` contains 213 runtime PNGs: 198
+The independent `backterria-toffeecraft-chess.zip` contains 213 runtime PNGs: 198
 authored piece cells and 15 playable board images. Its existing filename is
 retained; the inventory now also includes Cosunosuke's twelve gold/blue piece
 cells and frameless board. `chess-assets.manifest.json`
@@ -37,7 +36,8 @@ selectors. Catalog inclusion alone does not certify every board/piece combinatio
 for release. Cosunosuke's source-linked notice records the creator's game-use
 permission and prohibition on standalone raw-asset redistribution. The framed
 board and selection indicator remain private: Mapachess keeps its own coordinates
-and interaction overlays. GreyFox is not part of the runtime catalogs or this archive.
+and interaction overlays. GreyFox faces belong to the separate coach collection,
+not the chess-piece catalogs or chess archive.
 
 ## Existing animal, portrait and avatar bundle
 
@@ -48,14 +48,17 @@ builds to reproduce the Battle Stage, coach portraits, and player avatars.
   SHA-256 digest.
 - `seethingswarm-captainskolot-heroes99.zip` contains only those files, encrypted
   as AES-256 AE-2 data: SeethingSwarm animal sprites, CaptainSkolot coach portraits,
-  and Heroes99 avatar layers by AU_pixel.
+  GreyFox / Kashir0 coach faces, and Heroes99 avatar layers by AU_pixel.
+- `greyfox-coach.provenance.json` maps fifteen unmodified face images to their
+  source files. The sixteen-expression contract deliberately resolves Tiny Hurt
+  through neutral Chimpanzee; it does not duplicate an image or include Mole.
 - `LICENSE.txt` records provenance, attribution, and the controlling source
   terms. The encrypted archive does not grant permission to reuse its contents.
 - `vendor/presentation-assets/` is the ignored local source directory used to
   author a replacement archive.
 - `apps/web/public/generated/presentation-assets/` is ignored build output.
 
-The archive's filename identifies its source families; the existing manifest,
+The archive's historical filename is retained for delivery compatibility; the existing manifest,
 authoring directory, and generated browser URLs retain their presentation-domain
 names. A filename-only migration does not re-encrypt the archive or change its
 password, inventory, or runtime paths.

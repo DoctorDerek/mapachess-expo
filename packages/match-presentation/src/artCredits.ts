@@ -125,6 +125,20 @@ export const ART_CREDITS = Object.freeze({
     ]),
     modifications: "Portraits extracted from the supplied atlas.",
   }),
+  greyfox: Object.freeze({
+    title: "Chess-animals faces",
+    creator: "GreyFox / Kashir0",
+    contribution: "Optional animal-face coach reactions",
+    license: "Licensed game artwork; attribution required",
+    licenseUrl: "https://frfgreyfox.itch.io/chess-animal-asset-free",
+    sources: Object.freeze([
+      Object.freeze({
+        label: "Chess-animals + ico assets",
+        url: "https://frfgreyfox.itch.io/chess-animal-asset-free",
+      }),
+    ]),
+    modifications: "Unmodified faces assigned to Mapachess reaction labels.",
+  }),
   heroes99: Object.freeze({
     title: "Heroes99",
     creator: "AU_pixel",
