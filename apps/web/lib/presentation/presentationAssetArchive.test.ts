@@ -22,6 +22,10 @@ import {
 } from "@zip.js/zip.js/index-native.js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
+  LICENSED_ASSET_BUNDLES,
+  parseLicensedAssetBundleArgument,
+} from "../../../../scripts/ghost-assets/licensedAssetBundles"
+import {
   createLicensedPresentationAssetArchive,
   describeLicensedPresentationAssetFailure,
   hasPublishedLicensedPresentationAssets,
@@ -100,6 +104,7 @@ describe("licensed presentation asset preparation", () => {
       "scripts/create-presentation-asset-archive.ts",
       "scripts/decrypt-assets.ts",
       "scripts/ghost-assets/presentationAssetArchive.ts",
+      "scripts/ghost-assets/licensedAssetBundles.ts",
     ]) {
       const destination = join(repositoryRoot, path)
       await mkdir(dirname(destination), { recursive: true })
@@ -116,6 +121,21 @@ describe("licensed presentation asset preparation", () => {
     const workingDirectory =
       operation === "create" ? repositoryRoot : join(repositoryRoot, "apps/web")
     await mkdir(workingDirectory, { recursive: true })
+    if (operation === "prepare") {
+      await writeFile(
+        join(repositoryRoot, LICENSED_ASSET_BUNDLES.chess.manifest),
+        JSON.stringify({
+          files: [{ path: FIXTURE_PATH, sha256: FIXTURE_DIGEST }],
+        }),
+      )
+      const chessSource = join(
+        repositoryRoot,
+        LICENSED_ASSET_BUNDLES.chess.localSource,
+        FIXTURE_PATH,
+      )
+      await mkdir(dirname(chessSource), { recursive: true })
+      await writeFile(chessSource, FIXTURE_BYTES)
+    }
     return executeFile(
       process.execPath,
       operation === "create"
@@ -423,4 +443,144 @@ describe("licensed presentation asset preparation", () => {
     )
     await expectExtractionCleaned()
   })
+
+  it("uses an explicit bundle argument and rejects accidental archive selection", () => {
+    expect(parseLicensedAssetBundleArgument([])).toBe("presentation")
+    expect(parseLicensedAssetBundleArgument(["--bundle=chess"])).toBe("chess")
+    expect(parseLicensedAssetBundleArgument(["--bundle=presentation"])).toBe(
+      "presentation",
+    )
+    expect(() => parseLicensedAssetBundleArgument(["chess"])).toThrow()
+    expect(() =>
+      parseLicensedAssetBundleArgument(["--bundle=chess", "extra"]),
+    ).toThrow()
+  })
+
+  const prepareChessFixture = async (): Promise<void> => {
+    const bundle = LICENSED_ASSET_BUNDLES.chess
+    await writeFile(
+      join(repositoryRoot, bundle.manifest),
+      JSON.stringify({
+        files: [{ path: "pieces/king.png", sha256: FIXTURE_DIGEST }],
+      }),
+    )
+    await mkdir(join(repositoryRoot, bundle.localSource, "pieces"), {
+      recursive: true,
+    })
+    await writeFile(
+      join(repositoryRoot, bundle.localSource, "pieces/king.png"),
+      FIXTURE_BYTES,
+    )
+  }
+
+  it("encrypts and extracts chess independently without changing the presentation archive or output", async () => {
+    await useArchiveOnly()
+    await prepareLicensedPresentationAssets(repositoryRoot)
+    const originalArchive = await readFile(archivePath)
+    await prepareChessFixture()
+    await createLicensedPresentationAssetArchive(repositoryRoot, "chess")
+    await rm(join(repositoryRoot, LICENSED_ASSET_BUNDLES.chess.localSource), {
+      recursive: true,
+    })
+    await prepareLicensedPresentationAssets(repositoryRoot, "chess")
+    expect(
+      await hasPublishedLicensedPresentationAssets(repositoryRoot, "chess"),
+    ).toBe(true)
+    expect(await readFile(archivePath)).toEqual(originalArchive)
+    expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(
+      FIXTURE_BYTES,
+    )
+    expect(
+      existsSync(
+        join(repositoryRoot, LICENSED_ASSET_BUNDLES.chess.archiveSource),
+      ),
+    ).toBe(false)
+  })
+
+  it.each(["presentation", "chess"] as const)(
+    "keeps the other bundle usable when %s falls back",
+    async (missingBundle) => {
+      await prepareChessFixture()
+      await prepareLicensedPresentationAssets(repositoryRoot)
+      await prepareLicensedPresentationAssets(repositoryRoot, "chess")
+      vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, undefined)
+      await rm(
+        join(repositoryRoot, LICENSED_ASSET_BUNDLES[missingBundle].localSource),
+        { recursive: true },
+      )
+      await prepareLicensedPresentationAssets(repositoryRoot, missingBundle)
+      expect(
+        await hasPublishedLicensedPresentationAssets(
+          repositoryRoot,
+          missingBundle,
+        ),
+      ).toBe(false)
+      expect(
+        await hasPublishedLicensedPresentationAssets(
+          repositoryRoot,
+          missingBundle === "chess" ? "presentation" : "chess",
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it.each([
+    "wrong-key",
+    "hash",
+    "extra-entry",
+    "traversal",
+    "missing-entry",
+  ] as const)(
+    "rejects invalid chess delivery (%s) and cleans only its own staging",
+    async (failure) => {
+      await prepareChessFixture()
+      const bundle = LICENSED_ASSET_BUNDLES.chess
+      await prepareLicensedPresentationAssets(repositoryRoot)
+      const writer = new ZipWriter(new Uint8ArrayWriter(), {
+        password: FIXTURE_KEY,
+        encryptionStrength: 3,
+        zipCrypto: false,
+        useWebWorkers: false,
+      })
+      if (failure !== "missing-entry")
+        await writer.add("pieces/king.png", new Uint8ArrayReader(FIXTURE_BYTES))
+      if (failure === "extra-entry")
+        await writer.add("unwanted.png", new Uint8ArrayReader(FIXTURE_BYTES))
+      await writeFile(
+        join(repositoryRoot, bundle.archive),
+        await writer.close(),
+      )
+      if (failure === "hash" || failure === "traversal")
+        await writeFile(
+          join(repositoryRoot, bundle.manifest),
+          JSON.stringify({
+            files: [
+              {
+                path:
+                  failure === "traversal"
+                    ? "../outside.png"
+                    : "pieces/king.png",
+                sha256: failure === "hash" ? "0".repeat(64) : FIXTURE_DIGEST,
+              },
+            ],
+          }),
+        )
+      await rm(join(repositoryRoot, bundle.localSource), { recursive: true })
+      if (failure === "wrong-key")
+        vi.stubEnv(LICENSED_PRESENTATION_ASSET_KEY_VARIABLE, "wrong")
+      await expect(
+        prepareLicensedPresentationAssets(repositoryRoot, "chess"),
+      ).rejects.toThrow()
+      expect(existsSync(join(repositoryRoot, bundle.publicAssets))).toBe(false)
+      expect(existsSync(join(repositoryRoot, bundle.archiveSource))).toBe(false)
+      expect(
+        (await readdir(join(repositoryRoot, "vendor"))).some((name) =>
+          name.startsWith(".chess-assets-"),
+        ),
+      ).toBe(false)
+      expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(
+        FIXTURE_BYTES,
+      )
+    },
+  )
 })

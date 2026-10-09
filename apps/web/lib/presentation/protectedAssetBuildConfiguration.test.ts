@@ -20,10 +20,14 @@ const FIXTURE_KEY = "fixture asset password"
 const ROOT_INPUTS = [
   "ghost_assets/seethingswarm-captainskolot-heroes99.zip",
   "ghost_assets/presentation-assets.manifest.json",
+  "ghost_assets/chess-assets.manifest.json",
+  "ghost_assets/backterria-toffeecraft-chess.zip",
   "scripts/decrypt-assets.ts",
   "scripts/ghost-assets/presentationAssetArchive.ts",
+  "scripts/ghost-assets/licensedAssetBundles.ts",
   "tsconfig.json",
   "vendor/presentation-assets/fixture.png",
+  "vendor/chess-runtime-assets/fixture.png",
 ]
 
 const FIXTURE_PREPARE = `
