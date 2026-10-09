@@ -33,7 +33,10 @@ describe("Mapachess portable backups", () => {
       revision: 42,
       schema: initial.schema,
       schemaVersion: 6,
-      settings: initial.settings,
+      settings: {
+        autoHintMode: initial.settings.autoHintMode,
+        challengeSetup: initial.settings.challengeSetup,
+      },
       storyProgress: initial.storyProgress,
     }
     const originalCanonical = JSON.stringify([

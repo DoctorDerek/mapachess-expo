@@ -67,6 +67,7 @@ describe("durable Challenge history", () => {
   it("migrates a version-five profile without inventing past records", () => {
     const {
       challengeHistory: omitted,
+      settings: { chessAppearance: _chessAppearance, ...settings },
       appearance: _appearance,
       legacyRatings,
       lastAcceptedResultReward: _lastAcceptedResultReward,
@@ -77,7 +78,7 @@ describe("durable Challenge history", () => {
       unlockedAchievementIds: _unlockedAchievementIds,
       ...current
     } = createInitialMapachessPlayerData()
-    const old = { ...current, ratings: legacyRatings }
+    const old = { ...current, settings, ratings: legacyRatings }
     expect(omitted).toEqual(createInitialChallengeHistory())
     const result = decodeMapachessPlayerData({ ...old, schemaVersion: 5 })
     expect(result.ok).toBe(true)
@@ -85,7 +86,10 @@ describe("durable Challenge history", () => {
     expect(result.data.challengeHistory).toEqual(
       createInitialChallengeHistory(),
     )
-    expect(result.data.settings).toEqual(old.settings)
+    expect(result.data.settings).toEqual({
+      ...old.settings,
+      chessAppearance: { boardId: "current", pieceSetId: "current" },
+    })
   })
 
   it("rejects duplicate difficulty and animal identities", () => {

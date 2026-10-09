@@ -10,7 +10,9 @@ import {
   heroLayerPaths,
   samePlayerAppearance,
 } from "../src/playerAppearance.js"
-import createInitialMapachessPlayerData from "../src/playerData.js"
+import createInitialMapachessPlayerData, {
+  MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+} from "../src/playerData.js"
 import { decodeMapachessPlayerDataWithSource } from "../src/playerDataCodec.js"
 import {
   createMapachessPortableBackup,
@@ -161,8 +163,12 @@ describe("the saved personal appearance", () => {
 
   it("migrates schema9 without changing its checksum input or progression", () => {
     const current = createInitialMapachessPlayerData()
-    const { appearance: _appearance, ...fields } = current
-    const legacy = { ...fields, schemaVersion: 9 }
+    const {
+      appearance: _appearance,
+      settings: { chessAppearance: _chessAppearance, ...settings },
+      ...fields
+    } = current
+    const legacy = { ...fields, settings, schemaVersion: 9 }
     const decoded = decodeMapachessPlayerDataWithSource(legacy)
     expect(decoded.ok).toBe(true)
     if (!decoded.ok) throw new Error("Expected supported legacy profile")
@@ -184,7 +190,9 @@ describe("the saved personal appearance", () => {
         clothColor: 3,
         animal,
       }
-      const payload = { ...current, schemaVersion: 10, appearance }
+      const { chessAppearance: _chessAppearance, ...settings } =
+        current.settings
+      const payload = { ...current, settings, schemaVersion: 10, appearance }
       const canonical = `["mapachess-player-data",10,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(appearance)}]`
       const integrity = {
         algorithm: "SHA-256",
@@ -218,7 +226,9 @@ describe("the saved personal appearance", () => {
       if (!restored.ok)
         throw new Error("Expected an authenticated schema10 backup")
       expect(restored.backup.payload).toEqual(expected)
-      expect(restored.backup.saveSchemaVersion).toBe(11)
+      expect(restored.backup.saveSchemaVersion).toBe(
+        MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+      )
       expect(restored.backup.integrity.payloadHash).not.toBe(
         integrity.payloadHash,
       )

@@ -1,5 +1,8 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
 import captureError from "@mapachess/diagnostics/error-diagnostic"
+import decodeChessAppearance, {
+  sameChessAppearance,
+} from "./chessAppearanceSettings.js"
 import type { LoadedDurablePlayerData } from "./durableStore.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type {
@@ -26,6 +29,7 @@ import {
   prepareActiveMatchPending,
   prepareAppearancePending,
   prepareAutoHintModePending,
+  prepareChessAppearancePending,
   prepareEloResetPending,
   prepareFreshRecoveryPending,
   prepareImportPending,
@@ -76,6 +80,33 @@ const profileMachineDefinition = setup({
     >(({ input }) => retryPendingWrite(input)),
   },
   actions: {
+    rememberChessAppearance: assign(({ context, event }) => {
+      if (event.type !== "PROFILE.CHESS_APPEARANCE_CHANGED")
+        throw new Error("Chess appearance requires a preference event.")
+      const previous =
+        context.requestedChessAppearance ??
+        context.pendingWrite?.candidate.settings.chessAppearance ??
+        requireCurrentPlayerData(context).settings.chessAppearance
+      return {
+        requestedChessAppearance: decodeChessAppearance({
+          ...previous,
+          ...event.change,
+        }),
+      }
+    }),
+    prepareRequestedChessAppearanceWrite: assign(({ context }) => {
+      if (context.requestedChessAppearance === null)
+        throw new Error("A requested chess appearance is required.")
+      return {
+        pendingWrite: prepareChessAppearancePending(
+          context,
+          context.requestedChessAppearance,
+        ),
+        requestedChessAppearance: null,
+        persistenceFailure: null,
+      }
+    }),
+    clearRequestedChessAppearance: assign({ requestedChessAppearance: null }),
     prepareAppearanceWrite: assign(({ context, event }) => {
       if (event.type !== "PROFILE.APPEARANCE_SAVE_REQUESTED")
         throw new Error("Appearance save requires an appearance event.")
@@ -178,6 +209,17 @@ const profileMachineDefinition = setup({
     })),
   },
   guards: {
+    profileCommitIsSaving: ({ context }) =>
+      context.loaded?.current.type === "valid" &&
+      context.pendingWrite?.operation === "commit",
+    requestedChessAppearanceDiffers: ({ context }) =>
+      context.requestedChessAppearance !== null &&
+      !sameChessAppearance(
+        context.requestedChessAppearance,
+        requireCurrentPlayerData(context).settings.chessAppearance,
+      ),
+    requestedChessAppearanceExists: ({ context }) =>
+      context.requestedChessAppearance !== null,
     autoHintModeIsStandalone: ({ context }) =>
       requireCurrentPlayerData(context).activeMatch === null,
     standalonePreferenceIsSaving: ({ context }) =>
@@ -211,6 +253,7 @@ const profileMachineDefinition = setup({
     pendingWrite: null,
     persistenceFailure: null,
     requestedAutoHintMode: null,
+    requestedChessAppearance: null,
     store: input.store,
   }),
   states: {
@@ -259,6 +302,15 @@ const profileMachineDefinition = setup({
     ready: {
       always: [
         {
+          guard: "requestedChessAppearanceDiffers",
+          actions: "prepareRequestedChessAppearanceWrite",
+          target: "persisting",
+        },
+        {
+          guard: "requestedChessAppearanceExists",
+          actions: "clearRequestedChessAppearance",
+        },
+        {
           guard: "requestedAutoHintModeDiffers",
           actions: "prepareRequestedAutoHintModeWrite",
           target: "persisting",
@@ -269,6 +321,9 @@ const profileMachineDefinition = setup({
         },
       ],
       on: {
+        "PROFILE.CHESS_APPEARANCE_CHANGED": {
+          actions: "rememberChessAppearance",
+        },
         "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED": {
           actions: "prepareActiveMatchWrite",
           target: "persisting",
@@ -358,6 +413,10 @@ const profileMachineDefinition = setup({
     },
     persisting: {
       on: {
+        "PROFILE.CHESS_APPEARANCE_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberChessAppearance",
+        },
         "PROFILE.AUTO_HINT_MODE_CHANGED": {
           guard: "standalonePreferenceIsSaving",
           actions: "rememberAutoHintMode",
@@ -396,6 +455,10 @@ const profileMachineDefinition = setup({
     },
     retryingPersistence: {
       on: {
+        "PROFILE.CHESS_APPEARANCE_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberChessAppearance",
+        },
         "PROFILE.AUTO_HINT_MODE_CHANGED": {
           guard: "standalonePreferenceIsSaving",
           actions: "rememberAutoHintMode",
@@ -445,13 +508,27 @@ export const selectPendingPlayerData = (
   const candidate = snapshot.context.pendingWrite?.candidate
   if (candidate === undefined) return null
   const requested = snapshot.context.requestedAutoHintMode
-  return requested === null
+  const appearance = snapshot.context.requestedChessAppearance
+  return requested === null && appearance === null
     ? candidate
     : {
         ...candidate,
-        settings: { ...candidate.settings, autoHintMode: requested },
+        settings: {
+          ...candidate.settings,
+          autoHintMode: requested ?? candidate.settings.autoHintMode,
+          chessAppearance: appearance ?? candidate.settings.chessAppearance,
+        },
       }
 }
+
+export const selectCanChangeChessAppearance = (
+  snapshot: ProfileMachineSnapshot,
+): boolean =>
+  selectCurrentPlayerData(snapshot) !== null &&
+  (snapshot.matches("ready") ||
+    ((snapshot.matches("persisting") ||
+      snapshot.matches("retryingPersistence")) &&
+      snapshot.context.pendingWrite?.operation === "commit"))
 
 export const selectCanChangeAutoHintMode = (
   snapshot: ProfileMachineSnapshot,

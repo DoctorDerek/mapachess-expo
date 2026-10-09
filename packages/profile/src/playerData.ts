@@ -16,6 +16,10 @@ import {
   createInitialChallengeHistory,
   type ChallengeHistory,
 } from "./challengeHistory.js"
+import {
+  DEFAULT_CHESS_APPEARANCE,
+  type ChessAppearanceSettings,
+} from "./chessAppearanceSettings.js"
 import type { LevelAchievementId } from "./globalXp.js"
 import {
   DEFAULT_PLAYER_APPEARANCE,
@@ -37,7 +41,10 @@ export const TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION = 7 as const
 export const GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION = 8 as const
 export const REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION = 9 as const
 export const PLAYER_APPEARANCE_DATA_SCHEMA_VERSION = 10 as const
-export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 11 as const
+export const HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION = 11 as const
+export const CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION = 12 as const
+export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
+  CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -168,8 +175,12 @@ export const acceptedRewardMatchesEnding = (
             match.conclusion.winner))))
 
 export type MapachessPlayerData = Readonly<
-  Omit<MapachessPlayerDataV7, "schemaVersion"> & {
+  Omit<MapachessPlayerDataV7, "schemaVersion" | "settings"> & {
     schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+    settings: MapachessPlayerDataV7["settings"] &
+      Readonly<{
+        chessAppearance: ChessAppearanceSettings
+      }>
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
     lastAcceptedResultReward: AcceptedMatchReward | null
@@ -213,6 +224,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
     settings: Object.freeze({
       autoHintMode: DEFAULT_AUTO_HINT_MODE,
       challengeSetup: DEFAULT_CHALLENGE_SETUP,
+      chessAppearance: DEFAULT_CHESS_APPEARANCE,
     }),
   })
 }

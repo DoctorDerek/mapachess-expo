@@ -67,6 +67,7 @@ describe("Mapachess player data", () => {
       settings: {
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
+        chessAppearance: { boardId: "current", pieceSetId: "current" },
       },
     })
     expect(Object.keys(playerData.ratings).sort()).toEqual(

@@ -453,6 +453,7 @@ describe("profile-owned match persistence bridge", () => {
     expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
       autoHintMode: "auto-piece-hints",
       challengeSetup,
+      chessAppearance: { boardId: "current", pieceSetId: "current" },
     })
     await persistProfileActiveMatch({
       actor,

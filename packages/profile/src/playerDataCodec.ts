@@ -10,6 +10,9 @@ import { createInitialChallengeHistory } from "./challengeHistory.js"
 import decodeChallengeHistory, {
   canonicalChallengeHistory,
 } from "./challengeHistoryCodec.js"
+import decodeChessAppearance, {
+  DEFAULT_CHESS_APPEARANCE,
+} from "./chessAppearanceSettings.js"
 import {
   failData,
   PlayerDataDecodeProblem,
@@ -46,9 +49,11 @@ import {
 import {
   acceptedRewardMatchesEnding,
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
+  CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
   createInitialRatedMatchCounts,
   GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
+  HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION,
   INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -98,6 +103,7 @@ export type PlayerDataSource = Readonly<{
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
+    | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -307,6 +313,10 @@ const decodeAcceptedMatchReward = (
 const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
   Object.freeze({
     ...data,
+    settings: Object.freeze({
+      ...data.settings,
+      chessAppearance: DEFAULT_CHESS_APPEARANCE,
+    }),
     appearance: DEFAULT_PLAYER_APPEARANCE,
     legacyRatings: data.ratings,
     lastAcceptedResultReward: null,
@@ -440,6 +450,14 @@ export const canonicalPlayerData = (
           sourceSchemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
             ? legacyPlayerAppearance(data.appearance)
             : data.appearance,
+        ]
+      : []),
+    ...(sourceSchemaVersion >= CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+      ? [
+          [
+            data.settings.chessAppearance.boardId,
+            data.settings.chessAppearance.pieceSetId,
+          ],
         ]
       : []),
   ])
@@ -607,6 +625,7 @@ const decodeCurrentPlayerData = (
     | typeof GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
     | typeof REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
+    | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -633,7 +652,17 @@ const decodeCurrentPlayerData = (
     "$",
   )
   const settings = requireObject(object.settings, "$.settings")
-  requireExactKeys(settings, ["autoHintMode", "challengeSetup"], "$.settings")
+  requireExactKeys(
+    settings,
+    [
+      "autoHintMode",
+      "challengeSetup",
+      ...(sourceSchemaVersion >= CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+        ? ["chessAppearance"]
+        : []),
+    ],
+    "$.settings",
+  )
   const challengeSetup = parseChallengeSetup(settings.challengeSetup)
   if (!challengeSetup.ok) return failData("$.settings.challengeSetup")
   const activeMatch =
@@ -690,7 +719,7 @@ const decodeCurrentPlayerData = (
             storyProgress,
             "$.appearance",
           )
-        : sourceSchemaVersion >= MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
+        : sourceSchemaVersion >= HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
           ? decodePlayerAppearance(
               object.appearance,
               storyProgress,
@@ -724,6 +753,10 @@ const decodeCurrentPlayerData = (
         "$.settings.autoHintMode",
       ),
       challengeSetup: challengeSetup.setup,
+      chessAppearance:
+        sourceSchemaVersion >= CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+          ? decodeChessAppearance(settings.chessAppearance)
+          : DEFAULT_CHESS_APPEARANCE,
     }),
     storyProgress,
     totalXp,
@@ -841,6 +874,8 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)
             : failData("$.schemaVersion")

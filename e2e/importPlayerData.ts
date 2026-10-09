@@ -24,7 +24,11 @@ export default async function importPlayerData(
   await page
     .getByRole("button", { name: "Replace Local Player Data", exact: true })
     .click()
-  await expect(
-    page.getByRole("button", { name: "Customize profile card", exact: true }),
-  ).toBeEnabled()
+  if (playerData.activeMatch === null) {
+    await expect(
+      page.getByRole("button", { name: "Customize profile card", exact: true }),
+    ).toBeEnabled()
+  } else {
+    await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
+  }
 }

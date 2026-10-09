@@ -260,9 +260,14 @@ describe("one reversible active result", () => {
     const reward = accepted.lastAcceptedResultReward
     if (reward === null) throw new Error("Fixture requires a receipt")
     const { contribution: _contribution, ...legacyReward } = reward
-    const { appearance: _appearance, ...legacyFields } = accepted
+    const {
+      appearance: _appearance,
+      settings: { chessAppearance: _chessAppearance, ...settings },
+      ...legacyFields
+    } = accepted
     const payload = {
       ...legacyFields,
+      settings,
       schemaVersion: GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
       lastAcceptedResultReward: legacyReward,
     }

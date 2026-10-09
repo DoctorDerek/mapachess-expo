@@ -8,12 +8,14 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import profileMachine, {
   selectCanChangeAutoHintMode,
+  selectCanChangeChessAppearance,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
+import ChessAppearanceProvider from "../gameplay/ChessArtwork"
 import WebGame from "../gameplay/WebGame"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
@@ -29,6 +31,9 @@ export type ProfilePlayExperienceProps = Readonly<{
   settings: Omit<
     ProfileSettingsPanelProps,
     | "autoHintMode"
+    | "chessAppearance"
+    | "chessAppearanceDisabled"
+    | "onChessAppearanceChanged"
     | "ratings"
     | "ratedMatchCounts"
     | "onAutoHintModeChanged"
@@ -83,6 +88,11 @@ function ReadyPlayExperience({
   }, [actor, blocked, navigation.back])
   const settingsProps: ProfileSettingsPanelProps = {
     ...settings,
+    chessAppearance: (selectPendingPlayerData(profile) ?? playerData).settings
+      .chessAppearance,
+    chessAppearanceDisabled: !selectCanChangeChessAppearance(profile),
+    onChessAppearanceChanged: (change) =>
+      profileActor.send({ type: "PROFILE.CHESS_APPEARANCE_CHANGED", change }),
     autoHintMode: (selectPendingPlayerData(profile) ?? playerData).settings
       .autoHintMode,
     ratings: playerData.ratings,
@@ -103,7 +113,7 @@ function ReadyPlayExperience({
     },
   }
   return (
-    <>
+    <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
       <ProfileCardJourney
         blocked={blocked}
         profileActor={profileActor}
@@ -150,7 +160,7 @@ function ReadyPlayExperience({
           />
         </RecoverableView>
       </div>
-    </>
+    </ChessAppearanceProvider>
   )
 }
 

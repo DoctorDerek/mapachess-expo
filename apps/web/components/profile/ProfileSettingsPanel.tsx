@@ -7,6 +7,10 @@ import type {
 } from "@mapachess/match/match-navigation"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
+import type {
+  ChessAppearanceChange,
+  ChessAppearanceSettings,
+} from "@mapachess/profile/chess-appearance-settings"
 import {
   PLAYER_ELO_RATING_IDS,
   type PlayerEloRatingId,
@@ -18,6 +22,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import ArtCredits from "./ArtCredits"
 import AutoHintModeChoices from "./AutoHintModeChoices"
+import ChessAppearanceChoices from "./ChessAppearanceChoices"
 import MoveClassificationFaq from "./MoveClassificationFaq"
 import {
   ImportBackupButton,
@@ -31,6 +36,9 @@ export type ProfileSettingsPanelProps = Readonly<{
   exporting?: boolean
   hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
+  chessAppearance: ChessAppearanceSettings
+  chessAppearanceDisabled: boolean
+  onChessAppearanceChanged: (change: ChessAppearanceChange) => void
   ratings: PlayerEloRatings
   ratedMatchCounts: RatedMatchCounts
   importIssue: ProfileImportIssue | null
@@ -48,6 +56,9 @@ export default function ProfileSettingsPanel({
   exporting = false,
   hintChangesDisabled,
   autoHintMode,
+  chessAppearance,
+  chessAppearanceDisabled,
+  onChessAppearanceChanged,
   ratings,
   ratedMatchCounts,
   importIssue,
@@ -113,6 +124,12 @@ export default function ProfileSettingsPanel({
             onAutoHintModeChanged={onAutoHintModeChanged}
           />
         </div>
+
+        <ChessAppearanceChoices
+          appearance={chessAppearance}
+          disabled={chessAppearanceDisabled}
+          onChange={onChessAppearanceChanged}
+        />
 
         <section aria-labelledby="player-elo-settings-title" className="mt-7">
           <h2

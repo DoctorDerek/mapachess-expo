@@ -5,6 +5,9 @@ import accountActiveResult from "./activeResultAccounting.js"
 import applyChallengeMatchResult, {
   recordChallengeStart,
 } from "./challengeHistory.js"
+import decodeChessAppearance, {
+  type ChessAppearanceSettings,
+} from "./chessAppearanceSettings.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
 import {
@@ -31,6 +34,19 @@ export const changePlayerAppearance = (
       current.appearance.animal === "chicken-stockfish" ? "preserve" : "reject",
     ),
     revision: current.revision + 1,
+  })
+
+export const changeChessAppearance = (
+  current: MapachessPlayerData,
+  chessAppearance: ChessAppearanceSettings,
+): MapachessPlayerData =>
+  Object.freeze({
+    ...current,
+    revision: current.revision + 1,
+    settings: Object.freeze({
+      ...current.settings,
+      chessAppearance: decodeChessAppearance(chessAppearance),
+    }),
   })
 
 const freezePlayerData = (
