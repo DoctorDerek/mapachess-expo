@@ -283,6 +283,25 @@ describe("web match session machine", () => {
       expect(parseMatchNavigationDestination(invalid)).toBeNull()
   })
 
+  it("restores the player-animal chooser only on a setup screen", () => {
+    const destination = {
+      screen: "setup",
+      matchId: null,
+      setupKey: "story:standard",
+      overlays: ["setup-player"],
+    } as const
+    expect(parseMatchNavigationDestination(destination)).toEqual(destination)
+    expect(eligibleMatchNavigationOverlays(destination, false)).toEqual([
+      "setup-player",
+    ])
+    expect(
+      eligibleMatchNavigationOverlays(
+        { ...destination, screen: "menu" },
+        false,
+      ),
+    ).toEqual([])
+  })
+
   it("opens selected Story setup only after closing the saved session, without starting a match", async () => {
     const menu = Promise.withResolvers<void>()
     const ops = operations({ returnToMenu: vi.fn(() => menu.promise) })
