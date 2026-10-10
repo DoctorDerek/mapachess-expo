@@ -30,8 +30,9 @@ import {
   ImportBackupButton,
   importIssueMessage,
   PREPARING_BACKUP_LABEL,
-  ProfileCard,
 } from "./ProfileFoundation"
+
+export const PROFILE_SETTINGS_TITLE = "Settings & Player Data"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
@@ -92,209 +93,202 @@ export default function ProfileSettingsPanel({
   return (
     <div
       aria-busy={busy}
-      className="relative z-20 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)] aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
+      className="mx-auto w-full max-w-3xl aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
       id="profile-settings-panel"
     >
-      <ProfileCard labelledBy="profile-settings-title">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-              Local profile
-            </p>
-            <h2
-              className="font-display text-mapachito-charcoal mt-3 text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase"
-              id="profile-settings-title"
-            >
-              Settings &amp; Player Data
-            </h2>
-          </div>
-          <MapachessButton
-            variant="secondary"
-            autoFocus
-            onClick={onClose}
-            type="button"
-          >
-            Close Settings
-          </MapachessButton>
-        </div>
+      <header className="bg-mapachito-white sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 py-2">
+        <h2
+          className="font-display text-mapachito-charcoal text-2xl leading-tight font-black"
+          id="profile-settings-title"
+        >
+          {PROFILE_SETTINGS_TITLE}
+        </h2>
+        <MapachessButton
+          variant="secondary"
+          autoFocus
+          onClick={onClose}
+          type="button"
+        >
+          Close Settings
+        </MapachessButton>
+      </header>
 
-        <div className="mt-8">
-          <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
-            Choose how Better Hints appear automatically. During a match,
-            changes take effect immediately and become the default for future
-            matches. Every Better Hint remains available manually.
-          </p>
-          <AutoHintModeChoices
-            autoHintMode={autoHintMode}
-            disabled={hintChangesDisabled ?? busy}
-            onAutoHintModeChanged={onAutoHintModeChanged}
-          />
-        </div>
-
-        <CoachCollectionChoices
-          collection={coachCollection}
-          disabled={chessAppearanceDisabled}
-          onChange={onCoachCollectionChanged}
+      <div className="mt-8">
+        <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
+          Choose how Better Hints appear automatically. During a match, changes
+          take effect immediately and become the default for future matches.
+          Every Better Hint remains available manually.
+        </p>
+        <AutoHintModeChoices
+          autoHintMode={autoHintMode}
+          disabled={hintChangesDisabled ?? busy}
+          onAutoHintModeChanged={onAutoHintModeChanged}
         />
+      </div>
 
-        <ChessAppearanceChoices
-          appearance={chessAppearance}
-          disabled={chessAppearanceDisabled}
-          onChange={onChessAppearanceChanged}
-        />
+      <CoachCollectionChoices
+        collection={coachCollection}
+        disabled={chessAppearanceDisabled}
+        onChange={onCoachCollectionChanged}
+      />
 
-        <section aria-labelledby="player-elo-settings-title" className="mt-7">
-          <h2
-            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-            id="player-elo-settings-title"
-          >
-            Your Elo ratings
-          </h2>
-          <div className="mt-4 grid gap-3">
-            {PLAYER_ELO_RATING_IDS.map((variant) => {
-              const label = MATCH_VARIANT_LABELS[variant]
-              return (
-                <div
-                  className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
-                  key={variant}
-                >
-                  <div>
-                    <p className="text-mapachito-charcoal font-bold">
-                      {label} · {Math.round(ratings[variant])} Elo
-                    </p>
-                    <p className="text-mapachito-charcoal text-sm opacity-76">
-                      {ratedMatchCounts[variant]} rated matches
-                    </p>
-                  </div>
-                  <MapachessButton
-                    disabled={busy}
-                    onClick={() => navigation.open(`reset-${variant}`)}
-                    type="button"
-                    variant="secondary"
-                  >
-                    Reset {label} Elo
-                  </MapachessButton>
-                </div>
-              )
-            })}
-          </div>
-          {resetVariant === null ? null : (
-            <div
-              aria-labelledby="player-elo-reset-title"
-              className="border-mapachito-charcoal bg-mapachito-white mt-4 rounded-lg border-3 p-4"
-              role="group"
-            >
-              <h3
-                className="text-mapachito-charcoal text-lg font-black"
-                id="player-elo-reset-title"
+      <ChessAppearanceChoices
+        appearance={chessAppearance}
+        disabled={chessAppearanceDisabled}
+        onChange={onChessAppearanceChanged}
+      />
+
+      <section aria-labelledby="player-elo-settings-title" className="mt-7">
+        <h2
+          className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+          id="player-elo-settings-title"
+        >
+          Your Elo ratings
+        </h2>
+        <div className="mt-4 grid gap-3">
+          {PLAYER_ELO_RATING_IDS.map((variant) => {
+            const label = MATCH_VARIANT_LABELS[variant]
+            return (
+              <div
+                className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
+                key={variant}
               >
-                Reset {resetLabel} Elo?
-              </h3>
-              <p className="text-mapachito-charcoal mt-2 text-base leading-relaxed">
-                {resetLabel} Elo returns to 100 and its rated-match count to
-                zero. The other rating, Story progress, medals, Challenge
-                records, settings, and active match stay unchanged. Completed
-                matches cannot be rated again. Export your data first if you
-                want a backup.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <MapachessButton
-                  autoFocus
-                  onClick={navigation.back}
-                  type="button"
-                  variant="secondary"
-                >
-                  Cancel
-                </MapachessButton>
-                <MapachessButton
-                  aria-busy={exporting}
-                  busyLabel={PREPARING_BACKUP_LABEL}
-                  onClick={onExportPlayerData}
-                  type="button"
-                  variant="secondary"
-                >
-                  Export Player Data
-                </MapachessButton>
+                <div>
+                  <p className="text-mapachito-charcoal font-bold">
+                    {label} · {Math.round(ratings[variant])} Elo
+                  </p>
+                  <p className="text-mapachito-charcoal text-sm opacity-76">
+                    {ratedMatchCounts[variant]} rated matches
+                  </p>
+                </div>
                 <MapachessButton
                   disabled={busy}
-                  onClick={() => {
-                    onEloResetConfirmed(resetVariant)
-                    navigation.back()
-                  }}
+                  onClick={() => navigation.open(`reset-${variant}`)}
                   type="button"
-                  variant="destructive"
+                  variant="secondary"
                 >
-                  Reset {resetLabel} Elo to 100
+                  Reset {label} Elo
                 </MapachessButton>
               </div>
-            </div>
-          )}
-        </section>
-
-        <section aria-labelledby="player-data-actions-title" className="mt-7">
-          <h2
-            className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
-            id="player-data-actions-title"
+            )
+          })}
+        </div>
+        {resetVariant === null ? null : (
+          <div
+            aria-labelledby="player-elo-reset-title"
+            className="border-mapachito-charcoal bg-mapachito-white mt-4 rounded-lg border-3 p-4"
+            role="group"
           >
-            Portable Player Data
-          </h2>
-          <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-            Data stays on this device unless you explicitly download or import a
-            JSON backup. Import first opens a non-destructive preview and is
-            never applied before you review it.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <MapachessButton
-              aria-busy={exporting}
-              busyLabel={PREPARING_BACKUP_LABEL}
-              onClick={onExportPlayerData}
-              type="button"
+            <h3
+              className="text-mapachito-charcoal text-lg font-black"
+              id="player-elo-reset-title"
             >
-              Export Player Data
-            </MapachessButton>
-            <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
+              Reset {resetLabel} Elo?
+            </h3>
+            <p className="text-mapachito-charcoal mt-2 text-base leading-relaxed">
+              {resetLabel} Elo returns to 100 and its rated-match count to zero.
+              The other rating, Story progress, medals, Challenge records,
+              settings, and active match stay unchanged. Completed matches
+              cannot be rated again. Export your data first if you want a
+              backup.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <MapachessButton
+                autoFocus
+                onClick={navigation.back}
+                type="button"
+                variant="secondary"
+              >
+                Cancel
+              </MapachessButton>
+              <MapachessButton
+                aria-busy={exporting}
+                busyLabel={PREPARING_BACKUP_LABEL}
+                onClick={onExportPlayerData}
+                type="button"
+                variant="secondary"
+              >
+                Export Player Data
+              </MapachessButton>
+              <MapachessButton
+                disabled={busy}
+                onClick={() => {
+                  onEloResetConfirmed(resetVariant)
+                  navigation.back()
+                }}
+                type="button"
+                variant="destructive"
+              >
+                Reset {resetLabel} Elo to 100
+              </MapachessButton>
+            </div>
           </div>
-        </section>
+        )}
+      </section>
 
-        <MoveClassificationFaq
-          open={overlays.includes("classifications")}
-          onOpen={() => navigation.open("classifications")}
-          onClose={navigation.back}
-        />
-        <details
-          open={overlays.includes("about-elo")}
-          className="text-mapachito-charcoal mt-7 text-base"
+      <section aria-labelledby="player-data-actions-title" className="mt-7">
+        <h2
+          className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+          id="player-data-actions-title"
         >
-          <summary
-            onClick={(event) => {
-              event.preventDefault()
-              if (overlays.includes("about-elo")) navigation.back()
-              else navigation.open("about-elo")
-            }}
-            className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+          Portable Player Data
+        </h2>
+        <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
+          Data stays on this device unless you explicitly download or import a
+          JSON backup. Import first opens a non-destructive preview and is never
+          applied before you review it.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <MapachessButton
+            aria-busy={exporting}
+            busyLabel={PREPARING_BACKUP_LABEL}
+            onClick={onExportPlayerData}
+            type="button"
           >
-            About Elo ratings
-          </summary>
-          <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
-        </details>
+            Export Player Data
+          </MapachessButton>
+          <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
+        </div>
+      </section>
 
-        <ArtCredits
-          open={overlays.includes("credits")}
-          onOpen={() => navigation.open("credits")}
-          onClose={navigation.back}
-        />
+      <MoveClassificationFaq
+        open={overlays.includes("classifications")}
+        onOpen={() => navigation.open("classifications")}
+        onClose={navigation.back}
+      />
+      <details
+        open={overlays.includes("about-elo")}
+        className="text-mapachito-charcoal mt-7 text-base"
+      >
+        <summary
+          onClick={(event) => {
+            event.preventDefault()
+            if (overlays.includes("about-elo")) navigation.back()
+            else navigation.open("about-elo")
+          }}
+          className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+        >
+          About Elo ratings
+        </summary>
+        <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
+      </details>
 
-        {importIssue === null ? null : (
-          <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
-            {importIssueMessage(importIssue)}
-          </MapachessNotice>
-        )}
-        {activityMessage === null ? null : (
-          <p className="sr-only" role="status">
-            {activityMessage}
-          </p>
-        )}
-      </ProfileCard>
+      <ArtCredits
+        open={overlays.includes("credits")}
+        onOpen={() => navigation.open("credits")}
+        onClose={navigation.back}
+      />
+
+      {importIssue === null ? null : (
+        <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
+          {importIssueMessage(importIssue)}
+        </MapachessNotice>
+      )}
+      {activityMessage === null ? null : (
+        <p className="sr-only" role="status">
+          {activityMessage}
+        </p>
+      )}
     </div>
   )
 }

@@ -251,7 +251,9 @@ describe("Better Hints board presentation", () => {
         'data-hint-kind="move" data-hint-owner="opponent" data-hint-pattern="dashed"',
       ),
     ).toBe(3)
-    expect(countOccurrences(whiteMarkup, 'markerHeight="0.96"')).toBe(2)
+    expect(countOccurrences(whiteMarkup, 'markerHeight="0.78"')).toBe(2)
+    expect(whiteMarkup).not.toContain("var(--color-mapachito-white)")
+    expect(whiteMarkup).toContain('stroke-linecap="butt"')
     expect(countOccurrences(whiteMarkup, 'data-hint-stroke="outline"')).toBe(12)
     expect(countOccurrences(whiteMarkup, 'data-hint-stroke="owner"')).toBe(12)
     expect(whiteMarkup).toContain("z-[5]")

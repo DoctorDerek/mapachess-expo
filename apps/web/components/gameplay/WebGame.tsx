@@ -330,7 +330,9 @@ export default function WebGame({
                 ? "difficulty"
                 : snapshot.context.overlays.includes("setup-hints")
                   ? "hints"
-                  : null
+                  : snapshot.context.overlays.includes("setup-player")
+                    ? "player"
+                    : null
           }
           onEditorOpened={(editor) => navigation.open(`setup-${editor}`)}
           onEditorClosed={navigation.back}

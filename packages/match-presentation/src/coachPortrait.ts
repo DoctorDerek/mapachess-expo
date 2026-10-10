@@ -68,11 +68,7 @@ export const COACH_COLLECTIONS: Readonly<
   greyfox: Object.freeze({
     label: "Animal faces",
     directory: "coach/greyfox",
-    portraits: Object.freeze(
-      COACH_PORTRAITS.filter(({ label }) => label !== "hurt_low").map(
-        ({ label }) => label,
-      ),
-    ),
+    portraits: Object.freeze(COACH_PORTRAITS.map(({ label }) => label)),
   }),
 })
 
@@ -102,6 +98,7 @@ const GREYFOX_PORTRAIT_FRAMES = {
   eager_high: { x: 17.5, y: 18, size: 108 },
   eager_low: { x: 5, y: 5.5, size: 133 },
   satisfied_high: { x: 6, y: 6, size: 132 },
+  hurt_low: { x: 37.5, y: 27, size: 95 },
   impressed_1: { x: 5.5, y: 6, size: 132 },
   hurt_medium: { x: 22, y: 22, size: 100 },
   neutral: { x: 17, y: 16.5, size: 110 },
@@ -109,10 +106,7 @@ const GREYFOX_PORTRAIT_FRAMES = {
   hurt_high: { x: 32, y: 31.5, size: 80 },
   eager_peak: { x: 18.5, y: 18, size: 107 },
 } as const satisfies Readonly<
-  Record<
-    Exclude<CoachPortraitLabel, "hurt_low">,
-    Omit<CoachPortraitFrame, "sourceSize">
-  >
+  Record<CoachPortraitLabel, Omit<CoachPortraitFrame, "sourceSize">>
 >
 
 export const coachPortraitFrame = (
@@ -122,7 +116,7 @@ export const coachPortraitFrame = (
   collection === "mapachito"
     ? MAPACHITO_PORTRAIT_FRAME
     : {
-        ...GREYFOX_PORTRAIT_FRAMES[label === "hurt_low" ? "neutral" : label],
+        ...GREYFOX_PORTRAIT_FRAMES[label],
         sourceSize: 144,
       }
 

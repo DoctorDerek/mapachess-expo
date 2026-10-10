@@ -1,18 +1,29 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 
-test("shows the entire locked roster and keeps it keyboard-scrollable on a narrow screen", async ({
+async function openStoryPlayerChoices(page: Page): Promise<void> {
+  await page
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
+    .click()
+  await expect(
+    page.getByRole("region", { name: "Player animals", exact: true }),
+  ).toHaveCount(0)
+  await page.getByRole("button", { name: /^Play as / }).click()
+  await expect(
+    page.getByRole("dialog", { name: "Play as", exact: true }),
+  ).toBeVisible()
+}
+
+test("opens the complete locked roster from the selected animal and keeps it keyboard-scrollable", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 915 })
   await page.goto("/")
-  await page
-    .getByRole("button", { name: "Standard Chess Story", exact: true })
-    .click()
+  await openStoryPlayerChoices(page)
   const gallery = page.getByRole("region", {
     name: "Player animals",
     exact: true,
@@ -26,14 +37,20 @@ test("shows the entire locked roster and keeps it keyboard-scrollable on a narro
   await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(22)
   await gallery.focus()
   await page.keyboard.press("End")
+  const dialog = page.getByRole("dialog", { name: "Play as", exact: true })
   await expect
-    .poll(() => gallery.evaluate((element) => element.scrollTop))
+    .poll(() => dialog.evaluate((element) => element.scrollTop))
     .toBeGreaterThan(0)
   await gallery
     .getByRole("radio", { name: /Dragonfly/ })
     .scrollIntoViewIfNeeded()
   await expect(gallery.getByText("Dragonfly", { exact: false })).toBeVisible()
-  await expect(gallery).toHaveCSS("overflow-x", "hidden")
+  const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
+  const chicken = gallery.getByRole("radio", { name: /Chicken/ })
+  const raccoonBounds = await raccoon.boundingBox()
+  const chickenBounds = await chicken.boundingBox()
+  expect(raccoonBounds?.y).toBe(chickenBounds?.y)
+  expect(chickenBounds?.x).toBeGreaterThan(raccoonBounds?.x ?? 0)
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -61,9 +78,7 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
     },
   })
   const before = await savedProfile(page)
-  await page
-    .getByRole("button", { name: "Standard Chess Story", exact: true })
-    .click()
+  await openStoryPlayerChoices(page)
   const gallery = page.getByRole("region", {
     name: "Player animals",
     exact: true,
@@ -81,6 +96,10 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
     appearance: before.appearance,
     revision: before.revision,
   }).toEqual(before)
+  await page.getByRole("button", { name: "Done", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: /^Play as Chicken/ }),
+  ).toBeFocused()
   await page
     .getByRole("button", { name: "All game modes", exact: true })
     .click()
@@ -143,9 +162,7 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
     ...initial,
     appearance: { ...initial.appearance, animal: "chicken-stockfish" },
   })
-  await page
-    .getByRole("button", { name: "Standard Chess Story", exact: true })
-    .click()
+  await openStoryPlayerChoices(page)
   const gallery = page.getByRole("region", {
     name: "Player animals",
     exact: true,

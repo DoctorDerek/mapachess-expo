@@ -13,6 +13,7 @@ import type {
   ChessAppearanceSettings,
 } from "@mapachess/profile/chess-appearance-settings"
 import {
+  ChessArtworkRecovery,
   chessBoard,
   ChessBoardArtwork,
   ChessPiece,
@@ -75,6 +76,7 @@ export default function ChessAppearanceChoices({
       >
         Board &amp; Pieces
       </h2>
+      <ChessArtworkRecovery />
       <div
         className="border-mapachito-charcoal relative mx-auto my-4 grid aspect-square w-full max-w-80 grid-cols-8 grid-rows-8 overflow-hidden rounded-sm border-2 text-[clamp(1rem,5vw,2.25rem)]"
         role="img"

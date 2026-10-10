@@ -53,7 +53,7 @@ export type WebMatchSetupProps = Readonly<{
   onEditorClosed: () => void
 }>
 
-type SetupEditor = "opponent" | "difficulty" | "hints"
+type SetupEditor = "opponent" | "difficulty" | "hints" | "player"
 
 export default function WebMatchSetup({
   autoHintMode,
@@ -106,6 +106,10 @@ export default function WebMatchSetup({
   )
   const challengeOpponents = selectChallengeUnlockedOpponents(storyProgress)
   const opponent = stockfishOpponent(selectedOpponentId)
+  const playerAnimal =
+    playerAppearance === undefined
+      ? null
+      : stockfishOpponent(playerAppearance.animal)
   usePreparedMatchImages(
     selectedOpponentId,
     setup.mode === "story" ? playerAppearance?.animal : "raccoon-stockfish",
@@ -183,15 +187,32 @@ export default function WebMatchSetup({
       </div>
       <form onSubmit={startMatch} className="grid gap-3 text-base">
         {setup.mode === "story" &&
-        playerAppearance !== undefined &&
+        playerAnimal !== null &&
         onPlayerAnimalChanged !== undefined ? (
-          <PlayerAnimalChoices
-            active={visible && editing === null}
+          <button
+            aria-haspopup="dialog"
+            className="bg-mapachito-violet text-mapachito-white flex min-w-0 cursor-pointer items-center gap-3 rounded-lg p-3 text-left focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
             disabled={disabled || opening}
-            onSelected={onPlayerAnimalChanged}
-            selectedId={playerAppearance.animal}
-            storyProgress={storyProgress}
-          />
+            onClick={(event) => openEditor("player", event.currentTarget)}
+            type="button"
+          >
+            <span className="pointer-events-none block h-20 w-20 shrink-0">
+              <ChallengeAnimalPortrait
+                key={playerAnimal.id}
+                active={visible && editing === null}
+                opponent={playerAnimal}
+              />
+            </span>
+            <span className="min-w-0 flex-1 wrap-anywhere">
+              <span className="block text-base">Play as</span>
+              <span className="font-display block text-xl font-black">
+                {playerAnimal.displayName.replace(" Stockfish", "")}
+              </span>
+            </span>
+            <span className="text-base font-bold">
+              Change animal <span aria-hidden="true">▾</span>
+            </span>
+          </button>
         ) : null}
         <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
           <button
@@ -305,14 +326,29 @@ export default function WebMatchSetup({
           <MatchSetupPicker
             onDone={onEditorClosed}
             title={
-              editing === "hints"
-                ? "Better Hints"
-                : editing === "difficulty"
-                  ? "Choose difficulty"
-                  : "Choose opponent"
+              editing === "player"
+                ? "Play as"
+                : editing === "hints"
+                  ? "Better Hints"
+                  : editing === "difficulty"
+                    ? "Choose difficulty"
+                    : "Choose opponent"
             }
           >
-            {editing === "hints" ? (
+            {editing === "player" &&
+            playerAppearance !== undefined &&
+            onPlayerAnimalChanged !== undefined ? (
+              <div className="bg-mapachito-charcoal rounded-lg p-3">
+                <PlayerAnimalChoices
+                  active={visible}
+                  presentation="dialog"
+                  disabled={disabled || opening}
+                  onSelected={onPlayerAnimalChanged}
+                  selectedId={playerAppearance.animal}
+                  storyProgress={storyProgress}
+                />
+              </div>
+            ) : editing === "hints" ? (
               <AutoHintModeChoices
                 autoHintMode={autoHintMode}
                 disabled={disabled}

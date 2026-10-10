@@ -47,8 +47,28 @@ export const chessBoard = (id: ChessBoardId): (typeof CHESS_BOARDS)[number] => {
 }
 
 const ArtworkContext = createContext<
-  Readonly<{ appearance: ChessAppearanceSettings; attempt: number }>
->({ appearance: DEFAULT_CHESS_APPEARANCE, attempt: 0 })
+  Readonly<{
+    appearance: ChessAppearanceSettings
+    attempt: number
+    retry: (() => void) | null
+  }>
+>({ appearance: DEFAULT_CHESS_APPEARANCE, attempt: 0, retry: null })
+
+export function ChessArtworkRecovery() {
+  const { retry } = useContext(ArtworkContext)
+  return retry === null ? null : (
+    <div
+      role="alert"
+      className="bg-mapachito-white text-mapachito-charcoal mx-auto my-3 flex max-w-3xl flex-wrap items-center gap-3 rounded-lg p-4"
+    >
+      <p>
+        Selected chess artwork could not load. Defaults are shown; your choices
+        and match are preserved.
+      </p>
+      <MapachessButton onClick={retry}>Retry chess artwork</MapachessButton>
+    </div>
+  )
+}
 
 function useArtworkVisibility(
   source: string | null,
@@ -146,22 +166,12 @@ export default function ChessAppearanceProvider({
           boardId: board.displayed,
         },
         attempt,
+        retry:
+          pieces.failed || board.failed
+            ? () => setAttempt((value) => value + 1)
+            : null,
       }}
     >
-      {pieces.failed || board.failed ? (
-        <div
-          role="alert"
-          className="bg-mapachito-white text-mapachito-charcoal mx-auto my-3 flex max-w-3xl flex-wrap items-center gap-3 rounded-lg p-4"
-        >
-          <p>
-            Selected chess artwork could not load. Defaults are shown; your
-            choices and match are preserved.
-          </p>
-          <MapachessButton onClick={() => setAttempt((value) => value + 1)}>
-            Retry chess artwork
-          </MapachessButton>
-        </div>
-      ) : null}
       {children}
     </ArtworkContext>
   )
