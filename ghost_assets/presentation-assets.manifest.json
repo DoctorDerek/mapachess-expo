@@ -4673,6 +4673,10 @@
       "sha256": "0ef527470de97df2ea6adbfaeda191c5b343a166c583ae8c0664efb575dad4c0"
     },
     {
+      "path": "coach/greyfox/hurt_low.png",
+      "sha256": "f5693ad69d0629cfd498462c767cbcb499ef8869cd64a03c03d677040b489170"
+    },
+    {
       "path": "coach/greyfox/impressed_1.png",
       "sha256": "55aeb444486c57e9cac95df626ba824ff46f0150a371f765bacf072e4080457c"
     },

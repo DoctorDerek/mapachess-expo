@@ -8,6 +8,7 @@ export type MatchNavigationOverlay =
   | "reset-standard"
   | "reset-chess960"
   | "setup-opponent"
+  | "setup-player"
   | "setup-difficulty"
   | "setup-hints"
   | "rewards"
@@ -38,6 +39,7 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "reset-standard",
   "reset-chess960",
   "setup-opponent",
+  "setup-player",
   "setup-difficulty",
   "setup-hints",
   "rewards",

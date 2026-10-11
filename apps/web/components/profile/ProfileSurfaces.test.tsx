@@ -185,6 +185,13 @@ describe("web player-data controls", () => {
     )
 
     expect(markup).toContain("Auto Move Hints")
+    expect(markup).toContain("Your game customization")
+    expect(markup).not.toContain("Settings &amp; Player Data")
+    for (const area of ["coach", "pieces", "board"])
+      expect(markup).toContain(
+        `aria-expanded="false" aria-label="Change ${area}"`,
+      )
+    expect(markup).not.toContain("board preview")
     expect(markup).toContain("Auto Piece Hints")
     expect(markup).toContain("No Auto Hints")
     expect(markup).toContain("Bronze if you win after using Move Hints.")

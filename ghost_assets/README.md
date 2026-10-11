@@ -49,9 +49,9 @@ builds to reproduce the Battle Stage, coach portraits, and player avatars.
 - `seethingswarm-captainskolot-heroes99.zip` contains only those files, encrypted
   as AES-256 AE-2 data: SeethingSwarm animal sprites, CaptainSkolot coach portraits,
   GreyFox / Kashir0 coach faces, and Heroes99 avatar layers by AU_pixel.
-- `greyfox-coach.provenance.json` maps fifteen unmodified face images to their
-  source files. The sixteen-expression contract deliberately resolves Tiny Hurt
-  through neutral Chimpanzee; it does not duplicate an image or include Mole.
+- `greyfox-coach.provenance.json` maps all sixteen dedicated face images to their
+  sources: fifteen unmodified standalone PNGs and one exact atlas crop for
+  Tiny Hurt's sad wolf. Chimpanzee remains neutral; Mole is not included.
 - `LICENSE.txt` records provenance, attribution, and the controlling source
   terms. The encrypted archive does not grant permission to reuse its contents.
 - `vendor/presentation-assets/` is the ignored local source directory used to

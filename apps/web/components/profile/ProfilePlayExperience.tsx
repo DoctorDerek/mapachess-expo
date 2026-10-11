@@ -16,13 +16,17 @@ import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
 import CoachCollectionContext from "../../lib/presentation/CoachCollectionContext"
-import ChessAppearanceProvider from "../gameplay/ChessArtwork"
+import ChessAppearanceProvider, {
+  ChessArtworkRecovery,
+} from "../gameplay/ChessArtwork"
 import WebGame from "../gameplay/WebGame"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessDialog from "../presentation/MapachessDialog"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import RecoverableView from "../presentation/RecoverableView"
 import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
+  PROFILE_SETTINGS_TITLE,
   type ProfileSettingsPanelProps,
 } from "./ProfileSettingsPanel"
 
@@ -132,23 +136,29 @@ function ReadyPlayExperience({
           navigation={navigation}
         />
         {settingsOpen ? (
-          <RecoverableView
-            title="Settings could not be displayed."
-            description="Your player data has not been reset. Try again or close Settings."
-            actions={
-              <MapachessButton onClick={navigation.back}>
-                Close Settings
-              </MapachessButton>
-            }
+          <MapachessDialog
+            label={PROFILE_SETTINGS_TITLE}
+            onClose={navigation.back}
           >
-            {matchActor === null ? (
-              <ProfileSettingsPanel {...settingsProps} />
-            ) : (
-              <MatchSettings {...settingsProps} actor={matchActor} />
-            )}
-          </RecoverableView>
+            <RecoverableView
+              title="Settings could not be displayed."
+              description="Your player data has not been reset. Try again or close Settings."
+              actions={
+                <MapachessButton onClick={navigation.back}>
+                  Close Settings
+                </MapachessButton>
+              }
+            >
+              {matchActor === null ? (
+                <ProfileSettingsPanel {...settingsProps} />
+              ) : (
+                <MatchSettings {...settingsProps} actor={matchActor} />
+              )}
+            </RecoverableView>
+          </MapachessDialog>
         ) : null}
         <div inert={blocked || settingsOpen || personalOpen}>
+          {settingsOpen ? null : <ChessArtworkRecovery />}
           <RecoverableView
             title="This screen could not be displayed."
             description="Your player data is still held in memory. Try again without refreshing, or export it."
@@ -165,7 +175,10 @@ function ReadyPlayExperience({
               actor={actor}
               navigation={navigation}
               profileActor={profileActor}
-              onSettingsRequested={() => navigation.open("settings")}
+              onSettingsRequested={() => {
+                settingsButton.current?.focus({ preventScroll: true })
+                navigation.open("settings")
+              }}
               settingsButtonRef={settingsButton}
               settingsOpen={settingsOpen}
             />

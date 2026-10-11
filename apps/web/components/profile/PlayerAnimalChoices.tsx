@@ -20,12 +20,14 @@ const PLAYER_ANIMALS = Object.freeze([
 
 export default function PlayerAnimalChoices({
   active = true,
+  presentation = "embedded",
   disabled,
   onSelected,
   selectedId,
   storyProgress,
 }: Readonly<{
   active?: boolean
+  presentation?: "embedded" | "dialog"
   disabled: boolean
   onSelected: (animal: StockfishOpponentId) => void
   selectedId: StockfishOpponentId
@@ -43,13 +45,26 @@ export default function PlayerAnimalChoices({
       className="text-mapachito-white min-w-0"
       disabled={disabled}
     >
-      <legend className="font-display text-xl font-bold">Play as</legend>
+      <legend
+        className={
+          presentation === "dialog"
+            ? "sr-only"
+            : "font-display text-xl font-bold"
+        }
+      >
+        Play as
+      </legend>
       <p className="mt-1 text-base" id={`${groupId}-help`}>
         Beat animals in Story to unlock them. Raccoon is always yours.
       </p>
       <div
         aria-label="Player animals"
-        className="mt-2 grid max-h-96 [scrollbar-color:var(--color-mapachito-blue)_var(--color-mapachito-charcoal)] [scrollbar-gutter:stable] grid-cols-[repeat(auto-fit,minmax(min(7.5rem,100%),1fr))] gap-3 overflow-x-hidden overflow-y-scroll overscroll-contain p-2"
+        className={cx(
+          "mt-2 grid gap-3 p-2",
+          presentation === "dialog"
+            ? "grid-cols-[repeat(auto-fit,minmax(min(6.5rem,100%),1fr))]"
+            : "max-h-96 [scrollbar-color:var(--color-mapachito-blue)_var(--color-mapachito-charcoal)] [scrollbar-gutter:stable] grid-cols-[repeat(auto-fit,minmax(min(7.5rem,100%),1fr))] overflow-x-hidden overflow-y-scroll overscroll-contain",
+        )}
         role="region"
         tabIndex={0}
       >

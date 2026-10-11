@@ -87,9 +87,9 @@ Source terms reviewed October 9, 2026 permit personal and commercial project
 use with attribution. Reselling or distributing the downloaded or modified
 asset pack is prohibited. This is licensed game artwork, not open-source art.
 
-Fifteen unmodified static face PNGs supply the optional Animal faces coach.
-The sixteen-slot expression contract uses neutral Chimpanzee for Tiny Hurt;
-there is no dedicated Tiny Hurt asset. Mole is not included.
+Sixteen static face PNGs supply the optional Animal faces coach: fifteen
+unmodified standalone images and one exact atlas crop for Tiny Hurt's sad wolf,
+without resampling or repainting. Chimpanzee remains neutral; Mole is not included.
 Runtime filenames express Mapachess's interpreted reactions, not the creators'
 emotion labels. Exact source-to-runtime mapping is in
 greyfox-coach.provenance.json. Original packs, unused faces and source sheets

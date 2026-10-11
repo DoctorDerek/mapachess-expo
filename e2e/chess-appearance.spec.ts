@@ -45,13 +45,11 @@ const openGallery = async (
   page: Page,
   name: "Pieces" | "Board",
 ): Promise<void> => {
-  const disclosure = appearanceSection(page)
-    .locator("details")
-    .filter({
-      has: page.locator("summary").filter({ hasText: new RegExp(name) }),
-    })
-  if (!(await disclosure.evaluate((element) => element.hasAttribute("open"))))
-    await disclosure.locator("summary").click()
+  const trigger = appearanceSection(page).getByRole("button", {
+    name: new RegExp(`^(Change|Done choosing) ${name.toLowerCase()}$`),
+  })
+  if ((await trigger.getAttribute("aria-expanded")) !== "true")
+    await trigger.click()
 }
 const openSettings = async (page: Page): Promise<void> => {
   const settings = page.getByRole("button", { name: "Settings", exact: true })

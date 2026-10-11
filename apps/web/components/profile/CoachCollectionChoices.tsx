@@ -1,7 +1,7 @@
 "use client"
 
 import cx from "classix"
-import { useId } from "react"
+import { useId, useState } from "react"
 import {
   COACH_COLLECTION_IDS,
   COACH_COLLECTIONS,
@@ -10,6 +10,7 @@ import {
 } from "@mapachess/match-presentation/coach-portrait"
 import useDecodedCoachPortrait from "../../lib/presentation/useDecodedCoachPortrait"
 import CoachPortraitImage from "../presentation/CoachPortraitImage"
+import CustomizationChoice from "./CustomizationChoice"
 
 const SAMPLE_EXPRESSIONS = [
   "neutral",
@@ -48,54 +49,61 @@ export default function CoachCollectionChoices({
   onChange: (collection: CoachCollectionId) => void
 }>) {
   const id = useId()
+  const [open, setOpen] = useState(false)
   return (
-    <fieldset
-      disabled={disabled}
-      aria-describedby={`${id}-description`}
-      className="mt-8"
+    <CustomizationChoice
+      label="Coach"
+      value={COACH_COLLECTIONS[collection].label}
+      preview={<CoachSample collection={collection} expression="neutral" />}
+      open={open}
+      onToggle={() => setOpen((current) => !current)}
     >
-      <legend className="font-display text-mapachito-charcoal text-[1.35rem] font-black uppercase">
-        Coach
-      </legend>
-      <p
-        id={`${id}-description`}
-        className="text-mapachito-charcoal mt-2 text-sm"
+      <fieldset
+        disabled={disabled}
+        aria-describedby={`${id}-description`}
+        className="mt-4"
       >
-        One raccoon, or a cast of animals whose expressions follow the match.
-      </p>
-      <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-3">
-        {COACH_COLLECTION_IDS.map((choice) => (
-          <label
-            key={choice}
-            className={cx(
-              "bg-mapachito-violet text-mapachito-white has-[:focus-visible]:outline-mapachito-orange grid cursor-pointer justify-items-center gap-3 rounded-lg p-3 font-bold has-[:disabled]:cursor-not-allowed has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2",
-              collection === choice &&
-                "ring-mapachito-orange ring-3 ring-offset-2",
-            )}
-          >
-            <span className="flex gap-2">
-              {SAMPLE_EXPRESSIONS.map((expression) => (
-                <CoachSample
-                  key={expression}
-                  collection={choice}
-                  expression={expression}
+        <legend className="sr-only">Coach</legend>
+        <p
+          id={`${id}-description`}
+          className="text-mapachito-charcoal mt-2 text-sm"
+        >
+          One raccoon, or a cast of animals whose expressions follow the match.
+        </p>
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-3">
+          {COACH_COLLECTION_IDS.map((choice) => (
+            <label
+              key={choice}
+              className={cx(
+                "bg-mapachito-violet text-mapachito-white has-[:focus-visible]:outline-mapachito-orange grid cursor-pointer justify-items-center gap-3 rounded-lg p-3 font-bold has-[:disabled]:cursor-not-allowed has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2",
+                collection === choice &&
+                  "ring-mapachito-orange ring-3 ring-offset-2",
+              )}
+            >
+              <span className="flex gap-2">
+                {SAMPLE_EXPRESSIONS.map((expression) => (
+                  <CoachSample
+                    key={expression}
+                    collection={choice}
+                    expression={expression}
+                  />
+                ))}
+              </span>
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${id}-coach`}
+                  checked={collection === choice}
+                  value={choice}
+                  onChange={() => onChange(choice)}
+                  className="accent-mapachito-orange size-4 shrink-0"
                 />
-              ))}
-            </span>
-            <span className="flex items-center gap-2">
-              <input
-                type="radio"
-                name={`${id}-coach`}
-                checked={collection === choice}
-                value={choice}
-                onChange={() => onChange(choice)}
-                className="accent-mapachito-orange size-4 shrink-0"
-              />
-              {COACH_COLLECTIONS[choice].label}
-            </span>
-          </label>
-        ))}
-      </div>
-    </fieldset>
+                {COACH_COLLECTIONS[choice].label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    </CustomizationChoice>
   )
 }

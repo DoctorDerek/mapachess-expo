@@ -428,6 +428,9 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
   await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect(
+    page.getByRole("dialog", { name: "Better Hints", exact: true }),
+  ).toHaveCount(0)
+  await expect(
     page.getByRole("button", { name: "Start match", exact: true }),
   ).toBeEnabled()
   await page.reload()
@@ -596,7 +599,7 @@ test("has no serious or critical accessibility violations", async ({
   await expect(
     page.getByRole("heading", {
       level: 2,
-      name: "Settings & Player Data",
+      name: "Your game customization",
       exact: true,
     }),
   ).toBeVisible()

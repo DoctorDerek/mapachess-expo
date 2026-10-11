@@ -1,8 +1,7 @@
 {
   "source": "https://frfgreyfox.itch.io/chess-animal-asset-free",
   "creators": ["GreyFox", "Kashir0"],
-  "modifications": "Unmodified standalone face PNGs renamed to existing semantic expression IDs. Emotion assignments are project interpretations, not creator-supplied labels.",
-  "fallbacks": { "hurt_low": "neutral" },
+  "modifications": "Fifteen unmodified standalone face PNGs and one exact 144-by-144 atlas crop, without resampling or repainting, named for existing semantic expression IDs. Emotion assignments are project interpretations, not creator-supplied labels.",
   "files": [
     {
       "path": "coach/greyfox/happy_high.png",
@@ -48,6 +47,13 @@
       "path": "coach/greyfox/satisfied_high.png",
       "source": "ground animals/Pallas's cat/Pallas's cat face.png",
       "animal": "Pallas's cat"
+    },
+    {
+      "path": "coach/greyfox/hurt_low.png",
+      "source": "Tileset/FaceAnimal2.png",
+      "sourceSha256": "db5122648020421b50610a8f894e8dd418bb15df53a37505ec6b42fdeb445e19",
+      "animal": "sad wolf",
+      "crop": { "x": 432, "y": 0, "width": 144, "height": 144 }
     },
     {
       "path": "coach/greyfox/impressed_1.png",
