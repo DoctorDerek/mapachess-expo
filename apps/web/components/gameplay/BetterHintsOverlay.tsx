@@ -80,9 +80,9 @@ export default function BetterHintsOverlay({
           <marker
             id={id}
             key={id}
-            markerHeight="0.78"
+            markerHeight="0.4"
             markerUnits="userSpaceOnUse"
-            markerWidth="0.78"
+            markerWidth="0.4"
             orient="auto"
             refX="10"
             refY="5"
@@ -121,7 +121,7 @@ export default function BetterHintsOverlay({
               strokeDasharray={
                 ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
               }
-              strokeWidth="0.14"
+              strokeWidth="0.07"
               width="0.82"
               x={Math.floor(source.x) + 0.09}
               y={Math.floor(source.y) + 0.09}
@@ -135,7 +135,7 @@ export default function BetterHintsOverlay({
               strokeDasharray={
                 ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
               }
-              strokeWidth="0.08"
+              strokeWidth="0.04"
               width="0.82"
               x={Math.floor(source.x) + 0.09}
               y={Math.floor(source.y) + 0.09}
@@ -180,7 +180,7 @@ export default function BetterHintsOverlay({
                   strokeLinecap={
                     ownedHint.owner === "opponent" ? "butt" : "round"
                   }
-                  strokeWidth="0.22"
+                  strokeWidth="0.1"
                   x1={source.x}
                   x2={destination.x}
                   y1={source.y}
@@ -196,7 +196,7 @@ export default function BetterHintsOverlay({
                   strokeLinecap={
                     ownedHint.owner === "opponent" ? "butt" : "round"
                   }
-                  strokeWidth="0.14"
+                  strokeWidth="0.065"
                   x1={source.x}
                   x2={destination.x}
                   y1={source.y}
