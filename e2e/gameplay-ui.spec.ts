@@ -3,11 +3,115 @@ import { expect, test } from "@playwright/test"
 import savedProfile from "./savedProfile.js"
 
 for (const width of [320, 1280]) {
+  test(`previews customization inline and keeps the ${width}px match brief focused on its participants`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Settings", exact: true }).click()
+    const settings = page.getByRole("dialog", {
+      name: "Your game customization",
+      exact: true,
+    })
+    const original = await savedProfile(page)
+    for (const area of ["coach", "pieces", "board"]) {
+      await expect(
+        settings.getByRole("button", {
+          name: `Change ${area}`,
+          exact: true,
+        }),
+      ).toHaveAttribute("aria-expanded", "false")
+    }
+    await expect(
+      settings.getByRole("group", { name: "Coach", exact: true }),
+    ).toHaveCount(0)
+    await expect(
+      settings.getByRole("img", { name: /board preview/ }),
+    ).toHaveCount(0)
+    await expect(settings.locator("img")).toHaveCount(1)
+    await expect
+      .poll(() =>
+        settings
+          .locator("img")
+          .evaluate(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0,
+          ),
+      )
+      .toBe(true)
+    await page.screenshot({
+      path: testInfo.outputPath("customization-closed.png"),
+    })
+    const coachChange = settings.getByRole("button", {
+      name: "Change coach",
+      exact: true,
+    })
+    await coachChange.focus()
+    await page.keyboard.press("Enter")
+    await expect(
+      settings
+        .getByRole("group", { name: "Coach", exact: true })
+        .getByRole("radio"),
+    ).toHaveCount(2)
+    await settings
+      .getByRole("button", { name: "Done choosing coach", exact: true })
+      .click()
+    await expect(coachChange).toBeFocused()
+    await settings
+      .getByRole("button", { name: "Change pieces", exact: true })
+      .click()
+    await expect(
+      settings.getByRole("img", { name: /board preview/ }),
+    ).toBeVisible()
+    await settings
+      .getByRole("button", { name: "Done choosing pieces", exact: true })
+      .click()
+    await expect(
+      settings.getByRole("img", { name: /board preview/ }),
+    ).toHaveCount(0)
+    expect(await savedProfile(page)).toEqual(original)
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include("#profile-settings-panel")
+          .analyze()
+      ).violations,
+    ).toEqual([])
+    await settings
+      .getByRole("button", { name: "Close Settings", exact: true })
+      .click()
+    await page
+      .getByRole("button", { name: "Standard Chess Story", exact: true })
+      .click()
+    await expect(
+      page.getByRole("button", { name: /^Play as Raccoon/ }),
+    ).toHaveText("Change")
+    await expect(
+      page.getByRole("button", { name: "Change Story opponent", exact: true }),
+    ).toHaveText("Change")
+    await expect(
+      page.getByText("Chicken Stockfish", { exact: true }),
+    ).toBeVisible()
+    await expect(page.getByText("100 Elo", { exact: true })).toBeVisible()
+    await expect(page.getByRole("radio")).toHaveCount(0)
+    await expect(
+      page.getByRole("button", { name: "Start match", exact: true }),
+    ).toBeInViewport()
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath("match-brief.png") })
+  })
+
   test(`keeps the ${width}px board fixed through Menu and Settings navigation`, async ({
     page,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(90000)
-    await page.setViewportSize({ width, height: 900 })
+    await page.setViewportSize({ width, height: 800 })
     await page.goto("/")
     await page
       .getByRole("button", { name: "Standard Chess Challenge", exact: true })
@@ -17,6 +121,7 @@ for (const width of [320, 1280]) {
       timeout: 30000,
     })
     const board = page.locator('[role="grid"]')
+    await page.screenshot({ path: testInfo.outputPath("fine-point-hints.png") })
     const bounds = await board.boundingBox()
     const original = await savedProfile(page)
     const menu = page.locator("summary").filter({ hasText: "Menu" })
@@ -28,7 +133,7 @@ for (const width of [320, 1280]) {
     })
     await settingsButton.click()
     const settings = page.getByRole("dialog", {
-      name: "Settings & Player Data",
+      name: "Your game customization",
       exact: true,
     })
     await expect(settings).toBeVisible()
@@ -109,7 +214,7 @@ test("Settings retains its recovery and reset controls inside the non-shifting d
   await trigger.click()
   const original = await savedProfile(page)
   const settings = page.getByRole("dialog", {
-    name: "Settings & Player Data",
+    name: "Your game customization",
     exact: true,
   })
   await settings

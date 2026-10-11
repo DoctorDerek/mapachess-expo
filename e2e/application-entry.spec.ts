@@ -599,7 +599,7 @@ test("has no serious or critical accessibility violations", async ({
   await expect(
     page.getByRole("heading", {
       level: 2,
-      name: "Settings & Player Data",
+      name: "Your game customization",
       exact: true,
     }),
   ).toBeVisible()

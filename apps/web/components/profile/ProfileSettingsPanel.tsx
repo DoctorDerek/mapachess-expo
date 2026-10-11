@@ -32,7 +32,7 @@ import {
   PREPARING_BACKUP_LABEL,
 } from "./ProfileFoundation"
 
-export const PROFILE_SETTINGS_TITLE = "Settings & Player Data"
+export const PROFILE_SETTINGS_TITLE = "Your game customization"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
@@ -113,11 +113,23 @@ export default function ProfileSettingsPanel({
         </MapachessButton>
       </header>
 
-      <div className="mt-8">
+      <div className="mt-5 grid gap-3">
+        <CoachCollectionChoices
+          collection={coachCollection}
+          disabled={chessAppearanceDisabled}
+          onChange={onCoachCollectionChanged}
+        />
+        <ChessAppearanceChoices
+          appearance={chessAppearance}
+          disabled={chessAppearanceDisabled}
+          onChange={onChessAppearanceChanged}
+        />
+      </div>
+
+      <div className="mt-7">
         <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
-          Choose how Better Hints appear automatically. During a match, changes
-          take effect immediately and become the default for future matches.
-          Every Better Hint remains available manually.
+          Hint changes take effect immediately and become your default. You can
+          always request hints manually.
         </p>
         <AutoHintModeChoices
           autoHintMode={autoHintMode}
@@ -125,18 +137,6 @@ export default function ProfileSettingsPanel({
           onAutoHintModeChanged={onAutoHintModeChanged}
         />
       </div>
-
-      <CoachCollectionChoices
-        collection={coachCollection}
-        disabled={chessAppearanceDisabled}
-        onChange={onCoachCollectionChanged}
-      />
-
-      <ChessAppearanceChoices
-        appearance={chessAppearance}
-        disabled={chessAppearanceDisabled}
-        onChange={onChessAppearanceChanged}
-      />
 
       <section aria-labelledby="player-elo-settings-title" className="mt-7">
         <h2

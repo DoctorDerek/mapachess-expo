@@ -15,6 +15,7 @@ const openSettings = async (page: Page): Promise<void> => {
   await expect(settings.or(menu)).toBeVisible({ timeout: 30000 })
   if (!(await settings.isVisible())) await menu.click()
   await settings.click()
+  await page.getByRole("button", { name: "Change coach", exact: true }).click()
 }
 
 for (const width of [320, 1280]) {
@@ -75,6 +76,9 @@ for (const width of [320, 1280]) {
     expect(report.violations).toEqual([])
     await group.screenshot({ path: testInfo.outputPath(`coach-${width}.png`) })
     await page.reload()
+    await page
+      .getByRole("button", { name: "Change coach", exact: true })
+      .click()
     await expect(
       coachChoices(page).getByRole("radio", {
         name: "Animal faces",
