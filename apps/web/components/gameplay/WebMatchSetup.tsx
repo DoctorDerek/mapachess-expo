@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEventHandler,
+  type ReactNode,
+} from "react"
 import {
   AUTO_HINT_MODE_PRESENTATION,
   type AutoHintMode,
@@ -54,6 +61,56 @@ export type WebMatchSetupProps = Readonly<{
 }>
 
 type SetupEditor = "opponent" | "difficulty" | "hints" | "player"
+
+function MatchSetupChoice({
+  label,
+  value,
+  detail,
+  preview,
+  actionLabel,
+  disabled,
+  onChange,
+}: Readonly<{
+  label: string
+  value: string
+  detail?: string | undefined
+  preview?: ReactNode
+  actionLabel: string
+  disabled: boolean
+  onChange: MouseEventHandler<HTMLButtonElement>
+}>) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      {preview === undefined ? null : (
+        <span className="pointer-events-none block size-20 shrink-0">
+          {preview}
+        </span>
+      )}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1 basis-28 wrap-anywhere">
+          <p className="text-sm font-semibold">{label}</p>
+          <p className="font-display text-xl leading-tight font-black">
+            {value}
+          </p>
+          {detail === undefined ? null : (
+            <p className="font-semibold">{detail}</p>
+          )}
+        </div>
+        <MapachessButton
+          aria-haspopup="dialog"
+          aria-label={actionLabel}
+          className="px-3! py-2! text-base"
+          disabled={disabled}
+          onClick={onChange}
+          type="button"
+          variant="secondary"
+        >
+          Change
+        </MapachessButton>
+      </div>
+    </div>
+  )
+}
 
 export default function WebMatchSetup({
   autoHintMode,
@@ -186,83 +243,58 @@ export default function WebMatchSetup({
         </h1>
       </div>
       <form onSubmit={startMatch} className="grid gap-3 text-base">
-        {setup.mode === "story" &&
-        playerAnimal !== null &&
-        onPlayerAnimalChanged !== undefined ? (
-          <button
-            aria-haspopup="dialog"
-            className="bg-mapachito-violet text-mapachito-white flex min-w-0 cursor-pointer items-center gap-3 rounded-lg p-3 text-left focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60"
+        <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-5 rounded-xl border-3 p-4">
+          {setup.mode === "story" &&
+          playerAnimal !== null &&
+          onPlayerAnimalChanged !== undefined ? (
+            <MatchSetupChoice
+              label="Play as"
+              value={playerAnimal.displayName.replace(" Stockfish", "")}
+              actionLabel={`Play as ${playerAnimal.displayName.replace(" Stockfish", "")} · Change animal`}
+              disabled={disabled || opening}
+              onChange={(event) => openEditor("player", event.currentTarget)}
+              preview={
+                <ChallengeAnimalPortrait
+                  key={playerAnimal.id}
+                  active={visible && editing === null}
+                  opponent={playerAnimal}
+                />
+              }
+            />
+          ) : null}
+          <MatchSetupChoice
+            label="Opponent"
+            value={opponent.displayName}
+            detail={
+              setup.mode === "story"
+                ? `${opponent.storyTargetElo} Elo`
+                : undefined
+            }
+            actionLabel={
+              setup.mode === "story" ? "Change Story opponent" : "Change animal"
+            }
             disabled={disabled || opening}
-            onClick={(event) => openEditor("player", event.currentTarget)}
-            type="button"
-          >
-            <span className="pointer-events-none block h-20 w-20 shrink-0">
-              <ChallengeAnimalPortrait
-                key={playerAnimal.id}
-                active={visible && editing === null}
-                opponent={playerAnimal}
-              />
-            </span>
-            <span className="min-w-0 flex-1 wrap-anywhere">
-              <span className="block text-base">Play as</span>
-              <span className="font-display block text-xl font-black">
-                {playerAnimal.displayName.replace(" Stockfish", "")}
-              </span>
-            </span>
-            <span className="text-base font-bold">
-              Change animal <span aria-hidden="true">▾</span>
-            </span>
-          </button>
-        ) : null}
-        <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-4 rounded-xl border-3 p-4">
-          <button
-            className="focus-visible:outline-mapachito-violet flex min-w-0 flex-wrap items-center justify-center gap-3 rounded-lg text-left focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
-            disabled={disabled || opening}
-            onClick={(event) => openEditor("opponent", event.currentTarget)}
-            type="button"
-          >
-            <span className="block h-26 w-24 shrink-0">
+            onChange={(event) => openEditor("opponent", event.currentTarget)}
+            preview={
               <ChallengeAnimalPortrait
                 key={opponent.id}
                 active={visible && editing === null}
                 opponent={opponent}
               />
-            </span>
-            <span className="min-w-0 flex-1 basis-32 wrap-anywhere">
-              <span className="font-display block text-xl font-black">
-                {opponent.displayName}
-              </span>
-              {setup.mode === "story" ? (
-                <span>{opponent.storyTargetElo} Elo</span>
-              ) : null}
-              <span className="text-mapachito-violet block font-bold">
-                {setup.mode === "story"
-                  ? "Choose Story opponent"
-                  : "Change animal"}
-              </span>
-            </span>
-            <span aria-hidden="true" className="inline-block -scale-x-100">
-              ✎
-            </span>
-          </button>
+            }
+          />
 
-          {challenge === null ? (
-            <p>{MATCH_SETUP_COPY.randomColor}</p>
-          ) : (
+          {challenge === null ? null : (
             <>
-              <MapachessButton
+              <MatchSetupChoice
+                label="Difficulty"
+                value={`${difficultyTargetElo} Elo`}
+                actionLabel="Change difficulty"
                 disabled={disabled || opening}
-                onClick={(event) =>
+                onChange={(event) =>
                   openEditor("difficulty", event.currentTarget)
                 }
-                type="button"
-                variant="secondary"
-              >
-                {difficultyTargetElo} Elo · Change difficulty{" "}
-                <span aria-hidden="true" className="inline-block -scale-x-100">
-                  ✎
-                </span>
-              </MapachessButton>
+              />
               <MatchColorChoices
                 disabled={disabled || opening}
                 initialColor={challenge.playerColor}
@@ -286,17 +318,13 @@ export default function WebMatchSetup({
               value={positionNumber}
             />
           ) : null}
-          <MapachessButton
+          <MatchSetupChoice
+            label="Better Hints"
+            value={AUTO_HINT_MODE_PRESENTATION[autoHintMode].label}
+            actionLabel="Change hints"
             disabled={disabled || opening}
-            onClick={(event) => openEditor("hints", event.currentTarget)}
-            type="button"
-            variant="secondary"
-          >
-            {AUTO_HINT_MODE_PRESENTATION[autoHintMode].label} · Change hints{" "}
-            <span aria-hidden="true" className="inline-block -scale-x-100">
-              ✎
-            </span>
-          </MapachessButton>
+            onChange={(event) => openEditor("hints", event.currentTarget)}
+          />
         </div>
 
         {!selectionAvailable ? (
@@ -309,7 +337,10 @@ export default function WebMatchSetup({
             {MATCH_SETUP_COPY.invalidSetup}
           </MapachessNotice>
         ) : null}
-        <p className="text-mapachito-white">{MATCH_SETUP_COPY.untimed}</p>
+        <p className="text-mapachito-white text-sm">
+          {MATCH_SETUP_COPY.untimed}
+          {challenge === null ? ` · ${MATCH_SETUP_COPY.randomColor}` : null}
+        </p>
         <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <MapachessButton
             aria-busy={opening}

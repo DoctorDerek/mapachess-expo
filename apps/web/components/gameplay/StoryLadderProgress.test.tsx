@@ -159,7 +159,7 @@ describe("Story ladder presentation structure", () => {
       />,
     )
     expect(markup).toContain("Bunny Stockfish")
-    expect(markup).toContain("Choose Story opponent")
+    expect(markup).toContain("Change Story opponent")
     expect(markup).not.toContain('value="dog-stockfish"')
     expect(markup).not.toContain("Dog Stockfish")
     expect(markup).not.toContain("Defeated · Gold")
@@ -226,7 +226,7 @@ describe("Story ladder presentation structure", () => {
         }}
       />,
     )
-    expect(story).toContain("Choose Story opponent")
+    expect(story).toContain("Change Story opponent")
     expect(story).toContain("Start match")
     expect(challenge).not.toContain("Your Story ladder")
     expect(challenge).toContain("Play as")
