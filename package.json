@@ -42,6 +42,7 @@
     "@vitest/coverage-v8": "^4",
     "@zip.js/zip.js": "^2",
     "chrome-launcher": "^1",
+    "doctorderek-cicd": "github:DoctorDerek/DoctorDerekCICD#c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a",
     "eslint": "^10",
     "eslint-config-flat-gitignore": "^2",
     "eslint-config-prettier": "^10",

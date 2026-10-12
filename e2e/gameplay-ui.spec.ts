@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
+import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
 for (const width of [320, 1280]) {

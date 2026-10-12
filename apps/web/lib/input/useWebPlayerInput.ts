@@ -56,7 +56,12 @@ export default function useWebPlayerInput({
       reportDevice({ method: "keyboard" })
       if (
         event.defaultPrevented ||
-        (isTextInput(event.target) && event.code !== "Escape")
+        (isTextInput(event.target) && event.code !== "Escape") ||
+        (event.target instanceof HTMLInputElement &&
+          event.target.type === "radio" &&
+          ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+            event.code,
+          ))
       )
         return
       const action = actionForKeyboardCode(readBindings(), event.code)

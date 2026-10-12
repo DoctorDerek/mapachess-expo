@@ -1,9 +1,10 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import resolveCoachPortrait, {
   COACH_COLLECTIONS,
   COACH_PORTRAIT_NAMES,
 } from "../packages/match-presentation/src/coachPortrait.js"
+import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 
@@ -53,6 +54,15 @@ for (const width of [320, 1280]) {
     await expect(
       group.getByRole("radio", { name: "Animal faces", exact: true }),
     ).toBeChecked()
+    await page.keyboard.press("ArrowLeft")
+    await expect(mapachito).toBeChecked()
+    await page.keyboard.press("ArrowDown")
+    await expect(
+      group.getByRole("radio", { name: "Animal faces", exact: true }),
+    ).toBeChecked()
+    await page.keyboard.press("ArrowUp")
+    await expect(mapachito).toBeChecked()
+    await page.keyboard.press("ArrowRight")
     await expect
       .poll(async () => (await savedProfile(page)).settings.coachCollection)
       .toBe("greyfox")
