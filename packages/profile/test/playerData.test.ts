@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
+import DEFAULT_PLAYER_INPUT_BINDINGS from "@mapachess/match/player-input"
 import createInitialMapachessPlayerData, {
   INITIAL_PLAYER_ELO,
   MAPACHESS_PLAYER_DATA_SCHEMA,
@@ -10,6 +11,32 @@ import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 import { playerResultScore, updatedPlayerElo } from "../src/playerElo.js"
 
 describe("Mapachess player data", () => {
+  it("adds defaults to schema13 without changing player progress and rejects invalid schema14 bindings", () => {
+    const initial = createInitialMapachessPlayerData()
+    const { inputBindings: _inputBindings, ...settings } = initial.settings
+    const old = {
+      ...initial,
+      schemaVersion: 13,
+      totalXp: 3000,
+      ratings: { standard: 345.123, chess960: 432.789 },
+      settings,
+    }
+    const migrated = decodeMapachessPlayerData(old)
+    expect(migrated).toEqual({
+      ok: true,
+      data: {
+        ...old,
+        schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+        settings: { ...settings, inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS },
+      },
+    })
+    expect(
+      decodeMapachessPlayerData({
+        ...initial,
+        settings: { ...initial.settings, inputBindings: {} },
+      }).ok,
+    ).toBe(false)
+  })
   it("uses the approved full-precision per-variant Elo coefficient and result scores", () => {
     expect(updatedPlayerElo(100, 0, 100, 1)).toBe(228)
     expect(updatedPlayerElo(100, 0, 100, 0.5)).toBe(100)
@@ -65,6 +92,7 @@ describe("Mapachess player data", () => {
       totalXp: 0,
       unlockedAchievementIds: [],
       settings: {
+        inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,
         chessAppearance: { boardId: "current", pieceSetId: "current" },

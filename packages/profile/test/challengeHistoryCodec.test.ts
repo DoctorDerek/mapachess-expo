@@ -70,6 +70,7 @@ describe("durable Challenge history", () => {
       settings: {
         chessAppearance: _chessAppearance,
         coachCollection: _coachCollection,
+        inputBindings: _inputBindings,
         ...settings
       },
       appearance: _appearance,
@@ -94,6 +95,7 @@ describe("durable Challenge history", () => {
       ...old.settings,
       chessAppearance: { boardId: "current", pieceSetId: "current" },
       coachCollection: "mapachito",
+      inputBindings: createInitialMapachessPlayerData().settings.inputBindings,
     })
   })
 

@@ -265,6 +265,7 @@ describe("one reversible active result", () => {
       settings: {
         chessAppearance: _chessAppearance,
         coachCollection: _coachCollection,
+        inputBindings: _inputBindings,
         ...settings
       },
       ...legacyFields
