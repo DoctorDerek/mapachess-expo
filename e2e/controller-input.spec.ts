@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { parseMatchMoveId } from "../packages/match/src/matchMove.js"
 import { createInitialMatchPosition } from "../packages/match/src/matchPosition.js"
 import {
@@ -7,6 +7,7 @@ import {
   currentMatchPosition,
 } from "../packages/match/src/matchTimeline.js"
 import prepareControllerInput, { activate, press } from "./controllerInput.js"
+import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 

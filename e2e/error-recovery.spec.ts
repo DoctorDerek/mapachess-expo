@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
+import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
 test("retries a denied storage accessor without replacing saved player data", async ({

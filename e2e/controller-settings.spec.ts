@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import { createMapachessPortableBackup } from "../packages/profile/src/portableBackup.js"
 import { requireSha256Hex } from "../packages/profile/src/sha256.js"
 import prepareControllerInput, {
@@ -8,6 +8,7 @@ import prepareControllerInput, {
   frames,
   press,
 } from "./controllerInput.js"
+import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
 test.beforeEach(prepareControllerInput)

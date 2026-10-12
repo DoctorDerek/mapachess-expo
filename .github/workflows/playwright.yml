@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   preview:
-    uses: DoctorDerek/DoctorDerekCICD/.github/workflows/playwright.yml@d1d38c91a7187e8f22c8228e7d7845193365024a
+    uses: DoctorDerek/DoctorDerekCICD/.github/workflows/playwright.yml@c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a
     with:
       trusted-oidc: true
       prepare-command: pnpm --filter @mapachess/profile... build

@@ -1,9 +1,10 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import resolveCoachPortrait, {
   COACH_COLLECTIONS,
   COACH_PORTRAIT_NAMES,
 } from "../packages/match-presentation/src/coachPortrait.js"
+import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 

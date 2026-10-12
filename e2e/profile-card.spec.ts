@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises"
-import { expect, test } from "@playwright/test"
+import { expect } from "@playwright/test"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 

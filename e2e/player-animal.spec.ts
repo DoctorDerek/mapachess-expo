@@ -1,7 +1,8 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, test, type Page } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 

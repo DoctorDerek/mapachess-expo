@@ -35,6 +35,9 @@ importers:
       chrome-launcher:
         specifier: ^1
         version: 1.2.1(supports-color@7.2.0)
+      doctorderek-cicd:
+        specifier: github:DoctorDerek/DoctorDerekCICD#c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a
+        version: https://codeload.github.com/DoctorDerek/DoctorDerekCICD/tar.gz/c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a(@playwright/test@1.63.0)
       eslint:
         specifier: ^10
         version: 10.8.1(jiti@2.7.0)(supports-color@7.2.0)
@@ -2949,6 +2952,13 @@ packages:
 
   dnssd-advertise@1.1.6:
     resolution: {integrity: sha512-Ndrrf6BMPalkQPd/zubL+4YghH2J9NspapQ09uDXwYbvOPkP0oaqf5CkcwJ0b50kS2O3ul6yVu+jz+RY62Cejg==}
+
+  doctorderek-cicd@https://codeload.github.com/DoctorDerek/DoctorDerekCICD/tar.gz/c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a:
+    resolution: {gitHosted: true, integrity: sha512-1WMS0Uvy9aVORzJHtfyP7XGYrr1SpUlPr3puzHoK29r7jEG2sbhjJiFEZypiu8FNx9w+DSrwy3/eLwkrCbwV1Q==, tarball: https://codeload.github.com/DoctorDerek/DoctorDerekCICD/tar.gz/c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a}
+    version: 0.0.0
+    engines: {node: 24.x}
+    peerDependencies:
+      '@playwright/test': ^1
 
   domexception@4.0.0:
     resolution: {integrity: sha512-A2is4PLG+eeSfoTMA95/s4pvAoSo2mKtiM5jlHkAVewmiO8ISFTFKZjH7UAM1Atli/OT/7JHOrJRJiMKUZKYBw==}
@@ -8572,6 +8582,11 @@ snapshots:
   diff-sequences@29.6.3: {}
 
   dnssd-advertise@1.1.6: {}
+
+  doctorderek-cicd@https://codeload.github.com/DoctorDerek/DoctorDerekCICD/tar.gz/c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a(@playwright/test@1.63.0):
+    dependencies:
+      '@playwright/test': 1.63.0
+      jiti: 2.7.0
 
   domexception@4.0.0:
     dependencies:
