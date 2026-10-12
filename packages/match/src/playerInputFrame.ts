@@ -65,6 +65,7 @@ export default function advanceControllerFrame(
       intentional: false,
     }
   const actions = new Set<PlayerInputAction>()
+  const repeats = new Set<PlayerInputAction>()
   let intentional = false
   for (const control of held) {
     const action = actionForControllerControl(bindings, control)
@@ -75,7 +76,7 @@ export default function advanceControllerFrame(
     if (!isInputDirection(action)) continue
     const deadline =
       previous.nextRepeat.get(control) ?? nowMs + CONTROLLER_REPEAT_DELAY_MS
-    if (!fresh && nowMs >= deadline) actions.add(action)
+    if (!fresh && nowMs >= deadline) repeats.add(action)
     nextRepeat.set(
       control,
       nowMs >= deadline ? nowMs + CONTROLLER_REPEAT_INTERVAL_MS : deadline,
@@ -83,7 +84,7 @@ export default function advanceControllerFrame(
   }
   return {
     state: { held, nextRepeat, armed: true },
-    actions: [...actions],
+    actions: [...new Set([...actions, ...repeats])],
     intentional,
   }
 }

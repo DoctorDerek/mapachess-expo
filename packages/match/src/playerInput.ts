@@ -1,8 +1,8 @@
+export const INPUT_DIRECTIONS = ["up", "down", "left", "right"] as const
+export type InputDirection = (typeof INPUT_DIRECTIONS)[number]
+
 export const PLAYER_INPUT_ACTIONS = [
-  "up",
-  "down",
-  "left",
-  "right",
+  ...INPUT_DIRECTIONS,
   "confirm",
   "cancel",
   "hints",
@@ -15,13 +15,6 @@ export const PLAYER_INPUT_ACTIONS = [
 ] as const
 
 export type PlayerInputAction = (typeof PLAYER_INPUT_ACTIONS)[number]
-export type InputDirection = "up" | "down" | "left" | "right"
-export const INPUT_DIRECTIONS: readonly InputDirection[] = [
-  "up",
-  "down",
-  "left",
-  "right",
-]
 export const PLAYER_INPUT_LABELS = {
   up: "Up",
   down: "Down",
@@ -226,7 +219,8 @@ export type BindingChange =
   | Readonly<{
       device: "controller"
       action: PlayerInputAction
-      control: ControllerControl
+      control: ControllerControl | null
+      slot?: 0 | 1
     }>
   | Readonly<{ device: "keyboard"; action: PlayerInputAction; code: string }>
 
@@ -247,15 +241,27 @@ export function changePlayerInputBinding(
       displaced: displaced === change.action ? null : (displaced ?? null),
     }
   }
-  const displaced = actionForControllerControl(bindings, change.control)
   const controller = { ...bindings.controller }
-  const previous = controller[change.action][0]
-  controller[change.action] = [
-    change.control,
-    ...controller[change.action]
-      .slice(1)
-      .filter((control) => control !== change.control),
-  ]
+  const slot = change.slot ?? 0
+  const previous = controller[change.action][slot]
+  if (change.control === null) {
+    controller[change.action] = controller[change.action].filter(
+      (_, index) => index !== slot,
+    )
+    return {
+      bindings: parsePlayerInputBindings({ ...bindings, controller }),
+      displaced: null,
+    }
+  }
+  const displaced = actionForControllerControl(bindings, change.control)
+  const next = [...controller[change.action]]
+  const duplicate = next.indexOf(change.control)
+  next[slot] = change.control
+  if (duplicate !== -1 && duplicate !== slot) {
+    if (previous === undefined) next.splice(duplicate, 1)
+    else next[duplicate] = previous
+  }
+  controller[change.action] = next
   if (displaced !== undefined && displaced !== change.action) {
     controller[displaced] = controller[displaced].flatMap((control) =>
       control !== change.control
