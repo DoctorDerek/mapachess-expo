@@ -339,6 +339,9 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
     page.getByText("Saved appearance", { exact: true }),
   ).toBeVisible()
   await page.getByRole("button", { name: "Back", exact: true }).click()
+  await expect(
+    page.getByRole("region", { name: "Customize profile card", exact: true }),
+  ).toBeHidden()
   await page.reload()
   expect((await savedProfile(page)).appearance.weapon).toBe("weapon5_c4")
   await page
@@ -352,6 +355,9 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
   await page
     .getByRole("button", { name: "Cancel changes", exact: true })
     .click()
+  await expect(
+    page.getByRole("region", { name: "Customize profile card", exact: true }),
+  ).toBeHidden()
   await expect(
     page.getByRole("button", { name: "Customize profile card", exact: true }),
   ).toBeVisible()
