@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./player-input": {
+      "types": "./src/playerInput.ts",
+      "default": "./dist/playerInput.js"
+    },
+    "./player-input-frame": {
+      "types": "./src/playerInputFrame.ts",
+      "default": "./dist/playerInputFrame.js"
+    },
     "./match-navigation": {
       "types": "./src/matchNavigation.ts",
       "default": "./dist/matchNavigation.js"
