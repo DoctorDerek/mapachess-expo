@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./input-prompts": {
+      "types": "./src/inputPrompts.ts",
+      "default": "./dist/inputPrompts.js"
+    },
     "./art-credits": {
       "types": "./src/artCredits.ts",
       "default": "./dist/artCredits.js"

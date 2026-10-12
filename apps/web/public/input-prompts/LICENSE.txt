@@ -1,0 +1,19 @@
+Input Prompts (1.5A)
+Created/distributed by Kenney (www.kenney.nl)
+Creation date in archive: 11-07-2026
+
+License: Creative Commons Zero (CC0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+You can use this content for personal, educational, and commercial purposes.
+Support by crediting Kenney or www.kenney.nl (this is not a requirement).
+
+Source: https://kenney.nl/assets/input-prompts
+Archive: https://kenney.nl/media/pages/assets/input-prompts/8de120163f-1783763952/kenney_input-prompts_1.5.zip
+Original retrieval: 2026-10-08. License and subset verified: 2026-10-12.
+Archive SHA256: ac2fcf599080b0f3ba2d174c9474db6df1a0e96ff0662580e2da79a122ab78a1
+
+Unmodified Default 64x64 PNGs. Exact source paths and physical-control mapping
+are owned by packages/match-presentation/src/inputPrompts.ts. The runtime files
+retain their original basenames and bytes. No commercial Ghost Assets are used.
+Unknown controllers use unlettered face-position diagrams and generic controls.
