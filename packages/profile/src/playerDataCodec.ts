@@ -10,6 +10,11 @@ import parseChallengeSetup, {
   DEFAULT_CHALLENGE_SETUP,
   parseChallengePositionSetup,
 } from "@mapachess/match/challenge-setup"
+import {
+  DEFAULT_PLAYER_INPUT_BINDINGS,
+  parsePlayerInputBindings,
+  PLAYER_INPUT_ACTIONS,
+} from "@mapachess/match/player-input"
 import { createInitialChallengeHistory } from "./challengeHistory.js"
 import decodeChallengeHistory, {
   canonicalChallengeHistory,
@@ -60,6 +65,7 @@ import {
   GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
   HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION,
   INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION,
+  INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   LEGACY_PLAYER_ELO_RATING_IDS,
@@ -110,6 +116,7 @@ export type PlayerDataSource = Readonly<{
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+    | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -323,6 +330,7 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
       ...data.settings,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
+      inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
     }),
     appearance: DEFAULT_PLAYER_APPEARANCE,
     legacyRatings: data.ratings,
@@ -469,6 +477,14 @@ export const canonicalPlayerData = (
       : []),
     ...(sourceSchemaVersion >= COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
       ? [data.settings.coachCollection]
+      : []),
+    ...(sourceSchemaVersion >= INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
+      ? [
+          PLAYER_INPUT_ACTIONS.map((action) => [
+            data.settings.inputBindings.controller[action],
+            data.settings.inputBindings.keyboard[action],
+          ]),
+        ]
       : []),
   ])
 
@@ -637,6 +653,7 @@ const decodeCurrentPlayerData = (
     | typeof PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
+    | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -673,6 +690,9 @@ const decodeCurrentPlayerData = (
         : []),
       ...(sourceSchemaVersion >= COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
         ? ["coachCollection"]
+        : []),
+      ...(sourceSchemaVersion >= INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
+        ? ["inputBindings"]
         : []),
     ],
     "$.settings",
@@ -779,6 +799,11 @@ const decodeCurrentPlayerData = (
               "$.settings.coachCollection",
             )
           : DEFAULT_COACH_COLLECTION,
+      inputBindings:
+        sourceSchemaVersion >= INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
+          ? (parsePlayerInputBindings(settings.inputBindings) ??
+            failData("$.settings.inputBindings"))
+          : DEFAULT_PLAYER_INPUT_BINDINGS,
     }),
     storyProgress,
     totalXp,
@@ -899,6 +924,8 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
             ? decodeCurrentPlayerData(object, object.schemaVersion)

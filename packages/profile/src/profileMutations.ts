@@ -1,6 +1,10 @@
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import {
+  parsePlayerInputBindings,
+  type PlayerInputBindings,
+} from "@mapachess/match/player-input"
 import accountActiveResult from "./activeResultAccounting.js"
 import applyChallengeMatchResult, {
   recordChallengeStart,
@@ -35,6 +39,22 @@ export const changePlayerAppearance = (
     ),
     revision: current.revision + 1,
   })
+
+export const changePlayerInputBindings = (
+  current: MapachessPlayerData,
+  bindings: PlayerInputBindings,
+): MapachessPlayerData => {
+  const validated = parsePlayerInputBindings(bindings)
+  if (validated === null)
+    throw new TypeError(
+      "Player input bindings must be complete and unambiguous.",
+    )
+  return Object.freeze({
+    ...current,
+    revision: current.revision + 1,
+    settings: Object.freeze({ ...current.settings, inputBindings: validated }),
+  })
+}
 
 export const changePresentationPreferences = (
   current: MapachessPlayerData,

@@ -1,5 +1,9 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
 import captureError from "@mapachess/diagnostics/error-diagnostic"
+import {
+  parsePlayerInputBindings,
+  samePlayerInputBindings,
+} from "@mapachess/match/player-input"
 import type { LoadedDurablePlayerData } from "./durableStore.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type {
@@ -33,6 +37,7 @@ import {
   prepareFreshRecoveryPending,
   prepareImportPending,
   prepareInitialPending,
+  prepareInputBindingsPending,
   prepareLastKnownGoodRecoveryPending,
   preparePresentationPreferencesPending,
   requireCurrentPlayerData,
@@ -80,6 +85,27 @@ const profileMachineDefinition = setup({
     >(({ input }) => retryPendingWrite(input)),
   },
   actions: {
+    rememberInputBindings: assign(({ event }) => {
+      if (event.type !== "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED")
+        throw new Error("Input settings require a binding event.")
+      const requestedInputBindings = parsePlayerInputBindings(event.bindings)
+      if (requestedInputBindings === null)
+        throw new TypeError("Input settings must be validated before saving.")
+      return { requestedInputBindings }
+    }),
+    prepareRequestedInputWrite: assign(({ context }) => {
+      if (context.requestedInputBindings === null)
+        throw new Error("Requested input bindings are required.")
+      return {
+        pendingWrite: prepareInputBindingsPending(
+          context,
+          context.requestedInputBindings,
+        ),
+        requestedInputBindings: null,
+        persistenceFailure: null,
+      }
+    }),
+    clearRequestedInputBindings: assign({ requestedInputBindings: null }),
     rememberPresentationPreferences: assign(({ context, event }) => {
       if (
         event.type !== "PROFILE.CHESS_APPEARANCE_CHANGED" &&
@@ -221,6 +247,14 @@ const profileMachineDefinition = setup({
     })),
   },
   guards: {
+    requestedInputBindingsDiffer: ({ context }) =>
+      context.requestedInputBindings !== null &&
+      !samePlayerInputBindings(
+        context.requestedInputBindings,
+        requireCurrentPlayerData(context).settings.inputBindings,
+      ),
+    requestedInputBindingsExist: ({ context }) =>
+      context.requestedInputBindings !== null,
     profileCommitIsSaving: ({ context }) =>
       context.loaded?.current.type === "valid" &&
       context.pendingWrite?.operation === "commit",
@@ -266,6 +300,7 @@ const profileMachineDefinition = setup({
     persistenceFailure: null,
     requestedAutoHintMode: null,
     requestedPresentationPreferences: null,
+    requestedInputBindings: null,
     store: input.store,
   }),
   states: {
@@ -314,6 +349,15 @@ const profileMachineDefinition = setup({
     ready: {
       always: [
         {
+          guard: "requestedInputBindingsDiffer",
+          actions: "prepareRequestedInputWrite",
+          target: "persisting",
+        },
+        {
+          guard: "requestedInputBindingsExist",
+          actions: "clearRequestedInputBindings",
+        },
+        {
           guard: "requestedPresentationPreferencesDiffers",
           actions: "prepareRequestedPresentationWrite",
           target: "persisting",
@@ -335,6 +379,9 @@ const profileMachineDefinition = setup({
       on: {
         "PROFILE.CHESS_APPEARANCE_CHANGED": {
           actions: "rememberPresentationPreferences",
+        },
+        "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED": {
+          actions: "rememberInputBindings",
         },
         "PROFILE.COACH_COLLECTION_CHANGED": {
           actions: "rememberPresentationPreferences",
@@ -428,6 +475,10 @@ const profileMachineDefinition = setup({
     },
     persisting: {
       on: {
+        "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberInputBindings",
+        },
         "PROFILE.CHESS_APPEARANCE_CHANGED": {
           guard: "profileCommitIsSaving",
           actions: "rememberPresentationPreferences",
@@ -474,6 +525,10 @@ const profileMachineDefinition = setup({
     },
     retryingPersistence: {
       on: {
+        "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberInputBindings",
+        },
         "PROFILE.CHESS_APPEARANCE_CHANGED": {
           guard: "profileCommitIsSaving",
           actions: "rememberPresentationPreferences",
@@ -532,7 +587,8 @@ export const selectPendingPlayerData = (
   if (candidate === undefined) return null
   const requested = snapshot.context.requestedAutoHintMode
   const appearance = snapshot.context.requestedPresentationPreferences
-  return requested === null && appearance === null
+  const bindings = snapshot.context.requestedInputBindings
+  return requested === null && appearance === null && bindings === null
     ? candidate
     : {
         ...candidate,
@@ -540,6 +596,7 @@ export const selectPendingPlayerData = (
           ...candidate.settings,
           autoHintMode: requested ?? candidate.settings.autoHintMode,
           ...appearance,
+          inputBindings: bindings ?? candidate.settings.inputBindings,
         },
       }
 }
