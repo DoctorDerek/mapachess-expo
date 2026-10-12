@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import FullPageProfilePanel, {
@@ -32,6 +33,7 @@ export default function ProfileRecoveryPanel({
 }: ProfileRecoveryPanelProps) {
   const [confirmingReset, setConfirmingReset] = useState(false)
   const resetTrigger = useRef<HTMLButtonElement>(null)
+  const resetSurface = useRef<HTMLElement>(null)
   const restoreResetTriggerFocus = useRef(false)
 
   useEffect(() => {
@@ -45,6 +47,14 @@ export default function ProfileRecoveryPanel({
     restoreResetTriggerFocus.current = true
     setConfirmingReset(false)
   }
+  usePlayerInputScope({
+    root: resetSurface,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      cancelReset()
+      return true
+    },
+  })
 
   return (
     <FullPageProfilePanel
@@ -67,6 +77,8 @@ export default function ProfileRecoveryPanel({
 
       {confirmingReset ? (
         <section
+          ref={resetSurface}
+          data-player-input-layer="recovery-reset"
           aria-labelledby="recovery-reset-title"
           className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-red mt-8 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-5 inset-shadow-[0.5rem_0_0]"
         >

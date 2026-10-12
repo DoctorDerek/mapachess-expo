@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
@@ -20,6 +20,7 @@ import ChessAppearanceProvider, {
   ChessArtworkRecovery,
 } from "../gameplay/ChessArtwork"
 import WebGame from "../gameplay/WebGame"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
@@ -47,6 +48,8 @@ export type ProfilePlayExperienceProps = Readonly<{
     | "onClose"
     | "overlays"
     | "navigation"
+    | "inputBindings"
+    | "onInputBindingsSaved"
   >
 }>
 
@@ -69,6 +72,16 @@ function ReadyPlayExperience({
   const profile = useSelector(profileActor, (current) => current)
   const navigation = useWebNavigationHistory(actor)
   const settingsButton = useRef<HTMLButtonElement>(null)
+  const gameSurface = useRef<HTMLDivElement>(null)
+  usePlayerInputScope({
+    root: gameSurface,
+    enabled: !blocked,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      navigation.back()
+      return true
+    },
+  })
   const settingsOpen =
     snapshot.context.overlays.includes("settings") && !blocked
   const personalOpen = snapshot.context.overlays.some(
@@ -78,23 +91,14 @@ function ReadyPlayExperience({
   const playerData = selectCurrentPlayerData(profile)
   if (playerData === null)
     throw new Error("Play requires accepted player data.")
-  useEffect(() => {
-    const dismiss = (event: KeyboardEvent): void => {
-      if (
-        event.key !== "Escape" ||
-        event.defaultPrevented ||
-        blocked ||
-        actor.getSnapshot().context.overlays.length === 0
-      )
-        return
-      event.preventDefault()
-      navigation.back()
-    }
-    window.addEventListener("keydown", dismiss)
-    return () => window.removeEventListener("keydown", dismiss)
-  }, [actor, blocked, navigation.back])
   const settingsProps: ProfileSettingsPanelProps = {
     ...settings,
+    inputBindings: playerData.settings.inputBindings,
+    onInputBindingsSaved: (bindings) =>
+      profileActor.send({
+        type: "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED",
+        bindings,
+      }),
     chessAppearance: (selectPendingPlayerData(profile) ?? playerData).settings
       .chessAppearance,
     chessAppearanceDisabled: !selectCanChangePresentationPreferences(profile),
@@ -157,7 +161,7 @@ function ReadyPlayExperience({
             </RecoverableView>
           </MapachessDialog>
         ) : null}
-        <div inert={blocked || settingsOpen || personalOpen}>
+        <div ref={gameSurface} inert={blocked || settingsOpen || personalOpen}>
           {settingsOpen ? null : <ChessArtworkRecovery />}
           <RecoverableView
             title="This screen could not be displayed."

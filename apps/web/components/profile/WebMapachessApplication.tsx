@@ -24,6 +24,9 @@ import {
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
 } from "../../lib/profile/webPlayerDataFiles"
+import PlayerInputProvider, {
+  usePlayerInputScope,
+} from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -44,6 +47,16 @@ type ProfileRuntimeState =
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const snapshot = useSelector(actor, (current) => current)
+  const recoverySurface = useRef<HTMLElement>(null)
+  usePlayerInputScope({
+    root: recoverySurface,
+    enabled: snapshot.matches("importPreview"),
+    handle: (action) => {
+      if (action !== "cancel") return false
+      actor.send({ type: "PROFILE.IMPORT_CANCELLED" })
+      return true
+    },
+  })
   const [exportFailed, setExportFailed] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportOperation = useRef<AbortController | null>(null)
@@ -202,7 +215,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     } satisfies ProfilePlayExperienceProps["settings"]
 
     return (
-      <main>
+      <main ref={recoverySurface}>
         {exportFailure}
         {importPreviewPanel}
         {persistenceFailurePanel}
@@ -220,11 +233,11 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   if (importPreviewPanel !== null || persistenceFailurePanel !== null) {
     return (
       <MapachessShell as="main" className="grid place-items-start">
-        <div className="w-full">
+        <section ref={recoverySurface} className="w-full">
           {exportFailure}
           {importPreviewPanel}
           {persistenceFailurePanel}
-        </div>
+        </section>
       </MapachessShell>
     )
   }
@@ -289,27 +302,33 @@ export default function WebMapachessApplication() {
   }, [openingAttempt])
 
   if (runtimeState.status === "ready") {
-    return <ProfileExperience actor={runtimeState.runtime.actor} />
+    return (
+      <PlayerInputProvider profileActor={runtimeState.runtime.actor}>
+        <ProfileExperience actor={runtimeState.runtime.actor} />
+      </PlayerInputProvider>
+    )
   }
 
   if (runtimeState.status === "opening") return <MapachessLoadingSurface />
 
   return (
-    <FullPageProfilePanel
-      description="This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
-      eyebrow="Local profile"
-      live="assertive"
-      title="Local saves are unavailable."
-    >
-      <MapachessButton
-        className="mt-7"
-        onClick={() => {
-          setRuntimeState({ status: "opening" })
-          setOpeningAttempt((attempt) => attempt + 1)
-        }}
+    <PlayerInputProvider profileActor={null}>
+      <FullPageProfilePanel
+        description="This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
+        eyebrow="Local profile"
+        live="assertive"
+        title="Local saves are unavailable."
       >
-        Try Again
-      </MapachessButton>
-    </FullPageProfilePanel>
+        <MapachessButton
+          className="mt-7"
+          onClick={() => {
+            setRuntimeState({ status: "opening" })
+            setOpeningAttempt((attempt) => attempt + 1)
+          }}
+        >
+          Try Again
+        </MapachessButton>
+      </FullPageProfilePanel>
+    </PlayerInputProvider>
   )
 }
