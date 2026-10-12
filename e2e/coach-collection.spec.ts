@@ -53,6 +53,15 @@ for (const width of [320, 1280]) {
     await expect(
       group.getByRole("radio", { name: "Animal faces", exact: true }),
     ).toBeChecked()
+    await page.keyboard.press("ArrowLeft")
+    await expect(mapachito).toBeChecked()
+    await page.keyboard.press("ArrowDown")
+    await expect(
+      group.getByRole("radio", { name: "Animal faces", exact: true }),
+    ).toBeChecked()
+    await page.keyboard.press("ArrowUp")
+    await expect(mapachito).toBeChecked()
+    await page.keyboard.press("ArrowRight")
     await expect
       .poll(async () => (await savedProfile(page)).settings.coachCollection)
       .toBe("greyfox")
