@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 
 export default function MapachessDialog({
   children,
@@ -10,6 +11,14 @@ export default function MapachessDialog({
   onClose: () => void
 }>) {
   const dialog = useRef<HTMLDialogElement>(null)
+  usePlayerInputScope({
+    root: dialog,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      onClose()
+      return true
+    },
+  })
 
   useEffect(() => {
     const element = dialog.current

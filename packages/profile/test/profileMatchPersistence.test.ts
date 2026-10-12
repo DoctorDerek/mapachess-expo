@@ -451,6 +451,7 @@ describe("profile-owned match persistence bridge", () => {
       signal,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
+      inputBindings: initial.settings.inputBindings,
       autoHintMode: "auto-piece-hints",
       challengeSetup,
       chessAppearance: { boardId: "current", pieceSetId: "current" },

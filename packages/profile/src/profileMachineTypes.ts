@@ -3,6 +3,7 @@ import type { CoachCollectionId } from "@mapachess/match-presentation/coach-port
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import type { PlayerInputBindings } from "@mapachess/match/player-input"
 import type { ChessAppearanceChange } from "./chessAppearanceSettings.js"
 import type {
   DurablePlayerDataStore,
@@ -61,10 +62,15 @@ export type ProfileMachineContext = Readonly<{
   persistenceFailure: ProfilePersistenceFailure | null
   requestedAutoHintMode: AutoHintMode | null
   requestedPresentationPreferences: PresentationPreferences | null
+  requestedInputBindings: PlayerInputBindings | null
   store: DurablePlayerDataStore
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{
+      type: "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED"
+      bindings: PlayerInputBindings
+    }>
   | Readonly<{
       type: "PROFILE.COACH_COLLECTION_CHANGED"
       coachCollection: CoachCollectionId

@@ -110,6 +110,7 @@ describe("global match XP", () => {
       settings: {
         chessAppearance: _chessAppearance,
         coachCollection: _coachCollection,
+        inputBindings: _inputBindings,
         ...settings
       },
       appearance: _appearance,

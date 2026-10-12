@@ -15,11 +15,20 @@ import type {
   MatchSquare,
 } from "@mapachess/match/match-position"
 import {
+  actionForKeyboardCode,
+  isInputDirection,
+} from "@mapachess/match/player-input"
+import {
   createBoardSquareRows,
+  cycleOwnPieceFocus,
   nextFocusedBoardSquare,
   type BoardNavigationKey,
   type BoardOrientation,
 } from "../../lib/board/boardPresentation"
+import {
+  usePlayerInput,
+  usePlayerInputScope,
+} from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import BetterHintsOverlay from "./BetterHintsOverlay"
 import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
@@ -150,6 +159,7 @@ export default function CanonicalChessboard({
   position,
   showMoveHints,
 }: CanonicalChessboardProps) {
+  const input = usePlayerInput()
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
   const initialFocusSquare = orientation === "white" ? "e1" : "e8"
   const [focusedSquare, setFocusedSquare] =
@@ -160,6 +170,8 @@ export default function CanonicalChessboard({
   )
   const squareElements = useRef(new Map<MatchSquare, HTMLButtonElement>())
   const firstChoiceButton = useRef<HTMLButtonElement>(null)
+  const boardElement = useRef<HTMLDivElement>(null)
+  const choiceElement = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setPendingChoice(null)
@@ -216,13 +228,69 @@ export default function CanonicalChessboard({
     event: KeyboardEvent<HTMLButtonElement>,
     square: MatchSquare,
   ): void => {
-    if (!isNavigationKey(event.key)) return
+    if (
+      !isNavigationKey(event.key) ||
+      (input !== null &&
+        ((event.key !== "Home" && event.key !== "End") ||
+          actionForKeyboardCode(input.bindings, event.code) !== undefined))
+    )
+      return
 
     event.preventDefault()
     const nextSquare = nextFocusedBoardSquare(rows, square, event.key)
     setFocusedSquare(nextSquare)
     squareElements.current.get(nextSquare)?.focus()
   }
+
+  usePlayerInputScope({
+    root: boardElement,
+    focused: true,
+    handle: (action) => {
+      if (isInputDirection(action)) {
+        const keys = {
+          up: "ArrowUp",
+          down: "ArrowDown",
+          left: "ArrowLeft",
+          right: "ArrowRight",
+        } as const
+        const next = nextFocusedBoardSquare(rows, focusedSquare, keys[action])
+        squareElements.current.get(next)?.focus()
+        return true
+      }
+      if (action === "previousPiece" || action === "nextPiece") {
+        squareElements.current
+          .get(
+            cycleOwnPieceFocus(
+              rows,
+              position.pieces,
+              orientation,
+              focusedSquare,
+              action,
+            ),
+          )
+          ?.focus()
+        return true
+      }
+      if (action === "confirm") {
+        chooseSquare(focusedSquare)
+        return true
+      }
+      if (action === "cancel" && selectedSquare !== null) {
+        clearSelection()
+        return true
+      }
+      return false
+    },
+  })
+  usePlayerInputScope({
+    root: choiceElement,
+    enabled: pendingChoice !== null,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      clearSelection()
+      return true
+    },
+  })
 
   const choosingPromotion =
     pendingChoice?.moves.every(
@@ -248,6 +316,7 @@ export default function CanonicalChessboard({
           aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
           className="border-mapachito-charcoal relative grid aspect-square w-full grid-rows-8 overflow-hidden border"
           role="grid"
+          ref={boardElement}
         >
           <ChessBoardArtwork orientation={orientation} />
           {rows.map((row, rowIndex) => (
@@ -355,7 +424,11 @@ export default function CanonicalChessboard({
           aria-modal="true"
           className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] p-6 backdrop-blur-sm"
           onKeyDown={(event) => {
-            if (event.key === "Escape") clearSelection()
+            if (event.key === "Escape") {
+              event.preventDefault()
+              event.stopPropagation()
+              clearSelection()
+            }
             if (event.key === "Tab") {
               const buttons =
                 event.currentTarget.querySelectorAll<HTMLButtonElement>(
@@ -373,6 +446,7 @@ export default function CanonicalChessboard({
             }
           }}
           role="dialog"
+          ref={choiceElement}
         >
           <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal w-full max-w-md rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-5 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
             <h2

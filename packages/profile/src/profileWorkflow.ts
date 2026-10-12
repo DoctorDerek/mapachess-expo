@@ -1,6 +1,7 @@
 import captureError from "@mapachess/diagnostics/error-diagnostic"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import type { PlayerInputBindings } from "@mapachess/match/player-input"
 import {
   durableStoreSnapshotsEqual,
   type LoadedDurablePlayerData,
@@ -23,6 +24,7 @@ import type {
 import {
   changeAutoHintMode,
   changePlayerAppearance,
+  changePlayerInputBindings,
   changePresentationPreferences,
   createFreshRecoveryData,
   createLastKnownGoodRecoveryData,
@@ -38,6 +40,16 @@ export const prepareAppearancePending = (
   pendingWrite(
     requireLoaded(context),
     changePlayerAppearance(requireCurrentPlayerData(context), appearance),
+    "commit",
+  )
+
+export const prepareInputBindingsPending = (
+  context: ProfileMachineContext,
+  bindings: PlayerInputBindings,
+): PendingProfileWrite =>
+  pendingWrite(
+    requireLoaded(context),
+    changePlayerInputBindings(requireCurrentPlayerData(context), bindings),
     "commit",
   )
 

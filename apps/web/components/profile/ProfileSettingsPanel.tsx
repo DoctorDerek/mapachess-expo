@@ -8,6 +8,7 @@ import type {
 } from "@mapachess/match/match-navigation"
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
+import type { PlayerInputBindings } from "@mapachess/match/player-input"
 import type {
   ChessAppearanceChange,
   ChessAppearanceSettings,
@@ -19,6 +20,7 @@ import {
   type RatedMatchCounts,
 } from "@mapachess/profile/player-data"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import InputBindingSettings from "../input/InputBindingSettings"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import ArtCredits from "./ArtCredits"
@@ -36,6 +38,8 @@ export const PROFILE_SETTINGS_TITLE = "Your game customization"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  inputBindings: PlayerInputBindings
+  onInputBindingsSaved: (bindings: PlayerInputBindings) => void
   exporting?: boolean
   hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
@@ -58,6 +62,8 @@ export type ProfileSettingsPanelProps = Readonly<{
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  inputBindings,
+  onInputBindingsSaved,
   exporting = false,
   hintChangesDisabled,
   autoHintMode,
@@ -137,6 +143,12 @@ export default function ProfileSettingsPanel({
           onAutoHintModeChanged={onAutoHintModeChanged}
         />
       </div>
+
+      <InputBindingSettings
+        bindings={inputBindings}
+        disabled={busy}
+        onSave={onInputBindingsSaved}
+      />
 
       <section aria-labelledby="player-elo-settings-title" className="mt-7">
         <h2

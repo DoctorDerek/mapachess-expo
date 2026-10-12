@@ -9,6 +9,17 @@ type ArtCredit = Readonly<{
 }>
 
 export const ART_CREDITS = Object.freeze({
+  kenney: Object.freeze({
+    title: "Input Prompts",
+    creator: "Kenney",
+    contribution: "Controller control glyphs",
+    license: "CC0 1.0",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+    sources: Object.freeze([
+      { label: "Input Prompts", url: "https://kenney.nl/assets/input-prompts" },
+    ]),
+    modifications: "Unmodified 64-pixel glyph subset from Input Prompts 1.5A.",
+  }),
   seethingswarm: Object.freeze({
     title: "Animal sprites",
     creator: "SeethingSwarm",

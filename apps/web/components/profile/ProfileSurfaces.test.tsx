@@ -62,6 +62,8 @@ describe("web player-data controls", () => {
   it("keeps hint choices and closing available while a standalone preference saves", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        inputBindings: playerData.settings.inputBindings,
+        onInputBindingsSaved: vi.fn(),
         chessAppearance: playerData.settings.chessAppearance,
         chessAppearanceDisabled: false,
         coachCollection: playerData.settings.coachCollection,
@@ -164,6 +166,8 @@ describe("web player-data controls", () => {
   it("offers all three automatic hint modes during play", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        inputBindings: playerData.settings.inputBindings,
+        onInputBindingsSaved: vi.fn(),
         chessAppearance: playerData.settings.chessAppearance,
         chessAppearanceDisabled: false,
         coachCollection: playerData.settings.coachCollection,

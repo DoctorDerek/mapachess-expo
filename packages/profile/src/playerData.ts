@@ -15,6 +15,10 @@ import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type { MatchConclusion } from "@mapachess/match/match-conclusion"
 import type { MatchMoveId } from "@mapachess/match/match-move"
 import type { MatchVariant } from "@mapachess/match/match-variant"
+import {
+  DEFAULT_PLAYER_INPUT_BINDINGS,
+  type PlayerInputBindings,
+} from "@mapachess/match/player-input"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   createInitialChallengeHistory,
@@ -48,8 +52,9 @@ export const PLAYER_APPEARANCE_DATA_SCHEMA_VERSION = 10 as const
 export const HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION = 11 as const
 export const CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION = 12 as const
 export const COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION = 13 as const
+export const INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION = 14 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+  INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -186,6 +191,7 @@ export type MapachessPlayerData = Readonly<
       Readonly<{
         chessAppearance: ChessAppearanceSettings
         coachCollection: CoachCollectionId
+        inputBindings: PlayerInputBindings
       }>
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
@@ -232,6 +238,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
       challengeSetup: DEFAULT_CHALLENGE_SETUP,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
+      inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
     }),
   })
 }

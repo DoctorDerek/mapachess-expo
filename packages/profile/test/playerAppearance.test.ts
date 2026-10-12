@@ -167,6 +167,7 @@ describe("the saved personal appearance", () => {
       appearance: _appearance,
       settings: {
         chessAppearance: _chessAppearance,
+        inputBindings: _inputBindings,
         coachCollection: _coachCollection,
         ...settings
       },
@@ -197,6 +198,7 @@ describe("the saved personal appearance", () => {
       const {
         chessAppearance: _chessAppearance,
         coachCollection: _coachCollection,
+        inputBindings: _inputBindings,
         ...settings
       } = current.settings
       const payload = { ...current, settings, schemaVersion: 10, appearance }

@@ -5,6 +5,7 @@ import type {
   BetterHintsResult,
 } from "@mapachess/match/better-hints"
 import type { MatchHintStage } from "@mapachess/match/match-machine"
+import InputPrompt from "../input/InputPrompt"
 import MapachessButton from "../presentation/MapachessButton"
 
 type HintControlAction = "move-hints" | "piece-hints"
@@ -138,11 +139,12 @@ export default function BetterHintsControl({
         aria-describedby="better-hints-guidance"
         className="flex min-h-14 w-full min-w-0 flex-col items-center justify-center px-1! py-1! text-base"
         data-hint-stage={matchComplete ? "complete" : stage}
+        data-player-action="hints"
         disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
-        <span aria-hidden="true">✦ </span>
+        <InputPrompt action="hints" fallback="✦" />
         <span className="sr-only">{control.label}</span>
         <span aria-hidden="true">Hints</span>
       </MapachessButton>

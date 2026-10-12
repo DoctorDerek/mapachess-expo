@@ -1,10 +1,45 @@
 import { describe, expect, it } from "vitest"
 import {
   createBoardSquareRows,
+  cycleOwnPieceFocus,
   nextFocusedBoardSquare,
 } from "./boardPresentation"
 
 describe("canonical board presentation", () => {
+  it("cycles only owned pieces in displayed order with wraparound and no selection", () => {
+    const pieces = [
+      { color: "white", role: "king", square: "e1" },
+      { color: "white", role: "pawn", square: "e2" },
+      { color: "black", role: "king", square: "e8" },
+    ] as const
+    expect(
+      cycleOwnPieceFocus(
+        createBoardSquareRows("white"),
+        pieces,
+        "white",
+        "e1",
+        "nextPiece",
+      ),
+    ).toBe("e2")
+    expect(
+      cycleOwnPieceFocus(
+        createBoardSquareRows("white"),
+        pieces,
+        "white",
+        "e2",
+        "previousPiece",
+      ),
+    ).toBe("e1")
+    expect(
+      cycleOwnPieceFocus(
+        createBoardSquareRows("black"),
+        pieces,
+        "black",
+        "e2",
+        "nextPiece",
+      ),
+    ).toBe("e8")
+  })
   it("orients every square with the player nearest the bottom", () => {
     const whiteRows = createBoardSquareRows("white")
     const blackRows = createBoardSquareRows("black")

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
+import DEFAULT_PLAYER_INPUT_BINDINGS, {
+  changePlayerInputBinding,
+} from "@mapachess/match/player-input"
 import SerializedPlayerDataStore, {
   EMPTY_DURABLE_STORE_SNAPSHOT,
   type DurableStoreAdapter,
@@ -80,6 +83,50 @@ class FailFirstWriteAdapter implements DurableStoreAdapter {
 }
 
 describe("XState durable profile orchestration", () => {
+  it("retains old effective bindings through a failed save, then accepts the same pending remap on retry", async () => {
+    const store = createStore()
+    const current = await seedProfile(store)
+    const actor = createProfileActor(store)
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const changed = changePlayerInputBinding(DEFAULT_PLAYER_INPUT_BINDINGS, {
+      device: "controller",
+      action: "confirm",
+      control: "east",
+    }).bindings
+    if (changed === null) throw new Error("Fixture must remain usable")
+    vi.spyOn(store, "commitCurrent").mockRejectedValueOnce(
+      new Error("Storage temporarily unavailable"),
+    )
+    actor.send({
+      type: "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED",
+      bindings: changed,
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(current)
+    expect(
+      selectPendingPlayerData(actor.getSnapshot())?.settings.inputBindings,
+    ).toEqual(changed)
+    actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const accepted = selectCurrentPlayerData(actor.getSnapshot())
+    if (accepted === null) throw new Error("Expected accepted profile")
+    expect(accepted).toEqual({
+      ...current,
+      revision: current.revision + 1,
+      settings: { ...current.settings, inputBindings: changed },
+    })
+    const raw = await createMapachessPortableBackup({
+      applicationVersion: "test",
+      gddRevision: "5.2",
+      playerData: accepted,
+      sha256,
+    })
+    expect(await decodeMapachessPortableBackup(raw, sha256)).toMatchObject({
+      ok: true,
+      backup: { payload: accepted },
+    })
+    actor.stop()
+  })
   it("retains a boot exception without replacing saved data and clears it after retry", async () => {
     const store = createStore()
     const saved = await seedProfile(store)

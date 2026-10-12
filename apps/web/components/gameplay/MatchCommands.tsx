@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from "react"
+import { useRef, type ReactNode, type Ref } from "react"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectCanOfferDraw,
@@ -13,10 +13,13 @@ import matchMachine, {
   selectMatchPosition,
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
+import InputPrompt from "../input/InputPrompt"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 
 export default function MatchCommands({
   actor,
+  onBoardFocusRequested,
   hints,
   coach,
   menuActions,
@@ -30,6 +33,7 @@ export default function MatchCommands({
   opponentName,
 }: Readonly<{
   hints: ReactNode
+  onBoardFocusRequested: () => void
   coach: ReactNode
   menuActions?: ReactNode
   menuSummaryRef?: Ref<HTMLElement>
@@ -43,42 +47,63 @@ export default function MatchCommands({
   opponentName: string
 }>) {
   const persisting = selectIsPersistingMutation(snapshot)
+  const menu = useRef<HTMLDetailsElement>(null)
+  usePlayerInputScope({
+    root: menu,
+    enabled: menuOpen,
+    handle: (action) => {
+      if (action !== "cancel" && action !== "menu") return false
+      onMenuClosed()
+      return true
+    },
+  })
   return (
     <div className="flex flex-wrap items-center gap-2">
       {coach}
       <MapachessButton
+        variant="secondary"
+        aria-label="Focus board"
+        data-player-action="controls"
+        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
+        onClick={onBoardFocusRequested}
+      >
+        <InputPrompt action="controls" fallback="▦" />
+        Board
+      </MapachessButton>
+      <MapachessButton
         aria-busy={persisting && selectHasUndoHistory(snapshot)}
         className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanUndo(snapshot)}
+        data-player-action="undo"
         onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
         type="button"
         variant="secondary"
       >
-        <span aria-hidden="true" className="text-lg leading-none">
-          ↶
-        </span>
+        <InputPrompt action="undo" fallback="↶" />
         Undo
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasRedoHistory(snapshot)}
         className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanRedo(snapshot)}
+        data-player-action="redo"
         onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
         type="button"
         variant="secondary"
       >
-        <span aria-hidden="true" className="text-lg leading-none">
-          ↷
-        </span>
+        <InputPrompt action="redo" fallback="↷" />
         Redo
       </MapachessButton>
       {hints}
       <details
         className="relative z-40 min-w-0 flex-1 basis-12"
         open={menuOpen}
+        ref={menu}
+        data-player-input-layer={menuOpen ? "match-menu" : undefined}
       >
         <summary
           aria-label="Match menu"
+          data-player-action="menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
           ref={menuSummaryRef}
           onClick={(event) => {
@@ -87,7 +112,8 @@ export default function MatchCommands({
             else onMenuOpened()
           }}
         >
-          <span aria-hidden="true">☰</span>Menu
+          <InputPrompt action="menu" fallback="☰" />
+          Menu
         </summary>
         <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-64 max-w-[calc(100vw-1rem)] gap-3 overflow-auto rounded-lg border p-3 shadow-xl xl:top-full xl:bottom-auto xl:mt-2 xl:mb-0">
           {menuActions}

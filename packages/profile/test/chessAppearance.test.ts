@@ -34,7 +34,11 @@ import completedStoryMatch from "./storyProgressTestSupport.js"
 describe("independent saved chess artwork", () => {
   it("authenticates schema12 before defaulting its missing coach preference", async () => {
     const current = createInitialMapachessPlayerData()
-    const { coachCollection: _coachCollection, ...settings } = current.settings
+    const {
+      coachCollection: _coachCollection,
+      inputBindings: _inputBindings,
+      ...settings
+    } = current.settings
     const payload = { ...current, schemaVersion: 12, settings }
     const canonical = `["mapachess-player-data",12,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(current.appearance)},["current","current"]]`
     const decoded = decodeMapachessPlayerDataWithSource(payload)
@@ -95,6 +99,7 @@ describe("independent saved chess artwork", () => {
     const current = createInitialMapachessPlayerData()
     const {
       chessAppearance: _chessAppearance,
+      inputBindings: _inputBindings,
       coachCollection: _coachCollection,
       ...settings
     } = current.settings
