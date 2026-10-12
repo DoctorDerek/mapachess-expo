@@ -41,8 +41,10 @@ import {
 import type { StoryProgress } from "@mapachess/profile/story-progress"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
+import { focusInput } from "../../lib/input/webFocusNavigation"
 import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatchPresentation"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import BattleStageSurface from "./BattleStageSurface"
 import BetterHintsControl from "./BetterHintsControl"
@@ -214,9 +216,43 @@ export default function WebMatch({
     })
   }
 
+  const matchSurface = useRef<HTMLElement>(null)
+  const toggleBoardFocus = (): void => {
+    const root = matchSurface.current
+    if (root === null) return
+    const board = root.querySelector<HTMLElement>('[role="grid"]')
+    const destination = board?.contains(document.activeElement)
+      ? root.querySelector<HTMLElement>('[data-player-action="controls"]')
+      : board?.querySelector<HTMLElement>('[tabindex="0"]')
+    if (destination != null) focusInput(destination)
+  }
+  usePlayerInputScope({
+    root: matchSurface,
+    enabled: visible,
+    handle: (action) => {
+      const root = matchSurface.current
+      if (root === null) return false
+      if (action === "controls") {
+        toggleBoardFocus()
+        return true
+      }
+      if (!["hints", "menu", "undo", "redo"].includes(action)) return false
+      const control = root.querySelector<HTMLElement>(
+        `[data-player-action="${action}"]`,
+      )
+      if (
+        control !== null &&
+        !control.matches(':disabled, [aria-disabled="true"]')
+      )
+        control.click()
+      return true
+    },
+  })
+
   return (
     <>
       <section
+        ref={matchSurface}
         aria-label={`${modeLabel} match against ${opponent.displayName}`}
         className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
       >
@@ -270,6 +306,7 @@ export default function WebMatch({
             className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
           >
             <MatchCommands
+              onBoardFocusRequested={toggleBoardFocus}
               opponentName={opponent.displayName}
               menuOpen={overlays.includes("match-menu")}
               onMenuOpened={() => {

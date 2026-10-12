@@ -1,4 +1,7 @@
-import type { MatchSquare } from "@mapachess/match/match-position"
+import type {
+  MatchBoardPiece,
+  MatchSquare,
+} from "@mapachess/match/match-position"
 
 export const BOARD_FILES = ["a", "b", "c", "d", "e", "f", "g", "h"] as const
 export const BOARD_RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"] as const
@@ -25,6 +28,25 @@ export function createBoardSquareRows(
 
 const clampBoardIndex = (value: number): number =>
   Math.min(BOARD_FILES.length - 1, Math.max(0, value))
+
+export function cycleOwnPieceFocus(
+  rows: readonly (readonly MatchSquare[])[],
+  pieces: readonly MatchBoardPiece[],
+  color: BoardOrientation,
+  current: MatchSquare,
+  direction: "previousPiece" | "nextPiece",
+): MatchSquare {
+  const board = rows.flat()
+  const own = board.filter((square) =>
+    pieces.some((piece) => piece.square === square && piece.color === color),
+  )
+  const index = board.indexOf(current)
+  return direction === "nextPiece"
+    ? (own.find((square) => board.indexOf(square) > index) ?? own[0] ?? current)
+    : (own.findLast((square) => board.indexOf(square) < index) ??
+        own.at(-1) ??
+        current)
+}
 
 export function nextFocusedBoardSquare(
   rows: readonly (readonly MatchSquare[])[],

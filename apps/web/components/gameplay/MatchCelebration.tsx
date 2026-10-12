@@ -18,6 +18,7 @@ import {
   selectStoryLadder,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MatchLevelProgress from "./MatchLevelProgress"
 import MatchSaveConfirmation from "./MatchSaveConfirmation"
@@ -53,6 +54,14 @@ export default function MatchCelebration({
     throw new Error("A completed match is required for its celebration.")
   }
   const dialog = useRef<HTMLDialogElement>(null)
+  usePlayerInputScope({
+    root: dialog,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      onDismiss()
+      return true
+    },
+  })
   const reviewButton = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const opponent = stockfishOpponent(match.opponentId)
