@@ -9,6 +9,17 @@ type ArtCredit = Readonly<{
 }>
 
 export const ART_CREDITS = Object.freeze({
+  mapachitoIdentity: Object.freeze({
+    title: "Mapachito ice cream",
+    creator: "Dr. Derek Austin",
+    contribution: "Original first-arrival animation and still artwork",
+    license: "All rights reserved; supplied for Mapachess",
+    licenseUrl: "https://DoctorDerek.com",
+    sources: Object.freeze([
+      { label: "DoctorDerek.com", url: "https://DoctorDerek.com" },
+    ]),
+    modifications: null,
+  }),
   kenney: Object.freeze({
     title: "Input Prompts",
     creator: "Kenney",

@@ -103,6 +103,11 @@ describe("licensed presentation asset preparation", () => {
       "scripts/runTypeScript.mjs",
       "scripts/create-presentation-asset-archive.ts",
       "scripts/decrypt-assets.ts",
+      "scripts/prepareFirstArrivalAssets.ts",
+      "packages/diagnostics/src/errorDiagnostic.ts",
+      "packages/match-presentation/assets/first-arrival/ice-cream.png",
+      "packages/match-presentation/assets/first-arrival/ice-cream.riv",
+      "packages/match-presentation/assets/first-arrival/LICENSE.txt",
       "scripts/ghost-assets/presentationAssetArchive.ts",
       "scripts/ghost-assets/licensedAssetBundles.ts",
     ]) {
@@ -122,6 +127,11 @@ describe("licensed presentation asset preparation", () => {
       operation === "create" ? repositoryRoot : join(repositoryRoot, "apps/web")
     await mkdir(workingDirectory, { recursive: true })
     if (operation === "prepare") {
+      await symlink(
+        fileURLToPath(new URL("../../../node_modules", import.meta.url)),
+        join(workingDirectory, "node_modules"),
+        "junction",
+      )
       await writeFile(
         join(repositoryRoot, LICENSED_ASSET_BUNDLES.chess.manifest),
         JSON.stringify({
