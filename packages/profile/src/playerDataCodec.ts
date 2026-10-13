@@ -49,6 +49,7 @@ import {
   STRONGER_CALIBRATED_WIN_BONUS_XP,
   type LevelAchievementId,
 } from "./globalXp.js"
+import { CANDIDATE_LOCALES } from "./locale.js"
 import {
   decodeLegacyPlayerAppearance,
   decodePlayerAppearance,
@@ -62,6 +63,7 @@ import {
   COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION,
   createInitialPlayerEloRatings,
   createInitialRatedMatchCounts,
+  FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION,
   GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION,
   HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION,
   INDEPENDENT_CHALLENGE_PLAYER_DATA_SCHEMA_VERSION,
@@ -117,6 +119,7 @@ export type PlayerDataSource = Readonly<{
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
     | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+    | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -331,8 +334,10 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
+      locale: null,
     }),
     appearance: DEFAULT_PLAYER_APPEARANCE,
+    introductionCompleted: true,
     legacyRatings: data.ratings,
     lastAcceptedResultReward: null,
     processedMatchResultIds: Object.freeze(
@@ -485,6 +490,9 @@ export const canonicalPlayerData = (
             data.settings.inputBindings.keyboard[action],
           ]),
         ]
+      : []),
+    ...(sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+      ? [data.introductionCompleted, data.settings.locale]
       : []),
   ])
 
@@ -654,6 +662,7 @@ const decodeCurrentPlayerData = (
     | typeof HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION
     | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
+    | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -670,6 +679,9 @@ const decodeCurrentPlayerData = (
       "schemaVersion",
       "settings",
       "storyProgress",
+      ...(sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+        ? ["introductionCompleted"]
+        : []),
       ...(sourceSchemaVersion >= PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
         ? ["appearance"]
         : []),
@@ -693,6 +705,9 @@ const decodeCurrentPlayerData = (
         : []),
       ...(sourceSchemaVersion >= INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
         ? ["inputBindings"]
+        : []),
+      ...(sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+        ? ["locale"]
         : []),
     ],
     "$.settings",
@@ -746,6 +761,13 @@ const decodeCurrentPlayerData = (
       : null
   const data: MapachessPlayerData = Object.freeze({
     activeMatch,
+    introductionCompleted:
+      sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+        ? requireBoolean(
+            object.introductionCompleted,
+            "$.introductionCompleted",
+          )
+        : true,
     appearance:
       sourceSchemaVersion === PLAYER_APPEARANCE_DATA_SCHEMA_VERSION
         ? decodeLegacyPlayerAppearance(
@@ -804,6 +826,15 @@ const decodeCurrentPlayerData = (
           ? (parsePlayerInputBindings(settings.inputBindings) ??
             failData("$.settings.inputBindings"))
           : DEFAULT_PLAYER_INPUT_BINDINGS,
+      locale:
+        sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION &&
+        settings.locale !== null
+          ? requireEnumValue(
+              settings.locale,
+              CANDIDATE_LOCALES,
+              "$.settings.locale",
+            )
+          : null,
     }),
     storyProgress,
     totalXp,
@@ -924,6 +955,8 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===

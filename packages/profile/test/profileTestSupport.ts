@@ -5,6 +5,16 @@ import {
   type DurableStoreAdapter,
   type DurableStoreSnapshot,
 } from "../src/durableStore.js"
+import type { MapachessPlayerData } from "../src/playerData.js"
+
+export function withoutFirstArrivalPreferences(data: MapachessPlayerData) {
+  const {
+    introductionCompleted: _completed,
+    settings: { locale: _locale, ...settings },
+    ...previous
+  } = data
+  return { ...previous, settings }
+}
 
 export const sha256 = async (canonicalValue: string): Promise<string> =>
   createHash("sha256").update(canonicalValue).digest("hex")

@@ -23,6 +23,7 @@
     "@mapachess/match-presentation": "workspace:*",
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
+    "@rive-app/canvas-lite": "^2",
     "@vercel/analytics": "^2",
     "@xstate/react": "^6",
     "classix": "^2",

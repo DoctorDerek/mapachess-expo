@@ -2,16 +2,19 @@
 
 import { useSelector } from "@xstate/react"
 import { useRef } from "react"
+import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
+import resolveLocale from "@mapachess/profile/locale"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCanChangePresentationPreferences,
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
+import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
@@ -50,6 +53,8 @@ export type ProfilePlayExperienceProps = Readonly<{
     | "navigation"
     | "inputBindings"
     | "onInputBindingsSaved"
+    | "locale"
+    | "onLocaleChanged"
   >
 }>
 
@@ -93,6 +98,13 @@ function ReadyPlayExperience({
     throw new Error("Play requires accepted player data.")
   const settingsProps: ProfileSettingsPanelProps = {
     ...settings,
+    locale: resolveLocale({
+      selection: (selectPendingPlayerData(profile) ?? playerData).settings
+        .locale,
+      preferences: globalThis.navigator?.languages ?? [],
+    }),
+    onLocaleChanged: (locale) =>
+      profileActor.send({ type: "PROFILE.LOCALE_CHANGED", locale }),
     inputBindings: playerData.settings.inputBindings,
     onInputBindingsSaved: (bindings) =>
       profileActor.send({
@@ -196,6 +208,12 @@ function ReadyPlayExperience({
 export default function ProfilePlayExperience(
   props: ProfilePlayExperienceProps,
 ) {
+  preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {
+    as: "fetch",
+    crossOrigin: "anonymous",
+    fetchPriority: "low",
+    type: "application/wasm",
+  })
   const actor = useWebMatchSession(props.profileActor)
   return actor === null ? (
     <MapachessLoadingSurface />

@@ -43,9 +43,7 @@ export const activate = async (
   await press(page, button)
 }
 
-export default async function prepareControllerInput({
-  page,
-}: Readonly<{ page: Page }>): Promise<void> {
+export const injectControllerInput = async (page: Page): Promise<void> => {
   await page.addInitScript(() => {
     window.mapachessTestPads = [
       {
@@ -73,6 +71,12 @@ export default async function prepareControllerInput({
         })),
     })
   })
+}
+
+export default async function prepareControllerInput({
+  page,
+}: Readonly<{ page: Page }>): Promise<void> {
+  await injectControllerInput(page)
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto("/")
   await expect(

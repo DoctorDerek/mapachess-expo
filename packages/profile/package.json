@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./locale": {
+      "types": "./src/locale.ts",
+      "default": "./dist/locale.js"
+    },
+    "./first-arrival": {
+      "types": "./src/firstArrival.ts",
+      "default": "./dist/firstArrival.js"
+    },
     "./chess-appearance-settings": {
       "types": "./src/chessAppearanceSettings.ts",
       "default": "./dist/chessAppearanceSettings.js"

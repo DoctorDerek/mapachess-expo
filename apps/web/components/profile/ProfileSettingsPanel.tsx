@@ -13,6 +13,7 @@ import type {
   ChessAppearanceChange,
   ChessAppearanceSettings,
 } from "@mapachess/profile/chess-appearance-settings"
+import type { ShippedLocale } from "@mapachess/profile/locale"
 import {
   PLAYER_ELO_RATING_IDS,
   type PlayerEloRatingId,
@@ -27,6 +28,7 @@ import ArtCredits from "./ArtCredits"
 import AutoHintModeChoices from "./AutoHintModeChoices"
 import ChessAppearanceChoices from "./ChessAppearanceChoices"
 import CoachCollectionChoices from "./CoachCollectionChoices"
+import LanguageChoice from "./LanguageChoice"
 import MoveClassificationFaq from "./MoveClassificationFaq"
 import {
   ImportBackupButton,
@@ -38,6 +40,8 @@ export const PROFILE_SETTINGS_TITLE = "Your game customization"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
+  locale: ShippedLocale
+  onLocaleChanged: (locale: ShippedLocale) => void
   inputBindings: PlayerInputBindings
   onInputBindingsSaved: (bindings: PlayerInputBindings) => void
   exporting?: boolean
@@ -62,6 +66,8 @@ export type ProfileSettingsPanelProps = Readonly<{
 
 export default function ProfileSettingsPanel({
   activityMessage,
+  locale,
+  onLocaleChanged,
   inputBindings,
   onInputBindingsSaved,
   exporting = false,
@@ -120,6 +126,11 @@ export default function ProfileSettingsPanel({
       </header>
 
       <div className="mt-5 grid gap-3">
+        <LanguageChoice
+          locale={locale}
+          disabled={busy}
+          onChange={onLocaleChanged}
+        />
         <CoachCollectionChoices
           collection={coachCollection}
           disabled={chessAppearanceDisabled}

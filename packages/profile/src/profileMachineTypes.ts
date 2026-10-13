@@ -11,6 +11,8 @@ import type {
   DurablePlayerDataWriteResult,
   LoadedDurablePlayerData,
 } from "./durableStore.js"
+import type { FirstArrivalPreferences } from "./firstArrival.js"
+import type { ShippedLocale } from "./locale.js"
 import type { PlayerAppearance } from "./playerAppearance.js"
 import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import type {
@@ -63,10 +65,13 @@ export type ProfileMachineContext = Readonly<{
   requestedAutoHintMode: AutoHintMode | null
   requestedPresentationPreferences: PresentationPreferences | null
   requestedInputBindings: PlayerInputBindings | null
+  requestedFirstArrivalPreferences: FirstArrivalPreferences | null
   store: DurablePlayerDataStore
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{ type: "PROFILE.INTRODUCTION_COMPLETED"; locale: ShippedLocale }>
+  | Readonly<{ type: "PROFILE.LOCALE_CHANGED"; locale: ShippedLocale }>
   | Readonly<{
       type: "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED"
       bindings: PlayerInputBindings

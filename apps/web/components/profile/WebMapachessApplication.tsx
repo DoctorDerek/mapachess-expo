@@ -2,8 +2,8 @@
 
 import { useSelector } from "@xstate/react"
 import { useEffect, useRef, useState } from "react"
-import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
+import resolveLocale from "@mapachess/profile/locale"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -14,7 +14,6 @@ import profileMachine, {
   selectPersistenceFailure,
   selectUnreadablePlayerData,
 } from "@mapachess/profile/profile-machine"
-import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import openWebProfileRuntime, {
   type WebProfileRuntime,
 } from "../../lib/profile/openWebProfileRuntime"
@@ -31,6 +30,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
+import Introduction from "./Introduction"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
@@ -70,6 +70,10 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const currentPlayerData = selectCurrentPlayerData(snapshot)
   const pendingPlayerData = selectPendingPlayerData(snapshot)
   const exportablePlayerData = pendingPlayerData ?? currentPlayerData
+  const locale = resolveLocale({
+    selection: exportablePlayerData?.settings.locale ?? null,
+    preferences: globalThis.navigator?.languages ?? [],
+  })
   const unreadablePlayerData = selectUnreadablePlayerData(snapshot)
   const importIssue = selectImportIssue(snapshot)
   const importPreview = selectImportPreview(snapshot)
@@ -219,13 +223,32 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
         {exportFailure}
         {importPreviewPanel}
         {persistenceFailurePanel}
-        <ProfilePlayExperience
-          profileActor={actor}
-          settings={settingsProps}
-          blocked={
-            importPreviewPanel !== null || persistenceFailurePanel !== null
-          }
-        />
+        {!currentPlayerData.introductionCompleted ? (
+          <Introduction
+            locale={locale}
+            pending={profileActivityMessage !== null}
+            blocked={
+              importPreviewPanel !== null || persistenceFailurePanel !== null
+            }
+            onLocaleChanged={(locale) =>
+              actor.send({ type: "PROFILE.LOCALE_CHANGED", locale })
+            }
+            onStart={() =>
+              actor.send({
+                type: "PROFILE.INTRODUCTION_COMPLETED",
+                locale,
+              })
+            }
+          />
+        ) : (
+          <ProfilePlayExperience
+            profileActor={actor}
+            settings={settingsProps}
+            blocked={
+              importPreviewPanel !== null || persistenceFailurePanel !== null
+            }
+          />
+        )}
       </main>
     )
   }
@@ -265,12 +288,6 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 }
 
 export default function WebMapachessApplication() {
-  preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {
-    as: "fetch",
-    crossOrigin: "anonymous",
-    fetchPriority: "low",
-    type: "application/wasm",
-  })
   const [runtimeState, setRuntimeState] = useState<ProfileRuntimeState>({
     status: "opening",
   })

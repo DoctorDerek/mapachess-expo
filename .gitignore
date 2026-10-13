@@ -17,6 +17,7 @@ apps/mobile/ios/
 apps/web/public/stockfish-runtime/
 apps/web/public/generated/presentation-assets/
 apps/web/public/generated/chess-assets/
+apps/web/public/generated/first-arrival/
 .bayeselo/
 .calibration/
 
