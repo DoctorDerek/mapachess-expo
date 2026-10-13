@@ -29,6 +29,7 @@ import {
   type ChessAppearanceSettings,
 } from "./chessAppearanceSettings.js"
 import type { LevelAchievementId } from "./globalXp.js"
+import type { CandidateLocale } from "./locale.js"
 import {
   DEFAULT_PLAYER_APPEARANCE,
   type PlayerAppearance,
@@ -53,8 +54,9 @@ export const HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION = 11 as const
 export const CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION = 12 as const
 export const COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION = 13 as const
 export const INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION = 14 as const
+export const FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION = 15 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
+  FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -192,11 +194,13 @@ export type MapachessPlayerData = Readonly<
         chessAppearance: ChessAppearanceSettings
         coachCollection: CoachCollectionId
         inputBindings: PlayerInputBindings
+        locale: CandidateLocale | null
       }>
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
     lastAcceptedResultReward: AcceptedMatchReward | null
     appearance: PlayerAppearance
+    introductionCompleted: boolean
   }
 >
 
@@ -221,6 +225,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
   return Object.freeze({
     activeMatch: null,
     appearance: DEFAULT_PLAYER_APPEARANCE,
+    introductionCompleted: false,
     challengeHistory: createInitialChallengeHistory(),
     legacyRatings: createInitialLegacyPlayerEloRatings(),
     lastAcceptedResultReward: null,
@@ -239,6 +244,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
+      locale: null,
     }),
   })
 }

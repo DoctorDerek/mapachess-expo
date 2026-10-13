@@ -17,7 +17,7 @@ import {
 import { decodeMapachessPortableBackup } from "../src/portableBackup.js"
 import { replaceActiveMatch, resetPlayerElo } from "../src/profileMutations.js"
 import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
-import { sha256 } from "./profileTestSupport.js"
+import { sha256, withoutFirstArrivalPreferences } from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 const completed = completedStoryMatch()
@@ -117,7 +117,7 @@ describe("global match XP", () => {
       unlockedAchievementIds: _unlockedAchievementIds,
       lastAcceptedResultReward: _lastAcceptedResultReward,
       ...previousFields
-    } = completedOldProfile
+    } = withoutFirstArrivalPreferences(completedOldProfile)
     const versionSeven = {
       ...previousFields,
       settings,

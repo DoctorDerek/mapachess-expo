@@ -9,13 +9,15 @@ import createInitialMapachessPlayerData, {
 } from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 import { playerResultScore, updatedPlayerElo } from "../src/playerElo.js"
+import { withoutFirstArrivalPreferences } from "./profileTestSupport.js"
 
 describe("Mapachess player data", () => {
   it("adds defaults to schema13 without changing player progress and rejects invalid schema14 bindings", () => {
     const initial = createInitialMapachessPlayerData()
-    const { inputBindings: _inputBindings, ...settings } = initial.settings
+    const previous = withoutFirstArrivalPreferences(initial)
+    const { inputBindings: _inputBindings, ...settings } = previous.settings
     const old = {
-      ...initial,
+      ...previous,
       schemaVersion: 13,
       totalXp: 3000,
       ratings: { standard: 345.123, chess960: 432.789 },
@@ -26,8 +28,13 @@ describe("Mapachess player data", () => {
       ok: true,
       data: {
         ...old,
+        introductionCompleted: true,
         schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
-        settings: { ...settings, inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS },
+        settings: {
+          ...settings,
+          inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
+          locale: null,
+        },
       },
     })
     expect(
@@ -58,6 +65,7 @@ describe("Mapachess player data", () => {
 
     expect(playerData).toEqual({
       activeMatch: null,
+      introductionCompleted: false,
       appearance: {
         skin: 1,
         face: 2,
@@ -92,6 +100,7 @@ describe("Mapachess player data", () => {
       totalXp: 0,
       unlockedAchievementIds: [],
       settings: {
+        locale: null,
         inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
         autoHintMode: "auto-move-hints",
         challengeSetup: DEFAULT_CHALLENGE_SETUP,

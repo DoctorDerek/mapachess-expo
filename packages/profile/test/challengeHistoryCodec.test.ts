@@ -9,6 +9,7 @@ import decodeChallengeHistory, {
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
 import { replaceActiveMatch } from "../src/profileMutations.js"
+import { withoutFirstArrivalPreferences } from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 const wonHistory = () => {
@@ -82,7 +83,7 @@ describe("durable Challenge history", () => {
       totalXp: _totalXp,
       unlockedAchievementIds: _unlockedAchievementIds,
       ...current
-    } = createInitialMapachessPlayerData()
+    } = withoutFirstArrivalPreferences(createInitialMapachessPlayerData())
     const old = { ...current, settings, ratings: legacyRatings }
     expect(omitted).toEqual(createInitialChallengeHistory())
     const result = decodeMapachessPlayerData({ ...old, schemaVersion: 5 })
@@ -93,6 +94,7 @@ describe("durable Challenge history", () => {
     )
     expect(result.data.settings).toEqual({
       ...old.settings,
+      locale: null,
       chessAppearance: { boardId: "current", pieceSetId: "current" },
       coachCollection: "mapachito",
       inputBindings: createInitialMapachessPlayerData().settings.inputBindings,

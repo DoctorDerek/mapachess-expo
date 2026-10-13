@@ -24,7 +24,11 @@ import profileMachine, {
 import { changePlayerAppearance } from "../src/profileMutations.js"
 import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
 import { selectChallengeUnlockedOpponents } from "../src/storyProgress.js"
-import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
+import {
+  InMemoryDurableStoreAdapter,
+  sha256,
+  withoutFirstArrivalPreferences,
+} from "./profileTestSupport.js"
 
 describe("the saved personal appearance", () => {
   it("always permits raccoon without unlocking its opponent", () => {
@@ -162,7 +166,10 @@ describe("the saved personal appearance", () => {
   })
 
   it("migrates schema9 without changing its checksum input or progression", () => {
-    const current = createInitialMapachessPlayerData()
+    const current = {
+      ...createInitialMapachessPlayerData(),
+      introductionCompleted: true,
+    }
     const {
       appearance: _appearance,
       settings: {
@@ -172,7 +179,7 @@ describe("the saved personal appearance", () => {
         ...settings
       },
       ...fields
-    } = current
+    } = withoutFirstArrivalPreferences(current)
     const legacy = { ...fields, settings, schemaVersion: 9 }
     const decoded = decodeMapachessPlayerDataWithSource(legacy)
     expect(decoded.ok).toBe(true)
@@ -185,7 +192,11 @@ describe("the saved personal appearance", () => {
   it.each(["raccoon-stockfish", "chicken-stockfish"] as const)(
     "authenticates schema10 saves and backups before adding None for %s",
     async (animal) => {
-      const current = createInitialMapachessPlayerData()
+      const current = {
+        ...createInitialMapachessPlayerData(),
+        introductionCompleted: true,
+      }
+      const previous = withoutFirstArrivalPreferences(current)
       const appearance = {
         skin: 1,
         face: 2,
@@ -200,8 +211,8 @@ describe("the saved personal appearance", () => {
         coachCollection: _coachCollection,
         inputBindings: _inputBindings,
         ...settings
-      } = current.settings
-      const payload = { ...current, settings, schemaVersion: 10, appearance }
+      } = previous.settings
+      const payload = { ...previous, settings, schemaVersion: 10, appearance }
       const canonical = `["mapachess-player-data",10,0,"auto-move-hints",[100,100],null,["standard","white",null,"chicken-stockfish",100],[[],[]],[[[],[]],[[],[]]],[100,100,100,100],[0,0],[],0,[],null,${JSON.stringify(appearance)}]`
       const integrity = {
         algorithm: "SHA-256",

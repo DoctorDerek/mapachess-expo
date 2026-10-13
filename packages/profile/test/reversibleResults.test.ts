@@ -21,7 +21,7 @@ import {
   replaceActiveMatch,
   resetPlayerElo,
 } from "../src/profileMutations.js"
-import { sha256 } from "./profileTestSupport.js"
+import { sha256, withoutFirstArrivalPreferences } from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 const opened = (match: DurableMatchRecord): DurableMatchRecord => ({
@@ -269,7 +269,7 @@ describe("one reversible active result", () => {
         ...settings
       },
       ...legacyFields
-    } = accepted
+    } = withoutFirstArrivalPreferences(accepted)
     const payload = {
       ...legacyFields,
       settings,
