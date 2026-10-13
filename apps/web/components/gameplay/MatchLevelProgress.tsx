@@ -7,6 +7,7 @@ import levelProgressionSpans, {
   easeOutQuad,
 } from "@mapachess/profile/level-progression"
 import pausePresentationWhileHidden from "../../lib/presentation/pausePresentationWhileHidden"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const progressFrame = (xp: number) => {
   const progress = levelProgress(xp)
@@ -17,6 +18,8 @@ export default function MatchLevelProgress({
   beforeXp,
   afterXp,
 }: Readonly<{ beforeXp: number; afterXp: number }>) {
+  const copy = useMapachessCopy()
+
   const [displayed, setDisplayed] = useState(() => progressFrame(beforeXp))
   const reduceMotion = useReducedMotion() === true
   const final = levelProgress(afterXp)
@@ -73,7 +76,11 @@ export default function MatchLevelProgress({
 
   return (
     <section
-      aria-label={`Level ${String(final.level)}. ${String(final.current)} of ${String(final.required)} XP toward the next Level.`}
+      aria-label={copy.gameplay.levelProgress(
+        final.level,
+        final.current,
+        final.required,
+      )}
       className="border-mapachito-charcoal bg-mapachito-white grid gap-2 rounded-lg border-3 p-3"
     >
       <div
@@ -81,10 +88,10 @@ export default function MatchLevelProgress({
         className="flex items-baseline justify-between gap-3"
       >
         <span className="font-display text-2xl font-black tabular-nums">
-          Level {displayed.level}
+          {copy.gameplay.level(displayed.level)}
         </span>
         <span className="text-sm font-bold tabular-nums">
-          {displayed.current} / {displayed.required} XP
+          {copy.gameplay.xpProgress(displayed.current, displayed.required)}
         </span>
       </div>
       <div

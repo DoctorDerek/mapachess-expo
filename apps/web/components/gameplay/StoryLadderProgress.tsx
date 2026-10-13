@@ -3,14 +3,13 @@ import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-matc
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import {
   canPlayStoryOpponent,
-  formatStoryCompletion,
   selectChallengeUnlockedOpponents,
   selectStoryCompletion,
   selectStoryLadder,
-  STORY_PROGRESS_COPY,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MedalSymbol from "../presentation/MedalSymbol"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 import StoryOpponentPortrait from "./StoryOpponentPortrait"
 
@@ -29,6 +28,9 @@ export default function StoryLadderProgress({
   variant,
   selection,
 }: StoryLadderProgressProps) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+
   const headingId = useId()
   const ladder = selectStoryLadder(progress, variant)
   const completion = selectStoryCompletion(progress)
@@ -49,7 +51,7 @@ export default function StoryLadderProgress({
             className="font-display text-mapachito-violet text-2xl font-black"
             id={headingId}
           >
-            {STORY_PROGRESS_COPY.title}
+            {copy.shared.story.title}
           </h2>
           <p
             className={
@@ -58,12 +60,11 @@ export default function StoryLadderProgress({
                 : "sr-only"
             }
           >
-            {STORY_PROGRESS_COPY.independence}
+            {copy.shared.story.independence}
           </p>
         </div>
         <p className="border-mapachito-violet rounded-lg border-2 px-4 py-2 font-bold">
-          {STORY_PROGRESS_COPY.completedCount}: {progress[variant].length} /{" "}
-          {ladder.length}
+          {copy.gameplay.defeatedCount(progress[variant].length, ladder.length)}
         </p>
       </div>
       <dl
@@ -75,20 +76,22 @@ export default function StoryLadderProgress({
       >
         {(["standard", "chess960", "overall"] as const).map((scope) => (
           <div key={scope}>
-            <dt>{STORY_PROGRESS_COPY[scope]}</dt>
+            <dt>{copy.shared.story[scope]}</dt>
             <dd className="font-display mt-1 text-2xl font-black">
-              {formatStoryCompletion(completion[scope])}
+              {copy.gameplay.storyCompletion(completion[scope])}
             </dd>
           </div>
         ))}
       </dl>
       <p className="mt-5 font-bold">
         {nextOpponent === undefined
-          ? STORY_PROGRESS_COPY.allDefeated
-          : `${STORY_PROGRESS_COPY.nextOpponent}: ${nextOpponent.opponent.displayName}`}
+          ? copy.shared.story.allDefeated
+          : copy.gameplay.nextUnlocked(
+              animalCopy.opponent(nextOpponent.opponent.id),
+            )}
       </p>
       <ol
-        aria-label={STORY_PROGRESS_COPY.opponents}
+        aria-label={copy.shared.story.opponents}
         className={
           selection === undefined
             ? "border-mapachito-charcoal/30 focus-visible:outline-mapachito-violet mt-5 grid max-h-80 gap-2 overflow-y-auto rounded-lg border-2 p-3 focus-visible:outline-3 focus-visible:outline-offset-4"
@@ -133,11 +136,11 @@ export default function StoryLadderProgress({
                   <div>
                     <p className="font-display font-black">
                       {status === "locked"
-                        ? `${STORY_PROGRESS_COPY.lockedOpponent} ${String(opponent.storyPosition)}`
-                        : opponent.displayName}
+                        ? copy.gameplay.lockedOpponent(opponent.storyPosition)
+                        : animalCopy.opponent(opponent.id)}
                     </p>
                     <p className="mt-1 text-base">
-                      {STORY_PROGRESS_COPY.targetElo}: {opponent.storyTargetElo}
+                      {copy.gameplay.targetElo(opponent.storyTargetElo)}
                     </p>
                   </div>
                 </div>
@@ -152,24 +155,27 @@ export default function StoryLadderProgress({
                     <MedalSymbol medal={highestMedal} />
                   ) : null}
                   {highestMedal === null
-                    ? STORY_PROGRESS_COPY[status]
-                    : `${STORY_PROGRESS_COPY.defeated} · ${STORY_PROGRESS_COPY.medals[highestMedal]}`}
+                    ? copy.shared.story[status]
+                    : copy.gameplay.defeatedMedal(
+                        copy.shared.story.medals[highestMedal],
+                      )}
                 </p>
               </Row>
             </li>
           )
         })}
       </ol>
-      <p className="mt-3 text-sm">{STORY_PROGRESS_COPY.replay}</p>
+      <p className="mt-3 text-sm">{copy.shared.story.replay}</p>
       <p
         className={
           selection === undefined ? "mt-2 text-sm leading-relaxed" : "sr-only"
         }
       >
-        {STORY_PROGRESS_COPY.challengeUnlocked}:{" "}
-        {selectChallengeUnlockedOpponents(progress)
-          .map(({ displayName }) => displayName)
-          .join(", ")}
+        {copy.gameplay.challengeList(
+          selectChallengeUnlockedOpponents(progress).map(({ id }) =>
+            animalCopy.opponent(id),
+          ),
+        )}
       </p>
     </section>
   )

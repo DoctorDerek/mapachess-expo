@@ -2,12 +2,12 @@ import type { MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import {
   selectStoryLadder,
-  STORY_PROGRESS_COPY,
   storyVictoryMedal,
   type StoryMatchResult as SavedStoryMatchResult,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MedalWithHintUse from "./MedalWithHintUse"
 
 export default function StoryMatchResult({
@@ -23,6 +23,10 @@ export default function StoryMatchResult({
   opening: boolean
   onSetupRequested: (setup: MatchSetup) => void
 }>) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+  const messages = copy.interface.storyMatchResult
+
   if (match.mode !== "story" || match.conclusion === null) return null
   const variant = match.startingPosition.variant
   const medal = storyVictoryMedal(match)
@@ -36,27 +40,33 @@ export default function StoryMatchResult({
     onSetupRequested({ mode: "story", variant, opponentId })
 
   return (
-    <section aria-label="Story result" className="grid gap-3">
+    <section aria-label={messages.storyResult} className="grid gap-3">
       <div>
         {medal !== null && next === undefined ? (
-          <h3 className="font-display text-xl font-black">Story complete!</h3>
+          <h3 className="font-display text-xl font-black">
+            {messages.storyComplete}
+          </h3>
         ) : null}
         <p className="text-base">
-          {medal === null ? "No new medal" : <MedalWithHintUse medal={medal} />}
+          {medal === null ? (
+            copy.gameplay.noNewMedal
+          ) : (
+            <MedalWithHintUse medal={medal} />
+          )}
         </p>
       </div>
       {medal === null ? (
-        <p className="text-sm">Your Story progress is unchanged.</p>
+        <p className="text-sm">{messages.yourStoryProgressIsUnchanged}</p>
       ) : best !== undefined && best !== medal ? (
         <p className="text-sm">
-          Your best: {STORY_PROGRESS_COPY.medals[best]}.
+          {copy.gameplay.bestMedal(copy.shared.story.medals[best])}
         </p>
       ) : null}
       {medal !== null ? (
         <p className="text-sm">
-          {opponent.displayName} is available in both Challenge modes.
+          {copy.gameplay.challengeUnlocked(animalCopy.opponent(opponent.id))}
           {next === undefined
-            ? ` All ${ladder.length} opponents in this Story defeated.`
+            ? ` ${copy.gameplay.storyDefeated(ladder.length)}`
             : ""}
         </p>
       ) : null}
@@ -64,12 +74,15 @@ export default function StoryMatchResult({
         <MapachessButton
           disabled={disabled}
           aria-busy={opening}
-          busyLabel="Opening setup…"
+          busyLabel={messages.openingSetup}
           onClick={() => setup(next.opponent.id)}
         >
-          Next opponent
+          {messages.nextOpponent}
           <span className="mt-1 block text-base font-normal">
-            {next.opponent.displayName} · {next.opponent.storyTargetElo} Elo
+            {copy.gameplay.opponentAndElo(
+              animalCopy.opponent(next.opponent.id),
+              next.opponent.storyTargetElo,
+            )}
           </span>
         </MapachessButton>
       ) : null}
@@ -77,25 +90,28 @@ export default function StoryMatchResult({
         <MapachessButton
           disabled={disabled}
           aria-busy={opening}
-          busyLabel="Opening setup…"
+          busyLabel={messages.openingSetup}
           onClick={() => onSetupRequested({ mode: "story", variant })}
         >
-          Story ladder
+          {messages.storyLadder}
         </MapachessButton>
       ) : null}
       <MapachessButton
         variant="secondary"
         disabled={disabled}
         aria-busy={opening}
-        busyLabel="Opening setup…"
+        busyLabel={messages.openingSetup}
         onClick={() => setup()}
       >
-        Replay opponent
+        {messages.replayOpponent}
         <span className="mt-1 block text-base font-normal">
-          {opponent.displayName} · {opponent.storyTargetElo} Elo
+          {copy.gameplay.opponentAndElo(
+            animalCopy.opponent(opponent.id),
+            opponent.storyTargetElo,
+          )}
         </span>
       </MapachessButton>
-      <p className="text-xs">Choose your settings before playing again.</p>
+      <p className="text-xs">{messages.chooseYourSettingsBeforePlayingAgain}</p>
     </section>
   )
 }

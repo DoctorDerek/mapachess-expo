@@ -3,17 +3,15 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useRef, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import {
   selectIsPersistingMutation,
   selectMatchConclusion,
   selectPersistenceFailure,
 } from "@mapachess/match/match-machine"
 import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
-import createMatchSetupForMode, {
-  MATCH_SETUP_COPY,
-} from "@mapachess/match/match-setup"
+import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import { samePlayerAppearance } from "@mapachess/profile/player-appearance"
 import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
@@ -33,6 +31,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MatchModeMenu from "./MatchModeMenu"
 import MatchResultFacts from "./MatchResultFacts"
 import StoryMatchResult from "./StoryMatchResult"
@@ -81,6 +80,8 @@ function GameFrame({
   settingsButtonRef,
   settingsOpen,
 }: GameFrameProps) {
+  const messages = useMapachessCopy().interface.webGame
+
   const homeTitle = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     if (home) homeTitle.current?.focus({ preventScroll: true })
@@ -94,7 +95,7 @@ function GameFrame({
       ref={settingsButtonRef}
       type="button"
     >
-      Settings
+      {messages.settings}
     </MapachessButton>
   )
   return (
@@ -134,27 +135,32 @@ function GameFrame({
   )
 }
 
-const openingTitle = (actor: WebMatchSessionActor): string | null => {
+const openingTitle = (
+  actor: WebMatchSessionActor,
+  copy: MapachessCatalog,
+): string | null => {
   const snapshot = actor.getSnapshot()
-  if (snapshot.matches("openingCurrentMatch")) return "Resuming saved match…"
-  if (snapshot.matches("restartingMatch"))
-    return MATCH_SETUP_COPY.restartingMatch
-  if (snapshot.matches("returningToMenu"))
-    return MATCH_SETUP_COPY.returningToMenu
-  if (snapshot.matches("openingFreshMatch"))
-    return MATCH_SETUP_COPY.openingMatch
+  if (snapshot.matches("openingCurrentMatch"))
+    return copy.presentation.resumingMatch
+  if (snapshot.matches("restartingMatch")) return copy.setup.restartingMatch
+  if (snapshot.matches("returningToMenu")) return copy.setup.returningToMenu
+  if (snapshot.matches("openingFreshMatch")) return copy.setup.openingMatch
   return null
 }
 
-const failureTitle = (operation: WebMatchSessionFailureOperation): string => {
+const failureTitle = (
+  operation: WebMatchSessionFailureOperation,
+  copy: MapachessCatalog,
+): string => {
   if (operation === "open-current-match") {
-    return "Your saved match could not open."
+    return copy.presentation.sessionFailure[operation]
   }
-  if (operation === "restart-match") return "Your match could not restart."
+  if (operation === "restart-match")
+    return copy.presentation.sessionFailure[operation]
   if (operation === "return-to-menu") {
-    return "Mapachess could not return to the menu."
+    return copy.presentation.sessionFailure[operation]
   }
-  return "Your match could not start."
+  return copy.presentation.sessionFailure.start
 }
 
 export default function WebGame({
@@ -165,6 +171,11 @@ export default function WebGame({
   settingsOpen,
   profileActor,
 }: WebGameProps) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+
+  const messages = copy.interface.webGame
+
   const snapshot = useSelector(actor, (current) => current)
   const profileSnapshot = useSelector(profileActor, (current) => current)
   const savedPlayerData = selectCurrentPlayerData(profileSnapshot)
@@ -252,7 +263,7 @@ export default function WebGame({
 
   return (
     <GameFrame
-      activityMessage={openingTitle(actor)}
+      activityMessage={openingTitle(actor, copy)}
       matchSessionActive={retainingMatch}
       home={snapshot.matches({ menu: "choosingMode" })}
       onSettingsRequested={onSettingsRequested}
@@ -269,7 +280,7 @@ export default function WebGame({
                 }
                 disabled={settingsOpen}
               >
-                Resume match
+                {messages.resumeMatch}
               </MapachessButton>
             </div>
           )}
@@ -391,17 +402,17 @@ export default function WebGame({
               <>
                 <MapachessButton
                   aria-busy={snapshot.matches("restartingMatch")}
-                  busyLabel={MATCH_SETUP_COPY.restartingMatch}
+                  busyLabel={copy.setup.restartingMatch}
                   variant="secondary"
                   onClick={() =>
                     actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
                   }
                 >
-                  Restart Match
+                  {messages.restartMatch}
                 </MapachessButton>
                 <MapachessButton
                   aria-busy={snapshot.matches("returningToMenu")}
-                  busyLabel={MATCH_SETUP_COPY.returningToMenu}
+                  busyLabel={copy.setup.returningToMenu}
                   variant="secondary"
                   onClick={() =>
                     actor.send({
@@ -409,7 +420,7 @@ export default function WebGame({
                     })
                   }
                 >
-                  Return to Menu
+                  {messages.returnToMenu}
                 </MapachessButton>
                 <MapachessButton
                   variant="secondary"
@@ -418,7 +429,7 @@ export default function WebGame({
                   onClick={onSettingsRequested}
                   ref={settingsButtonRef}
                 >
-                  Settings
+                  {messages.settings}
                 </MapachessButton>
               </>
             }
@@ -490,12 +501,14 @@ export default function WebGame({
                       }
                       onClick={requestReplayAfterResult}
                     >
-                      Replay opponent
+                      {messages.replayOpponent}
                       <span className="mt-1 block text-base font-normal">
-                        {stockfishOpponent(savedMatch.opponentId).displayName}
                         {savedMatch.opponentTargetElo === undefined
-                          ? null
-                          : ` · ${String(savedMatch.opponentTargetElo)} Elo`}
+                          ? animalCopy.opponent(savedMatch.opponentId)
+                          : copy.gameplay.opponentAndElo(
+                              animalCopy.opponent(savedMatch.opponentId),
+                              savedMatch.opponentTargetElo,
+                            )}
                       </span>
                     </MapachessButton>
                   )}
@@ -512,11 +525,10 @@ export default function WebGame({
         >
           <div role="alert">
             <h1 className="font-display text-mapachito-charcoal text-[clamp(1.75rem,5vw,3rem)] leading-[0.95] font-black tracking-[-0.025em] text-balance uppercase">
-              {failureTitle(failure.operation)}
+              {failureTitle(failure.operation, copy)}
             </h1>
             <p className="text-mapachito-charcoal mt-4 max-w-lg leading-[1.55] font-semibold opacity-76">
-              Your last verified local profile remains available. Retry the
-              interrupted session operation.
+              {messages.yourLastVerifiedLocalProfileRemainsAvailable}
             </p>
             <MapachessButton
               className="mt-6"
@@ -525,7 +537,7 @@ export default function WebGame({
               }
               type="button"
             >
-              Retry
+              {messages.retry}
             </MapachessButton>
           </div>
         </section>

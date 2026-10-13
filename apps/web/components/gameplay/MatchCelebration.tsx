@@ -10,7 +10,6 @@ import {
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
@@ -20,11 +19,10 @@ import {
 } from "@mapachess/profile/story-progress"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MatchLevelProgress from "./MatchLevelProgress"
 import MatchSaveConfirmation from "./MatchSaveConfirmation"
 import MedalWithHintUse from "./MedalWithHintUse"
-
-const displayElo = (elo: number): string => Math.round(elo).toLocaleString("en")
 
 export default function MatchCelebration({
   battleStageRef,
@@ -49,6 +47,10 @@ export default function MatchCelebration({
   storyProgress: StoryProgress
   showSaveConfirmation: boolean
 }>) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+  const messages = copy.interface.matchCelebration
+
   const conclusion = match.conclusion
   if (conclusion === null) {
     throw new Error("A completed match is required for its celebration.")
@@ -101,20 +103,20 @@ export default function MatchCelebration({
       onSetupRequested({ mode: "story", variant, opponentId: next.opponent.id })
     }
   }
-  const actionLabel =
+  const action =
     match.mode === "challenge" || medal === null
-      ? "Replay opponent"
+      ? "replay"
       : next === undefined
-        ? "Story ladder"
-        : "Next opponent"
+        ? "ladder"
+        : "next"
   const actionOpponent =
-    actionLabel === "Next opponent"
+    action === "next"
       ? next?.opponent
-      : actionLabel === "Replay opponent"
+      : action === "replay"
         ? opponent
         : undefined
   const actionElo =
-    actionLabel === "Next opponent"
+    action === "next"
       ? next?.opponent.storyTargetElo
       : match.mode === "story"
         ? opponent.storyTargetElo
@@ -137,21 +139,22 @@ export default function MatchCelebration({
           id={titleId}
         >
           {playerWon
-            ? `You defeated ${opponent.displayName}!`
+            ? copy.gameplay.defeatedOpponent(animalCopy.opponent(opponent.id))
             : matchConclusionText(
                 conclusion,
                 match.playerColor,
-                opponent.displayName,
+                animalCopy.opponent(opponent.id),
+                copy.gameplay.conclusion,
               )}
         </h2>
         {playerWon && conclusion.type === "resignation" ? (
-          <p className="text-base">Opponent resigned.</p>
+          <p className="text-base">{messages.opponentResigned}</p>
         ) : null}
         <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
           {medal === null ? null : <MedalWithHintUse medal={medal} />}
           {reward === null ? null : (
             <p className="font-display text-3xl font-black tabular-nums">
-              +{reward.awardedXp} XP
+              {copy.gameplay.awardedXp(reward.awardedXp)}
             </p>
           )}
         </div>
@@ -166,16 +169,16 @@ export default function MatchCelebration({
         {reward === null || reward.ratedElo === null ? null : (
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-base">
             <span className="font-bold">
-              {MATCH_VARIANT_LABELS[reward.ratedElo.variant]} Elo
+              {copy.profile.ratingLabel[reward.ratedElo.variant]}
             </span>
             <strong className="font-display text-xl tabular-nums">
-              {displayElo(reward.ratedElo.before)} →{" "}
-              {displayElo(reward.ratedElo.after)}
+              {copy.gameplay.integer(reward.ratedElo.before)} →{" "}
+              {copy.gameplay.integer(reward.ratedElo.after)}
             </strong>
           </p>
         )}
         {match.mode === "story" && medal !== null && next === undefined ? (
-          <p className="text-sm font-bold">Story complete!</p>
+          <p className="text-sm font-bold">{messages.storyComplete}</p>
         ) : null}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-2">
           <MapachessButton
@@ -186,7 +189,7 @@ export default function MatchCelebration({
             type="button"
             variant="secondary"
           >
-            Review board
+            {messages.reviewBoard}
           </MapachessButton>
           <MapachessButton
             className="min-h-12 min-w-0 px-2! text-base wrap-break-word"
@@ -194,11 +197,15 @@ export default function MatchCelebration({
             onClick={nextAction}
             type="button"
           >
-            {actionLabel}
+            {copy.gameplay.resultActions[action]}
             {actionOpponent !== undefined ? (
               <span className="mt-1 block text-base font-normal">
-                {actionOpponent.displayName}
-                {actionElo === undefined ? null : ` · ${String(actionElo)} Elo`}
+                {actionElo === undefined
+                  ? animalCopy.opponent(actionOpponent.id)
+                  : copy.gameplay.opponentAndElo(
+                      animalCopy.opponent(actionOpponent.id),
+                      actionElo,
+                    )}
               </span>
             ) : null}
           </MapachessButton>

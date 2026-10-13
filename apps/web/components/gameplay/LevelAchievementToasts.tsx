@@ -5,6 +5,7 @@ import {
   LEVEL_ACHIEVEMENTS,
   type LevelAchievementId,
 } from "@mapachess/profile/global-xp"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const ACHIEVEMENT_TOAST_DURATION_MS = 5_000
 
@@ -12,6 +13,8 @@ export default function LevelAchievementToasts({
   ids,
   paused,
 }: Readonly<{ ids: readonly LevelAchievementId[]; paused: boolean }>) {
+  const copy = useMapachessCopy()
+
   const [index, setIndex] = useState(0)
   const [hidden, setHidden] = useState(false)
   const currentId = ids[index]
@@ -46,7 +49,9 @@ export default function LevelAchievementToasts({
       className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 max-w-[min(24rem,calc(100vw-1.5rem))] rounded-lg border-3 px-4 py-3 text-base font-bold shadow-[0.375rem_0.375rem_0_#1e1e1e]"
       role="status"
     >
-      Achievement unlocked · {achievement.title}
+      {copy.gameplay.achievementUnlocked(
+        copy.gameplay.levelAchievement(achievement.level),
+      )}
     </p>
   )
 }

@@ -29,7 +29,6 @@ import type {
   MatchNavigationCommands,
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
-import { matchModeLabel } from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
@@ -46,6 +45,7 @@ import useAcceptedMatchPresentation from "../../lib/presentation/useAcceptedMatc
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BattleStageSurface from "./BattleStageSurface"
 import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
@@ -109,6 +109,10 @@ export default function WebMatch({
   visible,
   playerAnimal = "raccoon-stockfish",
 }: WebMatchProps) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+  const messages = copy.interface.webMatch
+
   const heading = useRef<HTMLHeadingElement>(null)
   const menuSummary = useRef<HTMLElement>(null)
   const rewardsButton = useRef<HTMLButtonElement>(null)
@@ -169,7 +173,7 @@ export default function WebMatch({
     [opponentReaction, runtime.opponentId, opponentVariationOrdinal],
   )
   const position = selectMatchPosition(snapshot)
-  const modeLabel = matchModeLabel({ mode, variant: position.variant })
+  const modeLabel = copy.setup.presentations[position.variant][mode].title
   const timeline = selectMatchTimeline(snapshot)
   const reactions = useMoveReactions(
     timeline,
@@ -253,7 +257,10 @@ export default function WebMatch({
     <>
       <section
         ref={matchSurface}
-        aria-label={`${modeLabel} match against ${opponent.displayName}`}
+        aria-label={copy.board.matchAgainst(
+          modeLabel,
+          animalCopy.opponent(opponent.id),
+        )}
         className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
       >
         <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
@@ -262,7 +269,7 @@ export default function WebMatch({
               headingRef={heading}
               playerColor={runtime.playerColor}
               playerElo={playerElo}
-              opponentName={opponent.displayName}
+              opponentName={animalCopy.opponent(opponent.id)}
               opponentElo={runtime.opponentTargetElo}
               reactions={
                 <MoveReactionFeedback
@@ -294,7 +301,7 @@ export default function WebMatch({
             onParticipantAnimationCompleted={
               presentation.notifyParticipantAnimationCompleted
             }
-            opponentName={opponent.displayName}
+            opponentName={animalCopy.opponent(opponent.id)}
             opponentPresentation={opponentPresentation}
             presentationSnapshot={presentation.snapshot}
           />
@@ -302,12 +309,12 @@ export default function WebMatch({
 
         <div className="contents xl:grid xl:min-w-0 xl:gap-2">
           <section
-            aria-label="Core match actions"
+            aria-label={messages.coreMatchActions}
             className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
           >
             <MatchCommands
               onBoardFocusRequested={toggleBoardFocus}
-              opponentName={opponent.displayName}
+              opponentName={animalCopy.opponent(opponent.id)}
               menuOpen={overlays.includes("match-menu")}
               onMenuOpened={() => {
                 reactions.clear()
@@ -362,20 +369,20 @@ export default function WebMatch({
                       }}
                       className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
                     >
-                      Match details &amp; Move History
+                      {messages.matchDetailsMoveHistory}
                     </summary>
                     <div className="text-mapachito-charcoal grid gap-3">
                       <dl
-                        aria-label="Current match data"
+                        aria-label={messages.currentMatchData}
                         className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
                       >
-                        <dt>Mode</dt>
+                        <dt>{messages.mode}</dt>
                         <dd>{modeLabel}</dd>
-                        <dt>Clock</dt>
-                        <dd>Untimed</dd>
-                        <dt>Privacy</dt>
-                        <dd>Local · Accountless</dd>
-                        <dt>Engine</dt>
+                        <dt>{messages.clock}</dt>
+                        <dd>{messages.untimed}</dd>
+                        <dt>{messages.privacy}</dt>
+                        <dd>{messages.localAccountless}</dd>
+                        <dt>{messages.engine}</dt>
                         <dd className="truncate">
                           {runtime.engineIdentity.name}
                         </dd>
@@ -405,7 +412,7 @@ export default function WebMatch({
               snapshot={snapshot}
               evaluationActor={evaluationActor}
               evaluationSnapshot={evaluationSnapshot}
-              opponentName={opponent.displayName}
+              opponentName={animalCopy.opponent(opponent.id)}
             />
           </section>
           {conclusion === null || celebrationPending ? null : (
@@ -419,7 +426,7 @@ export default function WebMatch({
               <MatchOutcome
                 conclusion={conclusion}
                 playerColor={runtime.playerColor}
-                opponentName={opponent.displayName}
+                opponentName={animalCopy.opponent(opponent.id)}
               >
                 {result?.(persisting || persistenceFailure !== null)}
                 {!completedSavedMatch ? null : (
@@ -429,7 +436,7 @@ export default function WebMatch({
                     variant="secondary"
                     ref={rewardsButton}
                   >
-                    View rewards
+                    {messages.viewRewards}
                   </MapachessButton>
                 )}
               </MatchOutcome>
