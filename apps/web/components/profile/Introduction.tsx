@@ -1,7 +1,7 @@
 "use client"
 
-import firstArrivalCopy from "@mapachess/profile/first-arrival"
-import type { ShippedLocale } from "@mapachess/profile/locale"
+import loadCatalog from "@mapachess/localization/catalog"
+import type { ShippedLocale } from "@mapachess/localization/locale"
 import useFirstArrivalMotion from "../../lib/presentation/useFirstArrivalMotion"
 import FirstArrivalRaccoon from "../presentation/FirstArrivalRaccoon"
 import MapachessButton from "../presentation/MapachessButton"
@@ -20,7 +20,7 @@ export default function Introduction({
   onLocaleChanged: (locale: ShippedLocale) => void
   onStart: () => void
 }>) {
-  const copy = firstArrivalCopy(locale)
+  const copy = loadCatalog(locale).introduction
   const motion = useFirstArrivalMotion(!pending && !blocked)
   return (
     <div

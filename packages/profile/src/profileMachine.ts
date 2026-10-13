@@ -1,11 +1,11 @@
 import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
 import captureError from "@mapachess/diagnostics/error-diagnostic"
+import { isShippedLocale } from "@mapachess/localization/locale"
 import {
   parsePlayerInputBindings,
   samePlayerInputBindings,
 } from "@mapachess/match/player-input"
 import type { LoadedDurablePlayerData } from "./durableStore.js"
-import { isShippedLocale } from "./locale.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type {
   MapachessPortableBackup,

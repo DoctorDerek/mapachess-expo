@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
-import { PLAYER_INPUT_ACTIONS } from "@mapachess/match/player-input"
-import SerializedPlayerDataStore from "../src/durableStore.js"
-import firstArrivalCopy from "../src/firstArrival.js"
+import loadCatalog from "@mapachess/localization/catalog"
 import resolveLocale, {
   CANDIDATE_LOCALES,
   LOCALE_LABELS,
   SHIPPED_LOCALES,
-} from "../src/locale.js"
+} from "@mapachess/localization/locale"
+import { PLAYER_INPUT_ACTIONS } from "@mapachess/match/player-input"
+import SerializedPlayerDataStore from "../src/durableStore.js"
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import {
   canonicalPlayerData,
@@ -40,8 +40,8 @@ describe("first-arrival preferences", () => {
     expect(resolveLocale({ selection: "es-419", route: "en-US" })).toBe("en")
     expect(resolveLocale({ preferences: ["unsupported", "en-GB"] })).toBe("en")
     expect(resolveLocale({})).toBe("en")
-    expect(firstArrivalCopy("en").paragraphs).toHaveLength(5)
-    expect(firstArrivalCopy("en").website).toBe("DoctorDerek.com")
+    expect(loadCatalog("en").introduction.paragraphs).toHaveLength(5)
+    expect(loadCatalog("en").introduction.website).toBe("DoctorDerek.com")
   })
 
   it("authenticates exact schema14 bytes before marking an existing player introduced", async () => {

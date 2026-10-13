@@ -1,3 +1,4 @@
+import { CANDIDATE_LOCALES } from "@mapachess/localization/locale"
 import {
   COACH_COLLECTION_IDS,
   DEFAULT_COACH_COLLECTION,
@@ -49,7 +50,6 @@ import {
   STRONGER_CALIBRATED_WIN_BONUS_XP,
   type LevelAchievementId,
 } from "./globalXp.js"
-import { CANDIDATE_LOCALES } from "./locale.js"
 import {
   decodeLegacyPlayerAppearance,
   decodePlayerAppearance,

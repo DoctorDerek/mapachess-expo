@@ -3,7 +3,7 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
-import resolveLocale from "@mapachess/profile/locale"
+import resolveLocale from "@mapachess/localization/locale"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCurrentPlayerData,

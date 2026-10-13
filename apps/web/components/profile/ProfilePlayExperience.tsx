@@ -7,7 +7,7 @@ import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
-import resolveLocale from "@mapachess/profile/locale"
+import resolveLocale from "@mapachess/localization/locale"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCanChangePresentationPreferences,

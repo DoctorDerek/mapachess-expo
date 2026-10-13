@@ -1,5 +1,6 @@
 "use client"
 
+import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { CoachCollectionId } from "@mapachess/match-presentation/coach-portrait"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type {
@@ -13,7 +14,6 @@ import type {
   ChessAppearanceChange,
   ChessAppearanceSettings,
 } from "@mapachess/profile/chess-appearance-settings"
-import type { ShippedLocale } from "@mapachess/profile/locale"
 import {
   PLAYER_ELO_RATING_IDS,
   type PlayerEloRatingId,

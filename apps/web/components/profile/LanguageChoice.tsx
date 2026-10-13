@@ -1,10 +1,10 @@
-import firstArrivalCopy from "@mapachess/profile/first-arrival"
+import loadCatalog from "@mapachess/localization/catalog"
 import {
   isShippedLocale,
   LOCALE_LABELS,
   SHIPPED_LOCALES,
   type ShippedLocale,
-} from "@mapachess/profile/locale"
+} from "@mapachess/localization/locale"
 
 export default function LanguageChoice({
   locale,
@@ -17,7 +17,9 @@ export default function LanguageChoice({
 }>) {
   return (
     <label className="text-mapachito-charcoal relative mx-auto block w-full max-w-110 font-bold">
-      <span className="sr-only">{firstArrivalCopy(locale).language}</span>
+      <span className="sr-only">
+        {loadCatalog(locale).introduction.language}
+      </span>
       <svg
         aria-hidden="true"
         focusable="false"

@@ -1,3 +1,4 @@
+import type { CandidateLocale } from "@mapachess/localization/locale"
 import {
   DEFAULT_COACH_COLLECTION,
   type CoachCollectionId,
@@ -29,7 +30,6 @@ import {
   type ChessAppearanceSettings,
 } from "./chessAppearanceSettings.js"
 import type { LevelAchievementId } from "./globalXp.js"
-import type { CandidateLocale } from "./locale.js"
 import {
   DEFAULT_PLAYER_APPEARANCE,
   type PlayerAppearance,
