@@ -7,7 +7,6 @@ import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
 } from "@mapachess/match/match-machine"
-import resolveLocale from "@mapachess/localization/locale"
 import profileMachine, {
   selectCanChangeAutoHintMode,
   selectCanChangePresentationPreferences,
@@ -28,6 +27,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import RecoverableView from "../presentation/RecoverableView"
+import { useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
   PROFILE_SETTINGS_TITLE,
@@ -75,6 +75,7 @@ function ReadyPlayExperience({
 }: ProfilePlayExperienceProps & Readonly<{ actor: WebMatchSessionActor }>) {
   const snapshot = useSelector(actor, (current) => current)
   const profile = useSelector(profileActor, (current) => current)
+  const locale = useMapachessLocale()
   const navigation = useWebNavigationHistory(actor)
   const settingsButton = useRef<HTMLButtonElement>(null)
   const gameSurface = useRef<HTMLDivElement>(null)
@@ -98,11 +99,7 @@ function ReadyPlayExperience({
     throw new Error("Play requires accepted player data.")
   const settingsProps: ProfileSettingsPanelProps = {
     ...settings,
-    locale: resolveLocale({
-      selection: (selectPendingPlayerData(profile) ?? playerData).settings
-        .locale,
-      preferences: globalThis.navigator?.languages ?? [],
-    }),
+    locale,
     onLocaleChanged: (locale) =>
       profileActor.send({ type: "PROFILE.LOCALE_CHANGED", locale }),
     inputBindings: playerData.settings.inputBindings,

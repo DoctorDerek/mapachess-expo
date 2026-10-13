@@ -3,7 +3,6 @@
 import { useSelector } from "@xstate/react"
 import { useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
-import resolveLocale from "@mapachess/localization/locale"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCurrentPlayerData,
@@ -31,6 +30,9 @@ import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import Introduction from "./Introduction"
+import MapachessLocaleProvider, {
+  useMapachessLocale,
+} from "./MapachessLocaleProvider"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
@@ -70,10 +72,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const currentPlayerData = selectCurrentPlayerData(snapshot)
   const pendingPlayerData = selectPendingPlayerData(snapshot)
   const exportablePlayerData = pendingPlayerData ?? currentPlayerData
-  const locale = resolveLocale({
-    selection: exportablePlayerData?.settings.locale ?? null,
-    preferences: globalThis.navigator?.languages ?? [],
-  })
+  const locale = useMapachessLocale()
   const unreadablePlayerData = selectUnreadablePlayerData(snapshot)
   const importIssue = selectImportIssue(snapshot)
   const importPreview = selectImportPreview(snapshot)
@@ -321,7 +320,9 @@ export default function WebMapachessApplication() {
   if (runtimeState.status === "ready") {
     return (
       <PlayerInputProvider profileActor={runtimeState.runtime.actor}>
-        <ProfileExperience actor={runtimeState.runtime.actor} />
+        <MapachessLocaleProvider actor={runtimeState.runtime.actor}>
+          <ProfileExperience actor={runtimeState.runtime.actor} />
+        </MapachessLocaleProvider>
       </PlayerInputProvider>
     )
   }
