@@ -1,3 +1,4 @@
+import loadCatalog from "@mapachess/localization/catalog"
 import type { MatchMoveId } from "./matchMove.js"
 import type { MatchColor } from "./matchPosition.js"
 
@@ -12,15 +13,7 @@ export const MOVE_GRADES = [
 ] as const
 export type MoveGrade = (typeof MOVE_GRADES)[number]
 export const MOVE_GRADE_LABELS: Readonly<Record<MoveGrade, string>> =
-  Object.freeze({
-    brilliant: "Brilliant !!",
-    genius: "Genius !",
-    best: "Best ★",
-    good: "Good ✓",
-    inaccuracy: "Inaccuracy ?!",
-    mistake: "Mistake ?",
-    blunder: "Blunder ??",
-  })
+  loadCatalog("en").shared.moveGrades
 
 export type PositionEvaluationBound = "exact" | "lower" | "upper"
 export type PositionEvaluation =

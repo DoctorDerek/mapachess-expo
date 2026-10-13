@@ -1,10 +1,10 @@
+import loadCatalog from "@mapachess/localization/catalog"
 import {
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
 import {
-  MATCH_VARIANT_LABELS,
   MATCH_VARIANTS,
   type MatchVariant,
 } from "@mapachess/match/match-variant"
@@ -48,33 +48,10 @@ export type StoryLadderStep = Readonly<{
   status: "defeated" | "unlocked" | "locked"
 }>
 
-export const STORY_PROGRESS_COPY = Object.freeze({
-  title: "Your Story ladder",
-  standard: `${MATCH_VARIANT_LABELS.standard} Story completion`,
-  chess960: `${MATCH_VARIANT_LABELS.chess960} Story completion`,
-  overall: "Overall Story completion",
-  defeated: "Defeated",
-  unlocked: "Unlocked",
-  locked: "Locked",
-  lockedOpponent: "Locked opponent",
-  targetElo: "Authored Elo target",
-  nextOpponent: "Next unlocked opponent",
-  completedCount: "Opponents defeated",
-  opponents: "Story opponents in ladder order",
-  challengeUnlocked: "Unlocked for both Challenge modes",
-  allDefeated: "Every opponent defeated",
-  replay: "Replay wins to improve your medals. Your highest medal is kept.",
-  independence: `${MATCH_VARIANT_LABELS.standard} and ${MATCH_VARIANT_LABELS.chess960} keep separate victories and medals.`,
-  medals: Object.freeze({ bronze: "Bronze", silver: "Silver", gold: "Gold" }),
-})
-
-const completionFormatter = new Intl.NumberFormat("en", {
-  style: "percent",
-  maximumFractionDigits: 1,
-})
+export const STORY_PROGRESS_COPY = loadCatalog("en").shared.story
 
 export const formatStoryCompletion = (percent: number): string =>
-  completionFormatter.format(percent / 100)
+  loadCatalog("en").gameplay.storyCompletion(percent)
 
 export const createInitialStoryProgress = (): StoryProgress =>
   Object.freeze({ standard: Object.freeze([]), chess960: Object.freeze([]) })

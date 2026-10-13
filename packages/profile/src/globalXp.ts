@@ -1,3 +1,4 @@
+import loadCatalog from "@mapachess/localization/catalog"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { playerResultScore } from "./playerElo.js"
 
@@ -5,15 +6,16 @@ export const GLOBAL_XP_QUANTUM = 4 as const
 export const COMPLETED_MATCH_XP = GLOBAL_XP_QUANTUM
 export const STRONGER_CALIBRATED_WIN_BONUS_XP = GLOBAL_XP_QUANTUM
 export const STRONGER_OPPONENT_MARGIN_ELO = 100 as const
+const achievementTitle = loadCatalog("en").gameplay.levelAchievement
 
 export const LEVEL_ACHIEVEMENTS = [
-  { id: "reach-level-5", level: 5, title: "Reach Level 5" },
-  { id: "reach-level-10", level: 10, title: "Reach Level 10" },
-  { id: "reach-level-25", level: 25, title: "Reach Level 25" },
-  { id: "reach-level-37", level: 37, title: "Reach Level 37" },
-  { id: "reach-level-50", level: 50, title: "Reach Level 50" },
-  { id: "reach-level-77", level: 77, title: "Reach Level 77" },
-  { id: "reach-level-100", level: 100, title: "Reach Level 100" },
+  { id: "reach-level-5", level: 5, title: achievementTitle(5) },
+  { id: "reach-level-10", level: 10, title: achievementTitle(10) },
+  { id: "reach-level-25", level: 25, title: achievementTitle(25) },
+  { id: "reach-level-37", level: 37, title: achievementTitle(37) },
+  { id: "reach-level-50", level: 50, title: achievementTitle(50) },
+  { id: "reach-level-77", level: 77, title: achievementTitle(77) },
+  { id: "reach-level-100", level: 100, title: achievementTitle(100) },
 ] as const
 
 export type LevelAchievementId = (typeof LEVEL_ACHIEVEMENTS)[number]["id"]

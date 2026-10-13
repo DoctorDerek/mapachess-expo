@@ -1,3 +1,7 @@
+import loadCatalog, {
+  type MapachessCatalog,
+} from "@mapachess/localization/catalog"
+
 export const INPUT_DIRECTIONS = ["up", "down", "left", "right"] as const
 export type InputDirection = (typeof INPUT_DIRECTIONS)[number]
 
@@ -15,21 +19,7 @@ export const PLAYER_INPUT_ACTIONS = [
 ] as const
 
 export type PlayerInputAction = (typeof PLAYER_INPUT_ACTIONS)[number]
-export const PLAYER_INPUT_LABELS = {
-  up: "Up",
-  down: "Down",
-  left: "Left",
-  right: "Right",
-  confirm: "Confirm",
-  cancel: "Cancel / Back",
-  hints: "Better Hints",
-  menu: "Match menu",
-  previousPiece: "Previous own piece",
-  nextPiece: "Next own piece",
-  controls: "Board / controls",
-  undo: "Undo",
-  redo: "Redo",
-} as const satisfies Readonly<Record<PlayerInputAction, string>>
+export const PLAYER_INPUT_LABELS = loadCatalog("en").shared.inputActions
 
 export const CONTROLLER_BUTTONS = [
   "south",
@@ -57,28 +47,8 @@ export const CONTROLLER_CONTROLS = [
   "stickRight",
 ] as const
 export type ControllerControl = (typeof CONTROLLER_CONTROLS)[number]
-export const CONTROLLER_CONTROL_LABELS = {
-  south: "Bottom face",
-  east: "Right face",
-  west: "Left face",
-  north: "Top face",
-  leftShoulder: "Left shoulder",
-  rightShoulder: "Right shoulder",
-  leftTrigger: "Left trigger",
-  rightTrigger: "Right trigger",
-  view: "View",
-  menu: "Menu",
-  leftStick: "Left stick press",
-  rightStick: "Right stick press",
-  dpadUp: "D-pad up",
-  dpadDown: "D-pad down",
-  dpadLeft: "D-pad left",
-  dpadRight: "D-pad right",
-  stickUp: "Left stick up",
-  stickDown: "Left stick down",
-  stickLeft: "Left stick left",
-  stickRight: "Left stick right",
-} as const satisfies Readonly<Record<ControllerControl, string>>
+export const CONTROLLER_CONTROL_LABELS =
+  loadCatalog("en").shared.controllerControls
 
 export type PlayerInputBindings = Readonly<{
   controller: Readonly<Record<PlayerInputAction, readonly ControllerControl[]>>
@@ -277,11 +247,12 @@ export function changePlayerInputBinding(
   }
 }
 
-export const keyboardBindingLabel = (code: string): string =>
-  code
-    .replace(/^Key|^Digit/, "")
-    .replace("Arrow", "")
-    .replace("BracketLeft", "[")
-    .replace("BracketRight", "]")
+export const keyboardBindingLabel = (
+  code: string,
+  keys: MapachessCatalog["controls"]["keys"] = loadCatalog("en").controls.keys,
+): string => {
+  const named = Object.entries(keys).find(([key]) => key === code)
+  return named?.[1] ?? code.replace(/^Key|^Digit/, "")
+}
 
 export default DEFAULT_PLAYER_INPUT_BINDINGS
