@@ -1,4 +1,5 @@
-import type { IntroductionCopy, MapachessCatalog } from "./catalog.js"
+import type { IntroductionCopy } from "./catalog.js"
+import setup from "./enSetup.js"
 
 const introduction = Object.freeze({
   title: "Mapachess",
@@ -35,6 +36,6 @@ const introduction = Object.freeze({
   websiteNewTab: " (opens in a new tab)",
 }) satisfies IntroductionCopy
 
-const english = Object.freeze({ introduction }) satisfies MapachessCatalog
+const english = Object.freeze({ introduction, setup })
 
 export default english
