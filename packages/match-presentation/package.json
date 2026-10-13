@@ -65,6 +65,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "xstate": "^5"
   }

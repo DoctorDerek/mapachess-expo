@@ -1,3 +1,6 @@
+import loadCatalog, {
+  type MapachessCatalog,
+} from "@mapachess/localization/catalog"
 import type { MatchColor, MatchPosition } from "@mapachess/match/match-position"
 import type {
   PositionEvaluation,
@@ -12,28 +15,16 @@ export type {
 
 export const positionEvaluationLabel = (
   evaluation: PositionEvaluation,
+  copy: MapachessCatalog["evaluation"] = loadCatalog("en").evaluation,
 ): string => {
-  if (evaluation.kind === "draw") return "0.00"
-  if (evaluation.kind === "mate") {
-    const winner = evaluation.winner === "white" ? "White" : "Black"
-    const label =
-      evaluation.moves === 0
-        ? `${winner} checkmate`
-        : `${winner} M${String(evaluation.moves)}`
-    return evaluation.bound === "exact"
-      ? label
-      : `${label} · ${evaluation.bound} bound`
+  switch (evaluation.kind) {
+    case "draw":
+      return copy.draw
+    case "mate":
+      return copy.mate(evaluation.winner, evaluation.moves, evaluation.bound)
+    case "centipawns":
+      return copy.centipawns(evaluation.whiteCentipawns, evaluation.bound)
   }
-  const sign =
-    evaluation.whiteCentipawns > 0
-      ? "+"
-      : evaluation.whiteCentipawns < 0
-        ? "−"
-        : ""
-  const pawns = `${sign}${(Math.abs(evaluation.whiteCentipawns) / 100).toFixed(2)}`
-  return evaluation.bound === "exact"
-    ? pawns
-    : `${evaluation.bound === "lower" ? "≥" : "≤"} ${pawns}`
 }
 
 const invertBound = (

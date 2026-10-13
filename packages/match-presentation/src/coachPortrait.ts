@@ -1,3 +1,4 @@
+import loadCatalog from "@mapachess/localization/catalog"
 import type { MoveGrade } from "@mapachess/match/move-feedback"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 import {
@@ -27,24 +28,7 @@ export const COACH_PORTRAITS = [
 export type CoachPortraitDefinition = (typeof COACH_PORTRAITS)[number]
 export type CoachPortraitLabel = CoachPortraitDefinition["label"]
 
-export const COACH_PORTRAIT_NAMES = {
-  happy_high: "More Happy",
-  happy_low: "Less Happy",
-  sad_high: "More Sad",
-  sad_low: "Less Sad",
-  brilliance: "Brilliance",
-  wow_great: "Wow / Great",
-  eager_high: "More Eager",
-  eager_low: "Less Eager",
-  satisfied_high: "Very Satisfied",
-  hurt_low: "Tiny Hurt",
-  impressed_1: "Impressed · portrait 11",
-  hurt_medium: "Less Hurt",
-  neutral: "Normal / OK",
-  impressed_2: "Impressed · portrait 14",
-  hurt_high: "More Hurt",
-  eager_peak: "Most Eager",
-} as const satisfies Readonly<Record<CoachPortraitLabel, string>>
+export const COACH_PORTRAIT_NAMES = loadCatalog("en").shared.coachPortraitNames
 
 export const COACH_COLLECTION_IDS = ["mapachito", "greyfox"] as const
 export type CoachCollectionId = (typeof COACH_COLLECTION_IDS)[number]
@@ -61,12 +45,12 @@ export const COACH_COLLECTIONS: Readonly<
   >
 > = Object.freeze({
   mapachito: Object.freeze({
-    label: "Mapachito",
+    label: loadCatalog("en").profile.coachCollections.mapachito,
     directory: "coach",
     portraits: Object.freeze(COACH_PORTRAITS.map(({ label }) => label)),
   }),
   greyfox: Object.freeze({
-    label: "Animal faces",
+    label: loadCatalog("en").profile.coachCollections.greyfox,
     directory: "coach/greyfox",
     portraits: Object.freeze(COACH_PORTRAITS.map(({ label }) => label)),
   }),
