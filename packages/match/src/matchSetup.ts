@@ -1,3 +1,5 @@
+import loadCatalog from "@mapachess/localization/catalog"
+import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { ChallengeSetup } from "./challengeSetup.js"
 import type { Chess960PositionId } from "./chess960Position.js"
 import {
@@ -5,11 +7,7 @@ import {
   type ImplementedDurableOpponentId,
   type MatchMode,
 } from "./durableMatchRecord.js"
-import {
-  MATCH_VARIANT_LABELS,
-  MATCH_VARIANTS,
-  type MatchVariant,
-} from "./matchVariant.js"
+import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
 
 export type MatchSetup =
   | Readonly<{
@@ -28,79 +26,9 @@ export type MatchModeSelection = Readonly<{
   variant: MatchVariant
 }>
 
-export const MATCH_SETUP_COPY = Object.freeze({
-  menuTitle: "Choose your game",
-  menuDescription: "Play your way. Better Hints are always within reach.",
-  allModes: "All game modes",
-  opponent: "Opponent",
-  color: "Play as",
-  white: "White",
-  black: "Black",
-  random: "Random",
-  randomize: "Randomize",
-  pinnedPosition: "This position is remembered until you choose Randomize.",
-  freshPosition:
-    "A fresh number for each new setup. Start uses the number shown.",
-  randomColor: "Your side is chosen at random when the match starts.",
-  position: "Chess960 starting position",
-  positionNumber: "Position number",
-  invalidSetup:
-    "Choose an available animal, difficulty, side, and valid starting position.",
-  difficulty: "Difficulty · estimated Elo",
-  estimated: "Estimated Elo",
-  unavailableSelection:
-    "This selection is not available. Choose an earned animal and supported difficulty.",
-  untimed: "Untimed",
-  webCalibrationDifficulty:
-    "These difficulty estimates are calibrated against a controlled engine pool, not certified human ratings.",
-  storyAvailability:
-    "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
-  challengeAvailability:
-    "Choose any animal you have defeated in either Story ladder. Chicken is always available. Animal appearance does not change difficulty.",
-  startMatch: "Start match",
-  openingMatch: "Opening match…",
-  restartingMatch: "Restarting match…",
-  returningToMenu: "Returning to menu…",
-})
+export const MATCH_SETUP_COPY = loadCatalog("en").setup
 
-const MATCH_MODE_PRESENTATION = {
-  standard: {
-    story: {
-      title: `${MATCH_VARIANT_LABELS.standard} Story`,
-      description:
-        "The classic starting position. Your side is chosen at random.",
-    },
-    challenge: {
-      title: `${MATCH_VARIANT_LABELS.standard} Challenge`,
-      description:
-        "The classic starting position. Choose White, Black, or Random.",
-    },
-  },
-  chess960: {
-    story: {
-      title: `${MATCH_VARIANT_LABELS.chess960} Story`,
-      description: "A fresh starting position and a randomly chosen side.",
-    },
-    challenge: {
-      title: `${MATCH_VARIANT_LABELS.chess960} Challenge`,
-      description:
-        "Choose your side and a random or numbered starting position.",
-    },
-  },
-} as const satisfies Readonly<
-  Record<
-    MatchVariant,
-    Readonly<
-      Record<
-        MatchMode,
-        Readonly<{
-          title: string
-          description: string
-        }>
-      >
-    >
-  >
->
+const MATCH_MODE_PRESENTATION = MATCH_SETUP_COPY.presentations
 
 export const MATCH_MODE_CHOICES = Object.freeze(
   MATCH_VARIANTS.flatMap((variant) =>
@@ -114,8 +42,12 @@ export const MATCH_MODE_CHOICES = Object.freeze(
   ),
 )
 
-export const matchModeLabel = ({ mode, variant }: MatchModeSelection): string =>
-  MATCH_MODE_PRESENTATION[variant][mode].title
+export const matchModeLabel = ({
+  mode,
+  variant,
+  locale = "en",
+}: MatchModeSelection & Readonly<{ locale?: ShippedLocale }>): string =>
+  loadCatalog(locale).setup.presentations[variant][mode].title
 
 export default function createMatchSetupForMode(
   { mode, variant }: MatchModeSelection,

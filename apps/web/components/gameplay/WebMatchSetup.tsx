@@ -6,17 +6,10 @@ import {
   type MouseEventHandler,
   type ReactNode,
 } from "react"
-import {
-  AUTO_HINT_MODE_PRESENTATION,
-  type AutoHintMode,
-} from "@mapachess/match/auto-hint-mode"
+import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
-import {
-  MATCH_SETUP_COPY,
-  matchModeLabel,
-  type MatchSetup,
-} from "@mapachess/match/match-setup"
+import { type MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
@@ -33,6 +26,7 @@ import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImage
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
@@ -79,6 +73,7 @@ function MatchSetupChoice({
   disabled: boolean
   onChange: MouseEventHandler<HTMLButtonElement>
 }>) {
+  const copy = useMapachessCopy().setup
   return (
     <div className="flex min-w-0 items-center gap-3">
       {preview === undefined ? null : (
@@ -105,7 +100,7 @@ function MatchSetupChoice({
           type="button"
           variant="secondary"
         >
-          Change
+          {copy.change}
         </MapachessButton>
       </div>
     </div>
@@ -129,6 +124,7 @@ export default function WebMatchSetup({
   playerAppearance,
   onPlayerAnimalChanged,
 }: WebMatchSetupProps) {
+  const copy = useMapachessCopy().setup
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
     setup.mode === "story" ? setup.variant : setup.challengeSetup.variant
@@ -231,7 +227,7 @@ export default function WebMatchSetup({
           variant="secondary"
         >
           <span aria-hidden="true">← </span>
-          {MATCH_SETUP_COPY.allModes}
+          {copy.allModes}
         </MapachessButton>
         <h1
           className="font-display text-mapachito-white text-2xl leading-tight font-black"
@@ -239,7 +235,7 @@ export default function WebMatchSetup({
           ref={heading}
           tabIndex={-1}
         >
-          {matchModeLabel({ mode: setup.mode, variant })}
+          {copy.presentations[variant][setup.mode].title}
         </h1>
       </div>
       <form onSubmit={startMatch} className="grid gap-3 text-base">
@@ -248,9 +244,11 @@ export default function WebMatchSetup({
           playerAnimal !== null &&
           onPlayerAnimalChanged !== undefined ? (
             <MatchSetupChoice
-              label="Play as"
+              label={copy.color}
               value={playerAnimal.displayName.replace(" Stockfish", "")}
-              actionLabel={`Play as ${playerAnimal.displayName.replace(" Stockfish", "")} · Change animal`}
+              actionLabel={copy.playAsAction(
+                playerAnimal.displayName.replace(" Stockfish", ""),
+              )}
               disabled={disabled || opening}
               onChange={(event) => openEditor("player", event.currentTarget)}
               preview={
@@ -263,15 +261,17 @@ export default function WebMatchSetup({
             />
           ) : null}
           <MatchSetupChoice
-            label="Opponent"
+            label={copy.opponent}
             value={opponent.displayName}
             detail={
               setup.mode === "story"
-                ? `${opponent.storyTargetElo} Elo`
+                ? copy.elo(String(opponent.storyTargetElo))
                 : undefined
             }
             actionLabel={
-              setup.mode === "story" ? "Change Story opponent" : "Change animal"
+              setup.mode === "story"
+                ? copy.changeStoryOpponent
+                : copy.changeAnimal
             }
             disabled={disabled || opening}
             onChange={(event) => openEditor("opponent", event.currentTarget)}
@@ -287,9 +287,9 @@ export default function WebMatchSetup({
           {challenge === null ? null : (
             <>
               <MatchSetupChoice
-                label="Difficulty"
-                value={`${difficultyTargetElo} Elo`}
-                actionLabel="Change difficulty"
+                label={copy.difficultyLabel}
+                value={copy.elo(String(difficultyTargetElo))}
+                actionLabel={copy.changeDifficulty}
                 disabled={disabled || opening}
                 onChange={(event) =>
                   openEditor("difficulty", event.currentTarget)
@@ -319,9 +319,9 @@ export default function WebMatchSetup({
             />
           ) : null}
           <MatchSetupChoice
-            label="Better Hints"
-            value={AUTO_HINT_MODE_PRESENTATION[autoHintMode].label}
-            actionLabel="Change hints"
+            label={copy.betterHints}
+            value={copy.autoHints[autoHintMode].label}
+            actionLabel={copy.changeHints}
             disabled={disabled || opening}
             onChange={(event) => openEditor("hints", event.currentTarget)}
           />
@@ -329,27 +329,27 @@ export default function WebMatchSetup({
 
         {!selectionAvailable ? (
           <MapachessNotice role="status" tone="warning">
-            {MATCH_SETUP_COPY.unavailableSelection}
+            {copy.unavailableSelection}
           </MapachessNotice>
         ) : null}
         {invalidSetup ? (
           <MapachessNotice role="alert" tone="warning">
-            {MATCH_SETUP_COPY.invalidSetup}
+            {copy.invalidSetup}
           </MapachessNotice>
         ) : null}
         <p className="text-mapachito-white text-sm">
-          {MATCH_SETUP_COPY.untimed}
-          {challenge === null ? ` · ${MATCH_SETUP_COPY.randomColor}` : null}
+          {copy.untimed}
+          {challenge === null ? ` · ${copy.randomColor}` : null}
         </p>
         <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <MapachessButton
             aria-busy={opening}
-            busyLabel={MATCH_SETUP_COPY.openingMatch}
+            busyLabel={copy.openingMatch}
             disabled={disabled || !selectionAvailable}
             type="submit"
           >
             <span aria-hidden="true">▶ </span>
-            {MATCH_SETUP_COPY.startMatch}
+            {copy.startMatch}
           </MapachessButton>
         </div>
 
@@ -358,12 +358,12 @@ export default function WebMatchSetup({
             onDone={onEditorClosed}
             title={
               editing === "player"
-                ? "Play as"
+                ? copy.color
                 : editing === "hints"
-                  ? "Better Hints"
+                  ? copy.betterHints
                   : editing === "difficulty"
-                    ? "Choose difficulty"
-                    : "Choose opponent"
+                    ? copy.chooseDifficulty
+                    : copy.chooseOpponent
             }
           >
             {editing === "player" &&

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 
 export default function ChallengeOpponentChoices({
@@ -13,10 +14,11 @@ export default function ChallengeOpponentChoices({
   opponents: readonly StockfishOpponentDefinition[]
   selectedId: StockfishOpponentDefinition["id"]
 }>) {
+  const copy = useMapachessCopy().setup
   const [attentionId, setAttentionId] = useState<string | null>(null)
   return (
     <fieldset disabled={disabled}>
-      <legend className="sr-only">Choose animal</legend>
+      <legend className="sr-only">{copy.chooseAnimal}</legend>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-3">
         {opponents.map((opponent) => (
           <label

@@ -1,10 +1,10 @@
 import cx from "classix"
 import { useId, useState } from "react"
-import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import { STORY_PROGRESS_COPY } from "@mapachess/profile/story-progress"
 import MedalSymbol from "../presentation/MedalSymbol"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 
 export default function ChallengeDifficultyChoices({
@@ -20,15 +20,14 @@ export default function ChallengeDifficultyChoices({
   selectedElo: number | undefined
   targets: readonly number[]
 }>) {
+  const copy = useMapachessCopy().setup
   const explanationId = useId()
   const [hoveredTarget, setHoveredTarget] = useState<number | null>(null)
   const [focusedTarget, setFocusedTarget] = useState<number | null>(null)
 
   return (
     <fieldset className="min-w-0" disabled={disabled}>
-      <legend className="text-lg font-black">
-        {MATCH_SETUP_COPY.difficulty}
-      </legend>
+      <legend className="text-lg font-black">{copy.difficulty}</legend>
       <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-3">
         {targets.map((target) => {
           const record = history.difficulties.find(
@@ -75,7 +74,7 @@ export default function ChallengeDifficultyChoices({
                     <MedalSymbol medal={medal} />
                     <span className="sr-only">
                       {" "}
-                      · Best medal: {STORY_PROGRESS_COPY.medals[medal]}
+                      {copy.bestMedal(STORY_PROGRESS_COPY.medals[medal])}
                     </span>
                   </span>
                 )}
@@ -93,7 +92,7 @@ export default function ChallengeDifficultyChoices({
                   />
                   <span className="sr-only">
                     {" "}
-                    · Last played: {animal.displayName}
+                    {copy.lastPlayed(animal.displayName)}
                   </span>
                 </span>
               )}
@@ -102,9 +101,7 @@ export default function ChallengeDifficultyChoices({
         })}
       </div>
       <p id={explanationId} className="mt-3 text-base leading-relaxed">
-        Best medal at this difficulty: Gold — no hints; Silver — Piece Hints
-        only; Bronze — Move Hints allowed. The animal is your last played
-        opponent, not your next selection.
+        {copy.difficultyMedals}
       </p>
     </fieldset>
   )
