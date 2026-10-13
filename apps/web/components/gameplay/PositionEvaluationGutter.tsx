@@ -11,6 +11,8 @@ import positionEvaluationMachine, {
   selectPositionEvaluation,
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
 
@@ -21,13 +23,16 @@ export type PositionEvaluationGutterProps = Readonly<{
   actor: ActorRefFrom<typeof positionEvaluationMachine>
 }>
 
-const evaluationText = (evaluation: PositionEvaluation): string => {
-  const label = positionEvaluationLabel(evaluation)
+const evaluationText = (
+  evaluation: PositionEvaluation,
+  copy: MapachessCatalog["evaluation"],
+): string => {
+  const label = positionEvaluationLabel(evaluation, copy)
   if (evaluation.kind !== "centipawns")
-    return evaluation.kind === "draw" ? "Even" : label
+    return evaluation.kind === "draw" ? copy.even : label
   if (evaluation.bound === "exact" && evaluation.whiteCentipawns === 0)
-    return "Even"
-  return `White-relative evaluation ${label}`
+    return copy.even
+  return copy.whiteRelative(label)
 }
 
 const whiteSharePercent = (evaluation: PositionEvaluation | null): number => {
@@ -46,26 +51,31 @@ const whiteSharePercent = (evaluation: PositionEvaluation | null): number => {
 export default function PositionEvaluationGutter({
   actor,
 }: PositionEvaluationGutterProps) {
+  const catalog = useMapachessCopy()
+  const copy = catalog.evaluation
+  const messages = catalog.interface.positionEvaluationGutter
+
   const snapshot = useSelector(actor, (current) => current)
   const evaluation = selectPositionEvaluation(snapshot)
   const stage = selectPositionEvaluationStage(snapshot)
   if (stage === "ready" && evaluation === null) {
     throw new Error("Ready position evaluation has no accepted score.")
   }
-  const acceptedText = evaluation === null ? null : evaluationText(evaluation)
+  const acceptedText =
+    evaluation === null ? null : evaluationText(evaluation, copy)
   const statusText =
-    acceptedText ??
-    (stage === "failure" ? "Evaluation unavailable" : "Evaluation waiting")
+    acceptedText ?? (stage === "failure" ? copy.unavailable : copy.waiting)
   const whiteShare = whiteSharePercent(evaluation)
   const style: EvaluationGutterStyle = {
     "--white-share": `${String(whiteShare)}%`,
   }
-  const score = evaluation === null ? "…" : positionEvaluationLabel(evaluation)
+  const score =
+    evaluation === null ? "…" : positionEvaluationLabel(evaluation, copy)
   return (
     <div
       className="bg-mapachito-charcoal relative isolate grid min-h-10 w-full place-items-center px-1 py-1 font-mono text-base font-bold text-white"
       style={style}
-      aria-label="Stockfish evaluation"
+      aria-label={messages.stockfishEvaluation}
       aria-valuemax={100}
       aria-valuemin={0}
       aria-valuenow={Math.round(whiteShare)}

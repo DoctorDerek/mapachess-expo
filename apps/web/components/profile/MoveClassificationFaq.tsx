@@ -1,10 +1,8 @@
 "use client"
 
-import {
-  MOVE_CLASSIFICATION_TABLE,
-  MOVE_MATE_CLASSIFICATION_TABLE,
-} from "@mapachess/evaluation/move-classification-copy"
+import { MOVE_CLASSIFICATION_THRESHOLDS } from "@mapachess/evaluation/move-classification"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 function ClassificationTable({
   headings,
@@ -52,6 +50,10 @@ export default function MoveClassificationFaq({
   onOpen,
   onClose,
 }: Readonly<{ open: boolean; onOpen: () => void; onClose: () => void }>) {
+  const catalog = useMapachessCopy()
+  const copy = catalog.classification
+  const messages = catalog.interface.moveClassificationFaq
+
   return (
     <details open={open} className="text-mapachito-charcoal mt-7 text-base">
       <summary
@@ -62,19 +64,19 @@ export default function MoveClassificationFaq({
         }}
         className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
       >
-        How are moves classified?
+        {messages.howAreMovesClassified}
       </summary>
       <div className="grid gap-6 py-3">
         <MapachessButton variant="secondary" onClick={onClose}>
-          Close move classifications
+          {messages.closeMoveClassifications}
         </MapachessButton>
         <ClassificationTable
-          headings={["Classification", "Meaning"]}
-          rows={MOVE_CLASSIFICATION_TABLE}
+          headings={copy.headings}
+          rows={copy.table(MOVE_CLASSIFICATION_THRESHOLDS)}
         />
         <ClassificationTable
-          headings={["Mate result after the move", "Classification"]}
-          rows={MOVE_MATE_CLASSIFICATION_TABLE}
+          headings={copy.mateHeadings}
+          rows={copy.mateTable(MOVE_CLASSIFICATION_THRESHOLDS)}
         />
       </div>
     </details>

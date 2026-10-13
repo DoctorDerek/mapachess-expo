@@ -2,6 +2,7 @@
 
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type {
   AppliedMatchMove,
@@ -10,7 +11,6 @@ import type {
 } from "@mapachess/match/match-move"
 import type {
   MatchBoardPiece,
-  MatchPieceRole,
   MatchPosition,
   MatchSquare,
 } from "@mapachess/match/match-position"
@@ -30,17 +30,11 @@ import {
   usePlayerInputScope,
 } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BetterHintsOverlay from "./BetterHintsOverlay"
 import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
 
-const PIECE_NAMES = Object.freeze({
-  bishop: "bishop",
-  king: "king",
-  knight: "knight",
-  pawn: "pawn",
-  queen: "queen",
-  rook: "rook",
-}) satisfies Readonly<Record<MatchPieceRole, string>>
+type BoardCopy = MapachessCatalog["board"]
 
 const PROMOTION_ROLES = ["queen", "rook", "bishop", "knight"] as const
 
@@ -59,12 +53,11 @@ export const boardDestinationMoves = (
       (move.kind === "castle" && move.rookFrom === square),
   )
 
-const moveChoiceLabel = (move: LegalMatchMove): string => {
-  if (move.kind === "castle")
-    return `Castle ${move.san} — king to ${move.to}, rook to ${move.rookTo}`
+const moveChoiceLabel = (move: LegalMatchMove, copy: BoardCopy): string => {
+  if (move.kind === "castle") return copy.castle(move.san, move.to, move.rookTo)
   return move.promotion === null
-    ? `Move king to ${move.to}`
-    : `Promote to ${PIECE_NAMES[move.promotion]}`
+    ? copy.moveKing(move.to)
+    : copy.promote(move.promotion)
 }
 
 export type CanonicalChessboardProps = Readonly<{
@@ -84,44 +77,21 @@ const pieceAtSquare = (
 ): MatchBoardPiece | undefined =>
   position.pieces.find((piece) => piece.square === square)
 
-const capitalize = (value: string): string =>
-  `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
-
-const squareLabel = (
-  square: MatchSquare,
-  piece: MatchBoardPiece | undefined,
-  selected: boolean,
-  legalDestination: boolean,
-  disabled: boolean,
-  hintDescriptions: readonly string[],
-): string => {
-  const parts = [
-    square,
-    piece === undefined
-      ? "empty"
-      : `${capitalize(piece.color)} ${PIECE_NAMES[piece.role]}`,
-  ]
-  if (selected) parts.push("selected")
-  if (legalDestination) parts.push("legal destination")
-  if (disabled) parts.push("board not accepting moves")
-  parts.push(...hintDescriptions)
-  return parts.join(", ")
-}
-
 const hintDescriptionsForSquare = (
   hints: BetterHintsResult | null,
   showMoveHints: boolean,
   square: MatchSquare,
+  copy: BoardCopy,
 ): readonly string[] => {
   if (hints === null) return []
 
   const descriptions: string[] = []
   for (const [owner, ownedHints] of [
-    ["Player", hints.player],
-    ["Opponent", hints.opponent],
+    ["player", hints.player],
+    ["opponent", hints.opponent],
   ] as const) {
     if (ownedHints.some((hint) => hint.from === square)) {
-      descriptions.push(`${owner} Piece Hint`)
+      descriptions.push(copy.pieceHint(owner))
     }
     if (showMoveHints) {
       descriptions.push(
@@ -129,8 +99,14 @@ const hintDescriptionsForSquare = (
           .filter((hint) => hint.to === square)
           .map((hint) =>
             hint.castling === undefined
-              ? `${owner} Move Hint destination from ${hint.from}`
-              : `${owner} Move Hint: castle ${hint.castling.side}side, king to ${hint.to}, rook from ${hint.castling.rookFrom} to ${hint.castling.rookTo}`,
+              ? copy.moveHint(owner, hint.from)
+              : copy.castleHint(
+                  owner,
+                  hint.castling.side,
+                  hint.to,
+                  hint.castling.rookFrom,
+                  hint.castling.rookTo,
+                ),
           ),
       )
     }
@@ -159,6 +135,7 @@ export default function CanonicalChessboard({
   position,
   showMoveHints,
 }: CanonicalChessboardProps) {
+  const copy = useMapachessCopy().board
   const input = usePlayerInput()
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
   const initialFocusSquare = orientation === "white" ? "e1" : "e8"
@@ -313,7 +290,7 @@ export default function CanonicalChessboard({
     <div className="[container-type:inline-size] relative w-full min-w-0">
       <div className="relative">
         <div
-          aria-label={`Chessboard, ${capitalize(orientation)} at bottom`}
+          aria-label={copy.orientation(orientation)}
           className="border-mapachito-charcoal relative grid aspect-square w-full grid-rows-8 overflow-hidden border"
           role="grid"
           ref={boardElement}
@@ -338,13 +315,18 @@ export default function CanonicalChessboard({
                 return (
                   <button
                     aria-disabled={disabled}
-                    aria-label={squareLabel(
+                    aria-label={copy.square(
                       square,
                       piece,
                       selected,
                       legalDestination,
                       disabled,
-                      hintDescriptionsForSquare(hints, showMoveHints, square),
+                      hintDescriptionsForSquare(
+                        hints,
+                        showMoveHints,
+                        square,
+                        copy,
+                      ),
                     )}
                     aria-selected={selected}
                     className={cx(
@@ -454,8 +436,8 @@ export default function CanonicalChessboard({
               id="move-choice-title"
             >
               {choosingPromotion
-                ? `Promote on ${pendingChoice.to}`
-                : `Choose your move to ${pendingChoice.to}`}
+                ? copy.promoteOn(pendingChoice.to)
+                : copy.chooseMove(pendingChoice.to)}
             </h2>
             <div
               className={cx(
@@ -466,7 +448,7 @@ export default function CanonicalChessboard({
               {choiceMoves.map((move, index) => (
                 <MapachessButton
                   variant="secondary"
-                  aria-label={moveChoiceLabel(move)}
+                  aria-label={moveChoiceLabel(move, copy)}
                   className={
                     choosingPromotion
                       ? "grid aspect-square place-items-center p-1 text-5xl"
@@ -481,7 +463,7 @@ export default function CanonicalChessboard({
                   {move.kind === "normal" && move.promotion !== null ? (
                     <ChessPiece color={position.turn} role={move.promotion} />
                   ) : (
-                    moveChoiceLabel(move)
+                    moveChoiceLabel(move, copy)
                   )}
                 </MapachessButton>
               ))}
@@ -492,7 +474,7 @@ export default function CanonicalChessboard({
               onClick={clearSelection}
               type="button"
             >
-              {choosingPromotion ? "Cancel promotion" : "Cancel move"}
+              {choosingPromotion ? copy.cancelPromotion : copy.cancelMove}
             </MapachessButton>
           </div>
         </div>

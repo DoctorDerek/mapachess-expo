@@ -7,7 +7,7 @@ import {
   MOVE_REACTION_DURATION_MS,
   type MoveReactionCard as ReactionCard,
 } from "@mapachess/evaluation/move-reaction-machine"
-import { MOVE_GRADE_LABELS } from "@mapachess/match/move-feedback"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ClassifiedMoveText from "./ClassifiedMoveText"
 
 export default function MoveReactionCard({
@@ -17,6 +17,7 @@ export default function MoveReactionCard({
   card: ReactionCard
   onDismiss: (presentationId: string) => void
 }>) {
+  const copy = useMapachessCopy()
   const [countdown, animate] = useAnimate<HTMLSpanElement>()
 
   useLayoutEffect(() => {
@@ -30,7 +31,6 @@ export default function MoveReactionCard({
   }, [animate, card.actor, countdown])
 
   const { mover, notation, classification } = card.reaction
-  const color = mover === "white" ? "White" : "Black"
 
   return (
     <button
@@ -41,7 +41,11 @@ export default function MoveReactionCard({
           ? "bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-charcoal"
           : "bg-mapachito-charcoal text-mapachito-white focus-visible:outline-mapachito-white",
       )}
-      aria-label={`Dismiss ${color} ${notation} ${MOVE_GRADE_LABELS[classification.grade]}`}
+      aria-label={copy.board.dismissReaction(
+        mover,
+        notation,
+        copy.shared.moveGrades[classification.grade],
+      )}
       onClick={(event) => {
         event.stopPropagation()
         onDismiss(card.presentationId)

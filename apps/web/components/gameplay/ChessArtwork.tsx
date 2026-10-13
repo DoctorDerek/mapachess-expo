@@ -25,6 +25,7 @@ import {
 } from "@mapachess/profile/chess-appearance-settings"
 import { loadPresentationImage } from "../../lib/presentation/presentationImages"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export const chessArtworkSource = (
   delivery: "public" | "protected-chess",
@@ -55,17 +56,18 @@ const ArtworkContext = createContext<
 >({ appearance: DEFAULT_CHESS_APPEARANCE, attempt: 0, retry: null })
 
 export function ChessArtworkRecovery() {
+  const messages = useMapachessCopy().interface.chessArtwork
+
   const { retry } = useContext(ArtworkContext)
   return retry === null ? null : (
     <div
       role="alert"
       className="bg-mapachito-white text-mapachito-charcoal mx-auto my-3 flex max-w-3xl flex-wrap items-center gap-3 rounded-lg p-4"
     >
-      <p>
-        Selected chess artwork could not load. Defaults are shown; your choices
-        and match are preserved.
-      </p>
-      <MapachessButton onClick={retry}>Retry chess artwork</MapachessButton>
+      <p>{messages.selectedChessArtworkCouldNotLoadDefaults}</p>
+      <MapachessButton onClick={retry}>
+        {messages.retryChessArtwork}
+      </MapachessButton>
     </div>
   )
 }
