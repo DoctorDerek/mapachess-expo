@@ -7,8 +7,6 @@ import type {
   MatchNavigationCommands,
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
-import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { PlayerInputBindings } from "@mapachess/match/player-input"
 import type {
   ChessAppearanceChange,
@@ -29,14 +27,9 @@ import AutoHintModeChoices from "./AutoHintModeChoices"
 import ChessAppearanceChoices from "./ChessAppearanceChoices"
 import CoachCollectionChoices from "./CoachCollectionChoices"
 import LanguageChoice from "./LanguageChoice"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 import MoveClassificationFaq from "./MoveClassificationFaq"
-import {
-  ImportBackupButton,
-  importIssueMessage,
-  PREPARING_BACKUP_LABEL,
-} from "./ProfileFoundation"
-
-export const PROFILE_SETTINGS_TITLE = "Your game customization"
+import { ImportBackupButton, importIssueMessage } from "./ProfileFoundation"
 
 export type ProfileSettingsPanelProps = Readonly<{
   activityMessage: string | null
@@ -89,6 +82,9 @@ export default function ProfileSettingsPanel({
   overlays,
   navigation,
 }: ProfileSettingsPanelProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profileSettingsPanel
+
   const busy = activityMessage !== null
   const resetOverlay = overlays.findLast(
     (overlay) => overlay === "reset-standard" || overlay === "reset-chess960",
@@ -100,7 +96,7 @@ export default function ProfileSettingsPanel({
         ? "chess960"
         : null
   const resetLabel =
-    resetVariant === null ? "" : MATCH_VARIANT_LABELS[resetVariant]
+    resetVariant === null ? "" : copy.setup.variants[resetVariant]
 
   return (
     <div
@@ -113,7 +109,7 @@ export default function ProfileSettingsPanel({
           className="font-display text-mapachito-charcoal text-2xl leading-tight font-black"
           id="profile-settings-title"
         >
-          {PROFILE_SETTINGS_TITLE}
+          {copy.profile.settingsTitle}
         </h2>
         <MapachessButton
           variant="secondary"
@@ -121,7 +117,7 @@ export default function ProfileSettingsPanel({
           onClick={onClose}
           type="button"
         >
-          Close Settings
+          {messages.closeSettings}
         </MapachessButton>
       </header>
 
@@ -145,8 +141,7 @@ export default function ProfileSettingsPanel({
 
       <div className="mt-7">
         <p className="text-mapachito-charcoal mb-4 text-sm leading-[1.55] font-semibold opacity-76">
-          Hint changes take effect immediately and become your default. You can
-          always request hints manually.
+          {messages.hintChangesTakeEffectImmediatelyAndBecome}
         </p>
         <AutoHintModeChoices
           autoHintMode={autoHintMode}
@@ -166,11 +161,11 @@ export default function ProfileSettingsPanel({
           className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
           id="player-elo-settings-title"
         >
-          Your Elo ratings
+          {messages.yourEloRatings}
         </h2>
         <div className="mt-4 grid gap-3">
           {PLAYER_ELO_RATING_IDS.map((variant) => {
-            const label = MATCH_VARIANT_LABELS[variant]
+            const label = copy.setup.variants[variant]
             return (
               <div
                 className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
@@ -178,10 +173,10 @@ export default function ProfileSettingsPanel({
               >
                 <div>
                   <p className="text-mapachito-charcoal font-bold">
-                    {label} · {Math.round(ratings[variant])} Elo
+                    {copy.profile.rating(label, ratings[variant])}
                   </p>
                   <p className="text-mapachito-charcoal text-sm opacity-76">
-                    {ratedMatchCounts[variant]} rated matches
+                    {copy.profile.ratedMatches(ratedMatchCounts[variant])}
                   </p>
                 </div>
                 <MapachessButton
@@ -190,7 +185,7 @@ export default function ProfileSettingsPanel({
                   type="button"
                   variant="secondary"
                 >
-                  Reset {label} Elo
+                  {copy.profile.resetRating(label)}
                 </MapachessButton>
               </div>
             )
@@ -206,14 +201,10 @@ export default function ProfileSettingsPanel({
               className="text-mapachito-charcoal text-lg font-black"
               id="player-elo-reset-title"
             >
-              Reset {resetLabel} Elo?
+              {copy.profile.resetQuestion(resetLabel)}
             </h3>
             <p className="text-mapachito-charcoal mt-2 text-base leading-relaxed">
-              {resetLabel} Elo returns to 100 and its rated-match count to zero.
-              The other rating, Story progress, medals, Challenge records,
-              settings, and active match stay unchanged. Completed matches
-              cannot be rated again. Export your data first if you want a
-              backup.
+              {copy.profile.resetExplanation(resetLabel)}
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <MapachessButton
@@ -222,16 +213,16 @@ export default function ProfileSettingsPanel({
                 type="button"
                 variant="secondary"
               >
-                Cancel
+                {messages.cancel}
               </MapachessButton>
               <MapachessButton
                 aria-busy={exporting}
-                busyLabel={PREPARING_BACKUP_LABEL}
+                busyLabel={copy.profile.preparingBackup}
                 onClick={onExportPlayerData}
                 type="button"
                 variant="secondary"
               >
-                Export Player Data
+                {messages.exportPlayerData}
               </MapachessButton>
               <MapachessButton
                 disabled={busy}
@@ -242,7 +233,7 @@ export default function ProfileSettingsPanel({
                 type="button"
                 variant="destructive"
               >
-                Reset {resetLabel} Elo to 100
+                {copy.profile.resetConfirmation(resetLabel)}
               </MapachessButton>
             </div>
           </div>
@@ -254,21 +245,19 @@ export default function ProfileSettingsPanel({
           className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
           id="player-data-actions-title"
         >
-          Portable Player Data
+          {messages.portablePlayerData}
         </h2>
         <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-          Data stays on this device unless you explicitly download or import a
-          JSON backup. Import first opens a non-destructive preview and is never
-          applied before you review it.
+          {messages.dataStaysOnThisDeviceUnlessYou}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <MapachessButton
             aria-busy={exporting}
-            busyLabel={PREPARING_BACKUP_LABEL}
+            busyLabel={copy.profile.preparingBackup}
             onClick={onExportPlayerData}
             type="button"
           >
-            Export Player Data
+            {messages.exportPlayerData}
           </MapachessButton>
           <ImportBackupButton disabled={busy} onBackupRead={onBackupRead} />
         </div>
@@ -291,9 +280,9 @@ export default function ProfileSettingsPanel({
           }}
           className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
         >
-          About Elo ratings
+          {messages.aboutEloRatings}
         </summary>
-        <p>{MATCH_SETUP_COPY.webCalibrationDifficulty}</p>
+        <p>{copy.setup.webCalibrationDifficulty}</p>
       </details>
 
       <ArtCredits
@@ -304,7 +293,7 @@ export default function ProfileSettingsPanel({
 
       {importIssue === null ? null : (
         <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
-          {importIssueMessage(importIssue)}
+          {importIssueMessage(importIssue, copy.profile)}
         </MapachessNotice>
       )}
       {activityMessage === null ? null : (

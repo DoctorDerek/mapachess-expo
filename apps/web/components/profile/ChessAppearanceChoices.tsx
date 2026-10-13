@@ -14,12 +14,11 @@ import type {
 } from "@mapachess/profile/chess-appearance-settings"
 import {
   ChessArtworkRecovery,
-  chessBoard,
   ChessBoardArtwork,
   ChessPiece,
-  chessPieceSet,
 } from "../gameplay/ChessArtwork"
 import CustomizationChoice from "./CustomizationChoice"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 const BACK_RANK = [
   "rook",
@@ -65,11 +64,16 @@ function ChessAppearancePreview({
 }: Readonly<{
   appearance: ChessAppearanceSettings
 }>) {
+  const copy = useMapachessCopy()
+
   return (
     <div
       className="border-mapachito-charcoal relative mx-auto my-4 grid aspect-square w-full max-w-80 grid-cols-8 grid-rows-8 overflow-hidden rounded-sm border-2 text-[clamp(1rem,5vw,2.25rem)]"
       role="img"
-      aria-label={`${chessPieceSet(appearance.pieceSetId).label} pieces on ${chessBoard(appearance.boardId).label} board preview`}
+      aria-label={copy.profile.artworkPreview(
+        copy.artwork.pieces[appearance.pieceSetId],
+        copy.artwork.boards[appearance.boardId],
+      )}
     >
       <ChessBoardArtwork />
       {Array.from({ length: 64 }, (_, index) => {
@@ -118,18 +122,21 @@ export default function ChessAppearanceChoices({
   disabled: boolean
   onChange: (change: ChessAppearanceChange) => void
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.chessAppearanceChoices
+
   const id = useId()
   const [open, setOpen] = useState<"pieces" | "board" | null>(null)
   return (
     <section aria-labelledby={`${id}-title`} className="min-w-0">
       <h2 id={`${id}-title`} className="sr-only">
-        Board &amp; Pieces
+        {messages.boardPieces}
       </h2>
       <ChessArtworkRecovery />
       <div className="grid gap-3">
         <CustomizationChoice
-          label="Pieces"
-          value={chessPieceSet(appearance.pieceSetId).label}
+          kind="pieces"
+          value={copy.artwork.pieces[appearance.pieceSetId]}
           preview={<PieceSample id={appearance.pieceSetId} compact />}
           open={open === "pieces"}
           onToggle={() =>
@@ -141,7 +148,7 @@ export default function ChessAppearanceChoices({
             disabled={disabled}
             className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-3"
           >
-            <legend className="sr-only">Pieces</legend>
+            <legend className="sr-only">{messages.pieces}</legend>
             {CHESS_PIECE_SETS.map((pieces) => (
               <label
                 key={pieces.id}
@@ -161,15 +168,15 @@ export default function ChessAppearanceChoices({
                     onChange={() => onChange({ pieceSetId: pieces.id })}
                     className="accent-mapachito-orange mt-0.5 size-4 shrink-0"
                   />
-                  {pieces.label}
+                  {copy.artwork.pieces[pieces.id]}
                 </span>
               </label>
             ))}
           </fieldset>
         </CustomizationChoice>
         <CustomizationChoice
-          label="Board"
-          value={chessBoard(appearance.boardId).label}
+          kind="board"
+          value={copy.artwork.boards[appearance.boardId]}
           preview={
             <span className="relative size-16 overflow-hidden rounded">
               <ChessBoardArtwork boardId={appearance.boardId} />
@@ -185,7 +192,7 @@ export default function ChessAppearanceChoices({
             disabled={disabled}
             className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-3"
           >
-            <legend className="sr-only">Board</legend>
+            <legend className="sr-only">{messages.board}</legend>
             {CHESS_BOARDS.map((board) => (
               <label
                 key={board.id}
@@ -207,7 +214,7 @@ export default function ChessAppearanceChoices({
                     onChange={() => onChange({ boardId: board.id })}
                     className="accent-mapachito-orange mt-0.5 size-4 shrink-0"
                   />
-                  {board.label}
+                  {copy.artwork.boards[board.id]}
                 </span>
               </label>
             ))}

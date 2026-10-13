@@ -1,21 +1,24 @@
 import { useId, type ReactNode } from "react"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 export default function CustomizationChoice({
-  label,
+  kind,
   value,
   preview,
   open,
   onToggle,
   children,
 }: Readonly<{
-  label: string
+  kind: "coach" | "pieces" | "board"
   value: string
   preview: ReactNode
   open: boolean
   onToggle: () => void
   children: ReactNode
 }>) {
+  const copy = useMapachessCopy()
+  const field = copy.profile.customization[kind]
   const choicesId = useId()
   return (
     <div className="min-w-0">
@@ -27,17 +30,13 @@ export default function CustomizationChoice({
           {preview}
         </span>
         <div className="min-w-0 flex-1 basis-16 wrap-anywhere">
-          <h3 className="font-display text-xl font-black">{label}</h3>
+          <h3 className="font-display text-xl font-black">{field.label}</h3>
           <p className="text-sm leading-snug">{value}</p>
         </div>
         <MapachessButton
           aria-controls={choicesId}
           aria-expanded={open}
-          aria-label={
-            open
-              ? `Done choosing ${label.toLowerCase()}`
-              : `Change ${label.toLowerCase()}`
-          }
+          aria-label={open ? field.done : field.change}
           className="min-w-22 px-3! py-2! text-base"
           onClick={(event) => {
             event.currentTarget.focus({ preventScroll: true })
@@ -46,7 +45,7 @@ export default function CustomizationChoice({
           type="button"
           variant="secondary"
         >
-          {open ? "Done" : "Change"}
+          {open ? copy.setup.done : copy.setup.change}
         </MapachessButton>
       </div>
       <div id={choicesId} hidden={!open}>

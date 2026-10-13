@@ -1,20 +1,23 @@
 "use client"
 
 import MapachessButton from "../components/presentation/MapachessButton"
+import { useMapachessCopy } from "../components/profile/MapachessLocaleProvider"
 import FullPageProfilePanel from "../components/profile/ProfileFoundation"
 
 export default function ApplicationError({
   retry,
 }: Readonly<{ retry: () => void }>) {
+  const messages = useMapachessCopy().interface.error
+
   return (
     <FullPageProfilePanel
-      title="Mapachess could not display this page."
-      description="Your saved player data has not been reset. Try opening the page again."
-      eyebrow="Page recovery"
+      title={messages.mapachessCouldNotDisplayThisPage}
+      description={messages.yourSavedPlayerDataHasNotBeen}
+      eyebrow={messages.pageRecovery}
       live="assertive"
     >
       <MapachessButton className="mt-7" onClick={retry}>
-        Try again
+        {messages.tryAgain}
       </MapachessButton>
     </FullPageProfilePanel>
   )

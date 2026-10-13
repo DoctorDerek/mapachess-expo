@@ -7,6 +7,9 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react"
+import loadCatalog, {
+  type MapachessCatalog,
+} from "@mapachess/localization/catalog"
 import { MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS } from "@mapachess/profile/portable-backup"
 import type {
   ProfileImportIssue,
@@ -16,9 +19,9 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
-export const PREPARING_BACKUP_LABEL = "Preparing backup…"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -86,6 +89,9 @@ export function ImportBackupButton({
   disabled,
   onBackupRead,
 }: ImportBackupButtonProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profileFoundation
+
   const fileInput = useRef<HTMLInputElement>(null)
   const readOperation = useRef<AbortController | null>(null)
   const [reading, setReading] = useState(false)
@@ -133,7 +139,7 @@ export function ImportBackupButton({
     <div>
       <MapachessButton
         aria-busy={reading}
-        busyLabel="Reading backup…"
+        busyLabel={messages.readingBackup}
         variant="secondary"
         disabled={disabled}
         onClick={() => {
@@ -142,7 +148,7 @@ export function ImportBackupButton({
         }}
         type="button"
       >
-        Import Backup
+        {messages.importBackup}
       </MapachessButton>
       <input
         accept=".json,application/json"
@@ -156,41 +162,45 @@ export function ImportBackupButton({
       {fileIssue === null ? null : (
         <MapachessNotice tone="warning" className="mt-4 text-sm" role="alert">
           {fileIssue === "too-large"
-            ? "That file is larger than Mapachess can safely inspect. Your saved data is unchanged."
-            : "That file could not be read. Your saved data is unchanged. Choose the file again or select another backup."}
+            ? copy.profile.fileTooLarge
+            : copy.profile.fileUnreadable}
         </MapachessNotice>
       )}
     </div>
   )
 }
 
-export const importIssueMessage = (issue: ProfileImportIssue): string => {
+export const importIssueMessage = (
+  issue: ProfileImportIssue,
+  copy: MapachessCatalog["profile"] = loadCatalog("en").profile,
+): string => {
   switch (issue.type) {
     case "PROFILE.BACKUP_INTEGRITY_MISMATCH":
-      return "The backup did not pass its integrity check. Your saved data is unchanged."
+      return copy.importIssue.integrity
     case "PROFILE.BACKUP_TOO_LARGE":
-      return "The selected backup is larger than Mapachess can safely inspect. Your saved data is unchanged."
+      return copy.importIssue.size
     case "PROFILE.BACKUP_VERSION_UNSUPPORTED":
     case "PROFILE.SCHEMA_VERSION_UNSUPPORTED":
-      return "This backup was created by a newer, unsupported Mapachess data version. Your saved data is unchanged."
+      return copy.importIssue.version
     case "PROFILE.BACKUP_READ_FAILED":
-      return "The selected backup could not be read. Your saved data is unchanged."
+      return copy.importIssue.read
     default:
-      return "The selected file is not a valid Mapachess backup. Your saved data is unchanged."
+      return copy.importIssue.invalid
   }
 }
 
 export const persistenceFailureMessage = (
   failure: ProfilePersistenceFailure,
+  copy: MapachessCatalog["profile"] = loadCatalog("en").profile,
 ): string => {
   switch (failure.type) {
     case "PROFILE.STORAGE_CONFLICT":
-      return "Another Mapachess tab changed local data first. Your pending change is still held here and has not overwritten it."
+      return copy.persistenceFailure.conflict
     case "PROFILE.STORAGE_VERIFICATION_FAILED":
-      return "Mapachess could not verify the saved copy. Your pending change is still held here."
+      return copy.persistenceFailure.verification
     case "PROFILE.STORAGE_REQUEST_FAILED":
-      return "Browser storage did not finish the request. Your pending change is still held here."
+      return copy.persistenceFailure.request
     default:
-      return "Mapachess could not safely save this change. Your pending change is still held here."
+      return copy.persistenceFailure.unsafe
   }
 }

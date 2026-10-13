@@ -10,6 +10,7 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import LocalSaveError from "../presentation/LocalSaveError"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchRecovery({
   actor,
@@ -24,6 +25,9 @@ export default function MatchRecovery({
   evaluationSnapshot: PositionEvaluationMachineSnapshot
   opponentName: string
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.matchRecovery
+
   const opponentFailure = selectOpponentFailure(snapshot)
   const persistenceFailure = selectPersistenceFailure(snapshot)
   return (
@@ -35,17 +39,15 @@ export default function MatchRecovery({
           }
           type="button"
         >
-          Retry Evaluation
+          {messages.retryEvaluation}
         </MapachessButton>
       ) : null}
       {opponentFailure === null ? null : (
         <div className="grid gap-2">
           <p role="status" className="text-mapachito-white">
-            {opponentName}{" "}
             {opponentFailure.type === "MATCH.OPPONENT_MOVE_ILLEGAL"
-              ? "returned an invalid move."
-              : "could not finish its turn."}{" "}
-            Retry or undo.
+              ? copy.gameplay.opponentMoveInvalid(opponentName)
+              : copy.gameplay.opponentTurnFailed(opponentName)}
           </p>
           <MapachessButton
             onClick={() =>
@@ -53,7 +55,7 @@ export default function MatchRecovery({
             }
             type="button"
           >
-            Retry {opponentName} turn
+            {copy.gameplay.retryTurn(opponentName)}
           </MapachessButton>
         </div>
       )}
@@ -62,8 +64,7 @@ export default function MatchRecovery({
           <p role="status" className="text-mapachito-white">
             <LocalSaveError />
             <span className="mt-1 block">
-              Your pending change is retained but not yet saved. Retry save to
-              continue.
+              {messages.yourPendingChangeIsRetainedButNot}
             </span>
           </p>
           <MapachessButton
@@ -72,7 +73,7 @@ export default function MatchRecovery({
             }
             type="button"
           >
-            Retry save
+            {messages.retrySave}
           </MapachessButton>
         </div>
       )}
