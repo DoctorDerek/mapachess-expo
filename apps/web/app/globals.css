@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes first-arrival-crossing {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @theme {
   --color-mapachito-deep-cyan: #008b8b;
   --color-mapachito-raspberry: #9c0052;

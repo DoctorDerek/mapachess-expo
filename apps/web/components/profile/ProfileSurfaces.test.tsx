@@ -47,13 +47,12 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Player content")
   })
 
-  it("emits the canonical engine preload during the first application render", () => {
+  it("defers the engine preload until the player enters the game", () => {
     const markup = renderToStaticMarkup(createElement(WebMapachessApplication))
-    expect(markup).toContain(
+    expect(markup).not.toContain(
       `href="/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}"`,
     )
-    expect(markup).toMatch(/<link[^>]*rel="preload"[^>]*as="fetch"/)
-    expect(markup).toContain('crossorigin=""')
+    expect(markup).not.toMatch(/<link[^>]*rel="preload"[^>]*as="fetch"/)
     expect(markup).toContain("Loading Mapachess.")
     expect(markup).not.toContain("Saving player data")
     expect(markup).not.toContain("Opening local storage")
@@ -62,6 +61,8 @@ describe("web player-data controls", () => {
   it("keeps hint choices and closing available while a standalone preference saves", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        locale: "en",
+        onLocaleChanged: vi.fn(),
         inputBindings: playerData.settings.inputBindings,
         onInputBindingsSaved: vi.fn(),
         chessAppearance: playerData.settings.chessAppearance,
@@ -166,6 +167,8 @@ describe("web player-data controls", () => {
   it("offers all three automatic hint modes during play", () => {
     const markup = renderToStaticMarkup(
       createElement(ProfileSettingsPanel, {
+        locale: "en",
+        onLocaleChanged: vi.fn(),
         inputBindings: playerData.settings.inputBindings,
         onInputBindingsSaved: vi.fn(),
         chessAppearance: playerData.settings.chessAppearance,
