@@ -1,13 +1,13 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import loadCatalog from "@mapachess/localization/catalog"
 import WebsiteAnalytics from "../components/WebsiteAnalytics"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://mapachess.com"),
   title: "Mapachess",
-  description:
-    "A permanently free, accountless chess game with Better Hints and animal Stockfish opponents.",
+  description: loadCatalog("en").presentation.metadataDescription,
   alternates: { canonical: "/" },
   openGraph: { url: "/" },
 }

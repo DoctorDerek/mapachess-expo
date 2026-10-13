@@ -3,7 +3,6 @@
 import { useActorRef, useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, useMemo, useState } from "react"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
@@ -13,6 +12,7 @@ import {
 } from "../../lib/presentation/profileCardArtwork"
 import { saveProfileCardFile } from "../../lib/presentation/profileCardExport"
 import profileCardExportMachine from "../../lib/presentation/profileCardExportMachine"
+import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
 import { ProfileArtwork } from "./ProfileCard"
 
@@ -39,18 +39,24 @@ export default function ProfileCardPreview({
   appearance: PlayerAppearance
   unsaved: boolean
 }>) {
+  const copy = useMapachessCopy()
+  const locale = useMapachessLocale()
+  const messages = copy.interface.profileCardPreview
+
   const [format, setFormat] = useState<"GIF" | "PNG">("GIF")
   const [content, setContent] = useState<CardContent>(INITIAL_CARD_CONTENT)
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState<
+    "shared" | "shareFailed" | "downloadRequested" | "downloadFailed" | null
+  >(null)
   const [sharing, setSharing] = useState(false)
   const input = useMemo(
-    () => ({ appearance, facts: cardFacts(data), content, format }),
-    [appearance, data, content, format],
+    () => ({ appearance, facts: cardFacts(data), content, format, locale }),
+    [appearance, data, content, format, locale],
   )
   const actor = useActorRef(profileCardExportMachine, { input })
   const snapshot = useSelector(actor, (current) => current)
   useEffect(() => {
-    setMessage("")
+    setMessage(null)
     actor.send({ type: "CARD.PREVIEW_CHANGED", input })
   }, [actor, input])
   const file = snapshot.matches("ready") ? snapshot.context.file : null
@@ -58,13 +64,13 @@ export default function ProfileCardPreview({
   const share = async (): Promise<void> => {
     if (file === null || !shareAvailable || sharing) return
     setSharing(true)
-    setMessage("")
+    setMessage(null)
     try {
       await navigator.share({ files: [file] })
-      setMessage("Shared.")
+      setMessage("shared")
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
-        setMessage("Sharing did not complete. You can retry or save the file.")
+        setMessage("shareFailed")
     } finally {
       setSharing(false)
     }
@@ -73,7 +79,7 @@ export default function ProfileCardPreview({
     <div className="mx-auto max-w-5xl">
       <div
         role="group"
-        aria-label="Image format"
+        aria-label={messages.imageFormat}
         className="mb-5 flex flex-wrap gap-3"
       >
         {(["GIF", "PNG"] as const).map((choice) => (
@@ -88,25 +94,25 @@ export default function ProfileCardPreview({
                 "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
             )}
           >
-            {choice === "GIF" ? "GIF · Animated" : "PNG · Still"}
+            {copy.profile.cardFormats[choice]}
           </ProfileAction>
         ))}
       </div>
       <div
         role="img"
-        aria-label={`Profile card ${format} preview`}
+        aria-label={copy.profile.cardPreview(format)}
         className="overflow-hidden shadow-[0.375rem_0.375rem_0_#009dae]"
       >
         <ProfileArtwork input={input} exportPreview />
       </div>
       <fieldset className="my-5 flex flex-wrap gap-x-6 gap-y-2">
-        <legend className="sr-only">Include in your profile card</legend>
+        <legend className="sr-only">{messages.includeInYourProfileCard}</legend>
         {(
           [
-            ["level", "Level"],
-            ["standard", `${MATCH_VARIANT_LABELS.standard} Elo`],
-            ["chess960", `${MATCH_VARIANT_LABELS.chess960} Elo`],
-            ["animal", "Animal companion"],
+            ["level", copy.profile.level],
+            ["standard", copy.profile.ratingLabel.standard],
+            ["chess960", copy.profile.ratingLabel.chess960],
+            ["animal", copy.profile.animalCompanion],
           ] as const
         ).map(([key, label]) => (
           <label
@@ -128,7 +134,7 @@ export default function ProfileCardPreview({
       </fieldset>
       {unsaved ? (
         <p className="my-3 text-base">
-          Previewing unsaved appearance. Image export does not save your edits.
+          {messages.previewingUnsavedAppearanceImageExportDoesNot}
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3">
@@ -137,46 +143,43 @@ export default function ProfileCardPreview({
             if (file !== null) {
               try {
                 saveProfileCardFile(file)
-                setMessage(`${format} download requested.`)
+                setMessage("downloadRequested")
               } catch {
-                setMessage(
-                  "The download could not start. Your card is still ready; try saving again.",
-                )
+                setMessage("downloadFailed")
               }
             }
           }}
           disabled={file === null || sharing}
           className="bg-mapachito-green shadow-[0.375rem_0.375rem_0_#008b8b]"
         >
-          <span aria-hidden="true">↓</span> Save {format}
+          <span aria-hidden="true">↓</span> {copy.profile.saveFormat(format)}
         </ProfileAction>
         <ProfileAction
           onClick={() => void share()}
           disabled={!shareAvailable || sharing}
           className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
         >
-          <span aria-hidden="true">↗</span> Share {format}
+          <span aria-hidden="true">↗</span> {copy.profile.shareFormat(format)}
         </ProfileAction>
       </div>
       <p role="status" className="mt-4 min-h-6 text-base">
         {snapshot.matches("preparing")
-          ? `Preparing ${format}…`
-          : message ||
-            (!shareAvailable && file !== null
-              ? "Save the file to share it with your preferred app."
-              : "")}
+          ? copy.profile.preparingFormat(format)
+          : (message === "downloadRequested"
+              ? copy.profile.downloadRequested(format)
+              : message === null
+                ? null
+                : copy.profile[message]) ||
+            (!shareAvailable && file !== null ? copy.profile.saveToShare : "")}
       </p>
       {snapshot.matches("failed") ? (
         <div role="alert">
-          <p>
-            Image preparation failed. Your appearance, preview choices, and game
-            are unchanged.
-          </p>
+          <p>{messages.imagePreparationFailedYourAppearancePreviewChoices}</p>
           <ProfileAction
             onClick={() => actor.send({ type: "CARD.RETRY_REQUESTED" })}
             className="bg-mapachito-violet mt-3"
           >
-            Retry {format}
+            {copy.profile.retryFormat(format)}
           </ProfileAction>
         </div>
       ) : null}

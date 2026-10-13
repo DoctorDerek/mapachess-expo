@@ -1,5 +1,6 @@
+import loadCatalog from "@mapachess/localization/catalog"
+import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { SpriteAnimationDefinition } from "@mapachess/match-presentation/presentation-asset-manifest"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import {
   HERO_IDLE_GEOMETRY,
@@ -41,6 +42,7 @@ export type CardFacts = Readonly<{
   chess960: number
 }>
 export type CardInput = Readonly<{
+  locale?: ShippedLocale
   appearance: PlayerAppearance
   facts: CardFacts
   content: CardContent
@@ -188,6 +190,7 @@ export function drawProfileCard(
 ): void {
   const { width, height } = context.canvas
   const { content, facts } = input
+  const copy = loadCatalog(input.locale ?? "en").profile
   const hasFacts = content.level || content.standard || content.chess960
   const factsWidth = hasFacts ? Math.round(width * 0.4) : 0
   const invitationHeight = Math.round(height * 0.13)
@@ -223,12 +226,15 @@ export function drawProfileCard(
     context.fillStyle = CARD_PALETTE.yellow
     context.fillRect(0, 0, factsWidth, pictureHeight)
     const items = [
-      ...(content.level ? [{ value: facts.level, label: "Level" }] : []),
+      ...(content.level
+        ? [{ kind: "level", value: facts.level, label: copy.level }]
+        : []),
       ...(content.standard
         ? [
             {
               value: facts.standard,
-              label: `${MATCH_VARIANT_LABELS.standard} Elo`,
+              kind: "rating",
+              label: copy.ratingLabel.standard,
             },
           ]
         : []),
@@ -236,7 +242,8 @@ export function drawProfileCard(
         ? [
             {
               value: facts.chess960,
-              label: `${MATCH_VARIANT_LABELS.chess960} Elo`,
+              kind: "rating",
+              label: copy.ratingLabel.chess960,
             },
           ]
         : []),
@@ -244,12 +251,12 @@ export function drawProfileCard(
     context.fillStyle = CARD_PALETTE.ink
     context.textAlign = "left"
     context.textBaseline = "middle"
-    items.forEach(({ value, label }, index) => {
+    items.forEach(({ value, label, kind }, index) => {
       const center = (pictureHeight * (index + 0.5)) / items.length
       const left = width * 0.04
       const available = factsWidth - width * 0.08
       context.font = `bold ${Math.round(height * 0.061)}px "Trebuchet MS", sans-serif`
-      if (label === "Level") {
+      if (kind === "level") {
         context.fillText(label, left, center)
         const labelWidth = context.measureText(label).width + width * 0.01
         context.font = `${Math.round(height * 0.12)}px Impact, sans-serif`
@@ -273,7 +280,7 @@ export function drawProfileCard(
   context.textBaseline = "middle"
   context.font = `bold ${Math.round(width * 0.035)}px "Trebuchet MS", sans-serif`
   context.fillText(
-    "Play free at Mapachess.com",
+    copy.playFree,
     width / 2,
     pictureHeight + invitationHeight / 2,
   )
