@@ -2,7 +2,6 @@ import cx from "classix"
 import { useId, useState } from "react"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import { STORY_PROGRESS_COPY } from "@mapachess/profile/story-progress"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
@@ -20,7 +19,11 @@ export default function ChallengeDifficultyChoices({
   selectedElo: number | undefined
   targets: readonly number[]
 }>) {
-  const copy = useMapachessCopy().setup
+  const catalog = useMapachessCopy()
+  const medals = catalog.shared.story.medals
+  const animalCopy = catalog.animals
+  const messages = catalog.interface.challengeDifficultyChoices
+  const copy = catalog.setup
   const explanationId = useId()
   const [hoveredTarget, setHoveredTarget] = useState<number | null>(null)
   const [focusedTarget, setFocusedTarget] = useState<number | null>(null)
@@ -67,14 +70,14 @@ export default function ChallengeDifficultyChoices({
               <span className="flex w-full items-center justify-between gap-1">
                 <span className="font-display text-2xl font-black">
                   {target}
-                  <span className="sr-only"> Elo</span>
+                  <span className="sr-only"> {messages.elo}</span>
                 </span>
                 {medal === null ? null : (
                   <span>
                     <MedalSymbol medal={medal} />
                     <span className="sr-only">
                       {" "}
-                      {copy.bestMedal(STORY_PROGRESS_COPY.medals[medal])}
+                      {copy.bestMedal(medals[medal])}
                     </span>
                   </span>
                 )}
@@ -92,7 +95,7 @@ export default function ChallengeDifficultyChoices({
                   />
                   <span className="sr-only">
                     {" "}
-                    {copy.lastPlayed(animal.displayName)}
+                    {copy.lastPlayed(animalCopy.opponent(animal.id))}
                   </span>
                 </span>
               )}

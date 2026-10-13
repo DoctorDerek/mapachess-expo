@@ -124,7 +124,9 @@ export default function WebMatchSetup({
   playerAppearance,
   onPlayerAnimalChanged,
 }: WebMatchSetupProps) {
-  const copy = useMapachessCopy().setup
+  const catalog = useMapachessCopy()
+  const animalCopy = catalog.animals
+  const copy = catalog.setup
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
     setup.mode === "story" ? setup.variant : setup.challengeSetup.variant
@@ -245,10 +247,8 @@ export default function WebMatchSetup({
           onPlayerAnimalChanged !== undefined ? (
             <MatchSetupChoice
               label={copy.color}
-              value={playerAnimal.displayName.replace(" Stockfish", "")}
-              actionLabel={copy.playAsAction(
-                playerAnimal.displayName.replace(" Stockfish", ""),
-              )}
+              value={animalCopy.names[playerAnimal.id]}
+              actionLabel={copy.playAsAction(animalCopy.names[playerAnimal.id])}
               disabled={disabled || opening}
               onChange={(event) => openEditor("player", event.currentTarget)}
               preview={
@@ -262,7 +262,7 @@ export default function WebMatchSetup({
           ) : null}
           <MatchSetupChoice
             label={copy.opponent}
-            value={opponent.displayName}
+            value={animalCopy.opponent(opponent.id)}
             detail={
               setup.mode === "story"
                 ? copy.elo(String(opponent.storyTargetElo))

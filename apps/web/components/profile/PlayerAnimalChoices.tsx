@@ -10,6 +10,7 @@ import {
 } from "@mapachess/profile/player-appearance"
 import type { StoryProgress } from "@mapachess/profile/story-progress"
 import ChallengeAnimalPortrait from "../gameplay/ChallengeAnimalPortrait"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 const PLAYER_ANIMALS = Object.freeze([
   stockfishOpponent(DEFAULT_PLAYER_APPEARANCE.animal),
@@ -33,6 +34,10 @@ export default function PlayerAnimalChoices({
   selectedId: StockfishOpponentId
   storyProgress: StoryProgress
 }>) {
+  const copy = useMapachessCopy()
+  const animalCopy = copy.animals
+  const messages = copy.interface.playerAnimalChoices
+
   const groupId = useId()
   const [attentionId, setAttentionId] = useState<StockfishOpponentId | null>(
     null,
@@ -52,13 +57,13 @@ export default function PlayerAnimalChoices({
             : "font-display text-xl font-bold"
         }
       >
-        Play as
+        {messages.playAs}
       </legend>
       <p className="mt-1 text-base" id={`${groupId}-help`}>
-        Beat animals in Story to unlock them. Raccoon is always yours.
+        {messages.beatAnimalsInStoryToUnlockThem}
       </p>
       <div
-        aria-label="Player animals"
+        aria-label={messages.playerAnimals}
         className={cx(
           "mt-2 grid gap-3 p-2",
           presentation === "dialog"
@@ -120,15 +125,17 @@ export default function PlayerAnimalChoices({
                 />
               </span>
               <span className="text-xl leading-snug font-bold">
-                {opponent.displayName.replace(" Stockfish", "")}
+                {animalCopy.names[opponent.id]}
                 {locked ? (
-                  <span className="block text-base font-normal">Locked</span>
+                  <span className="block text-base font-normal">
+                    {messages.locked}
+                  </span>
                 ) : null}
               </span>
               {selected ? (
                 <span className="bg-mapachito-violet absolute top-1 right-1 rounded-full px-1.5 text-lg leading-tight font-bold">
                   <span aria-hidden="true">✓</span>
-                  <span className="sr-only">Selected</span>
+                  <span className="sr-only">{messages.selected}</span>
                 </span>
               ) : null}
             </label>

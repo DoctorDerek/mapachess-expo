@@ -14,7 +14,9 @@ export default function ChallengeOpponentChoices({
   opponents: readonly StockfishOpponentDefinition[]
   selectedId: StockfishOpponentDefinition["id"]
 }>) {
-  const copy = useMapachessCopy().setup
+  const catalog = useMapachessCopy()
+  const animalCopy = catalog.animals
+  const copy = catalog.setup
   const [attentionId, setAttentionId] = useState<string | null>(null)
   return (
     <fieldset disabled={disabled}>
@@ -48,7 +50,7 @@ export default function ChallengeOpponentChoices({
               opponent={opponent}
             />
             <span className="text-center font-bold">
-              {opponent.displayName}
+              {animalCopy.opponent(opponent.id)}
             </span>
           </label>
         ))}

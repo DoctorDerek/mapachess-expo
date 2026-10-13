@@ -2,12 +2,10 @@ import { useRef, useState } from "react"
 import { controllerPrompt } from "@mapachess/match-presentation/input-prompts"
 import DEFAULT_PLAYER_INPUT_BINDINGS, {
   changePlayerInputBinding,
-  CONTROLLER_CONTROL_LABELS,
   CONTROLLER_CONTROLS,
   isBindableKeyboardCode,
   keyboardBindingLabel,
   PLAYER_INPUT_ACTIONS,
-  PLAYER_INPUT_LABELS,
   samePlayerInputBindings,
   type BindingChange,
   type PlayerInputAction,
@@ -15,6 +13,7 @@ import DEFAULT_PLAYER_INPUT_BINDINGS, {
 } from "@mapachess/match/player-input"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import { usePlayerInput, usePlayerInputScope } from "./PlayerInputProvider"
 
 function BindingEditor({
@@ -26,6 +25,9 @@ function BindingEditor({
   onCancel: () => void
   onSave: (bindings: PlayerInputBindings) => void
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.inputBindingSettings
+
   const [draft, setDraft] = useState(bindings)
   const [device, setDevice] = useState<"controller" | "keyboard">("controller")
   const [editing, setEditing] = useState<PlayerInputAction | null>(null)
@@ -64,7 +66,7 @@ function BindingEditor({
       ref={root}
       data-player-input-layer="bindings"
       className="border-mapachito-violet mt-3 rounded-xl border-2 p-3 [&_button]:scroll-mt-20"
-      aria-label="Controls"
+      aria-label={messages.controls}
     >
       <div className="flex flex-wrap gap-3">
         {(["controller", "keyboard"] as const).map((option) => (
@@ -75,13 +77,12 @@ function BindingEditor({
             aria-pressed={device === option}
             onClick={() => setDevice(option)}
           >
-            {option === "controller" ? "Controller" : "Keyboard"}
+            {copy.controls.devices[option]}
           </MapachessButton>
         ))}
       </div>
       <p className="mt-3 text-sm">
-        Changes apply only after Save succeeds. Tab and platform shortcuts keep
-        their normal behavior.
+        {messages.changesApplyOnlyAfterSaveSucceedsTab}
       </p>
       <div className="mt-3 grid gap-2">
         {PLAYER_INPUT_ACTIONS.map((action) => (
@@ -90,7 +91,7 @@ function BindingEditor({
             className="grid grid-cols-[minmax(5rem,1fr)_minmax(0,2fr)] items-center gap-3"
           >
             <span id={`binding-${action}`} className="font-bold">
-              {PLAYER_INPUT_LABELS[action]}
+              {copy.shared.inputActions[action]}
             </span>
             <MapachessButton
               variant="secondary"
@@ -102,9 +103,12 @@ function BindingEditor({
                 className="flex flex-wrap items-center justify-center gap-2 text-sm"
               >
                 {device === "keyboard"
-                  ? keyboardBindingLabel(draft.keyboard[action])
+                  ? keyboardBindingLabel(
+                      draft.keyboard[action],
+                      copy.controls.keys,
+                    )
                   : draft.controller[action].length === 0
-                    ? "Via focused control"
+                    ? copy.controls.focusedControl
                     : draft.controller[action].map((control) => {
                         const prompt = controllerPrompt(family, control)
                         return (
@@ -119,7 +123,7 @@ function BindingEditor({
                               height={28}
                               className="bg-mapachito-charcoal size-7 rounded"
                             />
-                            {prompt.label}
+                            {copy.shared.controllerControls[control]}
                           </span>
                         )
                       })}
@@ -133,30 +137,36 @@ function BindingEditor({
           variant="secondary"
           onClick={() => setDraft(DEFAULT_PLAYER_INPUT_BINDINGS)}
         >
-          Restore defaults
+          {messages.restoreDefaults}
         </MapachessButton>
         <MapachessButton variant="secondary" onClick={onCancel}>
-          Cancel
+          {messages.cancel}
         </MapachessButton>
         <MapachessButton
           disabled={samePlayerInputBindings(draft, bindings)}
           onClick={() => onSave(draft)}
         >
-          Save controls
+          {messages.saveControls}
         </MapachessButton>
       </div>
       {editing === null ? null : (
         <MapachessDialog
-          label={`Change ${PLAYER_INPUT_LABELS[editing]} binding`}
+          label={copy.controls.changeBinding(copy.shared.inputActions[editing])}
           onClose={closeChoice}
         >
-          <h3 className="text-xl font-black">{PLAYER_INPUT_LABELS[editing]}</h3>
+          <h3 className="text-xl font-black">
+            {copy.shared.inputActions[editing]}
+          </h3>
           {conflict !== null ? (
             <>
               <p className="my-4" role="status">
                 {conflict.bindings === null
-                  ? "That change would leave a required action unbound. Choose another control."
-                  : `Already assigned to ${conflict.displaced === null ? "another action" : PLAYER_INPUT_LABELS[conflict.displaced]}. Swap the two bindings?`}
+                  ? copy.controls.requiredAction
+                  : copy.controls.swapQuestion(
+                      conflict.displaced === null
+                        ? null
+                        : copy.shared.inputActions[conflict.displaced],
+                    )}
               </p>
               <div className="flex gap-3">
                 <MapachessButton
@@ -164,7 +174,7 @@ function BindingEditor({
                   variant="secondary"
                   onClick={() => setConflict(null)}
                 >
-                  Cancel swap
+                  {messages.cancelSwap}
                 </MapachessButton>
                 {conflict.bindings === null ? null : (
                   <MapachessButton
@@ -174,7 +184,7 @@ function BindingEditor({
                       closeChoice()
                     }}
                   >
-                    Swap bindings
+                    {messages.swapBindings}
                   </MapachessButton>
                 )}
               </div>
@@ -182,8 +192,7 @@ function BindingEditor({
           ) : device === "controller" ? (
             <>
               <p className="my-3">
-                Choose the physical control. Your saved controls still navigate
-                this chooser.
+                {messages.chooseThePhysicalControlYourSavedControls}
               </p>
               <div className="mb-3 flex flex-wrap gap-3">
                 {([0, 1] as const).map((index) => {
@@ -198,10 +207,11 @@ function BindingEditor({
                       aria-pressed={slot === index}
                       onClick={() => setSlot(index)}
                     >
-                      {index === 0 ? "Primary" : "Alternate"}:{" "}
-                      {current === undefined
-                        ? "Not assigned"
-                        : CONTROLLER_CONTROL_LABELS[current]}
+                      {copy.controls[index === 0 ? "primary" : "alternate"](
+                        current === undefined
+                          ? undefined
+                          : copy.shared.controllerControls[current],
+                      )}
                     </MapachessButton>
                   )
                 })}
@@ -215,7 +225,7 @@ function BindingEditor({
                       choose({ device, action: editing, slot, control: null })
                     }
                   >
-                    Remove binding
+                    {messages.removeBinding}
                   </MapachessButton>
                 )}
               </div>
@@ -238,7 +248,7 @@ function BindingEditor({
                         height={32}
                         className="bg-mapachito-charcoal mx-auto size-8 rounded"
                       />
-                      {CONTROLLER_CONTROL_LABELS[control]}
+                      {copy.shared.controllerControls[control]}
                     </MapachessButton>
                   )
                 })}
@@ -264,11 +274,10 @@ function BindingEditor({
                   choose({ device, action: editing, code: event.code })
                 }}
               >
-                Press a key
+                {messages.pressAKey}
               </MapachessButton>
               <p className="my-3">
-                Escape closes without changes. To bind Escape explicitly, use
-                this control:
+                {messages.escapeClosesWithoutChangesToBindEscape}
               </p>
               <MapachessButton
                 variant="secondary"
@@ -276,7 +285,7 @@ function BindingEditor({
                   choose({ device, action: editing, code: "Escape" })
                 }
               >
-                Use Escape
+                {messages.useEscape}
               </MapachessButton>
             </div>
           )}
@@ -285,7 +294,7 @@ function BindingEditor({
             variant="secondary"
             onClick={closeChoice}
           >
-            Cancel binding change
+            {messages.cancelBindingChange}
           </MapachessButton>
         </MapachessDialog>
       )}
@@ -302,6 +311,9 @@ export default function InputBindingSettings({
   disabled: boolean
   onSave: (bindings: PlayerInputBindings) => void
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.inputBindingSettings
+
   const [open, setOpen] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   const close = (): void => {
@@ -317,7 +329,7 @@ export default function InputBindingSettings({
         disabled={disabled}
         onClick={() => setOpen(!open)}
       >
-        Controls
+        {messages.controls}
       </MapachessButton>
       {open ? (
         <BindingEditor
