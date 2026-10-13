@@ -11,6 +11,7 @@ import applyChallengeMatchResult, {
 } from "./challengeHistory.js"
 import type { DurablePlayerDataSlot } from "./durableStore.js"
 import { requiredRecoveryRevision } from "./durableStore.js"
+import type { FirstArrivalPreferences } from "./firstArrival.js"
 import {
   decodePlayerAppearance,
   type PlayerAppearance,
@@ -24,6 +25,21 @@ import validatePresentationPreferences, {
   type PresentationPreferences,
 } from "./presentationPreferences.js"
 import applyStoryMatchResult from "./storyProgress.js"
+
+export const changeFirstArrivalPreferences = (
+  current: MapachessPlayerData,
+  preferences: FirstArrivalPreferences,
+): MapachessPlayerData =>
+  Object.freeze({
+    ...current,
+    introductionCompleted:
+      current.introductionCompleted || preferences.introductionCompleted,
+    revision: current.revision + 1,
+    settings: Object.freeze({
+      ...current.settings,
+      locale: preferences.locale,
+    }),
+  })
 
 export const changePlayerAppearance = (
   current: MapachessPlayerData,

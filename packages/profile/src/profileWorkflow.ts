@@ -6,6 +6,7 @@ import {
   durableStoreSnapshotsEqual,
   type LoadedDurablePlayerData,
 } from "./durableStore.js"
+import type { FirstArrivalPreferences } from "./firstArrival.js"
 import type { PlayerAppearance } from "./playerAppearance.js"
 import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import { canonicalPlayerData } from "./playerDataCodec.js"
@@ -23,6 +24,7 @@ import type {
 } from "./profileMachineTypes.js"
 import {
   changeAutoHintMode,
+  changeFirstArrivalPreferences,
   changePlayerAppearance,
   changePlayerInputBindings,
   changePresentationPreferences,
@@ -32,6 +34,19 @@ import {
   replaceActiveMatch,
   resetPlayerElo,
 } from "./profileMutations.js"
+
+export const prepareFirstArrivalPending = (
+  context: ProfileMachineContext,
+  preferences: FirstArrivalPreferences,
+): PendingProfileWrite =>
+  pendingWrite(
+    requireLoaded(context),
+    changeFirstArrivalPreferences(
+      requireCurrentPlayerData(context),
+      preferences,
+    ),
+    "commit",
+  )
 
 export const prepareAppearancePending = (
   context: ProfileMachineContext,

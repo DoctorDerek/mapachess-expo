@@ -5,6 +5,7 @@ import {
   samePlayerInputBindings,
 } from "@mapachess/match/player-input"
 import type { LoadedDurablePlayerData } from "./durableStore.js"
+import { isShippedLocale } from "./locale.js"
 import type { MapachessPlayerData } from "./playerData.js"
 import type {
   MapachessPortableBackup,
@@ -34,6 +35,7 @@ import {
   prepareAppearancePending,
   prepareAutoHintModePending,
   prepareEloResetPending,
+  prepareFirstArrivalPending,
   prepareFreshRecoveryPending,
   prepareImportPending,
   prepareInitialPending,
@@ -85,6 +87,43 @@ const profileMachineDefinition = setup({
     >(({ input }) => retryPendingWrite(input)),
   },
   actions: {
+    rememberFirstArrivalPreferences: assign(({ context, event }) => {
+      if (
+        event.type !== "PROFILE.LOCALE_CHANGED" &&
+        event.type !== "PROFILE.INTRODUCTION_COMPLETED"
+      )
+        throw new Error(
+          "First-arrival preferences require a locale or introduction event.",
+        )
+      if (!isShippedLocale(event.locale))
+        throw new TypeError("Only a shipped language may be selected.")
+      const current =
+        context.pendingWrite?.candidate ?? requireCurrentPlayerData(context)
+      return {
+        requestedFirstArrivalPreferences: Object.freeze({
+          locale: event.locale,
+          introductionCompleted:
+            event.type === "PROFILE.INTRODUCTION_COMPLETED" ||
+            (context.requestedFirstArrivalPreferences?.introductionCompleted ??
+              current.introductionCompleted),
+        }),
+      }
+    }),
+    prepareRequestedFirstArrivalWrite: assign(({ context }) => {
+      if (context.requestedFirstArrivalPreferences === null)
+        throw new Error("Requested first-arrival preferences are required.")
+      return {
+        pendingWrite: prepareFirstArrivalPending(
+          context,
+          context.requestedFirstArrivalPreferences,
+        ),
+        requestedFirstArrivalPreferences: null,
+        persistenceFailure: null,
+      }
+    }),
+    clearRequestedFirstArrivalPreferences: assign({
+      requestedFirstArrivalPreferences: null,
+    }),
     rememberInputBindings: assign(({ event }) => {
       if (event.type !== "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED")
         throw new Error("Input settings require a binding event.")
@@ -247,6 +286,17 @@ const profileMachineDefinition = setup({
     })),
   },
   guards: {
+    requestedFirstArrivalPreferencesDiffer: ({ context }) => {
+      const requested = context.requestedFirstArrivalPreferences
+      const current = requireCurrentPlayerData(context)
+      return (
+        requested !== null &&
+        (requested.locale !== current.settings.locale ||
+          requested.introductionCompleted !== current.introductionCompleted)
+      )
+    },
+    requestedFirstArrivalPreferencesExist: ({ context }) =>
+      context.requestedFirstArrivalPreferences !== null,
     requestedInputBindingsDiffer: ({ context }) =>
       context.requestedInputBindings !== null &&
       !samePlayerInputBindings(
@@ -301,6 +351,7 @@ const profileMachineDefinition = setup({
     requestedAutoHintMode: null,
     requestedPresentationPreferences: null,
     requestedInputBindings: null,
+    requestedFirstArrivalPreferences: null,
     store: input.store,
   }),
   states: {
@@ -349,6 +400,15 @@ const profileMachineDefinition = setup({
     ready: {
       always: [
         {
+          guard: "requestedFirstArrivalPreferencesDiffer",
+          actions: "prepareRequestedFirstArrivalWrite",
+          target: "persisting",
+        },
+        {
+          guard: "requestedFirstArrivalPreferencesExist",
+          actions: "clearRequestedFirstArrivalPreferences",
+        },
+        {
           guard: "requestedInputBindingsDiffer",
           actions: "prepareRequestedInputWrite",
           target: "persisting",
@@ -377,6 +437,12 @@ const profileMachineDefinition = setup({
         },
       ],
       on: {
+        "PROFILE.LOCALE_CHANGED": {
+          actions: "rememberFirstArrivalPreferences",
+        },
+        "PROFILE.INTRODUCTION_COMPLETED": {
+          actions: "rememberFirstArrivalPreferences",
+        },
         "PROFILE.CHESS_APPEARANCE_CHANGED": {
           actions: "rememberPresentationPreferences",
         },
@@ -475,6 +541,14 @@ const profileMachineDefinition = setup({
     },
     persisting: {
       on: {
+        "PROFILE.LOCALE_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberFirstArrivalPreferences",
+        },
+        "PROFILE.INTRODUCTION_COMPLETED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberFirstArrivalPreferences",
+        },
         "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED": {
           guard: "profileCommitIsSaving",
           actions: "rememberInputBindings",
@@ -525,6 +599,14 @@ const profileMachineDefinition = setup({
     },
     retryingPersistence: {
       on: {
+        "PROFILE.LOCALE_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberFirstArrivalPreferences",
+        },
+        "PROFILE.INTRODUCTION_COMPLETED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberFirstArrivalPreferences",
+        },
         "PROFILE.INPUT_BINDINGS_SAVE_REQUESTED": {
           guard: "profileCommitIsSaving",
           actions: "rememberInputBindings",
@@ -588,15 +670,22 @@ export const selectPendingPlayerData = (
   const requested = snapshot.context.requestedAutoHintMode
   const appearance = snapshot.context.requestedPresentationPreferences
   const bindings = snapshot.context.requestedInputBindings
-  return requested === null && appearance === null && bindings === null
+  const arrival = snapshot.context.requestedFirstArrivalPreferences
+  return requested === null &&
+    appearance === null &&
+    bindings === null &&
+    arrival === null
     ? candidate
     : {
         ...candidate,
+        introductionCompleted:
+          arrival?.introductionCompleted ?? candidate.introductionCompleted,
         settings: {
           ...candidate.settings,
           autoHintMode: requested ?? candidate.settings.autoHintMode,
           ...appearance,
           inputBindings: bindings ?? candidate.settings.inputBindings,
+          locale: arrival?.locale ?? candidate.settings.locale,
         },
       }
 }
