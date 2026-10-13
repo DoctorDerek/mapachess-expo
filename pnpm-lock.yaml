@@ -189,6 +189,9 @@ importers:
       '@mapachess/hints':
         specifier: workspace:*
         version: link:../../packages/hints
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@mapachess/match':
         specifier: workspace:*
         version: link:../../packages/match
@@ -295,6 +298,8 @@ importers:
         specifier: ^0.15.1
         version: 0.15.1
 
+  packages/localization: {}
+
   packages/match:
     dependencies:
       '@mapachess/diagnostics':
@@ -321,6 +326,9 @@ importers:
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match

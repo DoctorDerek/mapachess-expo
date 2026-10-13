@@ -5,10 +5,6 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
-    "./locale": {
-      "types": "./src/locale.ts",
-      "default": "./dist/locale.js"
-    },
     "./first-arrival": {
       "types": "./src/firstArrival.ts",
       "default": "./dist/firstArrival.js"
@@ -78,6 +74,7 @@
   },
   "dependencies": {
     "@mapachess/diagnostics": "workspace:*",
+    "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/match-presentation": "workspace:*",
     "xstate": "^5"

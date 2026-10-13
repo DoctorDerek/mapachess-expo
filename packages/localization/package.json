@@ -1,0 +1,21 @@
+{
+  "name": "@mapachess/localization",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./locale": {
+      "types": "./src/locale.ts",
+      "default": "./dist/locale.js"
+    },
+    "./catalog": {
+      "types": "./src/catalog.ts",
+      "default": "./dist/catalog.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "typecheck": "tsc --project tsconfig.json"
+  }
+}

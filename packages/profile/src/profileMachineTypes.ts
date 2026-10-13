@@ -1,4 +1,5 @@
 import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
+import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { CoachCollectionId } from "@mapachess/match-presentation/coach-portrait"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import type { ChallengeSetup } from "@mapachess/match/challenge-setup"
@@ -12,7 +13,6 @@ import type {
   LoadedDurablePlayerData,
 } from "./durableStore.js"
 import type { FirstArrivalPreferences } from "./firstArrival.js"
-import type { ShippedLocale } from "./locale.js"
 import type { PlayerAppearance } from "./playerAppearance.js"
 import type { MapachessPlayerData, PlayerEloRatingId } from "./playerData.js"
 import type {
