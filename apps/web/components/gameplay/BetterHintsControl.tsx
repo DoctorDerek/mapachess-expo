@@ -1,5 +1,6 @@
 "use client"
 
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type {
   BetterHint,
   BetterHintsResult,
@@ -7,13 +8,9 @@ import type {
 import type { MatchHintStage } from "@mapachess/match/match-machine"
 import InputPrompt from "../input/InputPrompt"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 type HintControlAction = "move-hints" | "piece-hints"
-
-type HintControlPresentation = Readonly<{
-  action: HintControlAction | null
-  label: string
-}>
 
 export type BetterHintsControlProps = Readonly<{
   busy?: boolean
@@ -25,82 +22,50 @@ export type BetterHintsControlProps = Readonly<{
   stage: MatchHintStage
 }>
 
-const HINT_CONTROLS = Object.freeze({
-  failure: Object.freeze({
-    action: "piece-hints",
-    label: "Retry Piece Hints",
-  }),
-  hidden: Object.freeze({
-    action: null,
-    label: "Hints available on your turn",
-  }),
-  loading: Object.freeze({ action: null, label: "Finding Piece Hints…" }),
-  "move-hints": Object.freeze({ action: null, label: "Move Hints Shown" }),
-  "piece-hints": Object.freeze({
-    action: "move-hints",
-    label: "Show Move Hints",
-  }),
-  ready: Object.freeze({
-    action: "piece-hints",
-    label: "Show Piece Hints",
-  }),
-  unavailable: Object.freeze({ action: null, label: "Hints unavailable" }),
-}) satisfies Readonly<Record<MatchHintStage, HintControlPresentation>>
+const HINT_ACTIONS = {
+  failure: "piece-hints",
+  hidden: null,
+  loading: null,
+  "move-hints": null,
+  "piece-hints": "move-hints",
+  ready: "piece-hints",
+  unavailable: null,
+} as const satisfies Readonly<Record<MatchHintStage, HintControlAction | null>>
 
-const COMPLETED_HINT_CONTROL: HintControlPresentation = Object.freeze({
-  action: null,
-  label: "Hints unavailable after game",
-})
+type HintCopy = MapachessCatalog["gameplay"]["hints"]
 
-const HINT_GUIDANCE = Object.freeze({
-  failure: "Piece Hints could not be calculated. Your position is unchanged.",
-  hidden: "Piece Hints return when it is your turn.",
-  loading: "Analyzing this unchanged board for Player and Opponent pieces.",
-  "move-hints":
-    "Solid green arrows show Player moves. Dashed red arrows show Opponent moves.",
-  "piece-hints":
-    "Solid green borders mark Player pieces. Dashed red borders mark Opponent pieces.",
-  ready: "Start by finding the most important Player and Opponent pieces.",
-  unavailable: "This runtime has no Better Hints analyst.",
-}) satisfies Readonly<Record<MatchHintStage, string>>
-
-const describeHintPieces = (
-  owner: "Opponent" | "Player",
-  hints: readonly BetterHint[],
-): string =>
-  `${owner} Piece Hints: ${hints.length === 0 ? "none" : hints.map((hint) => hint.from).join(", ")}.`
-
-const describeHintMoves = (
-  owner: "Opponent" | "Player",
-  hints: readonly BetterHint[],
-): string =>
-  `${owner} Move Hints: ${
-    hints.length === 0
-      ? "none"
-      : hints
-          .map((hint) =>
-            hint.castling === undefined
-              ? `${hint.from} to ${hint.to}`
-              : `castle ${hint.castling.side}side, king to ${hint.to}, rook from ${hint.castling.rookFrom} to ${hint.castling.rookTo}`,
-          )
-          .join("; ")
-  }.`
+const describeHintMove = (hint: BetterHint, copy: HintCopy): string =>
+  hint.castling === undefined
+    ? copy.move(hint.from, hint.to)
+    : copy.castle(
+        hint.castling.side,
+        hint.to,
+        hint.castling.rookFrom,
+        hint.castling.rookTo,
+      )
 
 const hintAnnouncement = (
   stage: MatchHintStage,
   hints: BetterHintsResult | null,
+  copy: HintCopy,
 ): string => {
   if (stage === "loading") {
-    return "Finding Piece Hints for Player and Opponent."
+    return copy.loading
   }
   if (stage === "failure") {
-    return "Piece Hints could not be calculated. The board is unchanged."
+    return copy.failed
   }
   if (stage === "piece-hints" && hints !== null) {
-    return `Piece Hints shown. ${describeHintPieces("Player", hints.player)} ${describeHintPieces("Opponent", hints.opponent)}`
+    return copy.piecesShown(
+      hints.player.map((hint) => hint.from),
+      hints.opponent.map((hint) => hint.from),
+    )
   }
   if (stage === "move-hints" && hints !== null) {
-    return `Move Hints shown. ${describeHintMoves("Player", hints.player)} ${describeHintMoves("Opponent", hints.opponent)}`
+    return copy.movesShown(
+      hints.player.map((hint) => describeHintMove(hint, copy)),
+      hints.opponent.map((hint) => describeHintMove(hint, copy)),
+    )
   }
   return ""
 }
@@ -114,10 +79,15 @@ export default function BetterHintsControl({
   onPieceHintsRequested,
   stage,
 }: BetterHintsControlProps) {
-  const control = matchComplete ? COMPLETED_HINT_CONTROL : HINT_CONTROLS[stage]
-  const guidance = matchComplete
-    ? "Better Hints are available only while the match is in progress."
-    : HINT_GUIDANCE[stage]
+  const copy = useMapachessCopy()
+  const messages = copy.interface.betterHintsControl
+
+  const control = {
+    action: matchComplete ? null : HINT_ACTIONS[stage],
+    label: copy.gameplay.hints.controls[matchComplete ? "complete" : stage],
+  }
+  const guidance =
+    copy.gameplay.hints.guidance[matchComplete ? "complete" : stage]
   const activate =
     control.action === "piece-hints"
       ? onPieceHintsRequested
@@ -131,7 +101,7 @@ export default function BetterHintsControl({
       className="relative min-w-0 flex-1 basis-12"
     >
       <h2 className="sr-only" id="better-hints-title">
-        Better Hints
+        {messages.betterHints}
       </h2>
       <MapachessButton
         variant="hint"
@@ -146,10 +116,10 @@ export default function BetterHintsControl({
       >
         <InputPrompt action="hints" fallback="✦" />
         <span className="sr-only">{control.label}</span>
-        <span aria-hidden="true">Hints</span>
+        <span aria-hidden="true">{messages.hints}</span>
       </MapachessButton>
       <p aria-atomic="true" aria-live="polite" className="sr-only">
-        {hintAnnouncement(stage, hints)}
+        {hintAnnouncement(stage, hints, copy.gameplay.hints)}
       </p>
       <p
         className={

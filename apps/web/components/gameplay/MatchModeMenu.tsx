@@ -3,8 +3,8 @@ import {
   MATCH_MODE_CHOICES,
   type MatchModeSelection,
 } from "@mapachess/match/match-setup"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ProfileAction from "../profile/ProfileAction"
 import ProfileCard from "../profile/ProfileCard"
 
@@ -22,6 +22,7 @@ export default function MatchModeMenu({
   onCustomize,
   onShare,
 }: MatchModeMenuProps) {
+  const copy = useMapachessCopy().setup
   return (
     <section
       aria-labelledby="game-modes-title"
@@ -39,24 +40,24 @@ export default function MatchModeMenu({
               <span aria-hidden="true" className="inline-block -scale-x-100">
                 ✎
               </span>{" "}
-              Customize profile card
+              {copy.customizeProfile}
             </ProfileAction>
             <ProfileAction
               disabled={disabled}
               onClick={onShare}
               className="bg-mapachito-blue flex-1 shadow-[0.375rem_0.375rem_0_#008b8b]"
             >
-              <span aria-hidden="true">↗</span> Share profile card
+              <span aria-hidden="true">↗</span> {copy.shareProfile}
             </ProfileAction>
           </div>
         </div>
         <div className="flex flex-wrap gap-4 pr-1.5 pb-1.5">
-          {MATCH_MODE_CHOICES.map(({ mode, variant, title }) => (
+          {MATCH_MODE_CHOICES.map(({ mode, variant }) => (
             <ProfileAction
               key={`${variant}:${mode}`}
               disabled={disabled}
               onClick={() => onModeSelected({ mode, variant })}
-              aria-label={title}
+              aria-label={copy.presentations[variant][mode].title}
               className={cx(
                 "flex min-h-24 min-w-0 flex-[1_1_max(9.5rem,calc((100%-1rem)/2))] flex-col items-stretch justify-center gap-2 px-4 text-left xl:min-h-32",
                 variant === "standard"
@@ -69,10 +70,10 @@ export default function MatchModeMenu({
               )}
             >
               <strong className="text-xl xl:text-2xl">
-                {MATCH_VARIANT_LABELS[variant]}
+                {copy.variants[variant]}
               </strong>
               <span className="flex items-center justify-between gap-2">
-                {mode === "story" ? "Story" : "Challenge"}
+                {copy.modes[mode]}
                 <span aria-hidden="true">→</span>
               </span>
             </ProfileAction>

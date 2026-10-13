@@ -1,3 +1,4 @@
+import loadCatalog from "@mapachess/localization/catalog"
 import type {
   MatchColor,
   MatchPieceRole,
@@ -68,12 +69,12 @@ const pieceSet = <Id extends string>(
 export const CHESS_PIECE_SETS = Object.freeze([
   Object.freeze({
     id: "current",
-    label: "Mapachess default",
+    label: loadCatalog("en").artwork.pieces.current,
     kind: "unicode",
   } as const),
   pieceSet(
     "chessnut",
-    "Chessnut",
+    loadCatalog("en").artwork.pieces["chessnut"],
     "chessnut",
     "public",
     ["white", "black"],
@@ -84,7 +85,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "skoll",
-    "Game-icons (Skoll)",
+    loadCatalog("en").artwork.pieces["skoll"],
     "skoll",
     "public",
     ["white", "black"],
@@ -95,7 +96,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "classical",
-    "Classical · white / black",
+    loadCatalog("en").artwork.pieces["classical"],
     "toffee-classical",
     "protected-chess",
     ["white", "black"],
@@ -104,7 +105,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "classical-brown",
-    "Classical · white / brown",
+    loadCatalog("en").artwork.pieces["classical-brown"],
     "toffee-classical",
     "protected-chess",
     ["white", "darkbrown"],
@@ -113,7 +114,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "classical-earth",
-    "Classical · brown / black",
+    loadCatalog("en").artwork.pieces["classical-earth"],
     "toffee-classical",
     "protected-chess",
     ["darkbrown", "black"],
@@ -122,7 +123,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "toffee-wood",
-    "Toffee Wood",
+    loadCatalog("en").artwork.pieces["toffee-wood"],
     "toffee-wood",
     "protected-chess",
     ["toffee-wood/white", "toffee-wood/black"],
@@ -131,7 +132,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "toffee-ice",
-    "Toffee Ice",
+    loadCatalog("en").artwork.pieces["toffee-ice"],
     "toffee-ice",
     "protected-chess",
     ["toffee-ice/white", "toffee-ice/black"],
@@ -140,7 +141,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-1-bit",
-    "Backterria · 1-bit",
+    loadCatalog("en").artwork.pieces["back-1-bit"],
     "backterria",
     "protected-chess",
     ["back-1-bit/white", "back-1-bit/black"],
@@ -149,7 +150,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-plain",
-    "Backterria · plain",
+    loadCatalog("en").artwork.pieces["back-plain"],
     "backterria",
     "protected-chess",
     ["back-plain/white", "back-plain/black"],
@@ -158,7 +159,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-wood",
-    "Backterria · wood",
+    loadCatalog("en").artwork.pieces["back-wood"],
     "backterria",
     "protected-chess",
     ["back-wood/white", "back-wood/black"],
@@ -167,7 +168,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-gold-bronze",
-    "Backterria · gold / bronze",
+    loadCatalog("en").artwork.pieces["back-gold-bronze"],
     "backterria",
     "protected-chess",
     ["back-gold-bronze/white", "back-gold-bronze/black"],
@@ -176,7 +177,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-glass",
-    "Backterria · glass",
+    loadCatalog("en").artwork.pieces["back-glass"],
     "backterria",
     "protected-chess",
     ["back-glass/white", "back-glass/black"],
@@ -185,7 +186,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-stone",
-    "Backterria · stone",
+    loadCatalog("en").artwork.pieces["back-stone"],
     "backterria",
     "protected-chess",
     ["back-stone/white", "back-stone/black"],
@@ -194,7 +195,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-elegant",
-    "Backterria · elegant",
+    loadCatalog("en").artwork.pieces["back-elegant"],
     "backterria",
     "protected-chess",
     ["back-elegant/white", "back-elegant/black"],
@@ -203,7 +204,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-fantasy-i-mono",
-    "Fantasy I · white / black",
+    loadCatalog("en").artwork.pieces["back-fantasy-i-mono"],
     "backterria",
     "protected-chess",
     ["back-fantasy-i-mono/white", "back-fantasy-i-mono/black"],
@@ -212,7 +213,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-fantasy-i-color",
-    "Fantasy I · blue / red",
+    loadCatalog("en").artwork.pieces["back-fantasy-i-color"],
     "backterria",
     "protected-chess",
     ["back-fantasy-i-color/white", "back-fantasy-i-color/black"],
@@ -221,7 +222,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-fantasy-i-earth",
-    "Fantasy I · yellow / green",
+    loadCatalog("en").artwork.pieces["back-fantasy-i-earth"],
     "backterria",
     "protected-chess",
     ["back-fantasy-i-earth/white", "back-fantasy-i-earth/black"],
@@ -230,7 +231,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-fantasy-ii-plain",
-    "Fantasy II · plain",
+    loadCatalog("en").artwork.pieces["back-fantasy-ii-plain"],
     "backterria",
     "protected-chess",
     ["back-fantasy-ii-plain/white", "back-fantasy-ii-plain/black"],
@@ -239,7 +240,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "back-fantasy-ii-gold",
-    "Fantasy II · gold",
+    loadCatalog("en").artwork.pieces["back-fantasy-ii-gold"],
     "backterria",
     "protected-chess",
     ["back-fantasy-ii-gold/white", "back-fantasy-ii-gold/black"],
@@ -248,7 +249,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "cosunosuke",
-    "Cosunosuke · gold / blue",
+    loadCatalog("en").artwork.pieces["cosunosuke"],
     "cosunosuke",
     "protected-chess",
     ["white", "black"],
@@ -257,7 +258,7 @@ export const CHESS_PIECE_SETS = Object.freeze([
   ),
   pieceSet(
     "cat-chess",
-    "Cat chess",
+    loadCatalog("en").artwork.pieces["cat-chess"],
     "cat-chess",
     "public",
     ["white", "black"],
@@ -292,24 +293,60 @@ const board = <Id extends string>(
 export const CHESS_BOARDS = Object.freeze([
   Object.freeze({
     id: "current",
-    label: "Mapachess blue / white",
+    label: loadCatalog("en").artwork.boards.current,
     kind: "colors",
   } as const),
-  board("toffee-brown", "Toffee · brown", "toffee-classical", 256),
-  board("toffee-mono", "Toffee · black / white", "toffee-classical", 256),
-  board("toffee-green", "Toffee · green / yellow", "toffee-classical", 256),
-  board("toffee-wood", "Toffee · wood", "toffee-wood", 256),
-  board("toffee-ice", "Toffee · ice", "toffee-ice", 256),
+  board(
+    "toffee-brown",
+    loadCatalog("en").artwork.boards["toffee-brown"],
+    "toffee-classical",
+    256,
+  ),
+  board(
+    "toffee-mono",
+    loadCatalog("en").artwork.boards["toffee-mono"],
+    "toffee-classical",
+    256,
+  ),
+  board(
+    "toffee-green",
+    loadCatalog("en").artwork.boards["toffee-green"],
+    "toffee-classical",
+    256,
+  ),
+  board(
+    "toffee-wood",
+    loadCatalog("en").artwork.boards["toffee-wood"],
+    "toffee-wood",
+    256,
+  ),
+  board(
+    "toffee-ice",
+    loadCatalog("en").artwork.boards["toffee-ice"],
+    "toffee-ice",
+    256,
+  ),
   ...(["a", "b", "c", "d", "e", "f", "g", "h", "i"] as const).map((letter) =>
     board(
       `back-${letter}`,
-      `Backterria · board ${letter.toUpperCase()}`,
+      loadCatalog("en").artwork.boards[`back-${letter}`],
       "backterria",
       128,
     ),
   ),
-  board("cosunosuke", "Cosunosuke · slate", "cosunosuke", 256),
-  board("cat-chess", "Cat chess · green / white", "cat-chess", 744, "public"),
+  board(
+    "cosunosuke",
+    loadCatalog("en").artwork.boards["cosunosuke"],
+    "cosunosuke",
+    256,
+  ),
+  board(
+    "cat-chess",
+    loadCatalog("en").artwork.boards["cat-chess"],
+    "cat-chess",
+    744,
+    "public",
+  ),
 ] as const)
 
 export type ChessPieceSetId = (typeof CHESS_PIECE_SETS)[number]["id"]

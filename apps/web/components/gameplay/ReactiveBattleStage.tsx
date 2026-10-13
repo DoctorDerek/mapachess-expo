@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import {
   selectMatchPresentationAnimalReaction,
   selectMatchPresentationBeat,
@@ -18,6 +19,7 @@ import type {
 } from "@mapachess/match/stockfish-opponent"
 import { battleStageStyle } from "../../lib/presentation/battleSpriteFrames"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BattleFighter from "./BattleFighter"
 
 export type ReactiveBattleStageProps = Readonly<{
@@ -48,25 +50,26 @@ const participantWithRole = (
 const stageAnnouncement = (
   phase: MatchPresentationPhase | null,
   opponentName: ReactiveBattleStageProps["opponentName"],
+  copy: MapachessCatalog["presentation"],
 ): string => {
   if (phase === null) {
-    return `Mapachito and ${opponentName} are ready.`
+    return copy.ready(opponentName)
   }
   if (phase.kind === "capture" || phase.kind === "check") {
     const attacker = participantWithRole(phase, "attacker")
-    const attackerName = attacker === "player" ? "Mapachito" : opponentName
+    const attackerName = attacker === "player" ? copy.playerName : opponentName
     const victimName =
       participantWithRole(phase, "victim") === "player"
-        ? "Mapachito"
+        ? copy.playerName
         : opponentName
     return phase.kind === "capture"
-      ? `${attackerName} captures; ${victimName} reacts.`
-      : `${attackerName} gives check; ${victimName} reacts.`
+      ? copy.capture(attackerName, victimName)
+      : copy.check(attackerName, victimName)
   }
 
   return phase.player.family === "victory"
-    ? "Mapachito wins the chess battle."
-    : `${opponentName} wins the chess battle.`
+    ? copy.victory(copy.playerName)
+    : copy.victory(opponentName)
 }
 
 export default function ReactiveBattleStage({
@@ -77,6 +80,9 @@ export default function ReactiveBattleStage({
   pauseTransientOnBackground = false,
   playerAnimal = "raccoon-stockfish",
 }: ReactiveBattleStageProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.reactiveBattleStage
+
   const { currentPhase, pendingParticipants, phaseIndex, reactionSequence } =
     presentationSnapshot.context
   const playerReaction = selectMatchPresentationAnimalReaction(
@@ -105,11 +111,11 @@ export default function ReactiveBattleStage({
       className="text-mapachito-white relative isolate"
     >
       <h2 className="sr-only" id="reactive-battle-stage-title">
-        Reactive Battle Stage
+        {messages.reactiveBattleStage}
       </h2>
 
       <p aria-live="polite" className="sr-only">
-        {stageAnnouncement(currentPhase, opponentName)}
+        {stageAnnouncement(currentPhase, opponentName, copy.presentation)}
       </p>
 
       <div
@@ -118,7 +124,7 @@ export default function ReactiveBattleStage({
       >
         <BattleFighter
           beat={beat}
-          displayName="Mapachito"
+          displayName={copy.presentation.playerName}
           facing="right"
           onAnimationCompleted={onParticipantAnimationCompleted}
           opposingPresentation={opponentPresentation}

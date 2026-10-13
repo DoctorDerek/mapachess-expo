@@ -1,27 +1,98 @@
+import loadCatalog from "@mapachess/localization/catalog"
+
 const STOCKFISH_OPPONENT_IDENTITIES = [
-  { id: "chicken-stockfish", displayName: "Chicken Stockfish" },
-  { id: "bunny-stockfish", displayName: "Bunny Stockfish" },
-  { id: "dog-stockfish", displayName: "Dog Stockfish" },
-  { id: "cat-stockfish", displayName: "Cat Stockfish" },
-  { id: "mouse-stockfish", displayName: "Mouse Stockfish" },
-  { id: "frog-stockfish", displayName: "Frog Stockfish" },
-  { id: "turtle-stockfish", displayName: "Turtle Stockfish" },
-  { id: "panda-stockfish", displayName: "Panda Stockfish" },
-  { id: "otter-stockfish", displayName: "Otter Stockfish" },
-  { id: "raccoon-stockfish", displayName: "Raccoon Stockfish" },
-  { id: "axolotl-stockfish", displayName: "Axolotl Stockfish" },
-  { id: "parrot-stockfish", displayName: "Parrot Stockfish" },
-  { id: "hedgehog-stockfish", displayName: "Hedgehog Stockfish" },
-  { id: "deer-stockfish", displayName: "Deer Stockfish" },
-  { id: "fox-stockfish", displayName: "Fox Stockfish" },
-  { id: "wolf-stockfish", displayName: "Wolf Stockfish" },
-  { id: "falcon-stockfish", displayName: "Falcon Stockfish" },
-  { id: "crane-stockfish", displayName: "Crane Stockfish" },
-  { id: "crow-stockfish", displayName: "Crow Stockfish" },
-  { id: "bat-stockfish", displayName: "Bat Stockfish" },
-  { id: "ninja-stockfish", displayName: "Ninja Stockfish" },
-  { id: "war-hero-stockfish", displayName: "War Hero Stockfish" },
-  { id: "dragonfly-stockfish", displayName: "Dragonfly Stockfish" },
+  {
+    id: "chicken-stockfish",
+    displayName: loadCatalog("en").animals.opponent("chicken-stockfish"),
+  },
+  {
+    id: "bunny-stockfish",
+    displayName: loadCatalog("en").animals.opponent("bunny-stockfish"),
+  },
+  {
+    id: "dog-stockfish",
+    displayName: loadCatalog("en").animals.opponent("dog-stockfish"),
+  },
+  {
+    id: "cat-stockfish",
+    displayName: loadCatalog("en").animals.opponent("cat-stockfish"),
+  },
+  {
+    id: "mouse-stockfish",
+    displayName: loadCatalog("en").animals.opponent("mouse-stockfish"),
+  },
+  {
+    id: "frog-stockfish",
+    displayName: loadCatalog("en").animals.opponent("frog-stockfish"),
+  },
+  {
+    id: "turtle-stockfish",
+    displayName: loadCatalog("en").animals.opponent("turtle-stockfish"),
+  },
+  {
+    id: "panda-stockfish",
+    displayName: loadCatalog("en").animals.opponent("panda-stockfish"),
+  },
+  {
+    id: "otter-stockfish",
+    displayName: loadCatalog("en").animals.opponent("otter-stockfish"),
+  },
+  {
+    id: "raccoon-stockfish",
+    displayName: loadCatalog("en").animals.opponent("raccoon-stockfish"),
+  },
+  {
+    id: "axolotl-stockfish",
+    displayName: loadCatalog("en").animals.opponent("axolotl-stockfish"),
+  },
+  {
+    id: "parrot-stockfish",
+    displayName: loadCatalog("en").animals.opponent("parrot-stockfish"),
+  },
+  {
+    id: "hedgehog-stockfish",
+    displayName: loadCatalog("en").animals.opponent("hedgehog-stockfish"),
+  },
+  {
+    id: "deer-stockfish",
+    displayName: loadCatalog("en").animals.opponent("deer-stockfish"),
+  },
+  {
+    id: "fox-stockfish",
+    displayName: loadCatalog("en").animals.opponent("fox-stockfish"),
+  },
+  {
+    id: "wolf-stockfish",
+    displayName: loadCatalog("en").animals.opponent("wolf-stockfish"),
+  },
+  {
+    id: "falcon-stockfish",
+    displayName: loadCatalog("en").animals.opponent("falcon-stockfish"),
+  },
+  {
+    id: "crane-stockfish",
+    displayName: loadCatalog("en").animals.opponent("crane-stockfish"),
+  },
+  {
+    id: "crow-stockfish",
+    displayName: loadCatalog("en").animals.opponent("crow-stockfish"),
+  },
+  {
+    id: "bat-stockfish",
+    displayName: loadCatalog("en").animals.opponent("bat-stockfish"),
+  },
+  {
+    id: "ninja-stockfish",
+    displayName: loadCatalog("en").animals.opponent("ninja-stockfish"),
+  },
+  {
+    id: "war-hero-stockfish",
+    displayName: loadCatalog("en").animals.opponent("war-hero-stockfish"),
+  },
+  {
+    id: "dragonfly-stockfish",
+    displayName: loadCatalog("en").animals.opponent("dragonfly-stockfish"),
+  },
 ] as const
 
 const STORY_OPPONENT_TARGET_ELO_STEP = 100

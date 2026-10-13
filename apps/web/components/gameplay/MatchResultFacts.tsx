@@ -1,8 +1,8 @@
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MedalWithHintUse from "./MedalWithHintUse"
 
 export default function MatchResultFacts({
@@ -12,6 +12,8 @@ export default function MatchResultFacts({
   match: DurableMatchRecord
   reward: AcceptedMatchReward | null
 }>) {
+  const copy = useMapachessCopy()
+
   const challengeMedal =
     match.mode === "challenge" ? matchVictoryMedal(match) : null
   if (challengeMedal === null && reward === null) return null
@@ -23,14 +25,18 @@ export default function MatchResultFacts({
       )}
       {reward === null ? null : (
         <>
-          <span>+{reward.awardedXp} XP</span>
+          <span>{copy.gameplay.awardedXp(reward.awardedXp)}</span>
           <span>
-            Level {levelFromTotalXp(reward.totalXpBefore + reward.awardedXp)}
+            {copy.gameplay.level(
+              levelFromTotalXp(reward.totalXpBefore + reward.awardedXp),
+            )}
           </span>
           {reward.ratedElo === null ? null : (
             <span>
-              {MATCH_VARIANT_LABELS[reward.ratedElo.variant]} Elo{" "}
-              {Math.round(reward.ratedElo.after)}
+              {copy.profile.rating(
+                copy.setup.variants[reward.ratedElo.variant],
+                reward.ratedElo.after,
+              )}
             </span>
           )}
         </>

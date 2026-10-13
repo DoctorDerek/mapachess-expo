@@ -1,11 +1,11 @@
 import { useId } from "react"
 import {
-  AUTO_HINT_MEDAL_EXPLANATION,
   AUTO_HINT_MODE_PRESENTATION,
   AUTO_HINT_MODES,
   type AutoHintMode,
 } from "@mapachess/match/auto-hint-mode"
 import MedalSymbol from "../presentation/MedalSymbol"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 export type AutoHintModeChoicesProps = Readonly<{
   autoHintMode: AutoHintMode
@@ -18,6 +18,7 @@ export default function AutoHintModeChoices({
   disabled,
   onAutoHintModeChanged,
 }: AutoHintModeChoicesProps) {
+  const copy = useMapachessCopy().setup
   const groupId = useId()
 
   return (
@@ -27,17 +28,17 @@ export default function AutoHintModeChoices({
       disabled={disabled}
     >
       <legend className="text-mapachito-charcoal text-lg font-black">
-        Better Hints
+        {copy.betterHints}
       </legend>
       <p
         className="text-mapachito-charcoal mt-2 text-sm leading-relaxed"
         id={`${groupId}-explanation`}
       >
-        {AUTO_HINT_MEDAL_EXPLANATION}
+        {copy.hintMedalExplanation}
       </p>
       <div className="mt-4 grid gap-3">
         {AUTO_HINT_MODES.map((mode) => {
-          const choice = AUTO_HINT_MODE_PRESENTATION[mode]
+          const choice = copy.autoHints[mode]
           const controlId = `${groupId}-${mode}`
           return (
             <label
@@ -73,7 +74,9 @@ export default function AutoHintModeChoices({
                   className="text-mapachito-violet mt-2 block text-sm font-bold"
                   id={`${controlId}-medal`}
                 >
-                  <MedalSymbol medal={choice.medalTier} />
+                  <MedalSymbol
+                    medal={AUTO_HINT_MODE_PRESENTATION[mode].medalTier}
+                  />
                   {choice.medal}
                 </span>
               </span>

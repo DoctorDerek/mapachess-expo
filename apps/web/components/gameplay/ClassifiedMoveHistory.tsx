@@ -3,6 +3,7 @@ import {
   type MatchMoveTransition,
 } from "@mapachess/match/match-move"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ClassifiedMoveText from "./ClassifiedMoveText"
 
 export default function ClassifiedMoveHistory({
@@ -12,6 +13,8 @@ export default function ClassifiedMoveHistory({
   transitions: readonly MatchMoveTransition[]
   records: readonly MoveFeedbackRecord[]
 }>) {
+  const messages = useMapachessCopy().interface.classifiedMoveHistory
+
   return (
     <section
       aria-labelledby="move-history-title"
@@ -21,11 +24,11 @@ export default function ClassifiedMoveHistory({
         className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
         id="move-history-title"
       >
-        Move History
+        {messages.moveHistory}
       </h2>
       {transitions.length === 0 ? (
         <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-          No moves yet.
+          {messages.noMovesYet}
         </p>
       ) : (
         <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 text-base inset-shadow-[0.5rem_0_0]">

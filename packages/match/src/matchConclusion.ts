@@ -1,3 +1,6 @@
+import loadCatalog, {
+  type MapachessCatalog,
+} from "@mapachess/localization/catalog"
 import type { MatchColor, MatchPositionStatus } from "./matchPosition.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
@@ -39,22 +42,24 @@ export const matchConclusionText = (
   conclusion: MatchConclusion,
   playerColor: MatchColor,
   opponentName: string,
+  copy: MapachessCatalog["gameplay"]["conclusion"] = loadCatalog("en").gameplay
+    .conclusion,
 ): string => {
   switch (conclusion.type) {
     case "checkmate":
       return conclusion.winner === playerColor
-        ? "You won!"
-        : `${opponentName} won.`
+        ? copy.playerWon
+        : copy.opponentWon(opponentName)
     case "resignation":
       return conclusion.winner === playerColor
-        ? `${opponentName} resigned — you won.`
-        : `You resigned — ${opponentName} won.`
+        ? copy.opponentResigned(opponentName)
+        : copy.playerResigned(opponentName)
     case "draw-agreement":
-      return "Draw by agreement."
+      return copy[conclusion.type]
     case "stalemate":
-      return "Draw by stalemate."
+      return copy[conclusion.type]
     case "insufficient-material":
-      return "Draw by insufficient material."
+      return copy[conclusion.type]
   }
 }
 

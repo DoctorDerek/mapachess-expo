@@ -1,4 +1,8 @@
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
+
 export default function LocalSaveError() {
+  const messages = useMapachessCopy().interface.localSaveError
+
   return (
     <span className="inline-flex items-center gap-2">
       <svg
@@ -11,7 +15,7 @@ export default function LocalSaveError() {
       >
         <path d="m6 6 12 12M18 6 6 18" />
       </svg>
-      Local save error
+      {messages.localSaveError}
     </span>
   )
 }

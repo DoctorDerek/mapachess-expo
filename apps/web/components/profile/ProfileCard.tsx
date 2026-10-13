@@ -2,7 +2,6 @@
 
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { MATCH_VARIANT_LABELS } from "@mapachess/match/match-variant"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
@@ -20,6 +19,7 @@ import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_WIDTH,
 } from "../../lib/presentation/profileCardFormat"
+import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 
 export function ProfileArtwork({
   input,
@@ -30,6 +30,8 @@ export function ProfileArtwork({
   exportPreview?: boolean
   fitStage?: boolean
 }>) {
+  const messages = useMapachessCopy().interface.profileCard
+
   const canvas = useRef<HTMLCanvasElement>(null)
   const [failure, setFailure] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -118,13 +120,13 @@ export function ProfileArtwork({
       />
       {failure ? (
         <div role="alert" className="p-3 text-base">
-          <p>Profile artwork could not load.</p>
+          <p>{messages.profileArtworkCouldNotLoad}</p>
           <button
             type="button"
             onClick={() => setRetry((value) => value + 1)}
             className="mt-2 underline"
           >
-            Retry artwork
+            {messages.retryArtwork}
           </button>
         </div>
       ) : null}
@@ -136,28 +138,40 @@ export default function ProfileCard({
   data,
   appearance = data.appearance,
 }: Readonly<{ data: MapachessPlayerData; appearance?: PlayerAppearance }>) {
+  const copy = useMapachessCopy()
+  const locale = useMapachessLocale()
   const facts = useMemo(() => cardFacts(data), [data])
   const input = useMemo<CardInput>(
-    () => ({ appearance, facts, content: INITIAL_CARD_CONTENT, format: "GIF" }),
-    [appearance, facts],
+    () => ({
+      appearance,
+      facts,
+      content: INITIAL_CARD_CONTENT,
+      format: "GIF",
+      locale,
+    }),
+    [appearance, facts, locale],
   )
   return (
     <section
-      aria-label={`Your profile card: Level ${facts.level}, ${MATCH_VARIANT_LABELS.standard} Elo ${facts.standard}, ${MATCH_VARIANT_LABELS.chess960} Elo ${facts.chess960}`}
+      aria-label={copy.profile.cardDescription(
+        facts.level,
+        facts.standard,
+        facts.chess960,
+      )}
       className="[container-type:inline-size] shadow-[0.375rem_0.375rem_0_#009dae]"
     >
       <div className="grid min-h-[max(15rem,56cqw)] grid-cols-[minmax(0,2fr)_minmax(0,3fr)] overflow-hidden text-[#1e1e1e]">
         <dl className="flex flex-col justify-evenly gap-4 bg-[#ffe652] p-[max(0.75rem,3cqw)]">
           {[
-            ["Level", facts.level],
-            [`${MATCH_VARIANT_LABELS.standard} Elo`, facts.standard],
-            [`${MATCH_VARIANT_LABELS.chess960} Elo`, facts.chess960],
-          ].map(([label, value]) => (
+            ["level", copy.profile.level, facts.level],
+            ["standard", copy.profile.ratingLabel.standard, facts.standard],
+            ["chess960", copy.profile.ratingLabel.chess960, facts.chess960],
+          ].map(([kind, label, value]) => (
             <div
-              key={label}
+              key={kind}
               className={cx(
                 "flex min-w-0",
-                label === "Level"
+                kind === "level"
                   ? "flex-wrap items-baseline gap-x-1"
                   : "flex-col-reverse",
               )}

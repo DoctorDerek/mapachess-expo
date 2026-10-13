@@ -31,6 +31,7 @@ import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import Introduction from "./Introduction"
 import MapachessLocaleProvider, {
+  useMapachessCopy,
   useMapachessLocale,
 } from "./MapachessLocaleProvider"
 import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
@@ -48,6 +49,9 @@ type ProfileRuntimeState =
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.webMapachessApplication
+
   const snapshot = useSelector(actor, (current) => current)
   const recoverySurface = useRef<HTMLElement>(null)
   usePlayerInputScope({
@@ -79,9 +83,9 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const persistenceFailure = selectPersistenceFailure(snapshot)
   const playableProfile = currentPlayerData !== null
   const profileActivityMessage = snapshot.matches("importDecoding")
-    ? "Inspecting the selected backup. Nothing has been replaced."
+    ? copy.profile.inspectingBackup
     : snapshot.matches("persisting") || snapshot.matches("retryingPersistence")
-      ? "Saving and verifying your local data…"
+      ? copy.profile.savingData
       : null
 
   const requestImportPreview = (rawBackup: string): void => {
@@ -132,18 +136,17 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
       className="relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
       role="alert"
     >
-      The download could not be created. Your local data is unchanged. Try again
-      or use another browser download destination.
+      {messages.theDownloadCouldNotBeCreatedYour}
     </MapachessNotice>
   ) : null
 
   if (snapshot.matches("loadFailure")) {
     return (
       <FullPageProfilePanel
-        description="Browser storage did not finish opening. Nothing has been reset or replaced."
-        eyebrow="Local profile"
+        description={messages.browserStorageDidNotFinishOpeningNothing}
+        eyebrow={messages.localProfile}
         live="assertive"
-        title="Mapachess could not read local data."
+        title={messages.mapachessCouldNotReadLocalData}
       >
         <MapachessButton
           autoFocus
@@ -151,7 +154,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           onClick={() => actor.send({ type: "PROFILE.BOOT_RETRY_REQUESTED" })}
           type="button"
         >
-          Try Again
+          {messages.tryAgain}
         </MapachessButton>
       </FullPageProfilePanel>
     )
@@ -268,10 +271,10 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 
   return (
     <FullPageProfilePanel
-      description="Inspecting the selected backup. Nothing has been replaced."
-      eyebrow="Player data"
+      description={messages.inspectingTheSelectedBackupNothingHasBeen}
+      eyebrow={messages.playerData}
       live="polite"
-      title="Inspecting backup…"
+      title={messages.inspectingBackup}
     >
       {snapshot.matches("importDecoding") ? (
         <MapachessButton
@@ -279,7 +282,7 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           onClick={() => actor.send({ type: "PROFILE.IMPORT_CANCELLED" })}
           type="button"
         >
-          Cancel Import
+          {messages.cancelImport}
         </MapachessButton>
       ) : null}
     </FullPageProfilePanel>
@@ -287,6 +290,9 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
 }
 
 export default function WebMapachessApplication() {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.webMapachessApplication
+
   const [runtimeState, setRuntimeState] = useState<ProfileRuntimeState>({
     status: "opening",
   })
@@ -332,10 +338,10 @@ export default function WebMapachessApplication() {
   return (
     <PlayerInputProvider profileActor={null}>
       <FullPageProfilePanel
-        description="This browser does not currently provide the local storage and integrity APIs Mapachess needs. No player data was changed."
-        eyebrow="Local profile"
+        description={messages.thisBrowserDoesNotCurrentlyProvideThe}
+        eyebrow={messages.localProfile}
         live="assertive"
-        title="Local saves are unavailable."
+        title={messages.localSavesAreUnavailable}
       >
         <MapachessButton
           className="mt-7"
@@ -344,7 +350,7 @@ export default function WebMapachessApplication() {
             setOpeningAttempt((attempt) => attempt + 1)
           }}
         >
-          Try Again
+          {messages.tryAgain}
         </MapachessButton>
       </FullPageProfilePanel>
     </PlayerInputProvider>

@@ -16,6 +16,7 @@ import matchMachine, {
 import InputPrompt from "../input/InputPrompt"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchCommands({
   actor,
@@ -46,6 +47,9 @@ export default function MatchCommands({
   snapshot: MatchMachineSnapshot
   opponentName: string
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.matchCommands
+
   const persisting = selectIsPersistingMutation(snapshot)
   const menu = useRef<HTMLDetailsElement>(null)
   usePlayerInputScope({
@@ -62,13 +66,13 @@ export default function MatchCommands({
       {coach}
       <MapachessButton
         variant="secondary"
-        aria-label="Focus board"
+        aria-label={messages.focusBoard}
         data-player-action="controls"
         className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         onClick={onBoardFocusRequested}
       >
         <InputPrompt action="controls" fallback="▦" />
-        Board
+        {messages.board}
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasUndoHistory(snapshot)}
@@ -80,7 +84,7 @@ export default function MatchCommands({
         variant="secondary"
       >
         <InputPrompt action="undo" fallback="↶" />
-        Undo
+        {messages.undo}
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasRedoHistory(snapshot)}
@@ -92,7 +96,7 @@ export default function MatchCommands({
         variant="secondary"
       >
         <InputPrompt action="redo" fallback="↷" />
-        Redo
+        {messages.redo}
       </MapachessButton>
       {hints}
       <details
@@ -102,7 +106,7 @@ export default function MatchCommands({
         data-player-input-layer={menuOpen ? "match-menu" : undefined}
       >
         <summary
-          aria-label="Match menu"
+          aria-label={messages.matchMenu}
           data-player-action="menu"
           className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-lg border-3 px-1 py-1 leading-[1.2] font-black focus-visible:outline-2"
           ref={menuSummaryRef}
@@ -113,7 +117,7 @@ export default function MatchCommands({
           }}
         >
           <InputPrompt action="menu" fallback="☰" />
-          Menu
+          {messages.menu}
         </summary>
         <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-64 max-w-[calc(100vw-1rem)] gap-3 overflow-auto rounded-lg border p-3 shadow-xl xl:top-full xl:bottom-auto xl:mt-2 xl:mb-0">
           {menuActions}
@@ -128,11 +132,11 @@ export default function MatchCommands({
             <span aria-hidden="true" className="block text-xl">
               ½
             </span>
-            Offer Draw
+            {messages.offerDraw}
           </MapachessButton>
           {selectDrawOfferResponse(snapshot) === "rejected" ? (
             <p role="status" className="text-mapachito-white">
-              {opponentName} declines the draw.
+              {copy.gameplay.drawDeclined(opponentName)}
             </p>
           ) : null}
           <MapachessButton
@@ -150,7 +154,7 @@ export default function MatchCommands({
             <span aria-hidden="true" className="block text-xl">
               ⚑
             </span>
-            Resign
+            {messages.resign}
           </MapachessButton>
         </div>
       </details>

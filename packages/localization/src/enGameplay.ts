@@ -1,0 +1,111 @@
+import {
+  formatInteger,
+  formatStoryPercentage,
+  formatUngroupedInteger,
+} from "./enNumbers.js"
+
+const gameplay = {
+  integer: formatInteger,
+  elo: formatUngroupedInteger,
+  storyCompletion: formatStoryPercentage,
+  defeatedCount: (count: number, total: number): string =>
+    `Opponents defeated: ${formatInteger(count)} / ${formatInteger(total)}`,
+  nextUnlocked: (opponent: string): string =>
+    `Next unlocked opponent: ${opponent}`,
+  lockedOpponent: (position: number): string =>
+    `Locked opponent ${formatInteger(position)}`,
+  targetElo: (elo: number): string =>
+    `Authored Elo target: ${formatUngroupedInteger(elo)}`,
+  defeatedMedal: (medal: string): string => `Defeated · ${medal}`,
+  challengeList: (opponents: readonly string[]): string =>
+    `Unlocked for both Challenge modes: ${opponents.join(", ")}`,
+  conclusion: {
+    playerWon: "You won!",
+    opponentWon: (opponent: string): string => `${opponent} won.`,
+    opponentResigned: (opponent: string): string =>
+      `${opponent} resigned — you won.`,
+    playerResigned: (opponent: string): string =>
+      `You resigned — ${opponent} won.`,
+    "draw-agreement": "Draw by agreement.",
+    stalemate: "Draw by stalemate.",
+    "insufficient-material": "Draw by insufficient material.",
+  },
+  defeatedOpponent: (opponent: string): string => `You defeated ${opponent}!`,
+  resultActions: {
+    replay: "Replay opponent",
+    ladder: "Story ladder",
+    next: "Next opponent",
+  },
+  opponentAndElo: (opponent: string, elo: number): string =>
+    `${opponent} · ${formatUngroupedInteger(elo)} Elo`,
+  awardedXp: (amount: number): string => `+${formatInteger(amount)} XP`,
+  level: (level: number): string => `Level ${formatInteger(level)}`,
+  xpProgress: (current: number, required: number): string =>
+    `${formatInteger(current)} / ${formatInteger(required)} XP`,
+  levelProgress: (level: number, current: number, required: number): string =>
+    `Level ${formatInteger(level)}. ${formatInteger(current)} of ${formatInteger(required)} XP toward the next Level.`,
+  levelAchievement: (level: number): string =>
+    `Reach Level ${formatInteger(level)}`,
+  achievementUnlocked: (title: string): string =>
+    `Achievement unlocked · ${title}`,
+  noNewMedal: "No new medal",
+  bestMedal: (medal: string): string => `Your best: ${medal}.`,
+  challengeUnlocked: (opponent: string): string =>
+    `${opponent} is available in both Challenge modes.`,
+  storyDefeated: (count: number): string =>
+    `All ${formatInteger(count)} opponents in this Story defeated.`,
+  opponentMoveInvalid: (opponent: string): string =>
+    `${opponent} returned an invalid move. Retry or undo.`,
+  opponentTurnFailed: (opponent: string): string =>
+    `${opponent} could not finish its turn. Retry or undo.`,
+  retryTurn: (opponent: string): string => `Retry ${opponent} turn`,
+  drawDeclined: (opponent: string): string => `${opponent} declines the draw.`,
+  hints: {
+    controls: {
+      failure: "Retry Piece Hints",
+      hidden: "Hints available on your turn",
+      loading: "Finding Piece Hints…",
+      "move-hints": "Move Hints Shown",
+      "piece-hints": "Show Move Hints",
+      ready: "Show Piece Hints",
+      unavailable: "Hints unavailable",
+      complete: "Hints unavailable after game",
+    },
+    guidance: {
+      failure:
+        "Piece Hints could not be calculated. Your position is unchanged.",
+      hidden: "Piece Hints return when it is your turn.",
+      loading: "Analyzing this unchanged board for Player and Opponent pieces.",
+      "move-hints":
+        "Solid green arrows show Player moves. Dashed red arrows show Opponent moves.",
+      "piece-hints":
+        "Solid green borders mark Player pieces. Dashed red borders mark Opponent pieces.",
+      ready: "Start by finding the most important Player and Opponent pieces.",
+      unavailable: "This runtime has no Better Hints analyst.",
+      complete:
+        "Better Hints are available only while the match is in progress.",
+    },
+    loading: "Finding Piece Hints for Player and Opponent.",
+    failed: "Piece Hints could not be calculated. The board is unchanged.",
+    piecesShown: (
+      player: readonly string[],
+      opponent: readonly string[],
+    ): string =>
+      `Piece Hints shown. Player Piece Hints: ${player.length === 0 ? "none" : player.join(", ")}. Opponent Piece Hints: ${opponent.length === 0 ? "none" : opponent.join(", ")}.`,
+    movesShown: (
+      player: readonly string[],
+      opponent: readonly string[],
+    ): string =>
+      `Move Hints shown. Player Move Hints: ${player.length === 0 ? "none" : player.join("; ")}. Opponent Move Hints: ${opponent.length === 0 ? "none" : opponent.join("; ")}.`,
+    move: (from: string, to: string): string => `${from} to ${to}`,
+    castle: (
+      side: "king" | "queen",
+      to: string,
+      rookFrom: string,
+      rookTo: string,
+    ): string =>
+      `castle ${side}side, king to ${to}, rook from ${rookFrom} to ${rookTo}`,
+  },
+} as const
+
+export default gameplay

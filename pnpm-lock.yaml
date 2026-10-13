@@ -276,6 +276,9 @@ importers:
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match
@@ -305,6 +308,9 @@ importers:
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../localization
       chessops:
         specifier: ^0.15.1
         version: 0.15.1
@@ -314,6 +320,9 @@ importers:
 
   packages/match-presentation:
     dependencies:
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match

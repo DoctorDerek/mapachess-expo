@@ -4,13 +4,13 @@ import cx from "classix"
 import { useId, useState } from "react"
 import {
   COACH_COLLECTION_IDS,
-  COACH_COLLECTIONS,
   type CoachCollectionId,
   type CoachPortraitLabel,
 } from "@mapachess/match-presentation/coach-portrait"
 import useDecodedCoachPortrait from "../../lib/presentation/useDecodedCoachPortrait"
 import CoachPortraitImage from "../presentation/CoachPortraitImage"
 import CustomizationChoice from "./CustomizationChoice"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 const SAMPLE_EXPRESSIONS = [
   "neutral",
@@ -48,12 +48,15 @@ export default function CoachCollectionChoices({
   disabled: boolean
   onChange: (collection: CoachCollectionId) => void
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.coachCollectionChoices
+
   const id = useId()
   const [open, setOpen] = useState(false)
   return (
     <CustomizationChoice
-      label="Coach"
-      value={COACH_COLLECTIONS[collection].label}
+      kind="coach"
+      value={copy.profile.coachCollections[collection]}
       preview={<CoachSample collection={collection} expression="neutral" />}
       open={open}
       onToggle={() => setOpen((current) => !current)}
@@ -63,12 +66,12 @@ export default function CoachCollectionChoices({
         aria-describedby={`${id}-description`}
         className="mt-4"
       >
-        <legend className="sr-only">Coach</legend>
+        <legend className="sr-only">{messages.coach}</legend>
         <p
           id={`${id}-description`}
           className="text-mapachito-charcoal mt-2 text-sm"
         >
-          One raccoon, or a cast of animals whose expressions follow the match.
+          {messages.oneRaccoonOrACastOfAnimals}
         </p>
         <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))] gap-3">
           {COACH_COLLECTION_IDS.map((choice) => (
@@ -98,7 +101,7 @@ export default function CoachCollectionChoices({
                   onChange={() => onChange(choice)}
                   className="accent-mapachito-orange size-4 shrink-0"
                 />
-                {COACH_COLLECTIONS[choice].label}
+                {copy.profile.coachCollections[choice]}
               </span>
             </label>
           ))}

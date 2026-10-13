@@ -18,6 +18,7 @@ import {
   showBattleSpriteFrame,
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const FALLBACK_MOVEMENT_SECONDS = 0.36
 type BattleTravelTarget = "home" | "contact" | "recoil"
@@ -53,6 +54,7 @@ export default function BattleFighter({
   reactionSequence,
   shouldReportCompletion,
 }: BattleFighterProps) {
+  const copy = useMapachessCopy().presentation
   const shouldReduceMotion = useReducedMotion() === true
   const displayedFacing =
     beat === "recovery" && presentation.reactionSlot.endsWith("attacker")
@@ -252,7 +254,7 @@ export default function BattleFighter({
   return (
     <div className="relative z-2 grid min-w-0 justify-items-center">
       <div
-        aria-label={`${displayName}: ${presentation.reactionSlot.replaceAll("-", " ")}`}
+        aria-label={copy.fighter(displayName, presentation.reactionSlot)}
         className={cx(
           "relative flex h-[max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))] w-full items-end justify-center pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)]",
           participant === "player"
@@ -303,8 +305,7 @@ export default function BattleFighter({
             : "sr-only"
         }
       >
-        {displayName}
-        {imageUnavailable ? " · Artwork unavailable" : null}
+        {imageUnavailable ? copy.unavailableFighter(displayName) : displayName}
       </span>
     </div>
   )

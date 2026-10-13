@@ -27,10 +27,9 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
 import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import RecoverableView from "../presentation/RecoverableView"
-import { useMapachessLocale } from "./MapachessLocaleProvider"
+import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
-  PROFILE_SETTINGS_TITLE,
   type ProfileSettingsPanelProps,
 } from "./ProfileSettingsPanel"
 
@@ -73,6 +72,9 @@ function ReadyPlayExperience({
   blocked,
   settings,
 }: ProfilePlayExperienceProps & Readonly<{ actor: WebMatchSessionActor }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profilePlayExperience
+
   const snapshot = useSelector(actor, (current) => current)
   const profile = useSelector(profileActor, (current) => current)
   const locale = useMapachessLocale()
@@ -150,15 +152,15 @@ function ReadyPlayExperience({
         />
         {settingsOpen ? (
           <MapachessDialog
-            label={PROFILE_SETTINGS_TITLE}
+            label={copy.profile.settingsTitle}
             onClose={navigation.back}
           >
             <RecoverableView
-              title="Settings could not be displayed."
-              description="Your player data has not been reset. Try again or close Settings."
+              title={messages.settingsCouldNotBeDisplayed}
+              description={messages.yourPlayerDataHasNotBeenReset}
               actions={
                 <MapachessButton onClick={navigation.back}>
-                  Close Settings
+                  {messages.closeSettings}
                 </MapachessButton>
               }
             >
@@ -173,14 +175,14 @@ function ReadyPlayExperience({
         <div ref={gameSurface} inert={blocked || settingsOpen || personalOpen}>
           {settingsOpen ? null : <ChessArtworkRecovery />}
           <RecoverableView
-            title="This screen could not be displayed."
-            description="Your player data is still held in memory. Try again without refreshing, or export it."
+            title={messages.thisScreenCouldNotBeDisplayed}
+            description={messages.yourPlayerDataIsStillHeldIn}
             actions={
               <MapachessButton
                 disabled={settings.exporting}
                 onClick={settings.onExportPlayerData}
               >
-                Export player data
+                {messages.exportPlayerData}
               </MapachessButton>
             }
           >

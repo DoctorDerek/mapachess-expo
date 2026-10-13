@@ -12,6 +12,7 @@ import {
   cardFacts,
   INITIAL_CARD_CONTENT,
 } from "../../lib/presentation/profileCardArtwork"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 import PlayerAnimalChoices from "./PlayerAnimalChoices"
 import ProfileAction from "./ProfileAction"
 import ProfileCard, { ProfileArtwork } from "./ProfileCard"
@@ -42,6 +43,10 @@ export default function ProfileDressingRoom({
   onShare: () => void
   onRetry: () => void
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profileDressingRoom
+  const dressing = copy.profile.dressing
+
   const [category, setCategory] = useState<Category>("Clothes")
   const [colors, setColors] = useState(false)
   const clothing = HERO_CATALOG.cloth.find(({ id }) => id === draft.cloth)
@@ -57,12 +62,12 @@ export default function ProfileDressingRoom({
     category === "Weapons"
       ? colors && weapon.variants.length > 1
         ? weapon.variants.map((variant, index) => ({
-            label: `${weapon.label} color ${index + 1}`,
+            label: dressing.weaponColor(dressing.weapons[weapon.id], index + 1),
             selected: variant === draft.weapon,
             appearance: { ...draft, weapon: variant },
           }))
         : HERO_CATALOG.weapons.map((item) => ({
-            label: item.label,
+            label: dressing.weapons[item.id],
             selected: item.id === weapon.id,
             appearance: {
               ...draft,
@@ -74,12 +79,12 @@ export default function ProfileDressingRoom({
       : category === "Clothes"
         ? colors
           ? clothing.colors.map((color) => ({
-              label: `Clothing color ${color}`,
+              label: dressing.clothingColor(color),
               selected: color === draft.clothColor,
               appearance: { ...draft, clothColor: color },
             }))
           : HERO_CATALOG.cloth.map((item) => ({
-              label: `Outfit ${item.id.slice(5)}`,
+              label: dressing.outfit(item.id.slice(5)),
               selected: item.id === draft.cloth,
               appearance: {
                 ...draft,
@@ -92,12 +97,12 @@ export default function ProfileDressingRoom({
         : category === "Hair"
           ? colors
             ? hair.colors.map((color) => ({
-                label: `Hair color ${color}`,
+                label: dressing.hairColor(color),
                 selected: color === draft.hairColor,
                 appearance: { ...draft, hairColor: color },
               }))
             : HERO_CATALOG.hair.map((item) => ({
-                label: `Hairstyle ${item.id}`,
+                label: dressing.hairstyle(item.id),
                 selected: item.id === draft.hair,
                 appearance: {
                   ...draft,
@@ -109,13 +114,13 @@ export default function ProfileDressingRoom({
               }))
           : category === "Skin"
             ? HERO_CATALOG.skin.map((skin) => ({
-                label: `Skin ${skin}`,
+                label: dressing.skin(skin),
                 selected: skin === draft.skin,
                 appearance: { ...draft, skin },
               }))
             : category === "Face"
               ? HERO_CATALOG.face.map((face) => ({
-                  label: `Face ${face}`,
+                  label: dressing.face(face),
                   selected: face === draft.face,
                   appearance: { ...draft, face },
                 }))
@@ -125,11 +130,7 @@ export default function ProfileDressingRoom({
       <div className="min-w-0">
         <ProfileCard data={data} appearance={draft} />
         <p role="status" className="mt-4 min-h-6 text-base">
-          {busy
-            ? "Saving appearance…"
-            : dirty
-              ? "Unsaved appearance"
-              : "Saved appearance"}
+          {busy ? dressing.saving : dirty ? dressing.unsaved : dressing.saved}
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           <ProfileAction
@@ -137,33 +138,31 @@ export default function ProfileDressingRoom({
             onClick={onSave}
             disabled={busy || !dirty}
           >
-            <span aria-hidden="true">✓</span> Save appearance
+            <span aria-hidden="true">✓</span> {messages.saveAppearance}
           </ProfileAction>
           <ProfileAction
             className="bg-mapachito-blue shadow-[0.375rem_0.375rem_0_#008b8b]"
             onClick={onShare}
             disabled={busy}
           >
-            <span aria-hidden="true">↗</span> Share profile card
+            <span aria-hidden="true">↗</span> {messages.shareProfileCard}
           </ProfileAction>
           <ProfileAction
             className="bg-mapachito-charcoal shadow-[0.375rem_0.375rem_0_#790fc5]"
             onClick={onCancel}
             disabled={busy}
           >
-            <span aria-hidden="true">×</span> Cancel changes
+            <span aria-hidden="true">×</span> {messages.cancelChanges}
           </ProfileAction>
         </div>
         {failed ? (
           <div role="alert" className="mt-4">
-            <p>
-              Appearance could not be saved locally. Your edits are still here.
-            </p>
+            <p>{messages.appearanceCouldNotBeSavedLocallyYour}</p>
             <ProfileAction
               onClick={onRetry}
               className="bg-mapachito-violet mt-3"
             >
-              Retry save
+              {messages.retrySave}
             </ProfileAction>
           </div>
         ) : null}
@@ -171,7 +170,7 @@ export default function ProfileDressingRoom({
       <div className="min-w-0">
         <div
           role="group"
-          aria-label="Appearance categories"
+          aria-label={messages.appearanceCategories}
           className="flex flex-wrap gap-3"
         >
           {(
@@ -191,7 +190,7 @@ export default function ProfileDressingRoom({
                   "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
               )}
             >
-              {name}
+              {dressing.categories[name]}
             </ProfileAction>
           ))}
         </div>
@@ -201,21 +200,21 @@ export default function ProfileDressingRoom({
           <div
             className="my-4 flex flex-wrap gap-3"
             role="group"
-            aria-label={`${category} choices`}
+            aria-label={dressing.choices(dressing.categories[category])}
           >
             <ProfileAction
               aria-pressed={!colors}
               className="bg-mapachito-blue"
               onClick={() => setColors(false)}
             >
-              Styles
+              {messages.styles}
             </ProfileAction>
             <ProfileAction
               aria-pressed={colors}
               className="bg-mapachito-blue"
               onClick={() => setColors(true)}
             >
-              Colors
+              {messages.colors}
             </ProfileAction>
           </div>
         ) : null}
@@ -232,7 +231,7 @@ export default function ProfileDressingRoom({
         ) : (
           <div
             role="group"
-            aria-label={`${category} selection`}
+            aria-label={dressing.selection(dressing.categories[category])}
             className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-3"
           >
             {options.map(({ label, selected, appearance }) => (

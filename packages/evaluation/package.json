@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@mapachess/diagnostics": "workspace:*",
+    "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "xstate": "^5"

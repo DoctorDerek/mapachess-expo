@@ -4,6 +4,7 @@ import { Component, useEffect, useRef, type ReactNode } from "react"
 import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MapachessButton from "./MapachessButton"
 
 type RecoveryProps = Readonly<{
@@ -18,6 +19,8 @@ function Recovery({
   actions,
   onRetry,
 }: RecoveryProps & Readonly<{ onRetry: () => void }>) {
+  const messages = useMapachessCopy().interface.recoverableView
+
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => heading.current?.focus({ preventScroll: true }), [])
   return (
@@ -34,7 +37,7 @@ function Recovery({
       </h2>
       <p>{description}</p>
       <div className="flex flex-wrap gap-3">
-        <MapachessButton onClick={onRetry}>Try again</MapachessButton>
+        <MapachessButton onClick={onRetry}>{messages.tryAgain}</MapachessButton>
         {actions}
       </div>
     </section>

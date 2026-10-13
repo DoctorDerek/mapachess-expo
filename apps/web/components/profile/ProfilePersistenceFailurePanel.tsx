@@ -5,11 +5,8 @@ import type { ProfilePersistenceFailure } from "@mapachess/profile/profile-machi
 import LocalSaveError from "../presentation/LocalSaveError"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
-import {
-  persistenceFailureMessage,
-  PREPARING_BACKUP_LABEL,
-  ProfileCard,
-} from "./ProfileFoundation"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
+import { persistenceFailureMessage, ProfileCard } from "./ProfileFoundation"
 
 export type ProfilePersistenceFailurePanelProps = Readonly<{
   exportablePlayerData: MapachessPlayerData | null
@@ -30,6 +27,9 @@ export default function ProfilePersistenceFailurePanel({
   onExportUnreadable,
   onRetry,
 }: ProfilePersistenceFailurePanelProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profilePersistenceFailurePanel
+
   return (
     <div className="relative z-30 px-[clamp(1rem,3vw,3rem)] pt-[clamp(1.5rem,3vw,2.5rem)]">
       <ProfileCard labelledBy="profile-persistence-failure-title">
@@ -40,28 +40,28 @@ export default function ProfilePersistenceFailurePanel({
           <LocalSaveError />
         </h2>
         <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
-          {persistenceFailureMessage(failure)} It is not yet saved. Later
-          state-changing actions are frozen until Retry succeeds.
+          {persistenceFailureMessage(failure, copy.profile)}{" "}
+          {messages.itIsNotYetSavedLaterState}
         </MapachessNotice>
         <div className="mt-6 flex flex-wrap gap-3">
           <MapachessButton
             aria-busy={retrying}
             autoFocus
-            busyLabel="Retrying save…"
+            busyLabel={messages.retryingSave}
             onClick={onRetry}
             type="button"
           >
-            Retry save
+            {messages.retrySave}
           </MapachessButton>
           {exportablePlayerData === null ? null : (
             <MapachessButton
               aria-busy={exporting}
-              busyLabel={PREPARING_BACKUP_LABEL}
+              busyLabel={copy.profile.preparingBackup}
               variant="secondary"
               onClick={onExportPlayerData}
               type="button"
             >
-              Export Pending Player Data
+              {messages.exportPendingPlayerData}
             </MapachessButton>
           )}
           {onExportUnreadable === null ? null : (
@@ -70,7 +70,7 @@ export default function ProfilePersistenceFailurePanel({
               onClick={onExportUnreadable}
               type="button"
             >
-              Export Unreadable Data
+              {messages.exportUnreadableData}
             </MapachessButton>
           )}
         </div>

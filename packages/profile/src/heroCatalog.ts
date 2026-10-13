@@ -1,3 +1,7 @@
+import loadCatalog from "@mapachess/localization/catalog"
+
+const weaponNames = loadCatalog("en").profile.dressing.weapons
+
 export const HERO_IDLE_GEOMETRY = {
   width: 45,
   height: 32,
@@ -8,37 +12,37 @@ export const HERO_CATALOG = {
   weapons: [
     {
       id: "none",
-      label: "None",
+      label: weaponNames.none,
       variants: ["none"],
       bounds: HERO_BODY_IDLE_BOUNDS,
     },
     {
       id: "weapon1",
-      label: "Sword",
+      label: weaponNames.weapon1,
       variants: ["weapon1"],
       bounds: HERO_BODY_IDLE_BOUNDS,
     },
     {
       id: "weapon2",
-      label: "Spear",
+      label: weaponNames.weapon2,
       variants: ["weapon2"],
       bounds: { ...HERO_BODY_IDLE_BOUNDS, height: 32 },
     },
     {
       id: "weapon3",
-      label: "Wand",
+      label: weaponNames.weapon3,
       variants: ["weapon3"],
       bounds: HERO_BODY_IDLE_BOUNDS,
     },
     {
       id: "weapon4",
-      label: "Axe",
+      label: weaponNames.weapon4,
       variants: ["weapon4"],
       bounds: { x: 0, y: 0, width: 45, height: 31 },
     },
     {
       id: "weapon5",
-      label: "Dagger",
+      label: weaponNames.weapon5,
       variants: ["weapon5_c1", "weapon5_c2", "weapon5_c3", "weapon5_c4"],
       bounds: { x: 6, y: 0, width: 30, height: 31 },
     },

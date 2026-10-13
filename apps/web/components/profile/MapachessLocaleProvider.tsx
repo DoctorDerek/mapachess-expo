@@ -3,6 +3,9 @@
 import { useSelector } from "@xstate/react"
 import { createContext, useContext, useEffect, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
+import loadCatalog, {
+  type MapachessCatalog,
+} from "@mapachess/localization/catalog"
 import resolveLocale, {
   DEFAULT_LOCALE,
   type ShippedLocale,
@@ -15,6 +18,9 @@ import profileMachine, {
 const LocaleContext = createContext<ShippedLocale>(DEFAULT_LOCALE)
 
 export const useMapachessLocale = (): ShippedLocale => useContext(LocaleContext)
+
+export const useMapachessCopy = (): MapachessCatalog =>
+  loadCatalog(useMapachessLocale())
 
 export default function MapachessLocaleProvider({
   actor,

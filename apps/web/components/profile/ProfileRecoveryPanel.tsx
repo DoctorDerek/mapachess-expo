@@ -5,6 +5,7 @@ import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 import FullPageProfilePanel, {
   ImportBackupButton,
   importIssueMessage,
@@ -31,6 +32,9 @@ export default function ProfileRecoveryPanel({
   onRestoreLastKnownGood,
   onTryAgain,
 }: ProfileRecoveryPanelProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profileRecoveryPanel
+
   const [confirmingReset, setConfirmingReset] = useState(false)
   const resetTrigger = useRef<HTMLButtonElement>(null)
   const resetSurface = useRef<HTMLElement>(null)
@@ -58,20 +62,19 @@ export default function ProfileRecoveryPanel({
 
   return (
     <FullPageProfilePanel
-      description="Mapachess could not safely read the current local save. The available bytes are preserved, gameplay changes are frozen, and nothing has been reset."
-      eyebrow="Local data recovery"
+      description={messages.mapachessCouldNotSafelyReadTheCurrent}
+      eyebrow={messages.localDataRecovery}
       live="assertive"
-      title="Your save needs attention."
+      title={messages.yourSaveNeedsAttention}
     >
       {downloadFailed ? (
         <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
-          The download could not be created. Your preserved local bytes are
-          unchanged. Try again or use another browser download destination.
+          {messages.theDownloadCouldNotBeCreatedYour}
         </MapachessNotice>
       ) : null}
       {importIssue === null ? null : (
         <MapachessNotice tone="warning" className="mt-6 text-sm" role="alert">
-          {importIssueMessage(importIssue)}
+          {importIssueMessage(importIssue, copy.profile)}
         </MapachessNotice>
       )}
 
@@ -86,13 +89,10 @@ export default function ProfileRecoveryPanel({
             className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
             id="recovery-reset-title"
           >
-            Reset all local player data?
+            {messages.resetAllLocalPlayerData}
           </h2>
           <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
-            This replaces all local player data, including the active match,
-            Story and Challenge records, both current Elo ratings and their
-            rated-match counts, historical rating values, and settings. It does
-            not affect backup files you already exported.
+            {messages.thisReplacesAllLocalPlayerDataIncluding}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <MapachessButton
@@ -101,35 +101,35 @@ export default function ProfileRecoveryPanel({
               onClick={cancelReset}
               type="button"
             >
-              Cancel
+              {messages.cancel}
             </MapachessButton>
             <MapachessButton
               variant="secondary"
               onClick={onExportUnreadable}
               type="button"
             >
-              Export Unreadable Data
+              {messages.exportUnreadableData}
             </MapachessButton>
             <MapachessButton
               variant="destructive"
               onClick={onResetConfirmed}
               type="button"
             >
-              Reset All Local Player Data
+              {messages.resetAllLocalPlayerData2}
             </MapachessButton>
           </div>
         </section>
       ) : (
         <div className="mt-8 grid gap-4 xl:grid-cols-2">
           <MapachessButton onClick={onTryAgain} type="button">
-            Try Again
+            {messages.tryAgain}
           </MapachessButton>
           <MapachessButton
             variant="secondary"
             onClick={onExportUnreadable}
             type="button"
           >
-            Export Unreadable Data
+            {messages.exportUnreadableData}
           </MapachessButton>
           <ImportBackupButton disabled={false} onBackupRead={onBackupRead} />
           {hasLastKnownGood ? (
@@ -138,7 +138,7 @@ export default function ProfileRecoveryPanel({
               onClick={onRestoreLastKnownGood}
               type="button"
             >
-              Restore Last Known-Good Save
+              {messages.restoreLastKnownGoodSave}
             </MapachessButton>
           ) : null}
           <MapachessButton
@@ -147,7 +147,7 @@ export default function ProfileRecoveryPanel({
             ref={resetTrigger}
             type="button"
           >
-            Review Full Local Reset
+            {messages.reviewFullLocalReset}
           </MapachessButton>
         </div>
       )}

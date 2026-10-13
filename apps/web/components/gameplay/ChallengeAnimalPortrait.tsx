@@ -14,6 +14,7 @@ import createPresentationImages from "../../lib/presentation/presentationImages"
 import resolveWebOpponentPresentation, {
   resolveWebOpponentAttention,
 } from "../../lib/presentation/webOpponentPresentation"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function ChallengeAnimalPortrait({
   opponent,
@@ -24,6 +25,8 @@ export default function ChallengeAnimalPortrait({
   active: boolean
   attention?: boolean
 }>) {
+  const animalCopy = useMapachessCopy().animals
+
   const attentionActor = useActorRef(animalAttentionMachine)
   const attentionOrdinal = useSelector(attentionActor, (snapshot) =>
     snapshot.matches("attention") ? snapshot.context.ordinal : null,
@@ -174,7 +177,7 @@ export default function ChallengeAnimalPortrait({
     >
       {step === null || unavailable ? (
         <span className="absolute inset-0 grid place-items-center text-center text-xs font-bold">
-          {opponent.displayName}
+          {animalCopy.opponent(opponent.id)}
         </span>
       ) : null}
       <span className="absolute bottom-1 left-1/2 block size-0">

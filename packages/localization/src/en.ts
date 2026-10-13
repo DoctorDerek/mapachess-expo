@@ -1,4 +1,17 @@
-import type { IntroductionCopy, MapachessCatalog } from "./catalog.js"
+import type { IntroductionCopy } from "./catalog.js"
+import animals from "./enAnimals.js"
+import artwork from "./enArtwork.js"
+import board from "./enBoard.js"
+import classification from "./enClassification.js"
+import controls from "./enControls.js"
+import credits from "./enCredits.js"
+import evaluation from "./enEvaluation.js"
+import gameplay from "./enGameplay.js"
+import interfaceCopy from "./enInterface.js"
+import presentation from "./enPresentation.js"
+import profile from "./enProfile.js"
+import setup from "./enSetup.js"
+import shared from "./enShared.js"
 
 const introduction = Object.freeze({
   title: "Mapachess",
@@ -35,6 +48,21 @@ const introduction = Object.freeze({
   websiteNewTab: " (opens in a new tab)",
 }) satisfies IntroductionCopy
 
-const english = Object.freeze({ introduction }) satisfies MapachessCatalog
+const english = Object.freeze({
+  introduction,
+  setup,
+  interface: interfaceCopy,
+  profile,
+  shared,
+  controls,
+  gameplay,
+  animals,
+  board,
+  artwork,
+  evaluation,
+  classification,
+  credits,
+  presentation,
+})
 
 export default english

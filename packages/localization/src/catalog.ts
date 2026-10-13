@@ -15,7 +15,15 @@ export type IntroductionCopy = Readonly<{
   websiteNewTab: string
 }>
 
-export type MapachessCatalog = Readonly<{ introduction: IntroductionCopy }>
+type CatalogText<Value> = Value extends string
+  ? string
+  : Value extends (...parameters: infer Parameters) => infer Result
+    ? (...parameters: Parameters) => Result
+    : Value extends object
+      ? { readonly [Key in keyof Value]: CatalogText<Value[Key]> }
+      : Value
+
+export type MapachessCatalog = CatalogText<typeof english>
 
 export const CATALOG_LOADERS = Object.freeze({
   en: (): MapachessCatalog => english,

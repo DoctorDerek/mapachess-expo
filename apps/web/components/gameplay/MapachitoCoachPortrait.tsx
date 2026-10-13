@@ -1,8 +1,6 @@
 "use client"
 
 import resolveCoachPortrait, {
-  COACH_COLLECTIONS,
-  COACH_PORTRAIT_NAMES,
   type CoachMoveReaction,
 } from "@mapachess/match-presentation/coach-portrait"
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
@@ -12,6 +10,7 @@ import { useCoachCollection } from "../../lib/presentation/CoachCollectionContex
 import useDecodedCoachPortrait from "../../lib/presentation/useDecodedCoachPortrait"
 import { availableCoachPortraits } from "../../lib/presentation/webPresentationAssets"
 import CoachPortraitImage from "../presentation/CoachPortraitImage"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const IDLE_REACTION = Object.freeze({
   family: "idle",
@@ -26,6 +25,9 @@ export default function MapachitoCoachPortrait({
   presentationSnapshot,
   moveReaction = null,
 }: MapachitoCoachPortraitProps) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.mapachitoCoachPortrait
+
   const collection = useCoachCollection()
   const playerReaction =
     presentationSnapshot.context.currentPhase?.player ?? IDLE_REACTION
@@ -37,7 +39,7 @@ export default function MapachitoCoachPortrait({
     selectMatchPresentationVariationOrdinal(presentationSnapshot, "player"),
   )
   const visiblePortrait = useDecodedCoachPortrait(portrait, collection)
-  const readableLabel = COACH_PORTRAIT_NAMES[visiblePortrait.label]
+  const readableLabel = copy.shared.coachPortraitNames[visiblePortrait.label]
 
   return (
     <figure aria-live="polite" className="flex items-center gap-2">
@@ -46,18 +48,20 @@ export default function MapachitoCoachPortrait({
       </div>
       <figcaption className="grid gap-1">
         <span className="sr-only">
-          {COACH_COLLECTIONS[visiblePortrait.collection].label} coach
+          {copy.presentation.coach(
+            copy.profile.coachCollections[visiblePortrait.collection],
+          )}
         </span>
         <strong className="sr-only">{readableLabel}</strong>
         {visiblePortrait.unavailable ? (
           <span role="status" className="text-sm font-bold">
-            Artwork unavailable.{" "}
+            {messages.artworkUnavailable}{" "}
             <button
               type="button"
               onClick={visiblePortrait.retry}
               className="cursor-pointer underline focus-visible:outline-2"
             >
-              Retry artwork
+              {messages.retryArtwork}
             </button>
           </span>
         ) : null}

@@ -1,4 +1,4 @@
-import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchColorChoices({
   disabled,
@@ -7,9 +7,10 @@ export default function MatchColorChoices({
   disabled: boolean
   initialColor: "white" | "black" | "random"
 }>) {
+  const copy = useMapachessCopy().setup
   return (
     <fieldset disabled={disabled}>
-      <legend className="font-bold">{MATCH_SETUP_COPY.color}</legend>
+      <legend className="font-bold">{copy.color}</legend>
       <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(min(6rem,100%),1fr))] gap-2">
         {(["white", "black", "random"] as const).map((color) => (
           <label
@@ -23,7 +24,7 @@ export default function MatchColorChoices({
               type="radio"
               value={color}
             />
-            {MATCH_SETUP_COPY[color]}
+            {copy[color]}
           </label>
         ))}
       </div>

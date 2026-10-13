@@ -1,3 +1,6 @@
+import loadCatalog from "@mapachess/localization/catalog"
+import type { ShippedLocale } from "@mapachess/localization/locale"
+
 export const AUTO_HINT_MODES = [
   "auto-move-hints",
   "auto-piece-hints",
@@ -10,23 +13,15 @@ export const DEFAULT_AUTO_HINT_MODE: AutoHintMode = "auto-move-hints"
 
 export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
   "auto-move-hints": {
-    label: "Auto Move Hints",
-    description:
-      "Automatically show three Piece Hints and their Move Hints for each side.",
-    medal: "Bronze if you win after using Move Hints.",
+    ...loadCatalog("en").setup.autoHints["auto-move-hints"],
     medalTier: "bronze",
   },
   "auto-piece-hints": {
-    label: "Auto Piece Hints",
-    description:
-      "Automatically show three Piece Hints for each side. Request Move Hints whenever you want.",
-    medal: "Silver if you win with Piece Hints but no Move Hints.",
+    ...loadCatalog("en").setup.autoHints["auto-piece-hints"],
     medalTier: "silver",
   },
   "no-auto-hints": {
-    label: "No Auto Hints",
-    description: "Request Piece Hints or Move Hints whenever you want.",
-    medal: "Gold if you win without using any hints.",
+    ...loadCatalog("en").setup.autoHints["no-auto-hints"],
     medalTier: "gold",
   },
 } as const satisfies Readonly<
@@ -42,10 +37,12 @@ export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
 >)
 
 export const AUTO_HINT_MEDAL_EXPLANATION =
-  "Medals reflect hints actually shown during the match. Changing this setting never erases earlier hint use."
+  loadCatalog("en").setup.hintMedalExplanation
 
-export const autoHintModeLabel = (autoHintMode: AutoHintMode): string =>
-  AUTO_HINT_MODE_PRESENTATION[autoHintMode].label
+export const autoHintModeLabel = (
+  autoHintMode: AutoHintMode,
+  locale: ShippedLocale = "en",
+): string => loadCatalog(locale).setup.autoHints[autoHintMode].label
 
 export const autoHintModeFromLegacyEnabled = (
   autoHintsEnabled: boolean,

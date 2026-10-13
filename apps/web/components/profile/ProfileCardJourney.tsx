@@ -13,6 +13,7 @@ import profileMachine, {
 } from "@mapachess/profile/profile-machine"
 import profileCardEditorMachine from "../../lib/presentation/profileCardEditorMachine"
 import RecoverableView from "../presentation/RecoverableView"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
 import ProfileCardPreview from "./ProfileCardPreview"
 import ProfileDressingRoom from "./ProfileDressingRoom"
@@ -28,6 +29,9 @@ export default function ProfileCardJourney({
   navigation: MatchNavigationCommands
   blocked: boolean
 }>) {
+  const copy = useMapachessCopy()
+  const messages = copy.interface.profileCardJourney
+
   const profile = useSelector(profileActor, (current) => current)
   const data = selectCurrentPlayerData(profile)
   if (data === null)
@@ -90,7 +94,7 @@ export default function ProfileCardJourney({
             disabled={busy}
             className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
           >
-            <span aria-hidden="true">←</span> Back
+            <span aria-hidden="true">←</span> {messages.back}
           </ProfileAction>
           <h1
             id="personal-card-title"
@@ -98,7 +102,7 @@ export default function ProfileCardJourney({
             tabIndex={-1}
             className="text-2xl font-black outline-none"
           >
-            {preview ? "Share profile card" : "Customize profile card"}
+            {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
           </h1>
         </header>
         {snapshot.matches("confirmingDiscard") ? (
@@ -108,20 +112,20 @@ export default function ProfileCardJourney({
             className="mx-auto max-w-xl p-5"
           >
             <h2 id="unsaved-card-title" className="text-2xl font-bold">
-              Keep your appearance changes?
+              {messages.keepYourAppearanceChanges}
             </h2>
             <div className="mt-5 flex flex-wrap gap-3">
               <ProfileAction
                 className="bg-mapachito-violet"
                 onClick={() => editor.send({ type: "CARD.RETURN_REQUESTED" })}
               >
-                Keep editing
+                {messages.keepEditing}
               </ProfileAction>
               <ProfileAction
                 className="bg-mapachito-green"
                 onClick={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
               >
-                Save appearance
+                {messages.saveAppearance}
               </ProfileAction>
               <ProfileAction
                 className="bg-mapachito-raspberry"
@@ -130,15 +134,15 @@ export default function ProfileCardJourney({
                   navigation.back()
                 }}
               >
-                Discard changes
+                {messages.discardChanges}
               </ProfileAction>
             </div>
           </div>
         ) : null}
         {preview ? (
           <RecoverableView
-            title="The profile-card preview could not be displayed."
-            description="Your appearance changes are still here. Try again or use Back to return."
+            title={messages.theProfileCardPreviewCouldNotBe}
+            description={messages.yourAppearanceChangesAreStillHereTry}
           >
             <ProfileCardPreview
               data={data}
@@ -153,8 +157,8 @@ export default function ProfileCardJourney({
             inert={preview || snapshot.matches("confirmingDiscard")}
           >
             <RecoverableView
-              title="Customization could not be displayed."
-              description="Your appearance changes are still here. Try again to keep editing."
+              title={messages.customizationCouldNotBeDisplayed}
+              description={messages.yourAppearanceChangesAreStillHereTry2}
             >
               <ProfileDressingRoom
                 active={

@@ -1,16 +1,15 @@
 "use client"
 
-import {
-  ART_CREDITS,
-  ART_CREDITS_COPY,
-} from "@mapachess/match-presentation/art-credits"
+import { ART_CREDITS } from "@mapachess/match-presentation/art-credits"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 export default function ArtCredits({
   open,
   onOpen,
   onClose,
 }: Readonly<{ open: boolean; onOpen: () => void; onClose: () => void }>) {
+  const copy = useMapachessCopy()
   return (
     <details open={open} className="text-mapachito-charcoal mt-7 text-base">
       <summary
@@ -21,17 +20,21 @@ export default function ArtCredits({
           else onOpen()
         }}
       >
-        {ART_CREDITS_COPY.title}
+        {copy.shared.creditControls.title}
       </summary>
       <ul className="mt-4 grid gap-6">
-        {Object.entries(ART_CREDITS).map(([id, credit]) => (
-          <li key={id}>
+        {Object.values(ART_CREDITS).map((credit) => (
+          <li key={credit.id}>
             <h3 className="font-bold">
               {credit.title} · {credit.creator}
             </h3>
-            <p>{credit.contribution}</p>
+            <p>{copy.credits[credit.id].contribution}</p>
             {credit.modifications === null ? null : (
-              <p className="mt-1">{credit.modifications}</p>
+              <p className="mt-1">
+                {"modifications" in copy.credits[credit.id]
+                  ? copy.credits[credit.id].modifications
+                  : null}
+              </p>
             )}
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {credit.sources.map(({ url, label }) => (
@@ -46,7 +49,7 @@ export default function ArtCredits({
                   {url === credit.licenseUrl ? ` · ${credit.license}` : ""}
                   <span className="sr-only">
                     {" "}
-                    · {credit.title} · {ART_CREDITS_COPY.externalLink}
+                    · {credit.title} · {copy.shared.creditControls.externalLink}
                   </span>
                 </a>
               ))}
@@ -62,7 +65,7 @@ export default function ArtCredits({
                   {credit.license}
                   <span className="sr-only">
                     {" "}
-                    · {ART_CREDITS_COPY.externalLink}
+                    · {copy.shared.creditControls.externalLink}
                   </span>
                 </a>
               )}
@@ -76,7 +79,7 @@ export default function ArtCredits({
         onClick={onClose}
         className="mt-6"
       >
-        {ART_CREDITS_COPY.close}
+        {copy.shared.creditControls.close}
       </MapachessButton>
     </details>
   )

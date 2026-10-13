@@ -1,4 +1,7 @@
+import loadCatalog from "@mapachess/localization/catalog"
+
 type ArtCredit = Readonly<{
+  id: string
   title: string
   creator: string
   contribution: string
@@ -10,9 +13,10 @@ type ArtCredit = Readonly<{
 
 export const ART_CREDITS = Object.freeze({
   mapachitoIdentity: Object.freeze({
+    id: "mapachitoIdentity" as const,
     title: "Mapachito ice cream",
     creator: "Dr. Derek Austin",
-    contribution: "Original first-arrival animation and still artwork",
+    contribution: loadCatalog("en").credits["mapachitoIdentity"].contribution,
     license: "All rights reserved; supplied for Mapachess",
     licenseUrl: "https://DoctorDerek.com",
     sources: Object.freeze([
@@ -21,20 +25,22 @@ export const ART_CREDITS = Object.freeze({
     modifications: null,
   }),
   kenney: Object.freeze({
+    id: "kenney" as const,
     title: "Input Prompts",
     creator: "Kenney",
-    contribution: "Controller control glyphs",
+    contribution: loadCatalog("en").credits["kenney"].contribution,
     license: "CC0 1.0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
     sources: Object.freeze([
       { label: "Input Prompts", url: "https://kenney.nl/assets/input-prompts" },
     ]),
-    modifications: "Unmodified 64-pixel glyph subset from Input Prompts 1.5A.",
+    modifications: loadCatalog("en").credits["kenney"].modifications,
   }),
   seethingswarm: Object.freeze({
+    id: "seethingswarm" as const,
     title: "Animal sprites",
     creator: "SeethingSwarm",
-    contribution: "Battle animals and profile-card companions",
+    contribution: loadCatalog("en").credits["seethingswarm"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://seethingswarm.itch.io/raccoonpack",
     sources: Object.freeze([
@@ -134,9 +140,10 @@ export const ART_CREDITS = Object.freeze({
     modifications: null,
   }),
   captainskolot: Object.freeze({
+    id: "captainskolot" as const,
     title: "Racoon Portrait Pack",
     creator: "CaptainSkolot",
-    contribution: "Mapachito coach reactions",
+    contribution: loadCatalog("en").credits["captainskolot"].contribution,
     license: "CC BY 4.0; additional source-page terms",
     licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
     sources: Object.freeze([
@@ -145,12 +152,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://captainskolot.itch.io/racoon-portrait-pack-asset-pixelart-pixel-art-sprite-badass-bust-pack-rpg-vis",
       }),
     ]),
-    modifications: "Portraits extracted from the supplied atlas.",
+    modifications: loadCatalog("en").credits["captainskolot"].modifications,
   }),
   greyfox: Object.freeze({
+    id: "greyfox" as const,
     title: "Chess-animals faces",
     creator: "GreyFox / Kashir0",
-    contribution: "Optional animal-face coach reactions",
+    contribution: loadCatalog("en").credits["greyfox"].contribution,
     license: "Licensed game artwork; attribution required",
     licenseUrl: "https://frfgreyfox.itch.io/chess-animal-asset-free",
     sources: Object.freeze([
@@ -159,12 +167,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://frfgreyfox.itch.io/chess-animal-asset-free",
       }),
     ]),
-    modifications: "Unmodified faces assigned to Mapachess reaction labels.",
+    modifications: loadCatalog("en").credits["greyfox"].modifications,
   }),
   heroes99: Object.freeze({
+    id: "heroes99" as const,
     title: "Heroes99",
     creator: "AU_pixel",
-    contribution: "Layered profile-card characters, clothing and weapons",
+    contribution: loadCatalog("en").credits["heroes99"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://au-pixel.itch.io/heroes99",
     sources: Object.freeze([
@@ -173,12 +182,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://au-pixel.itch.io/heroes99",
       }),
     ]),
-    modifications: "Idle frames extracted for layered game compositions.",
+    modifications: loadCatalog("en").credits["heroes99"].modifications,
   }),
   chessnut: Object.freeze({
+    id: "chessnut" as const,
     title: "Chessnut",
     creator: "Alexis Luengas",
-    contribution: "Vector chess pieces",
+    contribution: loadCatalog("en").credits["chessnut"].contribution,
     license: "Apache License 2.0",
     licenseUrl: "https://www.apache.org/licenses/LICENSE-2.0",
     sources: Object.freeze([
@@ -190,9 +200,10 @@ export const ART_CREDITS = Object.freeze({
     modifications: null,
   }),
   skoll: Object.freeze({
+    id: "skoll" as const,
     title: "Game-icons chess icons",
     creator: "Skoll",
-    contribution: "Vector chess pieces",
+    contribution: loadCatalog("en").credits["skoll"].contribution,
     license: "CC BY 3.0",
     licenseUrl: "https://creativecommons.org/licenses/by/3.0/",
     sources: Object.freeze([
@@ -221,12 +232,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://game-icons.net/1x1/skoll/chess-pawn.html",
       }),
     ]),
-    modifications: "Contrasting outlines added to the original silhouettes.",
+    modifications: loadCatalog("en").credits["skoll"].modifications,
   }),
   "toffee-classical": Object.freeze({
+    id: "toffee-classical" as const,
     title: "Chess Pixel — Classical",
     creator: "ToffeeCraft",
-    contribution: "Pixel-art chess pieces and boards",
+    contribution: loadCatalog("en").credits["toffee-classical"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel",
     sources: Object.freeze([
@@ -235,12 +247,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://toffeecraft.itch.io/chess-pixel",
       }),
     ]),
-    modifications: "Playable board areas and individual pieces extracted.",
+    modifications: loadCatalog("en").credits["toffee-classical"].modifications,
   }),
   "toffee-wood": Object.freeze({
+    id: "toffee-wood" as const,
     title: "Chess Pixel — Wood",
     creator: "ToffeeCraft",
-    contribution: "Pixel-art chess pieces and board",
+    contribution: loadCatalog("en").credits["toffee-wood"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel-wood",
     sources: Object.freeze([
@@ -249,12 +262,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://toffeecraft.itch.io/chess-pixel-wood",
       }),
     ]),
-    modifications: "Playable board area and individual pieces extracted.",
+    modifications: loadCatalog("en").credits["toffee-wood"].modifications,
   }),
   "toffee-ice": Object.freeze({
+    id: "toffee-ice" as const,
     title: "Chess Pixel — Ice",
     creator: "ToffeeCraft",
-    contribution: "Pixel-art chess pieces and board",
+    contribution: loadCatalog("en").credits["toffee-ice"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel-ice",
     sources: Object.freeze([
@@ -263,12 +277,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://toffeecraft.itch.io/chess-pixel-ice",
       }),
     ]),
-    modifications: "Playable board area and individual pieces extracted.",
+    modifications: loadCatalog("en").credits["toffee-ice"].modifications,
   }),
   backterria: Object.freeze({
+    id: "backterria" as const,
     title: "The Chess",
     creator: "Backterria",
-    contribution: "Conventional and Fantasy chess pieces and boards",
+    contribution: loadCatalog("en").credits["backterria"].contribution,
     license: "Licensed game artwork",
     licenseUrl: "https://backterria.itch.io/the-chess",
     sources: Object.freeze([
@@ -277,12 +292,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://backterria.itch.io/the-chess",
       }),
     ]),
-    modifications: "Playable board areas and authored sprite cells extracted.",
+    modifications: loadCatalog("en").credits["backterria"].modifications,
   }),
   cosunosuke: Object.freeze({
+    id: "cosunosuke" as const,
     title: "32-bit Chess Asset Pack",
     creator: "Cosunosuke",
-    contribution: "Gold and blue pixel-art chess pieces and slate board",
+    contribution: loadCatalog("en").credits["cosunosuke"].contribution,
     license: "Creator-authorized game use; no standalone asset redistribution",
     licenseUrl: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
     sources: Object.freeze([
@@ -291,13 +307,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
       }),
     ]),
-    modifications:
-      "Individual piece cells extracted; original colors and frameless board retained.",
+    modifications: loadCatalog("en").credits["cosunosuke"].modifications,
   }),
   "cat-chess": Object.freeze({
+    id: "cat-chess" as const,
     title: "Cat chess set",
     creator: "OgreofWart @ DarkEvil ink.",
-    contribution: "Cat-themed chess pieces and board",
+    contribution: loadCatalog("en").credits["cat-chess"].contribution,
     license: "CC0 1.0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
     sources: Object.freeze([
@@ -306,15 +322,10 @@ export const ART_CREDITS = Object.freeze({
         url: "https://opengameart.org/content/cat-chess-set",
       }),
     ]),
-    modifications:
-      "Transparent margins trimmed; shared piece scale retained. Board cropped and rotated.",
+    modifications: loadCatalog("en").credits["cat-chess"].modifications,
   }),
 }) satisfies Readonly<Record<string, ArtCredit>>
 
 export type ArtCreditId = keyof typeof ART_CREDITS
 
-export const ART_CREDITS_COPY = Object.freeze({
-  title: "Credits",
-  close: "Close Credits",
-  externalLink: "opens in a new tab",
-})
+export const ART_CREDITS_COPY = loadCatalog("en").shared.creditControls

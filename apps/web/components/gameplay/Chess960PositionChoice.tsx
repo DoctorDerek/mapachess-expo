@@ -1,10 +1,10 @@
 import { useRef, useState } from "react"
 import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
-import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import { isInputDirection } from "@mapachess/match/player-input"
 import InputPrompt from "../input/InputPrompt"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function Chess960PositionChoice({
   disabled,
@@ -19,6 +19,7 @@ export default function Chess960PositionChoice({
   onRandomize: () => void
   value: string
 }>) {
+  const copy = useMapachessCopy().setup
   const root = useRef<HTMLFieldSetElement>(null)
   const numberInput = useRef<HTMLInputElement>(null)
   const [editing, setEditing] = useState<Readonly<{
@@ -68,11 +69,11 @@ export default function Chess960PositionChoice({
       disabled={disabled}
       data-player-input-layer={editing === null ? undefined : "position-edit"}
     >
-      <legend className="font-bold">{MATCH_SETUP_COPY.position}</legend>
+      <legend className="font-bold">{copy.position}</legend>
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <label className="min-w-0 flex-1 basis-32" htmlFor="chess960-position">
           <span className="sr-only">
-            {MATCH_SETUP_COPY.positionNumber} (0–{CHESS960_POSITION_COUNT - 1})
+            {copy.positionNumber(CHESS960_POSITION_COUNT - 1)}
           </span>
           <input
             ref={numberInput}
@@ -100,7 +101,7 @@ export default function Chess960PositionChoice({
           variant="secondary"
         >
           <span aria-hidden="true">⤨ </span>
-          {MATCH_SETUP_COPY.randomize}
+          {copy.randomize}
         </MapachessButton>
       </div>
       <p className="mt-2">
@@ -109,13 +110,13 @@ export default function Chess960PositionChoice({
             <InputPrompt action="up" />
             <InputPrompt action="down" /> ±1 · <InputPrompt action="left" />
             <InputPrompt action="right" /> ±10 ·{" "}
-            <InputPrompt action="confirm" /> Accept ·{" "}
-            <InputPrompt action="cancel" /> Cancel
+            <InputPrompt action="confirm" /> {copy.accept} ·{" "}
+            <InputPrompt action="cancel" /> {copy.cancel}
           </>
         ) : numberedPosition ? (
-          MATCH_SETUP_COPY.pinnedPosition
+          copy.pinnedPosition
         ) : (
-          MATCH_SETUP_COPY.freshPosition
+          copy.freshPosition
         )}
       </p>
     </fieldset>
