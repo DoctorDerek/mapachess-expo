@@ -7,13 +7,14 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.ts"],
     coverage: {
+      allowExternal: true,
       reportOnFailure: true,
       provider: "v8",
       reporter: [
         "text",
         ["lcov", { projectRoot: resolve(import.meta.dirname, "../..") }],
       ],
-      include: ["src/**/*.ts"],
+      include: ["src/**/*.ts", "../localization/src/**/*.ts"],
       exclude: ["src/**/*.test.ts"],
     },
   },

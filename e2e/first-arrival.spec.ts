@@ -9,6 +9,33 @@ import {
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
+test("choosing English persists only the locale before Start and retains the document language", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  const language = page.getByRole("combobox", { name: "Language" })
+  await expect(language).toBeVisible()
+  await expect(language.getByRole("option")).toHaveText(["English (US)"])
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+  const before = await savedProfile(page)
+  expect(before.settings.locale).toBeNull()
+  await language.selectOption("en")
+  const expected = {
+    ...before,
+    revision: before.revision + 1,
+    settings: { ...before.settings, locale: "en" },
+  }
+  await expect.poll(() => savedProfile(page)).toEqual(expected)
+  await page.reload()
+  await expect(language).toHaveValue("en")
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+  await expect(
+    page.getByRole("button", { name: "Start", exact: true }),
+  ).toBeVisible()
+  expect(await savedProfile(page)).toEqual(expected)
+})
+
 test("controller focus and activation reach Introduction controls through the existing input owner", async ({
   page,
 }) => {
