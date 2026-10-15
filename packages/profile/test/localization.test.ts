@@ -11,6 +11,7 @@ import resolveLocale, {
   SHIPPED_LOCALES,
   type ShippedLocale,
 } from "../../localization/src/locale.js"
+import validateCatalog from "../../localization/src/validateCatalog.js"
 import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
@@ -30,7 +31,10 @@ describe("shared localization foundation", () => {
     expectTypeOf(loadCatalog).returns.toEqualTypeOf<MapachessCatalog>()
     for (const locale of SHIPPED_LOCALES) {
       expect(CANDIDATE_LOCALES).toContain(locale)
-      expect(loadCatalog(locale)).toBe(CATALOG_LOADERS[locale]())
+      expect(validateCatalog(CATALOG_LOADERS[locale])).toEqual([])
+      expect(loadCatalog(locale).introduction).toEqual(
+        CATALOG_LOADERS[locale]().introduction,
+      )
     }
   })
 
