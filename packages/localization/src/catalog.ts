@@ -1,3 +1,4 @@
+import createCatalogReader from "./catalogReader.js"
 import english from "./en.js"
 import type { ShippedLocale } from "./locale.js"
 
@@ -29,6 +30,10 @@ export const CATALOG_LOADERS = Object.freeze({
   en: (): MapachessCatalog => english,
 }) satisfies Readonly<Record<ShippedLocale, () => MapachessCatalog>>
 
+const catalogs = createCatalogReader(CATALOG_LOADERS)
+
+export const getCatalogHealth = catalogs.health
+
 export default function loadCatalog(locale: ShippedLocale): MapachessCatalog {
-  return CATALOG_LOADERS[locale]()
+  return catalogs.load(locale)
 }
