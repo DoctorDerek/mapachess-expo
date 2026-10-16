@@ -1,4 +1,6 @@
-let decimal: Intl.NumberFormat | undefined
+import { formatCentipawns } from "./enNumbers.js"
+import type { EvaluationBound } from "./numberFormatters.js"
+
 const colors = { white: "White", black: "Black" } as const
 
 const evaluation = {
@@ -11,7 +13,7 @@ const evaluation = {
   mate: (
     winner: keyof typeof colors,
     moves: number,
-    bound: "exact" | "lower" | "upper",
+    bound: EvaluationBound,
   ): string => {
     const score =
       moves === 0
@@ -19,18 +21,7 @@ const evaluation = {
         : `${colors[winner]} M${moves}`
     return bound === "exact" ? score : `${score} · ${bound} bound`
   },
-  centipawns: (value: number, bound: "exact" | "lower" | "upper"): string => {
-    decimal ??= new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: false,
-    })
-    const sign = value > 0 ? "+" : value < 0 ? "−" : ""
-    const score = `${sign}${decimal.format(Math.abs(value) / 100)}`
-    return bound === "exact"
-      ? score
-      : `${bound === "lower" ? "≥" : "≤"} ${score}`
-  },
+  centipawns: formatCentipawns,
 } as const
 
 export default evaluation

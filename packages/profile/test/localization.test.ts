@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
+import { MOVE_CLASSIFICATION_THRESHOLDS } from "../../evaluation/src/moveClassification.js"
 import loadCatalog, {
   CATALOG_LOADERS,
   type MapachessCatalog,
@@ -8,6 +9,7 @@ import resolveLocale, {
   DEFAULT_LOCALE,
   isShippedLocale,
   LOCALE_LABELS,
+  LOCALE_LANGUAGE_TAGS,
   SHIPPED_LOCALES,
   type ShippedLocale,
 } from "../../localization/src/locale.js"
@@ -20,12 +22,32 @@ import { COACH_PORTRAITS } from "../../match-presentation/src/coachPortrait.js"
 import { matchConclusionText } from "../../match/src/matchConclusion.js"
 
 describe("shared localization foundation", () => {
+  it.each(SHIPPED_LOCALES)(
+    "describes lost-mate classifications without promising a displayed internal reason in %s",
+    (locale) => {
+      const copy = loadCatalog(locale)
+      const table = copy.classification.table(MOVE_CLASSIFICATION_THRESHOLDS)
+      const mateTable = copy.classification.mateTable(
+        MOVE_CLASSIFICATION_THRESHOLDS,
+      )
+      expect(mateTable.slice(-3).map(([, grade]) => grade)).toEqual([
+        copy.shared.moveGrades.inaccuracy,
+        copy.shared.moveGrades.mistake,
+        copy.shared.moveGrades.blunder,
+      ])
+      expect(table.flat().join(" ")).not.toMatch(
+        /Lost forced mate|Mate forzado perdido/u,
+      )
+    },
+  )
+
   it("keeps the shipped manifest, labels and typed loaders in agreement", () => {
-    expect(SHIPPED_LOCALES).toEqual(["en"])
+    expect(SHIPPED_LOCALES).toEqual(["en", "es-419"])
     expect(SHIPPED_LOCALES).toContain(DEFAULT_LOCALE)
     expect(new Set(CANDIDATE_LOCALES).size).toBe(CANDIDATE_LOCALES.length)
     expect(new Set(SHIPPED_LOCALES).size).toBe(SHIPPED_LOCALES.length)
     expect(Object.keys(LOCALE_LABELS)).toEqual(SHIPPED_LOCALES)
+    expect(Object.keys(LOCALE_LANGUAGE_TAGS)).toEqual(SHIPPED_LOCALES)
     expect(Object.keys(CATALOG_LOADERS)).toEqual(SHIPPED_LOCALES)
     expectTypeOf<keyof typeof CATALOG_LOADERS>().toEqualTypeOf<ShippedLocale>()
     expectTypeOf(loadCatalog).returns.toEqualTypeOf<MapachessCatalog>()
@@ -47,13 +69,15 @@ describe("shared localization foundation", () => {
       1,
       true,
       "en-US",
-      "es-419",
+      "es-MX",
+      "es-ES",
       "",
     ])
       expect(isShippedLocale(value)).toBe(false)
     expect(isShippedLocale("en")).toBe(true)
+    expect(isShippedLocale("es-419")).toBe(true)
     expect(resolveLocale({ selection: "es-419", preferences: ["es-MX"] })).toBe(
-      "en",
+      "es-419",
     )
     expect(resolveLocale({ route: "zh-Hant", preferences: ["zh-TW"] })).toBe(
       "en",
@@ -62,7 +86,7 @@ describe("shared localization foundation", () => {
 
   it.each([
     { selection: "en" as const, route: "unsupported", preferences: ["es-MX"] },
-    { selection: "es-419" as const, route: "EN" },
+    { selection: "es-ES" as const, route: "EN" },
     { route: "EN-us" },
     { preferences: ["unsupported", "en-GB"] },
     { preferences: ["EN-us"] },
@@ -71,6 +95,28 @@ describe("shared localization foundation", () => {
   ])("resolves a safe shipped language from %j", (input) => {
     expect(resolveLocale(input)).toBe("en")
   })
+
+  it.each([
+    { selection: "es-419" as const, route: "en-US" },
+    { route: "ES-mx", preferences: ["en-US"] },
+    { preferences: ["es-MX", "en-US"] },
+    { preferences: ["es-ES", "es-MX"] },
+    { preferences: ["unsupported", "ES-419"] },
+  ])(
+    "resolves Mexican Spanish without changing its canonical ID from %j",
+    (input) => {
+      expect(resolveLocale(input)).toBe("es-419")
+      expect(LOCALE_LABELS["es-419"]).toBe("Español (México)")
+      expect(LOCALE_LANGUAGE_TAGS["es-419"]).toBe("es-MX")
+    },
+  )
+
+  it.each(["es", "es-ES", "es-AR", "es-MX-invented"])(
+    "does not silently alias a different Spanish preference: %s",
+    (preference) => {
+      expect(resolveLocale({ preferences: [preference] })).toBe("en")
+    },
+  )
 
   it("loads immutable local English without a network or asynchronous boot stage", () => {
     const catalog = loadCatalog("en")

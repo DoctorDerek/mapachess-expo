@@ -16,7 +16,10 @@ test("choosing English persists only the locale before Start and retains the doc
   await page.goto("/")
   const language = page.getByRole("combobox", { name: "Language" })
   await expect(language).toBeVisible()
-  await expect(language.getByRole("option")).toHaveText(["English (US)"])
+  await expect(language.getByRole("option")).toHaveText([
+    "English (US)",
+    "Español (México)",
+  ])
   await expect(page.locator("html")).toHaveAttribute("lang", "en")
   const before = await savedProfile(page)
   expect(before.settings.locale).toBeNull()

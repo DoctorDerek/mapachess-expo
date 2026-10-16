@@ -3,6 +3,7 @@ import { CATALOG_LOADERS } from "../../localization/src/catalog.js"
 import { MAX_CATALOG_ISSUES } from "../../localization/src/catalogIssues.js"
 import createCatalogReader from "../../localization/src/catalogReader.js"
 import english from "../../localization/src/en.js"
+import { SHIPPED_LOCALES } from "../../localization/src/locale.js"
 import {
   isMessageRows,
   isMessageText,
@@ -23,11 +24,12 @@ const thresholds = {
 
 describe("catalog quality gates before recovery", () => {
   it("validates every raw shipped catalog and exercises every formatter without fallbacks", () => {
-    for (const [locale, loader] of Object.entries(CATALOG_LOADERS)) {
+    for (const locale of SHIPPED_LOCALES) {
+      const loader = CATALOG_LOADERS[locale]
       expect(validateCatalog(loader), locale).toEqual([])
       const raw = loader()
-      const reader = createCatalogReader({ en: loader })
-      const copy = reader.load("en")
+      const reader = createCatalogReader(CATALOG_LOADERS)
+      const copy = reader.load(locale)
       for (const [path, examples] of Object.entries(formatterExamples)) {
         const resolve = (root: unknown) =>
           path.split(".").reduce(
