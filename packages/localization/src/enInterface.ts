@@ -40,7 +40,7 @@ const interfaceCopy = {
   matchRecovery: {
     retryEvaluation: "Retry Evaluation",
     yourPendingChangeIsRetainedButNot:
-      "Your pending change is retained but not yet saved. Retry save to continue.",
+      "Your change is still here but is not saved yet. Choose Retry save to continue.",
     retrySave: "Retry save",
   },
   matchSaveConfirmation: {
@@ -70,7 +70,7 @@ const interfaceCopy = {
     returnToMenu: "Return to Menu",
     replayOpponent: "Replay opponent",
     yourLastVerifiedLocalProfileRemainsAvailable:
-      "Your last verified local profile remains available. Retry the interrupted session operation.",
+      "Your last verified local save is still available. Choose Retry to try the interrupted action again.",
     retry: "Retry",
   },
   webMatch: {
@@ -88,7 +88,7 @@ const interfaceCopy = {
   inputBindingSettings: {
     controls: "Controls",
     changesApplyOnlyAfterSaveSucceedsTab:
-      "Changes apply only after Save succeeds. Tab and platform shortcuts keep their normal behavior.",
+      "Changes take effect only after Save controls succeeds. Tab and platform shortcuts keep their normal behavior.",
     restoreDefaults: "Restore defaults",
     cancel: "Cancel",
     saveControls: "Save controls",
@@ -179,7 +179,7 @@ const interfaceCopy = {
     verifiedBackupPreview: "Verified backup preview",
     reviewBeforeReplacingLocalData: "Review before replacing local data",
     theBackupPassedStructuralAndIntegrityChecks:
-      "The backup passed structural and integrity checks. Nothing has been replaced yet. Confirming first creates and verifies a backup of the current readable profile when one exists.",
+      "This backup passed format and integrity checks. Nothing has been replaced. Confirming also preserves a verified backup of your current readable profile, if one exists.",
     backupApplication: "Backup application",
     dataRevision: "Data revision",
     automaticHints: "Automatic hints",
@@ -191,7 +191,7 @@ const interfaceCopy = {
   },
   profilePersistenceFailurePanel: {
     itIsNotYetSavedLaterState:
-      "It is not yet saved. Later state-changing actions are frozen until Retry succeeds.",
+      "This change is not saved yet. Choose Retry save to try again. Further changes are paused until saving succeeds.",
     retryingSave: "Retrying save…",
     retrySave: "Retry save",
     exportPendingPlayerData: "Export Pending Player Data",
@@ -209,11 +209,11 @@ const interfaceCopy = {
   },
   profileRecoveryPanel: {
     mapachessCouldNotSafelyReadTheCurrent:
-      "Mapachess could not safely read the current local save. The available bytes are preserved, gameplay changes are frozen, and nothing has been reset.",
+      "Mapachess could not read your local save safely. The saved data is preserved, play is paused, and nothing has been reset.",
     localDataRecovery: "Local data recovery",
     yourSaveNeedsAttention: "Your save needs attention.",
     theDownloadCouldNotBeCreatedYour:
-      "The download could not be created. Your preserved local bytes are unchanged. Try again or use another browser download destination.",
+      "The download could not be created. Your preserved save data is unchanged. Try again or choose another download location in your browser.",
     resetAllLocalPlayerData: "Reset all local player data?",
     thisReplacesAllLocalPlayerDataIncluding:
       "This replaces all local player data, including the active match, Story and Challenge records, both current Elo ratings and their rated-match counts, historical rating values, and settings. It does not affect backup files you already exported.",
@@ -227,13 +227,13 @@ const interfaceCopy = {
   profileSettingsPanel: {
     closeSettings: "Close Settings",
     hintChangesTakeEffectImmediatelyAndBecome:
-      "Hint changes take effect immediately and become your default. You can always request hints manually.",
+      "Hint changes become your default and apply to the current match. You can still request hints on your turn.",
     yourEloRatings: "Your Elo ratings",
     cancel: "Cancel",
     exportPlayerData: "Export Player Data",
     portablePlayerData: "Portable Player Data",
     dataStaysOnThisDeviceUnlessYou:
-      "Data stays on this device unless you explicitly download or import a JSON backup. Import first opens a non-destructive preview and is never applied before you review it.",
+      "Your progress stays on this device. Export a JSON backup to move it yourself. Import lets you review a backup before replacing local data.",
     aboutEloRatings: "About Elo ratings",
   },
   webMapachessApplication: {

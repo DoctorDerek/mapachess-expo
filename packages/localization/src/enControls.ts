@@ -3,7 +3,7 @@ const controls = {
   focusedControl: "Via focused control",
   changeBinding: (action: string): string => `Change ${action} binding`,
   requiredAction:
-    "That change would leave a required action unbound. Choose another control.",
+    "That change would leave a required action without a controller input. Choose another control.",
   swapQuestion: (action: string | null): string =>
     `Already assigned to ${action ?? "another action"}. Swap the two bindings?`,
   primary: (control: string | undefined): string =>

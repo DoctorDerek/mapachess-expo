@@ -71,7 +71,7 @@ describe("actionable match recovery", () => {
         expect(markup).not.toContain("private")
         if (failure === "save") {
           expect(markup).toContain("Local save error")
-          expect(markup).toContain("retained but not yet saved")
+          expect(markup).toContain("still here but is not saved yet")
           expect(markup).toContain("Retry save")
           expect(markup).not.toContain("Saved")
         } else {
@@ -80,7 +80,7 @@ describe("actionable match recovery", () => {
               ? "returned an invalid move"
               : "could not finish its turn",
           )
-          expect(markup).toContain("Retry Chicken Stockfish turn")
+          expect(markup).toContain("Retry Chicken Stockfish’s turn")
         }
       } finally {
         actor.stop()

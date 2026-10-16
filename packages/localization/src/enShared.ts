@@ -59,7 +59,7 @@ const shared = {
     unlocked: "Unlocked",
     locked: "Locked",
     lockedOpponent: "Locked opponent",
-    targetElo: "Authored Elo target",
+    targetElo: "Target Elo",
     nextOpponent: "Next unlocked opponent",
     completedCount: "Opponents defeated",
     opponents: "Story opponents in ladder order",

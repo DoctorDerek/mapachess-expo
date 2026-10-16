@@ -15,7 +15,7 @@ const gameplay = {
   lockedOpponent: (position: number): string =>
     `Locked opponent ${formatInteger(position)}`,
   targetElo: (elo: number): string =>
-    `Authored Elo target: ${formatUngroupedInteger(elo)}`,
+    `Target Elo: ${formatUngroupedInteger(elo)}`,
   defeatedMedal: (medal: string): string => `Defeated · ${medal}`,
   challengeList: (opponents: readonly string[]): string =>
     `Unlocked for both Challenge modes: ${opponents.join(", ")}`,
@@ -58,7 +58,7 @@ const gameplay = {
     `${opponent} returned an invalid move. Retry or undo.`,
   opponentTurnFailed: (opponent: string): string =>
     `${opponent} could not finish its turn. Retry or undo.`,
-  retryTurn: (opponent: string): string => `Retry ${opponent} turn`,
+  retryTurn: (opponent: string): string => `Retry ${opponent}’s turn`,
   drawDeclined: (opponent: string): string => `${opponent} declines the draw.`,
   hints: {
     controls: {
@@ -69,19 +69,19 @@ const gameplay = {
       "piece-hints": "Show Move Hints",
       ready: "Show Piece Hints",
       unavailable: "Hints unavailable",
-      complete: "Hints unavailable after game",
+      complete: "Hints unavailable after the match",
     },
     guidance: {
       failure:
         "Piece Hints could not be calculated. Your position is unchanged.",
       hidden: "Piece Hints return when it is your turn.",
-      loading: "Analyzing this unchanged board for Player and Opponent pieces.",
+      loading: "Finding Piece Hints for both sides without changing the board.",
       "move-hints":
         "Solid green arrows show Player moves. Dashed red arrows show Opponent moves.",
       "piece-hints":
         "Solid green borders mark Player pieces. Dashed red borders mark Opponent pieces.",
       ready: "Start by finding the most important Player and Opponent pieces.",
-      unavailable: "This runtime has no Better Hints analyst.",
+      unavailable: "Better Hints are unavailable in this version of Mapachess.",
       complete:
         "Better Hints are available only while the match is in progress.",
     },

@@ -24,7 +24,7 @@ const profile = {
       "The backup did not pass its integrity check. Your saved data is unchanged.",
     size: "The selected backup is larger than Mapachess can safely inspect. Your saved data is unchanged.",
     version:
-      "This backup was created by a newer, unsupported Mapachess data version. Your saved data is unchanged.",
+      "This backup uses a newer Mapachess data format that this version cannot read. Your saved data is unchanged.",
     read: "The selected backup could not be read. Your saved data is unchanged.",
     invalid:
       "The selected file is not a valid Mapachess backup. Your saved data is unchanged.",
@@ -35,7 +35,7 @@ const profile = {
     verification:
       "Mapachess could not verify the saved copy. Your pending change is still held here.",
     request:
-      "Browser storage did not finish the request. Your pending change is still held here.",
+      "Storage did not finish saving. Your unsaved change is still here.",
     unsafe:
       "Mapachess could not safely save this change. Your pending change is still held here.",
   },

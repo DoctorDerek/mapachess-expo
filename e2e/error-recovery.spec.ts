@@ -353,7 +353,7 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
     const retry = page.getByRole("button", {
       name:
         engine === "opponent"
-          ? "Retry Chicken Stockfish turn"
+          ? "Retry Chicken Stockfish’s turn"
           : engine === "evaluation"
             ? "Retry Evaluation"
             : "Retry Piece Hints",
