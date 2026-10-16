@@ -89,7 +89,7 @@ test("retains save recovery while retrying and restores settings after success",
   await expect(
     page.getByRole("alert").filter({
       hasText:
-        "It is not yet saved. Later state-changing actions are frozen until Retry succeeds.",
+        "This change is not saved yet. Choose Retry save to try again. Further changes are paused until saving succeeds.",
     }),
   ).toBeVisible()
   await expect(
@@ -406,7 +406,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await page.getByRole("button", { name: "Randomize", exact: true }).click()
       await expect(
         page.getByText(
-          "A fresh number for each new setup. Start uses the number shown.",
+          "Each new setup gets a random position number. Start match uses the number shown.",
           { exact: true },
         ),
       ).toBeVisible()

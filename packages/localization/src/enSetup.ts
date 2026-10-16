@@ -10,7 +10,7 @@ const setup = {
   randomize: "Randomize",
   pinnedPosition: "This position is remembered until you choose Randomize.",
   freshPosition:
-    "A fresh number for each new setup. Start uses the number shown.",
+    "Each new setup gets a random position number. Start match uses the number shown.",
   randomColor: "Your side is chosen at random when the match starts.",
   position: "Chess960 starting position",
   positionNumber: (maximum: number): string => `Position number (0–${maximum})`,
@@ -89,12 +89,13 @@ const setup = {
     "auto-piece-hints": {
       label: "Auto Piece Hints",
       description:
-        "Automatically show three Piece Hints for each side. Request Move Hints whenever you want.",
+        "Automatically show three Piece Hints for each side. Request their Move Hints on your turn.",
       medal: "Silver if you win with Piece Hints but no Move Hints.",
     },
     "no-auto-hints": {
       label: "No Auto Hints",
-      description: "Request Piece Hints or Move Hints whenever you want.",
+      description:
+        "On your turn, request three Piece Hints for each side, then their Move Hints.",
       medal: "Gold if you win without using any hints.",
     },
   },

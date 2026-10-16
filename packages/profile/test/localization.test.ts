@@ -108,6 +108,7 @@ describe("American English player-facing catalog", () => {
     expect(copy.profile.ratedMatches(2)).toBe("2 rated matches")
     expect(copy.gameplay.elo(445.21238123123)).toBe("445")
     expect(copy.gameplay.elo(1200.5)).toBe("1201")
+    expect(copy.gameplay.targetElo(1200.5)).toBe("Target Elo: 1201")
     expect(copy.profile.rating("Standard Chess", 1200.5)).toBe(
       "Standard Chess · 1201 Elo",
     )
@@ -130,6 +131,27 @@ describe("American English player-facing catalog", () => {
       COACH_PORTRAITS.map(({ label }) => label).sort(),
     )
   })
+
+  it("names the recovery and setup controls that the player can actually use", () => {
+    expect(copy.setup.freshPosition).toContain(copy.setup.startMatch)
+    expect(
+      copy.interface.inputBindingSettings.changesApplyOnlyAfterSaveSucceedsTab,
+    ).toContain(copy.interface.inputBindingSettings.saveControls)
+    expect(
+      copy.interface.matchRecovery.yourPendingChangeIsRetainedButNot,
+    ).toContain(copy.interface.matchRecovery.retrySave)
+    expect(
+      copy.interface.profilePersistenceFailurePanel.itIsNotYetSavedLaterState,
+    ).toContain(copy.interface.profilePersistenceFailurePanel.retrySave)
+    expect(copy.controls.requiredAction).toContain("controller input")
+  })
+
+  it.each(["Chicken Stockfish", "War Hero Stockfish", "Dragonfly Stockfish"])(
+    "keeps the actual opponent in the retry action for %s",
+    (opponent) => {
+      expect(copy.gameplay.retryTurn(opponent)).toBe(`Retry ${opponent}’s turn`)
+    },
+  )
 
   it("keeps whole hint announcements distinct for player and opponent on the unchanged board", () => {
     expect(

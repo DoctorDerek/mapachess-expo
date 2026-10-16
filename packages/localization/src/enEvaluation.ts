@@ -4,9 +4,9 @@ const colors = { white: "White", black: "Black" } as const
 const evaluation = {
   even: "Even",
   unavailable: "Evaluation unavailable",
-  waiting: "Evaluation waiting",
+  waiting: "Waiting for evaluation",
   whiteRelative: (score: string): string =>
-    `White-relative evaluation ${score}`,
+    `Evaluation from White’s perspective: ${score}`,
   draw: "0.00",
   mate: (
     winner: keyof typeof colors,

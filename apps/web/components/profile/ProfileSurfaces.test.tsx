@@ -213,13 +213,15 @@ describe("web player-data controls", () => {
     expect(markup).toContain(
       "Changing this setting never erases earlier hint use.",
     )
-    expect(markup).toContain("changes take effect immediately")
+    expect(markup).toContain(
+      "Hint changes become your default and apply to the current match.",
+    )
     expect(markup).toContain("Standard Chess · 100 Elo")
     expect(markup).toContain("Chess960 · 100 Elo")
     expect(markup).toContain("Reset Standard Chess Elo")
     expect(markup).toContain("Reset Chess960 Elo")
     expect(markup).toContain("Export Player Data")
-    expect(markup).toContain("non-destructive preview")
+    expect(markup).toContain("review a backup before replacing local data")
     expect(markup).toContain("Credits")
   })
 
@@ -232,7 +234,7 @@ describe("web player-data controls", () => {
       }),
     )
 
-    expect(markup).toContain("Nothing has been replaced yet")
+    expect(markup).toContain("Nothing has been replaced.")
     expect(markup).toContain("Cancel Import")
     expect(markup).toContain('autofocus=""')
     expect(markup).toContain("Replace Local Player Data")
