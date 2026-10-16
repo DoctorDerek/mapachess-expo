@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import { describe, expect, it } from "vitest"
+import loadCatalog from "@mapachess/localization/catalog"
 import {
   MATCH_COLORS,
   MATCH_PIECE_ROLES,
@@ -8,7 +9,7 @@ import {
 import manifest from "../../../ghost_assets/chess-assets.manifest.json"
 import provenance from "../../../ghost_assets/chess-assets.provenance.json"
 import ANIMAL_OPPONENT_SOURCE_PACKS from "../src/animalOpponent.js"
-import { ART_CREDITS } from "../src/artCredits.js"
+import localizeArtCredits, { ART_CREDITS } from "../src/artCredits.js"
 import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
@@ -145,7 +146,7 @@ describe("prepared chess appearance", () => {
   })
 
   it("retains source and license links for every artist, including CC0", () => {
-    for (const credit of Object.values(ART_CREDITS)) {
+    for (const credit of localizeArtCredits(loadCatalog("en"))) {
       expect(credit.creator.length).toBeGreaterThan(0)
       expect(credit.licenseUrl).toMatch(/^https:\/\//)
       expect(credit.sources.length).toBeGreaterThan(0)
@@ -155,13 +156,20 @@ describe("prepared chess appearance", () => {
       }
     }
     expect(ART_CREDITS["cat-chess"].license).toBe("CC0 1.0")
-    expect(ART_CREDITS.skoll.modifications).toContain("outlines")
+    expect(
+      localizeArtCredits(loadCatalog("en")).find(({ id }) => id === "skoll")
+        ?.modifications,
+    ).toContain("outlines")
   })
 
   it("records Cosunosuke's permission and attribution without relicensing the art", async () => {
     const credit = ART_CREDITS.cosunosuke
     expect(credit.creator).toBe("Cosunosuke")
-    expect(credit.license).toContain("no standalone asset redistribution")
+    expect(
+      localizeArtCredits(loadCatalog("en")).find(
+        ({ id }) => id === "cosunosuke",
+      )?.license,
+    ).toContain("no standalone asset redistribution")
     const notice = await readFile(
       new URL(
         "../../../ghost_assets/licenses/cosunosuke/LICENSE.txt",

@@ -1,47 +1,49 @@
-import loadCatalog from "@mapachess/localization/catalog"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
+
+type CreditMessage =
+  keyof MapachessCatalog["shared"]["creditControls"]["labels"]
+
+type CreditLabel =
+  | string
+  | Readonly<{ message: CreditMessage }>
+  | Readonly<{ piece: keyof MapachessCatalog["board"]["pieces"] }>
 
 type ArtCredit = Readonly<{
-  id: string
-  title: string
+  id: keyof MapachessCatalog["credits"]
+  title: CreditLabel
   creator: string
-  contribution: string
-  license: string
+  license: CreditLabel
+  licenseTerms?: CreditMessage
   licenseUrl: string
-  sources: readonly Readonly<{ label: string; url: string }>[]
-  modifications: string | null
+  sources: readonly Readonly<{ label: CreditLabel; url: string }>[]
 }>
 
 export const ART_CREDITS = Object.freeze({
   mapachitoIdentity: Object.freeze({
     id: "mapachitoIdentity" as const,
-    title: "Mapachito ice cream",
+    title: { message: "mapachitoIdentity" as const },
     creator: "Dr. Derek Austin",
-    contribution: loadCatalog("en").credits["mapachitoIdentity"].contribution,
-    license: "All rights reserved; supplied for Mapachess",
+    license: { message: "allRightsReserved" as const },
     licenseUrl: "https://DoctorDerek.com",
     sources: Object.freeze([
       { label: "DoctorDerek.com", url: "https://DoctorDerek.com" },
     ]),
-    modifications: null,
   }),
   kenney: Object.freeze({
     id: "kenney" as const,
     title: "Input Prompts",
     creator: "Kenney",
-    contribution: loadCatalog("en").credits["kenney"].contribution,
     license: "CC0 1.0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
     sources: Object.freeze([
       { label: "Input Prompts", url: "https://kenney.nl/assets/input-prompts" },
     ]),
-    modifications: loadCatalog("en").credits["kenney"].modifications,
   }),
   seethingswarm: Object.freeze({
     id: "seethingswarm" as const,
-    title: "Animal sprites",
+    title: { message: "animalSprites" as const },
     creator: "SeethingSwarm",
-    contribution: loadCatalog("en").credits["seethingswarm"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://seethingswarm.itch.io/raccoonpack",
     sources: Object.freeze([
       Object.freeze({
@@ -137,14 +139,13 @@ export const ART_CREDITS = Object.freeze({
         url: "https://seethingswarm.itch.io/dragonflypack",
       }),
     ]),
-    modifications: null,
   }),
   captainskolot: Object.freeze({
     id: "captainskolot" as const,
     title: "Racoon Portrait Pack",
     creator: "CaptainSkolot",
-    contribution: loadCatalog("en").credits["captainskolot"].contribution,
-    license: "CC BY 4.0; additional source-page terms",
+    license: "CC BY 4.0",
+    licenseTerms: "sourcePageTerms" as const,
     licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
     sources: Object.freeze([
       Object.freeze({
@@ -152,14 +153,12 @@ export const ART_CREDITS = Object.freeze({
         url: "https://captainskolot.itch.io/racoon-portrait-pack-asset-pixelart-pixel-art-sprite-badass-bust-pack-rpg-vis",
       }),
     ]),
-    modifications: loadCatalog("en").credits["captainskolot"].modifications,
   }),
   greyfox: Object.freeze({
     id: "greyfox" as const,
-    title: "Chess-animals faces",
+    title: { message: "greyfoxFaces" as const },
     creator: "GreyFox / Kashir0",
-    contribution: loadCatalog("en").credits["greyfox"].contribution,
-    license: "Licensed game artwork; attribution required",
+    license: { message: "attributionRequired" as const },
     licenseUrl: "https://frfgreyfox.itch.io/chess-animal-asset-free",
     sources: Object.freeze([
       Object.freeze({
@@ -167,14 +166,12 @@ export const ART_CREDITS = Object.freeze({
         url: "https://frfgreyfox.itch.io/chess-animal-asset-free",
       }),
     ]),
-    modifications: loadCatalog("en").credits["greyfox"].modifications,
   }),
   heroes99: Object.freeze({
     id: "heroes99" as const,
     title: "Heroes99",
     creator: "AU_pixel",
-    contribution: loadCatalog("en").credits["heroes99"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://au-pixel.itch.io/heroes99",
     sources: Object.freeze([
       Object.freeze({
@@ -182,109 +179,97 @@ export const ART_CREDITS = Object.freeze({
         url: "https://au-pixel.itch.io/heroes99",
       }),
     ]),
-    modifications: loadCatalog("en").credits["heroes99"].modifications,
   }),
   chessnut: Object.freeze({
     id: "chessnut" as const,
     title: "Chessnut",
     creator: "Alexis Luengas",
-    contribution: loadCatalog("en").credits["chessnut"].contribution,
     license: "Apache License 2.0",
     licenseUrl: "https://www.apache.org/licenses/LICENSE-2.0",
     sources: Object.freeze([
       Object.freeze({
-        label: "Chessnut source",
+        label: { message: "chessnutSource" as const },
         url: "https://github.com/LexLuengas/chessnut-pieces",
       }),
     ]),
-    modifications: null,
   }),
   skoll: Object.freeze({
     id: "skoll" as const,
-    title: "Game-icons chess icons",
+    title: { message: "skollIcons" as const },
     creator: "Skoll",
-    contribution: loadCatalog("en").credits["skoll"].contribution,
     license: "CC BY 3.0",
     licenseUrl: "https://creativecommons.org/licenses/by/3.0/",
     sources: Object.freeze([
       Object.freeze({
-        label: "King",
+        label: { piece: "king" as const },
         url: "https://game-icons.net/1x1/skoll/chess-king.html",
       }),
       Object.freeze({
-        label: "Queen",
+        label: { piece: "queen" as const },
         url: "https://game-icons.net/1x1/skoll/chess-queen.html",
       }),
       Object.freeze({
-        label: "Rook",
+        label: { piece: "rook" as const },
         url: "https://game-icons.net/1x1/skoll/chess-rook.html",
       }),
       Object.freeze({
-        label: "Bishop",
+        label: { piece: "bishop" as const },
         url: "https://game-icons.net/1x1/skoll/chess-bishop.html",
       }),
       Object.freeze({
-        label: "Knight",
+        label: { piece: "knight" as const },
         url: "https://game-icons.net/1x1/skoll/chess-knight.html",
       }),
       Object.freeze({
-        label: "Pawn",
+        label: { piece: "pawn" as const },
         url: "https://game-icons.net/1x1/skoll/chess-pawn.html",
       }),
     ]),
-    modifications: loadCatalog("en").credits["skoll"].modifications,
   }),
   "toffee-classical": Object.freeze({
     id: "toffee-classical" as const,
     title: "Chess Pixel — Classical",
     creator: "ToffeeCraft",
-    contribution: loadCatalog("en").credits["toffee-classical"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel",
     sources: Object.freeze([
       Object.freeze({
-        label: "Classical",
+        label: { message: "classical" as const },
         url: "https://toffeecraft.itch.io/chess-pixel",
       }),
     ]),
-    modifications: loadCatalog("en").credits["toffee-classical"].modifications,
   }),
   "toffee-wood": Object.freeze({
     id: "toffee-wood" as const,
     title: "Chess Pixel — Wood",
     creator: "ToffeeCraft",
-    contribution: loadCatalog("en").credits["toffee-wood"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel-wood",
     sources: Object.freeze([
       Object.freeze({
-        label: "Wood",
+        label: { message: "wood" as const },
         url: "https://toffeecraft.itch.io/chess-pixel-wood",
       }),
     ]),
-    modifications: loadCatalog("en").credits["toffee-wood"].modifications,
   }),
   "toffee-ice": Object.freeze({
     id: "toffee-ice" as const,
     title: "Chess Pixel — Ice",
     creator: "ToffeeCraft",
-    contribution: loadCatalog("en").credits["toffee-ice"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://toffeecraft.itch.io/chess-pixel-ice",
     sources: Object.freeze([
       Object.freeze({
-        label: "Ice",
+        label: { message: "ice" as const },
         url: "https://toffeecraft.itch.io/chess-pixel-ice",
       }),
     ]),
-    modifications: loadCatalog("en").credits["toffee-ice"].modifications,
   }),
   backterria: Object.freeze({
     id: "backterria" as const,
     title: "The Chess",
     creator: "Backterria",
-    contribution: loadCatalog("en").credits["backterria"].contribution,
-    license: "Licensed game artwork",
+    license: { message: "licensedArtwork" as const },
     licenseUrl: "https://backterria.itch.io/the-chess",
     sources: Object.freeze([
       Object.freeze({
@@ -292,14 +277,12 @@ export const ART_CREDITS = Object.freeze({
         url: "https://backterria.itch.io/the-chess",
       }),
     ]),
-    modifications: loadCatalog("en").credits["backterria"].modifications,
   }),
   cosunosuke: Object.freeze({
     id: "cosunosuke" as const,
     title: "32-bit Chess Asset Pack",
     creator: "Cosunosuke",
-    contribution: loadCatalog("en").credits["cosunosuke"].contribution,
-    license: "Creator-authorized game use; no standalone asset redistribution",
+    license: { message: "creatorPermission" as const },
     licenseUrl: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
     sources: Object.freeze([
       Object.freeze({
@@ -307,13 +290,11 @@ export const ART_CREDITS = Object.freeze({
         url: "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
       }),
     ]),
-    modifications: loadCatalog("en").credits["cosunosuke"].modifications,
   }),
   "cat-chess": Object.freeze({
     id: "cat-chess" as const,
     title: "Cat chess set",
     creator: "OgreofWart @ DarkEvil ink.",
-    contribution: loadCatalog("en").credits["cat-chess"].contribution,
     license: "CC0 1.0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
     sources: Object.freeze([
@@ -322,10 +303,54 @@ export const ART_CREDITS = Object.freeze({
         url: "https://opengameart.org/content/cat-chess-set",
       }),
     ]),
-    modifications: loadCatalog("en").credits["cat-chess"].modifications,
   }),
-}) satisfies Readonly<Record<string, ArtCredit>>
+}) satisfies Readonly<Record<keyof MapachessCatalog["credits"], ArtCredit>>
 
 export type ArtCreditId = keyof typeof ART_CREDITS
 
-export const ART_CREDITS_COPY = loadCatalog("en").shared.creditControls
+export type LocalizedArtCredit = Readonly<{
+  id: ArtCreditId
+  title: string
+  creator: string
+  contribution: string
+  license: string
+  licenseUrl: string
+  sources: readonly Readonly<{ label: string; url: string }>[]
+  modifications: string | null
+}>
+
+export default function localizeArtCredits(
+  copy: MapachessCatalog,
+): readonly LocalizedArtCredit[] {
+  const controls = copy.shared.creditControls
+  const label = (value: CreditLabel): string => {
+    if (typeof value === "string") return value
+    return "message" in value
+      ? controls.labels[value.message]
+      : controls.pieceSource(copy.board.pieces[value.piece])
+  }
+  return Object.values(ART_CREDITS).map((credit) => {
+    const description = copy.credits[credit.id]
+    const license = label(credit.license)
+    return {
+      id: credit.id,
+      title: label(credit.title),
+      creator: credit.creator,
+      contribution: description.contribution,
+      modifications:
+        "modifications" in description ? description.modifications : null,
+      license:
+        "licenseTerms" in credit
+          ? controls.licenseWithTerms(
+              license,
+              controls.labels[credit.licenseTerms],
+            )
+          : license,
+      licenseUrl: credit.licenseUrl,
+      sources: credit.sources.map((source) => ({
+        label: label(source.label),
+        url: source.url,
+      })),
+    }
+  })
+}
