@@ -13,6 +13,35 @@ import { matchConclusionText } from "../../match/src/matchConclusion.js"
 const copy = loadCatalog("es-419")
 
 describe("Mexican Spanish player-facing catalog", () => {
+  it("localizes the Chess960 name consistently without renaming variant identities", () => {
+    expect(copy.setup.variants).toEqual({
+      standard: "Ajedrez estándar",
+      chess960: "Ajedrez 960",
+    })
+    expect(copy.introduction.paragraphs[0]?.body).toBe(
+      "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 23 oponentes de Historia o elige tu propio Desafío.",
+    )
+    expect(copy.setup.position).toBe("Posición inicial de ajedrez 960")
+    expect(copy.setup.presentations.chess960.story.title).toBe(
+      "Historia de ajedrez 960",
+    )
+    expect(copy.setup.presentations.chess960.challenge.title).toBe(
+      "Desafío de ajedrez 960",
+    )
+    expect(copy.shared.story.chess960).toBe(
+      "Progreso de Historia de ajedrez 960",
+    )
+    expect(copy.shared.story.independence).toBe(
+      "Ajedrez estándar y ajedrez 960 conservan sus victorias y medallas por separado.",
+    )
+    expect(copy.profile.ratingLabel.chess960).toBe("Elo de ajedrez 960")
+    expect(copy.profile.rating(copy.setup.variants.chess960, 1200.5)).toBe(
+      "Ajedrez 960 · 1201 Elo",
+    )
+    expect(loadCatalog("en").setup.variants.chess960).toBe("Chess960")
+    expect(loadCatalog("en").profile.ratingLabel.chess960).toBe("Chess960 Elo")
+  })
+
   it.each([
     [0, "0 partidas con puntuación"],
     [1, "1 partida con puntuación"],
@@ -201,4 +230,37 @@ describe("Mexican Spanish player-facing catalog", () => {
       })
     },
   )
+
+  it("recovers a damaged variant name without losing the translated setup", () => {
+    const reader = createCatalogReader({
+      en: () => english,
+      "es-419": () => ({
+        ...mexicanSpanish,
+        setup: {
+          ...mexicanSpanish.setup,
+          variants: { ...mexicanSpanish.setup.variants, chess960: undefined },
+        },
+      }),
+    })
+    const recovered = reader.load("es-419")
+    expect(recovered.setup.variants).toEqual({
+      standard: "Ajedrez estándar",
+      chess960: "Chess960",
+    })
+    expect(recovered.setup.presentations.chess960.challenge.title).toBe(
+      "Desafío de ajedrez 960",
+    )
+    expect(reader.health()).toEqual({
+      limitReached: false,
+      issues: [
+        {
+          locale: "es-419",
+          path: "setup.variants.chess960",
+          source: "selected",
+          reason: "missing",
+          recovery: "english",
+        },
+      ],
+    })
+  })
 })

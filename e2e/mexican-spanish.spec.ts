@@ -2,7 +2,7 @@ import { expect } from "@playwright/test"
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
-test("Mexican Spanish survives a match, language changes, hints and rewards without replacing player data", async ({
+test("Mexican Spanish preserves Chess960 through language changes, hints and rewards without replacing player data", async ({
   page,
 }, testInfo) => {
   test.setTimeout(120000)
@@ -21,8 +21,24 @@ test("Mexican Spanish survives a match, language changes, hints and rewards with
     .getByRole("button", { name: "Cerrar configuración", exact: true })
     .click()
   await page
-    .getByRole("button", { name: "Desafío de ajedrez estándar", exact: true })
+    .getByRole("button", { name: "Desafío de ajedrez 960", exact: true })
     .click()
+  await expect(
+    page.getByRole("group", {
+      name: "Posición inicial de ajedrez 960",
+      exact: true,
+    }),
+  ).toBeVisible()
+  await page
+    .getByRole("spinbutton", {
+      name: "Número de posición (0–959)",
+      exact: true,
+    })
+    .fill("959")
+  await page.screenshot({
+    path: testInfo.outputPath("spanish-chess960-setup.png"),
+    fullPage: true,
+  })
   await page.getByRole("radio", { name: "Blancas", exact: true }).check()
   await page
     .getByRole("button", { name: "Iniciar partida", exact: true })
@@ -81,6 +97,10 @@ test("Mexican Spanish survives a match, language changes, hints and rewards with
     })
   }
   const before = await savedProfile(page)
+  expect(before.activeMatch?.startingPosition).toEqual({
+    variant: "chess960",
+    chess960PositionId: 959,
+  })
   await page.locator("summary").filter({ hasText: "Menú" }).click()
   await page.getByRole("button", { name: "Configuración", exact: true }).click()
   await page.getByRole("combobox", { name: "Idioma" }).selectOption("en")
@@ -164,6 +184,15 @@ for (const width of [390, 1280]) {
     ).toBeVisible()
     await expect(
       page.getByRole("button", { name: "Desafío de ajedrez 960", exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole("button", {
+        name: "Historia de ajedrez 960",
+        exact: true,
+      }),
+    ).toBeVisible()
+    await expect(
+      page.getByText("Elo de ajedrez 960", { exact: true }),
     ).toBeVisible()
     await page.screenshot({
       path: testInfo.outputPath(`spanish-menu-${width}.png`),
