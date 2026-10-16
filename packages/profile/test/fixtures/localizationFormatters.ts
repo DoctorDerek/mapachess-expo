@@ -179,6 +179,10 @@ const formatterExamples = {
     ],
   ],
   "presentation.coach": [["GreyFox"]],
+  "shared.creditControls.licenseWithTerms": [
+    ["CC BY 4.0", "additional source-page terms"],
+  ],
+  "shared.creditControls.pieceSource": [["queen"], ["peón"]],
   "presentation.fighter": [["Raccoon", "idle"]],
   "presentation.unavailableFighter": [["Raccoon"]],
   "presentation.ready": [["Chicken Stockfish"]],

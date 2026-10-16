@@ -95,6 +95,28 @@ const shared = {
     title: "Créditos",
     close: "Cerrar créditos",
     externalLink: "se abre en una pestaña nueva",
+    labels: {
+      mapachitoIdentity: "Helado de Mapachito",
+      animalSprites: "Sprites de animales",
+      greyfoxFaces: "Caras de Chess-animals",
+      skollIcons: "Iconos de ajedrez de Game-icons",
+      allRightsReserved:
+        "Todos los derechos reservados; proporcionado para Mapachess",
+      licensedArtwork: "Recursos gráficos con licencia para el juego",
+      sourcePageTerms: "condiciones adicionales en la página de origen",
+      attributionRequired:
+        "Recursos gráficos con licencia para el juego; atribución obligatoria",
+      creatorPermission:
+        "Uso en el juego autorizado por el creador; se prohíbe redistribuir los recursos por separado",
+      chessnutSource: "Código fuente de Chessnut",
+      classical: "Clásicas",
+      wood: "Madera",
+      ice: "Hielo",
+    },
+    licenseWithTerms: (license: string, terms: string): string =>
+      `${license}; ${terms}`,
+    pieceSource: (piece: string): string =>
+      piece.charAt(0).toUpperCase() + piece.slice(1),
   }),
 } as const satisfies MapachessCatalog["shared"]
 
