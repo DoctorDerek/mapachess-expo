@@ -1,6 +1,6 @@
 "use client"
 
-import { ART_CREDITS } from "@mapachess/match-presentation/art-credits"
+import localizeArtCredits from "@mapachess/match-presentation/art-credits"
 import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 
@@ -23,18 +23,14 @@ export default function ArtCredits({
         {copy.shared.creditControls.title}
       </summary>
       <ul className="mt-4 grid gap-6">
-        {Object.values(ART_CREDITS).map((credit) => (
+        {localizeArtCredits(copy).map((credit) => (
           <li key={credit.id}>
             <h3 className="font-bold">
               {credit.title} · {credit.creator}
             </h3>
-            <p>{copy.credits[credit.id].contribution}</p>
+            <p>{credit.contribution}</p>
             {credit.modifications === null ? null : (
-              <p className="mt-1">
-                {"modifications" in copy.credits[credit.id]
-                  ? copy.credits[credit.id].modifications
-                  : null}
-              </p>
+              <p className="mt-1">{credit.modifications}</p>
             )}
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {credit.sources.map(({ url, label }) => (

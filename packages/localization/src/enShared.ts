@@ -91,6 +91,26 @@ const shared = {
     title: "Credits",
     close: "Close Credits",
     externalLink: "opens in a new tab",
+    labels: {
+      mapachitoIdentity: "Mapachito ice cream",
+      animalSprites: "Animal sprites",
+      greyfoxFaces: "Chess-animals faces",
+      skollIcons: "Game-icons chess icons",
+      allRightsReserved: "All rights reserved; supplied for Mapachess",
+      licensedArtwork: "Licensed game artwork",
+      sourcePageTerms: "additional source-page terms",
+      attributionRequired: "Licensed game artwork; attribution required",
+      creatorPermission:
+        "Creator-authorized game use; no standalone asset redistribution",
+      chessnutSource: "Chessnut source",
+      classical: "Classical",
+      wood: "Wood",
+      ice: "Ice",
+    },
+    licenseWithTerms: (license: string, terms: string): string =>
+      `${license}; ${terms}`,
+    pieceSource: (piece: string): string =>
+      piece.charAt(0).toUpperCase() + piece.slice(1),
   }),
 } as const
 

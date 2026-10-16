@@ -47,7 +47,7 @@ const credits = {
     modifications: "Área jugable del tablero y piezas individuales extraídas.",
   },
   backterria: {
-    contribution: "Piezas y tableros de ajedrez convencionales y Fantasy",
+    contribution: "Piezas y tableros de ajedrez convencionales y de fantasía",
     modifications:
       "Áreas jugables de los tableros y celdas de sprites del autor extraídas.",
   },
