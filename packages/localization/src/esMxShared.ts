@@ -55,7 +55,7 @@ const shared = {
   story: Object.freeze({
     title: "Tu progresión de Historia",
     standard: "Progreso de Historia de ajedrez estándar",
-    chess960: "Progreso de Historia de Chess960",
+    chess960: "Progreso de Historia de ajedrez 960",
     overall: "Progreso total de Historia",
     defeated: "Derrotado",
     unlocked: "Desbloqueado",
@@ -70,7 +70,7 @@ const shared = {
     replay:
       "Vuelve a jugar las partidas que ganaste para mejorar tus medallas. Conservas tu mejor medalla.",
     independence:
-      "Ajedrez estándar y Chess960 conservan sus victorias y medallas por separado.",
+      "Ajedrez estándar y ajedrez 960 conservan sus victorias y medallas por separado.",
     medals: Object.freeze({ bronze: "Bronce", silver: "Plata", gold: "Oro" }),
   }),
   coachPortraitNames: {

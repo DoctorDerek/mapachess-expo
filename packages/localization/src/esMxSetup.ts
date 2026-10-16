@@ -16,7 +16,7 @@ const setup = {
   freshPosition:
     "Cada nueva configuración recibe un número de posición al azar. Iniciar partida usa el número que se muestra.",
   randomColor: "Tu bando se elige al azar cuando comienza la partida.",
-  position: "Posición inicial de Chess960",
+  position: "Posición inicial de ajedrez 960",
   positionNumber: (maximum: number): string =>
     `Número de posición (0–${maximum})`,
   invalidSetup:
@@ -57,7 +57,7 @@ const setup = {
   lastPlayed: (opponent: string): string => ` · Último oponente: ${opponent}`,
   difficultyMedals:
     "Mejor medalla en esta dificultad: Oro — sin pistas; Plata — solo Pistas de piezas; Bronce — se permiten Pistas de movimientos. El animal es tu último oponente, no tu próxima selección.",
-  variants: { standard: "Ajedrez estándar", chess960: "Chess960" },
+  variants: { standard: "Ajedrez estándar", chess960: "Ajedrez 960" },
   modes: { story: "Historia", challenge: "Desafío" },
   presentations: {
     standard: {
@@ -73,11 +73,11 @@ const setup = {
     },
     chess960: {
       story: {
-        title: "Historia de Chess960",
+        title: "Historia de ajedrez 960",
         description: "Una nueva posición inicial y un bando elegido al azar.",
       },
       challenge: {
-        title: "Desafío de Chess960",
+        title: "Desafío de ajedrez 960",
         description:
           "Elige tu bando y una posición inicial al azar o por número.",
       },
