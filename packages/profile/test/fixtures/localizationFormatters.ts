@@ -36,7 +36,7 @@ const formatterExamples = {
   "setup.elo": [["1201"]],
   "setup.bestMedal": [["Gold"]],
   "setup.lastPlayed": [["Chicken Stockfish"]],
-  "profile.ratedMatches": [[0], [1], [23]],
+  "profile.ratedMatches": [[0], [1], [23], [1_000_000], [1_000_001]],
   "profile.rating": [["Standard Chess", 1200.5]],
   "profile.resetRating": [["Standard Chess"]],
   "profile.resetQuestion": [["Standard Chess"]],
