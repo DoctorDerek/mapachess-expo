@@ -52,7 +52,7 @@ describe("position evaluation gutter", () => {
         actor,
       }),
     )
-    expect(markup).toContain("White-relative evaluation −2.50")
+    expect(markup).toContain("Evaluation from White’s perspective: −2.50")
     expect(markup).toContain(">−2.50</span>")
     expect(markup).not.toContain("Waiting:")
     expect(markup).not.toContain("Qh5")
@@ -68,7 +68,7 @@ describe("position evaluation gutter", () => {
 
     expect(markup).toContain('role="meter"')
     expect(markup).toContain('aria-label="Stockfish evaluation"')
-    expect(markup).toContain('aria-valuetext="Evaluation waiting"')
+    expect(markup).toContain('aria-valuetext="Waiting for evaluation"')
     expect(markup).toContain("min-h-10 w-full")
     expect(markup).not.toContain("xl:h-full")
     expect(markup).not.toContain("writing-mode")
@@ -88,7 +88,9 @@ describe("position evaluation gutter", () => {
     const markup = renderGutter(actor)
 
     expect(markup).toContain('aria-valuenow="56"')
-    expect(markup).toContain('aria-valuetext="White-relative evaluation +1.25"')
+    expect(markup).toContain(
+      'aria-valuetext="Evaluation from White’s perspective: +1.25"',
+    )
     expect(markup).toContain('style="--white-share:56.25%"')
     actor.stop()
   })
@@ -104,7 +106,7 @@ describe("position evaluation gutter", () => {
     boundedActor.send({ request, type: "EVALUATION.POSITION_REQUESTED" })
     await waitFor(boundedActor, (snapshot) => snapshot.matches("ready"))
     expect(renderGutter(boundedActor)).toContain(
-      'aria-valuetext="White-relative evaluation ≤ −0.75"',
+      'aria-valuetext="Evaluation from White’s perspective: ≤ −0.75"',
     )
     boundedActor.stop()
 
