@@ -1,5 +1,6 @@
 import createCatalogReader from "./catalogReader.js"
 import english from "./en.js"
+import mexicanSpanish from "./esMx.js"
 import type { ShippedLocale } from "./locale.js"
 
 export type IntroductionCopy = Readonly<{
@@ -28,6 +29,7 @@ export type MapachessCatalog = CatalogText<typeof english>
 
 export const CATALOG_LOADERS = Object.freeze({
   en: (): MapachessCatalog => english,
+  "es-419": (): MapachessCatalog => mexicanSpanish,
 }) satisfies Readonly<Record<ShippedLocale, () => MapachessCatalog>>
 
 const catalogs = createCatalogReader(CATALOG_LOADERS)

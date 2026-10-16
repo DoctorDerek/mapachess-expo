@@ -8,6 +8,7 @@ import loadCatalog, {
 } from "@mapachess/localization/catalog"
 import resolveLocale, {
   DEFAULT_LOCALE,
+  LOCALE_LANGUAGE_TAGS,
   type ShippedLocale,
 } from "@mapachess/localization/locale"
 import profileMachine, {
@@ -41,7 +42,7 @@ export default function MapachessLocaleProvider({
   })
   useEffect(() => {
     const previousLanguage = document.documentElement.lang
-    document.documentElement.lang = locale
+    document.documentElement.lang = LOCALE_LANGUAGE_TAGS[locale]
     return () => {
       document.documentElement.lang = previousLanguage
     }

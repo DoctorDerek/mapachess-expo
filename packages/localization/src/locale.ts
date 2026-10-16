@@ -18,11 +18,17 @@ export const CANDIDATE_LOCALES = Object.freeze([
 
 export type CandidateLocale = (typeof CANDIDATE_LOCALES)[number]
 
-export const SHIPPED_LOCALES = Object.freeze(["en"] as const)
+export const SHIPPED_LOCALES = Object.freeze(["en", "es-419"] as const)
 export type ShippedLocale = (typeof SHIPPED_LOCALES)[number]
 export const DEFAULT_LOCALE = "en" satisfies ShippedLocale
 export const LOCALE_LABELS = Object.freeze({
   en: "English (US)",
+  "es-419": "Español (México)",
+} satisfies Readonly<Record<ShippedLocale, string>>)
+
+export const LOCALE_LANGUAGE_TAGS = Object.freeze({
+  en: "en",
+  "es-419": "es-MX",
 } satisfies Readonly<Record<ShippedLocale, string>>)
 
 export const isShippedLocale = (value: unknown): value is ShippedLocale =>
@@ -37,6 +43,7 @@ const supportedLocale = (
     (locale) => locale.toLowerCase() === normalized,
   )
   if (exact !== undefined) return exact
+  if (normalized === "es-mx") return "es-419"
   return normalized.startsWith("en-") ? DEFAULT_LOCALE : null
 }
 

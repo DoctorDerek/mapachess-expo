@@ -30,14 +30,17 @@ import {
 } from "./profileTestSupport.js"
 
 describe("first-arrival preferences", () => {
-  it("ships only complete English copy and resolves supported preferences without pretending candidates are shipped", () => {
-    expect(SHIPPED_LOCALES).toEqual(["en"])
+  it("resolves the explicit shipped languages without pretending other candidates are shipped", () => {
+    expect(SHIPPED_LOCALES).toEqual(["en", "es-419"])
     expect(Object.keys(LOCALE_LABELS)).toEqual(SHIPPED_LOCALES)
     expect(CANDIDATE_LOCALES).toContain("es-419")
     expect(resolveLocale({ selection: "en", preferences: ["es-MX"] })).toBe(
       "en",
     )
-    expect(resolveLocale({ selection: "es-419", route: "en-US" })).toBe("en")
+    expect(resolveLocale({ selection: "es-419", route: "en-US" })).toBe(
+      "es-419",
+    )
+    expect(resolveLocale({ selection: "es-ES", route: "en-US" })).toBe("en")
     expect(resolveLocale({ preferences: ["unsupported", "en-GB"] })).toBe("en")
     expect(resolveLocale({})).toBe("en")
     expect(loadCatalog("en").introduction.paragraphs).toHaveLength(5)

@@ -12,7 +12,7 @@ import {
   cardFacts,
   INITIAL_CARD_CONTENT,
 } from "../../lib/presentation/profileCardArtwork"
-import { useMapachessCopy } from "./MapachessLocaleProvider"
+import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import PlayerAnimalChoices from "./PlayerAnimalChoices"
 import ProfileAction from "./ProfileAction"
 import ProfileCard, { ProfileArtwork } from "./ProfileCard"
@@ -44,6 +44,7 @@ export default function ProfileDressingRoom({
   onRetry: () => void
 }>) {
   const copy = useMapachessCopy()
+  const locale = useMapachessLocale()
   const messages = copy.interface.profileDressingRoom
   const dressing = copy.profile.dressing
 
@@ -248,6 +249,7 @@ export default function ProfileDressingRoom({
               >
                 <ProfileArtwork
                   input={{
+                    locale,
                     appearance,
                     facts: cardFacts(data),
                     content: {
