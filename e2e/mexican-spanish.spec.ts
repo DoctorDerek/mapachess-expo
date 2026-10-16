@@ -163,7 +163,7 @@ for (const width of [390, 1280]) {
       }),
     ).toBeVisible()
     await expect(
-      page.getByRole("button", { name: "Desafío de Chess960", exact: true }),
+      page.getByRole("button", { name: "Desafío de ajedrez 960", exact: true }),
     ).toBeVisible()
     await page.screenshot({
       path: testInfo.outputPath(`spanish-menu-${width}.png`),

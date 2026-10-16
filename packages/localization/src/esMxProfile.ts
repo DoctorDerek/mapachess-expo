@@ -16,7 +16,7 @@ const profile = {
     `${variant} · ${formatUngroupedInteger(elo)} Elo`,
   ratingLabel: {
     standard: "Elo de ajedrez estándar",
-    chess960: "Elo de Chess960",
+    chess960: "Elo de ajedrez 960",
   },
   resetRating: (variant: string): string => `Restablecer Elo de ${variant}`,
   resetQuestion: (variant: string): string => `¿Restablecer Elo de ${variant}?`,
@@ -63,7 +63,7 @@ const profile = {
     standard: number,
     chess960: number,
   ): string =>
-    `Tu tarjeta de perfil: nivel ${formatUngroupedInteger(level)}, Elo de ajedrez estándar ${formatUngroupedInteger(standard)}, Elo de Chess960 ${formatUngroupedInteger(chess960)}`,
+    `Tu tarjeta de perfil: nivel ${formatUngroupedInteger(level)}, Elo de ajedrez estándar ${formatUngroupedInteger(standard)}, Elo de ajedrez 960 ${formatUngroupedInteger(chess960)}`,
   level: "Nivel",
   playFree: "Juega gratis en Mapachess.com",
   cardFormats: { GIF: "GIF · Animado", PNG: "PNG · Imagen fija" },

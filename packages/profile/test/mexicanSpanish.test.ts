@@ -31,7 +31,7 @@ describe("Mexican Spanish player-facing catalog", () => {
     expect(copy.gameplay.xpProgress(1000, 2000)).toBe("1,000 / 2,000 XP")
     expect(copy.gameplay.storyCompletion(12.345)).toBe("12.3%")
     expect(copy.profile.cardDescription(9001, 445.2, 1200.5)).toBe(
-      "Tu tarjeta de perfil: nivel 9001, Elo de ajedrez estándar 445, Elo de Chess960 1201",
+      "Tu tarjeta de perfil: nivel 9001, Elo de ajedrez estándar 445, Elo de ajedrez 960 1201",
     )
     expect(copy.evaluation.centipawns(125, "exact")).toBe("+1.25")
     expect(copy.evaluation.centipawns(-125, "lower")).toBe("≥ −1.25")
