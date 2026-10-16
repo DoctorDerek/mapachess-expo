@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     name: "profile",
     environment: "node",
+    setupFiles: ["../localization/test/catalogHealth.setup.ts"],
     include: ["test/**/*.test.ts"],
     coverage: {
       allowExternal: true,

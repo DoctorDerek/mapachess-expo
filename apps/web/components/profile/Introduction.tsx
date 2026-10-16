@@ -43,8 +43,8 @@ export default function Introduction({
           {copy.heading}
         </h2>
         <div className="space-y-4 text-lg leading-relaxed">
-          {copy.paragraphs.map(({ lead, body }) => (
-            <p key={body}>
+          {copy.paragraphs.map(({ lead, body }, index) => (
+            <p key={index}>
               {lead ? <strong>{lead} </strong> : null}
               {body}
             </p>

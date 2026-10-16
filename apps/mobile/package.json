@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@mapachess/diagnostics": "workspace:*",
+    "@mapachess/localization": "workspace:*",
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@mapachess/stockfish-native": "workspace:*",

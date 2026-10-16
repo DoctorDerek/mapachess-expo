@@ -77,6 +77,9 @@ importers:
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../../packages/diagnostics
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@mapachess/profile':
         specifier: workspace:*
         version: link:../../packages/profile

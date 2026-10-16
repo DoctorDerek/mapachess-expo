@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     name: "web",
     environment: "node",
+    setupFiles: ["../../packages/localization/test/catalogHealth.setup.ts"],
     include: ["components/**/*.test.tsx", "lib/**/*.test.ts"],
     coverage: {
       reportOnFailure: true,

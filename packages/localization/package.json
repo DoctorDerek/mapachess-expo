@@ -12,6 +12,10 @@
     "./catalog": {
       "types": "./src/catalog.ts",
       "default": "./dist/catalog.js"
+    },
+    "./catalog-reader": {
+      "types": "./src/catalogReader.ts",
+      "default": "./dist/catalogReader.js"
     }
   },
   "scripts": {
