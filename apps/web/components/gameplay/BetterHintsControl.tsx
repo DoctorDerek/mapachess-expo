@@ -98,7 +98,7 @@ export default function BetterHintsControl({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="relative min-w-0 flex-1 basis-12"
+      className="relative min-w-min flex-1 basis-12"
     >
       <h2 className="sr-only" id="better-hints-title">
         {messages.betterHints}

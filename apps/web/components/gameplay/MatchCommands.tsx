@@ -68,7 +68,7 @@ export default function MatchCommands({
         variant="secondary"
         aria-label={messages.focusBoard}
         data-player-action="controls"
-        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex min-h-14 min-w-min flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         onClick={onBoardFocusRequested}
       >
         <InputPrompt action="controls" fallback="▦" />
@@ -76,7 +76,7 @@ export default function MatchCommands({
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasUndoHistory(snapshot)}
-        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex min-h-14 min-w-min flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanUndo(snapshot)}
         data-player-action="undo"
         onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
@@ -88,7 +88,7 @@ export default function MatchCommands({
       </MapachessButton>
       <MapachessButton
         aria-busy={persisting && selectHasRedoHistory(snapshot)}
-        className="flex min-h-14 min-w-0 flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex min-h-14 min-w-min flex-1 basis-12 flex-col items-center justify-center px-1! py-1! text-base"
         disabled={!selectCanRedo(snapshot)}
         data-player-action="redo"
         onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
@@ -100,7 +100,7 @@ export default function MatchCommands({
       </MapachessButton>
       {hints}
       <details
-        className="relative z-40 min-w-0 flex-1 basis-12"
+        className="relative z-40 min-w-min flex-1 basis-12"
         open={menuOpen}
         ref={menu}
         data-player-input-layer={menuOpen ? "match-menu" : undefined}

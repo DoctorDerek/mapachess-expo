@@ -251,11 +251,18 @@ export function drawProfileCard(
     context.fillStyle = CARD_PALETTE.ink
     context.textAlign = "left"
     context.textBaseline = "middle"
+    const left = width * 0.04
+    const available = factsWidth - width * 0.08
+    const maximumLabelFontSize = Math.round(height * 0.061)
+    context.font = `bold ${maximumLabelFontSize}px "Trebuchet MS", sans-serif`
+    const widestLabel = Math.max(
+      ...items.map(({ label }) => context.measureText(label).width),
+    )
+    const labelFontSize =
+      maximumLabelFontSize * Math.min(1, available / widestLabel)
     items.forEach(({ value, label, kind }, index) => {
       const center = (pictureHeight * (index + 0.5)) / items.length
-      const left = width * 0.04
-      const available = factsWidth - width * 0.08
-      context.font = `bold ${Math.round(height * 0.061)}px "Trebuchet MS", sans-serif`
+      context.font = `bold ${labelFontSize}px "Trebuchet MS", sans-serif`
       if (kind === "level") {
         context.fillText(label, left, center)
         const labelWidth = context.measureText(label).width + width * 0.01
