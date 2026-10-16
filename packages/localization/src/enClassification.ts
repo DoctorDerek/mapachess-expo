@@ -27,15 +27,15 @@ const classification = {
     ],
     [
       "Inaccuracy ?!",
-      `An ordinary mover-relative outcome loss of at least ${thresholds.inaccuracyLoss} but less than ${thresholds.mistakeLoss} points; two additional full mating moves while the mover’s forced mate remains; or loss of a verified forced mate with an outcome-scale loss below ${thresholds.mistakeLoss} points. The latter displays the reason Lost forced mate.`,
+      `An ordinary mover-relative outcome loss of at least ${thresholds.inaccuracyLoss} but less than ${thresholds.mistakeLoss} points; two additional full mating moves while the mover’s forced mate remains; or loss of a verified forced mate with an outcome-scale loss below ${thresholds.mistakeLoss} points.`,
     ],
     [
       "Mistake ?",
-      `An ordinary mover-relative outcome loss of at least ${thresholds.mistakeLoss} but less than ${thresholds.blunderLoss} points; three or more additional full mating moves while the mover’s forced mate remains; or loss of a verified forced mate with an outcome-scale loss of at least ${thresholds.mistakeLoss} but less than ${thresholds.blunderLoss} points. The latter displays the reason Lost forced mate.`,
+      `An ordinary mover-relative outcome loss of at least ${thresholds.mistakeLoss} but less than ${thresholds.blunderLoss} points; three or more additional full mating moves while the mover’s forced mate remains; or loss of a verified forced mate with an outcome-scale loss of at least ${thresholds.mistakeLoss} but less than ${thresholds.blunderLoss} points.`,
     ],
     [
       "Blunder ??",
-      `An ordinary mover-relative outcome loss of ${thresholds.blunderLoss} or more points; or loss of a verified forced mate with an outcome-scale loss of ${thresholds.blunderLoss} or more points. The latter displays the reason Lost forced mate.`,
+      `An ordinary mover-relative outcome loss of ${thresholds.blunderLoss} or more points; or loss of a verified forced mate with an outcome-scale loss of ${thresholds.blunderLoss} or more points.`,
     ],
   ],
   mateTable: (
@@ -64,15 +64,15 @@ const classification = {
     ],
     [
       `Mover loses a verified forced mate and the remaining mover-relative outcome loss is below ${thresholds.mistakeLoss} points`,
-      "Inaccuracy ?! with reason Lost forced mate",
+      "Inaccuracy ?!",
     ],
     [
       `Mover loses a verified forced mate and the remaining outcome loss is at least ${thresholds.mistakeLoss} but less than ${thresholds.blunderLoss} points`,
-      "Mistake ? with reason Lost forced mate",
+      "Mistake ?",
     ],
     [
       `Mover loses a verified forced mate and the remaining outcome loss is ${thresholds.blunderLoss} or more points`,
-      "Blunder ?? with reason Lost forced mate",
+      "Blunder ??",
     ],
   ],
 } as const
