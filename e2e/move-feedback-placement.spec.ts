@@ -47,7 +47,7 @@ async function openGame(
   await page.getByRole("button", { name: "Start", exact: true }).click()
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   const choices = page.getByRole("group", {
-    name: "Move feedback position",
+    name: "Move rating position",
     exact: true,
   })
   await expect(

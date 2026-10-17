@@ -3,9 +3,9 @@ import { formatUngroupedInteger } from "./enNumbers.js"
 const profile = {
   settingsTitle: "Your game customization",
   moveReactionPlacement: {
-    label: "Move feedback position",
+    label: "Move rating position",
     description:
-      "Beside the board on desktop; over the board on smaller screens.",
+      "Beside the board on wide screens; over the board on narrow screens.",
     options: { top: "Top", middle: "Midpoint", bottom: "Bottom" },
   },
   ratedMatches: (count: number): string =>
