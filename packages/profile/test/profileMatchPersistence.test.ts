@@ -452,6 +452,7 @@ describe("profile-owned match persistence bridge", () => {
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
       locale: initial.settings.locale,
+      moveReactionPlacement: initial.settings.moveReactionPlacement,
       inputBindings: initial.settings.inputBindings,
       autoHintMode: "auto-piece-hints",
       challengeSetup,

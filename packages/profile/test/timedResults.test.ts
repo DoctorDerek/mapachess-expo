@@ -26,7 +26,11 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge from "../src/profileMatchPersistence.js"
 import { playerRatingId } from "../src/ratingContext.js"
 import { decodeStoredPlayerData } from "../src/storedPlayerData.js"
-import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
+import {
+  InMemoryDurableStoreAdapter,
+  sha256,
+  withoutMoveReactionPlacement,
+} from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 const cleanup: (() => void)[] = []
@@ -231,7 +235,7 @@ describe("durable timed results and rating migration", () => {
   it("authenticates the exact schema15 two-rating preimage before adding six contexts", async () => {
     const current = createInitialMapachessPlayerData()
     const payload = {
-      ...current,
+      ...withoutMoveReactionPlacement(current),
       schemaVersion: 15,
       ratings: { standard: 445.212, chess960: 612.75 },
       ratedMatchCounts: { standard: 17, chess960: 9 },
@@ -332,7 +336,7 @@ describe("durable timed results and rating migration", () => {
     ).toBe(false)
     expect(
       decodeMapachessPlayerDataWithSource({
-        ...data,
+        ...withoutMoveReactionPlacement(data),
         schemaVersion: 15,
         ratings: { standard: 100, chess960: 100 },
         ratedMatchCounts: { standard: 0, chess960: 0 },

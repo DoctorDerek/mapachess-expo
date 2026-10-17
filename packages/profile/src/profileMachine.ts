@@ -148,7 +148,8 @@ const profileMachineDefinition = setup({
     rememberPresentationPreferences: assign(({ context, event }) => {
       if (
         event.type !== "PROFILE.CHESS_APPEARANCE_CHANGED" &&
-        event.type !== "PROFILE.COACH_COLLECTION_CHANGED"
+        event.type !== "PROFILE.COACH_COLLECTION_CHANGED" &&
+        event.type !== "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED"
       )
         throw new Error("Presentation preferences require a preference event.")
       const previous =
@@ -157,15 +158,17 @@ const profileMachineDefinition = setup({
         requireCurrentPlayerData(context).settings
       return {
         requestedPresentationPreferences: validatePresentationPreferences(
-          event.type === "PROFILE.COACH_COLLECTION_CHANGED"
-            ? { ...previous, coachCollection: event.coachCollection }
-            : {
-                ...previous,
-                chessAppearance: {
-                  ...previous.chessAppearance,
-                  ...event.change,
+          event.type === "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED"
+            ? { ...previous, moveReactionPlacement: event.placement }
+            : event.type === "PROFILE.COACH_COLLECTION_CHANGED"
+              ? { ...previous, coachCollection: event.coachCollection }
+              : {
+                  ...previous,
+                  chessAppearance: {
+                    ...previous.chessAppearance,
+                    ...event.change,
+                  },
                 },
-              },
         ),
       }
     }),
@@ -437,6 +440,9 @@ const profileMachineDefinition = setup({
         },
       ],
       on: {
+        "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED": {
+          actions: "rememberPresentationPreferences",
+        },
         "PROFILE.LOCALE_CHANGED": {
           actions: "rememberFirstArrivalPreferences",
         },
@@ -541,6 +547,10 @@ const profileMachineDefinition = setup({
     },
     persisting: {
       on: {
+        "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberPresentationPreferences",
+        },
         "PROFILE.LOCALE_CHANGED": {
           guard: "profileCommitIsSaving",
           actions: "rememberFirstArrivalPreferences",
@@ -599,6 +609,10 @@ const profileMachineDefinition = setup({
     },
     retryingPersistence: {
       on: {
+        "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED": {
+          guard: "profileCommitIsSaving",
+          actions: "rememberPresentationPreferences",
+        },
         "PROFILE.LOCALE_CHANGED": {
           guard: "profileCommitIsSaving",
           actions: "rememberFirstArrivalPreferences",

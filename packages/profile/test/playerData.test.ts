@@ -36,6 +36,7 @@ describe("Mapachess player data", () => {
           ...settings,
           inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
           locale: null,
+          moveReactionPlacement: "middle",
         },
       },
     })
@@ -117,6 +118,7 @@ describe("Mapachess player data", () => {
       totalXp: 0,
       unlockedAchievementIds: [],
       settings: {
+        moveReactionPlacement: "middle",
         locale: null,
         inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
         autoHintMode: "auto-move-hints",

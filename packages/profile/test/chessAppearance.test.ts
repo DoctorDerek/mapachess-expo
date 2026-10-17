@@ -172,6 +172,7 @@ describe("independent saved chess artwork", () => {
         completedStoryMatch(),
       )
       const changed = changePresentationPreferences(original, {
+        ...original.settings,
         chessAppearance: appearance,
         coachCollection: "greyfox",
       })
@@ -272,6 +273,10 @@ describe("independent saved chess artwork", () => {
         coachCollection: "mapachito",
       })
       actor.send({
+        type: "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED",
+        placement: "top",
+      })
+      actor.send({
         type: "PROFILE.CHESS_APPEARANCE_CHANGED",
         change: { boardId: "toffee-wood" },
       })
@@ -280,6 +285,10 @@ describe("independent saved chess artwork", () => {
         change: { pieceSetId: "cat-chess" },
       })
       const expected = { boardId: "toffee-wood", pieceSetId: "cat-chess" }
+      actor.send({
+        type: "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED",
+        placement: "bottom",
+      })
       actor.send({
         type: "PROFILE.COACH_COLLECTION_CHANGED",
         coachCollection: "greyfox",
@@ -290,6 +299,10 @@ describe("independent saved chess artwork", () => {
       expect(
         selectPendingPlayerData(actor.getSnapshot())?.settings.chessAppearance,
       ).toEqual(expected)
+      expect(
+        selectPendingPlayerData(actor.getSnapshot())?.settings
+          .moveReactionPlacement,
+      ).toBe("bottom")
       savingMatch ??= saveMatch()
       gate.resolve()
       if (fail) {
@@ -310,6 +323,7 @@ describe("independent saved chess artwork", () => {
       const accepted = selectCurrentPlayerData(actor.getSnapshot())
       expect(accepted?.settings.chessAppearance).toEqual(expected)
       expect(accepted?.settings.coachCollection).toBe("greyfox")
+      expect(accepted?.settings.moveReactionPlacement).toBe("bottom")
       expect(accepted?.activeMatch).toEqual(updatedMatch)
       expect(accepted?.totalXp).toBe(initial.totalXp)
       expect(accepted?.lastAcceptedResultReward).toEqual(
@@ -317,6 +331,10 @@ describe("independent saved chess artwork", () => {
       )
       expect(accepted?.appearance).toEqual(initial.appearance)
       const loaded = await store.load()
+      expect(
+        loaded.current.type === "valid" &&
+          loaded.current.data.settings.moveReactionPlacement,
+      ).toBe("bottom")
       expect(
         loaded.current.type === "valid" &&
           loaded.current.data.settings.chessAppearance,
