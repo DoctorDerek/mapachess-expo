@@ -19,6 +19,7 @@ import {
   type PlayerEloRatings,
   type RatedMatchCounts,
 } from "@mapachess/profile/player-data"
+import type { MoveReactionPlacement } from "@mapachess/profile/presentation-preferences"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
 import { PLAYER_RATING_CONTEXTS } from "@mapachess/profile/rating-context"
 import { TimeCategoryChoices } from "../gameplay/TimeControlChoices"
@@ -32,6 +33,7 @@ import CoachCollectionChoices from "./CoachCollectionChoices"
 import LanguageChoice from "./LanguageChoice"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 import MoveClassificationFaq from "./MoveClassificationFaq"
+import MoveReactionPlacementChoices from "./MoveReactionPlacementChoices"
 import { ImportBackupButton, importIssueMessage } from "./ProfileFoundation"
 
 export type ProfileSettingsPanelProps = Readonly<{
@@ -44,8 +46,10 @@ export type ProfileSettingsPanelProps = Readonly<{
   hintChangesDisabled?: boolean
   autoHintMode: AutoHintMode
   chessAppearance: ChessAppearanceSettings
-  chessAppearanceDisabled: boolean
+  presentationPreferencesDisabled: boolean
   coachCollection: CoachCollectionId
+  moveReactionPlacement: MoveReactionPlacement
+  onMoveReactionPlacementChanged: (placement: MoveReactionPlacement) => void
   onCoachCollectionChanged: (collection: CoachCollectionId) => void
   onChessAppearanceChanged: (change: ChessAppearanceChange) => void
   ratings: PlayerEloRatings
@@ -70,8 +74,10 @@ export default function ProfileSettingsPanel({
   hintChangesDisabled,
   autoHintMode,
   chessAppearance,
-  chessAppearanceDisabled,
+  presentationPreferencesDisabled,
   coachCollection,
+  moveReactionPlacement,
+  onMoveReactionPlacementChanged,
   onCoachCollectionChanged,
   onChessAppearanceChanged,
   ratings,
@@ -133,12 +139,12 @@ export default function ProfileSettingsPanel({
         />
         <CoachCollectionChoices
           collection={coachCollection}
-          disabled={chessAppearanceDisabled}
+          disabled={presentationPreferencesDisabled}
           onChange={onCoachCollectionChanged}
         />
         <ChessAppearanceChoices
           appearance={chessAppearance}
-          disabled={chessAppearanceDisabled}
+          disabled={presentationPreferencesDisabled}
           onChange={onChessAppearanceChanged}
         />
       </div>
@@ -153,6 +159,12 @@ export default function ProfileSettingsPanel({
           onAutoHintModeChanged={onAutoHintModeChanged}
         />
       </div>
+
+      <MoveReactionPlacementChoices
+        placement={moveReactionPlacement}
+        disabled={presentationPreferencesDisabled}
+        onChange={onMoveReactionPlacementChanged}
+      />
 
       <InputBindingSettings
         bindings={inputBindings}
