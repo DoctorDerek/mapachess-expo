@@ -190,7 +190,8 @@ export function drawProfileCard(
 ): void {
   const { width, height } = context.canvas
   const { content, facts } = input
-  const copy = loadCatalog(input.locale ?? "en").profile
+  const catalog = loadCatalog(input.locale ?? "en")
+  const copy = catalog.profile
   const hasFacts = content.level || content.standard || content.chess960
   const factsWidth = hasFacts ? Math.round(width * 0.4) : 0
   const invitationHeight = Math.round(height * 0.13)
@@ -276,6 +277,13 @@ export function drawProfileCard(
         return
       }
       context.fillText(label, left, center + height * 0.052)
+      context.font = `bold ${Math.round(height * 0.045)}px "Trebuchet MS", sans-serif`
+      context.fillText(
+        catalog.gameplay.clock.category.untimed,
+        left,
+        center + height * 0.105,
+        available,
+      )
       context.font = `${Math.round(height * 0.12)}px Impact, sans-serif`
       context.fillText(String(value), left, center - height * 0.037, available)
     })

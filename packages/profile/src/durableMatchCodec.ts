@@ -9,6 +9,7 @@ import {
   IMPLEMENTED_DURABLE_OPPONENT_IDS,
   LEGACY_DURABLE_MATCH_RECORD_VERSION,
   LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
+  LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
   MATCH_MODES,
   type DurableMatchRecord,
 } from "@mapachess/match/durable-match-record"
@@ -33,6 +34,7 @@ import {
   requireSafeRevision,
   requireString,
 } from "./decodePrimitives.js"
+import decodeMatchClock, { decodeTimeControl } from "./matchClockCodec.js"
 import decodeMoveFeedback, {
   canonicalMoveFeedback,
 } from "./moveFeedbackCodec.js"
@@ -106,6 +108,7 @@ export const decodeConclusion = (
   switch (object.type) {
     case "checkmate":
     case "resignation":
+    case "timeout":
       requireExactKeys(object, ["type", "winner"], path)
       return Object.freeze({
         type: object.type,
@@ -114,6 +117,7 @@ export const decodeConclusion = (
     case "draw-agreement":
     case "insufficient-material":
     case "stalemate":
+    case "timeout-insufficient-material":
       requireExactKeys(object, ["type"], path)
       return Object.freeze({ type: object.type })
     default:
@@ -149,7 +153,9 @@ export const decodeDurableMatch = (
     object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION
   const legacyRecordV2 =
     object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION_2
-  const currentRecord = object.recordVersion === DURABLE_MATCH_RECORD_VERSION
+  const currentRecord =
+    object.recordVersion === DURABLE_MATCH_RECORD_VERSION ||
+    object.recordVersion === LEGACY_DURABLE_MATCH_RECORD_VERSION_3
   if (!legacyRecord && !legacyRecordV2 && !currentRecord) {
     return failData(`${path}.recordVersion`)
   }
@@ -162,6 +168,10 @@ export const decodeDurableMatch = (
           "autoHintMode",
           "conclusion",
           "recordVersion",
+          ...(object.recordVersion === DURABLE_MATCH_RECORD_VERSION &&
+          object.clock !== undefined
+            ? ["clock"]
+            : []),
           ...(object.retainedConclusion === undefined
             ? []
             : ["retainedConclusion"]),
@@ -205,9 +215,15 @@ export const decodeDurableMatch = (
   )
   if (moveHintsUsed && !pieceHintsUsed) failData(`${path}.moveHintsUsed`)
 
-  const timeControl = requireObject(object.timeControl, `${path}.timeControl`)
-  requireExactKeys(timeControl, ["type"], `${path}.timeControl`)
-  if (timeControl.type !== "untimed") failData(`${path}.timeControl.type`)
+  const timeControl = decodeTimeControl(
+    object.timeControl,
+    `${path}.timeControl`,
+  )
+  if (
+    object.recordVersion !== DURABLE_MATCH_RECORD_VERSION &&
+    timeControl.type !== "untimed"
+  )
+    failData(`${path}.timeControl`)
 
   const recordWithoutConclusion: DurableMatchRecord = Object.freeze({
     ...(currentRecord && object.opponentTargetElo !== undefined
@@ -272,12 +288,15 @@ export const decodeDurableMatch = (
       object.playerEloAtStart,
       `${path}.playerEloAtStart`,
     ),
-    recordVersion: DURABLE_MATCH_RECORD_VERSION,
+    recordVersion:
+      object.recordVersion === DURABLE_MATCH_RECORD_VERSION
+        ? DURABLE_MATCH_RECORD_VERSION
+        : LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
     startingPosition: decodeStartingPosition(
       object.startingPosition,
       `${path}.startingPosition`,
     ),
-    timeControl: Object.freeze({ type: "untimed" }),
+    timeControl,
   })
   const timeline = requireReconstructableTimeline(recordWithoutConclusion, path)
   if (
@@ -321,9 +340,19 @@ export const decodeDurableMatch = (
         `${path}.retainedConclusion.cursor`,
       )
       if (
-        (ending?.type !== "resignation" && ending?.type !== "draw-agreement") ||
+        (ending?.type !== "resignation" &&
+          ending?.type !== "draw-agreement" &&
+          ending?.type !== "timeout" &&
+          ending?.type !== "timeout-insufficient-material") ||
         retainedCursor > moveIds.length ||
         retainedCursor < cursor ||
+        !conclusionMatchesRetainedBranch(ending, {
+          ...timeline,
+          cursor: retainedCursor,
+        }) ||
+        ((ending?.type === "timeout" ||
+          ending?.type === "timeout-insufficient-material") &&
+          timeControl.type !== "fischer") ||
         (ending.type === "resignation" &&
           ending.winner === recordWithoutConclusion.playerColor) ||
         (conclusion !== null &&
@@ -336,9 +365,19 @@ export const decodeDurableMatch = (
       })
     }
   }
+  const clock = decodeMatchClock(
+    object.clock,
+    timeControl,
+    timeline,
+    conclusion,
+    `${path}.clock`,
+  )
   return Object.freeze({
     ...recordWithoutConclusion,
     conclusion,
+    ...(timeControl.type === "untimed" && object.clock === undefined
+      ? {}
+      : { clock }),
     ...(retainedConclusion === undefined ? {} : { retainedConclusion }),
     ...(object.moveFeedback === undefined
       ? {}
@@ -353,8 +392,11 @@ export const decodeDurableMatch = (
 }
 
 const canonicalConclusion = (conclusion: MatchConclusion | null) =>
-  conclusion?.type === "draw-agreement" || conclusion?.type === "resignation"
-    ? conclusion.type === "resignation"
+  conclusion?.type === "draw-agreement" ||
+  conclusion?.type === "resignation" ||
+  conclusion?.type === "timeout" ||
+  conclusion?.type === "timeout-insufficient-material"
+    ? "winner" in conclusion
       ? [conclusion.type, conclusion.winner]
       : [conclusion.type]
     : null
@@ -404,4 +446,8 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
     : [match.moveFeedback.map(canonicalMoveFeedback)]),
   ...(match.ratedOpponentElo === undefined ? [] : [match.ratedOpponentElo]),
   ...(match.retainedConclusion === undefined ? [] : [match.retainedConclusion]),
+  ...(match.timeControl.type === "untimed"
+    ? []
+    : [match.timeControl.baseSeconds, match.timeControl.incrementSeconds]),
+  ...(match.clock === undefined ? [] : [match.clock]),
 ]

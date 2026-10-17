@@ -5,8 +5,13 @@ import {
   type DurableMatchRecord,
   type MatchMode,
 } from "@mapachess/match/durable-match-record"
+import {
+  createMatchClock,
+  durableMatchClock,
+} from "@mapachess/match/match-clock"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
+import { UNTIMED, type TimeControl } from "@mapachess/match/time-control"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
@@ -17,6 +22,7 @@ export type ResumedWebMatch = Readonly<{
 }>
 
 export type FreshWebMatchInput = Readonly<{
+  timeControl?: TimeControl
   autoHintMode: AutoHintMode
   mode?: MatchMode
   playerEloAtStart: number
@@ -39,6 +45,7 @@ export function buildFreshWebMatch(
   const initialPosition = createInitialMatchPosition(
     input.runtime.startingPosition,
   )
+  const timeControl = input.timeControl ?? UNTIMED
   return Object.freeze({
     autoHintMode: input.autoHintMode,
     conclusion: null,
@@ -58,7 +65,14 @@ export function buildFreshWebMatch(
     playerEloAtStart: input.playerEloAtStart,
     recordVersion: DURABLE_MATCH_RECORD_VERSION,
     startingPosition: input.runtime.startingPosition,
-    timeControl: Object.freeze({ type: "untimed" }),
+    timeControl,
+    ...(timeControl.type === "untimed"
+      ? {}
+      : {
+          clock: durableMatchClock(
+            createMatchClock(timeControl, initialPosition.turn),
+          ),
+        }),
   })
 }
 

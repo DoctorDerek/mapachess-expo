@@ -34,7 +34,12 @@ export default function MatchResultFacts({
           {reward.ratedElo === null ? null : (
             <span>
               {copy.profile.rating(
-                copy.setup.variants[reward.ratedElo.variant],
+                copy.gameplay.clock.rating(
+                  copy.setup.variants[reward.ratedElo.variant],
+                  copy.gameplay.clock.category[
+                    reward.ratedElo.timeCategory ?? "untimed"
+                  ],
+                ),
                 reward.ratedElo.after,
               )}
             </span>

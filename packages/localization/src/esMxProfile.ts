@@ -21,7 +21,7 @@ const profile = {
   resetRating: (variant: string): string => `Restablecer Elo de ${variant}`,
   resetQuestion: (variant: string): string => `¿Restablecer Elo de ${variant}?`,
   resetExplanation: (variant: string): string =>
-    `El Elo de ${variant} vuelve a 100 y su conteo de partidas con puntuación vuelve a cero. La otra puntuación, el progreso de Historia, las medallas, los registros de Desafío, la configuración y la partida activa no cambian. Las partidas terminadas no pueden volver a contar para la puntuación. Exporta tus datos primero si quieres un respaldo.`,
+    `El Elo de ${variant} vuelve a 100 y su conteo de partidas con puntuación vuelve a cero. Las demás puntuaciones, el progreso de Historia, las medallas, los registros de Desafío, la configuración y la partida activa no cambian. Las partidas terminadas no pueden volver a contar para la puntuación. Exporta tus datos primero si quieres un respaldo.`,
   resetConfirmation: (variant: string): string =>
     `Restablecer Elo de ${variant} a 100`,
   preparingBackup: "Preparando respaldo…",
@@ -63,7 +63,7 @@ const profile = {
     standard: number,
     chess960: number,
   ): string =>
-    `Tu tarjeta de perfil: nivel ${formatUngroupedInteger(level)}, Elo de ajedrez estándar ${formatUngroupedInteger(standard)}, Elo de ajedrez 960 ${formatUngroupedInteger(chess960)}`,
+    `Tu tarjeta de perfil: nivel ${formatUngroupedInteger(level)}, Elo de ajedrez estándar sin reloj ${formatUngroupedInteger(standard)}, Elo de ajedrez 960 sin reloj ${formatUngroupedInteger(chess960)}`,
   level: "Nivel",
   playFree: "Juega gratis en Mapachess.com",
   cardFormats: { GIF: "GIF · Animado", PNG: "PNG · Imagen fija" },

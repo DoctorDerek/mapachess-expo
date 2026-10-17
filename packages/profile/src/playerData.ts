@@ -21,6 +21,7 @@ import {
   type PlayerInputBindings,
 } from "@mapachess/match/player-input"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
+import type { TimeCategory } from "@mapachess/match/time-control"
 import {
   createInitialChallengeHistory,
   type ChallengeHistory,
@@ -34,10 +35,16 @@ import {
   DEFAULT_PLAYER_APPEARANCE,
   type PlayerAppearance,
 } from "./playerAppearance.js"
+import { type PlayerEloRatingId } from "./ratingContext.js"
 import {
   createInitialStoryProgress,
   type StoryProgress,
 } from "./storyProgress.js"
+
+export {
+  PLAYER_ELO_RATING_IDS,
+  type PlayerEloRatingId,
+} from "./ratingContext.js"
 
 export const MAPACHESS_PLAYER_DATA_SCHEMA = "mapachess-player-data" as const
 export const LEGACY_MAPACHESS_PLAYER_DATA_SCHEMA_VERSION = 1 as const
@@ -55,8 +62,9 @@ export const CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION = 12 as const
 export const COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION = 13 as const
 export const INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION = 14 as const
 export const FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION = 15 as const
+export const TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION = 16 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+  TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -64,11 +72,9 @@ export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "chess960Story",
   "chess960Challenge",
 ] as const
-export const PLAYER_ELO_RATING_IDS = ["standard", "chess960"] as const
 
 export type LegacyPlayerEloRatingId =
   (typeof LEGACY_PLAYER_ELO_RATING_IDS)[number]
-export type PlayerEloRatingId = (typeof PLAYER_ELO_RATING_IDS)[number]
 
 export type LegacyPlayerEloRatings = Readonly<
   Record<LegacyPlayerEloRatingId, number>
@@ -134,13 +140,14 @@ export type MapachessPlayerDataV7 = Readonly<
     schemaVersion: typeof TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION
     legacyRatings: LegacyPlayerEloRatings
     processedMatchResultIds: readonly string[]
-    ratedMatchCounts: RatedMatchCounts
-    ratings: PlayerEloRatings
+    ratedMatchCounts: Readonly<Record<MatchVariant, number>>
+    ratings: Readonly<Record<MatchVariant, number>>
   }
 >
 
 export type AcceptedMatchReward = Readonly<{
   contribution?: Readonly<{
+    timeCategory?: TimeCategory
     applied: boolean
     ending: Readonly<{
       conclusion: MatchConclusion
@@ -159,6 +166,7 @@ export type AcceptedMatchReward = Readonly<{
   totalXpBefore: number
   unlockedAchievementIds: readonly LevelAchievementId[]
   ratedElo: Readonly<{
+    timeCategory?: TimeCategory
     variant: MatchVariant
     before: number
     after: number
@@ -187,7 +195,12 @@ export const acceptedRewardMatchesEnding = (
             match.conclusion.winner))))
 
 export type MapachessPlayerData = Readonly<
-  Omit<MapachessPlayerDataV7, "schemaVersion" | "settings"> & {
+  Omit<
+    MapachessPlayerDataV7,
+    "schemaVersion" | "settings" | "ratings" | "ratedMatchCounts"
+  > & {
+    ratings: PlayerEloRatings
+    ratedMatchCounts: RatedMatchCounts
     schemaVersion: typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
     settings: MapachessPlayerDataV7["settings"] &
       Readonly<{
@@ -216,10 +229,25 @@ export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
   Object.freeze({
     chess960: INITIAL_PLAYER_ELO,
     standard: INITIAL_PLAYER_ELO,
+    "standard-bullet": INITIAL_PLAYER_ELO,
+    "standard-blitz": INITIAL_PLAYER_ELO,
+    "standard-rapid": INITIAL_PLAYER_ELO,
+    "chess960-bullet": INITIAL_PLAYER_ELO,
+    "chess960-blitz": INITIAL_PLAYER_ELO,
+    "chess960-rapid": INITIAL_PLAYER_ELO,
   })
 
 export const createInitialRatedMatchCounts = (): RatedMatchCounts =>
-  Object.freeze({ chess960: 0, standard: 0 })
+  Object.freeze({
+    chess960: 0,
+    standard: 0,
+    "standard-bullet": 0,
+    "standard-blitz": 0,
+    "standard-rapid": 0,
+    "chess960-bullet": 0,
+    "chess960-blitz": 0,
+    "chess960-rapid": 0,
+  })
 
 export default function createInitialMapachessPlayerData(): MapachessPlayerData {
   return Object.freeze({

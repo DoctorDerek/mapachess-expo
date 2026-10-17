@@ -10,7 +10,7 @@ const profile = {
   resetRating: (variant: string): string => `Reset ${variant} Elo`,
   resetQuestion: (variant: string): string => `Reset ${variant} Elo?`,
   resetExplanation: (variant: string): string =>
-    `${variant} Elo returns to 100 and its rated-match count to zero. The other rating, Story progress, medals, Challenge records, settings, and active match stay unchanged. Completed matches cannot be rated again. Export your data first if you want a backup.`,
+    `${variant} Elo returns to 100 and its rated-match count to zero. All other ratings, Story progress, medals, Challenge records, settings, and the active match stay unchanged. Completed matches cannot be rated again. Export your data first if you want a backup.`,
   resetConfirmation: (variant: string): string => `Reset ${variant} Elo to 100`,
   preparingBackup: "Preparing backup…",
   none: "None",
@@ -50,7 +50,7 @@ const profile = {
     standard: number,
     chess960: number,
   ): string =>
-    `Your profile card: Level ${formatUngroupedInteger(level)}, Standard Chess Elo ${formatUngroupedInteger(standard)}, Chess960 Elo ${formatUngroupedInteger(chess960)}`,
+    `Your profile card: Level ${formatUngroupedInteger(level)}, Untimed Standard Chess Elo ${formatUngroupedInteger(standard)}, Untimed Chess960 Elo ${formatUngroupedInteger(chess960)}`,
   level: "Level",
   playFree: "Play free at Mapachess.com",
   cardFormats: { GIF: "GIF · Animated", PNG: "PNG · Still" },

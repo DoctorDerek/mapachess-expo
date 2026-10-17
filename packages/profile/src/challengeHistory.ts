@@ -133,7 +133,11 @@ export default function applyChallengeMatchResult(
   )
     return history
   const conclusion = match.conclusion
-  if (conclusion.type !== "checkmate" && conclusion.type !== "resignation")
+  if (
+    conclusion.type !== "checkmate" &&
+    conclusion.type !== "resignation" &&
+    conclusion.type !== "timeout"
+  )
     return history
   const variant = match.startingPosition.variant
   const current = history[variant]

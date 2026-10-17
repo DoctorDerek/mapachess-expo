@@ -8,9 +8,17 @@ import type {
   BetterHintsResult,
 } from "./betterHints.js"
 import {
+  advanceMatchClock,
+  clockHasExpired,
+  createMatchClock,
+  restoreMatchClock,
+  stopMatchClock,
+} from "./matchClock.js"
+import {
   conclusionMatchesRetainedBranch,
+  createTimeoutConclusion,
   deriveRetainedBranchConclusion,
-  retainManualConclusion,
+  retainExplicitConclusion,
   type MatchConclusion,
 } from "./matchConclusion.js"
 import type {
@@ -43,6 +51,7 @@ import {
   undoMatchTimeline,
   type MatchTimeline,
 } from "./matchTimeline.js"
+import { UNTIMED } from "./timeControl.js"
 
 export const createInitialContext = (
   input: MatchMachineInput,
@@ -52,6 +61,12 @@ export const createInitialContext = (
   }
 
   const resumedState = "resumedState" in input ? input.resumedState : undefined
+  if (
+    resumedState !== undefined &&
+    input.timeControl?.type === "fischer" &&
+    resumedState.clock == null
+  )
+    throw new TypeError("A resumed timed match requires its recorded clocks.")
   if (resumedState?.moveHintsUsed && !resumedState.pieceHintsUsed) {
     throw new TypeError("Resumed Move Hint use requires Piece Hint use.")
   }
@@ -71,12 +86,25 @@ export const createInitialContext = (
   }
 
   return {
+    timeControl: input.timeControl ?? UNTIMED,
+    monotonicClock: input.monotonicClock ?? { now: () => performance.now() },
+    clock:
+      resumedState?.clock == null
+        ? createMatchClock(
+            input.timeControl ?? UNTIMED,
+            currentMatchPosition(timeline).turn,
+          )
+        : Object.freeze({
+            ...resumedState.clock,
+            paused: true,
+            startedAt: null,
+          }),
     autoHintMode: input.autoHintMode,
     requestedAutoHintMode: null,
     conclusion,
     retainedConclusion:
       resumedState?.retainedConclusion ??
-      retainManualConclusion(conclusion, timeline.cursor),
+      retainExplicitConclusion(conclusion, timeline.cursor),
     durability: input.durability,
     drawOfferResponse: null,
     hintAnalyst: input.hintAnalyst ?? null,
@@ -205,13 +233,18 @@ export const requireMatchPersistence = (
 export const undoMatchDecision = (
   context: MatchMachineContext,
 ): MatchTimeline | undefined =>
-  context.conclusion?.type === "resignation" ||
-  context.conclusion?.type === "draw-agreement"
-    ? currentMatchPosition(context.timeline).turn === context.playerColor
-      ? context.timeline
-      : (undoToPreviousPlayerDecision(context.timeline, context.playerColor) ??
-        context.timeline)
-    : undoToPreviousPlayerDecision(context.timeline, context.playerColor)
+  context.conclusion?.type === "timeout" ||
+  context.conclusion?.type === "timeout-insufficient-material"
+    ? context.timeline
+    : context.conclusion?.type === "resignation" ||
+        context.conclusion?.type === "draw-agreement"
+      ? currentMatchPosition(context.timeline).turn === context.playerColor
+        ? context.timeline
+        : (undoToPreviousPlayerDecision(
+            context.timeline,
+            context.playerColor,
+          ) ?? context.timeline)
+      : undoToPreviousPlayerDecision(context.timeline, context.playerColor)
 
 export const redoMatchDecision = (
   context: MatchMachineContext,
@@ -235,12 +268,39 @@ export const pendingPositionMutation = (
   timeline: MatchTimeline,
   operation: "move" | "undo" | "redo" = "move",
 ): PendingMatchMutation => {
+  const settledClock = stopMatchClock(
+    context.clock,
+    context.monotonicClock.now(),
+  )
+  if (
+    operation === "move" &&
+    clockHasExpired(settledClock, context.monotonicClock.now())
+  )
+    return pendingConclusionMutation(
+      { ...context, clock: settledClock },
+      createTimeoutConclusion(currentMatchPosition(context.timeline)),
+    )
   const conclusion =
     operation === "redo" &&
     context.retainedConclusion?.cursor === timeline.cursor
       ? context.retainedConclusion.conclusion
       : deriveRetainedBranchConclusion(timeline)
   return createPendingMatchMutation({
+    clock:
+      operation === "move"
+        ? advanceMatchClock(
+            settledClock,
+            context.timeControl,
+            timeline.cursor,
+            currentMatchPosition(timeline).turn,
+          )
+        : restoreMatchClock(
+            settledClock,
+            timeline.cursor,
+            currentMatchPosition(timeline).turn,
+            conclusion?.type === "timeout" ||
+              conclusion?.type === "timeout-insufficient-material",
+          ),
     retainedConclusion:
       operation === "move" ? null : context.retainedConclusion,
     autoHintMode: context.autoHintMode,
@@ -259,12 +319,16 @@ export const pendingConclusionMutation = (
   context: MatchMachineContext,
   conclusion: MatchConclusion,
 ): PendingMatchMutation => {
+  const clock = stopMatchClock(context.clock, context.monotonicClock.now())
+  if (clockHasExpired(clock, context.monotonicClock.now()))
+    conclusion = createTimeoutConclusion(currentMatchPosition(context.timeline))
   if (!conclusionMatchesRetainedBranch(conclusion, context.timeline)) {
     throw new TypeError("Requested conclusion does not match the match branch.")
   }
 
   return createPendingMatchMutation({
-    retainedConclusion: retainManualConclusion(
+    clock,
+    retainedConclusion: retainExplicitConclusion(
       conclusion,
       context.timeline.cursor,
     ),
@@ -284,10 +348,16 @@ export const pendingAcceptedHintsMutation = (
   context: MatchMachineContext,
   hints: BetterHintsResult,
 ): PendingMatchMutation => {
+  if (clockHasExpired(context.clock, context.monotonicClock.now()))
+    return pendingConclusionMutation(
+      context,
+      createTimeoutConclusion(currentMatchPosition(context.timeline)),
+    )
   const moveHintsUsed =
     context.moveHintsUsed || context.autoHintMode === "auto-move-hints"
 
   return createPendingMatchMutation({
+    clock: stopMatchClock(context.clock, context.monotonicClock.now()),
     retainedConclusion: context.retainedConclusion,
     autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
@@ -303,8 +373,14 @@ export const pendingAcceptedHintsMutation = (
 
 export const pendingMoveHintsMutation = (
   context: MatchMachineContext,
-): PendingMatchMutation =>
-  createPendingMatchMutation({
+): PendingMatchMutation => {
+  if (clockHasExpired(context.clock, context.monotonicClock.now()))
+    return pendingConclusionMutation(
+      context,
+      createTimeoutConclusion(currentMatchPosition(context.timeline)),
+    )
+  return createPendingMatchMutation({
+    clock: stopMatchClock(context.clock, context.monotonicClock.now()),
     retainedConclusion: context.retainedConclusion,
     autoHintMode: context.autoHintMode,
     conclusion: context.conclusion,
@@ -317,6 +393,7 @@ export const pendingMoveHintsMutation = (
     retainedHintStage: "piece-hints",
     timeline: context.timeline,
   })
+}
 
 type AutoHintModeState = Readonly<{
   autoHintMode: AutoHintMode
@@ -350,7 +427,16 @@ export const pendingAutoHintModeMutation = (
   previousHintStage: "piece-hints" | "move-hints" | null,
 ): PendingMatchMutation => {
   const state = autoHintModeState(context, autoHintMode)
+  if (
+    context.conclusion === null &&
+    clockHasExpired(context.clock, context.monotonicClock.now())
+  )
+    return pendingConclusionMutation(
+      context,
+      createTimeoutConclusion(currentMatchPosition(context.timeline)),
+    )
   return createPendingMatchMutation({
+    clock: stopMatchClock(context.clock, context.monotonicClock.now()),
     retainedConclusion: context.retainedConclusion,
     autoHintMode: state.autoHintMode,
     conclusion: context.conclusion,
@@ -375,6 +461,13 @@ export const acceptedPendingMutation = (
 ): Partial<MatchMachineContext> => {
   const pending = requirePendingMutation(context)
   return {
+    clock:
+      pending.clock === null
+        ? null
+        : Object.freeze({
+            ...pending.clock,
+            paused: pending.clock.paused || context.clock?.paused === true,
+          }),
     autoHintMode: pending.request.autoHintMode,
     requestedAutoHintMode: null,
     conclusion: pending.conclusion,

@@ -11,6 +11,7 @@ type RecoveryProps = Readonly<{
   title: string
   description: string
   actions?: ReactNode
+  onRecovery?: () => void
 }>
 
 function Recovery({
@@ -56,6 +57,10 @@ export default class RecoverableView extends Component<
     error: unknown,
   ): Readonly<{ failure: ErrorDiagnostic }> {
     return { failure: captureError(error) }
+  }
+
+  override componentDidCatch(): void {
+    this.props.onRecovery?.()
   }
 
   override render() {

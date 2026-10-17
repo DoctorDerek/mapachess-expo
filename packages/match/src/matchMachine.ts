@@ -1,29 +1,11 @@
-import { assign, fromPromise, setup, type SnapshotFrom } from "xstate"
+import { assign, type SnapshotFrom } from "xstate"
 import captureError from "@mapachess/diagnostics/error-diagnostic"
-import type { BetterHintsResult } from "./betterHints.js"
-import {
-  createDrawAgreementConclusion,
-  createPlayerResignationConclusion,
-  deriveRetainedBranchConclusion,
-  retainManualConclusion,
-} from "./matchConclusion.js"
-import type {
-  MatchHintsActorInput,
-  MatchMachineContext,
-  MatchMachineEvent,
-  MatchMachineInput,
-  MatchOpponentActorInput,
-  MatchPersistenceActorInput,
-} from "./matchMachineTypes.js"
-import type { MatchMoveId } from "./matchMove.js"
-import {
-  persistenceReceiptMatches,
-  type MatchPersistenceReceipt,
-} from "./matchPersistence.js"
-import { currentMatchPosition } from "./matchTimeline.js"
+import { clockHasExpired } from "./matchClock.js"
+import { pendingClockPause } from "./matchClockWorkflow.js"
+import matchMachineSetup from "./matchMachineSetup.js"
+import { persistenceReceiptMatches } from "./matchPersistence.js"
 import {
   acceptedPendingMutation,
-  autoHintModeState,
   createHintsRequest,
   createInitialContext,
   createOpponentRequest,
@@ -33,17 +15,13 @@ import {
   opponentRequestFailure,
   pendingAcceptedHintsMutation,
   pendingAutoHintModeMutation,
-  pendingConclusionMutation,
-  pendingMoveHintsMutation,
   pendingPositionMutation,
   persistenceRequestFailure,
-  redoMatchDecision,
   requireAppliedTimelineMove,
   requireHintAnalyst,
   requireMatchPersistence,
   requirePendingMutation,
   stalePersistenceReceiptFailure,
-  undoMatchDecision,
 } from "./matchWorkflow.js"
 
 export type {
@@ -57,260 +35,66 @@ export type {
   MatchOpponentRequest,
 } from "./matchMachineTypes.js"
 
-const matchCanConclude = (context: MatchMachineContext): boolean =>
-  context.conclusion === null &&
-  context.pendingMutation === null &&
-  currentMatchPosition(context.timeline).status.type === "playing"
-
-const autoHintModeCanChange = (
-  context: MatchMachineContext,
-  event: MatchMachineEvent,
-): boolean =>
-  event.type === "MATCH.AUTO_HINT_MODE_CHANGED" &&
-  event.autoHintMode !== context.autoHintMode &&
-  context.pendingMutation === null
-
-const drawOfferDecisionMatches = (
-  context: MatchMachineContext,
-  event: MatchMachineEvent,
-  outcome: "accepted" | "rejected",
-): boolean =>
-  event.type === "MATCH.DRAW_OFFER_REQUESTED" &&
-  event.decision.outcome === outcome &&
-  event.decision.positionFen === currentMatchPosition(context.timeline).fen &&
-  currentMatchPosition(context.timeline).turn === context.playerColor &&
-  matchCanConclude(context)
-
-const matchMachineDefinition = setup({
-  types: {
-    context: {} as MatchMachineContext,
-    events: {} as MatchMachineEvent,
-    input: {} as MatchMachineInput,
-  },
-  actors: {
-    requestHints: fromPromise<BetterHintsResult, MatchHintsActorInput>(
-      ({ input, signal }) => input.analyst.analyze(input.request, signal),
-    ),
-    requestOpponentMove: fromPromise<MatchMoveId, MatchOpponentActorInput>(
-      ({ input, signal }) => input.opponent.selectMove(input.request, signal),
-    ),
-    persistMutation: fromPromise<
-      MatchPersistenceReceipt,
-      MatchPersistenceActorInput
-    >(({ input, signal }) => input.persistence.persist(input.request, signal)),
-  },
-  actions: {
-    applyAutoHintMode: assign(({ context, event }) => {
-      if (event.type !== "MATCH.AUTO_HINT_MODE_CHANGED") {
-        throw new Error("Hint-mode action received a non-setting event.")
-      }
-      return autoHintModeState(context, event.autoHintMode)
-    }),
-    applyRequestedMove: assign(({ context, event }) => {
-      if (event.type !== "MATCH.MOVE_REQUESTED") {
-        throw new Error("Move action received a non-move event.")
-      }
-
-      const timeline = requireAppliedTimelineMove(
-        context.timeline,
-        event.moveId,
-      )
-      return {
-        conclusion: deriveRetainedBranchConclusion(timeline),
-        retainedConclusion: null,
-        drawOfferResponse: null,
-        hintFailure: null,
-        hints: null,
-        opponentFailure: null,
-        timeline,
-      }
-    }),
-    applyAcceptedDrawOffer: assign(({ context }) => ({
-      conclusion: createDrawAgreementConclusion(),
-      retainedConclusion: retainManualConclusion(
-        createDrawAgreementConclusion(),
-        context.timeline.cursor,
-      ),
-      drawOfferResponse: null,
-      hintFailure: null,
-      hints: null,
-      opponentFailure: null,
-    })),
-    applyResignation: assign(({ context }) => ({
-      conclusion: createPlayerResignationConclusion(context.playerColor),
-      retainedConclusion: retainManualConclusion(
-        createPlayerResignationConclusion(context.playerColor),
-        context.timeline.cursor,
-      ),
-      drawOfferResponse: null,
-      hintFailure: null,
-      hints: null,
-      opponentFailure: null,
-    })),
-    clearOpponentFailure: assign({ opponentFailure: null }),
-    clearHintFailure: assign({ hintFailure: null }),
-    markDrawOfferRejected: assign({ drawOfferResponse: "rejected" }),
-    markMoveHintsUsed: assign({ moveHintsUsed: true }),
-    prepareMoveHintsMutation: assign(({ context }) => ({
-      pendingMutation: pendingMoveHintsMutation(context),
-      persistenceFailure: null,
-    })),
-    prepareAutoHintModeMutation: assign(({ context, event, self }) => {
-      if (event.type !== "MATCH.AUTO_HINT_MODE_CHANGED") {
-        throw new Error("Hint-mode persistence received a non-setting event.")
-      }
-      return {
-        pendingMutation: pendingAutoHintModeMutation(
-          context,
-          event.autoHintMode,
-          self.getSnapshot().matches({ playerTurn: "moveHintsVisible" })
-            ? "move-hints"
-            : self.getSnapshot().matches({ playerTurn: "pieceHintsVisible" })
-              ? "piece-hints"
-              : null,
-        ),
-        persistenceFailure: null,
-      }
-    }),
-    prepareAcceptedDrawOfferMutation: assign(({ context }) => ({
-      pendingMutation: pendingConclusionMutation(
-        context,
-        createDrawAgreementConclusion(),
-      ),
-      persistenceFailure: null,
-    })),
-    prepareRedoMutation: assign(({ context }) => {
-      const timeline = redoMatchDecision(context)
-      if (timeline === undefined) {
-        throw new Error("Guarded durable Redo became unavailable.")
-      }
-      return {
-        pendingMutation: pendingPositionMutation(context, timeline, "redo"),
-        persistenceFailure: null,
-      }
-    }),
-    prepareRequestedMoveMutation: assign(({ context, event }) => {
-      if (event.type !== "MATCH.MOVE_REQUESTED") {
-        throw new Error("Move persistence received a non-move event.")
-      }
-      return {
-        pendingMutation: pendingPositionMutation(
-          context,
-          requireAppliedTimelineMove(context.timeline, event.moveId),
-        ),
-        persistenceFailure: null,
-      }
-    }),
-    prepareResignationMutation: assign(({ context }) => ({
-      pendingMutation: pendingConclusionMutation(
-        context,
-        createPlayerResignationConclusion(context.playerColor),
-      ),
-      persistenceFailure: null,
-    })),
-    prepareUndoMutation: assign(({ context }) => {
-      const timeline = undoMatchDecision(context)
-      if (timeline === undefined) {
-        throw new Error("Guarded durable Undo became unavailable.")
-      }
-      return {
-        pendingMutation: pendingPositionMutation(context, timeline, "undo"),
-        persistenceFailure: null,
-      }
-    }),
-    redoToPlayerDecision: assign(({ context }) => {
-      const timeline = redoMatchDecision(context)
-
-      return timeline === undefined
-        ? {}
-        : {
-            conclusion:
-              context.retainedConclusion?.cursor === timeline.cursor
-                ? context.retainedConclusion.conclusion
-                : deriveRetainedBranchConclusion(timeline),
-            hintFailure: null,
-            hints: null,
-            drawOfferResponse: null,
-            opponentFailure: null,
-            timeline,
-          }
-    }),
-    undoToPlayerDecision: assign(({ context }) => {
-      const timeline = undoMatchDecision(context)
-
-      return timeline === undefined
-        ? {}
-        : {
-            conclusion: deriveRetainedBranchConclusion(timeline),
-            hintFailure: null,
-            hints: null,
-            drawOfferResponse: null,
-            opponentFailure: null,
-            timeline,
-          }
-    }),
-  },
-  guards: {
-    acceptedDrawNeedsNoPersistence: ({ context, event }) =>
-      context.durability.type === "ephemeral" &&
-      drawOfferDecisionMatches(context, event, "accepted"),
-    acceptedDrawNeedsPersistence: ({ context, event }) =>
-      context.durability.type === "durable" &&
-      drawOfferDecisionMatches(context, event, "accepted"),
-    autoMoveHintsAreEnabled: ({ context }) =>
-      context.autoHintMode === "auto-move-hints",
-    autoHintModeChangeNeedsNoPersistence: ({ context, event }) =>
-      context.durability.type === "ephemeral" &&
-      autoHintModeCanChange(context, event),
-    autoHintModeChangeNeedsPersistence: ({ context, event }) =>
-      context.durability.type === "durable" &&
-      autoHintModeCanChange(context, event),
-    canRejectDrawOffer: ({ context, event }) =>
-      drawOfferDecisionMatches(context, event, "rejected"),
-    canResignEphemerally: ({ context }) =>
-      context.durability.type === "ephemeral" && matchCanConclude(context),
-    canResignDurably: ({ context }) =>
-      context.durability.type === "durable" && matchCanConclude(context),
-    isComplete: ({ context }) => context.conclusion !== null,
-    isPlayerTurn: ({ context }) =>
-      currentMatchPosition(context.timeline).turn === context.playerColor,
-    hasHintAnalyst: ({ context }) => context.hintAnalyst !== null,
-    moveHintsNeedNoPersistence: ({ context }) =>
-      context.durability.type === "ephemeral" || context.moveHintsUsed,
-    moveHintsNeedPersistence: ({ context }) =>
-      context.durability.type === "durable" && !context.moveHintsUsed,
-    canRedoDurably: ({ context }) =>
-      context.durability.type === "durable" &&
-      redoMatchDecision(context) !== undefined,
-    canRedoEphemerally: ({ context }) =>
-      context.durability.type === "ephemeral" &&
-      redoMatchDecision(context) !== undefined,
-    canUndoDurably: ({ context }) =>
-      context.durability.type === "durable" &&
-      undoMatchDecision(context) !== undefined,
-    canUndoEphemerally: ({ context }) =>
-      context.durability.type === "ephemeral" &&
-      undoMatchDecision(context) !== undefined,
-    requestedDurableMoveIsLegal: ({ context, event }) =>
-      context.durability.type === "durable" &&
-      event.type === "MATCH.MOVE_REQUESTED" &&
-      moveIsLegal(context.timeline, event.moveId),
-    requestedEphemeralMoveIsLegal: ({ context, event }) =>
-      context.durability.type === "ephemeral" &&
-      event.type === "MATCH.MOVE_REQUESTED" &&
-      moveIsLegal(context.timeline, event.moveId),
-    shouldStartAutoHints: ({ context }) =>
-      context.autoHintMode !== "no-auto-hints" && context.hintAnalyst !== null,
-    shouldShowAcceptedMoveHints: ({ context }) =>
-      context.hints !== null && context.autoHintMode === "auto-move-hints",
-    shouldShowAcceptedPieceHints: ({ context }) =>
-      context.hints !== null && context.autoHintMode === "auto-piece-hints",
-  },
-}).createMachine({
+const matchMachineDefinition = matchMachineSetup.createMachine({
   id: "match",
   initial: "setup",
   context: ({ input }) => createInitialContext(input),
   on: {
+    "MATCH.CLOCK_EXPIRED": [
+      {
+        guard: ({ context }) =>
+          context.pendingMutation === null &&
+          context.conclusion === null &&
+          clockHasExpired(context.clock, context.monotonicClock.now()) &&
+          context.durability.type === "durable",
+        actions: "prepareClockTimeout",
+        target: ".persistingMutation",
+      },
+      {
+        guard: ({ context }) =>
+          context.pendingMutation === null &&
+          context.conclusion === null &&
+          clockHasExpired(context.clock, context.monotonicClock.now()),
+        actions: "applyClockTimeout",
+        target: ".complete",
+      },
+    ],
+    "MATCH.CLOCK_PAUSE_REQUESTED": [
+      {
+        guard: ({ context }) =>
+          context.pendingMutation === null &&
+          context.conclusion === null &&
+          context.durability.type === "ephemeral" &&
+          clockHasExpired(context.clock, context.monotonicClock.now()),
+        actions: "applyClockTimeout",
+        target: ".complete",
+      },
+      {
+        guard: ({ context }) =>
+          context.clock !== null &&
+          !context.clock.paused &&
+          context.conclusion === null &&
+          context.pendingMutation !== null,
+        actions: "pauseClock",
+      },
+      {
+        guard: ({ context }) =>
+          context.clock !== null &&
+          !context.clock.paused &&
+          context.conclusion === null &&
+          context.durability.type === "durable",
+        actions: "prepareClockPause",
+        target: ".persistingMutation",
+      },
+      {
+        guard: ({ context }) =>
+          context.clock !== null &&
+          !context.clock.paused &&
+          context.conclusion === null,
+        actions: "pauseClock",
+        target: ".paused",
+      },
+    ],
     "MATCH.AUTO_HINT_MODE_CHANGED": [
       {
         guard: ({ context }) => context.pendingMutation !== null,
@@ -365,11 +149,24 @@ const matchMachineDefinition = setup({
     resolving: {
       always: [
         { guard: "isComplete", target: "complete" },
+        {
+          guard: ({ context }) => context.clock?.paused === true,
+          target: "paused",
+        },
         { guard: "isPlayerTurn", target: "playerTurn" },
         { target: "opponentThinking" },
       ],
     },
     playerTurn: {
+      entry: "startClock",
+      exit: "stopClock",
+      invoke: {
+        src: "clockDeadline",
+        input: ({ context }) => ({
+          clock: context.clock,
+          monotonicClock: context.monotonicClock,
+        }),
+      },
       initial: "ready",
       states: {
         ready: {
@@ -532,58 +329,67 @@ const matchMachineDefinition = setup({
       },
     },
     opponentThinking: {
-      invoke: {
-        src: "requestOpponentMove",
-        input: ({ context }) => ({
-          opponent: context.opponent,
-          request: createOpponentRequest(context),
-        }),
-        onDone: [
-          {
-            actions: assign(({ context, event }) => ({
-              pendingMutation: pendingPositionMutation(
-                context,
-                requireAppliedTimelineMove(context.timeline, event.output),
-              ),
-              persistenceFailure: null,
+      entry: "startClock",
+      exit: "stopClock",
+      invoke: [
+        {
+          src: "clockDeadline",
+          input: ({ context }) => ({
+            clock: context.clock,
+            monotonicClock: context.monotonicClock,
+          }),
+        },
+        {
+          src: "requestOpponentMove",
+          input: ({ context }) => ({
+            opponent: context.opponent,
+            request: createOpponentRequest(context),
+          }),
+          onDone: [
+            {
+              actions: assign(({ context, event }) => ({
+                pendingMutation: pendingPositionMutation(
+                  context,
+                  requireAppliedTimelineMove(context.timeline, event.output),
+                ),
+                persistenceFailure: null,
+              })),
+              guard: ({ context, event }) =>
+                context.durability.type === "durable" &&
+                moveIsLegal(context.timeline, event.output),
+              target: "persistingMutation",
+            },
+            {
+              actions: assign(({ context, event }) => {
+                const timeline = requireAppliedTimelineMove(
+                  context.timeline,
+                  event.output,
+                )
+                return acceptedPendingMutation({
+                  ...context,
+                  pendingMutation: pendingPositionMutation(context, timeline),
+                })
+              }),
+              guard: ({ context, event }) =>
+                context.durability.type === "ephemeral" &&
+                moveIsLegal(context.timeline, event.output),
+              target: "resolving",
+            },
+            {
+              actions: assign({
+                opponentFailure: illegalOpponentMoveFailure(),
+              }),
+              target: "opponentFailure",
+            },
+          ],
+          onError: {
+            actions: assign(({ event }) => ({
+              opponentFailure: opponentRequestFailure(event.error),
             })),
-            guard: ({ context, event }) =>
-              context.durability.type === "durable" &&
-              moveIsLegal(context.timeline, event.output),
-            target: "persistingMutation",
-          },
-          {
-            actions: assign(({ context, event }) => {
-              const timeline = requireAppliedTimelineMove(
-                context.timeline,
-                event.output,
-              )
-              return {
-                conclusion: deriveRetainedBranchConclusion(timeline),
-                drawOfferResponse: null,
-                opponentFailure: null,
-                timeline,
-              }
-            }),
-            guard: ({ context, event }) =>
-              context.durability.type === "ephemeral" &&
-              moveIsLegal(context.timeline, event.output),
-            target: "resolving",
-          },
-          {
-            actions: assign({
-              opponentFailure: illegalOpponentMoveFailure(),
-            }),
             target: "opponentFailure",
           },
-        ],
-        onError: {
-          actions: assign(({ event }) => ({
-            opponentFailure: opponentRequestFailure(event.error),
-          })),
-          target: "opponentFailure",
         },
-      },
+      ],
       on: {
         "MATCH.UNDO_REQUESTED": [
           {
@@ -632,6 +438,39 @@ const matchMachineDefinition = setup({
             }),
             target: "persistingMutation",
             reenter: true,
+          },
+          {
+            guard: ({ context, event }) =>
+              context.clock?.paused === true &&
+              requirePendingMutation(context).clock?.paused === false &&
+              requirePendingMutation(context).conclusion === null &&
+              persistenceReceiptMatches(
+                requirePendingMutation(context).request,
+                event.output,
+              ),
+            actions: assign(({ context }) => {
+              const accepted = acceptedPendingMutation(context)
+              return {
+                ...accepted,
+                pendingMutation: pendingClockPause({
+                  ...context,
+                  ...accepted,
+                }),
+              }
+            }),
+            target: "persistingMutation",
+            reenter: true,
+          },
+          {
+            actions: assign(({ context }) => acceptedPendingMutation(context)),
+            guard: ({ context, event }) =>
+              context.clock?.paused === true &&
+              requirePendingMutation(context).conclusion === null &&
+              persistenceReceiptMatches(
+                requirePendingMutation(context).request,
+                event.output,
+              ),
+            target: "paused",
           },
           {
             actions: assign(({ context }) => acceptedPendingMutation(context)),
@@ -693,6 +532,7 @@ const matchMachineDefinition = setup({
       },
     },
     persistenceFailure: {
+      entry: "pauseClock",
       on: {
         "MATCH.PERSISTENCE_RETRY_REQUESTED": {
           target: "persistingMutation",
@@ -700,10 +540,26 @@ const matchMachineDefinition = setup({
       },
     },
     opponentFailure: {
+      entry: "pauseClock",
+      always: [
+        {
+          guard: ({ context }) =>
+            context.durability.type === "durable" &&
+            clockHasExpired(context.clock, context.monotonicClock.now()),
+          actions: "prepareClockTimeout",
+          target: "persistingMutation",
+        },
+        {
+          guard: ({ context }) =>
+            clockHasExpired(context.clock, context.monotonicClock.now()),
+          actions: "applyClockTimeout",
+          target: "complete",
+        },
+      ],
       on: {
         "MATCH.OPPONENT_RETRY_REQUESTED": {
           actions: "clearOpponentFailure",
-          target: "opponentThinking",
+          target: "resolving",
         },
         "MATCH.UNDO_REQUESTED": [
           {
@@ -720,6 +576,7 @@ const matchMachineDefinition = setup({
       },
     },
     complete: {
+      entry: "stopClock",
       on: {
         "MATCH.REDO_REQUESTED": [
           {
@@ -742,6 +599,38 @@ const matchMachineDefinition = setup({
           {
             actions: "undoToPlayerDecision",
             guard: "canUndoEphemerally",
+            target: "resolving",
+          },
+        ],
+      },
+    },
+    paused: {
+      on: {
+        "MATCH.CLOCK_RESUME_REQUESTED": {
+          actions: "resumeClock",
+          target: "resolving",
+        },
+        "MATCH.UNDO_REQUESTED": [
+          {
+            guard: "canUndoDurably",
+            actions: "prepareUndoMutation",
+            target: "persistingMutation",
+          },
+          {
+            guard: "canUndoEphemerally",
+            actions: "undoToPlayerDecision",
+            target: "resolving",
+          },
+        ],
+        "MATCH.REDO_REQUESTED": [
+          {
+            guard: "canRedoDurably",
+            actions: "prepareRedoMutation",
+            target: "persistingMutation",
+          },
+          {
+            guard: "canRedoEphemerally",
+            actions: "redoToPlayerDecision",
             target: "resolving",
           },
         ],

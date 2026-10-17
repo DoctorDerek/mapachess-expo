@@ -89,7 +89,11 @@ describe("web player-data controls", () => {
       /<input[^>]*type="radio"[^>]*value="(?:auto-move-hints|auto-piece-hints|no-auto-hints)"[^>]*>/g,
     )
     expect(hintChoices).toHaveLength(3)
-    expect(markup).not.toMatch(/<fieldset[^>]* disabled=""/)
+    const hintFieldset = markup
+      .match(/<fieldset\b[^>]*>[\s\S]*?<\/fieldset>/g)
+      ?.find((fieldset) => fieldset.includes('value="auto-move-hints"'))
+    expect(hintFieldset).toBeDefined()
+    expect(hintFieldset).not.toMatch(/^<fieldset[^>]* disabled=""/)
     for (const choice of hintChoices ?? [])
       expect(choice).not.toContain(' disabled=""')
     expect(markup).not.toMatch(/<button[^>]* disabled=""[^>]*>Close Settings/)
@@ -216,10 +220,10 @@ describe("web player-data controls", () => {
     expect(markup).toContain(
       "Hint changes become your default and apply to the current match.",
     )
-    expect(markup).toContain("Standard Chess · 100 Elo")
-    expect(markup).toContain("Chess960 · 100 Elo")
-    expect(markup).toContain("Reset Standard Chess Elo")
-    expect(markup).toContain("Reset Chess960 Elo")
+    expect(markup).toContain("Standard Chess · Untimed · 100 Elo")
+    expect(markup).toContain("Chess960 · Untimed · 100 Elo")
+    expect(markup).toContain("Reset Standard Chess · Untimed Elo")
+    expect(markup).toContain("Reset Chess960 · Untimed Elo")
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("review a backup before replacing local data")
     expect(markup).toContain("Credits")

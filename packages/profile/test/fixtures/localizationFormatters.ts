@@ -31,6 +31,20 @@ type FormatterExamples = {
 }
 
 const formatterExamples = {
+  "gameplay.clock.label": [["White"], ["negras"]],
+  "gameplay.clock.preset": [["Bullet", "1+0"]],
+  "gameplay.clock.explanation": [
+    [1, 0],
+    [3, 2],
+  ],
+  "gameplay.clock.rating": [["Standard Chess", "Untimed"]],
+  "gameplay.clock.display": [
+    [0, 0],
+    [0, 9],
+    [3, 2],
+    [12, 45],
+  ],
+  "gameplay.conclusion.opponentTimedOut": [["Chicken Stockfish"]],
   "setup.positionNumber": [[959]],
   "setup.playAsAction": [["Raccoon"]],
   "setup.elo": [["1201"]],

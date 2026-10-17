@@ -9,6 +9,8 @@ export default function MatchIdentity({
   opponentName,
   opponentElo,
   reactions,
+  playerClock,
+  opponentClock,
 }: Readonly<{
   headingRef: Ref<HTMLHeadingElement>
   playerColor: MatchColor
@@ -16,6 +18,8 @@ export default function MatchIdentity({
   opponentName: string
   opponentElo: number
   reactions: ReactNode
+  playerClock?: ReactNode
+  opponentClock?: ReactNode
 }>) {
   const copy = useMapachessCopy()
   return (
@@ -29,14 +33,20 @@ export default function MatchIdentity({
         tabIndex={-1}
         className="text-center text-base leading-tight"
       >
-        <strong>{copy.presentation.playerName}</strong> ·{" "}
-        {copy.gameplay.elo(playerElo)}
-        <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
+        <span className="inline-block">
+          <strong>{copy.presentation.playerName}</strong> ·{" "}
+          {copy.gameplay.elo(playerElo)}
+          <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
+          {playerClock}
+        </span>
         {copy.board.versus}
-        <strong>{opponentName}</strong> · {copy.gameplay.elo(opponentElo)}
-        <span className="sr-only">
-          {" "}
-          ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
+        <span className="inline-block">
+          <strong>{opponentName}</strong> · {copy.gameplay.elo(opponentElo)}
+          <span className="sr-only">
+            {" "}
+            ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
+          </span>
+          {opponentClock}
         </span>
       </h1>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30">

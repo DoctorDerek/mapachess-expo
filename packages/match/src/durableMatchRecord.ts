@@ -1,4 +1,5 @@
 import type { AutoHintMode } from "./autoHintMode.js"
+import type { MatchClockRecord } from "./matchClock.js"
 import type {
   MatchConclusion,
   RetainedMatchConclusion,
@@ -10,6 +11,7 @@ import {
   STOCKFISH_OPPONENTS,
   type StockfishOpponentId,
 } from "./stockfishOpponent.js"
+import type { TimeControl } from "./timeControl.js"
 
 export const MATCH_MODES = ["story", "challenge"] as const
 export const IMPLEMENTED_DURABLE_OPPONENT_IDS = Object.freeze(
@@ -17,7 +19,8 @@ export const IMPLEMENTED_DURABLE_OPPONENT_IDS = Object.freeze(
 )
 export const LEGACY_DURABLE_MATCH_RECORD_VERSION = 1 as const
 export const LEGACY_DURABLE_MATCH_RECORD_VERSION_2 = 2 as const
-export const DURABLE_MATCH_RECORD_VERSION = 3 as const
+export const LEGACY_DURABLE_MATCH_RECORD_VERSION_3 = 3 as const
+export const DURABLE_MATCH_RECORD_VERSION = 4 as const
 
 export type MatchMode = (typeof MATCH_MODES)[number]
 export type ImplementedDurableOpponentId = StockfishOpponentId
@@ -36,7 +39,8 @@ type DurableMatchRecordFields = Readonly<{
   playerColor: MatchColor
   playerEloAtStart: number
   startingPosition: MatchStartingPosition
-  timeControl: Readonly<{ type: "untimed" }>
+  timeControl: TimeControl
+  clock?: MatchClockRecord | null
 }>
 
 export type DurableMatchRecordV1 = DurableMatchRecordFields &
@@ -52,7 +56,7 @@ export type DurableMatchRecordV2 = DurableMatchRecordFields &
     recordVersion: typeof LEGACY_DURABLE_MATCH_RECORD_VERSION_2
   }>
 
-export type DurableMatchRecordV3 = DurableMatchRecordFields &
+export type DurableMatchRecord = DurableMatchRecordFields &
   Readonly<{
     retainedConclusion?: RetainedMatchConclusion | null
     moveFeedback?: readonly MoveFeedbackRecord[]
@@ -60,7 +64,7 @@ export type DurableMatchRecordV3 = DurableMatchRecordFields &
     ratedOpponentElo?: number | null
     autoHintMode: AutoHintMode
     conclusion: MatchConclusion | null
-    recordVersion: typeof DURABLE_MATCH_RECORD_VERSION
+    recordVersion:
+      | typeof LEGACY_DURABLE_MATCH_RECORD_VERSION_3
+      | typeof DURABLE_MATCH_RECORD_VERSION
   }>
-
-export type DurableMatchRecord = DurableMatchRecordV3

@@ -201,7 +201,7 @@ const interfaceCopy = {
     resetAllLocalPlayerData:
       "¿Restablecer todos los datos locales del jugador?",
     thisReplacesAllLocalPlayerDataIncluding:
-      "Esto reemplaza todos los datos locales del jugador, incluida la partida activa, los registros de Historia y Desafío, ambas puntuaciones Elo actuales y sus conteos de partidas con puntuación, las puntuaciones históricas y la configuración. No afecta los archivos de respaldo que ya exportaste.",
+      "Esto reemplaza todos los datos locales del jugador, incluida la partida activa, los registros de Historia y Desafío, todas las puntuaciones Elo actuales y sus conteos de partidas con puntuación, las puntuaciones históricas y la configuración. No afecta los archivos de respaldo que ya exportaste.",
     cancel: "Cancelar",
     exportUnreadableData: "Exportar datos ilegibles",
     resetAllLocalPlayerData2: "Restablecer todos los datos locales del jugador",
