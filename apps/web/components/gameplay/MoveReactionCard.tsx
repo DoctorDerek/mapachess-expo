@@ -36,7 +36,7 @@ export default function MoveReactionCard({
     <button
       type="button"
       className={cx(
-        "font-body pointer-events-auto relative min-h-10 w-full rounded px-2 py-2 text-base leading-tight wrap-anywhere shadow-sm ring-1 ring-current/40 focus-visible:outline-2 focus-visible:-outline-offset-2",
+        "font-body pointer-events-auto relative min-h-10 w-full shrink-0 rounded px-2 py-2 text-base leading-tight wrap-anywhere shadow-sm ring-1 ring-current/40 focus-visible:outline-2 focus-visible:-outline-offset-2",
         mover === "white"
           ? "bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-charcoal"
           : "bg-mapachito-charcoal text-mapachito-white focus-visible:outline-mapachito-white",

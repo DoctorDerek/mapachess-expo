@@ -40,8 +40,10 @@ export type ProfilePlayExperienceProps = Readonly<{
     ProfileSettingsPanelProps,
     | "autoHintMode"
     | "chessAppearance"
-    | "chessAppearanceDisabled"
+    | "presentationPreferencesDisabled"
     | "coachCollection"
+    | "moveReactionPlacement"
+    | "onMoveReactionPlacementChanged"
     | "onCoachCollectionChanged"
     | "onChessAppearanceChanged"
     | "ratings"
@@ -112,9 +114,17 @@ function ReadyPlayExperience({
       }),
     chessAppearance: (selectPendingPlayerData(profile) ?? playerData).settings
       .chessAppearance,
-    chessAppearanceDisabled: !selectCanChangePresentationPreferences(profile),
+    presentationPreferencesDisabled:
+      !selectCanChangePresentationPreferences(profile),
     coachCollection: (selectPendingPlayerData(profile) ?? playerData).settings
       .coachCollection,
+    moveReactionPlacement: (selectPendingPlayerData(profile) ?? playerData)
+      .settings.moveReactionPlacement,
+    onMoveReactionPlacementChanged: (placement) =>
+      profileActor.send({
+        type: "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED",
+        placement,
+      }),
     onCoachCollectionChanged: (coachCollection) =>
       profileActor.send({
         type: "PROFILE.COACH_COLLECTION_CHANGED",

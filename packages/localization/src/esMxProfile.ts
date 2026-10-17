@@ -3,6 +3,12 @@ import { formatUngroupedInteger } from "./esMxNumbers.js"
 
 const profile = {
   settingsTitle: "Personaliza tu juego",
+  moveReactionPlacement: {
+    label: "Posición de los avisos de jugada",
+    description:
+      "A un lado del tablero en pantallas grandes y sobre él en pantallas pequeñas.",
+    options: { top: "Arriba", middle: "Centro", bottom: "Abajo" },
+  },
   ratedMatches: (count: number): string => {
     const matchCountNoun =
       count === 1

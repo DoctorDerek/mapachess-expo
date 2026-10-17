@@ -20,7 +20,10 @@ import type {
   PortableBackupDecodeIssue,
   PortableBackupDecodeResult,
 } from "./portableBackup.js"
-import type { PresentationPreferences } from "./presentationPreferences.js"
+import type {
+  MoveReactionPlacement,
+  PresentationPreferences,
+} from "./presentationPreferences.js"
 
 export type PortableBackupDecoder = (
   rawBackup: string,
@@ -70,6 +73,10 @@ export type ProfileMachineContext = Readonly<{
 }>
 
 export type ProfileMachineEvent =
+  | Readonly<{
+      type: "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED"
+      placement: MoveReactionPlacement
+    }>
   | Readonly<{ type: "PROFILE.INTRODUCTION_COMPLETED"; locale: ShippedLocale }>
   | Readonly<{ type: "PROFILE.LOCALE_CHANGED"; locale: ShippedLocale }>
   | Readonly<{

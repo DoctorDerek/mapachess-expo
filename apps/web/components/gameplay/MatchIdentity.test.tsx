@@ -18,7 +18,6 @@ describe("compact match identity", () => {
           playerElo={playerElo}
           opponentName="Dragonfly Stockfish"
           opponentElo={1200.61238123123}
-          reactions={null}
         />,
       )
       expect(markup).toContain(`<strong>Mapachito</strong> · ${expectedElo}`)
@@ -38,7 +37,6 @@ describe("compact match identity", () => {
           playerElo={100}
           opponentName="Dragonfly Stockfish"
           opponentElo={1200}
-          reactions={null}
         />,
       )
       expect(markup).toContain("<strong>Mapachito</strong> · 100")

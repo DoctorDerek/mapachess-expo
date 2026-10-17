@@ -48,6 +48,12 @@ const emergencyCatalog: MapachessCatalog = {
   },
   profile: {
     settingsTitle: "Settings",
+    moveReactionPlacement: {
+      label: "Move feedback position",
+      description:
+        "Beside the board on desktop; over the board on smaller screens.",
+      options: { top: "Top", middle: "Midpoint", bottom: "Bottom" },
+    },
     ratedMatches: unavailableText,
     rating: (variant: string): string =>
       `${ratingVariant(variant)} Elo unavailable`,

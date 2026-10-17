@@ -77,6 +77,7 @@ import {
   LEGACY_PLAYER_ELO_RATING_IDS,
   MAPACHESS_PLAYER_DATA_SCHEMA,
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
+  MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_APPEARANCE_DATA_SCHEMA_VERSION,
   PLAYER_ELO_RATING_IDS,
   REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
@@ -93,6 +94,10 @@ import {
   type PlayerEloRatings,
   type RatedMatchCounts,
 } from "./playerData.js"
+import {
+  DEFAULT_MOVE_REACTION_PLACEMENT,
+  MOVE_REACTION_PLACEMENTS,
+} from "./presentationPreferences.js"
 import { playerRatingId } from "./ratingContext.js"
 import decodeResultContribution from "./resultContributionCodec.js"
 import applyStoryMatchResult, {
@@ -127,6 +132,7 @@ export type PlayerDataSource = Readonly<{
     | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
     | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+    | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -364,6 +370,7 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
       ...data.settings,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
+      moveReactionPlacement: DEFAULT_MOVE_REACTION_PLACEMENT,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
       locale: null,
     }),
@@ -538,6 +545,10 @@ export const canonicalPlayerData = (
     ...(sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
       ? [data.introductionCompleted, data.settings.locale]
       : []),
+    ...(sourceSchemaVersion >=
+    MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+      ? [data.settings.moveReactionPlacement]
+      : []),
   ])
 
 const decodeLegacyPlayerData = (
@@ -708,6 +719,7 @@ const decodeCurrentPlayerData = (
     | typeof COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION
     | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
+    | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -753,6 +765,10 @@ const decodeCurrentPlayerData = (
         : []),
       ...(sourceSchemaVersion >= FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
         ? ["locale"]
+        : []),
+      ...(sourceSchemaVersion >=
+      MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+        ? ["moveReactionPlacement"]
         : []),
     ],
     "$.settings",
@@ -871,6 +887,15 @@ const decodeCurrentPlayerData = (
               "$.settings.coachCollection",
             )
           : DEFAULT_COACH_COLLECTION,
+      moveReactionPlacement:
+        sourceSchemaVersion >=
+        MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+          ? requireEnumValue(
+              settings.moveReactionPlacement,
+              MOVE_REACTION_PLACEMENTS,
+              "$.settings.moveReactionPlacement",
+            )
+          : DEFAULT_MOVE_REACTION_PLACEMENT,
       inputBindings:
         sourceSchemaVersion >= INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
           ? (parsePlayerInputBindings(settings.inputBindings) ??
@@ -1028,6 +1053,7 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion === TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===

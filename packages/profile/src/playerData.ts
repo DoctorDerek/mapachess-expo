@@ -35,6 +35,10 @@ import {
   DEFAULT_PLAYER_APPEARANCE,
   type PlayerAppearance,
 } from "./playerAppearance.js"
+import {
+  DEFAULT_MOVE_REACTION_PLACEMENT,
+  type MoveReactionPlacement,
+} from "./presentationPreferences.js"
 import { type PlayerEloRatingId } from "./ratingContext.js"
 import {
   createInitialStoryProgress,
@@ -63,8 +67,9 @@ export const COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION = 13 as const
 export const INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION = 14 as const
 export const FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION = 15 as const
 export const TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION = 16 as const
+export const MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION = 17 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
+  MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -206,6 +211,7 @@ export type MapachessPlayerData = Readonly<
       Readonly<{
         chessAppearance: ChessAppearanceSettings
         coachCollection: CoachCollectionId
+        moveReactionPlacement: MoveReactionPlacement
         inputBindings: PlayerInputBindings
         locale: CandidateLocale | null
       }>
@@ -271,6 +277,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
       challengeSetup: DEFAULT_CHALLENGE_SETUP,
       chessAppearance: DEFAULT_CHESS_APPEARANCE,
       coachCollection: DEFAULT_COACH_COLLECTION,
+      moveReactionPlacement: DEFAULT_MOVE_REACTION_PLACEMENT,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
       locale: null,
     }),

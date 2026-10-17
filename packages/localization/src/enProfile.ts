@@ -2,6 +2,12 @@ import { formatUngroupedInteger } from "./enNumbers.js"
 
 const profile = {
   settingsTitle: "Your game customization",
+  moveReactionPlacement: {
+    label: "Move feedback position",
+    description:
+      "Beside the board on desktop; over the board on smaller screens.",
+    options: { top: "Top", middle: "Midpoint", bottom: "Bottom" },
+  },
   ratedMatches: (count: number): string =>
     `${formatUngroupedInteger(count)} rated ${count === 1 ? "match" : "matches"}`,
   rating: (variant: string, elo: number): string =>
