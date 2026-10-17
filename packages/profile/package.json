@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./presentation-preferences": {
+      "types": "./src/presentationPreferences.ts",
+      "default": "./dist/presentationPreferences.js"
+    },
     "./rating-context": {
       "types": "./src/ratingContext.ts",
       "default": "./dist/ratingContext.js"

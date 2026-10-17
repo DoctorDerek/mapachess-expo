@@ -121,6 +121,7 @@ describe("match composition", () => {
             onReplayRequested={vi.fn()}
             mode="challenge"
             playerElo={100}
+            moveReactionPlacement="middle"
             runtime={runtime}
             navigation={{ open: vi.fn(), back: vi.fn() }}
             overlays={[]}
@@ -174,6 +175,7 @@ describe("match composition", () => {
           onReplayRequested: vi.fn(),
           mode: "challenge",
           playerElo: 500,
+          moveReactionPlacement: "middle",
           runtime,
         }),
       )
@@ -250,6 +252,7 @@ describe("match composition", () => {
           onReplayRequested: vi.fn(),
           mode: "challenge",
           playerElo: 500,
+          moveReactionPlacement: "middle",
           runtime,
         }),
       )
@@ -302,6 +305,7 @@ describe("match composition", () => {
           onReplayRequested={vi.fn()}
           mode="challenge"
           playerElo={100}
+          moveReactionPlacement="middle"
           runtime={runtime}
         />,
       )

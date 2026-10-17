@@ -7,12 +7,17 @@ import {
 } from "../src/durableStore.js"
 import type { MapachessPlayerData } from "../src/playerData.js"
 
+export function withoutMoveReactionPlacement(data: MapachessPlayerData) {
+  const { moveReactionPlacement: _placement, ...settings } = data.settings
+  return { ...data, settings }
+}
+
 export function withoutFirstArrivalPreferences(data: MapachessPlayerData) {
   const {
     introductionCompleted: _completed,
     settings: { locale: _locale, ...settings },
     ...previous
-  } = data
+  } = withoutMoveReactionPlacement(data)
   return {
     ...previous,
     settings,
