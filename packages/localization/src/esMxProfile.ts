@@ -6,7 +6,7 @@ const profile = {
   moveReactionPlacement: {
     label: "Posición de los avisos de jugada",
     description:
-      "A un lado del tablero en pantallas grandes y sobre él en pantallas pequeñas.",
+      "Junto al tablero en pantallas anchas; sobre él en pantallas estrechas.",
     options: { top: "Arriba", middle: "Centro", bottom: "Abajo" },
   },
   ratedMatches: (count: number): string => {

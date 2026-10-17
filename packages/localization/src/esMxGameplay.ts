@@ -18,7 +18,7 @@ const gameplay = {
     preset: (category: string, notation: string): string =>
       `${category} · ${notation}`,
     explanation: (minutes: number, increment: number): string =>
-      `${formatInteger(minutes)} min por bando, más ${formatInteger(increment)} s después de cada jugada. Las pistas no pausan el reloj.`,
+      `${formatInteger(minutes)} ${minutes === 1 ? "minuto" : "minutos"} por jugador. ${increment === 0 ? "No se añade tiempo después de las jugadas." : `Cada jugada añade ${formatInteger(increment)} ${increment === 1 ? "segundo" : "segundos"} al reloj de quien mueve.`} Las pistas no pausan el reloj.`,
     untimedExplanation: "Sin reloj. Tómate tu tiempo para explorar.",
     paused: "Relojes en pausa",
     resume: "Reanudar relojes",
