@@ -70,7 +70,11 @@ export const deriveConclusionPresentationPhase = ({
   conclusion,
   playerColor,
 }: ConclusionPresentationInput): MatchPresentationPhase | null => {
-  if (conclusion.type !== "checkmate" && conclusion.type !== "resignation") {
+  if (
+    conclusion.type !== "checkmate" &&
+    conclusion.type !== "resignation" &&
+    conclusion.type !== "timeout"
+  ) {
     return null
   }
 

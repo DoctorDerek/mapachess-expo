@@ -24,6 +24,7 @@ import createInitialMapachessPlayerData, {
 import validatePresentationPreferences, {
   type PresentationPreferences,
 } from "./presentationPreferences.js"
+import { playerRatingId } from "./ratingContext.js"
 import applyStoryMatchResult from "./storyProgress.js"
 
 export const changeFirstArrivalPreferences = (
@@ -169,7 +170,11 @@ export const resetPlayerElo = (
   Object.freeze({
     ...current,
     lastAcceptedResultReward:
-      current.lastAcceptedResultReward?.contribution?.variant === variant
+      current.lastAcceptedResultReward?.contribution !== undefined &&
+      playerRatingId(
+        current.lastAcceptedResultReward.contribution.variant,
+        current.lastAcceptedResultReward.contribution.timeCategory,
+      ) === variant
         ? Object.freeze({
             ...current.lastAcceptedResultReward,
             ratedElo: null,

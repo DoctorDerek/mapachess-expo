@@ -13,7 +13,18 @@ export function withoutFirstArrivalPreferences(data: MapachessPlayerData) {
     settings: { locale: _locale, ...settings },
     ...previous
   } = data
-  return { ...previous, settings }
+  return {
+    ...previous,
+    settings,
+    ratings: {
+      standard: data.ratings.standard,
+      chess960: data.ratings.chess960,
+    },
+    ratedMatchCounts: {
+      standard: data.ratedMatchCounts.standard,
+      chess960: data.ratedMatchCounts.chess960,
+    },
+  }
 }
 
 export const sha256 = async (canonicalValue: string): Promise<string> =>

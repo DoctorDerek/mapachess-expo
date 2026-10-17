@@ -1,6 +1,11 @@
 import type { ErrorDiagnostic } from "@mapachess/diagnostics/error-diagnostic"
 import type { AutoHintMode } from "./autoHintMode.js"
 import type { BetterHintsResult } from "./betterHints.js"
+import {
+  durableMatchClock,
+  type MatchClock,
+  type MatchClockRecord,
+} from "./matchClock.js"
 import type {
   MatchConclusion,
   RetainedMatchConclusion,
@@ -9,6 +14,7 @@ import type { MatchMoveId } from "./matchMove.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
 export type MatchPersistenceRequest = Readonly<{
+  clock?: MatchClockRecord | null
   retainedConclusion?: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
@@ -54,6 +60,7 @@ export type PendingMatchMutationRoute =
   | "resolve-position"
 
 export type PendingMatchMutation = Readonly<{
+  clock: MatchClock | null
   conclusion: MatchConclusion | null
   hints: BetterHintsResult | null
   moveHintsUsed: boolean
@@ -65,6 +72,7 @@ export type PendingMatchMutation = Readonly<{
 }>
 
 export type CreatePendingMatchMutationInput = Readonly<{
+  clock?: MatchClock | null
   retainedConclusion?: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null
@@ -86,18 +94,21 @@ export const createPendingMatchMutation = (
     input.conclusion === null
       ? "active"
       : input.conclusion.type === "checkmate" ||
-          input.conclusion.type === "resignation"
+          input.conclusion.type === "resignation" ||
+          input.conclusion.type === "timeout"
         ? `${input.conclusion.type}-${input.conclusion.winner}`
         : input.conclusion.type
   const requestId = `${input.matchId}/persistence/${String(input.mutationSequence)}/auto-hints/${input.autoHintMode}/conclusion/${conclusionIdentity}/cursor/${String(input.timeline.cursor)}/fen/${position.fen}`
 
   return Object.freeze({
+    clock: input.clock ?? null,
     conclusion: input.conclusion,
     hints: input.hints,
     moveHintsUsed: input.moveHintsUsed,
     pieceHintsUsed: input.pieceHintsUsed,
     retainedHintStage: input.retainedHintStage ?? null,
     request: Object.freeze({
+      ...(input.clock == null ? {} : { clock: durableMatchClock(input.clock) }),
       autoHintMode: input.autoHintMode,
       conclusion: input.conclusion,
       retainedConclusion: input.retainedConclusion ?? null,

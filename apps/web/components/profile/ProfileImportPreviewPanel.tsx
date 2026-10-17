@@ -1,6 +1,8 @@
 "use client"
 
+import { Fragment } from "react"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import { PLAYER_RATING_CONTEXTS } from "@mapachess/profile/rating-context"
 import { selectStoryCompletion } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
@@ -54,10 +56,17 @@ export default function ProfileImportPreviewPanel({
               ? copy.profile.none
               : copy.profile.included}
           </dd>
-          <dt>{copy.profile.ratingLabel.standard}</dt>
-          <dd className="text-right">{Math.round(data.ratings.standard)}</dd>
-          <dt>{copy.profile.ratingLabel.chess960}</dt>
-          <dd className="text-right">{Math.round(data.ratings.chess960)}</dd>
+          {PLAYER_RATING_CONTEXTS.map(({ id, variant, category }) => (
+            <Fragment key={id}>
+              <dt>
+                {copy.gameplay.clock.rating(
+                  copy.profile.ratingLabel[variant],
+                  copy.gameplay.clock.category[category],
+                )}
+              </dt>
+              <dd className="text-right">{Math.round(data.ratings[id])}</dd>
+            </Fragment>
+          ))}
           <dt>{messages.earlierFourRatings}</dt>
           <dd className="text-right">{messages.preservedInBackup}</dd>
           <dt>{copy.shared.story.standard}</dt>

@@ -15,6 +15,11 @@ import matchMachine, {
 } from "@mapachess/match/match-machine"
 import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchVariant } from "@mapachess/match/match-variant"
+import {
+  timeCategory,
+  UNTIMED,
+  type TimeControl,
+} from "@mapachess/match/time-control"
 import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
@@ -22,6 +27,7 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "@mapachess/profile/profile-match-persistence"
+import { playerRatingId } from "@mapachess/profile/rating-context"
 import {
   canPlayStoryOpponent,
   selectChallengeUnlockedOpponents,
@@ -52,6 +58,7 @@ export type OpenWebMatchSessionInput = Readonly<{
 
 export type OpenFreshWebMatchSessionInput = OpenWebMatchSessionInput &
   Readonly<{
+    timeControl?: TimeControl
     previousSession: WebMatchSession | null
     replacementSession?: WebMatchSession | null
   }> &
@@ -101,6 +108,7 @@ const closeRuntimeAfterFailure = async (
 }
 
 type OpenActorSessionInput = Readonly<{
+  fresh?: boolean
   match: DurableMatchRecord
   profileActor: ProfileActor
   resumedMatch: ResumedWebMatch
@@ -114,6 +122,7 @@ const openActorSession = async ({
   resumedMatch,
   runtime,
   signal,
+  fresh = false,
 }: OpenActorSessionInput): Promise<WebMatchSession> => {
   const persistence = new ProfileMatchPersistenceBridge({
     actor: profileActor,
@@ -136,6 +145,8 @@ const openActorSession = async ({
   try {
     const openedMatchActor = createActor(matchMachine, {
       input: {
+        timeControl: match.timeControl,
+        monotonicClock: { now: () => performance.now() },
         autoHintMode: match.autoHintMode,
         durability: { persistence, type: "durable" },
         hintAnalyst: runtime.hintAnalyst,
@@ -143,6 +154,7 @@ const openActorSession = async ({
         opponent: runtime.opponent,
         playerColor: match.playerColor,
         resumedState: {
+          clock: match.clock ?? null,
           retainedConclusion: match.retainedConclusion ?? null,
           conclusion: match.conclusion,
           moveHintsUsed: match.moveHintsUsed,
@@ -185,20 +197,24 @@ const openActorSession = async ({
     }
 
     return Object.freeze({
+      clockStartsOnArrival: fresh,
       actor: openedMatchActor,
       close,
       evaluationActor: openedEvaluationActor,
       match,
       runtime,
-      setup: createMatchSetupForMode(
-        { mode: match.mode, variant: match.startingPosition.variant },
-        {
-          ...match.startingPosition,
-          playerColor: match.playerColor,
-          opponentId: match.opponentId,
-          difficultyTargetElo: runtime.opponentTargetElo,
-        },
-      ),
+      setup: {
+        ...createMatchSetupForMode(
+          { mode: match.mode, variant: match.startingPosition.variant },
+          {
+            ...match.startingPosition,
+            playerColor: match.playerColor,
+            opponentId: match.opponentId,
+            difficultyTargetElo: runtime.opponentTargetElo,
+          },
+        ),
+        timeControl: match.timeControl,
+      },
     })
   } catch (error) {
     evaluationBinding?.disconnect()
@@ -374,10 +390,19 @@ export async function openFreshWebMatchSession(
     signal,
   })
   const mode = playerColor === undefined ? "story" : "challenge"
+  const timeControl =
+    previousSession?.match.timeControl ?? input.timeControl ?? UNTIMED
   const freshMatch = buildFreshWebMatch({
+    timeControl,
     autoHintMode: playerData.settings.autoHintMode,
     mode,
-    playerEloAtStart: playerData.ratings[runtime.startingPosition.variant],
+    playerEloAtStart:
+      playerData.ratings[
+        playerRatingId(
+          runtime.startingPosition.variant,
+          timeCategory(timeControl),
+        )
+      ],
     runtime,
   })
 
@@ -403,6 +428,7 @@ export async function openFreshWebMatchSession(
   }
 
   const session = await openActorSession({
+    fresh: true,
     match: freshMatch,
     profileActor,
     resumedMatch,

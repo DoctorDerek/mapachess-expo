@@ -1,3 +1,6 @@
+import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
+import { TIME_CATEGORIES, type TimeCategory } from "./timeControl.js"
+
 export type MatchNavigationOverlay =
   | "match-menu"
   | "match-details"
@@ -5,12 +8,13 @@ export type MatchNavigationOverlay =
   | "classifications"
   | "about-elo"
   | "credits"
-  | "reset-standard"
-  | "reset-chess960"
+  | `reset-${MatchVariant}`
+  | `reset-${MatchVariant}-${Exclude<TimeCategory, "untimed">}`
   | "setup-opponent"
   | "setup-player"
   | "setup-difficulty"
   | "setup-hints"
+  | "setup-time-control"
   | "rewards"
   | "dressing-room"
   | "profile-card"
@@ -36,12 +40,18 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "classifications",
   "about-elo",
   "credits",
-  "reset-standard",
-  "reset-chess960",
+  ...MATCH_VARIANTS.flatMap((variant) =>
+    TIME_CATEGORIES.map((category): MatchNavigationOverlay =>
+      category === "untimed"
+        ? `reset-${variant}`
+        : `reset-${variant}-${category}`,
+    ),
+  ),
   "setup-opponent",
   "setup-player",
   "setup-difficulty",
   "setup-hints",
+  "setup-time-control",
   "rewards",
   "dressing-room",
   "profile-card",
@@ -96,8 +106,7 @@ export function eligibleMatchNavigationOverlays(
       ((overlay === "classifications" ||
         overlay === "credits" ||
         overlay === "about-elo" ||
-        overlay === "reset-standard" ||
-        overlay === "reset-chess960") &&
+        overlay.startsWith("reset-")) &&
         result.includes("settings")) ||
       (overlay.startsWith("setup-") && destination.screen === "setup") ||
       (overlay === "match-menu" && destination.screen === "match") ||

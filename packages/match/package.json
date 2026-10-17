@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./time-control": {
+      "types": "./src/timeControl.ts",
+      "default": "./dist/timeControl.js"
+    },
+    "./match-clock": {
+      "types": "./src/matchClock.ts",
+      "default": "./dist/matchClock.js"
+    },
     "./player-input": {
       "types": "./src/playerInput.ts",
       "default": "./dist/playerInput.js"

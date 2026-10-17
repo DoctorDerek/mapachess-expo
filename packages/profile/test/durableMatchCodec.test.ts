@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
-  DURABLE_MATCH_RECORD_VERSION,
   LEGACY_DURABLE_MATCH_RECORD_VERSION_2,
+  LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
 } from "@mapachess/match/durable-match-record"
 import createInitialMapachessPlayerData from "../src/playerData.js"
 import { decodeMapachessPlayerData } from "../src/playerDataCodec.js"
@@ -41,7 +41,7 @@ const activeMatch = Object.freeze({
   ...activeMatchFields,
   autoHintMode: "auto-move-hints",
   conclusion: null,
-  recordVersion: DURABLE_MATCH_RECORD_VERSION,
+  recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
 })
 
 const playerDataWithMatch = (match: unknown, processed = false): unknown => ({
@@ -69,7 +69,7 @@ describe("durable active-match decoding", () => {
           currentFen: AFTER_E4_FEN,
           cursor: 1,
           moveIds: ["e2e4", "e7e5"],
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+          recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
         },
       },
       ok: true,
@@ -90,7 +90,7 @@ describe("durable active-match decoding", () => {
         activeMatch: {
           autoHintMode: "auto-move-hints",
           conclusion: null,
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+          recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
         },
       },
       ok: true,
@@ -115,7 +115,7 @@ describe("durable active-match decoding", () => {
       data: {
         activeMatch: {
           conclusion: { type: "checkmate", winner: "black" },
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+          recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
         },
       },
       ok: true,
@@ -137,7 +137,7 @@ describe("durable active-match decoding", () => {
       data: {
         activeMatch: {
           conclusion: { type: "draw-agreement" },
-          recordVersion: DURABLE_MATCH_RECORD_VERSION,
+          recordVersion: LEGACY_DURABLE_MATCH_RECORD_VERSION_3,
         },
       },
       ok: true,

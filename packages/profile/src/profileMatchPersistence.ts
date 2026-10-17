@@ -176,6 +176,7 @@ const candidateFromRequest = (
           ),
         }),
     autoHintMode: request.autoHintMode,
+    ...(request.clock === undefined ? {} : { clock: request.clock }),
     conclusion: request.conclusion,
     retainedConclusion: request.retainedConclusion ?? null,
     currentFen: request.currentFen,
@@ -203,7 +204,9 @@ const conclusionsEqual = (
   right: DurableMatchRecord["conclusion"],
 ): boolean =>
   left?.type === right?.type &&
-  (left?.type !== "checkmate" && left?.type !== "resignation"
+  (left?.type !== "checkmate" &&
+  left?.type !== "resignation" &&
+  left?.type !== "timeout"
     ? true
     : right?.type === left.type && right.winner === left.winner)
 
@@ -223,7 +226,9 @@ const requireValidConclusionMutation = (
       (candidate.cursor < accepted.cursor ||
         (candidate.cursor === accepted.cursor &&
           (accepted.conclusion.type === "resignation" ||
-            accepted.conclusion.type === "draw-agreement") &&
+            accepted.conclusion.type === "draw-agreement" ||
+            accepted.conclusion.type === "timeout" ||
+            accepted.conclusion.type === "timeout-insufficient-material") &&
           conclusionsEqual(
             accepted.conclusion,
             candidate.retainedConclusion?.conclusion ?? null,

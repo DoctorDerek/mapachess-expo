@@ -1,10 +1,17 @@
 import loadCatalog, {
   type MapachessCatalog,
 } from "@mapachess/localization/catalog"
-import type { MatchColor, MatchPositionStatus } from "./matchPosition.js"
+import {
+  hasInsufficientMatingMaterial,
+  type MatchColor,
+  type MatchPosition,
+  type MatchPositionStatus,
+} from "./matchPosition.js"
 import { currentMatchPosition, type MatchTimeline } from "./matchTimeline.js"
 
 export type MatchConclusion =
+  | Readonly<{ type: "timeout"; winner: MatchColor }>
+  | Readonly<{ type: "timeout-insufficient-material" }>
   | Readonly<{
       type: "checkmate"
       winner: MatchColor
@@ -25,16 +32,25 @@ export type MatchDrawOfferDecision = Readonly<{
 export type RetainedMatchConclusion = Readonly<{
   conclusion: Extract<
     MatchConclusion,
-    { type: "resignation" | "draw-agreement" }
+    {
+      type:
+        | "resignation"
+        | "draw-agreement"
+        | "timeout"
+        | "timeout-insufficient-material"
+    }
   >
   cursor: number
 }>
 
-export const retainManualConclusion = (
+export const retainExplicitConclusion = (
   conclusion: MatchConclusion | null,
   cursor: number,
 ): RetainedMatchConclusion | null =>
-  conclusion?.type === "resignation" || conclusion?.type === "draw-agreement"
+  conclusion?.type === "resignation" ||
+  conclusion?.type === "draw-agreement" ||
+  conclusion?.type === "timeout" ||
+  conclusion?.type === "timeout-insufficient-material"
     ? Object.freeze({ conclusion, cursor })
     : null
 
@@ -46,6 +62,12 @@ export const matchConclusionText = (
     .conclusion,
 ): string => {
   switch (conclusion.type) {
+    case "timeout":
+      return conclusion.winner === playerColor
+        ? copy.opponentTimedOut(opponentName)
+        : copy.playerTimedOut
+    case "timeout-insufficient-material":
+      return copy[conclusion.type]
     case "checkmate":
       return conclusion.winner === playerColor
         ? copy.playerWon
@@ -65,6 +87,15 @@ export const matchConclusionText = (
 
 const oppositeColor = (color: MatchColor): MatchColor =>
   color === "white" ? "black" : "white"
+
+export const createTimeoutConclusion = (
+  position: MatchPosition,
+): MatchConclusion => {
+  const winner = oppositeColor(position.turn)
+  return hasInsufficientMatingMaterial(position, winner)
+    ? Object.freeze({ type: "timeout-insufficient-material" })
+    : Object.freeze({ type: "timeout", winner })
+}
 
 export const deriveTerminalMatchConclusion = (
   status: MatchPositionStatus,
@@ -106,9 +137,16 @@ export const conclusionMatchesRetainedBranch = (
       : conclusion?.type === terminalConclusion.type
   }
 
-  return (
+  if (
     conclusion === null ||
     conclusion.type === "draw-agreement" ||
     conclusion.type === "resignation"
+  )
+    return true
+  const timeout = createTimeoutConclusion(currentMatchPosition(timeline))
+  return (
+    conclusion.type === timeout.type &&
+    (timeout.type !== "timeout" ||
+      (conclusion.type === "timeout" && conclusion.winner === timeout.winner))
   )
 }

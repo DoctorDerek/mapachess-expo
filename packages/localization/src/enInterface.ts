@@ -216,7 +216,7 @@ const interfaceCopy = {
       "The download could not be created. Your preserved save data is unchanged. Try again or choose another download location in your browser.",
     resetAllLocalPlayerData: "Reset all local player data?",
     thisReplacesAllLocalPlayerDataIncluding:
-      "This replaces all local player data, including the active match, Story and Challenge records, both current Elo ratings and their rated-match counts, historical rating values, and settings. It does not affect backup files you already exported.",
+      "This replaces all local player data, including the active match, Story and Challenge records, all current Elo ratings and their rated-match counts, historical rating values, and settings. It does not affect backup files you already exported.",
     cancel: "Cancel",
     exportUnreadableData: "Export Unreadable Data",
     resetAllLocalPlayerData2: "Reset All Local Player Data",

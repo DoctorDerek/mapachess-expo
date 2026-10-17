@@ -224,8 +224,16 @@ describe("one reversible active result", () => {
     }
     const initial = {
       ...createInitialMapachessPlayerData(),
-      ratings: { standard: 500, chess960: 100 },
-      ratedMatchCounts: { standard: 9, chess960: 0 },
+      ratings: {
+        ...createInitialMapachessPlayerData().ratings,
+        standard: 500,
+        chess960: 100,
+      },
+      ratedMatchCounts: {
+        ...createInitialMapachessPlayerData().ratedMatchCounts,
+        standard: 9,
+        chess960: 0,
+      },
     }
     const accepted = replaceActiveMatch(
       replaceActiveMatch(initial, opened(win)),

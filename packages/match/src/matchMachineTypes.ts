@@ -6,6 +6,11 @@ import type {
   BetterHintsResult,
 } from "./betterHints.js"
 import type {
+  MatchClock,
+  MatchClockRecord,
+  MonotonicClock,
+} from "./matchClock.js"
+import type {
   MatchConclusion,
   MatchDrawOfferDecision,
   RetainedMatchConclusion,
@@ -24,6 +29,7 @@ import type {
 } from "./matchPersistence.js"
 import type { MatchColor, MatchPosition } from "./matchPosition.js"
 import type { MatchTimeline } from "./matchTimeline.js"
+import type { TimeControl } from "./timeControl.js"
 
 export type MatchOpponentRequest = Readonly<{
   acceptedMoves: readonly AppliedMatchMove[]
@@ -48,6 +54,9 @@ export type MatchOpponentFailure =
     }>
 
 export type MatchMachineEvent =
+  | Readonly<{ type: "MATCH.CLOCK_PAUSE_REQUESTED" }>
+  | Readonly<{ type: "MATCH.CLOCK_RESUME_REQUESTED" }>
+  | Readonly<{ type: "MATCH.CLOCK_EXPIRED" }>
   | Readonly<{
       autoHintMode: AutoHintMode
       type: "MATCH.AUTO_HINT_MODE_CHANGED"
@@ -69,6 +78,8 @@ export type MatchMachineEvent =
   | Readonly<{ type: "MATCH.REDO_REQUESTED" }>
 
 type MatchMachineSharedInput = Readonly<{
+  timeControl?: TimeControl
+  monotonicClock?: MonotonicClock
   autoHintMode: AutoHintMode
   hintAnalyst?: BetterHintsAnalyst
   matchId: string
@@ -77,6 +88,7 @@ type MatchMachineSharedInput = Readonly<{
 }>
 
 export type ResumedMatchState = Readonly<{
+  clock?: MatchClockRecord | null
   retainedConclusion?: RetainedMatchConclusion | null
   conclusion: MatchConclusion | null
   moveHintsUsed: boolean
@@ -97,6 +109,9 @@ export type MatchMachineInput =
       }>)
 
 export type MatchMachineContext = Readonly<{
+  clock: MatchClock | null
+  monotonicClock: MonotonicClock
+  timeControl: TimeControl
   retainedConclusion: RetainedMatchConclusion | null
   autoHintMode: AutoHintMode
   conclusion: MatchConclusion | null

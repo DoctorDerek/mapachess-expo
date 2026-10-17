@@ -110,8 +110,20 @@ export default function ProfileCardPreview({
         {(
           [
             ["level", copy.profile.level],
-            ["standard", copy.profile.ratingLabel.standard],
-            ["chess960", copy.profile.ratingLabel.chess960],
+            [
+              "standard",
+              copy.gameplay.clock.rating(
+                copy.profile.ratingLabel.standard,
+                copy.gameplay.clock.category.untimed,
+              ),
+            ],
+            [
+              "chess960",
+              copy.gameplay.clock.rating(
+                copy.profile.ratingLabel.chess960,
+                copy.gameplay.clock.category.untimed,
+              ),
+            ],
             ["animal", copy.profile.animalCompanion],
           ] as const
         ).map(([key, label]) => (

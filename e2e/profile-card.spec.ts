@@ -186,6 +186,9 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
     revision: before.revision,
   }).toEqual(before)
   await page.getByRole("button", { name: "Back", exact: true }).click()
+  await expect(
+    page.getByRole("region", { name: "Customize profile card", exact: true }),
+  ).toHaveCount(0)
   await page.reload()
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await page.getByRole("button", { name: "Animal", exact: true }).click()

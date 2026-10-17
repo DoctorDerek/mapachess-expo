@@ -6,6 +6,30 @@ import {
 } from "./esMxNumbers.js"
 
 const gameplay = {
+  clock: {
+    timeControl: "Control de tiempo",
+    change: "Cambiar control de tiempo",
+    category: {
+      untimed: "Sin reloj",
+      bullet: "Bala",
+      blitz: "Relámpago",
+      rapid: "Rápido",
+    },
+    preset: (category: string, notation: string): string =>
+      `${category} · ${notation}`,
+    explanation: (minutes: number, increment: number): string =>
+      `${formatInteger(minutes)} min por bando, más ${formatInteger(increment)} s después de cada jugada. Las pistas no pausan el reloj.`,
+    untimedExplanation: "Sin reloj. Tómate tu tiempo para explorar.",
+    paused: "Relojes en pausa",
+    resume: "Reanudar relojes",
+    running: "Reloj en marcha",
+    low: "Poco tiempo",
+    label: (color: string): string => `Reloj de ${color}`,
+    rating: (variant: string, category: string): string =>
+      `${variant} · ${category}`,
+    display: (minutes: number, seconds: number): string =>
+      `${String(minutes)}:${String(seconds).padStart(2, "0")}`,
+  },
   integer: formatInteger,
   elo: formatUngroupedInteger,
   storyCompletion: formatStoryPercentage,
@@ -21,6 +45,11 @@ const gameplay = {
   challengeList: (opponents: readonly string[]): string =>
     `${opponents.length === 1 ? "Desbloqueado" : "Desbloqueados"} para ambos modos Desafío: ${opponents.join(", ")}`,
   conclusion: {
+    playerTimedOut: "Se te acabó el tiempo — perdiste.",
+    opponentTimedOut: (opponent: string): string =>
+      `A ${opponent} se le acabó el tiempo — ganaste.`,
+    "timeout-insufficient-material":
+      "Se acabó el tiempo. Tablas: el otro bando no tiene material suficiente para dar mate.",
     playerWon: "¡Ganaste!",
     opponentWon: (opponent: string): string => `${opponent} ganó.`,
     opponentResigned: (opponent: string): string =>

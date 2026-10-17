@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { CoachCollectionId } from "@mapachess/match-presentation/coach-portrait"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
@@ -8,17 +9,19 @@ import type {
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
 import type { PlayerInputBindings } from "@mapachess/match/player-input"
+import { type TimeCategory } from "@mapachess/match/time-control"
 import type {
   ChessAppearanceChange,
   ChessAppearanceSettings,
 } from "@mapachess/profile/chess-appearance-settings"
 import {
-  PLAYER_ELO_RATING_IDS,
   type PlayerEloRatingId,
   type PlayerEloRatings,
   type RatedMatchCounts,
 } from "@mapachess/profile/player-data"
 import type { ProfileImportIssue } from "@mapachess/profile/profile-machine"
+import { PLAYER_RATING_CONTEXTS } from "@mapachess/profile/rating-context"
+import { TimeCategoryChoices } from "../gameplay/TimeControlChoices"
 import InputBindingSettings from "../input/InputBindingSettings"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -86,17 +89,18 @@ export default function ProfileSettingsPanel({
   const messages = copy.interface.profileSettingsPanel
 
   const busy = activityMessage !== null
-  const resetOverlay = overlays.findLast(
-    (overlay) => overlay === "reset-standard" || overlay === "reset-chess960",
+  const [ratingCategory, setRatingCategory] = useState<TimeCategory>("untimed")
+  const resetContext = PLAYER_RATING_CONTEXTS.find(({ id }) =>
+    overlays.includes(`reset-${id}`),
   )
-  const resetVariant =
-    resetOverlay === "reset-standard"
-      ? "standard"
-      : resetOverlay === "reset-chess960"
-        ? "chess960"
-        : null
+  const resetVariant = resetContext?.id ?? null
   const resetLabel =
-    resetVariant === null ? "" : copy.setup.variants[resetVariant]
+    resetContext === undefined
+      ? ""
+      : copy.gameplay.clock.rating(
+          copy.setup.variants[resetContext.variant],
+          copy.gameplay.clock.category[resetContext.category],
+        )
 
   return (
     <div
@@ -163,9 +167,21 @@ export default function ProfileSettingsPanel({
         >
           {messages.yourEloRatings}
         </h2>
+        <div className="mt-3">
+          <TimeCategoryChoices
+            category={ratingCategory}
+            disabled={resetContext !== undefined || busy}
+            onChange={setRatingCategory}
+          />
+        </div>
         <div className="mt-4 grid gap-3">
-          {PLAYER_ELO_RATING_IDS.map((variant) => {
-            const label = copy.setup.variants[variant]
+          {PLAYER_RATING_CONTEXTS.filter(
+            ({ category }) => category === ratingCategory,
+          ).map(({ id: variant, variant: chessVariant, category }) => {
+            const label = copy.gameplay.clock.rating(
+              copy.setup.variants[chessVariant],
+              copy.gameplay.clock.category[category],
+            )
             return (
               <div
                 className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"

@@ -1,4 +1,5 @@
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import { timeCategory } from "@mapachess/match/time-control"
 import { adjustChallengeResultCount } from "./challengeHistory.js"
 import {
   completedMatchXpAward,
@@ -11,6 +12,7 @@ import {
   type MapachessPlayerData,
 } from "./playerData.js"
 import { playerResultScore, updatedPlayerElo } from "./playerElo.js"
+import { playerRatingId } from "./ratingContext.js"
 
 type ResultBalances = Pick<
   MapachessPlayerData,
@@ -30,12 +32,16 @@ const retractResult = (
   const contribution = reward.contribution
   if (contribution === undefined || !contribution.applied) return current
   const rated = contribution.eloState === "active" ? reward.ratedElo : null
+  const ratingId = playerRatingId(
+    contribution.variant,
+    contribution.timeCategory,
+  )
   if (
     current.totalXp !== reward.totalXpBefore + reward.awardedXp ||
     (rated !== null &&
       (contribution.ratedMatchCountBefore === null ||
-        current.ratings[rated.variant] !== rated.after ||
-        current.ratedMatchCounts[rated.variant] !==
+        current.ratings[ratingId] !== rated.after ||
+        current.ratedMatchCounts[ratingId] !==
           contribution.ratedMatchCountBefore + 1))
   )
     throw new Error(
@@ -47,13 +53,13 @@ const retractResult = (
     ratings:
       rated === null
         ? current.ratings
-        : Object.freeze({ ...current.ratings, [rated.variant]: rated.before }),
+        : Object.freeze({ ...current.ratings, [ratingId]: rated.before }),
     ratedMatchCounts:
       rated === null
         ? current.ratedMatchCounts
         : Object.freeze({
             ...current.ratedMatchCounts,
-            [rated.variant]: contribution.ratedMatchCountBefore,
+            [ratingId]: contribution.ratedMatchCountBefore!,
           }),
     challengeHistory:
       contribution.challengeOutcome === null
@@ -96,6 +102,8 @@ export default function accountActiveResult(
     return balances
 
   const variant = match.startingPosition.variant
+  const category = timeCategory(match.timeControl)
+  const ratingId = playerRatingId(variant, category)
   const eloState =
     sameReceipt?.contribution?.eloState === "superseded"
       ? "superseded"
@@ -107,10 +115,11 @@ export default function accountActiveResult(
     current.activeMatch.ratedOpponentElo === match.ratedOpponentElo
       ? Object.freeze({
           variant,
-          before: balances.ratings[variant],
+          ...(category === "untimed" ? {} : { timeCategory: category }),
+          before: balances.ratings[ratingId],
           after: updatedPlayerElo(
-            balances.ratings[variant],
-            balances.ratedMatchCounts[variant],
+            balances.ratings[ratingId],
+            balances.ratedMatchCounts[ratingId],
             match.ratedOpponentElo,
             playerResultScore(match.conclusion, match.playerColor),
           ),
@@ -139,10 +148,11 @@ export default function accountActiveResult(
       applied: true,
       eloState,
       variant,
+      ...(category === "untimed" ? {} : { timeCategory: category }),
       opponentId: match.opponentId,
       challengeOutcome,
       ratedMatchCountBefore:
-        rated === null ? null : balances.ratedMatchCounts[variant],
+        rated === null ? null : balances.ratedMatchCounts[ratingId],
       ending: Object.freeze({
         conclusion: match.conclusion,
         cursor: match.cursor,
@@ -158,13 +168,13 @@ export default function accountActiveResult(
     ratings:
       rated === null
         ? balances.ratings
-        : Object.freeze({ ...balances.ratings, [variant]: rated.after }),
+        : Object.freeze({ ...balances.ratings, [ratingId]: rated.after }),
     ratedMatchCounts:
       rated === null
         ? balances.ratedMatchCounts
         : Object.freeze({
             ...balances.ratedMatchCounts,
-            [variant]: balances.ratedMatchCounts[variant] + 1,
+            [ratingId]: balances.ratedMatchCounts[ratingId] + 1,
           }),
     challengeHistory:
       challengeOutcome === null

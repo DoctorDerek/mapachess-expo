@@ -30,6 +30,33 @@ const beforeCaptures = advance(initial, ["e2e4", "d7d5"])
 const captures = advance(beforeCaptures, ["e4d5", "d8d5"])
 
 describe("accepted animal-performance observation", () => {
+  it("presents timeout victory without inventing a finishing attack", () => {
+    for (const winner of ["white", "black"] as const) {
+      expect(
+        deriveConcludingMatchPresentationPhases(
+          { timeline: captures, conclusion: { type: "timeout", winner } },
+          "white",
+        ),
+      ).toEqual([
+        {
+          kind: "conclusion",
+          terminalDefeat: false,
+          player: { family: winner === "white" ? "victory" : "defeat" },
+          opponent: { family: winner === "white" ? "defeat" : "victory" },
+        },
+      ])
+    }
+    expect(
+      deriveConcludingMatchPresentationPhases(
+        {
+          timeline: captures,
+          conclusion: { type: "timeout-insufficient-material" },
+        },
+        "white",
+      ),
+    ).toEqual([])
+  })
+
   it("replays only the finishing capture/check and actual conclusion", () => {
     const mate = advance(initial, [
       "e2e4",

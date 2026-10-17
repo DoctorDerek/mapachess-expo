@@ -12,8 +12,14 @@ import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { type MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
+import {
+  timeCategory,
+  timeControlNotation,
+  UNTIMED,
+} from "@mapachess/match/time-control"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import { playerRatingId } from "@mapachess/profile/rating-context"
 import {
   canPlayStoryOpponent,
   selectChallengeUnlockedOpponents,
@@ -35,8 +41,10 @@ import Chess960PositionChoice from "./Chess960PositionChoice"
 import MatchColorChoices from "./MatchColorChoices"
 import MatchSetupPicker from "./MatchSetupPicker"
 import StoryLadderProgress from "./StoryLadderProgress"
+import TimeControlChoices from "./TimeControlChoices"
 
 export type WebMatchSetupProps = Readonly<{
+  ratings?: MapachessPlayerData["ratings"]
   playerAppearance?: PlayerAppearance
   onPlayerAnimalChanged?: (animal: StockfishOpponentId) => void
   autoHintMode: AutoHintMode
@@ -54,7 +62,8 @@ export type WebMatchSetupProps = Readonly<{
   onEditorClosed: () => void
 }>
 
-type SetupEditor = "opponent" | "difficulty" | "hints" | "player"
+type SetupEditor =
+  "opponent" | "difficulty" | "hints" | "player" | "time-control"
 
 function MatchSetupChoice({
   label,
@@ -123,10 +132,14 @@ export default function WebMatchSetup({
   onEditorClosed,
   playerAppearance,
   onPlayerAnimalChanged,
+  ratings,
 }: WebMatchSetupProps) {
   const catalog = useMapachessCopy()
   const animalCopy = catalog.animals
   const copy = catalog.setup
+  const clockCopy = catalog.gameplay.clock
+  const [timeControl, setTimeControl] = useState(setup.timeControl ?? UNTIMED)
+  const category = timeCategory(timeControl)
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
   const variant =
     setup.mode === "story" ? setup.variant : setup.challengeSetup.variant
@@ -184,7 +197,7 @@ export default function WebMatchSetup({
     event.preventDefault()
     if (disabled || opening || editing !== null || !selectionAvailable) return
     if (setup.mode === "story") {
-      onStart({ ...setup, opponentId: selectedOpponentId })
+      onStart({ ...setup, timeControl, opponentId: selectedOpponentId })
       return
     }
     const formData = new FormData(event.currentTarget)
@@ -212,6 +225,7 @@ export default function WebMatchSetup({
     }
     setInvalidSetup(false)
     onStart({
+      timeControl,
       mode: "challenge",
       challengeSetup: parsed.setup,
       ...(variant === "chess960" && displayedPosition.ok
@@ -325,6 +339,33 @@ export default function WebMatchSetup({
             disabled={disabled || opening}
             onChange={(event) => openEditor("hints", event.currentTarget)}
           />
+          <MatchSetupChoice
+            label={clockCopy.timeControl}
+            value={
+              timeControl.type === "untimed"
+                ? clockCopy.category.untimed
+                : clockCopy.preset(
+                    clockCopy.category[category],
+                    timeControlNotation(timeControl),
+                  )
+            }
+            actionLabel={clockCopy.change}
+            disabled={disabled || opening}
+            onChange={(event) =>
+              openEditor("time-control", event.currentTarget)
+            }
+          />
+          {ratings === undefined ? null : (
+            <p className="font-bold">
+              {catalog.profile.rating(
+                clockCopy.rating(
+                  copy.variants[variant],
+                  clockCopy.category[category],
+                ),
+                ratings[playerRatingId(variant, category)],
+              )}
+            </p>
+          )}
         </div>
 
         {!selectionAvailable ? (
@@ -337,10 +378,9 @@ export default function WebMatchSetup({
             {copy.invalidSetup}
           </MapachessNotice>
         ) : null}
-        <p className="text-mapachito-white text-sm">
-          {copy.untimed}
-          {challenge === null ? ` · ${copy.randomColor}` : null}
-        </p>
+        {challenge === null ? (
+          <p className="text-mapachito-white text-sm">{copy.randomColor}</p>
+        ) : null}
         <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <MapachessButton
             aria-busy={opening}
@@ -355,15 +395,18 @@ export default function WebMatchSetup({
 
         {editing === null ? null : (
           <MatchSetupPicker
+            contentSized={editing === "time-control"}
             onDone={onEditorClosed}
             title={
               editing === "player"
                 ? copy.color
-                : editing === "hints"
-                  ? copy.betterHints
-                  : editing === "difficulty"
-                    ? copy.chooseDifficulty
-                    : copy.chooseOpponent
+                : editing === "time-control"
+                  ? clockCopy.timeControl
+                  : editing === "hints"
+                    ? copy.betterHints
+                    : editing === "difficulty"
+                      ? copy.chooseDifficulty
+                      : copy.chooseOpponent
             }
           >
             {editing === "player" &&
@@ -378,6 +421,22 @@ export default function WebMatchSetup({
                   selectedId={playerAppearance.animal}
                   storyProgress={storyProgress}
                 />
+              </div>
+            ) : editing === "time-control" ? (
+              <div className="grid gap-3">
+                <TimeControlChoices
+                  control={timeControl}
+                  disabled={disabled || opening}
+                  onChange={setTimeControl}
+                />
+                <p>
+                  {timeControl.type === "untimed"
+                    ? clockCopy.untimedExplanation
+                    : clockCopy.explanation(
+                        timeControl.baseSeconds / 60,
+                        timeControl.incrementSeconds,
+                      )}
+                </p>
               </div>
             ) : editing === "hints" ? (
               <AutoHintModeChoices

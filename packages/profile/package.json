@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./rating-context": {
+      "types": "./src/ratingContext.ts",
+      "default": "./dist/ratingContext.js"
+    },
     "./first-arrival": {
       "types": "./src/firstArrival.ts",
       "default": "./dist/firstArrival.js"

@@ -1,4 +1,6 @@
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
+import { MATCH_VARIANTS } from "@mapachess/match/match-variant"
+import { TIME_CATEGORIES } from "@mapachess/match/time-control"
 import {
   failData,
   requireBoolean,
@@ -9,10 +11,7 @@ import {
   requireString,
 } from "./decodePrimitives.js"
 import { decodeConclusion, decodeMoveIds } from "./durableMatchCodec.js"
-import {
-  PLAYER_ELO_RATING_IDS,
-  type AcceptedMatchReward,
-} from "./playerData.js"
+import { type AcceptedMatchReward } from "./playerData.js"
 
 export default function decodeResultContribution(
   received: unknown,
@@ -29,6 +28,7 @@ export default function decodeResultContribution(
       "challengeOutcome",
       "ratedMatchCountBefore",
       "eloState",
+      ...(object.timeCategory === undefined ? [] : ["timeCategory"]),
     ],
     path,
   )
@@ -47,6 +47,15 @@ export default function decodeResultContribution(
   const moveIds = decodeMoveIds(ending.moveIds, `${path}.ending.moveIds`)
   if (cursor !== moveIds.length) return failData(`${path}.ending.cursor`)
   return Object.freeze({
+    ...(object.timeCategory === undefined
+      ? {}
+      : {
+          timeCategory: requireEnumValue(
+            object.timeCategory,
+            TIME_CATEGORIES,
+            `${path}.timeCategory`,
+          ),
+        }),
     applied: requireBoolean(object.applied, `${path}.applied`),
     ending: Object.freeze({
       conclusion,
@@ -60,7 +69,7 @@ export default function decodeResultContribution(
     }),
     variant: requireEnumValue(
       object.variant,
-      PLAYER_ELO_RATING_IDS,
+      MATCH_VARIANTS,
       `${path}.variant`,
     ),
     opponentId: requireEnumValue(

@@ -34,6 +34,10 @@ import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
+  timeCategory,
+  timeControlNotation,
+} from "@mapachess/match/time-control"
+import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
 } from "@mapachess/profile/player-data"
@@ -58,6 +62,7 @@ import MatchIdentity from "./MatchIdentity"
 import MatchOutcome from "./MatchOutcome"
 import MatchRecovery from "./MatchRecovery"
 import MoveReactionFeedback from "./MoveReactionFeedback"
+import ParticipantClock from "./ParticipantClock"
 import PositionEvaluationGutter from "./PositionEvaluationGutter"
 
 export type WebMatchProps = Readonly<{
@@ -266,6 +271,24 @@ export default function WebMatch({
         <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
           <div className="grid min-w-0 gap-2 [grid-area:playing] xl:[grid-area:auto]">
             <MatchIdentity
+              playerClock={
+                snapshot.context.clock === null ? null : (
+                  <ParticipantClock
+                    clock={snapshot.context.clock}
+                    color={runtime.playerColor}
+                    monotonicClock={snapshot.context.monotonicClock}
+                  />
+                )
+              }
+              opponentClock={
+                snapshot.context.clock === null ? null : (
+                  <ParticipantClock
+                    clock={snapshot.context.clock}
+                    color={runtime.playerColor === "white" ? "black" : "white"}
+                    monotonicClock={snapshot.context.monotonicClock}
+                  />
+                )
+              }
               headingRef={heading}
               playerColor={runtime.playerColor}
               playerElo={playerElo}
@@ -312,6 +335,16 @@ export default function WebMatch({
             aria-label={messages.coreMatchActions}
             className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
           >
+            {snapshot.matches("paused") ? (
+              <MapachessButton
+                onClick={() =>
+                  actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+                }
+              >
+                <span aria-hidden="true">▶ </span>
+                {copy.gameplay.clock.resume}
+              </MapachessButton>
+            ) : null}
             <MatchCommands
               onBoardFocusRequested={toggleBoardFocus}
               opponentName={animalCopy.opponent(opponent.id)}
@@ -379,7 +412,18 @@ export default function WebMatch({
                         <dt>{messages.mode}</dt>
                         <dd>{modeLabel}</dd>
                         <dt>{messages.clock}</dt>
-                        <dd>{messages.untimed}</dd>
+                        <dd>
+                          {snapshot.context.timeControl.type === "untimed"
+                            ? copy.gameplay.clock.category.untimed
+                            : copy.gameplay.clock.preset(
+                                copy.gameplay.clock.category[
+                                  timeCategory(snapshot.context.timeControl)
+                                ],
+                                timeControlNotation(
+                                  snapshot.context.timeControl,
+                                ),
+                              )}
+                        </dd>
                         <dt>{messages.privacy}</dt>
                         <dd>{messages.localAccountless}</dd>
                         <dt>{messages.engine}</dt>
