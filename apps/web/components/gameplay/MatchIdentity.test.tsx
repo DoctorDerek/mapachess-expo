@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
+import { UNTIMED } from "@mapachess/match/time-control"
 import MatchIdentity from "./MatchIdentity"
 
 describe("compact match identity", () => {
@@ -13,6 +14,7 @@ describe("compact match identity", () => {
     ({ playerColor, playerElo, expectedElo }) => {
       const markup = renderToStaticMarkup(
         <MatchIdentity
+          timeControl={UNTIMED}
           headingRef={null}
           playerColor={playerColor}
           playerElo={playerElo}
@@ -32,6 +34,7 @@ describe("compact match identity", () => {
     (playerColor) => {
       const markup = renderToStaticMarkup(
         <MatchIdentity
+          timeControl={UNTIMED}
           headingRef={null}
           playerColor={playerColor}
           playerElo={100}

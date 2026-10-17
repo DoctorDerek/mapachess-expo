@@ -17,7 +17,7 @@ const gameplay = {
     preset: (category: string, notation: string): string =>
       `${category} · ${notation}`,
     explanation: (minutes: number, increment: number): string =>
-      `${formatInteger(minutes)} min per side, plus ${formatInteger(increment)} sec after each move. Hints do not pause the clock.`,
+      `${formatInteger(minutes)} ${minutes === 1 ? "minute" : "minutes"} per player. ${increment === 0 ? "No time is added after moves." : `Each move adds ${formatInteger(increment)} ${increment === 1 ? "second" : "seconds"} to that player’s clock.`} Hints do not pause the clock.`,
     untimedExplanation: "No clock. Take your time and explore.",
     paused: "Clocks paused",
     resume: "Resume clocks",

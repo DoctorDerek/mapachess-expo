@@ -393,7 +393,10 @@ test("retains a pending promotion through appearance changes and uses the select
       moveFeedback: [],
     },
   })
-  const resume = page.getByRole("button", { name: "Resume match", exact: true })
+  const resume = page.getByRole("button", {
+    name: "Resume match Untimed",
+    exact: true,
+  })
   if (await resume.isVisible()) await resume.click()
   await page.locator('[data-square="b7"]').click()
   await page.locator('[data-square="a8"]').click()

@@ -39,7 +39,7 @@ export default function ArtCredits({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-mapachito-violet inline-flex min-h-12 items-center rounded underline underline-offset-4 focus-visible:outline-2"
+                  className="text-mapachito-violet inline-block min-h-12 max-w-full min-w-0 content-center rounded wrap-anywhere underline underline-offset-4 focus-visible:outline-2"
                 >
                   {label}
                   {url === credit.licenseUrl ? ` · ${credit.license}` : ""}
@@ -56,7 +56,7 @@ export default function ArtCredits({
                   href={credit.licenseUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-mapachito-violet inline-flex min-h-12 items-center rounded underline underline-offset-4 focus-visible:outline-2"
+                  className="text-mapachito-violet inline-block min-h-12 max-w-full min-w-0 content-center rounded wrap-anywhere underline underline-offset-4 focus-visible:outline-2"
                 >
                   {credit.license}
                   <span className="sr-only">

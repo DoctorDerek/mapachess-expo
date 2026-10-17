@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto"
-import { expect, test, type Locator, type Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 import { webMatchId } from "../apps/web/lib/gameplay/webOpponent"
 import {
   MAPACHESS_INDEXED_DB_CURRENT_KEY,
   MAPACHESS_INDEXED_DB_NAME,
   MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
 } from "../apps/web/lib/profile/IndexedDbDurableStore"
+import { test } from "../e2e/fixtures.js"
 import { parseChess960PositionId } from "../packages/match/dist/chess960Position.js"
 import {
   listLegalMatchMoves,
@@ -34,7 +35,9 @@ const databaseConfig = {
 
 const startMatch = async (page: Page) => {
   await page.goto("/")
-  await page.getByRole("button", { name: /Standard Challenge/ }).click()
+  await page
+    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
+    .click()
   await page.getByRole("radio", { name: "White", exact: true }).check()
   await page.getByRole("button", { name: /Start match/ }).click()
   await expect(page.getByRole("meter")).toHaveAttribute(
@@ -275,6 +278,10 @@ for (const config of [
       "aria-valuetext",
       label,
     )
+    await expect(page.getByRole("dialog")).toBeVisible()
+    await page
+      .getByRole("button", { name: "Review board", exact: true })
+      .click()
     const result = page.getByRole("region", {
       name: "Match result",
       exact: true,
@@ -282,9 +289,8 @@ for (const config of [
     await expect(
       result.getByRole("heading", { name: "You won!" }),
     ).toBeVisible()
-    if (config.mode === "story")
-      await expect(result).toContainText("Bronze this match · Saved")
-    else await expect(result).not.toContainText("Saved")
+    await expect(result).toContainText("Bronze")
+    await expect(result).toContainText("Move Hints used")
     expect(await stableGeometry(page)).toEqual(before)
     const resultBox = await geometry(result)
     expect(resultBox.y).toBeGreaterThan(before.menu.y + before.menu.height)
@@ -326,10 +332,13 @@ for (const ending of [
     const before = await stableGeometry(page)
     await page.getByLabel("Match menu", { exact: true }).click()
     await page.getByRole("button", { name: ending.action, exact: true }).click()
+    await expect(page.getByRole("dialog")).toBeVisible()
+    await page
+      .getByRole("button", { name: "Review board", exact: true })
+      .click()
     await expect(
       page.getByRole("region", { name: "Match result", exact: true }),
     ).toContainText(ending.result)
-    await page.getByLabel("Match menu", { exact: true }).click()
     expect(await stableGeometry(page)).toEqual(before)
     await page.screenshot({
       path: testInfo.outputPath("non-checkmate-result.png"),

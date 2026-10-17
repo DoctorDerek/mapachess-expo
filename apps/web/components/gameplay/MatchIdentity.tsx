@@ -1,5 +1,9 @@
 import type { ReactNode, Ref } from "react"
 import type { MatchColor } from "@mapachess/match/match-position"
+import {
+  timeControlLabel,
+  type TimeControl,
+} from "@mapachess/match/time-control"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchIdentity({
@@ -10,6 +14,7 @@ export default function MatchIdentity({
   opponentElo,
   playerClock,
   opponentClock,
+  timeControl,
 }: Readonly<{
   headingRef: Ref<HTMLHeadingElement>
   playerColor: MatchColor
@@ -18,6 +23,7 @@ export default function MatchIdentity({
   opponentElo: number
   playerClock?: ReactNode
   opponentClock?: ReactNode
+  timeControl: TimeControl
 }>) {
   const copy = useMapachessCopy()
   return (
@@ -45,6 +51,10 @@ export default function MatchIdentity({
             ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
           </span>
           {opponentClock}
+        </span>
+        <span className="inline-block">
+          {" "}
+          · {timeControlLabel(timeControl, copy.gameplay.clock)}
         </span>
       </h1>
     </section>

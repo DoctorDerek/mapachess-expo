@@ -93,7 +93,7 @@ for (const mode of [
       page.getByRole("heading", { level: 1, name: "Mapachess", exact: true }),
     ).toBeVisible()
     await expect(
-      page.getByRole("button", { name: "Resume match", exact: true }),
+      page.getByRole("button", { name: "Resume match Untimed", exact: true }),
     ).toBeEnabled()
     const before = await savedProfile(page)
     await page
@@ -133,7 +133,7 @@ for (const mode of [
       revision: before.revision,
     }).toEqual(before)
     await page
-      .getByRole("button", { name: "Resume match", exact: true })
+      .getByRole("button", { name: "Resume match Untimed", exact: true })
       .click()
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
     expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)

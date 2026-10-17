@@ -14,7 +14,7 @@ import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   timeCategory,
-  timeControlNotation,
+  timeControlLabel,
   UNTIMED,
 } from "@mapachess/match/time-control"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
@@ -341,14 +341,7 @@ export default function WebMatchSetup({
           />
           <MatchSetupChoice
             label={clockCopy.timeControl}
-            value={
-              timeControl.type === "untimed"
-                ? clockCopy.category.untimed
-                : clockCopy.preset(
-                    clockCopy.category[category],
-                    timeControlNotation(timeControl),
-                  )
-            }
+            value={timeControlLabel(timeControl, clockCopy)}
             actionLabel={clockCopy.change}
             disabled={disabled || opening}
             onChange={(event) =>
@@ -429,7 +422,7 @@ export default function WebMatchSetup({
                   disabled={disabled || opening}
                   onChange={setTimeControl}
                 />
-                <p>
+                <p role="status" aria-live="polite">
                   {timeControl.type === "untimed"
                     ? clockCopy.untimedExplanation
                     : clockCopy.explanation(
