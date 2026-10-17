@@ -16,7 +16,8 @@ export default function matchVictoryMedal(
 ): MatchMedal | null {
   if (
     (match.conclusion?.type !== "checkmate" &&
-      match.conclusion?.type !== "resignation") ||
+      match.conclusion?.type !== "resignation" &&
+      match.conclusion?.type !== "timeout") ||
     match.conclusion.winner !== match.playerColor
   )
     return null

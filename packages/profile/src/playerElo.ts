@@ -6,7 +6,9 @@ export const playerResultScore = (
   conclusion: MatchConclusion,
   playerColor: MatchColor,
 ): number =>
-  conclusion.type === "checkmate" || conclusion.type === "resignation"
+  conclusion.type === "checkmate" ||
+  conclusion.type === "resignation" ||
+  conclusion.type === "timeout"
     ? Number(conclusion.winner === playerColor)
     : 0.5
 

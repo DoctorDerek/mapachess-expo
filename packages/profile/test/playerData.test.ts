@@ -28,6 +28,8 @@ describe("Mapachess player data", () => {
       ok: true,
       data: {
         ...old,
+        ratings: { ...initial.ratings, ...old.ratings },
+        ratedMatchCounts: initial.ratedMatchCounts,
         introductionCompleted: true,
         schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         settings: {
@@ -88,8 +90,23 @@ describe("Mapachess player data", () => {
         standardStory: INITIAL_PLAYER_ELO,
       },
       processedMatchResultIds: [],
-      ratedMatchCounts: { chess960: 0, standard: 0 },
+      ratedMatchCounts: {
+        chess960: 0,
+        standard: 0,
+        "standard-bullet": 0,
+        "standard-blitz": 0,
+        "standard-rapid": 0,
+        "chess960-bullet": 0,
+        "chess960-blitz": 0,
+        "chess960-rapid": 0,
+      },
       ratings: {
+        "standard-bullet": 100,
+        "standard-blitz": 100,
+        "standard-rapid": 100,
+        "chess960-bullet": 100,
+        "chess960-blitz": 100,
+        "chess960-rapid": 100,
         chess960: INITIAL_PLAYER_ELO,
         standard: INITIAL_PLAYER_ELO,
       },

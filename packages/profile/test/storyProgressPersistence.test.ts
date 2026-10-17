@@ -75,6 +75,7 @@ describe("Story progress in durable profiles", () => {
       updatedPlayerElo(228, 1, 100, 1),
     )
     expect(afterChallenge.ratedMatchCounts).toEqual({
+      ...createInitialMapachessPlayerData().ratedMatchCounts,
       standard: 2,
       chess960: 0,
     })
@@ -145,8 +146,13 @@ describe("Story progress in durable profiles", () => {
       signal,
     })
     const afterStandard = selectCurrentPlayerData(actor.getSnapshot())
-    expect(afterStandard?.ratings).toEqual({ standard: 228, chess960: 100 })
+    expect(afterStandard?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
+      standard: 228,
+      chess960: 100,
+    })
     expect(afterStandard?.ratedMatchCounts).toEqual({
+      ...createInitialMapachessPlayerData().ratedMatchCounts,
       standard: 1,
       chess960: 0,
     })
@@ -185,11 +191,13 @@ describe("Story progress in durable profiles", () => {
     })
     await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
       standard: 228,
       chess960: 100,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(4)
     expect(selectPendingPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
       standard: 228,
       chess960: 228,
     })
@@ -198,6 +206,7 @@ describe("Story progress in durable profiles", () => {
     actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
     await savingChess960Result
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
       standard: 228,
       chess960: 228,
     })
@@ -215,10 +224,15 @@ describe("Story progress in durable profiles", () => {
     )
     const afterReset = selectCurrentPlayerData(actor.getSnapshot())
     expect(afterReset?.ratedMatchCounts).toEqual({
+      ...createInitialMapachessPlayerData().ratedMatchCounts,
       standard: 0,
       chess960: 1,
     })
-    expect(afterReset?.ratings).toEqual({ standard: 100, chess960: 228 })
+    expect(afterReset?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
+      standard: 100,
+      chess960: 228,
+    })
     expect(afterReset?.processedMatchResultIds).toEqual([
       standard.completed.matchId,
       chess960.completed.matchId,
@@ -238,6 +252,7 @@ describe("Story progress in durable profiles", () => {
       signal,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
+      ...createInitialMapachessPlayerData().ratings,
       standard: 100,
       chess960: 228,
     })
