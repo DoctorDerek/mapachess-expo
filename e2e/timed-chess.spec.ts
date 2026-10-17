@@ -84,6 +84,15 @@ async function startTimedMatch(
       exact: true,
     })
     .check()
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: spanish ? "por jugador" : "per player" }),
+  ).toHaveText(
+    spanish
+      ? "3 minutos por jugador. Cada jugada añade 2 segundos al reloj de quien mueve. Las pistas no pausan el reloj."
+      : "1 minute per player. No time is added after moves. Hints do not pause the clock.",
+  )
   await page
     .getByRole("button", { name: spanish ? "Listo" : "Done", exact: true })
     .click()
@@ -98,6 +107,14 @@ async function startTimedMatch(
     "false",
     { timeout: 30000 },
   )
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    spanish ? "Relámpago · 3+2" : "Bullet · 1+0",
+  )
+  await expect(
+    page.getByText(
+      /Hints do not pause the clock|Las pistas no pausan el reloj/,
+    ),
+  ).toHaveCount(0)
 }
 
 for (const spanish of [false, true]) {
@@ -313,7 +330,10 @@ test("Bullet uses real Auto Move Hints and pauses on navigation without changing
   await page.getByRole("button", { name: "Resume clocks", exact: true }).click()
   await page.goBack()
   await expect(
-    page.getByRole("button", { name: "Resume match", exact: true }),
+    page.getByRole("button", {
+      name: "Resume match Bullet · 1+0",
+      exact: true,
+    }),
   ).toBeVisible()
   await page.goForward()
   await expect(
@@ -411,6 +431,9 @@ test("a no-move timeout survives import, retracts on Undo and reapplies only onc
   })
   expect(ended.ratedMatchCounts["standard-bullet"]).toBe(1)
   expect(ended.ratedMatchCounts.standard).toBe(0)
+  await expect(
+    page.getByRole("dialog").getByText("Bullet · 1+0", { exact: true }),
+  ).toBeVisible()
   await page.screenshot({
     path: testInfo.outputPath("timeout-rewards.png"),
     fullPage: true,

@@ -11,6 +11,7 @@ import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import { timeControlLabel } from "@mapachess/match/time-control"
 import matchVictoryMedal from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import {
@@ -160,6 +161,9 @@ export default function MatchCelebration({
           </p>
         ) : null}
         <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
+          <span className="font-bold">
+            {timeControlLabel(match.timeControl, copy.gameplay.clock)}
+          </span>
           {medal === null ? null : <MedalWithHintUse medal={medal} />}
           {reward === null ? null : (
             <p className="font-display text-3xl font-black tabular-nums">

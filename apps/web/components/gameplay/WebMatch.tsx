@@ -33,10 +33,7 @@ import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
-import {
-  timeCategory,
-  timeControlNotation,
-} from "@mapachess/match/time-control"
+import { timeControlLabel } from "@mapachess/match/time-control"
 import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
@@ -273,6 +270,7 @@ export default function WebMatch({
       >
         <div className="mb-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:identity]">
           <MatchIdentity
+            timeControl={snapshot.context.timeControl}
             playerClock={
               snapshot.context.clock === null ? null : (
                 <ParticipantClock
@@ -412,16 +410,10 @@ export default function WebMatch({
                           <dd>{modeLabel}</dd>
                           <dt>{messages.clock}</dt>
                           <dd>
-                            {snapshot.context.timeControl.type === "untimed"
-                              ? copy.gameplay.clock.category.untimed
-                              : copy.gameplay.clock.preset(
-                                  copy.gameplay.clock.category[
-                                    timeCategory(snapshot.context.timeControl)
-                                  ],
-                                  timeControlNotation(
-                                    snapshot.context.timeControl,
-                                  ),
-                                )}
+                            {timeControlLabel(
+                              snapshot.context.timeControl,
+                              copy.gameplay.clock,
+                            )}
                           </dd>
                           <dt>{messages.privacy}</dt>
                           <dd>{messages.localAccountless}</dd>

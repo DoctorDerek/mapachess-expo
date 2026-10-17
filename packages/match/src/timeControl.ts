@@ -1,3 +1,5 @@
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
+
 export const TIME_CATEGORIES = ["untimed", "bullet", "blitz", "rapid"] as const
 export type TimeCategory = (typeof TIME_CATEGORIES)[number]
 
@@ -54,3 +56,13 @@ export const timeControlNotation = (control: TimeControl): string =>
   control.type === "untimed"
     ? ""
     : `${String(control.baseSeconds / 60)}+${String(control.incrementSeconds)}`
+export const timeControlLabel = (
+  control: TimeControl,
+  copy: MapachessCatalog["gameplay"]["clock"],
+): string =>
+  control.type === "untimed"
+    ? copy.category.untimed
+    : copy.preset(
+        copy.category[timeCategory(control)],
+        timeControlNotation(control),
+      )

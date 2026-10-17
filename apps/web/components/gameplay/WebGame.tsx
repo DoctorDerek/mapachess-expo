@@ -14,6 +14,7 @@ import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import {
   timeCategory,
+  timeControlLabel,
   timeControlNotation,
   UNTIMED,
 } from "@mapachess/match/time-control"
@@ -298,6 +299,12 @@ export default function WebGame({
                 disabled={settingsOpen}
               >
                 {messages.resumeMatch}
+                <span className="block text-base font-semibold">
+                  {timeControlLabel(
+                    session.match.timeControl,
+                    copy.gameplay.clock,
+                  )}
+                </span>
               </MapachessButton>
             </div>
           )}

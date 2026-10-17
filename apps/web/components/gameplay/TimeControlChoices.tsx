@@ -3,8 +3,7 @@ import { useId } from "react"
 import {
   TIME_CATEGORIES,
   TIME_CONTROL_PRESETS,
-  timeCategory,
-  timeControlNotation,
+  timeControlLabel,
   timeControlsEqual,
   type TimeCategory,
   type TimeControl,
@@ -76,13 +75,7 @@ export default function TimeControlChoices({
       presetGrid
       choices={TIME_CONTROL_PRESETS.map(({ id, control: preset }) => ({
         value: id,
-        label:
-          preset.type === "untimed"
-            ? copy.category.untimed
-            : copy.preset(
-                copy.category[timeCategory(preset)],
-                timeControlNotation(preset),
-              ),
+        label: timeControlLabel(preset, copy),
       }))}
       selected={selected.id}
       disabled={disabled}
