@@ -5,6 +5,30 @@ import {
 } from "./enNumbers.js"
 
 const gameplay = {
+  clock: {
+    timeControl: "Time control",
+    change: "Change time control",
+    category: {
+      untimed: "Untimed",
+      bullet: "Bullet",
+      blitz: "Blitz",
+      rapid: "Rapid",
+    },
+    preset: (category: string, notation: string): string =>
+      `${category} · ${notation}`,
+    explanation: (minutes: number, increment: number): string =>
+      `${formatInteger(minutes)} min per side, plus ${formatInteger(increment)} sec after each move. Hints do not pause the clock.`,
+    untimedExplanation: "No clock. Take your time and explore.",
+    paused: "Clocks paused",
+    resume: "Resume clocks",
+    running: "Clock running",
+    low: "Low time",
+    label: (color: string): string => `${color} clock`,
+    rating: (variant: string, category: string): string =>
+      `${variant} · ${category}`,
+    display: (minutes: number, seconds: number): string =>
+      `${String(minutes)}:${String(seconds).padStart(2, "0")}`,
+  },
   integer: formatInteger,
   elo: formatUngroupedInteger,
   storyCompletion: formatStoryPercentage,
@@ -20,6 +44,11 @@ const gameplay = {
   challengeList: (opponents: readonly string[]): string =>
     `Unlocked for both Challenge modes: ${opponents.join(", ")}`,
   conclusion: {
+    playerTimedOut: "Your time ran out — you lost.",
+    opponentTimedOut: (opponent: string): string =>
+      `${opponent} ran out of time — you won.`,
+    "timeout-insufficient-material":
+      "Time ran out. Draw: the other side has insufficient mating material.",
     playerWon: "You won!",
     opponentWon: (opponent: string): string => `${opponent} won.`,
     opponentResigned: (opponent: string): string =>

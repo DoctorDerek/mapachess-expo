@@ -256,6 +256,27 @@ const emergencyGameCopy = {
     },
   },
   gameplay: {
+    clock: {
+      timeControl: "Time control",
+      change: "Change time control",
+      category: {
+        untimed: "Untimed",
+        bullet: "Bullet",
+        blitz: "Blitz",
+        rapid: "Rapid",
+      },
+      preset: unavailableText,
+      explanation: unavailableText,
+      untimedExplanation: UNAVAILABLE_TEXT,
+      paused: "Clocks paused",
+      resume: "Resume clocks",
+      running: "Clock running",
+      low: "Low time",
+      label: unavailableText,
+      rating: unavailableText,
+      display: (minutes: number, seconds: number): string =>
+        `${String(minutes)}:${String(seconds).padStart(2, "0")}`,
+    },
     integer: unavailableText,
     elo: unavailableText,
     storyCompletion: unavailableText,
@@ -266,6 +287,9 @@ const emergencyGameCopy = {
     defeatedMedal: unavailableText,
     challengeList: unavailableText,
     conclusion: {
+      playerTimedOut: UNAVAILABLE_TEXT,
+      opponentTimedOut: unavailableText,
+      "timeout-insufficient-material": UNAVAILABLE_TEXT,
       playerWon: UNAVAILABLE_TEXT,
       opponentWon: unavailableText,
       opponentResigned: unavailableText,
