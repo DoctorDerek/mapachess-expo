@@ -16,6 +16,7 @@ import type { WebMatchRuntime } from "./webMatchRuntime"
 
 export type WebMatchSession = MatchSessionIdentity &
   Readonly<{
+    clockStartsOnArrival?: boolean
     actor: ActorRefFrom<typeof matchMachine>
     close: () => Promise<void>
     evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>

@@ -176,6 +176,9 @@ function ReadyPlayExperience({
           {settingsOpen ? null : <ChessArtworkRecovery />}
           <RecoverableView
             title={messages.thisScreenCouldNotBeDisplayed}
+            onRecovery={() =>
+              matchActor?.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
+            }
             description={messages.yourPlayerDataIsStillHeldIn}
             actions={
               <MapachessButton

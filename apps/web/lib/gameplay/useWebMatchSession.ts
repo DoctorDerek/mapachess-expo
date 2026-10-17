@@ -67,10 +67,34 @@ export default function useWebMatchSession(
         },
       },
     }).start()
+    const arrivedMatches = new WeakSet<WebMatchSession>()
+    const updateClockAvailability = (): void => {
+      const current = actor.getSnapshot()
+      const session = current.context.session
+      if (session === null) return
+      if (
+        !current.matches("active") ||
+        current.context.overlays.length > 0 ||
+        document.visibilityState === "hidden"
+      ) {
+        arrivedMatches.add(session)
+        session.actor.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
+      } else if (session.clockStartsOnArrival && !arrivedMatches.has(session)) {
+        arrivedMatches.add(session)
+        session.actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+      }
+    }
+    const clockSubscription = actor.subscribe(updateClockAvailability)
+    document.addEventListener("visibilitychange", updateClockAvailability)
     let preImportBackup =
       profileActor.getSnapshot().context.loaded?.snapshot.preImportBackup ??
       null
     const profileSubscription = profileActor.subscribe((snapshot) => {
+      if (!selectCanNavigateProfile(snapshot)) {
+        actor
+          .getSnapshot()
+          .context.session?.actor.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
+      }
       if (!snapshot.matches("ready") || disposed) return
       const current = selectCurrentPlayerData(snapshot)
       if (current === null) return
@@ -101,6 +125,8 @@ export default function useWebMatchSession(
     setSessionActor(actor)
     return () => {
       disposed = true
+      document.removeEventListener("visibilitychange", updateClockAvailability)
+      clockSubscription.unsubscribe()
       profileSubscription.unsubscribe()
       actor.stop()
       if (latestSession !== null)
