@@ -97,9 +97,13 @@ for (const width of [320, 1280]) {
     ).toBeVisible()
     await expect(page.getByText("100 Elo", { exact: true })).toBeVisible()
     await expect(page.getByRole("radio")).toHaveCount(0)
-    await expect(
-      page.getByRole("button", { name: "Start match", exact: true }),
-    ).toBeInViewport()
+    const startMatch = page.getByRole("button", {
+      name: "Start match",
+      exact: true,
+    })
+    await startMatch.scrollIntoViewIfNeeded()
+    await expect(startMatch).toBeInViewport({ ratio: 1 })
+    await expect(startMatch).toBeEnabled()
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

@@ -78,7 +78,7 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
       "Rehacer",
       "Pistas de movimientos visibles",
     ]) {
-      const action = page.getByRole("button", { name, exact: true })
+      const action = page.getByRole("button", { name: new RegExp(`${name}$`) })
       await expect(action).toBeVisible()
       expect(
         await action.evaluate(
@@ -192,8 +192,8 @@ for (const width of [390, 1280]) {
       }),
     ).toBeVisible()
     await expect(
-      page.getByText("Elo de ajedrez 960", { exact: true }),
-    ).toBeVisible()
+      page.getByRole("term").filter({ hasText: /^Elo de ajedrez 960/ }),
+    ).toHaveText(/^Elo de ajedrez 960\s*Sin reloj$/)
     await page.screenshot({
       path: testInfo.outputPath(`spanish-menu-${width}.png`),
       fullPage: true,
