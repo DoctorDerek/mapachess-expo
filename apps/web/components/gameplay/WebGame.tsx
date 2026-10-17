@@ -478,6 +478,7 @@ export default function WebGame({
             }
             key={session.match.matchId}
             mode={session.match.mode}
+            moveReactionPlacement={playerData.settings.moveReactionPlacement}
             playerElo={
               savedPlayerData?.ratings[
                 playerRatingId(

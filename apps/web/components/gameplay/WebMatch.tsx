@@ -41,6 +41,7 @@ import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
 } from "@mapachess/profile/player-data"
+import type { MoveReactionPlacement } from "@mapachess/profile/presentation-preferences"
 import type { StoryProgress } from "@mapachess/profile/story-progress"
 import useMoveReactions from "../../lib/gameplay/useMoveReactions"
 import type { WebMatchRuntime } from "../../lib/gameplay/webMatchRuntime"
@@ -79,6 +80,7 @@ export type WebMatchProps = Readonly<{
   reactionsPaused?: boolean
   mode: MatchMode
   playerElo: number
+  moveReactionPlacement: MoveReactionPlacement
   runtime: WebMatchRuntime
   menuActions?: ReactNode
   result?: (disabled: boolean) => ReactNode
@@ -103,6 +105,7 @@ export default function WebMatch({
   reactionsPaused = false,
   mode,
   playerElo,
+  moveReactionPlacement,
   runtime,
   result,
   menuActions,
@@ -266,58 +269,53 @@ export default function WebMatch({
           modeLabel,
           animalCopy.opponent(opponent.id),
         )}
-        className="grid min-w-0 items-start gap-2 [--playing-width:100%] [grid-template-areas:'playing'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:none]"
+        className="relative grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:'identity_command'_'evaluation_command'_'board_command'_'battle_.']"
       >
-        <div className="contents xl:grid xl:w-full xl:max-w-(--playing-width) xl:min-w-0 xl:gap-2 xl:justify-self-center">
-          <div className="grid min-w-0 gap-2 [grid-area:playing] xl:[grid-area:auto]">
-            <MatchIdentity
-              playerClock={
-                snapshot.context.clock === null ? null : (
-                  <ParticipantClock
-                    clock={snapshot.context.clock}
-                    color={runtime.playerColor}
-                    monotonicClock={snapshot.context.monotonicClock}
-                  />
-                )
-              }
-              opponentClock={
-                snapshot.context.clock === null ? null : (
-                  <ParticipantClock
-                    clock={snapshot.context.clock}
-                    color={runtime.playerColor === "white" ? "black" : "white"}
-                    monotonicClock={snapshot.context.monotonicClock}
-                  />
-                )
-              }
-              headingRef={heading}
-              playerColor={runtime.playerColor}
-              playerElo={playerElo}
-              opponentName={animalCopy.opponent(opponent.id)}
-              opponentElo={runtime.opponentTargetElo}
-              reactions={
-                <MoveReactionFeedback
-                  actor={reactions.actor}
-                  playerColor={runtime.playerColor}
+        <div className="mb-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:identity]">
+          <MatchIdentity
+            playerClock={
+              snapshot.context.clock === null ? null : (
+                <ParticipantClock
+                  clock={snapshot.context.clock}
+                  color={runtime.playerColor}
+                  monotonicClock={snapshot.context.monotonicClock}
                 />
-              }
-            />
-
-            <div className="grid min-w-0">
-              <PositionEvaluationGutter actor={evaluationActor} />
-              <CanonicalChessboard
-                disabled={!playerTurn}
-                hints={visibleHints}
-                lastMove={lastMove}
-                legalMoves={legalMoves}
-                onMove={(moveId) =>
-                  actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
-                }
-                orientation={runtime.playerColor}
-                position={position}
-                showMoveHints={hintStage === "move-hints"}
-              />
-            </div>
-          </div>
+              )
+            }
+            opponentClock={
+              snapshot.context.clock === null ? null : (
+                <ParticipantClock
+                  clock={snapshot.context.clock}
+                  color={runtime.playerColor === "white" ? "black" : "white"}
+                  monotonicClock={snapshot.context.monotonicClock}
+                />
+              )
+            }
+            headingRef={heading}
+            playerColor={runtime.playerColor}
+            playerElo={playerElo}
+            opponentName={animalCopy.opponent(opponent.id)}
+            opponentElo={runtime.opponentTargetElo}
+          />
+        </div>
+        <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:evaluation]">
+          <PositionEvaluationGutter actor={evaluationActor} />
+        </div>
+        <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
+          <CanonicalChessboard
+            disabled={!playerTurn}
+            hints={visibleHints}
+            lastMove={lastMove}
+            legalMoves={legalMoves}
+            onMove={(moveId) =>
+              actor.send({ moveId, type: "MATCH.MOVE_REQUESTED" })
+            }
+            orientation={runtime.playerColor}
+            position={position}
+            showMoveHints={hintStage === "move-hints"}
+          />
+        </div>
+        <div className="mt-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:battle]">
           <BattleStageSurface
             playerAnimal={playerAnimal}
             celebrationSlot={celebrationStageSlot}
@@ -330,162 +328,169 @@ export default function WebMatch({
           />
         </div>
 
-        <div className="contents xl:grid xl:min-w-0 xl:gap-2">
-          <section
-            aria-label={messages.coreMatchActions}
-            className="text-mapachito-charcoal grid min-w-0 gap-2 px-3 [grid-area:command] xl:px-0 xl:[grid-area:auto]"
-          >
-            {snapshot.matches("paused") ? (
-              <MapachessButton
-                onClick={() =>
-                  actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
-                }
-              >
-                <span aria-hidden="true">▶ </span>
-                {copy.gameplay.clock.resume}
-              </MapachessButton>
-            ) : null}
-            <MatchCommands
-              onBoardFocusRequested={toggleBoardFocus}
-              opponentName={animalCopy.opponent(opponent.id)}
-              menuOpen={overlays.includes("match-menu")}
-              onMenuOpened={() => {
-                reactions.clear()
-                navigation.open("match-menu")
-              }}
-              onMenuClosed={navigation.back}
-              coach={
-                <MapachitoCoachPortrait
-                  presentationSnapshot={presentation.snapshot}
-                  moveReaction={
-                    coachMove === null
-                      ? null
-                      : {
-                          family: "move",
-                          grade: coachMove.classification.grade,
-                          role:
-                            coachMove.mover === runtime.playerColor
-                              ? "player"
-                              : "opponent",
-                        }
-                  }
-                />
-              }
-              hints={
-                <BetterHintsControl
-                  busy={persisting}
-                  disabled={persistenceFailure !== null}
-                  hints={hints}
-                  matchComplete={matchComplete}
-                  onMoveHintsRequested={() =>
-                    actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-                  }
-                  onPieceHintsRequested={() =>
-                    actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-                  }
-                  stage={hintStage}
-                />
-              }
-              menuActions={
-                <>
-                  {menuActions}{" "}
-                  <details
-                    open={overlays.includes("match-details")}
-                    className="text-mapachito-white [grid-area:data]"
-                  >
-                    <summary
-                      onClick={(event) => {
-                        event.preventDefault()
-                        if (overlays.includes("match-details"))
-                          navigation.back()
-                        else navigation.open("match-details")
-                      }}
-                      className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
-                    >
-                      {messages.matchDetailsMoveHistory}
-                    </summary>
-                    <div className="text-mapachito-charcoal grid gap-3">
-                      <dl
-                        aria-label={messages.currentMatchData}
-                        className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
-                      >
-                        <dt>{messages.mode}</dt>
-                        <dd>{modeLabel}</dd>
-                        <dt>{messages.clock}</dt>
-                        <dd>
-                          {snapshot.context.timeControl.type === "untimed"
-                            ? copy.gameplay.clock.category.untimed
-                            : copy.gameplay.clock.preset(
-                                copy.gameplay.clock.category[
-                                  timeCategory(snapshot.context.timeControl)
-                                ],
-                                timeControlNotation(
-                                  snapshot.context.timeControl,
-                                ),
-                              )}
-                        </dd>
-                        <dt>{messages.privacy}</dt>
-                        <dd>{messages.localAccountless}</dd>
-                        <dt>{messages.engine}</dt>
-                        <dd className="truncate">
-                          {runtime.engineIdentity.name}
-                        </dd>
-                      </dl>
-
-                      <ClassifiedMoveHistory
-                        transitions={activeTransitions}
-                        records={moveFeedback}
-                      />
-                    </div>
-                  </details>
-                </>
-              }
-              menuSummaryRef={menuSummary}
-              actor={actor}
-              drawAvailable={
-                drawOfferDecision !== null &&
-                !matchComplete &&
-                position.turn === runtime.playerColor
-              }
-              onOfferDraw={offerDraw}
-              snapshot={snapshot}
-            />
-
-            <MatchRecovery
-              actor={actor}
-              snapshot={snapshot}
-              evaluationActor={evaluationActor}
-              evaluationSnapshot={evaluationSnapshot}
-              opponentName={animalCopy.opponent(opponent.id)}
-            />
-          </section>
-          {conclusion === null || celebrationPending ? null : (
-            <div
-              className={cx(
-                "px-3 [grid-area:result] xl:px-0 xl:[grid-area:auto]",
-                celebrationOpen && "invisible",
-              )}
-              inert={celebrationOpen}
+        <div className="contents xl:grid xl:min-h-0 xl:min-w-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-2 xl:self-stretch xl:[grid-area:command]">
+          <div className="contents xl:grid xl:gap-2">
+            <section
+              aria-label={messages.coreMatchActions}
+              className="text-mapachito-charcoal mt-2 grid min-w-0 gap-2 px-3 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
-              <MatchOutcome
-                conclusion={conclusion}
-                playerColor={runtime.playerColor}
+              {snapshot.matches("paused") ? (
+                <MapachessButton
+                  onClick={() =>
+                    actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+                  }
+                >
+                  <span aria-hidden="true">▶ </span>
+                  {copy.gameplay.clock.resume}
+                </MapachessButton>
+              ) : null}
+              <MatchCommands
+                onBoardFocusRequested={toggleBoardFocus}
                 opponentName={animalCopy.opponent(opponent.id)}
-              >
-                {result?.(persisting || persistenceFailure !== null)}
-                {!completedSavedMatch ? null : (
-                  <MapachessButton
-                    disabled={persisting || persistenceFailure !== null}
-                    onClick={onRewardsReplayRequested}
-                    variant="secondary"
-                    ref={rewardsButton}
-                  >
-                    {messages.viewRewards}
-                  </MapachessButton>
+                menuOpen={overlays.includes("match-menu")}
+                onMenuOpened={() => {
+                  reactions.clear()
+                  navigation.open("match-menu")
+                }}
+                onMenuClosed={navigation.back}
+                coach={
+                  <MapachitoCoachPortrait
+                    presentationSnapshot={presentation.snapshot}
+                    moveReaction={
+                      coachMove === null
+                        ? null
+                        : {
+                            family: "move",
+                            grade: coachMove.classification.grade,
+                            role:
+                              coachMove.mover === runtime.playerColor
+                                ? "player"
+                                : "opponent",
+                          }
+                    }
+                  />
+                }
+                hints={
+                  <BetterHintsControl
+                    busy={persisting}
+                    disabled={persistenceFailure !== null}
+                    hints={hints}
+                    matchComplete={matchComplete}
+                    onMoveHintsRequested={() =>
+                      actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+                    }
+                    onPieceHintsRequested={() =>
+                      actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+                    }
+                    stage={hintStage}
+                  />
+                }
+                menuActions={
+                  <>
+                    {menuActions}{" "}
+                    <details
+                      open={overlays.includes("match-details")}
+                      className="text-mapachito-white [grid-area:data]"
+                    >
+                      <summary
+                        onClick={(event) => {
+                          event.preventDefault()
+                          if (overlays.includes("match-details"))
+                            navigation.back()
+                          else navigation.open("match-details")
+                        }}
+                        className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+                      >
+                        {messages.matchDetailsMoveHistory}
+                      </summary>
+                      <div className="text-mapachito-charcoal grid gap-3">
+                        <dl
+                          aria-label={messages.currentMatchData}
+                          className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
+                        >
+                          <dt>{messages.mode}</dt>
+                          <dd>{modeLabel}</dd>
+                          <dt>{messages.clock}</dt>
+                          <dd>
+                            {snapshot.context.timeControl.type === "untimed"
+                              ? copy.gameplay.clock.category.untimed
+                              : copy.gameplay.clock.preset(
+                                  copy.gameplay.clock.category[
+                                    timeCategory(snapshot.context.timeControl)
+                                  ],
+                                  timeControlNotation(
+                                    snapshot.context.timeControl,
+                                  ),
+                                )}
+                          </dd>
+                          <dt>{messages.privacy}</dt>
+                          <dd>{messages.localAccountless}</dd>
+                          <dt>{messages.engine}</dt>
+                          <dd className="truncate">
+                            {runtime.engineIdentity.name}
+                          </dd>
+                        </dl>
+
+                        <ClassifiedMoveHistory
+                          transitions={activeTransitions}
+                          records={moveFeedback}
+                        />
+                      </div>
+                    </details>
+                  </>
+                }
+                menuSummaryRef={menuSummary}
+                actor={actor}
+                drawAvailable={
+                  drawOfferDecision !== null &&
+                  !matchComplete &&
+                  position.turn === runtime.playerColor
+                }
+                onOfferDraw={offerDraw}
+                snapshot={snapshot}
+              />
+
+              <MatchRecovery
+                actor={actor}
+                snapshot={snapshot}
+                evaluationActor={evaluationActor}
+                evaluationSnapshot={evaluationSnapshot}
+                opponentName={animalCopy.opponent(opponent.id)}
+              />
+            </section>
+            {conclusion === null || celebrationPending ? null : (
+              <div
+                className={cx(
+                  "mt-2 px-3 [grid-area:result] xl:mt-0 xl:px-0 xl:[grid-area:auto]",
+                  celebrationOpen && "invisible",
                 )}
-              </MatchOutcome>
-            </div>
-          )}
+                inert={celebrationOpen}
+              >
+                <MatchOutcome
+                  conclusion={conclusion}
+                  playerColor={runtime.playerColor}
+                  opponentName={animalCopy.opponent(opponent.id)}
+                >
+                  {result?.(persisting || persistenceFailure !== null)}
+                  {!completedSavedMatch ? null : (
+                    <MapachessButton
+                      disabled={persisting || persistenceFailure !== null}
+                      onClick={onRewardsReplayRequested}
+                      variant="secondary"
+                      ref={rewardsButton}
+                    >
+                      {messages.viewRewards}
+                    </MapachessButton>
+                  )}
+                </MatchOutcome>
+              </div>
+            )}
+          </div>
+          <MoveReactionFeedback
+            actor={reactions.actor}
+            playerColor={runtime.playerColor}
+            placement={moveReactionPlacement}
+          />
         </div>
       </section>
       {celebrationOpen && savedMatch !== null ? (

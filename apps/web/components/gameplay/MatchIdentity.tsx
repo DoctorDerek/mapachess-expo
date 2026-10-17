@@ -8,7 +8,6 @@ export default function MatchIdentity({
   playerElo,
   opponentName,
   opponentElo,
-  reactions,
   playerClock,
   opponentClock,
 }: Readonly<{
@@ -17,7 +16,6 @@ export default function MatchIdentity({
   playerElo: number
   opponentName: string
   opponentElo: number
-  reactions: ReactNode
   playerClock?: ReactNode
   opponentClock?: ReactNode
 }>) {
@@ -25,7 +23,7 @@ export default function MatchIdentity({
   return (
     <section
       aria-labelledby="opponent-band-title"
-      className="text-mapachito-white relative px-3 xl:px-0"
+      className="text-mapachito-white px-3 xl:px-0"
     >
       <h1
         id="opponent-band-title"
@@ -49,9 +47,6 @@ export default function MatchIdentity({
           {opponentClock}
         </span>
       </h1>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
-        {reactions}
-      </div>
     </section>
   )
 }
