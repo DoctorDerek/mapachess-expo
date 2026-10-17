@@ -70,7 +70,9 @@ export default function MatchCelebration({
   const medal = matchVictoryMedal(match)
   const variant = match.startingPosition.variant
   const playerWon =
-    (conclusion.type === "checkmate" || conclusion.type === "resignation") &&
+    (conclusion.type === "checkmate" ||
+      conclusion.type === "resignation" ||
+      conclusion.type === "timeout") &&
     conclusion.winner === match.playerColor
   const next =
     match.mode === "story" && medal !== null
@@ -150,6 +152,13 @@ export default function MatchCelebration({
         {playerWon && conclusion.type === "resignation" ? (
           <p className="text-base">{messages.opponentResigned}</p>
         ) : null}
+        {playerWon && conclusion.type === "timeout" ? (
+          <p className="text-base">
+            {copy.gameplay.conclusion.opponentTimedOut(
+              animalCopy.opponent(opponent.id),
+            )}
+          </p>
+        ) : null}
         <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
           {medal === null ? null : <MedalWithHintUse medal={medal} />}
           {reward === null ? null : (
@@ -169,7 +178,12 @@ export default function MatchCelebration({
         {reward === null || reward.ratedElo === null ? null : (
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-base">
             <span className="font-bold">
-              {copy.profile.ratingLabel[reward.ratedElo.variant]}
+              {copy.gameplay.clock.rating(
+                copy.profile.ratingLabel[reward.ratedElo.variant],
+                copy.gameplay.clock.category[
+                  reward.ratedElo.timeCategory ?? "untimed"
+                ],
+              )}
             </span>
             <strong className="font-display text-xl tabular-nums">
               {copy.gameplay.integer(reward.ratedElo.before)} →{" "}

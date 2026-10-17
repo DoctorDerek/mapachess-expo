@@ -12,6 +12,11 @@ import {
 import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
 import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
+import {
+  timeCategory,
+  timeControlNotation,
+  UNTIMED,
+} from "@mapachess/match/time-control"
 import { samePlayerAppearance } from "@mapachess/profile/player-appearance"
 import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
@@ -19,6 +24,7 @@ import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
+import { playerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import {
   selectWebMatchSession,
@@ -196,11 +202,16 @@ export default function WebGame({
     requestedSetup.mode === "challenge" ||
     requestedSetup.opponentId !== undefined
       ? requestedSetup
-      : createMatchSetupForMode(
-          { mode: requestedSetup.mode, variant },
-          playerData.settings.challengeSetup,
-          selectDefaultStoryOpponent(playerData.storyProgress, variant),
-        )
+      : {
+          ...createMatchSetupForMode(
+            { mode: requestedSetup.mode, variant },
+            playerData.settings.challengeSetup,
+            selectDefaultStoryOpponent(playerData.storyProgress, variant),
+          ),
+          ...(requestedSetup.timeControl === undefined
+            ? {}
+            : { timeControl: requestedSetup.timeControl }),
+        }
   const session = selectWebMatchSession(snapshot)
   useEffect(() => {
     if (
@@ -244,7 +255,13 @@ export default function WebGame({
   }
   const requestSetupAfterResult = (setup: MatchSetup): void => {
     if (!resultActionAvailable()) return
-    actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+    actor.send({
+      type: "MATCH_SESSION.SETUP_REQUESTED",
+      setup: {
+        ...setup,
+        ...(session === null ? {} : { timeControl: session.match.timeControl }),
+      },
+    })
   }
   const requestReplayAfterResult = (): void => {
     if (!resultActionAvailable()) return
@@ -325,6 +342,7 @@ export default function WebGame({
         inert={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
       >
         <WebMatchSetup
+          ratings={playerData.ratings}
           playerAppearance={playerData.appearance}
           onPlayerAnimalChanged={(animal) => {
             if (profileActor.getSnapshot().matches("ready"))
@@ -341,9 +359,11 @@ export default function WebGame({
                 ? "difficulty"
                 : snapshot.context.overlays.includes("setup-hints")
                   ? "hints"
-                  : snapshot.context.overlays.includes("setup-player")
-                    ? "player"
-                    : null
+                  : snapshot.context.overlays.includes("setup-time-control")
+                    ? "time-control"
+                    : snapshot.context.overlays.includes("setup-player")
+                      ? "player"
+                      : null
           }
           onEditorOpened={(editor) => navigation.open(`setup-${editor}`)}
           onEditorClosed={navigation.back}
@@ -351,7 +371,7 @@ export default function WebGame({
           challengeHistory={playerData.challengeHistory}
           autoHintMode={playerData.settings.autoHintMode}
           disabled={!profileReady && !openingFreshMatch}
-          key={`${requestedSetup.mode}:${variant}:${requestedSetup.mode === "story" ? (requestedSetup.opponentId ?? "default") : "challenge"}`}
+          key={`${requestedSetup.mode}:${variant}:${requestedSetup.mode === "story" ? (requestedSetup.opponentId ?? "default") : "challenge"}:${timeControlNotation(requestedSetup.timeControl ?? UNTIMED)}`}
           onAutoHintModeChanged={(autoHintMode) => {
             if (session !== null)
               session.actor.send({
@@ -460,7 +480,10 @@ export default function WebGame({
             mode={session.match.mode}
             playerElo={
               savedPlayerData?.ratings[
-                session.match.startingPosition.variant
+                playerRatingId(
+                  session.match.startingPosition.variant,
+                  timeCategory(session.match.timeControl),
+                )
               ] ?? session.match.playerEloAtStart
             }
             runtime={session.runtime}
