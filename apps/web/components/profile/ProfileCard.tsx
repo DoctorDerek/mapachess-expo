@@ -178,6 +178,11 @@ export default function ProfileCard({
             >
               <dt className="text-[max(1rem,3.6cqw)] leading-tight font-bold">
                 {label}
+                {kind === "level" ? null : (
+                  <span className="block text-base">
+                    {copy.gameplay.clock.category.untimed}
+                  </span>
+                )}
               </dt>
               <dd className="font-display mt-1 text-[max(1.75rem,7cqw)] leading-none break-all">
                 {value}
