@@ -8,18 +8,21 @@ import {
   type MatchMode,
 } from "./durableMatchRecord.js"
 import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
+import type { TimeControl } from "./timeControl.js"
 
-export type MatchSetup =
-  | Readonly<{
-      mode: "story"
-      variant: MatchVariant
-      opponentId?: ImplementedDurableOpponentId
-    }>
-  | Readonly<{
-      mode: "challenge"
-      challengeSetup: ChallengeSetup
-      displayedChess960PositionId?: Chess960PositionId
-    }>
+export type MatchSetup = Readonly<{ timeControl?: TimeControl }> &
+  (
+    | Readonly<{
+        mode: "story"
+        variant: MatchVariant
+        opponentId?: ImplementedDurableOpponentId
+      }>
+    | Readonly<{
+        mode: "challenge"
+        challengeSetup: ChallengeSetup
+        displayedChess960PositionId?: Chess960PositionId
+      }>
+  )
 
 export type MatchModeSelection = Readonly<{
   mode: MatchMode

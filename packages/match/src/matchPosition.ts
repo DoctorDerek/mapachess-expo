@@ -171,3 +171,11 @@ export const createInitialMatchPosition = (
   }
   return result.position
 }
+
+export const hasInsufficientMatingMaterial = (
+  position: MatchPosition,
+  color: MatchColor,
+): boolean => {
+  const setup = parseFen(position.fen).unwrap()
+  return Chess.fromSetup(setup).unwrap().hasInsufficientMaterial(color)
+}
