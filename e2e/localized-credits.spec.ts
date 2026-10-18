@@ -127,9 +127,27 @@ for (const width of [320, 1280]) {
           (element) => element.scrollWidth <= element.clientWidth,
         ),
       ).toBe(true)
+      const textSpacing = await page.addStyleTag({
+        content: ":root { letter-spacing: 0.12em; word-spacing: 0.16em; }",
+      })
+      await expect
+        .poll(() =>
+          credits.evaluate((element) =>
+            Number.parseFloat(getComputedStyle(element).letterSpacing),
+          ),
+        )
+        .toBeGreaterThan(0)
+      await expect
+        .poll(() =>
+          credits.evaluate(
+            (element) => element.scrollWidth <= element.clientWidth,
+          ),
+        )
+        .toBe(true)
       await page.screenshot({
         path: testInfo.outputPath("spanish-credits-text-200-percent.png"),
       })
+      await textSpacing.evaluate((element) => element.remove())
       await textScale.evaluate((element) => element.remove())
     }
     await page.getByRole("combobox", { name: "Idioma" }).selectOption("en")
