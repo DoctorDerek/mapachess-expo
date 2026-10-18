@@ -111,7 +111,7 @@ export default function ProfileSettingsPanel({
   return (
     <div
       aria-busy={busy}
-      className="mx-auto w-full max-w-3xl aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
+      className="mx-auto w-full max-w-3xl wrap-anywhere aria-busy:[&_button:disabled]:opacity-100 aria-busy:[&_label:has(:disabled)]:opacity-100"
       id="profile-settings-panel"
     >
       <header className="bg-mapachito-white sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 py-2">
