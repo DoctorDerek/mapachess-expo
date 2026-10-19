@@ -462,10 +462,7 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
   await appearanceSection(page).screenshot({
     path: testInfo.outputPath("cosunosuke-settings.png"),
   })
-  await page
-    .locator("summary")
-    .filter({ hasText: /^Credits$/ })
-    .click()
+  await page.getByRole("button", { name: "Credits", exact: true }).click()
   const credit = page.getByRole("listitem").filter({
     has: page.getByRole("heading", {
       name: "32-bit Chess Asset Pack · Cosunosuke",
@@ -478,6 +475,9 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
     "https://cosunosuke.itch.io/31-bir-chess-asset-pack",
   )
   await expect(credit).toContainText("no standalone asset redistribution")
+  await page
+    .getByRole("button", { name: "Back to Settings", exact: true })
+    .click()
   await page.setViewportSize({ width: 320, height: 915 })
   await appearanceSection(page).screenshot({
     path: testInfo.outputPath("cosunosuke-settings-narrow.png"),

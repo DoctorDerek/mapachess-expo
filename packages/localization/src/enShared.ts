@@ -87,9 +87,14 @@ const shared = {
     hurt_high: "More Hurt",
     eager_peak: "Most Eager",
   },
+  settingsControls: {
+    close: "Close",
+    back: "Back to Settings",
+    autoHints: "Auto-Hints",
+    explainAutoHints: "Explain Auto-Hints",
+  },
   creditControls: Object.freeze({
     title: "Credits",
-    close: "Close Credits",
     externalLink: "opens in a new tab",
     labels: {
       mapachitoIdentity: "Mapachito ice cream",

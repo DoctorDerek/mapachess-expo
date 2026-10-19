@@ -1,28 +1,21 @@
 "use client"
 
 import localizeArtCredits from "@mapachess/match-presentation/art-credits"
-import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
+import SettingsView from "./SettingsView"
 
 export default function ArtCredits({
-  open,
-  onOpen,
   onClose,
-}: Readonly<{ open: boolean; onOpen: () => void; onClose: () => void }>) {
+}: Readonly<{ onClose: () => void }>) {
   const copy = useMapachessCopy()
   return (
-    <details open={open} className="text-mapachito-charcoal mt-7 text-base">
-      <summary
-        className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
-        onClick={(event) => {
-          event.preventDefault()
-          if (open) onClose()
-          else onOpen()
-        }}
-      >
-        {copy.shared.creditControls.title}
-      </summary>
-      <ul className="mt-4 grid gap-6">
+    <SettingsView
+      title={copy.shared.creditControls.title}
+      closeLabel={copy.shared.settingsControls.back}
+      onClose={onClose}
+      focusHeading
+    >
+      <ul className="mt-5 grid gap-6 text-base leading-relaxed">
         {localizeArtCredits(copy).map((credit) => (
           <li key={credit.id}>
             <h3 className="font-bold">
@@ -69,14 +62,6 @@ export default function ArtCredits({
           </li>
         ))}
       </ul>
-      <MapachessButton
-        variant="secondary"
-        type="button"
-        onClick={onClose}
-        className="mt-6"
-      >
-        {copy.shared.creditControls.close}
-      </MapachessButton>
-    </details>
+    </SettingsView>
   )
 }

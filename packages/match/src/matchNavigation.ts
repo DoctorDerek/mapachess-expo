@@ -5,6 +5,7 @@ export type MatchNavigationOverlay =
   | "match-menu"
   | "match-details"
   | "settings"
+  | "auto-hints-help"
   | "classifications"
   | "about-elo"
   | "credits"
@@ -37,6 +38,7 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "match-menu",
   "match-details",
   "settings",
+  "auto-hints-help",
   "classifications",
   "about-elo",
   "credits",
@@ -104,6 +106,7 @@ export function eligibleMatchNavigationOverlays(
       overlay === "dressing-room" ||
       overlay === "profile-card" ||
       ((overlay === "classifications" ||
+        overlay === "auto-hints-help" ||
         overlay === "credits" ||
         overlay === "about-elo" ||
         overlay.startsWith("reset-")) &&

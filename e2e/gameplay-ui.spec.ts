@@ -207,13 +207,13 @@ for (const width of [320, 1280]) {
     await page.goForward()
     await expect(settings).toBeVisible()
     expect(await board.boundingBox()).toEqual(bounds)
-    await page.getByText("Credits", { exact: true }).click()
+    await page.getByRole("button", { name: "Credits", exact: true }).click()
     await expect(
-      page.getByRole("button", { name: "Close Credits", exact: true }),
+      page.getByRole("button", { name: "Back to Settings", exact: true }),
     ).toBeVisible()
     await page.keyboard.press("Escape")
     await expect(
-      page.getByRole("button", { name: "Close Credits", exact: true }),
+      page.getByRole("button", { name: "Back to Settings", exact: true }),
     ).toHaveCount(0)
     await expect(settings).toBeVisible()
     await page.keyboard.press("Escape")
