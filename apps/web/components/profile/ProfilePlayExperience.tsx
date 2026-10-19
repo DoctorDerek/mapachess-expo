@@ -162,8 +162,15 @@ function ReadyPlayExperience({
         />
         {settingsOpen ? (
           <MapachessDialog
-            label={copy.profile.settingsTitle}
+            label={
+              snapshot.context.overlays.at(-1) === "credits"
+                ? copy.shared.creditControls.title
+                : snapshot.context.overlays.at(-1) === "auto-hints-help"
+                  ? copy.shared.settingsControls.autoHints
+                  : copy.profile.settingsTitle
+            }
             onClose={navigation.back}
+            fixedContent
           >
             <RecoverableView
               title={messages.settingsCouldNotBeDisplayed}

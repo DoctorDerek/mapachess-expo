@@ -195,6 +195,12 @@ const emergencyGameCopy = {
       hurt_high: UNAVAILABLE_TEXT,
       eager_peak: UNAVAILABLE_TEXT,
     },
+    settingsControls: {
+      close: "Close",
+      back: "Back to Settings",
+      autoHints: "Auto-Hints",
+      explainAutoHints: "Explain Auto-Hints",
+    },
     creditControls: {
       labels: {
         mapachitoIdentity: UNAVAILABLE_TEXT,
@@ -215,7 +221,6 @@ const emergencyGameCopy = {
         `${license}; ${terms}`,
       pieceSource: unavailableText,
       title: "Credits",
-      close: "Close",
       externalLink: UNAVAILABLE_TEXT,
     },
   },

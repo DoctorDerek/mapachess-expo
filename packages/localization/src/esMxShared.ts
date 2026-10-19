@@ -91,9 +91,14 @@ const shared = {
     hurt_high: "Más dolor",
     eager_peak: "Máximo entusiasmo",
   },
+  settingsControls: {
+    close: "Cerrar",
+    back: "Volver a Configuración",
+    autoHints: "Pistas automáticas",
+    explainAutoHints: "Explicar las pistas automáticas",
+  },
   creditControls: Object.freeze({
     title: "Créditos",
-    close: "Cerrar créditos",
     externalLink: "se abre en una pestaña nueva",
     labels: {
       mapachitoIdentity: "Helado de Mapachito",

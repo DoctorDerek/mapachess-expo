@@ -21,11 +21,11 @@ for (const width of [320, 1280]) {
     await page
       .getByRole("button", { name: "Configuración", exact: true })
       .click()
-    const credits = page
-      .locator("details")
-      .filter({ has: page.locator("summary", { hasText: /^Créditos$/ }) })
-    await credits.locator("summary").press("Enter")
-    await expect(credits).toHaveAttribute("open", "")
+    const credits = page.getByRole("dialog", { name: "Créditos", exact: true })
+    await page
+      .getByRole("button", { name: "Créditos", exact: true })
+      .press("Enter")
+    await expect(credits).toBeVisible()
     await expect(credits.getByRole("heading", { level: 3 })).toHaveCount(14)
     const original = await savedProfile(page)
     for (const title of [
@@ -101,14 +101,14 @@ for (const width of [320, 1280]) {
     ).toBeVisible()
     await expect(credits.getByRole("link", { name: /^Madera ·/ })).toBeVisible()
     await expect(credits.getByRole("link", { name: /^Hielo ·/ })).toBeVisible()
-    const report = await new AxeBuilder({ page })
-      .include("dialog details[open]")
-      .analyze()
+    const report = await new AxeBuilder({ page }).include("dialog").analyze()
     expect(report.violations).toEqual([])
     await page.screenshot({
       path: testInfo.outputPath(`spanish-credits-permission-${width}.png`),
     })
-    await credits.locator("summary").scrollIntoViewIfNeeded()
+    await credits
+      .getByRole("heading", { name: "Créditos", exact: true })
+      .scrollIntoViewIfNeeded()
     await page.screenshot({
       path: testInfo.outputPath(`spanish-credits-start-${width}.png`),
     })
@@ -150,7 +150,11 @@ for (const width of [320, 1280]) {
       await textSpacing.evaluate((element) => element.remove())
       await textScale.evaluate((element) => element.remove())
     }
+    await credits
+      .getByRole("button", { name: "Volver a Configuración", exact: true })
+      .click()
     await page.getByRole("combobox", { name: "Idioma" }).selectOption("en")
+    await page.getByRole("button", { name: "Credits", exact: true }).click()
     await expect(
       page.getByRole("heading", {
         name: "Mapachito ice cream · Dr. Derek Austin",
@@ -161,13 +165,17 @@ for (const width of [320, 1280]) {
       page.getByRole("link", { name: /^Queen · Game-icons chess icons/ }),
     ).toBeVisible()
     await page
+      .getByRole("button", { name: "Back to Settings", exact: true })
+      .click()
+    await page
       .getByRole("combobox", { name: "Language" })
       .selectOption("es-419")
+    await page.getByRole("button", { name: "Créditos", exact: true }).click()
     await expect
       .poll(() => savedProfile(page))
       .toEqual({ ...original, revision: original.revision + 2 })
     const close = credits.getByRole("button", {
-      name: "Cerrar créditos",
+      name: "Volver a Configuración",
       exact: true,
     })
     await permission.focus()
@@ -180,7 +188,7 @@ for (const width of [320, 1280]) {
       await page.keyboard.press("Tab")
     await expect(close).toBeFocused()
     await page.keyboard.press("Enter")
-    await expect(credits).not.toHaveAttribute("open")
+    await expect(credits).toHaveCount(0)
     await page
       .getByRole("button", { name: "Cerrar configuración", exact: true })
       .click()
@@ -192,7 +200,7 @@ for (const width of [320, 1280]) {
     await page
       .getByRole("button", { name: "Configuración", exact: true })
       .click()
-    await credits.locator("summary").click()
+    await page.getByRole("button", { name: "Créditos", exact: true }).click()
     await expect(
       credits.getByRole("heading", {
         name: "Helado de Mapachito · Dr. Derek Austin",

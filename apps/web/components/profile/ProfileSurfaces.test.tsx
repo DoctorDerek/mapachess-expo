@@ -98,7 +98,11 @@ describe("web player-data controls", () => {
     expect(hintFieldset).not.toMatch(/^<fieldset[^>]* disabled=""/)
     for (const choice of hintChoices ?? [])
       expect(choice).not.toContain(' disabled=""')
-    expect(markup).not.toMatch(/<button[^>]* disabled=""[^>]*>Close Settings/)
+    const close = markup.match(
+      /<button\b[^>]*aria-label="Close Settings"[^>]*>/,
+    )?.[0]
+    expect(close).toBeDefined()
+    expect(close).not.toContain('disabled=""')
     expect(markup).toContain('class="sr-only" role="status"')
     expect(markup).toContain("Saving your hint preference…")
   })
@@ -128,12 +132,10 @@ describe("web player-data controls", () => {
   it("credits both existing and prepared art with safe external source and license links", () => {
     const markup = renderToStaticMarkup(
       createElement(ArtCredits, {
-        open: true,
-        onOpen: vi.fn(),
         onClose: vi.fn(),
       }),
     )
-    expect(markup).toContain("<details open=")
+    expect(markup).not.toContain("<details")
     for (const creator of [
       "SeethingSwarm",
       "CaptainSkolot",
@@ -148,7 +150,7 @@ describe("web player-data controls", () => {
     ])
       expect(markup).toContain(creator)
     expect(markup).toContain("CC0 1.0")
-    expect(markup).toContain("Close Credits")
+    expect(markup).toContain("Back to Settings")
     expect(markup).toContain('rel="noopener noreferrer"')
     expect(markup).toContain("opens in a new tab")
   })

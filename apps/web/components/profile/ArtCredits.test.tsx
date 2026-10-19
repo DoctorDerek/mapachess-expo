@@ -18,12 +18,12 @@ describe("Credits uses the selected language without changing attribution", () =
     (locale) => {
       const copy = loadCatalog(locale)
       vi.mocked(useMapachessCopy).mockReturnValue(copy)
-      const markup = renderToStaticMarkup(
-        <ArtCredits open onOpen={vi.fn()} onClose={vi.fn()} />,
-      )
+      const markup = renderToStaticMarkup(<ArtCredits onClose={vi.fn()} />)
       expect(markup.match(/<h3\b/g)).toHaveLength(14)
       expect(markup).toContain(copy.shared.creditControls.title)
-      expect(markup).toContain(copy.shared.creditControls.close)
+      expect(markup).toContain(copy.shared.settingsControls.back)
+      expect(markup).not.toContain("<details")
+      expect(markup).not.toContain("<summary")
       for (const credit of localizeArtCredits(copy)) {
         expect(markup).toContain(`${credit.title} · ${credit.creator}`)
         expect(markup).toContain(credit.contribution)
@@ -42,22 +42,18 @@ describe("Credits uses the selected language without changing attribution", () =
     },
   )
 
-  it("still renders attribution links and an enabled Close action when both catalogs are missing", () => {
+  it("still renders attribution links and an enabled return action when both catalogs are missing", () => {
     const reader = createCatalogReader({ en: () => null, "es-419": () => null })
     vi.mocked(useMapachessCopy).mockReturnValue(reader.load("es-419"))
-    const onOpen = vi.fn()
     const onClose = vi.fn()
-    const markup = renderToStaticMarkup(
-      <ArtCredits open onOpen={onOpen} onClose={onClose} />,
-    )
+    const markup = renderToStaticMarkup(<ArtCredits onClose={onClose} />)
     expect(markup.match(/<h3\b/g)).toHaveLength(14)
     expect(markup).toContain("CC BY 4.0")
     expect(markup).toContain(
       'href="https://game-icons.net/1x1/skoll/chess-queen.html"',
     )
-    expect(markup).toContain(">Close</button>")
+    expect(markup).toContain(">Back to Settings</button>")
     expect(markup).not.toContain('disabled=""')
-    expect(onOpen).not.toHaveBeenCalled()
     expect(onClose).not.toHaveBeenCalled()
     expect(
       reader.health().issues.some(({ recovery }) => recovery === "emergency"),

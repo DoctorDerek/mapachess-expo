@@ -4,6 +4,7 @@ import {
   AUTO_HINT_MODES,
   type AutoHintMode,
 } from "@mapachess/match/auto-hint-mode"
+import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 
@@ -11,14 +12,17 @@ export type AutoHintModeChoicesProps = Readonly<{
   autoHintMode: AutoHintMode
   disabled: boolean
   onAutoHintModeChanged: (mode: AutoHintMode) => void
+  onExplain?: () => void
 }>
 
 export default function AutoHintModeChoices({
   autoHintMode,
   disabled,
   onAutoHintModeChanged,
+  onExplain,
 }: AutoHintModeChoicesProps) {
-  const copy = useMapachessCopy().setup
+  const catalog = useMapachessCopy()
+  const copy = catalog.setup
   const groupId = useId()
 
   return (
@@ -28,7 +32,18 @@ export default function AutoHintModeChoices({
       disabled={disabled}
     >
       <legend className="text-mapachito-charcoal text-lg font-black">
-        {copy.betterHints}
+        <span className="flex flex-wrap items-center gap-3">
+          {copy.betterHints}
+          {onExplain === undefined ? null : (
+            <MapachessButton
+              aria-label={catalog.shared.settingsControls.explainAutoHints}
+              onClick={onExplain}
+              variant="secondary"
+            >
+              <span aria-hidden="true">?</span>
+            </MapachessButton>
+          )}
+        </span>
       </legend>
       <p
         className="text-mapachito-charcoal mt-2 text-sm leading-relaxed"
@@ -47,7 +62,11 @@ export default function AutoHintModeChoices({
               key={mode}
             >
               <input
-                aria-describedby={`${controlId}-description ${controlId}-medal`}
+                aria-describedby={
+                  onExplain === undefined
+                    ? `${controlId}-description ${controlId}-medal`
+                    : `${controlId}-medal`
+                }
                 aria-labelledby={`${controlId}-label`}
                 checked={autoHintMode === mode}
                 className="accent-mapachito-violet focus-visible:outline-mapachito-violet mt-1 size-5 shrink-0"
@@ -64,12 +83,14 @@ export default function AutoHintModeChoices({
                 >
                   {choice.label}
                 </span>
-                <span
-                  className="text-mapachito-charcoal mt-1 block text-sm leading-relaxed"
-                  id={`${controlId}-description`}
-                >
-                  {choice.description}
-                </span>
+                {onExplain === undefined ? (
+                  <span
+                    className="text-mapachito-charcoal mt-1 block text-sm leading-relaxed"
+                    id={`${controlId}-description`}
+                  >
+                    {choice.description}
+                  </span>
+                ) : null}
                 <span
                   className="text-mapachito-violet mt-2 block text-sm font-bold"
                   id={`${controlId}-medal`}

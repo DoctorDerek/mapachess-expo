@@ -15,22 +15,22 @@ test("retains nested Credits Back and Forward after reloading Settings", async (
 }) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Settings", exact: true }).click()
-  const credits = page
-    .locator("details")
-    .filter({ has: page.locator("summary").filter({ hasText: /^Credits$/ }) })
-  await page.getByText("Credits", { exact: true }).click()
-  await expect(credits).toHaveAttribute("open", "")
+  const credits = page.getByRole("dialog", { name: "Credits", exact: true })
+  await page.getByRole("button", { name: "Credits", exact: true }).click()
+  await expect(credits).toBeVisible()
   await page.reload()
-  await expect(credits).toHaveAttribute("open", "")
-  await page.getByRole("button", { name: "Close Credits", exact: true }).click()
-  await expect(credits).not.toHaveAttribute("open")
+  await expect(credits).toBeVisible()
+  await page
+    .getByRole("button", { name: "Back to Settings", exact: true })
+    .click()
+  await expect(credits).toHaveCount(0)
   await expect(
     page.getByRole("button", { name: "Close Settings", exact: true }),
   ).toBeVisible()
   await page.goForward()
-  await expect(credits).toHaveAttribute("open", "")
+  await expect(credits).toBeVisible()
   await page.goBack()
-  await expect(credits).not.toHaveAttribute("open")
+  await expect(credits).toHaveCount(0)
   await page.goBack()
   await expect(
     page.getByRole("button", { name: "Settings", exact: true }),
