@@ -3,6 +3,53 @@ import { expect } from "@playwright/test"
 import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
+for (const spanish of [false, true]) {
+  test(`${spanish ? "Spanish" : "English"} Settings reflows enlarged text without losing controls or changing saved data`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: 320, height: 800 })
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Settings", exact: true }).click()
+    if (spanish)
+      await page
+        .getByRole("combobox", { name: "Language" })
+        .selectOption("es-419")
+    const settings = page.getByRole("dialog", {
+      name: spanish ? "Personaliza tu juego" : "Your game customization",
+      exact: true,
+    })
+    await expect(settings).toBeVisible()
+    const original = await savedProfile(page)
+    await page.addStyleTag({ content: ":root { font-size: 200%; }" })
+    await expect
+      .poll(() =>
+        settings.evaluate((element) => getComputedStyle(element).fontSize),
+      )
+      .toBe("32px")
+    await expect
+      .poll(() =>
+        settings.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      )
+      .toBe(true)
+    const close = settings.getByRole("button", {
+      name: spanish ? "Cerrar configuración" : "Close Settings",
+      exact: true,
+    })
+    await close.focus()
+    await expect(close).toBeInViewport({ ratio: 1 })
+    await expect(close).toBeFocused()
+    await page.screenshot({
+      path: testInfo.outputPath("settings-text-200-percent.png"),
+    })
+    await close.press("Enter")
+    await expect(settings).toHaveCount(0)
+    expect(await savedProfile(page)).toEqual(original)
+  })
+}
+
 for (const width of [320, 1280]) {
   test(`previews customization inline and keeps the ${width}px match brief focused on its participants`, async ({
     page,
