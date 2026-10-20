@@ -243,8 +243,8 @@ export default function ProfileDressingRoom({
                 aria-pressed={selected}
                 onClick={() => onChange(appearance)}
                 className={cx(
-                  "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
-                  selected && "ring-3 ring-[#71dfe7]",
+                  "text-mapachito-white bg-mapachito-surface cursor-pointer rounded-lg px-2 py-2 text-base font-bold",
+                  selected && "ring-profile-card-cyan ring-3",
                 )}
               >
                 <ProfileArtwork
