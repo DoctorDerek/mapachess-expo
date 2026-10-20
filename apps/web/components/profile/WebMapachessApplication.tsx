@@ -34,7 +34,7 @@ import MapachessLocaleProvider, {
   useMapachessCopy,
   useMapachessLocale,
 } from "./MapachessLocaleProvider"
-import FullPageProfilePanel, { ImportBackupButton } from "./ProfileFoundation"
+import FullPageProfilePanel from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
 import ProfilePlayExperience, {

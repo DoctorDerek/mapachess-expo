@@ -35,11 +35,6 @@ const participantForColor = (
 ): MatchPresentationParticipant =>
   color === playerColor ? "player" : "opponent"
 
-const opposingParticipant = (
-  participant: MatchPresentationParticipant,
-): MatchPresentationParticipant =>
-  participant === "player" ? "opponent" : "player"
-
 const interactionPhase = (
   kind: "capture" | "check",
   attacker: MatchPresentationParticipant,
@@ -79,7 +74,6 @@ export const deriveConclusionPresentationPhase = ({
   }
 
   const winner = participantForColor(conclusion.winner, playerColor)
-  const loser = opposingParticipant(winner)
   const victory: MatchParticipantReaction = Object.freeze({
     family: "victory",
   })
