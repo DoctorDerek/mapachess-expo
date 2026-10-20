@@ -19,6 +19,7 @@ import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_WIDTH,
 } from "../../lib/presentation/profileCardFormat"
+import loadProfileCardFont from "../../lib/presentation/profileCardTypography"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 
 export function ProfileArtwork({
@@ -49,8 +50,11 @@ export function ProfileArtwork({
     let last = -1
     let cleanup: (() => void) | undefined
     setFailure(false)
-    void loadCardArtwork(input.appearance, input.content.animal)
-      .then((artwork) => {
+    void Promise.all([
+      loadCardArtwork(input.appearance, input.content.animal),
+      exportPreview ? loadProfileCardFont() : undefined,
+    ])
+      .then(([artwork, fontFamily]) => {
         if (cancelled) return
         const tick = (time: number): void => {
           handle = undefined
@@ -63,7 +67,8 @@ export function ProfileArtwork({
             if (frame !== last) {
               last = frame
               context.clearRect(0, 0, element.width, element.height)
-              if (exportPreview) drawProfileCard(context, artwork, input, frame)
+              if (exportPreview)
+                drawProfileCard(context, artwork, input, frame, fontFamily)
               else
                 drawCardCharacters(
                   context,
@@ -158,10 +163,10 @@ export default function ProfileCard({
         facts.standard,
         facts.chess960,
       )}
-      className="[container-type:inline-size] shadow-[0.375rem_0.375rem_0_#009dae]"
+      className="font-home [container-type:inline-size] shadow-[0.375rem_0.375rem_0_#009dae]"
     >
-      <div className="grid min-h-[max(15rem,56cqw)] grid-cols-[minmax(0,2fr)_minmax(0,3fr)] overflow-hidden text-[#1e1e1e]">
-        <dl className="flex flex-col justify-evenly gap-4 bg-[#ffe652] p-[max(0.75rem,3cqw)]">
+      <div className="flex min-h-[max(15rem,56cqw)] flex-wrap text-[#1e1e1e]">
+        <dl className="flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-4 bg-[#ffe652] p-[max(0.75rem,3cqw)]">
           {[
             ["level", copy.profile.level, facts.level],
             ["standard", copy.profile.ratingLabel.standard, facts.standard],
@@ -184,13 +189,13 @@ export default function ProfileCard({
                   </span>
                 )}
               </dt>
-              <dd className="font-display mt-1 text-[max(1.75rem,7cqw)] leading-none break-all">
+              <dd className="mt-1 text-[max(2rem,7cqw)] leading-none font-black break-all tabular-nums">
                 {value}
               </dd>
             </div>
           ))}
         </dl>
-        <div className="relative bg-[#71dfe7] bg-[radial-gradient(ellipse_at_50%_70%,#c2fff9_0_66%,transparent_66%)]">
+        <div className="relative min-h-58 min-w-0 flex-[3_1_9rem] bg-[#71dfe7] bg-[radial-gradient(ellipse_at_50%_70%,#c2fff9_0_66%,transparent_66%)]">
           <ProfileArtwork input={input} fitStage />
         </div>
       </div>

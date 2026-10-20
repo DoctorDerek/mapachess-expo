@@ -471,6 +471,9 @@ const emergencyGameCopy = {
     mateTable: unavailableRows,
   },
   credits: {
+    nunitoSans: {
+      contribution: UNAVAILABLE_TEXT,
+    },
     mapachitoIdentity: {
       contribution: UNAVAILABLE_TEXT,
     },

@@ -19,7 +19,7 @@ describe("Credits uses the selected language without changing attribution", () =
       const copy = loadCatalog(locale)
       vi.mocked(useMapachessCopy).mockReturnValue(copy)
       const markup = renderToStaticMarkup(<ArtCredits onClose={vi.fn()} />)
-      expect(markup.match(/<h3\b/g)).toHaveLength(14)
+      expect(markup.match(/<h3\b/g)).toHaveLength(15)
       expect(markup).toContain(copy.shared.creditControls.title)
       expect(markup).toContain(copy.shared.settingsControls.back)
       expect(markup).not.toContain("<details")
@@ -47,7 +47,7 @@ describe("Credits uses the selected language without changing attribution", () =
     vi.mocked(useMapachessCopy).mockReturnValue(reader.load("es-419"))
     const onClose = vi.fn()
     const markup = renderToStaticMarkup(<ArtCredits onClose={onClose} />)
-    expect(markup.match(/<h3\b/g)).toHaveLength(14)
+    expect(markup.match(/<h3\b/g)).toHaveLength(15)
     expect(markup).toContain("CC BY 4.0")
     expect(markup).toContain(
       'href="https://game-icons.net/1x1/skoll/chess-queen.html"',

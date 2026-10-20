@@ -11,6 +11,7 @@ import {
   type PlayerAppearance,
 } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import { PROFILE_CARD_FALLBACK_FONT } from "./profileCardTypography"
 import resolveWebOpponentPresentation from "./webOpponentPresentation"
 import {
   LICENSED_PRESENTATION_ASSETS_ENABLED,
@@ -187,6 +188,7 @@ export function drawProfileCard(
   artwork: CardArtwork,
   input: CardInput,
   frame: number,
+  fontFamily = PROFILE_CARD_FALLBACK_FONT,
 ): void {
   const { width, height } = context.canvas
   const { content, facts } = input
@@ -255,7 +257,7 @@ export function drawProfileCard(
     const left = width * 0.04
     const available = factsWidth - width * 0.08
     const maximumLabelFontSize = Math.round(height * 0.061)
-    context.font = `bold ${maximumLabelFontSize}px "Trebuchet MS", sans-serif`
+    context.font = `700 ${maximumLabelFontSize}px ${fontFamily}`
     const widestLabel = Math.max(
       ...items.map(({ label }) => context.measureText(label).width),
     )
@@ -263,11 +265,11 @@ export function drawProfileCard(
       maximumLabelFontSize * Math.min(1, available / widestLabel)
     items.forEach(({ value, label, kind }, index) => {
       const center = (pictureHeight * (index + 0.5)) / items.length
-      context.font = `bold ${labelFontSize}px "Trebuchet MS", sans-serif`
+      context.font = `700 ${labelFontSize}px ${fontFamily}`
       if (kind === "level") {
         context.fillText(label, left, center)
         const labelWidth = context.measureText(label).width + width * 0.01
-        context.font = `${Math.round(height * 0.12)}px Impact, sans-serif`
+        context.font = `900 ${Math.round(height * 0.12)}px ${fontFamily}`
         context.fillText(
           String(value),
           left + labelWidth,
@@ -277,14 +279,14 @@ export function drawProfileCard(
         return
       }
       context.fillText(label, left, center + height * 0.052)
-      context.font = `bold ${Math.round(height * 0.045)}px "Trebuchet MS", sans-serif`
+      context.font = `700 ${Math.round(height * 0.045)}px ${fontFamily}`
       context.fillText(
         catalog.gameplay.clock.category.untimed,
         left,
         center + height * 0.105,
         available,
       )
-      context.font = `${Math.round(height * 0.12)}px Impact, sans-serif`
+      context.font = `900 ${Math.round(height * 0.12)}px ${fontFamily}`
       context.fillText(String(value), left, center - height * 0.037, available)
     })
   }
@@ -293,7 +295,7 @@ export function drawProfileCard(
   context.fillStyle = "#fff"
   context.textAlign = "center"
   context.textBaseline = "middle"
-  context.font = `bold ${Math.round(width * 0.035)}px "Trebuchet MS", sans-serif`
+  context.font = `700 ${Math.round(width * 0.035)}px ${fontFamily}`
   context.fillText(
     copy.playFree,
     width / 2,

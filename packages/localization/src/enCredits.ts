@@ -1,4 +1,7 @@
 const credits = {
+  nunitoSans: {
+    contribution: "Home and profile-card typography",
+  },
   mapachitoIdentity: {
     contribution: "Original first-arrival animation and still artwork",
   },

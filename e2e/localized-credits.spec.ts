@@ -26,7 +26,7 @@ for (const width of [320, 1280]) {
       .getByRole("button", { name: "Créditos", exact: true })
       .press("Enter")
     await expect(credits).toBeVisible()
-    await expect(credits.getByRole("heading", { level: 3 })).toHaveCount(14)
+    await expect(credits.getByRole("heading", { level: 3 })).toHaveCount(15)
     const original = await savedProfile(page)
     for (const title of [
       "Helado de Mapachito · Dr. Derek Austin",

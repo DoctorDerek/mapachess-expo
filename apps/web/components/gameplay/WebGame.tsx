@@ -1,6 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useRef, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
@@ -101,12 +102,16 @@ function GameFrame({
       onClick={onSettingsRequested}
       ref={settingsButtonRef}
       type="button"
+      className={cx(home && "max-w-full min-w-0 wrap-break-word")}
     >
       {messages.settings}
     </MapachessButton>
   )
   return (
-    <MapachessShell spacing={matchSessionActive ? "match" : "page"}>
+    <MapachessShell
+      spacing={matchSessionActive ? "match" : home ? "home" : "page"}
+      className={cx(home && "font-home")}
+    >
       {matchSessionActive ? null : (
         <header
           inert={activityMessage !== null}
@@ -117,9 +122,11 @@ function GameFrame({
               id="game-modes-title"
               ref={homeTitle}
               tabIndex={-1}
-              className="text-mapachito-white text-2xl leading-tight font-black outline-none"
+              className="text-mapachito-white text-[2rem] leading-[1.05] font-black tracking-[-0.025em] outline-none"
             >
-              Mapachess
+              Mapa
+              <wbr />
+              chess
             </h1>
           ) : (
             <MapachessWordmark />
