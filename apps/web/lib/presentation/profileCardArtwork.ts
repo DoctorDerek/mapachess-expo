@@ -11,20 +11,21 @@ import {
   type PlayerAppearance,
 } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import { PROFILE_CARD_FALLBACK_FONT } from "./profileCardTypography"
+import {
+  PROFILE_CARD_HEIGHT,
+  PROFILE_CARD_LAYOUT,
+  PROFILE_CARD_WIDTH,
+} from "./profileCardFormat"
+import {
+  PROFILE_CARD_FALLBACK_FONT,
+  PROFILE_CARD_TYPOGRAPHY,
+} from "./profileCardTypography"
 import resolveWebOpponentPresentation from "./webOpponentPresentation"
 import {
   LICENSED_PRESENTATION_ASSETS_ENABLED,
   presentationAssetSource,
 } from "./webPresentationAssets"
 
-export const CARD_PALETTE = Object.freeze({
-  blue: "#009DAE",
-  cyan: "#71DFE7",
-  mint: "#C2FFF9",
-  yellow: "#FFE652",
-  ink: "#1e1e1e",
-})
 export type CardContent = Readonly<{
   level: boolean
   standard: boolean
@@ -55,6 +56,14 @@ export const cardFacts = (data: MapachessPlayerData): CardFacts => ({
   chess960: Math.round(data.ratings.chess960),
 })
 export type CardArtwork = Readonly<{
+  palette: Readonly<{
+    blue: string
+    cyan: string
+    mint: string
+    yellow: string
+    ink: string
+    white: string
+  }>
   hero: readonly HTMLImageElement[]
   heroBounds: Readonly<{ x: number; y: number; width: number; height: number }>
   animal: Readonly<{
@@ -89,6 +98,17 @@ export async function loadCardArtwork(
   if (presentation.kind !== "sprite")
     throw new Error("Selected animal artwork is unavailable.")
   const animation = presentation.steps[0].animation
+  const theme = getComputedStyle(document.documentElement)
+  const palette = {
+    blue: theme.getPropertyValue("--color-profile-card-blue").trim(),
+    cyan: theme.getPropertyValue("--color-profile-card-cyan").trim(),
+    mint: theme.getPropertyValue("--color-profile-card-mint").trim(),
+    yellow: theme.getPropertyValue("--color-profile-card-yellow").trim(),
+    ink: theme.getPropertyValue("--color-profile-card-ink").trim(),
+    white: theme.getPropertyValue("--color-mapachito-white").trim(),
+  }
+  if (Object.values(palette).some((color) => color === ""))
+    throw new Error("Profile card colors are unavailable.")
   const [hero, animal] = await Promise.all([
     Promise.all(
       heroLayerPaths(appearance).map((path) =>
@@ -100,6 +120,7 @@ export async function loadCardArtwork(
       : null,
   ])
   return {
+    palette,
     hero,
     heroBounds: heroWeaponDefinition(appearance.weapon).bounds,
     animal,
@@ -129,7 +150,7 @@ export function drawCardCharacters(
   const hasAnimal = artwork.animal !== null
   const heroX = Math.round(width * (hasAnimal ? 0.4 : 0.5) - heroWidth / 2)
   const floor = Math.round(height * 0.88)
-  context.fillStyle = CARD_PALETTE.blue
+  context.fillStyle = artwork.palette.blue
   context.globalAlpha = 0.28
   context.beginPath()
   context.ellipse(
@@ -190,17 +211,21 @@ export function drawProfileCard(
   frame: number,
   fontFamily = PROFILE_CARD_FALLBACK_FONT,
 ): void {
-  const { width, height } = context.canvas
+  const width = PROFILE_CARD_WIDTH
+  const height = PROFILE_CARD_HEIGHT
+  const { palette } = artwork
+  const typography = PROFILE_CARD_TYPOGRAPHY
+  const layout = PROFILE_CARD_LAYOUT
   const { content, facts } = input
   const catalog = loadCatalog(input.locale ?? "en")
   const copy = catalog.profile
   const hasFacts = content.level || content.standard || content.chess960
-  const factsWidth = hasFacts ? Math.round(width * 0.4) : 0
-  const invitationHeight = Math.round(height * 0.13)
+  const factsWidth = hasFacts ? layout.factsWidth : 0
+  const invitationHeight = layout.invitationHeight
   const pictureHeight = height - invitationHeight
-  context.fillStyle = CARD_PALETTE.cyan
+  context.fillStyle = palette.cyan
   context.fillRect(0, 0, width, height)
-  context.fillStyle = CARD_PALETTE.mint
+  context.fillStyle = palette.mint
   context.beginPath()
   context.ellipse(
     width * 0.71,
@@ -214,7 +239,7 @@ export function drawProfileCard(
   context.lineTo(width, pictureHeight)
   context.lineTo(factsWidth, pictureHeight)
   context.fill()
-  context.fillStyle = CARD_PALETTE.blue
+  context.fillStyle = palette.blue
   context.fillRect(
     factsWidth,
     pictureHeight * 0.91,
@@ -226,7 +251,7 @@ export function drawProfileCard(
   drawCardCharacters(context, artwork, frame, width - factsWidth, pictureHeight)
   context.restore()
   if (hasFacts) {
-    context.fillStyle = CARD_PALETTE.yellow
+    context.fillStyle = palette.yellow
     context.fillRect(0, 0, factsWidth, pictureHeight)
     const items = [
       ...(content.level
@@ -251,25 +276,25 @@ export function drawProfileCard(
           ]
         : []),
     ]
-    context.fillStyle = CARD_PALETTE.ink
+    context.fillStyle = palette.ink
     context.textAlign = "left"
     context.textBaseline = "middle"
-    const left = width * 0.04
-    const available = factsWidth - width * 0.08
-    const maximumLabelFontSize = Math.round(height * 0.061)
-    context.font = `700 ${maximumLabelFontSize}px ${fontFamily}`
+    const left = layout.factsInset
+    const available = factsWidth - left * 2
+    context.font = `${typography.label.weight} ${typography.label.size}px ${fontFamily}`
     const widestLabel = Math.max(
       ...items.map(({ label }) => context.measureText(label).width),
     )
     const labelFontSize =
-      maximumLabelFontSize * Math.min(1, available / widestLabel)
+      typography.label.size * Math.min(1, available / widestLabel)
     items.forEach(({ value, label, kind }, index) => {
       const center = (pictureHeight * (index + 0.5)) / items.length
-      context.font = `700 ${labelFontSize}px ${fontFamily}`
+      context.font = `${typography.label.weight} ${labelFontSize}px ${fontFamily}`
       if (kind === "level") {
         context.fillText(label, left, center)
-        const labelWidth = context.measureText(label).width + width * 0.01
-        context.font = `900 ${Math.round(height * 0.12)}px ${fontFamily}`
+        const labelWidth =
+          context.measureText(label).width + layout.levelLabelGap
+        context.font = `${typography.value.weight} ${typography.value.size}px ${fontFamily}`
         context.fillText(
           String(value),
           left + labelWidth,
@@ -278,24 +303,29 @@ export function drawProfileCard(
         )
         return
       }
-      context.fillText(label, left, center + height * 0.052)
-      context.font = `700 ${Math.round(height * 0.045)}px ${fontFamily}`
+      context.fillText(label, left, center + layout.ratingLabelOffset)
+      context.font = `${typography.category.weight} ${typography.category.size}px ${fontFamily}`
       context.fillText(
         catalog.gameplay.clock.category.untimed,
         left,
-        center + height * 0.105,
+        center + layout.categoryOffset,
         available,
       )
-      context.font = `900 ${Math.round(height * 0.12)}px ${fontFamily}`
-      context.fillText(String(value), left, center - height * 0.037, available)
+      context.font = `${typography.value.weight} ${typography.value.size}px ${fontFamily}`
+      context.fillText(
+        String(value),
+        left,
+        center + layout.ratingValueOffset,
+        available,
+      )
     })
   }
-  context.fillStyle = CARD_PALETTE.ink
+  context.fillStyle = palette.ink
   context.fillRect(0, pictureHeight, width, invitationHeight)
-  context.fillStyle = "#fff"
+  context.fillStyle = palette.white
   context.textAlign = "center"
   context.textBaseline = "middle"
-  context.font = `700 ${Math.round(width * 0.035)}px ${fontFamily}`
+  context.font = `${typography.invitation.weight} ${typography.invitation.size}px ${fontFamily}`
   context.fillText(
     copy.playFree,
     width / 2,

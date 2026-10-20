@@ -250,6 +250,26 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   )
   expect(png.readUInt32BE(16)).toBe(960)
   expect(png.readUInt32BE(20)).toBe(540)
+  const card = page
+    .getByRole("img", { name: "Profile card PNG preview", exact: true })
+    .locator("canvas")
+  expect(
+    await card.evaluate((canvas) => {
+      if (!(canvas instanceof HTMLCanvasElement))
+        throw new Error("Expected the profile card canvas")
+      const context = canvas.getContext("2d")
+      if (context === null) throw new Error("Expected a card rendering context")
+      return {
+        facts: [...context.getImageData(0, 0, 1, 1).data],
+        artwork: [...context.getImageData(canvas.width - 1, 0, 1, 1).data],
+        invitation: [...context.getImageData(0, canvas.height - 1, 1, 1).data],
+      }
+    }),
+  ).toEqual({
+    facts: [255, 230, 82, 255],
+    artwork: [113, 223, 231, 255],
+    invitation: [30, 30, 30, 255],
+  })
   await page.getByRole("checkbox", { name: "Animal companion" }).uncheck()
   await page.getByRole("button", { name: "GIF · Animated" }).click()
   await expect(
