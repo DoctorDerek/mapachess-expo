@@ -22,10 +22,22 @@
   --color-mapachito-violet: #790fc5;
   --color-mapachito-green: #008f39;
   --color-mapachito-green-ink: #007a32;
+  --color-mapachito-green-shadow: #008000;
   --color-mapachito-red: #ff0000;
   --color-mapachito-deep-gold: #a77e18;
   --color-mapachito-charcoal: #1e1e1e;
+  --color-mapachito-surface: #333333;
   --color-mapachito-white: #ffffff;
+  --color-profile-card-blue: #009dae;
+  --color-profile-card-cyan: #71dfe7;
+  --color-profile-card-mint: #c2fff9;
+  --color-profile-card-yellow: #ffe652;
+  --color-profile-card-ink: #1e1e1e;
+  --radius-mapachess-action: 0.75rem 0.25rem 0.75rem 0.25rem;
+  --shadow-mapachess-button: 0.25rem 0.25rem 0;
+  --shadow-mapachess-raised: 0.375rem 0.375rem 0;
+  --shadow-mapachess-pressed: 0.0625rem 0.0625rem 0;
+  --container-mapachess: 96rem;
   --font-display:
     Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
   --font-body: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;

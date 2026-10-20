@@ -28,8 +28,8 @@ describe("profile-card font readiness", () => {
     await Promise.resolve()
     expect(ready).toBe(false)
     expect(load.mock.calls).toEqual([
-      ['700 32px "Bundled Nunito", Arial'],
-      ['900 32px "Bundled Nunito", Arial'],
+      ['700 33px "Bundled Nunito", Arial'],
+      ['900 65px "Bundled Nunito", Arial'],
     ])
     pending.resolve([])
     await expect(loading).resolves.toBe('"Bundled Nunito", Arial')

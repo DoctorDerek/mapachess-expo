@@ -27,6 +27,9 @@ for (const width of [320, 390, 430, 1279, 1280]) {
       }
       const copy = loadCatalog(locale)
       const home = page.getByRole("region", { name: "Mapachess", exact: true })
+      const wordmark = page
+        .getByRole("heading", { name: "Mapachess", exact: true })
+        .getByText("Mapachess", { exact: true })
       await expect(
         home.getByRole("button", {
           name: copy.setup.customizeProfile,
@@ -60,6 +63,23 @@ for (const width of [320, 390, 430, 1279, 1280]) {
           font.family.replaceAll('"', ""),
         )
         expect(font.loaded).toBe(true)
+        await expect(wordmark).toHaveCSS("font-family", font.applied)
+        await expect(home.locator("dl")).toHaveCSS(
+          "background-color",
+          "rgb(255, 230, 82)",
+        )
+        if (percent === 100) {
+          const lines = await wordmark.evaluate((element) => {
+            const range = document.createRange()
+            range.selectNodeContents(element)
+            return new Set(
+              [...range.getClientRects()]
+                .filter(({ width }) => width > 0)
+                .map(({ top }) => top),
+            ).size
+          })
+          expect(lines).toBe(1)
+        }
         await expect(home.getByRole("button")).toHaveCount(6)
         for (const { variant, mode } of MATCH_MODE_CHOICES) {
           await expect(
@@ -68,6 +88,21 @@ for (const width of [320, 390, 430, 1279, 1280]) {
               exact: true,
             }),
           ).toBeEnabled()
+          if (locale === "en" && variant === "chess960") {
+            const label = home
+              .getByRole("button", {
+                name: copy.setup.presentations[variant][mode].title,
+                exact: true,
+              })
+              .getByText("Chess960", { exact: true })
+            expect(
+              await label.evaluate((element) => {
+                const range = document.createRange()
+                range.selectNodeContents(element)
+                return range.getClientRects().length
+              }),
+            ).toBe(1)
+          }
         }
         const bounds = await home.evaluate((element) => {
           const overflowing = [...element.querySelectorAll("button, dt, dd")]
@@ -133,6 +168,17 @@ test("all four mode buttons retain their setup and return paths", async ({
     page.getByRole("button", { name: "Customize profile card", exact: true }),
   ).toBeEnabled()
   const before = await savedProfile(page)
+  const wordmark = page.getByText("Mapachess", { exact: true })
+  await page.evaluate(() => document.fonts.ready)
+  const homeTitleStyle = await wordmark.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      family: style.fontFamily,
+      size: style.fontSize,
+      weight: style.fontWeight,
+      color: style.color,
+    }
+  })
   await page.getByRole("heading", { name: "Mapachess", exact: true }).focus()
   for (const name of [
     "Settings",
@@ -157,6 +203,11 @@ test("all four mode buttons retain their setup and return paths", async ({
     await expect(
       page.getByRole("heading", { name: title, exact: true }),
     ).toBeVisible()
+    await expect(wordmark).toHaveCount(1)
+    await expect(wordmark).toHaveCSS("font-family", homeTitleStyle.family)
+    await expect(wordmark).toHaveCSS("font-size", homeTitleStyle.size)
+    await expect(wordmark).toHaveCSS("font-weight", homeTitleStyle.weight)
+    await expect(wordmark).toHaveCSS("color", homeTitleStyle.color)
     await page
       .getByRole("button", { name: "All game modes", exact: true })
       .click()

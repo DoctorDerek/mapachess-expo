@@ -1,5 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
+import localizeArtCredits from "../packages/match-presentation/src/artCredits.js"
 import { activate, injectControllerInput, press } from "./controllerInput.js"
 import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
@@ -67,6 +69,7 @@ for (const width of [320, 1280]) {
           "font-size",
           `${(16 * percent) / 100}px`,
         )
+        await expect(close).toHaveCSS("font-size", `${(16 * percent) / 100}px`)
         await close.click({ trial: true })
         await page.mouse.move(0, 0)
         const footerBounds = await close.boundingBox()
@@ -159,7 +162,11 @@ for (const width of [320, 1280]) {
       await creditsButton.press("Enter")
       await expect(credits).toBeVisible()
       await expect(page.getByRole("dialog")).toHaveCount(1)
-      await expect(credits.getByRole("heading", { level: 3 })).toHaveCount(14)
+      await expect(credits.getByRole("heading", { level: 3 })).toHaveText(
+        localizeArtCredits(loadCatalog(spanish ? "es-419" : "en")).map(
+          ({ title, creator }) => `${title} · ${creator}`,
+        ),
+      )
       await expect(credits.getByRole("combobox")).toHaveCount(0)
       await expect(
         credits

@@ -4,11 +4,12 @@ import { describe, expect, it } from "vitest"
 import MapachessWordmark from "./MapachessWordmark"
 
 describe("MapachessWordmark", () => {
-  it("exposes one accessible name while hiding decorative lettering", () => {
+  it("renders the brand once as ordinary readable text", () => {
     const markup = renderToStaticMarkup(createElement(MapachessWordmark))
 
-    expect(markup).toContain('role="img"')
-    expect(markup).toContain('aria-label="Mapachess"')
-    expect(markup.match(/aria-hidden="true"/g)).toHaveLength(2)
+    expect(markup.replace(/<[^>]*>/g, "")).toBe("Mapachess")
+    expect(markup).not.toContain("aria-hidden")
+    expect(markup).not.toContain('role="img"')
+    expect(markup).not.toContain("<br")
   })
 })

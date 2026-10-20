@@ -135,21 +135,21 @@ export default function ProfileDressingRoom({
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
           <ProfileAction
-            className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
+            className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
             onClick={onSave}
             disabled={busy || !dirty}
           >
             <span aria-hidden="true">✓</span> {messages.saveAppearance}
           </ProfileAction>
           <ProfileAction
-            className="bg-mapachito-blue shadow-[0.375rem_0.375rem_0_#008b8b]"
+            className="bg-mapachito-blue shadow-mapachess-raised shadow-mapachito-deep-cyan"
             onClick={onShare}
             disabled={busy}
           >
             <span aria-hidden="true">↗</span> {messages.shareProfileCard}
           </ProfileAction>
           <ProfileAction
-            className="bg-mapachito-charcoal shadow-[0.375rem_0.375rem_0_#790fc5]"
+            className="bg-mapachito-charcoal shadow-mapachess-raised shadow-mapachito-violet"
             onClick={onCancel}
             disabled={busy}
           >
@@ -186,9 +186,9 @@ export default function ProfileDressingRoom({
                 setColors(false)
               }}
               className={cx(
-                "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]",
+                "bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry",
                 category === name &&
-                  "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
+                  "ring-offset-mapachito-charcoal ring-2 ring-white ring-offset-4",
               )}
             >
               {dressing.categories[name]}
@@ -243,8 +243,8 @@ export default function ProfileDressingRoom({
                 aria-pressed={selected}
                 onClick={() => onChange(appearance)}
                 className={cx(
-                  "text-mapachito-white cursor-pointer rounded-lg bg-[#333] px-2 py-2 text-base font-bold",
-                  selected && "ring-3 ring-[#71dfe7]",
+                  "text-mapachito-white bg-mapachito-surface cursor-pointer rounded-lg px-2 py-2 text-base font-bold",
+                  selected && "ring-profile-card-cyan ring-3",
                 )}
               >
                 <ProfileArtwork

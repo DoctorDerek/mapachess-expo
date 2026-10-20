@@ -115,18 +115,16 @@ function GameFrame({
       {matchSessionActive ? null : (
         <header
           inert={activityMessage !== null}
-          className="mx-auto mb-4 flex w-full max-w-[96rem] flex-wrap items-center justify-between gap-3"
+          className="max-w-mapachess mx-auto mb-4 flex w-full flex-wrap items-center justify-between gap-3"
         >
           {home ? (
             <h1
               id="game-modes-title"
               ref={homeTitle}
               tabIndex={-1}
-              className="text-mapachito-white text-[2rem] leading-[1.05] font-black tracking-[-0.025em] outline-none"
+              className="min-w-0 outline-none"
             >
-              Mapa
-              <wbr />
-              chess
+              <MapachessWordmark />
             </h1>
           ) : (
             <MapachessWordmark />
@@ -141,7 +139,7 @@ function GameFrame({
       <div
         aria-busy={activityMessage !== null}
         inert={activityMessage !== null}
-        className="mx-auto w-full max-w-[96rem]"
+        className="max-w-mapachess mx-auto w-full"
       >
         {children}
       </div>

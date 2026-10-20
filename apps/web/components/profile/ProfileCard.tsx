@@ -163,10 +163,10 @@ export default function ProfileCard({
         facts.standard,
         facts.chess960,
       )}
-      className="font-home [container-type:inline-size] shadow-[0.375rem_0.375rem_0_#009dae]"
+      className="font-home shadow-mapachess-raised shadow-profile-card-blue [container-type:inline-size]"
     >
-      <div className="flex min-h-[max(15rem,56cqw)] flex-wrap text-[#1e1e1e]">
-        <dl className="flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-4 bg-[#ffe652] p-[max(0.75rem,3cqw)]">
+      <div className="text-profile-card-ink flex min-h-[max(15rem,56cqw)] flex-wrap">
+        <dl className="bg-profile-card-yellow flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-4 p-[max(0.75rem,3cqw)]">
           {[
             ["level", copy.profile.level, facts.level],
             ["standard", copy.profile.ratingLabel.standard, facts.standard],
@@ -195,7 +195,7 @@ export default function ProfileCard({
             </div>
           ))}
         </dl>
-        <div className="relative min-h-58 min-w-0 flex-[3_1_9rem] bg-[#71dfe7] bg-[radial-gradient(ellipse_at_50%_70%,#c2fff9_0_66%,transparent_66%)]">
+        <div className="bg-profile-card-cyan from-profile-card-mint relative min-h-58 min-w-0 flex-[3_1_9rem] bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66%">
           <ProfileArtwork input={input} fitStage />
         </div>
       </div>

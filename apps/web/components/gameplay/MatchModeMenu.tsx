@@ -26,7 +26,7 @@ export default function MatchModeMenu({
   return (
     <section
       aria-labelledby="game-modes-title"
-      className="mx-auto max-w-[96rem]"
+      className="max-w-mapachess mx-auto"
     >
       <div className="grid items-center gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <div className="min-w-0">
@@ -36,7 +36,7 @@ export default function MatchModeMenu({
               size="home-card"
               disabled={disabled}
               onClick={onCustomize}
-              className="bg-mapachito-violet min-w-0 flex-[1_1_5.8em] wrap-break-word shadow-[0.375rem_0.375rem_0_#9c0052]"
+              className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry min-w-0 flex-[1_1_5.8em] wrap-break-word"
             >
               {copy.customizeProfile}
             </ProfileAction>
@@ -44,7 +44,7 @@ export default function MatchModeMenu({
               size="home-card"
               disabled={disabled}
               onClick={onShare}
-              className="bg-mapachito-blue min-w-0 flex-[1_1_5.8em] wrap-break-word shadow-[0.375rem_0.375rem_0_#008b8b]"
+              className="bg-mapachito-blue shadow-mapachess-raised shadow-mapachito-deep-cyan min-w-0 flex-[1_1_5.8em] wrap-break-word"
             >
               {copy.shareProfile}
             </ProfileAction>
@@ -59,20 +59,20 @@ export default function MatchModeMenu({
               onClick={() => onModeSelected({ mode, variant })}
               aria-label={copy.presentations[variant][mode].title}
               className={cx(
-                "flex min-h-25 min-w-0 flex-[1_1_max(7em,calc((100%-0.75rem)/2))] flex-col items-stretch justify-center gap-3 text-left wrap-break-word xl:min-h-32",
+                "shadow-mapachess-raised flex min-h-25 min-w-0 flex-[1_1_max(7em,calc((100%-0.75rem)/2))] flex-col items-stretch justify-center gap-3 text-left wrap-break-word xl:min-h-32",
                 variant === "standard"
                   ? mode === "story"
-                    ? "bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#008ec1]"
-                    : "bg-mapachito-orange shadow-[0.375rem_0.375rem_0_#a77e18]"
+                    ? "bg-mapachito-violet shadow-mapachito-blue"
+                    : "bg-mapachito-orange shadow-mapachito-deep-gold"
                   : mode === "story"
-                    ? "bg-mapachito-deep-cyan shadow-[0.375rem_0.375rem_0_#008000]"
-                    : "bg-mapachito-raspberry shadow-[0.375rem_0.375rem_0_#ff0000]",
+                    ? "bg-mapachito-deep-cyan shadow-mapachito-green-shadow"
+                    : "bg-mapachito-raspberry shadow-mapachito-red",
               )}
             >
-              <strong className="text-[1.28em] leading-[1.08] font-black">
+              <strong className="text-xl leading-tight font-black xl:text-2xl">
                 {copy.variants[variant]}
               </strong>
-              <span className="flex flex-wrap items-center justify-between gap-1 text-[1.05556em]">
+              <span className="flex flex-wrap items-center justify-between gap-1 text-lg">
                 {copy.modes[mode]}
                 <span aria-hidden="true" className="font-mono">
                   →
