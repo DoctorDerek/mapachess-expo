@@ -47,6 +47,7 @@ export const WEB_CALIBRATION_ENGINE_IDENTITY = {
 } as const satisfies WebCalibrationEngineIdentity
 
 const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
+// eslint-disable-next-line no-control-regex -- Invariant: policy identities reject control characters.
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const opponentPolicyFingerprintBrand: unique symbol

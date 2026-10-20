@@ -75,7 +75,6 @@ export default function Introduction({
       </div>
       <div className="bg-mapachito-deep-cyan relative z-30 h-1.5 shrink-0" />
       <footer className="relative mt-auto flex min-h-37 shrink-0 items-center justify-center bg-black px-4 py-4">
-        {/* eslint-disable-next-line @next/next/no-img-element -- Preserve the approved original artwork without an image-service dependency. */}
         <img
           src="/generated/first-arrival/ice-cream.png"
           width={3840}

@@ -4,6 +4,7 @@ import {
   type StockfishSearchRequest,
 } from "./engineSession.js"
 
+// eslint-disable-next-line no-control-regex -- Invariant: UCI inputs reject control characters.
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 const UCI_MOVE_PATTERN = /^[a-h][1-8][a-h][1-8][qrbn]?$/
 
