@@ -11,6 +11,7 @@ import {
   PROFILE_CARD_WIDTH,
   type GifEncodingRequest,
 } from "./profileCardFormat"
+import loadProfileCardFont from "./profileCardTypography"
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b))
 const nextPaint = (signal: AbortSignal): Promise<void> =>
@@ -89,7 +90,10 @@ export default async function createProfileCardFile(
   signal: AbortSignal,
 ): Promise<File> {
   signal.throwIfAborted()
-  const artwork = await loadCardArtwork(input.appearance, input.content.animal)
+  const [artwork, fontFamily] = await Promise.all([
+    loadCardArtwork(input.appearance, input.content.animal),
+    loadProfileCardFont(),
+  ])
   signal.throwIfAborted()
   const canvas = document.createElement("canvas")
   canvas.width = PROFILE_CARD_WIDTH
@@ -99,7 +103,7 @@ export default async function createProfileCardFile(
   })
   if (context === null) throw new Error("Image rendering is unavailable.")
   if (input.format === "PNG") {
-    drawProfileCard(context, artwork, input, 0)
+    drawProfileCard(context, artwork, input, 0, fontFamily)
     const blob = await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (value) =>
@@ -119,7 +123,7 @@ export default async function createProfileCardFile(
   const frames: Uint8Array<ArrayBuffer>[] = []
   for (let frame = 0; frame < frameCount; frame++) {
     await nextPaint(signal)
-    drawProfileCard(context, artwork, input, frame)
+    drawProfileCard(context, artwork, input, frame, fontFamily)
     frames.push(
       new Uint8Array(
         context.getImageData(0, 0, canvas.width, canvas.height).data,
