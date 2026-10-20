@@ -90,6 +90,25 @@ corepack pnpm build
 corepack pnpm test:e2e
 ```
 
+### Lint ownership and coverage
+
+The root `eslint.config.js` owns lint coverage for JavaScript and TypeScript
+(`.js`, `.cjs`, `.mjs`, `.ts`, `.tsx`, `.mts`, and `.cts`) across both apps,
+shared packages, tests, and scripts. Git-ignored private inputs and generated
+outputs stay excluded. TypeScript uses the syntax-aware recommended rules from
+`typescript-eslint`; type checking remains a separate gate.
+
+`pnpm lint` first runs `pnpm test:lint`, a focused Vitest integration check using
+the actual ESLint configuration, then lints the repository. The check catches
+silently ignored TypeScript files, missing rules, changed advisory severity,
+and broken exclusions. It also verifies that intentional omitted object fields
+and underscore-prefixed unused arguments do not hide dead locals or imports.
+
+DoctorDerekCICD invokes this repository's `pnpm lint`; it does not supply a
+consumer ESLint preset. Lint findings remain advisory under the existing policy.
+The configuration checks fail when that contract breaks. No separate shared
+workflow, command override, or type-aware project service is required.
+
 Native-engine, calibration, and dedicated browser-engine verification remain
 explicit rather than part of ordinary quality CI:
 
