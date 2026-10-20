@@ -12,7 +12,7 @@ describe("localized attribution with canonical provenance", () => {
   it("keeps creators, IDs and every source and license URL identical in both languages", () => {
     for (const locale of ["en", "es-419"] as const) {
       const credits = localizeArtCredits(loadCatalog(locale))
-      expect(credits).toHaveLength(15)
+      expect(credits).toHaveLength(Object.keys(ART_CREDITS).length)
       for (const credit of credits) {
         const original = ART_CREDITS[credit.id]
         expect(credit.creator).toBe(original.creator)
@@ -187,7 +187,7 @@ describe("localized attribution with canonical provenance", () => {
       "es-419": () => undefined,
     })
     const credits = localizeArtCredits(reader.load("es-419"))
-    expect(credits).toHaveLength(15)
+    expect(credits).toHaveLength(Object.keys(ART_CREDITS).length)
     expect(credits.find(({ id }) => id === "captainskolot")?.license).toContain(
       "CC BY 4.0",
     )
