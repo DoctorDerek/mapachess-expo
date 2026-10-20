@@ -85,14 +85,14 @@ export default function ProfileCardJourney({
       hidden={blocked}
       inert={blocked}
       aria-labelledby="personal-card-title"
-      className="text-mapachito-white fixed inset-0 z-40 overflow-y-auto bg-[#1e1e1e] px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
+      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-y-auto px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
     >
-      <div className="mx-auto max-w-[96rem]">
+      <div className="max-w-mapachess mx-auto">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <ProfileAction
             onClick={navigation.back}
             disabled={busy}
-            className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
+            className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
           >
             <span aria-hidden="true">←</span> {messages.back}
           </ProfileAction>

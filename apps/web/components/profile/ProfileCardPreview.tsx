@@ -89,9 +89,9 @@ export default function ProfileCardPreview({
             onClick={() => setFormat(choice)}
             disabled={sharing}
             className={cx(
-              "bg-mapachito-blue shadow-[0.375rem_0.375rem_0_#008b8b]",
+              "bg-mapachito-blue shadow-mapachess-raised shadow-mapachito-deep-cyan",
               format === choice &&
-                "ring-2 ring-white ring-offset-4 ring-offset-[#1e1e1e]",
+                "ring-offset-mapachito-charcoal ring-2 ring-white ring-offset-4",
             )}
           >
             {copy.profile.cardFormats[choice]}
@@ -101,7 +101,7 @@ export default function ProfileCardPreview({
       <div
         role="img"
         aria-label={copy.profile.cardPreview(format)}
-        className="overflow-hidden shadow-[0.375rem_0.375rem_0_#009dae]"
+        className="shadow-mapachess-raised shadow-profile-card-blue overflow-hidden"
       >
         <ProfileArtwork input={input} exportPreview />
       </div>
@@ -138,7 +138,7 @@ export default function ProfileCardPreview({
               onChange={(event) =>
                 setContent({ ...content, [key]: event.target.checked })
               }
-              className="size-5 accent-[#71dfe7]"
+              className="accent-profile-card-cyan size-5"
             />
             {label}
           </label>
@@ -162,14 +162,14 @@ export default function ProfileCardPreview({
             }
           }}
           disabled={file === null || sharing}
-          className="bg-mapachito-green shadow-[0.375rem_0.375rem_0_#008b8b]"
+          className="bg-mapachito-green shadow-mapachess-raised shadow-mapachito-deep-cyan"
         >
           <span aria-hidden="true">↓</span> {copy.profile.saveFormat(format)}
         </ProfileAction>
         <ProfileAction
           onClick={() => void share()}
           disabled={!shareAvailable || sharing}
-          className="bg-mapachito-violet shadow-[0.375rem_0.375rem_0_#9c0052]"
+          className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
         >
           <span aria-hidden="true">↗</span> {copy.profile.shareFormat(format)}
         </ProfileAction>
