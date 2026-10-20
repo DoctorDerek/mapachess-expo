@@ -19,6 +19,20 @@ type ArtCredit = Readonly<{
 }>
 
 export const ART_CREDITS = Object.freeze({
+  nunitoSans: Object.freeze({
+    id: "nunitoSans" as const,
+    title: "Nunito Sans",
+    creator:
+      "Vernon Adams, Jacques Le Bailly, Manvel Shmavonyan, Alexei Vanyashin",
+    license: "SIL Open Font License 1.1",
+    licenseUrl: "https://openfontlicense.org/open-font-license-official-text/",
+    sources: Object.freeze([
+      Object.freeze({
+        label: "Nunito Sans",
+        url: "https://github.com/google/fonts/tree/main/ofl/nunitosans",
+      }),
+    ]),
+  }),
   mapachitoIdentity: Object.freeze({
     id: "mapachitoIdentity" as const,
     title: { message: "mapachitoIdentity" as const },

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-home: var(--font-nunito-sans);
+}
+
 @keyframes first-arrival-crossing {
   from {
     transform: translateX(0);

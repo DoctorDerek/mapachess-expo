@@ -1,6 +1,9 @@
 import type { MapachessCatalog } from "./catalog.js"
 
 const credits = {
+  nunitoSans: {
+    contribution: "Tipografía de Inicio y de las tarjetas de perfil",
+  },
   mapachitoIdentity: {
     contribution: "Animación original de bienvenida e imagen fija",
   },

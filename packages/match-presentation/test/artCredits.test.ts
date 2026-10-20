@@ -12,7 +12,7 @@ describe("localized attribution with canonical provenance", () => {
   it("keeps creators, IDs and every source and license URL identical in both languages", () => {
     for (const locale of ["en", "es-419"] as const) {
       const credits = localizeArtCredits(loadCatalog(locale))
-      expect(credits).toHaveLength(14)
+      expect(credits).toHaveLength(15)
       for (const credit of credits) {
         const original = ART_CREDITS[credit.id]
         expect(credit.creator).toBe(original.creator)
@@ -33,6 +33,7 @@ describe("localized attribution with canonical provenance", () => {
   it("preserves the existing English headings, summaries and piece link names", () => {
     const credits = localizeArtCredits(loadCatalog("en"))
     expect(credits.map(({ title }) => title)).toEqual([
+      "Nunito Sans",
       "Mapachito ice cream",
       "Input Prompts",
       "Animal sprites",
@@ -49,6 +50,7 @@ describe("localized attribution with canonical provenance", () => {
       "Cat chess set",
     ])
     expect(credits.map(({ license }) => license)).toEqual([
+      "SIL Open Font License 1.1",
       "All rights reserved; supplied for Mapachess",
       "CC0 1.0",
       "Licensed game artwork",
@@ -185,7 +187,7 @@ describe("localized attribution with canonical provenance", () => {
       "es-419": () => undefined,
     })
     const credits = localizeArtCredits(reader.load("es-419"))
-    expect(credits).toHaveLength(14)
+    expect(credits).toHaveLength(15)
     expect(credits.find(({ id }) => id === "captainskolot")?.license).toContain(
       "CC BY 4.0",
     )
