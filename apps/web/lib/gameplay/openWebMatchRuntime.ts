@@ -104,7 +104,6 @@ const closeAfterFailedOpen = async (
   } catch (closeError) {
     const closeErrors: readonly unknown[] =
       closeError instanceof AggregateError ? closeError.errors : [closeError]
-    // eslint-disable-next-line preserve-caught-error -- Invariant: all opening and cleanup failures are preserved in errors.
     throw new AggregateError(
       [openError, ...closeErrors],
       "Web match failed to open and close cleanly.",

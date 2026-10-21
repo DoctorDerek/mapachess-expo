@@ -104,10 +104,24 @@ silently ignored TypeScript files, missing rules, changed advisory severity,
 and broken exclusions. It also verifies that intentional omitted object fields
 and underscore-prefixed unused arguments do not hide dead locals or imports.
 
-DoctorDerekCICD invokes this repository's `pnpm lint`; it does not supply a
-consumer ESLint preset. Lint findings remain advisory under the existing policy.
-The configuration checks fail when that contract breaks. No separate shared
-workflow, command override, or type-aware project service is required.
+Justified rule exceptions live in named entries in `eslint.config.js`, not inline
+directives or source-directory ignores. The canonical Stockfish text validator
+intentionally rejects control characters. The two web match lifecycle owners
+preserve opening and cleanup failures in `AggregateError.errors`, not a single
+cause. The Worker factory test allows only its `constructedWorker` instance
+capture through the rule's `allowedNames` option. The integration checks verify
+these exceptions, continued findings outside their scope, and unrelated rules
+remaining active inside their scope.
+
+The pinned DoctorDerekCICD quality workflow independently checks every tracked
+TypeScript-family file against this repository's effective ESLint configuration
+before invoking `pnpm lint`; it does not supply a consumer ESLint preset. Missing
+configuration or missing enabled TypeScript rules fail that shared guard;
+intentional generated/private exclusions and rule-level exceptions remain
+respected. Ordinary lint findings remain advisory under the existing policy.
+The local configuration tests additionally protect Mapachess-specific rule
+behavior. No separate workflow, command override, or type-aware project service
+is required.
 
 Native-engine, calibration, and dedicated browser-engine verification remain
 explicit rather than part of ordinary quality CI:

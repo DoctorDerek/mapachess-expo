@@ -4,6 +4,7 @@ import {
   type Chess960PositionId,
 } from "@mapachess/match/chess960-position"
 import { reconstructMatchPosition } from "@mapachess/match/match-position"
+import { assertStableText } from "@mapachess/stockfish/engine-validation"
 import createDeterministicRandom, {
   deriveCalibrationSeed,
   parseCalibrationRootSeed,
@@ -22,8 +23,6 @@ export const CALIBRATION_PLAN_SCHEMA_VERSION = 1 as const
 
 const PLAN_ID_NAMESPACE = "mapachess.calibration-plan/v1"
 const PAIR_ID_NAMESPACE = "mapachess.calibration-pair/v1"
-// eslint-disable-next-line no-control-regex -- Invariant: calibration inputs reject control characters.
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const calibrationGameIdBrand: unique symbol
 declare const calibrationPairIdBrand: unique symbol
@@ -120,19 +119,6 @@ type PairBlock = Readonly<{
   opening: CalibrationOpening
   pairId: CalibrationPairId
 }>
-
-function assertStableText(value: string, label: string): void {
-  if (
-    typeof value !== "string" ||
-    value.length === 0 ||
-    value !== value.trim() ||
-    CONTROL_CHARACTER_PATTERN.test(value)
-  ) {
-    throw new TypeError(
-      `${label} must be nonempty, trimmed, and free of control characters.`,
-    )
-  }
-}
 
 function assertPositiveSafeInteger(value: number, label: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {
