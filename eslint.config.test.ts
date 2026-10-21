@@ -15,6 +15,10 @@ describe("repository ESLint coverage", () => {
     "playwright.config.ts",
     "scripts/lint-probe.mts",
     "scripts/lint-probe.cts",
+    "packages/stockfish/src/engineValidation.ts",
+    "apps/web/lib/gameplay/openWebMatchRuntime.ts",
+    "apps/web/lib/gameplay/webMatchSession.ts",
+    "apps/web/lib/stockfish/webWorkerUciTransport.test.ts",
   ])(
     "detects TypeScript findings in %s without ignoring the file",
     async (filePath) => {
@@ -113,6 +117,92 @@ describe("repository ESLint coverage", () => {
       { filePath: "apps/mobile/metro.config.js" },
     )
     expect(metro[0]?.messages).toEqual([])
+  })
+
+  it("allows intentional control-character rejection in the canonical validator", async () => {
+    const results = await eslint.lintText(
+      String.raw`export const controlCharacters = /[\u0000-\u001f\u007f]/`,
+      { filePath: "packages/stockfish/src/engineValidation.ts" },
+    )
+
+    expect(results[0]?.messages).toEqual([])
+  })
+
+  it.each([
+    "packages/stockfish/src/buildIdentity.ts",
+    "packages/calibration/src/calibrationPlan.ts",
+    "packages/calibration/src/opponentPolicy.ts",
+  ])(
+    "still reports a duplicate control-character regex in %s",
+    async (filePath) => {
+      const results = await eslint.lintText(
+        String.raw`export const controlCharacters = /[\u0000-\u001f\u007f]/`,
+        { filePath },
+      )
+
+      expect(results[0]?.messages).toEqual([
+        expect.objectContaining({ ruleId: "no-control-regex", severity: 1 }),
+      ])
+    },
+  )
+
+  it.each([
+    "apps/web/lib/gameplay/openWebMatchRuntime.ts",
+    "apps/web/lib/gameplay/webMatchSession.ts",
+  ])(
+    "allows aggregate failures in their owning module %s",
+    async (filePath) => {
+      const results = await eslint.lintText(
+        "export function close() { try { throw new Error('open') } catch (error) { throw new AggregateError([error, new Error('close')], 'Both failed') } }",
+        { filePath },
+      )
+
+      expect(results[0]?.messages).toEqual([])
+    },
+  )
+
+  it("still reports a lost error cause outside the aggregate-failure owners", async () => {
+    const results = await eslint.lintText(
+      "export function close() { try { throw new Error('open') } catch (error) { throw new Error(String(error)) } }",
+      { filePath: "apps/web/lib/gameplay/lint-probe.ts" },
+    )
+
+    expect(results[0]?.messages).toEqual([
+      expect.objectContaining({ ruleId: "preserve-caught-error", severity: 1 }),
+    ])
+  })
+
+  it("allows capturing the constructed Worker only in its factory test", async () => {
+    const source =
+      "export let constructedWorker: CapturedWorker | undefined; export class CapturedWorker { constructor() { constructedWorker = this } }"
+    const allowed = await eslint.lintText(source, {
+      filePath: "apps/web/lib/stockfish/webWorkerUciTransport.test.ts",
+    })
+    const findings = await eslint.lintText(source, {
+      filePath: "apps/web/lib/stockfish/lint-probe.ts",
+    })
+
+    expect(allowed[0]?.messages).toEqual([])
+    expect(findings[0]?.messages).toEqual([
+      expect.objectContaining({
+        ruleId: "@typescript-eslint/no-this-alias",
+        severity: 1,
+      }),
+    ])
+  })
+
+  it("still reports ordinary this aliases in the Worker factory test", async () => {
+    const results = await eslint.lintText(
+      "export class CapturedWorker { getSelf() { const worker = this; return worker } }",
+      { filePath: "apps/web/lib/stockfish/webWorkerUciTransport.test.ts" },
+    )
+
+    expect(results[0]?.messages).toEqual([
+      expect.objectContaining({
+        ruleId: "@typescript-eslint/no-this-alias",
+        severity: 1,
+      }),
+    ])
   })
 
   it.each([

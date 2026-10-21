@@ -99,7 +99,6 @@ const closeRuntimeAfterFailure = async (
   try {
     await runtime.close()
   } catch (closeFailure) {
-    // eslint-disable-next-line preserve-caught-error -- Invariant: both failures are preserved in errors, not a single cause.
     throw new AggregateError(
       [openingFailure, closeFailure],
       "Web match session failed to open and close cleanly.",

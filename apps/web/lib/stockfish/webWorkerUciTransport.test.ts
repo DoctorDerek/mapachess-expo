@@ -126,7 +126,6 @@ describe("Stockfish web Worker transport", () => {
     class ConstructedFakeWorker extends FakeStockfishWorker {
       public constructor(url: string | URL, options?: WorkerOptions) {
         super()
-        // eslint-disable-next-line @typescript-eslint/no-this-alias -- Invariant: inspect the Worker instance constructed by the real session factory.
         constructedWorker = this
         constructedUrl = url
         constructedOptions = options

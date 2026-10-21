@@ -64,10 +64,62 @@ describe("engine validation", () => {
     ).toThrow("ponder must be a boolean")
   })
 
-  it("rejects unstable request text and malformed moves", () => {
-    expect(() => assertStableText(" request", "fixture")).toThrow(
-      "must be nonempty, trimmed, and free of control characters",
-    )
+  it("rejects nonstring, empty, or untrimmed text with the boundary label", () => {
+    for (const value of [
+      undefined,
+      null,
+      0,
+      false,
+      {},
+      [],
+      "",
+      " ",
+      " request",
+      "request ",
+    ]) {
+      expect(() => assertStableText(value, "opening.id")).toThrow(
+        new TypeError(
+          "opening.id must be nonempty, trimmed, and free of control characters.",
+        ),
+      )
+    }
+  })
+
+  it("rejects every C0 control character and DEL inside otherwise valid text", () => {
+    const controlCodes = [
+      ...Array.from({ length: 32 }, (_, index) => index),
+      127,
+    ]
+
+    for (const code of controlCodes) {
+      expect(() =>
+        assertStableText(
+          `before${String.fromCharCode(code)}after`,
+          "requestId",
+        ),
+      ).toThrow(
+        new TypeError(
+          "requestId must be nonempty, trimmed, and free of control characters.",
+        ),
+      )
+    }
+  })
+
+  it("accepts printable boundaries, internal spaces, and Unicode text", () => {
+    for (const value of [
+      "!",
+      "~",
+      "request 1",
+      "ajedrez",
+      "หมากรุก",
+      "🦝",
+      STANDARD_SEARCH.position.fen,
+    ]) {
+      expect(() => assertStableText(value, "fixture")).not.toThrow()
+    }
+  })
+
+  it("rejects malformed moves", () => {
     expect(() =>
       validateStockfishSearchRequest({
         ...STANDARD_SEARCH,

@@ -6,6 +6,7 @@ import {
   type StockfishBuildIdentity,
 } from "@mapachess/stockfish/build-identity"
 import type { StockfishStrength } from "@mapachess/stockfish/engine-session"
+import { assertStableText } from "@mapachess/stockfish/engine-validation"
 import {
   OPPONENT_MOVE_SELECTION_ALGORITHM_VERSION,
   OPPONENT_RANDOM_MOVE_PROBABILITY_SCALE,
@@ -47,8 +48,6 @@ export const WEB_CALIBRATION_ENGINE_IDENTITY = {
 } as const satisfies WebCalibrationEngineIdentity
 
 const POLICY_FINGERPRINT_NAMESPACE = "mapachess.opponent-policy/v2"
-// eslint-disable-next-line no-control-regex -- Invariant: policy identities reject control characters.
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const opponentPolicyFingerprintBrand: unique symbol
 
@@ -95,18 +94,6 @@ export type OpponentPolicy = Readonly<{
     threads: number
   }>
 }>
-
-function assertStableText(value: string, label: string): void {
-  if (
-    value.length === 0 ||
-    value !== value.trim() ||
-    CONTROL_CHARACTER_PATTERN.test(value)
-  ) {
-    throw new TypeError(
-      `${label} must be nonempty, trimmed, and free of control characters.`,
-    )
-  }
-}
 
 function assertPositiveSafeInteger(value: number, label: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {

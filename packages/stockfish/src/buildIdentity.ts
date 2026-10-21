@@ -1,7 +1,7 @@
+import { assertStableText } from "./engineValidation.js"
+
 const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/
 const SOURCE_REVISION_PATTERN = /^[0-9a-f]{40}$/
-// eslint-disable-next-line no-control-regex -- Invariant: build identities reject control characters.
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const sha256HexBrand: unique symbol
 
@@ -50,18 +50,6 @@ export function parseSha256Hex(value: string, label = "SHA-256"): Sha256Hex {
   }
 
   return value as Sha256Hex
-}
-
-function assertStableText(value: string, label: string): void {
-  if (
-    value.length === 0 ||
-    value !== value.trim() ||
-    CONTROL_CHARACTER_PATTERN.test(value)
-  ) {
-    throw new TypeError(
-      `${label} must be nonempty, trimmed, and free of control characters.`,
-    )
-  }
 }
 
 function validateNetworkIdentity(
