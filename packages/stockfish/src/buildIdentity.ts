@@ -1,5 +1,6 @@
 const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/
 const SOURCE_REVISION_PATTERN = /^[0-9a-f]{40}$/
+// eslint-disable-next-line no-control-regex -- Invariant: build identities reject control characters.
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const sha256HexBrand: unique symbol

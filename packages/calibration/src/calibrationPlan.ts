@@ -22,6 +22,7 @@ export const CALIBRATION_PLAN_SCHEMA_VERSION = 1 as const
 
 const PLAN_ID_NAMESPACE = "mapachess.calibration-plan/v1"
 const PAIR_ID_NAMESPACE = "mapachess.calibration-pair/v1"
+// eslint-disable-next-line no-control-regex -- Invariant: calibration inputs reject control characters.
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/
 
 declare const calibrationGameIdBrand: unique symbol
