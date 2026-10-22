@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
+import matchVictoryMedal, { matchMedalEligibility } from "../src/matchMedal.js"
 import applyStoryMatchResult, {
   canPlayStoryOpponent,
   createInitialStoryProgress,
@@ -14,6 +15,30 @@ import decodeStoryProgress from "../src/storyProgressCodec.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
 describe("earned Story progression", () => {
+  it.each([
+    { pieceHintsUsed: false, moveHintsUsed: false, medal: "gold" },
+    { pieceHintsUsed: true, moveHintsUsed: false, medal: "silver" },
+    { pieceHintsUsed: true, moveHintsUsed: true, medal: "bronze" },
+  ] as const)(
+    "distinguishes $medal eligibility from an earned victory",
+    (hintUse) => {
+      const win = { ...completedStoryMatch(), ...hintUse }
+      expect(matchMedalEligibility(hintUse)).toBe(hintUse.medal)
+      expect(matchVictoryMedal(win)).toBe(hintUse.medal)
+      expect(matchVictoryMedal({ ...win, conclusion: null })).toBeNull()
+      expect(
+        matchVictoryMedal({ ...win, conclusion: { type: "draw-agreement" } }),
+      ).toBeNull()
+      expect(matchVictoryMedal({ ...win, playerColor: "white" })).toBeNull()
+    },
+  )
+
+  it("rejects impossible Move Hint eligibility without Piece Hint disclosure", () => {
+    expect(() =>
+      matchMedalEligibility({ pieceHintsUsed: false, moveHintsUsed: true }),
+    ).toThrow("without Piece Hint use")
+  })
+
   it.each(["standard", "chess960"] as const)(
     "offers the complete earned %s roster without unlocking the other ladder",
     (variant) => {

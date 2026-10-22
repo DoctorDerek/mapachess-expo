@@ -11,6 +11,20 @@ type MedalResult = Pick<
   "conclusion" | "playerColor" | "moveHintsUsed" | "pieceHintsUsed"
 >
 
+export function matchMedalEligibility(
+  hintUse: Pick<DurableMatchRecord, "moveHintsUsed" | "pieceHintsUsed">,
+): MatchMedal {
+  if (hintUse.moveHintsUsed && !hintUse.pieceHintsUsed)
+    throw new TypeError(
+      "Move Hints cannot award a medal without Piece Hint use.",
+    )
+  return hintUse.moveHintsUsed
+    ? "bronze"
+    : hintUse.pieceHintsUsed
+      ? "silver"
+      : "gold"
+}
+
 export default function matchVictoryMedal(
   match: MedalResult,
 ): MatchMedal | null {
@@ -21,16 +35,7 @@ export default function matchVictoryMedal(
     match.conclusion.winner !== match.playerColor
   )
     return null
-  if (match.moveHintsUsed && !match.pieceHintsUsed) {
-    throw new TypeError(
-      "Move Hints cannot award a medal without Piece Hint use.",
-    )
-  }
-  return match.moveHintsUsed
-    ? "bronze"
-    : match.pieceHintsUsed
-      ? "silver"
-      : "gold"
+  return matchMedalEligibility(match)
 }
 
 export const highestMatchMedal = (
