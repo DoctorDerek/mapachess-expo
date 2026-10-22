@@ -198,7 +198,10 @@ describe("Better Hints board presentation", () => {
       expect(markup).toContain(`aria-busy="${String(state === "saving")}"`)
       expect(markup).toContain("Show Move Hints")
       expect(markup).toContain("Piece Hints shown.")
-      expect(markup).not.toContain("Finding Piece Hints")
+      expect(markup).not.toContain('data-hint-stage="loading"')
+      expect(markup).not.toContain(
+        "Finding Piece Hints for Player and Opponent.",
+      )
       expect(markup).not.toContain("Move Hints shown.")
     },
   )

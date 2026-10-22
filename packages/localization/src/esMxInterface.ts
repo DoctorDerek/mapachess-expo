@@ -1,7 +1,7 @@
 import type { MapachessCatalog } from "./catalog.js"
 
 const interfaceCopy = {
-  betterHintsControl: { betterHints: "Mejores pistas", hints: "Pistas" },
+  betterHintsControl: { betterHints: "Mejores pistas" },
   challengeDifficultyChoices: { elo: "Elo" },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults:

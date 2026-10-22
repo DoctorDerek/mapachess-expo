@@ -29,19 +29,24 @@ export default function MatchIdentity({
   return (
     <section
       aria-labelledby="opponent-band-title"
-      className="text-mapachito-white px-3 xl:px-0"
+      className="text-mapachito-white contents"
     >
+      {playerClock || opponentClock ? (
+        <div className="mb-2 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
+          <div>{playerClock}</div>
+          <div>{opponentClock}</div>
+        </div>
+      ) : null}
       <h1
         id="opponent-band-title"
         ref={headingRef}
         tabIndex={-1}
-        className="text-center text-base leading-tight"
+        className="mb-2 w-full max-w-(--playing-width) min-w-0 justify-self-center px-3 text-center text-base leading-tight [grid-area:identity] xl:px-0"
       >
         <span className="inline-block">
           <strong>{copy.presentation.playerName}</strong> ·{" "}
           {copy.gameplay.elo(playerElo)}
           <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
-          {playerClock}
         </span>
         {copy.board.versus}
         <span className="inline-block">
@@ -50,7 +55,6 @@ export default function MatchIdentity({
             {" "}
             ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
           </span>
-          {opponentClock}
         </span>
         <span className="inline-block">
           {" "}
