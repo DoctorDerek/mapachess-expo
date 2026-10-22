@@ -1,5 +1,4 @@
 import {
-  assign,
   enqueueActions,
   setup,
   type ActorRefFrom,
@@ -27,7 +26,7 @@ export type MoveReactionCard = Readonly<{
 
 type MoveReactionContext = Readonly<{
   cards: readonly MoveReactionCard[]
-  receivedIds: readonly string[]
+  latestPly: Readonly<Record<MatchColor, number>>
   generation: number
 }>
 
@@ -46,29 +45,38 @@ const moveReactionMachine = setup({
   },
   actors: { card: moveReactionCardMachine },
   guards: {
-    isNewReaction: ({ context, event }) =>
+    isNewerReaction: ({ context, event }) =>
       event.type === "MOVE_REACTION.RECEIVED" &&
-      !context.receivedIds.includes(event.reaction.id),
+      event.reaction.ply > context.latestPly[event.reaction.mover],
   },
   actions: {
-    receive: assign(({ context, event, spawn }) => {
+    receive: enqueueActions(({ context, event, enqueue }) => {
       if (event.type !== "MOVE_REACTION.RECEIVED")
         throw new Error("Receiving a card requires a completed move reaction.")
-      const presentationId = `${String(context.generation)}/${event.reaction.id}`
-      const card: MoveReactionCard = {
-        presentationId,
-        reaction: event.reaction,
-        actor: spawn("card", {
-          id: presentationId,
-          input: { presentationId },
-        }),
-      }
-      return {
-        cards: [...context.cards, card].sort(
-          (left, right) => right.reaction.ply - left.reaction.ply,
-        ),
-        receivedIds: [...context.receivedIds, event.reaction.id],
-      }
+      const reaction = event.reaction
+      for (const card of context.cards)
+        if (card.reaction.mover === reaction.mover)
+          enqueue.stopChild(card.actor)
+      enqueue.assign(({ spawn }) => {
+        const presentationId = `${String(context.generation)}/${reaction.id}`
+        const card: MoveReactionCard = {
+          presentationId,
+          reaction,
+          actor: spawn("card", {
+            id: presentationId,
+            input: { presentationId },
+          }),
+        }
+        return {
+          cards: [
+            ...context.cards.filter(
+              (current) => current.reaction.mover !== reaction.mover,
+            ),
+            card,
+          ].sort((left, right) => right.reaction.ply - left.reaction.ply),
+          latestPly: { ...context.latestPly, [reaction.mover]: reaction.ply },
+        }
+      })
     }),
     remove: enqueueActions(({ context, event, enqueue }) => {
       if (
@@ -89,16 +97,16 @@ const moveReactionMachine = setup({
       for (const card of context.cards) enqueue.stopChild(card.actor)
       enqueue.assign({
         cards: [],
-        receivedIds: [],
+        latestPly: { white: 0, black: 0 },
         generation: context.generation + 1,
       })
     }),
   },
 }).createMachine({
   id: "moveReaction",
-  context: { cards: [], receivedIds: [], generation: 0 },
+  context: { cards: [], latestPly: { white: 0, black: 0 }, generation: 0 },
   on: {
-    "MOVE_REACTION.RECEIVED": { guard: "isNewReaction", actions: "receive" },
+    "MOVE_REACTION.RECEIVED": { guard: "isNewerReaction", actions: "receive" },
     "MOVE_REACTION.DISMISSED": { actions: "remove" },
     "MOVE_REACTION.EXPIRED": { actions: "remove" },
     "MOVE_REACTION.CLEARED": { actions: "clear" },

@@ -80,10 +80,8 @@ describe("independent move reaction cards", () => {
     receive(reaction(1))
     receive(reaction(2))
     const whiteHero = selectMoveReactionColumns(actor.getSnapshot(), "white")
-    expect(whiteHero.hero.map((entry) => entry.reaction.ply)).toEqual([3, 1])
-    expect(whiteHero.opponent.map((entry) => entry.reaction.ply)).toEqual([
-      4, 2,
-    ])
+    expect(whiteHero.hero.map((entry) => entry.reaction.ply)).toEqual([3])
+    expect(whiteHero.opponent.map((entry) => entry.reaction.ply)).toEqual([4])
     const blackHero = selectMoveReactionColumns(actor.getSnapshot(), "black")
     expect(blackHero.hero).toEqual(whiteHero.opponent)
     expect(blackHero.opponent).toEqual(whiteHero.hero)
@@ -169,18 +167,48 @@ describe("independent move reaction cards", () => {
     ).toBe(true)
   })
 
-  it("does not hide or discard rapid arrivals behind a capacity limit", () => {
+  it("replaces rapid arrivals with one latest card per participant and no live backlog", () => {
     const { actor, receive, cards } = open()
     for (let ply = 1; ply <= 100; ply += 1) receive(reaction(ply))
-    expect(cards()).toHaveLength(100)
+    expect(cards().map((card) => card.reaction.ply)).toEqual([100, 99])
+    expect(Object.keys(actor.getSnapshot().children)).toHaveLength(2)
     expect(
       selectMoveReactionColumns(actor.getSnapshot(), "white").hero,
-    ).toHaveLength(50)
+    ).toHaveLength(1)
     expect(
       selectMoveReactionColumns(actor.getSnapshot(), "white").opponent,
-    ).toHaveLength(50)
+    ).toHaveLength(1)
     actor.send({ type: "MOVE_REACTION.CLEARED" })
     expect(Object.keys(actor.getSnapshot().children)).toEqual([])
+    actor.stop()
+  })
+
+  it("stops a replaced timer without extending the other participant or accepting an old expiry", () => {
+    const { actor, clock, receive, cards, card, present } = open()
+    receive(reaction(1))
+    receive(reaction(2))
+    present(1)
+    present(2)
+    const replaced = card(1)
+    const opponent = card(2)
+    clock.increment(4_000)
+    receive(reaction(3))
+    expect(replaced.actor.getSnapshot().status).toBe("stopped")
+    expect(card(2)).toBe(opponent)
+    present(3)
+    actor.send({
+      type: "MOVE_REACTION.EXPIRED",
+      presentationId: replaced.presentationId,
+    })
+    clock.increment(1_000)
+    expect(cards().map((card) => card.reaction.ply)).toEqual([3])
+    clock.increment(4_000)
+    expect(cards()).toEqual([])
+    receive(reaction(1))
+    receive(reaction(3))
+    expect(cards()).toEqual([])
+    receive(reaction(5))
+    expect(cards().map((card) => card.reaction.ply)).toEqual([5])
     actor.stop()
   })
 })
