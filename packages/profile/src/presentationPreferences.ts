@@ -10,7 +10,7 @@ import { requireEnumValue } from "./decodePrimitives.js"
 
 export const MOVE_REACTION_PLACEMENTS = ["top", "middle", "bottom"] as const
 export type MoveReactionPlacement = (typeof MOVE_REACTION_PLACEMENTS)[number]
-export const DEFAULT_MOVE_REACTION_PLACEMENT = "middle" as const
+export const DEFAULT_MOVE_REACTION_PLACEMENT = "top" as const
 
 export type PresentationPreferences = Readonly<{
   chessAppearance: ChessAppearanceSettings
