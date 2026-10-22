@@ -23,7 +23,7 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 
 describe("portable match session navigation", () => {
   it.each(["credits", "auto-hints-help"] as const)(
-    "keeps %s inside Settings through Back and restored Forward without replacing the match",
+    "restores the Settings context for %s through Back and Forward without replacing the match",
     async (overlay) => {
       const ops = operations()
       const actor = createActor(machine, {
@@ -31,7 +31,11 @@ describe("portable match session navigation", () => {
       }).start()
       await waitFor(actor, (snapshot) => snapshot.matches("active"))
       actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay })
-      expect(actor.getSnapshot().context.overlays).toEqual([])
+      expect(actor.getSnapshot().context.overlays).toEqual(
+        overlay === "credits" ? [] : [overlay],
+      )
+      if (overlay === "auto-hints-help")
+        actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
       actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "settings" })
       actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay })
       const destination = selectMatchNavigationDestination(actor.getSnapshot())
@@ -51,6 +55,31 @@ describe("portable match session navigation", () => {
       actor.stop()
     },
   )
+  it("keeps the match-owned hint picker and help in the portable Back/Forward stack", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "match-hints" })
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "auto-hints-help",
+    })
+    const destination = selectMatchNavigationDestination(actor.getSnapshot())
+    if (destination === null) throw new Error("Expected match destination")
+    expect(destination.overlays).toEqual(["match-hints", "auto-hints-help"])
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["match-hints"])
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+    expect(actor.getSnapshot().context.session).toBe(session)
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it("replaces the concluding match menu with rewards instead of reopening it after dismissal", async () => {
     const actor = createActor(machine, {
       input: { activeMatchExists: true, operations: operations() },

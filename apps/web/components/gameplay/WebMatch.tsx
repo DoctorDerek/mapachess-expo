@@ -49,13 +49,13 @@ import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BattleStageSurface from "./BattleStageSurface"
-import BetterHintsControl from "./BetterHintsControl"
 import CanonicalChessboard from "./CanonicalChessboard"
 import ClassifiedMoveHistory from "./ClassifiedMoveHistory"
 import LevelAchievementToasts from "./LevelAchievementToasts"
 import MapachitoCoachPortrait from "./MapachitoCoachPortrait"
 import MatchCelebration from "./MatchCelebration"
 import MatchCommands from "./MatchCommands"
+import MatchHintControls from "./MatchHintControls"
 import MatchIdentity from "./MatchIdentity"
 import MatchOutcome from "./MatchOutcome"
 import MatchRecovery from "./MatchRecovery"
@@ -183,7 +183,10 @@ export default function WebMatch({
   const reactions = useMoveReactions(
     timeline,
     moveFeedback,
-    reactionsPaused || celebrationPending || celebrationOpen,
+    reactionsPaused ||
+      overlays.length > 0 ||
+      celebrationPending ||
+      celebrationOpen,
   )
   const coachMove = useSelector(
     reactions.actor,
@@ -266,36 +269,34 @@ export default function WebMatch({
           modeLabel,
           animalCopy.opponent(opponent.id),
         )}
-        className="relative grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:'identity_command'_'evaluation_command'_'board_command'_'battle_.']"
+        className="relative grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:'clocks_command'_'identity_command'_'evaluation_command'_'board_command'_'battle_.']"
       >
-        <div className="mb-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:identity]">
-          <MatchIdentity
-            timeControl={snapshot.context.timeControl}
-            playerClock={
-              snapshot.context.clock === null ? null : (
-                <ParticipantClock
-                  clock={snapshot.context.clock}
-                  color={runtime.playerColor}
-                  monotonicClock={snapshot.context.monotonicClock}
-                />
-              )
-            }
-            opponentClock={
-              snapshot.context.clock === null ? null : (
-                <ParticipantClock
-                  clock={snapshot.context.clock}
-                  color={runtime.playerColor === "white" ? "black" : "white"}
-                  monotonicClock={snapshot.context.monotonicClock}
-                />
-              )
-            }
-            headingRef={heading}
-            playerColor={runtime.playerColor}
-            playerElo={playerElo}
-            opponentName={animalCopy.opponent(opponent.id)}
-            opponentElo={runtime.opponentTargetElo}
-          />
-        </div>
+        <MatchIdentity
+          timeControl={snapshot.context.timeControl}
+          playerClock={
+            snapshot.context.clock === null ? null : (
+              <ParticipantClock
+                clock={snapshot.context.clock}
+                color={runtime.playerColor}
+                monotonicClock={snapshot.context.monotonicClock}
+              />
+            )
+          }
+          opponentClock={
+            snapshot.context.clock === null ? null : (
+              <ParticipantClock
+                clock={snapshot.context.clock}
+                color={runtime.playerColor === "white" ? "black" : "white"}
+                monotonicClock={snapshot.context.monotonicClock}
+              />
+            )
+          }
+          headingRef={heading}
+          playerColor={runtime.playerColor}
+          playerElo={playerElo}
+          opponentName={animalCopy.opponent(opponent.id)}
+          opponentElo={runtime.opponentTargetElo}
+        />
         <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:evaluation]">
           <PositionEvaluationGutter actor={evaluationActor} />
         </div>
@@ -369,18 +370,11 @@ export default function WebMatch({
                   />
                 }
                 hints={
-                  <BetterHintsControl
-                    busy={persisting}
-                    disabled={persistenceFailure !== null}
-                    hints={hints}
-                    matchComplete={matchComplete}
-                    onMoveHintsRequested={() =>
-                      actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-                    }
-                    onPieceHintsRequested={() =>
-                      actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-                    }
-                    stage={hintStage}
+                  <MatchHintControls
+                    actor={actor}
+                    snapshot={snapshot}
+                    navigation={navigation}
+                    overlays={overlays}
                   />
                 }
                 menuActions={

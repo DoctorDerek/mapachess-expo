@@ -51,7 +51,7 @@ async function openGame(
     exact: true,
   })
   await expect(
-    choices.getByRole("radio", { name: "Midpoint", exact: true }),
+    choices.getByRole("radio", { name: "Top", exact: true }),
   ).toBeChecked()
   await choices
     .getByRole("radio", { name: placementLabels[placement], exact: true })
@@ -148,12 +148,22 @@ for (const configuration of [
       ),
     })
     await expect(hero).toHaveCount(1)
-    await expect(opponent).toHaveCount(configuration.color === "Black" ? 2 : 1)
+    await expect(opponent).toHaveCount(1)
+    await expect(hero).toHaveAccessibleName(
+      new RegExp(`^Dismiss ${configuration.color} 1\\.`),
+    )
+    await expect(opponent).toHaveAccessibleName(
+      configuration.color === "White"
+        ? /^Dismiss Black 1\.\.\. /
+        : /^Dismiss White 2\. /,
+    )
     const heroBox = await boxOf(hero)
     const desktop = configuration.width >= 1280
     const top = desktop
       ? before.commands.y + before.commands.height + 8
-      : before.board.y + 4
+      : configuration.placement === "top"
+        ? (await boxOf(page.getByRole("heading", { level: 1 }))).y + 4
+        : before.board.y + 4
     const bottom = before.board.y + before.board.height - (desktop ? 0 : 4)
     if (configuration.placement === "top") expect(heroBox.y).toBeCloseTo(top, 0)
     else if (configuration.placement === "bottom")
@@ -216,24 +226,25 @@ test("crossing the layout boundary preserves card identities and remaining lifet
 })
 
 for (const width of [320, 1440]) {
-  test(`rapid keyboard-play stacks remain readable and independently dismissible at ${width}px and enlarged text`, async ({
+  test(`rapid keyboard-play keeps one readable card per participant at ${width}px and enlarged text`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize({ width, height: 1100 })
-    await openGame(page, "middle", "White", 24)
+    await openGame(page, "top", "White", 24)
     const board = page.getByRole("grid", { name: /Chessboard/ })
     const before = await boxOf(board)
     const hero = page.getByRole("button", { name: /^Dismiss White / })
     const opponent = page.getByRole("button", { name: /^Dismiss Black / })
-    for (const [index, preferred] of ["e2e4", "g1f3", "f1c4"].entries()) {
+    for (const preferred of ["e2e4", "g1f3", "f1c4"]) {
       await playLegalMove(page, preferred, true)
-      await expect(hero).toHaveCount(index + 1)
-      await expect(opponent).toHaveCount(index + 1)
+      await expect(hero).toHaveCount(1)
+      await expect(opponent).toHaveCount(1)
     }
     expectSameBox(await boxOf(board), before)
     await expect(hero.first()).toHaveAccessibleName(/^Dismiss White 3\. /)
-    const last = await boxOf(hero.last())
-    expect(last.y).toBeGreaterThan((await boxOf(hero.first())).y)
+    await expect(opponent.first()).toHaveAccessibleName(
+      /^Dismiss Black 3\.\.\. /,
+    )
     for (const card of await page
       .getByRole("button", { name: /^Dismiss / })
       .all()) {
@@ -263,12 +274,12 @@ for (const width of [320, 1440]) {
       fullPage: true,
     })
     const opponentBefore = await boxOf(opponent.first())
-    await hero.nth(1).focus()
-    await hero.nth(1).press("Enter")
-    await expect(hero).toHaveCount(2)
+    await hero.focus()
+    await hero.press("Enter")
+    await expect(hero).toHaveCount(0)
     expectSameBox(await boxOf(opponent.first()), opponentBefore)
     await opponent.first().press("Space")
-    await expect(opponent).toHaveCount(2)
+    await expect(opponent).toHaveCount(0)
     expectSameBox(await boxOf(board), before)
   })
 }
@@ -286,7 +297,7 @@ test("Mexican Spanish placement is saved across reload and subsequent changes", 
     exact: true,
   })
   await expect(
-    choices.getByRole("radio", { name: "Centro", exact: true }),
+    choices.getByRole("radio", { name: "Arriba", exact: true }),
   ).toBeChecked()
   await choices.getByRole("radio", { name: "Abajo", exact: true }).check()
   await expect

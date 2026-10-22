@@ -98,7 +98,7 @@ export default function BetterHintsControl({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="relative min-w-min flex-1 basis-12"
+      className="relative flex min-w-0 flex-col"
     >
       <h2 className="sr-only" id="better-hints-title">
         {messages.betterHints}
@@ -107,7 +107,7 @@ export default function BetterHintsControl({
         variant="hint"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance"
-        className="flex min-h-14 w-full min-w-0 flex-col items-center justify-center px-1! py-1! text-base"
+        className="flex h-full min-h-20 w-full min-w-0 flex-col items-center justify-center gap-1 px-2! py-2! text-base"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
         disabled={disabled || busy || control.action === null}
@@ -115,8 +115,20 @@ export default function BetterHintsControl({
         type="button"
       >
         <InputPrompt action="hints" fallback="✦" />
-        <span className="sr-only">{control.label}</span>
-        <span aria-hidden="true">{messages.hints}</span>
+        <span className="grid max-w-full min-w-0 wrap-anywhere">
+          {Object.entries(copy.gameplay.hints.controls).map(
+            ([stage, label]) => (
+              <span
+                aria-hidden="true"
+                className="invisible col-start-1 row-start-1"
+                key={stage}
+              >
+                {label}
+              </span>
+            ),
+          )}
+          <span className="col-start-1 row-start-1">{control.label}</span>
+        </span>
       </MapachessButton>
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {hintAnnouncement(stage, hints, copy.gameplay.hints)}

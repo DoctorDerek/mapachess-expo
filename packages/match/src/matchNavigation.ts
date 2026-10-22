@@ -4,6 +4,7 @@ import { TIME_CATEGORIES, type TimeCategory } from "./timeControl.js"
 export type MatchNavigationOverlay =
   | "match-menu"
   | "match-details"
+  | "match-hints"
   | "settings"
   | "auto-hints-help"
   | "classifications"
@@ -37,6 +38,7 @@ export type MatchNavigationDestination = Readonly<{
 const overlayNames: readonly MatchNavigationOverlay[] = [
   "match-menu",
   "match-details",
+  "match-hints",
   "settings",
   "auto-hints-help",
   "classifications",
@@ -106,13 +108,15 @@ export function eligibleMatchNavigationOverlays(
       overlay === "dressing-room" ||
       overlay === "profile-card" ||
       ((overlay === "classifications" ||
-        overlay === "auto-hints-help" ||
         overlay === "credits" ||
         overlay === "about-elo" ||
         overlay.startsWith("reset-")) &&
         result.includes("settings")) ||
+      (overlay === "auto-hints-help" &&
+        (result.includes("settings") || destination.screen === "match")) ||
       (overlay.startsWith("setup-") && destination.screen === "setup") ||
       (overlay === "match-menu" && destination.screen === "match") ||
+      (overlay === "match-hints" && destination.screen === "match") ||
       (overlay === "match-details" && result.includes("match-menu")) ||
       (overlay === "rewards" &&
         destination.screen === "match" &&

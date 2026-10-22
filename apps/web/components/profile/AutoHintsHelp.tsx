@@ -4,12 +4,13 @@ import SettingsView from "./SettingsView"
 
 export default function AutoHintsHelp({
   onClose,
-}: Readonly<{ onClose: () => void }>) {
+  closeLabel,
+}: Readonly<{ onClose: () => void; closeLabel?: string }>) {
   const copy = useMapachessCopy()
   return (
     <SettingsView
       title={copy.shared.settingsControls.autoHints}
-      closeLabel={copy.shared.settingsControls.back}
+      closeLabel={closeLabel ?? copy.shared.settingsControls.back}
       onClose={onClose}
       focusHeading
     >
@@ -26,6 +27,9 @@ export default function AutoHintsHelp({
       </dl>
       <p className="mt-6 text-base leading-relaxed">
         {copy.setup.hintMedalExplanation}
+      </p>
+      <p className="mt-3 text-base leading-relaxed">
+        {copy.gameplay.hints.xpUnchanged}
       </p>
     </SettingsView>
   )

@@ -1,7 +1,6 @@
 const interfaceCopy = {
   betterHintsControl: {
     betterHints: "Better Hints",
-    hints: "Hints",
   },
   challengeDifficultyChoices: {
     elo: "Elo",

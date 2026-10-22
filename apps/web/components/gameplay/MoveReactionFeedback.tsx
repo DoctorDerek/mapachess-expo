@@ -25,7 +25,12 @@ export default function MoveReactionFeedback({
     actor.send({ type: "MOVE_REACTION.DISMISSED", presentationId })
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-30 min-h-0 min-w-0 [grid-area:board] xl:relative xl:[grid-area:auto]">
+    <div
+      className={cx(
+        "pointer-events-none absolute inset-0 z-30 min-h-0 min-w-0 xl:relative xl:[grid-area:auto]",
+        placement === "top" ? "[grid-area:identity]" : "[grid-area:board]",
+      )}
+    >
       <div className="absolute inset-0 grid grid-cols-2 gap-2 p-1 xl:p-0">
         {(["hero", "opponent"] as const).map((participant) => (
           <div

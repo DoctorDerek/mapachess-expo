@@ -280,7 +280,10 @@ test("reading Settings help and Credits preserves a paused timed match and requi
     .toBe(true)
   const original = await savedProfile(page)
   for (const name of ["Explain Auto-Hints", "Credits"]) {
-    await page.getByRole("button", { name, exact: true }).click()
+    await page
+      .getByRole("dialog", { name: "Your game customization", exact: true })
+      .getByRole("button", { name, exact: true })
+      .click()
     await page
       .getByRole("button", { name: "Back to Settings", exact: true })
       .click()

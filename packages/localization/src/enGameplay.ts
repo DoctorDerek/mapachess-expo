@@ -90,15 +90,27 @@ const gameplay = {
   retryTurn: (opponent: string): string => `Retry ${opponent}’s turn`,
   drawDeclined: (opponent: string): string => `${opponent} declines the draw.`,
   hints: {
+    autoMode: {
+      "auto-move-hints": "Auto: Move Hints",
+      "auto-piece-hints": "Auto: Piece Hints",
+      "no-auto-hints": "Auto: Off",
+    },
+    eligibility: (medal: string, hintUse: string): string =>
+      `${medal} if you win · ${hintUse}`,
+    nextMedal: {
+      "piece-hints": "Piece Hints → Silver",
+      "move-hints": "Move Hints → Bronze",
+    },
+    xpUnchanged: "Hints never reduce XP.",
     controls: {
       failure: "Retry Piece Hints",
-      hidden: "Hints available on your turn",
+      hidden: "Hints on your turn",
       loading: "Finding Piece Hints…",
       "move-hints": "Move Hints Shown",
       "piece-hints": "Show Move Hints",
       ready: "Show Piece Hints",
       unavailable: "Hints unavailable",
-      complete: "Hints unavailable after the match",
+      complete: "Match complete",
     },
     guidance: {
       failure:

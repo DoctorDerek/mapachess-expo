@@ -116,6 +116,10 @@ const formatterExamples = {
   "gameplay.opponentTurnFailed": [["Chicken Stockfish"]],
   "gameplay.retryTurn": [["Chicken Stockfish"], ["War Hero Stockfish"]],
   "gameplay.drawDeclined": [["Chicken Stockfish"]],
+  "gameplay.hints.eligibility": [
+    ["Gold", "No hints used"],
+    ["Bronce", "Usaste Pistas de movimientos"],
+  ],
   "gameplay.hints.piecesShown": [
     [[], []],
     [["e1"], ["e8"]],

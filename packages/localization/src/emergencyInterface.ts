@@ -4,7 +4,6 @@ import { UNAVAILABLE_TEXT } from "./messageRecovery.js"
 const emergencyInterface = {
   betterHintsControl: {
     betterHints: UNAVAILABLE_TEXT,
-    hints: UNAVAILABLE_TEXT,
   },
   challengeDifficultyChoices: {
     elo: UNAVAILABLE_TEXT,

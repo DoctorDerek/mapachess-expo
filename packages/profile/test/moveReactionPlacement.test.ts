@@ -55,7 +55,7 @@ describe("saved move-feedback placement", () => {
       schemaVersion: 16,
     }
     const sourceFields = JSON.parse(canonicalPlayerData(current)) as unknown[]
-    expect(sourceFields.pop()).toBe("middle")
+    expect(sourceFields.pop()).toBe("top")
     sourceFields[1] = 16
     const canonical = JSON.stringify(sourceFields)
     const decoded = decodeMapachessPlayerDataWithSource(payload)
@@ -140,10 +140,12 @@ describe("saved move-feedback placement", () => {
       new InMemoryDurableStoreAdapter(),
       sha256,
     )
-    const seeded = await store.commitCurrent(
-      await store.load(),
-      createInitialMapachessPlayerData(),
-    )
+    const initial = createInitialMapachessPlayerData()
+    expect(initial.settings.moveReactionPlacement).toBe("top")
+    const seeded = await store.commitCurrent(await store.load(), {
+      ...initial,
+      settings: { ...initial.settings, moveReactionPlacement: "middle" },
+    })
     if (!seeded.ok) throw new Error("Expected initial profile")
     const actor = createActor(profileMachine, {
       input: {

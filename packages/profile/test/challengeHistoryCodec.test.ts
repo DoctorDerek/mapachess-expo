@@ -95,7 +95,7 @@ describe("durable Challenge history", () => {
     expect(result.data.settings).toEqual({
       ...old.settings,
       locale: null,
-      moveReactionPlacement: "middle",
+      moveReactionPlacement: "top",
       chessAppearance: { boardId: "current", pieceSetId: "current" },
       coachCollection: "mapachito",
       inputBindings: createInitialMapachessPlayerData().settings.inputBindings,
