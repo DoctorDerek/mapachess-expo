@@ -91,15 +91,27 @@ const gameplay = {
   retryTurn: (opponent: string): string => `Reintentar el turno de ${opponent}`,
   drawDeclined: (opponent: string): string => `${opponent} rechaza las tablas.`,
   hints: {
+    autoMode: {
+      "auto-move-hints": "Auto: Movimientos",
+      "auto-piece-hints": "Auto: Piezas",
+      "no-auto-hints": "Auto: No",
+    },
+    eligibility: (medal: string, hintUse: string): string =>
+      `${medal} si ganas · ${hintUse}`,
+    nextMedal: {
+      "piece-hints": "Pistas de piezas → Plata",
+      "move-hints": "Pistas de movimientos → Bronce",
+    },
+    xpUnchanged: "Las pistas nunca reducen tu XP.",
     controls: {
       failure: "Reintentar Pistas de piezas",
-      hidden: "Pistas disponibles en tu turno",
+      hidden: "Pistas en tu turno",
       loading: "Buscando Pistas de piezas…",
       "move-hints": "Pistas de movimientos visibles",
       "piece-hints": "Mostrar Pistas de movimientos",
       ready: "Mostrar Pistas de piezas",
       unavailable: "Pistas no disponibles",
-      complete: "Pistas no disponibles después de la partida",
+      complete: "Partida terminada",
     },
     guidance: {
       failure:
