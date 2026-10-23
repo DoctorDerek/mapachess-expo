@@ -257,15 +257,9 @@ test("isolates an editor view failure while retaining the unsaved appearance", a
   await expect(
     page.getByRole("button", { name: "Face 5", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
-  await expect(
-    page.getByText("Unsaved appearance", { exact: true }),
-  ).toBeVisible()
-  await page
-    .getByRole("button", { name: "Save appearance", exact: true })
-    .click()
-  await expect(
-    page.getByText("Saved appearance", { exact: true }),
-  ).toBeVisible()
+  await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   expect((await savedProfile(page)).appearance.face).toBe(5)
 })
 
