@@ -1,7 +1,8 @@
 import loadCatalog from "@mapachess/localization/catalog"
+import { HINT_ASSISTANCE_TIERS } from "@mapachess/match/auto-hint-mode"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 
-export const MATCH_MEDALS = ["bronze", "silver", "gold"] as const
+export const MATCH_MEDALS = HINT_ASSISTANCE_TIERS
 export type MatchMedal = (typeof MATCH_MEDALS)[number]
 
 export const MATCH_MEDAL_HINT_USE = loadCatalog("en").shared.medalHintUse

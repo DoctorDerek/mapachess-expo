@@ -1,4 +1,4 @@
-import type { AutoHintMode } from "./autoHintMode.js"
+import type { AutoHintMode, HintAssistanceTier } from "./autoHintMode.js"
 import type { MatchClockRecord } from "./matchClock.js"
 import type {
   MatchConclusion,
@@ -24,6 +24,7 @@ export const DURABLE_MATCH_RECORD_VERSION = 4 as const
 
 export type MatchMode = (typeof MATCH_MODES)[number]
 export type ImplementedDurableOpponentId = StockfishOpponentId
+export type StartingPlayerElos = Readonly<Record<HintAssistanceTier, number>>
 
 type DurableMatchRecordFields = Readonly<{
   currentFen: string
@@ -58,6 +59,7 @@ export type DurableMatchRecordV2 = DurableMatchRecordFields &
 
 export type DurableMatchRecord = DurableMatchRecordFields &
   Readonly<{
+    playerElosAtStart?: StartingPlayerElos
     retainedConclusion?: RetainedMatchConclusion | null
     moveFeedback?: readonly MoveFeedbackRecord[]
     opponentTargetElo?: number

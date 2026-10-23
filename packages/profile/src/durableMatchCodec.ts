@@ -1,6 +1,7 @@
 import {
   AUTO_HINT_MODES,
   autoHintModeFromLegacyEnabled,
+  HINT_ASSISTANCE_TIERS,
 } from "@mapachess/match/auto-hint-mode"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import reconstructDurableMatch from "@mapachess/match/durable-match-reconstruction"
@@ -42,6 +43,16 @@ import decodeMoveFeedback, {
 const MAX_DURABLE_MATCH_PLY_COUNT = 20_000
 const MAX_FEN_LENGTH = 256
 const MATCH_SEED_PATTERN = /^[0-9a-f]{32}$/u
+
+const decodeStartingPlayerElos = (received: unknown, path: string) => {
+  const values = requireObject(received, path)
+  requireExactKeys(values, HINT_ASSISTANCE_TIERS, path)
+  return Object.freeze({
+    bronze: requirePlayerElo(values.bronze, `${path}.bronze`),
+    silver: requirePlayerElo(values.silver, `${path}.silver`),
+    gold: requirePlayerElo(values.gold, `${path}.gold`),
+  })
+}
 
 const DURABLE_MATCH_COMMON_KEYS = [
   "currentFen",
@@ -168,6 +179,9 @@ export const decodeDurableMatch = (
           "autoHintMode",
           "conclusion",
           "recordVersion",
+          ...(object.playerElosAtStart === undefined
+            ? []
+            : ["playerElosAtStart"]),
           ...(object.recordVersion === DURABLE_MATCH_RECORD_VERSION &&
           object.clock !== undefined
             ? ["clock"]
@@ -226,6 +240,14 @@ export const decodeDurableMatch = (
     failData(`${path}.timeControl`)
 
   const recordWithoutConclusion: DurableMatchRecord = Object.freeze({
+    ...(object.playerElosAtStart === undefined
+      ? {}
+      : {
+          playerElosAtStart: decodeStartingPlayerElos(
+            object.playerElosAtStart,
+            `${path}.playerElosAtStart`,
+          ),
+        }),
     ...(currentRecord && object.opponentTargetElo !== undefined
       ? {
           opponentTargetElo: requirePlayerElo(
@@ -450,4 +472,13 @@ export const canonicalActiveMatch = (match: DurableMatchRecord) => [
     ? []
     : [match.timeControl.baseSeconds, match.timeControl.incrementSeconds]),
   ...(match.clock === undefined ? [] : [match.clock]),
+  ...(match.playerElosAtStart === undefined
+    ? []
+    : [
+        [
+          match.playerElosAtStart.bronze,
+          match.playerElosAtStart.silver,
+          match.playerElosAtStart.gold,
+        ],
+      ]),
 ]
