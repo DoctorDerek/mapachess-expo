@@ -71,13 +71,13 @@ describe("Story progress in durable profiles", () => {
       challengeCompleted,
     )
 
-    expect(afterChallenge.ratings.standard).toBe(
+    expect(afterChallenge.ratings["standard-untimed-gold"]).toBe(
       updatedPlayerElo(228, 1, 100, 1),
     )
     expect(afterChallenge.ratedMatchCounts).toEqual({
       ...createInitialMapachessPlayerData().ratedMatchCounts,
-      standard: 2,
-      chess960: 0,
+      "standard-untimed-gold": 2,
+      "chess960-untimed-gold": 0,
     })
     expect(afterChallenge.storyProgress.standard).toEqual(
       afterStory.storyProgress.standard,
@@ -148,13 +148,13 @@ describe("Story progress in durable profiles", () => {
     const afterStandard = selectCurrentPlayerData(actor.getSnapshot())
     expect(afterStandard?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 228,
-      chess960: 100,
+      "standard-untimed-gold": 228,
+      "chess960-untimed-gold": 100,
     })
     expect(afterStandard?.ratedMatchCounts).toEqual({
       ...createInitialMapachessPlayerData().ratedMatchCounts,
-      standard: 1,
-      chess960: 0,
+      "standard-untimed-gold": 1,
+      "chess960-untimed-gold": 0,
     })
     expect(afterStandard?.processedMatchResultIds).toEqual([
       standard.completed.matchId,
@@ -192,14 +192,14 @@ describe("Story progress in durable profiles", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 228,
-      chess960: 100,
+      "standard-untimed-gold": 228,
+      "chess960-untimed-gold": 100,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(4)
     expect(selectPendingPlayerData(actor.getSnapshot())?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 228,
-      chess960: 228,
+      "standard-untimed-gold": 228,
+      "chess960-untimed-gold": 228,
     })
     expect(selectPendingPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
     failWrite = false
@@ -207,31 +207,35 @@ describe("Story progress in durable profiles", () => {
     await savingChess960Result
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 228,
-      chess960: 228,
+      "standard-untimed-gold": 228,
+      "chess960-untimed-gold": 228,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
     expect(
       selectCurrentPlayerData(actor.getSnapshot())?.unlockedAchievementIds,
     ).toEqual(["reach-level-5"])
 
-    actor.send({ type: "PROFILE.ELO_RESET_CONFIRMED", variant: "standard" })
+    actor.send({
+      type: "PROFILE.ELO_RESET_CONFIRMED",
+      variant: "standard-untimed-gold",
+    })
     await waitFor(
       actor,
       (snapshot) =>
         snapshot.matches("ready") &&
-        selectCurrentPlayerData(snapshot)?.ratings.standard === 100,
+        selectCurrentPlayerData(snapshot)?.ratings["standard-untimed-gold"] ===
+          100,
     )
     const afterReset = selectCurrentPlayerData(actor.getSnapshot())
     expect(afterReset?.ratedMatchCounts).toEqual({
       ...createInitialMapachessPlayerData().ratedMatchCounts,
-      standard: 0,
-      chess960: 1,
+      "standard-untimed-gold": 0,
+      "chess960-untimed-gold": 1,
     })
     expect(afterReset?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 100,
-      chess960: 228,
+      "standard-untimed-gold": 100,
+      "chess960-untimed-gold": 228,
     })
     expect(afterReset?.processedMatchResultIds).toEqual([
       standard.completed.matchId,
@@ -253,8 +257,8 @@ describe("Story progress in durable profiles", () => {
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.ratings).toEqual({
       ...createInitialMapachessPlayerData().ratings,
-      standard: 100,
-      chess960: 228,
+      "standard-untimed-gold": 100,
+      "chess960-untimed-gold": 228,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.totalXp).toBe(8)
     actor.stop()

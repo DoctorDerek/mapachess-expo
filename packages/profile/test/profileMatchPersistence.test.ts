@@ -451,6 +451,7 @@ describe("profile-owned match persistence bridge", () => {
       signal,
     })
     expect(selectCurrentPlayerData(actor.getSnapshot())?.settings).toEqual({
+      cardRatingContext: initial.settings.cardRatingContext,
       locale: initial.settings.locale,
       moveReactionPlacement: initial.settings.moveReactionPlacement,
       inputBindings: initial.settings.inputBindings,

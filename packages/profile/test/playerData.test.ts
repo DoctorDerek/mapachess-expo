@@ -28,7 +28,7 @@ describe("Mapachess player data", () => {
       ok: true,
       data: {
         ...old,
-        ratings: { ...initial.ratings, ...old.ratings },
+        ratings: initial.ratings,
         ratedMatchCounts: initial.ratedMatchCounts,
         introductionCompleted: true,
         schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -37,6 +37,7 @@ describe("Mapachess player data", () => {
           inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
           locale: null,
           moveReactionPlacement: "top",
+          cardRatingContext: initial.settings.cardRatingContext,
         },
       },
     })
@@ -91,26 +92,12 @@ describe("Mapachess player data", () => {
         standardStory: INITIAL_PLAYER_ELO,
       },
       processedMatchResultIds: [],
-      ratedMatchCounts: {
-        chess960: 0,
-        standard: 0,
-        "standard-bullet": 0,
-        "standard-blitz": 0,
-        "standard-rapid": 0,
-        "chess960-bullet": 0,
-        "chess960-blitz": 0,
-        "chess960-rapid": 0,
-      },
-      ratings: {
-        "standard-bullet": 100,
-        "standard-blitz": 100,
-        "standard-rapid": 100,
-        "chess960-bullet": 100,
-        "chess960-blitz": 100,
-        "chess960-rapid": 100,
-        chess960: INITIAL_PLAYER_ELO,
-        standard: INITIAL_PLAYER_ELO,
-      },
+      ratedMatchCounts: Object.fromEntries(
+        PLAYER_ELO_RATING_IDS.map((id) => [id, 0]),
+      ),
+      ratings: Object.fromEntries(
+        PLAYER_ELO_RATING_IDS.map((id) => [id, INITIAL_PLAYER_ELO]),
+      ),
       revision: 0,
       schema: MAPACHESS_PLAYER_DATA_SCHEMA,
       schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -119,6 +106,7 @@ describe("Mapachess player data", () => {
       unlockedAchievementIds: [],
       settings: {
         moveReactionPlacement: "top",
+        cardRatingContext: { category: "untimed", assistance: "bronze" },
         locale: null,
         inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
         autoHintMode: "auto-move-hints",
@@ -130,6 +118,7 @@ describe("Mapachess player data", () => {
     expect(Object.keys(playerData.ratings).sort()).toEqual(
       [...PLAYER_ELO_RATING_IDS].sort(),
     )
+    expect(PLAYER_ELO_RATING_IDS).toHaveLength(24)
     expect(Object.isFrozen(playerData)).toBe(true)
     expect(Object.isFrozen(playerData.ratings)).toBe(true)
     expect(Object.isFrozen(playerData.settings)).toBe(true)

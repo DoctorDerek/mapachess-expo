@@ -5,11 +5,57 @@ import {
   type DurableStoreAdapter,
   type DurableStoreSnapshot,
 } from "../src/durableStore.js"
+import type { MatchMedal } from "../src/matchMedal.js"
 import type { MapachessPlayerData } from "../src/playerData.js"
+import { PLAYER_RATING_CONTEXTS } from "../src/ratingContext.js"
+
+function withoutAssistance<T extends { assistance?: MatchMedal }>(
+  value: T,
+): Omit<T, "assistance"> {
+  const { assistance: _assistance, ...previous } = value
+  return previous
+}
+
+export function withoutAssistanceRatings(data: MapachessPlayerData) {
+  const reward = data.lastAcceptedResultReward
+  const { cardRatingContext: _cardRatingContext, ...settings } = data.settings
+  const contexts = PLAYER_RATING_CONTEXTS.filter(
+    ({ assistance }) => assistance === "gold",
+  )
+  const legacyId = ({ variant, category }: (typeof contexts)[number]) =>
+    category === "untimed" ? variant : `${variant}-${category}`
+  return {
+    ...data,
+    settings,
+    ratings: Object.fromEntries(
+      contexts.map((context) => [legacyId(context), data.ratings[context.id]]),
+    ),
+    ratedMatchCounts: Object.fromEntries(
+      contexts.map((context) => [
+        legacyId(context),
+        data.ratedMatchCounts[context.id],
+      ]),
+    ),
+    lastAcceptedResultReward:
+      reward === null
+        ? null
+        : {
+            ...reward,
+            ratedElo:
+              reward.ratedElo === null
+                ? null
+                : withoutAssistance(reward.ratedElo),
+            ...(reward.contribution === undefined
+              ? {}
+              : { contribution: withoutAssistance(reward.contribution) }),
+          },
+  }
+}
 
 export function withoutMoveReactionPlacement(data: MapachessPlayerData) {
-  const { moveReactionPlacement: _placement, ...settings } = data.settings
-  return { ...data, settings }
+  const previous = withoutAssistanceRatings(data)
+  const { moveReactionPlacement: _placement, ...settings } = previous.settings
+  return { ...previous, settings }
 }
 
 export function withoutFirstArrivalPreferences(data: MapachessPlayerData) {
@@ -22,12 +68,12 @@ export function withoutFirstArrivalPreferences(data: MapachessPlayerData) {
     ...previous,
     settings,
     ratings: {
-      standard: data.ratings.standard,
-      chess960: data.ratings.chess960,
+      standard: data.ratings["standard-untimed-gold"],
+      chess960: data.ratings["chess960-untimed-gold"],
     },
     ratedMatchCounts: {
-      standard: data.ratedMatchCounts.standard,
-      chess960: data.ratedMatchCounts.chess960,
+      standard: data.ratedMatchCounts["standard-untimed-gold"],
+      chess960: data.ratedMatchCounts["chess960-untimed-gold"],
     },
   }
 }

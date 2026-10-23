@@ -21,6 +21,7 @@ import {
   replaceActiveMatch,
   resetPlayerElo,
 } from "../src/profileMutations.js"
+import { playerRatingId } from "../src/ratingContext.js"
 import { sha256, withoutFirstArrivalPreferences } from "./profileTestSupport.js"
 import completedStoryMatch from "./storyProgressTestSupport.js"
 
@@ -166,7 +167,9 @@ describe("one reversible active result", () => {
       }
       const replaced = replaceActiveMatch(reopen, loss)
       expect(replaced.totalXp).toBe(4)
-      expect(replaced.ratedMatchCounts[variant]).toBe(1)
+      expect(
+        replaced.ratedMatchCounts[playerRatingId(variant, "untimed", "gold")],
+      ).toBe(1)
       expect(
         replaced.lastAcceptedResultReward?.contribution?.ending.conclusion,
       ).toEqual(loss.conclusion)
@@ -205,14 +208,14 @@ describe("one reversible active result", () => {
       replaceActiveMatch(createInitialMapachessPlayerData(), opened(win)),
       win,
     )
-    const reset = resetPlayerElo(accepted, "standard")
+    const reset = resetPlayerElo(accepted, "standard-untimed-gold")
     expect(decodeMapachessPlayerDataWithSource(reset)).toMatchObject({
       ok: true,
     })
     const redo = replaceActiveMatch(replaceActiveMatch(reset, opened(win)), win)
     expect(redo.totalXp).toBe(8)
-    expect(redo.ratings.standard).toBe(100)
-    expect(redo.ratedMatchCounts.standard).toBe(0)
+    expect(redo.ratings["standard-untimed-gold"]).toBe(100)
+    expect(redo.ratedMatchCounts["standard-untimed-gold"]).toBe(0)
     expect(redo.lastAcceptedResultReward?.ratedElo).toBeNull()
   })
 
@@ -226,13 +229,13 @@ describe("one reversible active result", () => {
       ...createInitialMapachessPlayerData(),
       ratings: {
         ...createInitialMapachessPlayerData().ratings,
-        standard: 500,
-        chess960: 100,
+        "standard-untimed-gold": 500,
+        "chess960-untimed-gold": 100,
       },
       ratedMatchCounts: {
         ...createInitialMapachessPlayerData().ratedMatchCounts,
-        standard: 9,
-        chess960: 0,
+        "standard-untimed-gold": 9,
+        "chess960-untimed-gold": 0,
       },
     }
     const accepted = replaceActiveMatch(
@@ -241,7 +244,7 @@ describe("one reversible active result", () => {
     )
     const reset = resetPlayerElo(
       replaceActiveMatch(accepted, opened(win)),
-      "standard",
+      "standard-untimed-gold",
     )
     expect(decodeMapachessPlayerDataWithSource(reset)).toMatchObject({
       ok: true,
@@ -251,7 +254,7 @@ describe("one reversible active result", () => {
     expect(
       redo.lastAcceptedResultReward?.contribution?.ratedMatchCountBefore,
     ).toBe(0)
-    expect(redo.ratedMatchCounts.standard).toBe(1)
+    expect(redo.ratedMatchCounts["standard-untimed-gold"]).toBe(1)
     expect(decodeMapachessPlayerDataWithSource(redo).ok).toBe(true)
   })
 
@@ -265,7 +268,8 @@ describe("one reversible active result", () => {
       replaceActiveMatch(createInitialMapachessPlayerData(), opened(win)),
       win,
     )
-    const reward = accepted.lastAcceptedResultReward
+    const reward =
+      withoutFirstArrivalPreferences(accepted).lastAcceptedResultReward
     if (reward === null) throw new Error("Fixture requires a receipt")
     const { contribution: _contribution, ...legacyReward } = reward
     const {
@@ -286,6 +290,8 @@ describe("one reversible active result", () => {
     }
     const legacyCurrent = {
       ...accepted,
+      ratings: legacyFields.ratings,
+      ratedMatchCounts: legacyFields.ratedMatchCounts,
       lastAcceptedResultReward: legacyReward,
     }
     const canonical = canonicalPlayerData(
@@ -315,8 +321,10 @@ describe("one reversible active result", () => {
       conclusion: { type: "resignation", winner: "white" },
     })
     expect(ended.totalXp).toBe(accepted.totalXp)
-    expect(ended.ratings).toEqual(accepted.ratings)
-    expect(ended.ratedMatchCounts).toEqual(accepted.ratedMatchCounts)
+    expect(ended.ratings).toEqual(createInitialMapachessPlayerData().ratings)
+    expect(ended.ratedMatchCounts).toEqual(
+      createInitialMapachessPlayerData().ratedMatchCounts,
+    )
     expect(ended.lastAcceptedResultReward).toBeNull()
   })
 
@@ -333,13 +341,16 @@ describe("one reversible active result", () => {
     expect(
       decodeMapachessPlayerDataWithSource({
         ...accepted,
-        ratedMatchCounts: { ...accepted.ratedMatchCounts, standard: 5 },
+        ratedMatchCounts: {
+          ...accepted.ratedMatchCounts,
+          "standard-untimed-gold": 5,
+        },
       }).ok,
     ).toBe(false)
     expect(
       decodeMapachessPlayerDataWithSource({
         ...accepted,
-        ratings: { ...accepted.ratings, standard: 999 },
+        ratings: { ...accepted.ratings, "standard-untimed-gold": 999 },
       }).ok,
     ).toBe(false)
     expect(() =>
