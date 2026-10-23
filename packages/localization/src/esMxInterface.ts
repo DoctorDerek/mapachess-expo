@@ -123,32 +123,33 @@ const interfaceCopy = {
   },
   profileCardJourney: {
     back: "Atrás",
-    keepYourAppearanceChanges: "¿Conservar los cambios de apariencia?",
+    keepYourAppearanceChanges:
+      "¿Conservar los cambios de tu tarjeta de perfil?",
     keepEditing: "Seguir editando",
-    saveAppearance: "Guardar apariencia",
+    saveAppearance: "Guardar cambios",
     discardChanges: "Descartar cambios",
     theProfileCardPreviewCouldNotBe:
       "No se pudo mostrar la vista previa de la tarjeta de perfil.",
     yourAppearanceChangesAreStillHereTry:
-      "Tus cambios de apariencia siguen aquí. Intenta de nuevo o usa Atrás para volver.",
+      "Los cambios de tu tarjeta de perfil siguen aquí. Intenta de nuevo o usa Atrás para volver.",
     customizationCouldNotBeDisplayed: "No se pudo mostrar la personalización.",
     yourAppearanceChangesAreStillHereTry2:
-      "Tus cambios de apariencia siguen aquí. Intenta de nuevo para seguir editando.",
+      "Los cambios de tu tarjeta de perfil siguen aquí. Intenta de nuevo para seguir editando.",
   },
   profileCardPreview: {
     imageFormat: "Formato de imagen",
     includeInYourProfileCard: "Incluir en tu tarjeta de perfil",
     previewingUnsavedAppearanceImageExportDoesNot:
-      "Vista previa de una apariencia sin guardar. Exportar la imagen no guarda tus cambios.",
+      "Vista previa de cambios sin guardar. Exportar la imagen no guarda tus cambios.",
     imagePreparationFailedYourAppearancePreviewChoices:
       "No se pudo preparar la imagen. Tu apariencia, las opciones de vista previa y tu partida no cambiaron.",
   },
   profileDressingRoom: {
-    saveAppearance: "Guardar apariencia",
+    saveAppearance: "Guardar cambios",
     shareProfileCard: "Compartir tarjeta de perfil",
     cancelChanges: "Cancelar cambios",
     appearanceCouldNotBeSavedLocallyYour:
-      "No se pudo guardar la apariencia localmente. Tus cambios siguen aquí.",
+      "No se pudieron guardar los cambios de tu tarjeta de perfil en este dispositivo. Tus cambios siguen aquí.",
     retrySave: "Reintentar guardado",
     appearanceCategories: "Categorías de apariencia",
     styles: "Estilos",

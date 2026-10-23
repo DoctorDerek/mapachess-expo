@@ -135,7 +135,7 @@ const emergencyInterface = {
     back: "Back",
     keepYourAppearanceChanges: UNAVAILABLE_TEXT,
     keepEditing: "Keep editing",
-    saveAppearance: "Save appearance",
+    saveAppearance: "Save changes",
     discardChanges: "Discard changes",
     theProfileCardPreviewCouldNotBe: UNAVAILABLE_TEXT,
     yourAppearanceChangesAreStillHereTry: UNAVAILABLE_TEXT,
@@ -149,7 +149,7 @@ const emergencyInterface = {
     imagePreparationFailedYourAppearancePreviewChoices: UNAVAILABLE_TEXT,
   },
   profileDressingRoom: {
-    saveAppearance: "Save appearance",
+    saveAppearance: "Save changes",
     shareProfileCard: UNAVAILABLE_TEXT,
     cancelChanges: "Cancel changes",
     appearanceCouldNotBeSavedLocallyYour: UNAVAILABLE_TEXT,

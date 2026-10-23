@@ -139,32 +139,32 @@ const interfaceCopy = {
   },
   profileCardJourney: {
     back: "Back",
-    keepYourAppearanceChanges: "Keep your appearance changes?",
+    keepYourAppearanceChanges: "Keep your profile-card changes?",
     keepEditing: "Keep editing",
-    saveAppearance: "Save appearance",
+    saveAppearance: "Save changes",
     discardChanges: "Discard changes",
     theProfileCardPreviewCouldNotBe:
       "The profile-card preview could not be displayed.",
     yourAppearanceChangesAreStillHereTry:
-      "Your appearance changes are still here. Try again or use Back to return.",
+      "Your profile-card changes are still here. Try again or use Back to return.",
     customizationCouldNotBeDisplayed: "Customization could not be displayed.",
     yourAppearanceChangesAreStillHereTry2:
-      "Your appearance changes are still here. Try again to keep editing.",
+      "Your profile-card changes are still here. Try again to keep editing.",
   },
   profileCardPreview: {
     imageFormat: "Image format",
     includeInYourProfileCard: "Include in your profile card",
     previewingUnsavedAppearanceImageExportDoesNot:
-      "Previewing unsaved appearance. Image export does not save your edits.",
+      "Previewing unsaved changes. Image export does not save your edits.",
     imagePreparationFailedYourAppearancePreviewChoices:
       "Image preparation failed. Your appearance, preview choices, and game are unchanged.",
   },
   profileDressingRoom: {
-    saveAppearance: "Save appearance",
+    saveAppearance: "Save changes",
     shareProfileCard: "Share profile card",
     cancelChanges: "Cancel changes",
     appearanceCouldNotBeSavedLocallyYour:
-      "Appearance could not be saved locally. Your edits are still here.",
+      "Your profile-card changes could not be saved locally. Your edits are still here.",
     retrySave: "Retry save",
     appearanceCategories: "Appearance categories",
     styles: "Styles",

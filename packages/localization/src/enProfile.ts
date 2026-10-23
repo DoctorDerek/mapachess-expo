@@ -16,7 +16,7 @@ const profile = {
   resetRating: (variant: string): string => `Reset ${variant} Elo`,
   resetQuestion: (variant: string): string => `Reset ${variant} Elo?`,
   resetExplanation: (variant: string): string =>
-    `${variant} Elo returns to 100 and its rated-match count to zero. All other ratings, Story progress, medals, Challenge records, settings, and the active match stay unchanged. Completed matches cannot be rated again. Export your data first if you want a backup.`,
+    `${variant} Elo returns to 100 and its rated-match count to zero. All other ratings, Story progress, medals, Challenge records, settings, and the active match stay unchanged. Undo/Redo will not restore a completed match’s contribution to this rating. Export your data first if you want a backup.`,
   resetConfirmation: (variant: string): string => `Reset ${variant} Elo to 100`,
   preparingBackup: "Preparing backup…",
   none: "None",
@@ -51,12 +51,18 @@ const profile = {
   artworkPreview: (pieces: string, board: string): string =>
     `${pieces} pieces on ${board} board preview`,
   cardPreview: (format: string): string => `Profile card ${format} preview`,
+  cardRatings: "Profile-card ratings",
+  cardTimeCategory: "Time category",
+  cardAssistance: "Hint tier",
+  cardRatingContext: (category: string, assistance: string): string =>
+    `${category} · ${assistance}`,
   cardDescription: (
     level: number,
     standard: number,
     chess960: number,
+    context: string,
   ): string =>
-    `Your profile card: Level ${formatUngroupedInteger(level)}, Untimed Standard Chess Elo ${formatUngroupedInteger(standard)}, Untimed Chess960 Elo ${formatUngroupedInteger(chess960)}`,
+    `Your profile card: Level ${formatUngroupedInteger(level)}, ${context}, Standard Chess Elo ${formatUngroupedInteger(standard)}, Chess960 Elo ${formatUngroupedInteger(chess960)}`,
   level: "Level",
   playFree: "Play free at Mapachess.com",
   cardFormats: { GIF: "GIF · Animated", PNG: "PNG · Still" },
@@ -101,9 +107,9 @@ const profile = {
     },
     choices: (category: string): string => `${category} choices`,
     selection: (category: string): string => `${category} selection`,
-    saving: "Saving appearance…",
-    unsaved: "Unsaved appearance",
-    saved: "Saved appearance",
+    saving: "Saving changes…",
+    unsaved: "Unsaved changes",
+    saved: "Changes saved",
     weapons: {
       none: "None",
       weapon1: "Sword",

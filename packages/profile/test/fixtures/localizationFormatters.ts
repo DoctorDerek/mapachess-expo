@@ -37,7 +37,7 @@ const formatterExamples = {
     [1, 0],
     [3, 2],
   ],
-  "gameplay.clock.rating": [["Standard Chess", "Untimed"]],
+  "gameplay.clock.rating": [["Standard Chess", "Untimed", "Bronze"]],
   "gameplay.clock.display": [
     [0, 0],
     [0, 9],
@@ -58,7 +58,8 @@ const formatterExamples = {
   "profile.resetConfirmation": [["Standard Chess"]],
   "profile.artworkPreview": [["Chessnut", "Classic"]],
   "profile.cardPreview": [["PNG"]],
-  "profile.cardDescription": [[1, 1200.5, 1200.5]],
+  "profile.cardDescription": [[1, 1200.5, 1200.5, "Untimed · Bronze"]],
+  "profile.cardRatingContext": [["Untimed", "Bronze"]],
   "profile.saveFormat": [["PNG"]],
   "profile.shareFormat": [["PNG"]],
   "profile.retryFormat": [["PNG"]],

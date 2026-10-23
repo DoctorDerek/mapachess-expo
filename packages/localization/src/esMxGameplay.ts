@@ -25,8 +25,8 @@ const gameplay = {
     running: "Reloj en marcha",
     low: "Poco tiempo",
     label: (color: string): string => `Reloj de ${color}`,
-    rating: (variant: string, category: string): string =>
-      `${variant} · ${category}`,
+    rating: (variant: string, category: string, assistance: string): string =>
+      `${variant} · ${category} · ${assistance}`,
     display: (minutes: number, seconds: number): string =>
       `${String(minutes)}:${String(seconds).padStart(2, "0")}`,
   },
