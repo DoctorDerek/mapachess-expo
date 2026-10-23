@@ -7,11 +7,12 @@ import type {
   MatchNavigationCommands,
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
-import { samePlayerAppearance as sameAppearance } from "@mapachess/profile/player-appearance"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
-import profileCardEditorMachine from "../../lib/presentation/profileCardEditorMachine"
+import profileCardEditorMachine, {
+  isProfileCardEditorDirty,
+} from "../../lib/presentation/profileCardEditorMachine"
 import RecoverableView from "../presentation/RecoverableView"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
@@ -39,10 +40,12 @@ export default function ProfileCardJourney({
   const editor = useActorRef(profileCardEditorMachine, {
     input: {
       appearance: data.appearance,
-      save: (appearance) =>
+      ratingContext: data.settings.cardRatingContext,
+      save: (appearance, cardRatingContext) =>
         profileActor.send({
           type: "PROFILE.APPEARANCE_SAVE_REQUESTED",
           appearance,
+          cardRatingContext,
         }),
     },
   })
@@ -52,10 +55,14 @@ export default function ProfileCardJourney({
   const wasDressing = useRef(false)
   const title = useRef<HTMLHeadingElement>(null)
   const open = dressing || preview
-  const dirty = !sameAppearance(snapshot.context.saved, snapshot.context.draft)
+  const dirty = isProfileCardEditorDirty(snapshot.context)
   useEffect(() => {
-    editor.send({ type: "CARD.PROFILE_ACCEPTED", appearance: data.appearance })
-  }, [editor, data.appearance, profile])
+    editor.send({
+      type: "CARD.PROFILE_ACCEPTED",
+      appearance: data.appearance,
+      ratingContext: data.settings.cardRatingContext,
+    })
+  }, [editor, data.appearance, data.settings.cardRatingContext, profile])
   useEffect(() => {
     if (profile.matches("persistenceFailure"))
       editor.send({ type: "CARD.SAVE_FAILED" })
@@ -65,10 +72,7 @@ export default function ProfileCardJourney({
       wasDressing.current &&
       !dressing &&
       !preview &&
-      !sameAppearance(
-        editor.getSnapshot().context.saved,
-        editor.getSnapshot().context.draft,
-      )
+      isProfileCardEditorDirty(editor.getSnapshot().context)
     ) {
       editor.send({ type: "CARD.LEAVE_REQUESTED" })
       navigation.open("dressing-room")
@@ -147,6 +151,11 @@ export default function ProfileCardJourney({
             <ProfileCardPreview
               data={data}
               appearance={dressing ? snapshot.context.draft : data.appearance}
+              ratingContext={
+                dressing
+                  ? snapshot.context.draftRatingContext
+                  : data.settings.cardRatingContext
+              }
               unsaved={dressing && dirty}
             />
           </RecoverableView>
@@ -166,6 +175,13 @@ export default function ProfileCardJourney({
                 }
                 data={data}
                 draft={snapshot.context.draft}
+                ratingContext={snapshot.context.draftRatingContext}
+                onRatingContextChanged={(ratingContext) =>
+                  editor.send({
+                    type: "CARD.RATING_CONTEXT_CHANGED",
+                    ratingContext,
+                  })
+                }
                 dirty={dirty}
                 busy={busy}
                 failed={snapshot.matches("failed")}

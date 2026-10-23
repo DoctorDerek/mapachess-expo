@@ -18,7 +18,12 @@ vi.mock("./profileCardArtwork", () => ({
 
 const input: CardInput = {
   appearance: DEFAULT_PLAYER_APPEARANCE,
-  facts: { level: 1, standard: 100, chess960: 100 },
+  facts: {
+    level: 1,
+    standard: 100,
+    chess960: 100,
+    ratingContext: { category: "untimed", assistance: "bronze" },
+  },
   content: { level: true, standard: true, chess960: true, animal: false },
   format: "GIF",
 }

@@ -4,6 +4,7 @@ import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import type { CardRatingContext } from "@mapachess/profile/rating-context"
 import {
   cardFacts,
   drawCardCharacters,
@@ -142,10 +143,22 @@ export function ProfileArtwork({
 export default function ProfileCard({
   data,
   appearance = data.appearance,
-}: Readonly<{ data: MapachessPlayerData; appearance?: PlayerAppearance }>) {
+  ratingContext = data.settings.cardRatingContext,
+}: Readonly<{
+  data: MapachessPlayerData
+  appearance?: PlayerAppearance
+  ratingContext?: CardRatingContext
+}>) {
   const copy = useMapachessCopy()
   const locale = useMapachessLocale()
-  const facts = useMemo(() => cardFacts(data), [data])
+  const facts = useMemo(
+    () => cardFacts(data, ratingContext),
+    [data, ratingContext],
+  )
+  const contextLabel = copy.profile.cardRatingContext(
+    copy.gameplay.clock.category[ratingContext.category],
+    copy.shared.story.medals[ratingContext.assistance],
+  )
   const input = useMemo<CardInput>(
     () => ({
       appearance,
@@ -162,6 +175,7 @@ export default function ProfileCard({
         facts.level,
         facts.standard,
         facts.chess960,
+        contextLabel,
       )}
       className="font-home shadow-mapachess-raised shadow-profile-card-blue [container-type:inline-size]"
     >
@@ -184,9 +198,7 @@ export default function ProfileCard({
               <dt className="text-[max(1rem,3.6cqw)] leading-tight font-bold">
                 {label}
                 {kind === "level" ? null : (
-                  <span className="block text-base">
-                    {copy.gameplay.clock.category.untimed}
-                  </span>
+                  <span className="block text-base">{contextLabel}</span>
                 )}
               </dt>
               <dd className="mt-1 text-[max(2rem,7cqw)] leading-none font-black break-all tabular-nums">
