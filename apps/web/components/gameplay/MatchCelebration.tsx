@@ -12,7 +12,9 @@ import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import { timeControlLabel } from "@mapachess/match/time-control"
-import matchVictoryMedal from "@mapachess/profile/match-medal"
+import matchVictoryMedal, {
+  matchMedalEligibility,
+} from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import {
   selectStoryLadder,
@@ -186,6 +188,9 @@ export default function MatchCelebration({
                 copy.profile.ratingLabel[reward.ratedElo.variant],
                 copy.gameplay.clock.category[
                   reward.ratedElo.timeCategory ?? "untimed"
+                ],
+                copy.shared.story.medals[
+                  reward.ratedElo.assistance ?? matchMedalEligibility(match)
                 ],
               )}
             </span>

@@ -226,10 +226,12 @@ describe("web player-data controls", () => {
     expect(markup).toContain(
       "Hint changes become your default and apply to the current match.",
     )
-    expect(markup).toContain("Standard Chess · Untimed · 100 Elo")
-    expect(markup).toContain("Chess960 · Untimed · 100 Elo")
-    expect(markup).toContain("Reset Standard Chess · Untimed Elo")
-    expect(markup).toContain("Reset Chess960 · Untimed Elo")
+    for (const tier of ["Gold", "Silver", "Bronze"]) {
+      expect(markup).toContain(`Standard Chess · Untimed · ${tier} · 100 Elo`)
+      expect(markup).toContain(`Chess960 · Untimed · ${tier} · 100 Elo`)
+      expect(markup).toContain(`Reset Standard Chess · Untimed · ${tier} Elo`)
+      expect(markup).toContain(`Reset Chess960 · Untimed · ${tier} Elo`)
+    }
     expect(markup).toContain("Export Player Data")
     expect(markup).toContain("review a backup before replacing local data")
     expect(markup).toContain("Credits")

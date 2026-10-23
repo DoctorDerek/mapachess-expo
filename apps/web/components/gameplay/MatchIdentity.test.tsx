@@ -15,6 +15,7 @@ describe("compact match identity", () => {
       const markup = renderToStaticMarkup(
         <MatchIdentity
           timeControl={UNTIMED}
+          assistance="gold"
           headingRef={null}
           playerColor={playerColor}
           playerElo={playerElo}
@@ -35,6 +36,7 @@ describe("compact match identity", () => {
       const markup = renderToStaticMarkup(
         <MatchIdentity
           timeControl={UNTIMED}
+          assistance="bronze"
           headingRef={null}
           playerColor={playerColor}
           playerElo={100}

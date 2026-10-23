@@ -4,6 +4,7 @@ import {
   DURABLE_MATCH_RECORD_VERSION,
   type DurableMatchRecord,
   type MatchMode,
+  type StartingPlayerElos,
 } from "@mapachess/match/durable-match-record"
 import {
   createMatchClock,
@@ -26,6 +27,7 @@ export type FreshWebMatchInput = Readonly<{
   autoHintMode: AutoHintMode
   mode?: MatchMode
   playerEloAtStart: number
+  playerElosAtStart?: StartingPlayerElos
   runtime: Pick<
     WebMatchRuntime,
     | "matchId"
@@ -63,6 +65,9 @@ export function buildFreshWebMatch(
     pieceHintsUsed: false,
     playerColor: input.runtime.playerColor,
     playerEloAtStart: input.playerEloAtStart,
+    ...(input.playerElosAtStart === undefined
+      ? {}
+      : { playerElosAtStart: Object.freeze({ ...input.playerElosAtStart }) }),
     recordVersion: DURABLE_MATCH_RECORD_VERSION,
     startingPosition: input.runtime.startingPosition,
     timeControl,

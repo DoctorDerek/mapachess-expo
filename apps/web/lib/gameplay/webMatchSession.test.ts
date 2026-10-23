@@ -24,9 +24,11 @@ import {
   currentMatchPosition,
 } from "@mapachess/match/match-timeline"
 import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
+import { MATCH_MEDALS } from "@mapachess/profile/match-medal"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
+import { playerRatingId } from "@mapachess/profile/rating-context"
 import {
   selectDefaultStoryOpponent,
   type StoryProgress,
@@ -67,8 +69,9 @@ const openProfileRuntime = async (
       storyProgress: storyProgress ?? initial.storyProgress,
       ratings: {
         ...initial.ratings,
-        standard: 600,
-        chess960: chess960StoryElo ?? initial.ratings.chess960,
+        "standard-untimed-gold": 600,
+        "chess960-untimed-gold":
+          chess960StoryElo ?? initial.ratings["chess960-untimed-gold"],
       },
     })
     if (!saved.ok) throw new Error("Initial rating fixture must persist")
@@ -467,13 +470,18 @@ describe("web match session ownership", () => {
         const reloaded = selectCurrentPlayerData(profile.actor.getSnapshot())
         expect(reloaded?.storyProgress).toEqual(progress)
         const otherVariant = variant === "standard" ? "chess960" : "standard"
-        expect(reloaded?.ratings[otherVariant]).toBe(
-          initialRatings[otherVariant],
+        for (const assistance of MATCH_MEDALS) {
+          const otherId = playerRatingId(otherVariant, "untimed", assistance)
+          expect(reloaded?.ratings[otherId]).toBe(initialRatings[otherId])
+        }
+        const assistance = MATCH_MEDALS[index % MATCH_MEDALS.length]!
+        const ratingId = playerRatingId(variant, "untimed", assistance)
+        expect(reloaded?.ratings[ratingId]).toBeGreaterThan(
+          initialRatings[ratingId],
         )
-        expect(reloaded?.ratings[variant]).toBeGreaterThan(
-          initialRatings[variant],
+        expect(reloaded?.ratedMatchCounts[ratingId]).toBe(
+          Math.floor(index / MATCH_MEDALS.length) + 1,
         )
-        expect(reloaded?.ratedMatchCounts[variant]).toBe(index + 1)
         if (progress === undefined)
           throw new Error("Story progress must remain available")
         expect(selectDefaultStoryOpponent(progress, variant)).toBe(
@@ -1042,6 +1050,12 @@ describe("web match session ownership", () => {
       signal: expect.any(AbortSignal),
     })
     expect(first.match.playerEloAtStart).toBe(725)
+    expect(first.match.playerElosAtStart).toEqual({
+      gold: 725,
+      silver: 100,
+      bronze: 100,
+    })
+    expect(Object.isFrozen(first.match.playerElosAtStart)).toBe(true)
     await first.close()
     const resumedOpener = runtimeOpener(
       createRuntime(FIRST_MATCH_SEED, startingPosition).runtime,
