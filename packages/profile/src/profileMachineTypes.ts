@@ -24,6 +24,7 @@ import type {
   MoveReactionPlacement,
   PresentationPreferences,
 } from "./presentationPreferences.js"
+import type { CardRatingContext } from "./ratingContext.js"
 
 export type PortableBackupDecoder = (
   rawBackup: string,
@@ -94,6 +95,7 @@ export type ProfileMachineEvent =
   | Readonly<{
       type: "PROFILE.APPEARANCE_SAVE_REQUESTED"
       appearance: PlayerAppearance
+      cardRatingContext?: CardRatingContext
     }>
   | Readonly<{
       activeMatch: DurableMatchRecord | null

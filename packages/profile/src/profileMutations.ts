@@ -24,7 +24,9 @@ import createInitialMapachessPlayerData, {
 import validatePresentationPreferences, {
   type PresentationPreferences,
 } from "./presentationPreferences.js"
+import { decodeCardRatingContext } from "./ratingBalancesCodec.js"
 import { playerRatingId } from "./ratingContext.js"
+import type { CardRatingContext } from "./ratingContext.js"
 import applyStoryMatchResult from "./storyProgress.js"
 
 export const changeFirstArrivalPreferences = (
@@ -45,6 +47,7 @@ export const changeFirstArrivalPreferences = (
 export const changePlayerAppearance = (
   current: MapachessPlayerData,
   appearance: PlayerAppearance,
+  cardRatingContext: CardRatingContext = current.settings.cardRatingContext,
 ): MapachessPlayerData =>
   Object.freeze({
     ...current,
@@ -55,6 +58,10 @@ export const changePlayerAppearance = (
       current.appearance.animal === "chicken-stockfish" ? "preserve" : "reject",
     ),
     revision: current.revision + 1,
+    settings: Object.freeze({
+      ...current.settings,
+      cardRatingContext: decodeCardRatingContext(cardRatingContext),
+    }),
   })
 
 export const changePlayerInputBindings = (
@@ -173,7 +180,8 @@ export const resetPlayerElo = (
       current.lastAcceptedResultReward?.contribution !== undefined &&
       playerRatingId(
         current.lastAcceptedResultReward.contribution.variant,
-        current.lastAcceptedResultReward.contribution.timeCategory,
+        current.lastAcceptedResultReward.contribution.timeCategory ?? "untimed",
+        current.lastAcceptedResultReward.contribution.assistance ?? "gold",
       ) === variant
         ? Object.freeze({
             ...current.lastAcceptedResultReward,

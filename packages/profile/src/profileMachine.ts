@@ -191,7 +191,11 @@ const profileMachineDefinition = setup({
       if (event.type !== "PROFILE.APPEARANCE_SAVE_REQUESTED")
         throw new Error("Appearance save requires an appearance event.")
       return {
-        pendingWrite: prepareAppearancePending(context, event.appearance),
+        pendingWrite: prepareAppearancePending(
+          context,
+          event.appearance,
+          event.cardRatingContext,
+        ),
         persistenceFailure: null,
       }
     }),

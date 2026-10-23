@@ -34,6 +34,7 @@ import {
   replaceActiveMatch,
   resetPlayerElo,
 } from "./profileMutations.js"
+import type { CardRatingContext } from "./ratingContext.js"
 
 export const prepareFirstArrivalPending = (
   context: ProfileMachineContext,
@@ -51,10 +52,15 @@ export const prepareFirstArrivalPending = (
 export const prepareAppearancePending = (
   context: ProfileMachineContext,
   appearance: PlayerAppearance,
+  cardRatingContext?: CardRatingContext,
 ): PendingProfileWrite =>
   pendingWrite(
     requireLoaded(context),
-    changePlayerAppearance(requireCurrentPlayerData(context), appearance),
+    changePlayerAppearance(
+      requireCurrentPlayerData(context),
+      appearance,
+      cardRatingContext,
+    ),
     "commit",
   )
 

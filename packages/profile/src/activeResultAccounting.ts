@@ -6,6 +6,7 @@ import {
   LEVEL_ACHIEVEMENTS,
   levelAchievementsCrossed,
 } from "./globalXp.js"
+import { matchMedalEligibility } from "./matchMedal.js"
 import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
@@ -34,7 +35,8 @@ const retractResult = (
   const rated = contribution.eloState === "active" ? reward.ratedElo : null
   const ratingId = playerRatingId(
     contribution.variant,
-    contribution.timeCategory,
+    contribution.timeCategory ?? "untimed",
+    contribution.assistance ?? "gold",
   )
   if (
     current.totalXp !== reward.totalXpBefore + reward.awardedXp ||
@@ -103,9 +105,12 @@ export default function accountActiveResult(
 
   const variant = match.startingPosition.variant
   const category = timeCategory(match.timeControl)
-  const ratingId = playerRatingId(variant, category)
+  const assistance = matchMedalEligibility(match)
+  const ratingId = playerRatingId(variant, category, assistance)
   const eloState =
-    sameReceipt?.contribution?.eloState === "superseded"
+    sameReceipt?.contribution?.eloState === "superseded" &&
+    (sameReceipt.contribution.assistance === undefined ||
+      sameReceipt.contribution.assistance === assistance)
       ? "superseded"
       : "active"
   const rated =
@@ -115,6 +120,7 @@ export default function accountActiveResult(
     current.activeMatch.ratedOpponentElo === match.ratedOpponentElo
       ? Object.freeze({
           variant,
+          assistance,
           ...(category === "untimed" ? {} : { timeCategory: category }),
           before: balances.ratings[ratingId],
           after: updatedPlayerElo(
@@ -147,6 +153,10 @@ export default function accountActiveResult(
     contribution: Object.freeze({
       applied: true,
       eloState,
+      ...(eloState === "superseded" &&
+      sameReceipt?.contribution?.assistance === undefined
+        ? {}
+        : { assistance }),
       variant,
       ...(category === "untimed" ? {} : { timeCategory: category }),
       opponentId: match.opponentId,

@@ -31,6 +31,7 @@ import {
   type ChessAppearanceSettings,
 } from "./chessAppearanceSettings.js"
 import type { LevelAchievementId } from "./globalXp.js"
+import { matchMedalEligibility, type MatchMedal } from "./matchMedal.js"
 import {
   DEFAULT_PLAYER_APPEARANCE,
   type PlayerAppearance,
@@ -39,7 +40,12 @@ import {
   DEFAULT_MOVE_REACTION_PLACEMENT,
   type MoveReactionPlacement,
 } from "./presentationPreferences.js"
-import { type PlayerEloRatingId } from "./ratingContext.js"
+import {
+  DEFAULT_CARD_RATING_CONTEXT,
+  ratingValues,
+  type CardRatingContext,
+  type PlayerEloRatingId,
+} from "./ratingContext.js"
 import {
   createInitialStoryProgress,
   type StoryProgress,
@@ -68,8 +74,9 @@ export const INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION = 14 as const
 export const FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION = 15 as const
 export const TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION = 16 as const
 export const MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION = 17 as const
+export const ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION = 18 as const
 export const MAPACHESS_PLAYER_DATA_SCHEMA_VERSION =
-  MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+  ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
 export const INITIAL_PLAYER_ELO = 100 as const
 export const LEGACY_PLAYER_ELO_RATING_IDS = [
   "standardStory",
@@ -152,6 +159,7 @@ export type MapachessPlayerDataV7 = Readonly<
 
 export type AcceptedMatchReward = Readonly<{
   contribution?: Readonly<{
+    assistance?: MatchMedal
     timeCategory?: TimeCategory
     applied: boolean
     ending: Readonly<{
@@ -171,6 +179,7 @@ export type AcceptedMatchReward = Readonly<{
   totalXpBefore: number
   unlockedAchievementIds: readonly LevelAchievementId[]
   ratedElo: Readonly<{
+    assistance?: MatchMedal
     timeCategory?: TimeCategory
     variant: MatchVariant
     before: number
@@ -187,6 +196,8 @@ export const acceptedRewardMatchesEnding = (
   match.conclusion !== null &&
   (reward.contribution === undefined ||
     (reward.contribution.applied &&
+      (reward.contribution.assistance === undefined ||
+        reward.contribution.assistance === matchMedalEligibility(match)) &&
       reward.contribution.ending.cursor === match.cursor &&
       reward.contribution.ending.currentFen === match.currentFen &&
       reward.contribution.ending.moveIds.length === match.cursor &&
@@ -214,6 +225,7 @@ export type MapachessPlayerData = Readonly<
         moveReactionPlacement: MoveReactionPlacement
         inputBindings: PlayerInputBindings
         locale: CandidateLocale | null
+        cardRatingContext: CardRatingContext
       }>
     totalXp: number
     unlockedAchievementIds: readonly LevelAchievementId[]
@@ -232,28 +244,10 @@ export const createInitialLegacyPlayerEloRatings = (): LegacyPlayerEloRatings =>
   })
 
 export const createInitialPlayerEloRatings = (): PlayerEloRatings =>
-  Object.freeze({
-    chess960: INITIAL_PLAYER_ELO,
-    standard: INITIAL_PLAYER_ELO,
-    "standard-bullet": INITIAL_PLAYER_ELO,
-    "standard-blitz": INITIAL_PLAYER_ELO,
-    "standard-rapid": INITIAL_PLAYER_ELO,
-    "chess960-bullet": INITIAL_PLAYER_ELO,
-    "chess960-blitz": INITIAL_PLAYER_ELO,
-    "chess960-rapid": INITIAL_PLAYER_ELO,
-  })
+  ratingValues(() => INITIAL_PLAYER_ELO)
 
 export const createInitialRatedMatchCounts = (): RatedMatchCounts =>
-  Object.freeze({
-    chess960: 0,
-    standard: 0,
-    "standard-bullet": 0,
-    "standard-blitz": 0,
-    "standard-rapid": 0,
-    "chess960-bullet": 0,
-    "chess960-blitz": 0,
-    "chess960-rapid": 0,
-  })
+  ratingValues(() => 0)
 
 export default function createInitialMapachessPlayerData(): MapachessPlayerData {
   return Object.freeze({
@@ -280,6 +274,7 @@ export default function createInitialMapachessPlayerData(): MapachessPlayerData 
       moveReactionPlacement: DEFAULT_MOVE_REACTION_PLACEMENT,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
       locale: null,
+      cardRatingContext: DEFAULT_CARD_RATING_CONTEXT,
     }),
   })
 }
