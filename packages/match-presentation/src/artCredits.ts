@@ -53,6 +53,20 @@ export const ART_CREDITS = Object.freeze({
       { label: "Input Prompts", url: "https://kenney.nl/assets/input-prompts" },
     ]),
   }),
+  fluentEmoji: Object.freeze({
+    id: "fluentEmoji" as const,
+    title: "Fluent Emoji",
+    creator: "Microsoft",
+    license: "MIT",
+    licenseUrl:
+      "https://github.com/microsoft/fluentui-emoji/blob/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/LICENSE",
+    sources: Object.freeze([
+      {
+        label: "Fluent Emoji",
+        url: "https://github.com/microsoft/fluentui-emoji",
+      },
+    ]),
+  }),
   seethingswarm: Object.freeze({
     id: "seethingswarm" as const,
     title: { message: "animalSprites" as const },
