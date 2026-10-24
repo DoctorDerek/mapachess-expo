@@ -43,17 +43,9 @@ export const activate = async (
   await press(page, button)
 }
 
-export const injectControllerInput = async (page: Page): Promise<void> => {
+export const isolateControllerInput = async (page: Page): Promise<void> => {
   await page.addInitScript(() => {
-    window.mapachessTestPads = [
-      {
-        id: "Steam Deck",
-        buttons: [],
-        axes: [0, 0],
-        mapping: "standard",
-        connected: true,
-      },
-    ]
+    window.mapachessTestPads ??= []
     Object.defineProperty(navigator, "getGamepads", {
       configurable: true,
       value: () =>
@@ -70,6 +62,21 @@ export const injectControllerInput = async (page: Page): Promise<void> => {
           })),
         })),
     })
+  })
+}
+
+export const injectControllerInput = async (page: Page): Promise<void> => {
+  await isolateControllerInput(page)
+  await page.addInitScript(() => {
+    window.mapachessTestPads = [
+      {
+        id: "Steam Deck",
+        buttons: [],
+        axes: [0, 0],
+        mapping: "standard",
+        connected: true,
+      },
+    ]
   })
 }
 
