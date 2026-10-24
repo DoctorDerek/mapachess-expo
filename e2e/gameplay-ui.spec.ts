@@ -76,25 +76,24 @@ for (const width of [320, 1280]) {
     await expect(
       settings.getByRole("img", { name: /board preview/ }),
     ).toHaveCount(0)
-    await expect(settings.locator("img")).toHaveCount(1)
+    const coachChange = settings.getByRole("button", {
+      name: "Change coach",
+      exact: true,
+    })
+    const coachPreview = coachChange.locator("..").locator("img")
+    await expect(coachPreview).toHaveCount(1)
     await expect
       .poll(() =>
-        settings
-          .locator("img")
-          .evaluate(
-            (image) =>
-              image instanceof HTMLImageElement &&
-              image.complete &&
-              image.naturalWidth > 0,
-          ),
+        coachPreview.evaluate(
+          (image) =>
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0,
+        ),
       )
       .toBe(true)
     await page.screenshot({
       path: testInfo.outputPath("customization-closed.png"),
-    })
-    const coachChange = settings.getByRole("button", {
-      name: "Change coach",
-      exact: true,
     })
     await coachChange.focus()
     await page.keyboard.press("Enter")
@@ -148,7 +147,9 @@ for (const width of [320, 1280]) {
       name: "Start match",
       exact: true,
     })
-    await startMatch.scrollIntoViewIfNeeded()
+    await startMatch.evaluate((button) =>
+      button.scrollIntoView({ block: "center", behavior: "instant" }),
+    )
     await expect(startMatch).toBeInViewport({ ratio: 1 })
     await expect(startMatch).toBeEnabled()
     expect(

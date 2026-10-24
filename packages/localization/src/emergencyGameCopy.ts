@@ -492,6 +492,10 @@ const emergencyGameCopy = {
       contribution: UNAVAILABLE_TEXT,
       modifications: UNAVAILABLE_TEXT,
     },
+    fluentEmoji: {
+      contribution: UNAVAILABLE_TEXT,
+      modifications: UNAVAILABLE_TEXT,
+    },
     seethingswarm: {
       contribution: UNAVAILABLE_TEXT,
     },

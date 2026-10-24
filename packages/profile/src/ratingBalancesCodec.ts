@@ -108,21 +108,28 @@ export function retirePreviousRatingContribution(
   const reward = data.lastAcceptedResultReward
   if (reward === null) return null
   const contribution = reward.contribution
+  if (contribution === undefined)
+    return Object.freeze({ ...reward, ratedElo: null })
+
+  const activeUndoneMatch =
+    !contribution.applied && data.activeMatch?.matchId === reward.matchId
+      ? data.activeMatch
+      : null
+  const retiredContribution: NonNullable<AcceptedMatchReward["contribution"]> =
+    Object.freeze({
+      ...contribution,
+      ratedMatchCountBefore: null,
+      eloState: contribution.applied ? "superseded" : "rebase",
+    })
   return Object.freeze({
     ...reward,
     ratedElo: null,
-    ...(contribution === undefined
-      ? {}
-      : {
-          contribution: Object.freeze({
-            ...contribution,
-            ...(contribution.applied ||
-            data.activeMatch?.matchId !== reward.matchId
-              ? {}
-              : { assistance: matchMedalEligibility(data.activeMatch) }),
-            ratedMatchCountBefore: null,
-            eloState: contribution.applied ? "superseded" : "rebase",
+    contribution:
+      activeUndoneMatch === null
+        ? retiredContribution
+        : Object.freeze({
+            ...retiredContribution,
+            assistance: matchMedalEligibility(activeUndoneMatch),
           }),
-        }),
   })
 }

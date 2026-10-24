@@ -9,6 +9,10 @@ const credits = {
     contribution: "Controller control glyphs",
     modifications: "Unmodified 64-pixel glyph subset from Input Prompts 1.5A.",
   },
+  fluentEmoji: {
+    contribution: "Gold, Silver and Bronze medal artwork",
+    modifications: "Unmodified 3D medal images, displayed at game UI sizes.",
+  },
   seethingswarm: {
     contribution: "Battle animals and profile-card companions",
   },

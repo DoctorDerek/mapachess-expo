@@ -7,6 +7,7 @@ import {
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
+import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MedalWithHintUse from "./MedalWithHintUse"
 
@@ -59,6 +60,7 @@ export default function StoryMatchResult({
         <p className="text-sm">{messages.yourStoryProgressIsUnchanged}</p>
       ) : best !== undefined && best !== medal ? (
         <p className="text-sm">
+          <MedalSymbol medal={best} />
           {copy.gameplay.bestMedal(copy.shared.story.medals[best])}
         </p>
       ) : null}

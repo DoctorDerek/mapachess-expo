@@ -27,6 +27,7 @@ import {
   replaceActiveMatch,
   resetPlayerElo,
 } from "../src/profileMutations.js"
+import { retirePreviousRatingContribution } from "../src/ratingBalancesCodec.js"
 import {
   PLAYER_RATING_CONTEXTS,
   playerRatingId,
@@ -246,6 +247,83 @@ describe("24 assistance rating contexts", () => {
 })
 
 describe("24-rating cutover and portable preferences", () => {
+  it("keeps absent legacy contributions absent and leaves source receipts unchanged", () => {
+    const initial = createInitialMapachessPlayerData()
+    expect(retirePreviousRatingContribution(initial)).toBeNull()
+    const reward = {
+      matchId: "legacy-result",
+      awardedXp: 4,
+      totalXpBefore: 0,
+      unlockedAchievementIds: [],
+      ratedElo: { variant: "standard", before: 100, after: 112 },
+    } as const
+    const retired = retirePreviousRatingContribution({
+      ...initial,
+      lastAcceptedResultReward: reward,
+    })
+    expect(retired).toEqual({ ...reward, ratedElo: null })
+    expect(retired).not.toHaveProperty("contribution")
+    expect(reward.ratedElo.after).toBe(112)
+  })
+
+  it.each([true, false])(
+    "retires applied=%s receipts without inventing inactive hint use",
+    (applied) => {
+      const initial = createInitialMapachessPlayerData()
+      const win = completedStoryMatch()
+      const accepted = replaceActiveMatch(
+        replaceActiveMatch(initial, opened(win)),
+        win,
+      )
+      const reward = accepted.lastAcceptedResultReward
+      if (reward?.contribution === undefined)
+        throw new Error("Expected a reversible receipt")
+      const source = {
+        ...reward,
+        contribution: {
+          ...reward.contribution,
+          applied,
+          assistance: "silver" as const,
+        },
+      }
+      for (const activeMatch of [
+        null,
+        { ...opened(win), matchId: "another-match", moveHintsUsed: true },
+      ]) {
+        const retired = retirePreviousRatingContribution({
+          ...accepted,
+          activeMatch,
+          lastAcceptedResultReward: source,
+        })
+        expect(retired).toEqual({
+          ...source,
+          ratedElo: null,
+          contribution: {
+            ...source.contribution,
+            ratedMatchCountBefore: null,
+            eloState: applied ? "superseded" : "rebase",
+          },
+        })
+      }
+      const active = {
+        ...opened(win),
+        pieceHintsUsed: true,
+        moveHintsUsed: true,
+      }
+      expect(
+        retirePreviousRatingContribution({
+          ...accepted,
+          activeMatch: active,
+          lastAcceptedResultReward: source,
+        })?.contribution,
+      ).toMatchObject({
+        assistance: applied ? "silver" : "bronze",
+        eloState: applied ? "superseded" : "rebase",
+      })
+      expect(source.contribution.assistance).toBe("silver")
+    },
+  )
+
   const legacyPayload = (data: MapachessPlayerData) => ({
     ...withoutAssistanceRatings(data),
     schemaVersion: 17,

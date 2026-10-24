@@ -12,6 +12,11 @@ const credits = {
     modifications:
       "Selección de iconos de 64 píxeles de Input Prompts 1.5A, sin modificaciones.",
   },
+  fluentEmoji: {
+    contribution: "Imágenes de las medallas de oro, plata y bronce",
+    modifications:
+      "Imágenes 3D de medallas sin modificar, mostradas al tamaño de la interfaz del juego.",
+  },
   seethingswarm: {
     contribution: "Animales de batalla y acompañantes de la tarjeta de perfil",
   },

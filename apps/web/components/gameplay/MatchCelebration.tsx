@@ -22,6 +22,7 @@ import {
 } from "@mapachess/profile/story-progress"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MatchLevelProgress from "./MatchLevelProgress"
 import MatchSaveConfirmation from "./MatchSaveConfirmation"
@@ -184,6 +185,11 @@ export default function MatchCelebration({
         {reward === null || reward.ratedElo === null ? null : (
           <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-base">
             <span className="font-bold">
+              <MedalSymbol
+                medal={
+                  reward.ratedElo.assistance ?? matchMedalEligibility(match)
+                }
+              />
               {copy.gameplay.clock.rating(
                 copy.profile.ratingLabel[reward.ratedElo.variant],
                 copy.gameplay.clock.category[

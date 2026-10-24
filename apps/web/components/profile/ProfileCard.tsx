@@ -21,6 +21,7 @@ import {
   PROFILE_CARD_WIDTH,
 } from "../../lib/presentation/profileCardFormat"
 import loadProfileCardFont from "../../lib/presentation/profileCardTypography"
+import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 
 export function ProfileArtwork({
@@ -52,7 +53,7 @@ export function ProfileArtwork({
     let cleanup: (() => void) | undefined
     setFailure(false)
     void Promise.all([
-      loadCardArtwork(input.appearance, input.content.animal),
+      loadCardArtwork(input, exportPreview),
       exportPreview ? loadProfileCardFont() : undefined,
     ])
       .then(([artwork, fontFamily]) => {
@@ -118,7 +119,8 @@ export function ProfileArtwork({
         height={exportPreview ? PROFILE_CARD_HEIGHT : PROFILE_ARTWORK_HEIGHT}
         aria-hidden="true"
         className={cx(
-          "pointer-events-none block [image-rendering:pixelated]",
+          "pointer-events-none block",
+          !exportPreview && "[image-rendering:pixelated]",
           fitStage
             ? "absolute inset-0 h-full w-full object-contain"
             : "h-auto w-full",
@@ -198,7 +200,10 @@ export default function ProfileCard({
               <dt className="text-[max(1rem,3.6cqw)] leading-tight font-bold">
                 {label}
                 {kind === "level" ? null : (
-                  <span className="block text-base">{contextLabel}</span>
+                  <span className="block text-base">
+                    <MedalSymbol medal={ratingContext.assistance} />
+                    {contextLabel}
+                  </span>
                 )}
               </dt>
               <dd className="mt-1 text-[max(2rem,7cqw)] leading-none font-black break-all tabular-nums">

@@ -7,6 +7,7 @@ import {
   selectChallengeUnlockedOpponents,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import medalArtworkSource from "../../lib/presentation/medalArtwork"
 import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
 import StoryLadderProgress from "./StoryLadderProgress"
 import WebMatchSetup from "./WebMatchSetup"
@@ -39,12 +40,12 @@ describe("Story ladder presentation structure", () => {
   })
 
   it.each([
-    { highestMedal: "bronze", symbol: "🥉", label: "Bronze" },
-    { highestMedal: "silver", symbol: "🥈", label: "Silver" },
-    { highestMedal: "gold", symbol: "🥇", label: "Gold" },
+    { highestMedal: "bronze", label: "Bronze" },
+    { highestMedal: "silver", label: "Silver" },
+    { highestMedal: "gold", label: "Gold" },
   ] as const)(
     "shows $label records with a decorative medal and readable text",
-    ({ highestMedal, symbol, label }) => {
+    ({ highestMedal, label }) => {
       for (const variant of ["standard", "chess960"] as const) {
         const markup = renderToStaticMarkup(
           <StoryLadderProgress
@@ -56,10 +57,10 @@ describe("Story ladder presentation structure", () => {
           />,
         )
         expect(markup).toContain(`Defeated · ${label}`)
-        expect(markup).toMatch(
-          new RegExp(`<span[^>]*aria-hidden="true"[^>]*>${symbol}</span>`),
+        expect(markup).toContain(
+          `src="${medalArtworkSource(highestMedal)}" alt="" aria-hidden="true"`,
         )
-        expect(markup.match(new RegExp(symbol, "gu"))).toHaveLength(1)
+        expect(markup.match(/<img\b/g)).toHaveLength(1)
       }
     },
   )
