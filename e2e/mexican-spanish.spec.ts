@@ -193,7 +193,7 @@ for (const width of [390, 1280]) {
     ).toBeVisible()
     await expect(
       page.getByRole("term").filter({ hasText: /^Elo de ajedrez 960/ }),
-    ).toHaveText(/^Elo de ajedrez 960\s*Sin reloj$/)
+    ).toHaveText(/^Elo de ajedrez 960\s*Sin reloj · Bronce$/)
     await page.screenshot({
       path: testInfo.outputPath(`spanish-menu-${width}.png`),
       fullPage: true,
