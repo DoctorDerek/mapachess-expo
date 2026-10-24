@@ -6,6 +6,7 @@ import createInitialMapachessPlayerData, {
 } from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
+import medalArtworkSource from "../../lib/presentation/medalArtwork"
 import RecoverableView from "../presentation/RecoverableView"
 import ArtCredits from "./ArtCredits"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
@@ -216,9 +217,9 @@ describe("web player-data controls", () => {
       "Silver if you win with Piece Hints but no Move Hints.",
     )
     expect(markup).toContain("Gold if you win without using any hints.")
-    for (const symbol of ["🥉", "🥈", "🥇"])
-      expect(markup).toMatch(
-        new RegExp(`<span[^>]*aria-hidden="true"[^>]*>${symbol}</span>`),
+    for (const medal of ["bronze", "silver", "gold"] as const)
+      expect(markup).toContain(
+        `src="${medalArtworkSource(medal)}" alt="" aria-hidden="true"`,
       )
     expect(markup).toContain(
       "Changing this setting never erases earlier hint use.",

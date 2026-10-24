@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
+import medalArtworkSource from "../../lib/presentation/medalArtwork"
 import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
 import WebMatchSetup from "./WebMatchSetup"
 
@@ -36,7 +37,9 @@ describe("Challenge difficulty history presentation", () => {
     expect(tiles).toHaveLength(3)
     expect(tiles[0]).toContain("Best medal: Gold")
     expect(tiles[0]).toContain("Last played: Dog Stockfish")
-    expect(tiles[0]).toMatch(/<span aria-hidden="true"[^>]*>🥇<\/span>/)
+    expect(tiles[0]).toContain(
+      `src="${medalArtworkSource("gold")}" alt="" aria-hidden="true"`,
+    )
     expect(tiles[1]).toContain('checked="" value="1000"')
     expect(tiles[1]).toContain("Last played: Raccoon Stockfish")
     expect(tiles[1]).not.toContain("Best medal")

@@ -125,9 +125,11 @@ for (const configuration of [
       .filter({ hasText: spanish ? "si ganas" : "if you win" })
     await expect(eligibility).toHaveText(
       spanish
-        ? "🥇Oro si ganas · No usaste pistas"
-        : "🥇Gold if you win · No hints used",
+        ? "Oro si ganas · No usaste pistas"
+        : "Gold if you win · No hints used",
     )
+    const medal = eligibility.locator('img[aria-hidden="true"]')
+    await expect(medal).toHaveAttribute("src", /\/gold\.[^/]+\.png$/)
     const initialHintBox = await documentBox(hint)
     const board = page.getByRole("grid")
     const initialBoardBox = await documentBox(board)
@@ -139,6 +141,7 @@ for (const configuration of [
     await expect(eligibility).toContainText(
       spanish ? "Plata si ganas" : "Silver if you win",
     )
+    await expect(medal).toHaveAttribute("src", /\/silver\.[^/]+\.png$/)
     expectSameBox(await documentBox(hint), initialHintBox)
     await hint.click()
     await expect(hint).toHaveAccessibleName(
@@ -149,6 +152,17 @@ for (const configuration of [
     await expect(eligibility).toContainText(
       spanish ? "Bronce si ganas" : "Bronze if you win",
     )
+    await expect(medal).toHaveAttribute("src", /\/bronze\.[^/]+\.png$/)
+    await expect
+      .poll(() =>
+        medal.evaluate(
+          (image) =>
+            image instanceof HTMLImageElement &&
+            image.complete &&
+            image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true)
     expectSameBox(await documentBox(hint), initialHintBox)
     expectSameBox(await documentBox(board), initialBoardBox)
     expect(
