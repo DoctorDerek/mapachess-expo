@@ -91,7 +91,7 @@ export default async function createProfileCardFile(
 ): Promise<File> {
   signal.throwIfAborted()
   const [artwork, fontFamily] = await Promise.all([
-    loadCardArtwork(input.appearance, input.content.animal),
+    loadCardArtwork(input),
     loadProfileCardFont(),
   ])
   signal.throwIfAborted()

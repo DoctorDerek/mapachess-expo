@@ -15,6 +15,7 @@ import {
   playerRatingId,
   type CardRatingContext,
 } from "@mapachess/profile/rating-context"
+import medalArtworkSource from "./medalArtwork"
 import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
@@ -90,6 +91,7 @@ export type CardArtwork = Readonly<{
     white: string
   }>
   hero: readonly HTMLImageElement[]
+  medal: HTMLImageElement | null
   heroBounds: Readonly<{ x: number; y: number; width: number; height: number }>
   animal: Readonly<{
     image: HTMLImageElement
@@ -114,8 +116,8 @@ function loadImage(path: string): Promise<HTMLImageElement> {
   return ready
 }
 export async function loadCardArtwork(
-  appearance: PlayerAppearance,
-  includeAnimal = true,
+  { appearance, content, facts }: CardInput,
+  includeRatingMedal = true,
 ): Promise<CardArtwork> {
   if (!LICENSED_PRESENTATION_ASSETS_ENABLED)
     throw new Error("Licensed profile artwork is unavailable in this build.")
@@ -134,19 +136,23 @@ export async function loadCardArtwork(
   }
   if (Object.values(palette).some((color) => color === ""))
     throw new Error("Profile card colors are unavailable.")
-  const [hero, animal] = await Promise.all([
+  const [hero, animal, medal] = await Promise.all([
     Promise.all(
       heroLayerPaths(appearance).map((path) =>
         loadImage(presentationAssetSource(path)),
       ),
     ),
-    includeAnimal
+    content.animal
       ? loadImage(animation.sourceId).then((image) => ({ image, animation }))
+      : null,
+    includeRatingMedal && (content.standard || content.chess960)
+      ? loadImage(medalArtworkSource(facts.ratingContext.assistance))
       : null,
   ])
   return {
     palette,
     hero,
+    medal,
     heroBounds: heroWeaponDefinition(appearance.weapon).bounds,
     animal,
   }
@@ -331,14 +337,28 @@ export function drawProfileCard(
       }
       context.fillText(label, left, center + layout.ratingLabelOffset)
       context.font = `${typography.category.weight} ${typography.category.size}px ${fontFamily}`
+      const medalWidth =
+        artwork.medal === null ? 0 : layout.medalSize + layout.medalGap
+      if (artwork.medal !== null) {
+        context.save()
+        context.imageSmoothingEnabled = true
+        context.drawImage(
+          artwork.medal,
+          left,
+          center + layout.categoryOffset - layout.medalSize / 2,
+          layout.medalSize,
+          layout.medalSize,
+        )
+        context.restore()
+      }
       context.fillText(
         copy.cardRatingContext(
           catalog.gameplay.clock.category[ratingContext.category],
           catalog.shared.story.medals[ratingContext.assistance],
         ),
-        left,
+        left + medalWidth,
         center + layout.categoryOffset,
-        available,
+        available - medalWidth,
       )
       context.font = `${typography.value.weight} ${typography.value.size}px ${fontFamily}`
       context.fillText(

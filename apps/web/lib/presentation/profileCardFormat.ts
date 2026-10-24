@@ -12,6 +12,8 @@ export const PROFILE_CARD_LAYOUT = {
   ratingValueOffset: -20,
   ratingLabelOffset: 28,
   categoryOffset: 57,
+  medalSize: 32,
+  medalGap: 6,
 } as const
 
 export type GifEncodingRequest = Readonly<{

@@ -1,5 +1,9 @@
 import { readFile } from "node:fs/promises"
 import { expect } from "@playwright/test"
+import {
+  PROFILE_CARD_HEIGHT,
+  PROFILE_CARD_LAYOUT,
+} from "../apps/web/lib/presentation/profileCardFormat.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
@@ -43,6 +47,28 @@ for (const width of [390, 1440]) {
       name: /^Your profile card:.*Blitz/,
     })
     await expect(card).toHaveAccessibleName(/Blitz.*Silver.*432.*679/)
+    const medals = card.locator('img[aria-hidden="true"]')
+    await expect(medals).toHaveCount(2)
+    await expect
+      .poll(() =>
+        medals.evaluateAll((images) =>
+          images.every(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0,
+          ),
+        ),
+      )
+      .toBe(true)
+    const medalSource = await medals.first().getAttribute("src")
+    if (medalSource === null)
+      throw new Error("Expected the selected medal image")
+    expect(medalSource).toContain("silver")
+    expect(await medals.first().boundingBox()).toMatchObject({
+      width: 24,
+      height: 24,
+    })
     await expect(
       page.getByText("Unsaved changes", { exact: true }),
     ).toBeVisible()
@@ -107,6 +133,55 @@ for (const width of [390, 1440]) {
     await page
       .getByRole("img", { name: "Profile card PNG preview", exact: true })
       .screenshot({ path: testInfo.outputPath("contextual-card.png") })
+    expect(
+      await page
+        .getByRole("img", { name: "Profile card PNG preview", exact: true })
+        .locator("canvas")
+        .evaluate(
+          async (canvas, { source, layout, height }) => {
+            if (!(canvas instanceof HTMLCanvasElement))
+              throw new Error("Expected the exported card canvas")
+            const actual = canvas.getContext("2d")
+            if (actual === null)
+              throw new Error("Expected the card rendering context")
+            const medal = new Image()
+            medal.src = source
+            await medal.decode()
+            const reference = document.createElement("canvas")
+            reference.width = layout.medalSize
+            reference.height = layout.medalSize
+            const expected = reference.getContext("2d")
+            if (expected === null)
+              throw new Error("Expected the reference image context")
+            const [red, green, blue] = actual.getImageData(0, 0, 1, 1).data
+            expected.fillStyle = `rgb(${red}, ${green}, ${blue})`
+            expected.fillRect(0, 0, layout.medalSize, layout.medalSize)
+            expected.drawImage(medal, 0, 0, layout.medalSize, layout.medalSize)
+            const actualPixels = actual.getImageData(
+              layout.factsInset,
+              (height - layout.invitationHeight) / 2 +
+                layout.categoryOffset -
+                layout.medalSize / 2,
+              layout.medalSize,
+              layout.medalSize,
+            ).data
+            const expectedPixels = expected.getImageData(
+              0,
+              0,
+              layout.medalSize,
+              layout.medalSize,
+            ).data
+            return actualPixels.every(
+              (value, index) => value === expectedPixels[index],
+            )
+          },
+          {
+            source: medalSource,
+            layout: PROFILE_CARD_LAYOUT,
+            height: PROFILE_CARD_HEIGHT,
+          },
+        ),
+    ).toBe(true)
     await page.getByRole("button", { name: "Back", exact: true }).click()
     await expect(
       page.getByRole("heading", {
@@ -385,6 +460,42 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   await expect(page.getByRole("button", { name: "Save GIF" })).toBeEnabled({
     timeout: 60000,
   })
+  expect(await savedProfile(page)).toEqual(before)
+  expect(errors).toEqual([])
+})
+
+test("keeps medal labels and recovers an unavailable medal image without changing progress", async ({
+  page,
+}) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  const medalRequest = "**/_next/static/media/bronze*.png"
+  await page.route(medalRequest, (route) => route.abort("failed"))
+  await page.goto("/")
+  const card = page.getByRole("region", { name: /^Your profile card:/ })
+  await expect(card).toBeVisible()
+  await expect(card).toHaveAccessibleName(/Untimed.*Bronze/)
+  await expect(
+    page.getByRole("button", { name: "Standard Chess Story", exact: true }),
+  ).toBeEnabled()
+  const before = await savedProfile(page)
+  await page
+    .getByRole("button", { name: "Share profile card", exact: true })
+    .click()
+  await page.getByRole("button", { name: "PNG · Still", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Retry PNG", exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Save PNG", exact: true }),
+  ).toBeDisabled()
+  await page.unroute(medalRequest)
+  await page.getByRole("button", { name: "Retry artwork", exact: true }).click()
+  await page.getByRole("button", { name: "Retry PNG", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Save PNG", exact: true }),
+  ).toBeEnabled()
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0)
   expect(await savedProfile(page)).toEqual(before)
   expect(errors).toEqual([])
 })
