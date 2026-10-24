@@ -5,6 +5,7 @@ import {
   type TimeControl,
 } from "@mapachess/match/time-control"
 import type { MatchMedal } from "@mapachess/profile/match-medal"
+import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchIdentity({
@@ -50,6 +51,7 @@ export default function MatchIdentity({
           <strong>{copy.presentation.playerName}</strong> ·{" "}
           {copy.gameplay.elo(playerElo)}
           {" · "}
+          <MedalSymbol medal={assistance} />
           {copy.shared.story.medals[assistance]}
           <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
         </span>

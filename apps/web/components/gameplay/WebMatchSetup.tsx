@@ -34,6 +34,7 @@ import { webChallengeDifficultyTargets } from "../../lib/gameplay/webOpponentPol
 import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImages"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
+import MedalSymbol from "../presentation/MedalSymbol"
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
@@ -353,6 +354,7 @@ export default function WebMatchSetup({
           />
           {ratings === undefined ? null : (
             <p className="font-bold">
+              <MedalSymbol medal={startingRatingAssistance(autoHintMode)} />
               {catalog.profile.rating(
                 clockCopy.rating(
                   copy.variants[variant],

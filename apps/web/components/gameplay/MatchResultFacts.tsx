@@ -4,6 +4,7 @@ import matchVictoryMedal, {
   matchMedalEligibility,
 } from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
+import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MedalWithHintUse from "./MedalWithHintUse"
 
@@ -35,6 +36,11 @@ export default function MatchResultFacts({
           </span>
           {reward.ratedElo === null ? null : (
             <span>
+              <MedalSymbol
+                medal={
+                  reward.ratedElo.assistance ?? matchMedalEligibility(match)
+                }
+              />
               {copy.profile.rating(
                 copy.gameplay.clock.rating(
                   copy.setup.variants[reward.ratedElo.variant],
