@@ -399,10 +399,14 @@ test("castles a Chess960 king through the ordinary controller move path", async 
     },
   })
   const king = page.getByRole("gridcell", { name: /^e1, White king/ })
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
+    timeout: 30000,
+  })
   await expect(king).toHaveAttribute("aria-disabled", "false", {
     timeout: 30000,
   })
   await activate(page, king)
+  await expect(king).toHaveAttribute("aria-selected", "true")
   await press(page, 15)
   await press(page, 15)
   await expect(page.getByRole("gridcell", { name: /^g1, empty/ })).toBeFocused()
