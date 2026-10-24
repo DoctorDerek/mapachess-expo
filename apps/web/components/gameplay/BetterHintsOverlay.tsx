@@ -1,24 +1,15 @@
 "use client"
 
-import { useId } from "react"
-import type {
-  BetterHint,
-  BetterHintsResult,
-} from "@mapachess/match/better-hints"
-import type { MatchSquare } from "@mapachess/match/match-position"
+import createBetterHintGeometry, {
+  BETTER_HINT_FRAME,
+  BETTER_HINT_RIBBON,
+  BETTER_HINT_VIEW_BOX,
+  type BetterHintGeometry,
+} from "@mapachess/match-presentation/better-hint-geometry"
+import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type { BoardOrientation } from "../../lib/board/boardPresentation"
 
 type HintOwner = "opponent" | "player"
-
-type OwnedHint = Readonly<{
-  hint: BetterHint
-  owner: HintOwner
-}>
-
-type BoardPoint = Readonly<{
-  x: number
-  y: number
-}>
 
 export type BetterHintsOverlayProps = Readonly<{
   hints: BetterHintsResult
@@ -30,181 +21,131 @@ const HINT_OUTLINE_COLOR = "var(--mapachess-board-hint-outline)"
 const PLAYER_HINT_COLOR = "var(--mapachess-board-player-hint)"
 const OPPONENT_HINT_COLOR = "var(--mapachess-board-opponent-hint)"
 
-const ownHints = (hints: BetterHintsResult): readonly OwnedHint[] => [
-  ...hints.player.map((hint) => ({ hint, owner: "player" as const })),
-  ...hints.opponent.map((hint) => ({
-    hint,
-    owner: "opponent" as const,
-  })),
-]
+function HintRibbon({
+  geometry,
+  owner,
+}: Readonly<{ geometry: BetterHintGeometry; owner: HintOwner }>) {
+  const color = owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
 
-const pointForSquare = (
-  square: MatchSquare,
-  orientation: BoardOrientation,
-): BoardPoint => {
-  const fileIndex = square.charCodeAt(0) - "a".charCodeAt(0)
-  const rankIndex = Number(square.slice(1)) - 1
-
-  return orientation === "white"
-    ? { x: fileIndex + 0.5, y: 7.5 - rankIndex }
-    : { x: 7.5 - fileIndex, y: rankIndex + 0.5 }
+  return (
+    <g
+      opacity={BETTER_HINT_RIBBON.opacity}
+      transform={`translate(${geometry.source.x} ${geometry.source.y}) rotate(${geometry.rotationDegrees})`}
+    >
+      {owner === "opponent" ? (
+        <>
+          <line
+            data-hint-stroke="outline"
+            stroke={HINT_OUTLINE_COLOR}
+            strokeDasharray={geometry.opponentDash}
+            strokeLinecap="butt"
+            strokeWidth={
+              BETTER_HINT_RIBBON.width + BETTER_HINT_RIBBON.outlineWidth
+            }
+            x1={BETTER_HINT_RIBBON.sourceOffset}
+            x2={geometry.shaftEnd}
+            y1="0"
+            y2="0"
+          />
+          <line
+            data-hint-stroke="owner"
+            stroke={color}
+            strokeDasharray={geometry.opponentDash}
+            strokeLinecap="butt"
+            strokeWidth={BETTER_HINT_RIBBON.width}
+            x1={BETTER_HINT_RIBBON.sourceOffset}
+            x2={geometry.shaftEnd}
+            y1="0"
+            y2="0"
+          />
+        </>
+      ) : null}
+      <path
+        d={owner === "player" ? geometry.ribbonPath : geometry.headPath}
+        fill={color}
+        stroke={HINT_OUTLINE_COLOR}
+        strokeLinejoin="round"
+        strokeWidth={BETTER_HINT_RIBBON.outlineWidth}
+      />
+    </g>
+  )
 }
-
-const hintColor = (owner: HintOwner): string =>
-  owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
 
 export default function BetterHintsOverlay({
   hints,
   orientation,
   showMoves,
 }: BetterHintsOverlayProps) {
-  const markerPrefix = useId().replaceAll(":", "")
-  const playerMarkerId = `${markerPrefix}-player-hint-arrow`
-  const opponentMarkerId = `${markerPrefix}-opponent-hint-arrow`
-  const ownedHints = ownHints(hints)
+  const ownedHints = (["player", "opponent"] as const).flatMap((owner) =>
+    hints[owner].map((hint) => ({
+      owner,
+      uci: hint.uci,
+      geometry: createBetterHintGeometry(hint, orientation),
+    })),
+  )
 
   return (
     <svg
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 z-[5] size-full"
       preserveAspectRatio="none"
-      viewBox="0 0 8 8"
+      viewBox={BETTER_HINT_VIEW_BOX}
     >
-      <defs>
-        {(
-          [
-            [playerMarkerId, PLAYER_HINT_COLOR],
-            [opponentMarkerId, OPPONENT_HINT_COLOR],
-          ] as const
-        ).map(([id, color]) => (
-          <marker
-            id={id}
-            key={id}
-            markerHeight="0.4"
-            markerUnits="userSpaceOnUse"
-            markerWidth="0.4"
-            orient="auto"
-            refX="10"
-            refY="5"
-            viewBox="-1 -1 12 12"
-          >
-            <path
-              d="M 0 0 L 10 5 L 0 10 Z"
-              fill={color}
-              stroke={HINT_OUTLINE_COLOR}
-              strokeLinejoin="round"
-              strokeWidth="0.8"
-            />
-          </marker>
-        ))}
-      </defs>
+      {ownedHints.map(({ geometry, owner, uci }) => {
+        const source = geometry.piece
+        const frame = {
+          fill: "none",
+          height: BETTER_HINT_FRAME.size,
+          rx: BETTER_HINT_FRAME.radius,
+          strokeDasharray:
+            owner === "opponent" ? BETTER_HINT_FRAME.opponentDash : undefined,
+          width: BETTER_HINT_FRAME.size,
+          x: Math.floor(source.x) + BETTER_HINT_FRAME.inset,
+          y: Math.floor(source.y) + BETTER_HINT_FRAME.inset,
+        }
 
-      {ownedHints.map((ownedHint) => {
-        const source = pointForSquare(ownedHint.hint.from, orientation)
         return (
           <g
             data-hint-kind="source"
-            data-hint-owner={ownedHint.owner}
-            data-hint-pattern={
-              ownedHint.owner === "player" ? "solid" : "dashed"
-            }
+            data-hint-owner={owner}
+            data-hint-pattern={owner === "player" ? "solid" : "dashed"}
             data-source-x={source.x}
             data-source-y={source.y}
-            key={`highlight-${ownedHint.owner}-${ownedHint.hint.uci}`}
+            key={`highlight-${owner}-${uci}`}
           >
             <rect
+              {...frame}
               data-hint-stroke="outline"
-              fill="none"
-              height="0.82"
-              rx="0.06"
               stroke={HINT_OUTLINE_COLOR}
-              strokeDasharray={
-                ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
-              }
-              strokeWidth="0.07"
-              width="0.82"
-              x={Math.floor(source.x) + 0.09}
-              y={Math.floor(source.y) + 0.09}
+              strokeWidth={BETTER_HINT_FRAME.outlineWidth}
             />
             <rect
+              {...frame}
               data-hint-stroke="owner"
-              fill="none"
-              height="0.82"
-              rx="0.06"
-              stroke={hintColor(ownedHint.owner)}
-              strokeDasharray={
-                ownedHint.owner === "opponent" ? "0.16 0.1" : undefined
+              stroke={
+                owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
               }
-              strokeWidth="0.04"
-              width="0.82"
-              x={Math.floor(source.x) + 0.09}
-              y={Math.floor(source.y) + 0.09}
+              strokeWidth={BETTER_HINT_FRAME.width}
             />
           </g>
         )
       })}
 
       {showMoves
-        ? ownedHints.map((ownedHint) => {
-            const hint = ownedHint.hint
-            const rookMovement =
-              hint.from === hint.to ? hint.castling : undefined
-            const source = pointForSquare(
-              rookMovement?.rookFrom ?? hint.from,
-              orientation,
-            )
-            const destination = pointForSquare(
-              rookMovement?.rookTo ?? hint.to,
-              orientation,
-            )
-            const color = hintColor(ownedHint.owner)
-            return (
-              <g
-                data-destination-x={destination.x}
-                data-destination-y={destination.y}
-                data-hint-kind="move"
-                data-hint-owner={ownedHint.owner}
-                data-hint-pattern={
-                  ownedHint.owner === "player" ? "solid" : "dashed"
-                }
-                data-source-x={source.x}
-                data-source-y={source.y}
-                key={`move-${ownedHint.owner}-${ownedHint.hint.uci}`}
-              >
-                <line
-                  data-hint-stroke="outline"
-                  stroke={HINT_OUTLINE_COLOR}
-                  strokeDasharray={
-                    ownedHint.owner === "opponent" ? "0.25 0.16" : undefined
-                  }
-                  strokeLinecap={
-                    ownedHint.owner === "opponent" ? "butt" : "round"
-                  }
-                  strokeWidth="0.1"
-                  x1={source.x}
-                  x2={destination.x}
-                  y1={source.y}
-                  y2={destination.y}
-                />
-                <line
-                  data-hint-stroke="owner"
-                  markerEnd={`url(#${ownedHint.owner === "player" ? playerMarkerId : opponentMarkerId})`}
-                  stroke={color}
-                  strokeDasharray={
-                    ownedHint.owner === "opponent" ? "0.25 0.16" : undefined
-                  }
-                  strokeLinecap={
-                    ownedHint.owner === "opponent" ? "butt" : "round"
-                  }
-                  strokeWidth="0.065"
-                  x1={source.x}
-                  x2={destination.x}
-                  y1={source.y}
-                  y2={destination.y}
-                />
-              </g>
-            )
-          })
+        ? ownedHints.map(({ geometry, owner, uci }) => (
+            <g
+              data-destination-x={geometry.destination.x}
+              data-destination-y={geometry.destination.y}
+              data-hint-kind="move"
+              data-hint-owner={owner}
+              data-hint-pattern={owner === "player" ? "solid" : "dashed"}
+              data-source-x={geometry.source.x}
+              data-source-y={geometry.source.y}
+              key={`move-${owner}-${uci}`}
+            >
+              <HintRibbon geometry={geometry} owner={owner} />
+            </g>
+          ))
         : null}
     </svg>
   )

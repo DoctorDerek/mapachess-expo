@@ -100,7 +100,14 @@ describe("Better Hints board presentation", () => {
       )
       expect(countOccurrences(markup, 'data-hint-kind="move"')).toBe(1)
       expect(markup).toContain(
-        orientation === "white" ? 'x1="7.5" x2="5.5"' : 'x1="0.5" x2="2.5"',
+        orientation === "white"
+          ? 'data-destination-x="5.5" data-destination-y="7.5"'
+          : 'data-destination-x="2.5" data-destination-y="0.5"',
+      )
+      expect(markup).toContain(
+        orientation === "white"
+          ? 'transform="translate(7.5 7.5) rotate(180)"'
+          : 'transform="translate(0.5 0.5) rotate(0)"',
       )
       const announcement = renderToStaticMarkup(
         createElement(BetterHintsControl, {
@@ -254,11 +261,14 @@ describe("Better Hints board presentation", () => {
         'data-hint-kind="move" data-hint-owner="opponent" data-hint-pattern="dashed"',
       ),
     ).toBe(3)
-    expect(countOccurrences(whiteMarkup, 'markerHeight="0.4"')).toBe(2)
+    expect(countOccurrences(whiteMarkup, "<path")).toBe(6)
+    expect(whiteMarkup).not.toContain("<marker")
     expect(whiteMarkup).not.toContain("var(--color-mapachito-white)")
     expect(whiteMarkup).toContain('stroke-linecap="butt"')
-    expect(countOccurrences(whiteMarkup, 'data-hint-stroke="outline"')).toBe(12)
-    expect(countOccurrences(whiteMarkup, 'data-hint-stroke="owner"')).toBe(12)
+    expect(countOccurrences(whiteMarkup, 'data-hint-stroke="outline"')).toBe(9)
+    expect(countOccurrences(whiteMarkup, 'data-hint-stroke="owner"')).toBe(9)
+    expect(countOccurrences(whiteMarkup, 'stroke-dasharray="')).toBe(12)
+    expect(whiteMarkup).toContain("pointer-events-none")
     expect(whiteMarkup).toContain("z-[5]")
     expect(whiteMarkup).not.toContain("data-hint-shape")
     expect(whiteMarkup).toContain(

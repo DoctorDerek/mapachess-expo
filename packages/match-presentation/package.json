@@ -6,6 +6,10 @@
   "type": "module",
   "exports": {
     "./medals/*.png": "./assets/medals/*.png",
+    "./better-hint-geometry": {
+      "types": "./src/betterHintGeometry.ts",
+      "default": "./dist/betterHintGeometry.js"
+    },
     "./input-prompts": {
       "types": "./src/inputPrompts.ts",
       "default": "./dist/inputPrompts.js"
