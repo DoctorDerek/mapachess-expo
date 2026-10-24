@@ -143,12 +143,8 @@ test("all earned animals remain selectable after reload and editing is still a d
   await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(23)
   await gallery.getByRole("radio", { name: /Dragonfly/ }).check()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
-  await page
-    .getByRole("button", { name: "Save appearance", exact: true })
-    .click()
-  await expect(
-    page.getByText("Saved appearance", { exact: true }),
-  ).toBeVisible()
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   await page.reload()
   await page.getByRole("button", { name: "Animal", exact: true }).click()
   await expect(gallery.getByRole("radio", { name: /Dragonfly/ })).toBeChecked()

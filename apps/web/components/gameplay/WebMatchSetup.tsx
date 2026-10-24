@@ -19,7 +19,10 @@ import {
 } from "@mapachess/match/time-control"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import { playerRatingId } from "@mapachess/profile/rating-context"
+import {
+  playerRatingId,
+  startingRatingAssistance,
+} from "@mapachess/profile/rating-context"
 import {
   canPlayStoryOpponent,
   selectChallengeUnlockedOpponents,
@@ -354,8 +357,17 @@ export default function WebMatchSetup({
                 clockCopy.rating(
                   copy.variants[variant],
                   clockCopy.category[category],
+                  catalog.shared.story.medals[
+                    startingRatingAssistance(autoHintMode)
+                  ],
                 ),
-                ratings[playerRatingId(variant, category)],
+                ratings[
+                  playerRatingId(
+                    variant,
+                    category,
+                    startingRatingAssistance(autoHintMode),
+                  )
+                ],
               )}
             </p>
           )}

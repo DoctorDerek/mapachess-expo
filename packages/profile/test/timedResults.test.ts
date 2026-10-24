@@ -63,11 +63,15 @@ async function openTimed(variant: MatchVariant, control: TimeControl) {
   const initial = createInitialMapachessPlayerData()
   const saved = await store.commitCurrent(await store.load(), {
     ...initial,
-    ratings: { ...initial.ratings, standard: 445.212, chess960: 612.75 },
+    ratings: {
+      ...initial.ratings,
+      "standard-untimed-gold": 445.212,
+      "chess960-untimed-gold": 612.75,
+    },
     ratedMatchCounts: {
       ...initial.ratedMatchCounts,
-      standard: 17,
-      chess960: 9,
+      "standard-untimed-gold": 17,
+      "chess960-untimed-gold": 9,
     },
   })
   if (!saved.ok) throw new Error("Fixture profile must save")
@@ -134,7 +138,7 @@ describe("durable timed results and rating migration", () => {
       for (const control of controls) {
         const game = await openTimed(variant, control)
         const before = game.data()
-        const id = playerRatingId(variant, timeCategory(control))
+        const id = playerRatingId(variant, timeCategory(control), "gold")
         game.setTime(
           control.type === "fischer" ? control.baseSeconds * 1000 : 0,
         )
@@ -148,8 +152,8 @@ describe("durable timed results and rating migration", () => {
         })
         expect(accepted.ratedMatchCounts[id]).toBe(1)
         expect(accepted.ratings[id]).toBeGreaterThan(100)
-        expect(accepted.ratings.standard).toBe(445.212)
-        expect(accepted.ratings.chess960).toBe(612.75)
+        expect(accepted.ratings["standard-untimed-gold"]).toBe(445.212)
+        expect(accepted.ratings["chess960-untimed-gold"]).toBe(612.75)
         expect(accepted.totalXp).toBe(8)
         expect(accepted.storyProgress[variant]).toEqual([
           { opponentId: "chicken-stockfish", highestMedal: "gold" },
@@ -211,28 +215,28 @@ describe("durable timed results and rating migration", () => {
     await waitFor(game.match, (s) => s.matches("complete"))
     game.profile.send({
       type: "PROFILE.ELO_RESET_CONFIRMED",
-      variant: "standard-blitz",
+      variant: "standard-blitz-gold",
     })
     await waitFor(game.profile, (s) => s.matches("ready"))
     expect(game.data().lastAcceptedResultReward?.ratedElo).not.toBeNull()
     game.profile.send({
       type: "PROFILE.ELO_RESET_CONFIRMED",
-      variant: "standard-bullet",
+      variant: "standard-bullet-gold",
     })
     await waitFor(game.profile, (s) => s.matches("ready"))
     game.match.send({ type: "MATCH.UNDO_REQUESTED" })
     await waitFor(game.match, (s) => s.matches("paused"))
     game.match.send({ type: "MATCH.REDO_REQUESTED" })
     await waitFor(game.match, (s) => s.matches("complete"))
-    expect(game.data().ratings["standard-bullet"]).toBe(100)
-    expect(game.data().ratedMatchCounts["standard-bullet"]).toBe(0)
-    expect(game.data().ratings.standard).toBe(445.212)
+    expect(game.data().ratings["standard-bullet-gold"]).toBe(100)
+    expect(game.data().ratedMatchCounts["standard-bullet-gold"]).toBe(0)
+    expect(game.data().ratings["standard-untimed-gold"]).toBe(445.212)
     expect(decodeMapachessPlayerDataWithSource(game.data())).toMatchObject({
       ok: true,
     })
   })
 
-  it("authenticates the exact schema15 two-rating preimage before adding six contexts", async () => {
+  it("authenticates the exact schema15 two-rating preimage before initializing 24 contexts", async () => {
     const current = createInitialMapachessPlayerData()
     const payload = {
       ...withoutMoveReactionPlacement(current),
@@ -272,14 +276,8 @@ describe("durable timed results and rating migration", () => {
     const decoded = decodeMapachessPlayerDataWithSource(payload)
     expect(decoded).toMatchObject({ ok: true, source: { canonical } })
     if (!decoded.ok) throw new Error("Legacy profile must decode")
-    expect(decoded.data.ratings).toEqual({
-      ...current.ratings,
-      ...payload.ratings,
-    })
-    expect(decoded.data.ratedMatchCounts).toEqual({
-      ...current.ratedMatchCounts,
-      ...payload.ratedMatchCounts,
-    })
+    expect(decoded.data.ratings).toEqual(current.ratings)
+    expect(decoded.data.ratedMatchCounts).toEqual(current.ratedMatchCounts)
     const envelope = {
       format: "mapachess-stored-player-data",
       formatVersion: 1,

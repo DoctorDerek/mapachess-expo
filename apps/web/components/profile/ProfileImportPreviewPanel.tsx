@@ -56,17 +56,20 @@ export default function ProfileImportPreviewPanel({
               ? copy.profile.none
               : copy.profile.included}
           </dd>
-          {PLAYER_RATING_CONTEXTS.map(({ id, variant, category }) => (
-            <Fragment key={id}>
-              <dt>
-                {copy.gameplay.clock.rating(
-                  copy.profile.ratingLabel[variant],
-                  copy.gameplay.clock.category[category],
-                )}
-              </dt>
-              <dd className="text-right">{Math.round(data.ratings[id])}</dd>
-            </Fragment>
-          ))}
+          {PLAYER_RATING_CONTEXTS.map(
+            ({ id, variant, category, assistance }) => (
+              <Fragment key={id}>
+                <dt>
+                  {copy.gameplay.clock.rating(
+                    copy.profile.ratingLabel[variant],
+                    copy.gameplay.clock.category[category],
+                    copy.shared.story.medals[assistance],
+                  )}
+                </dt>
+                <dd className="text-right">{Math.round(data.ratings[id])}</dd>
+              </Fragment>
+            ),
+          )}
           <dt>{messages.earlierFourRatings}</dt>
           <dd className="text-right">{messages.preservedInBackup}</dd>
           <dt>{copy.shared.story.standard}</dt>

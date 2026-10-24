@@ -269,7 +269,7 @@ test("Bullet uses real Auto Move Hints and pauses on navigation without changing
   const played = await savedProfile(page)
   expect(played.activeMatch?.clock?.history).toHaveLength(3)
   expect(played.activeMatch?.moveHintsUsed).toBe(true)
-  expect(played.ratings.standard).toBe(100)
+  expect(played.ratings["standard-untimed-bronze"]).toBe(100)
   await page.getByRole("button", { name: "Undo", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Resume clocks", exact: true }),
@@ -429,8 +429,8 @@ test("a no-move timeout survives import, retracts on Undo and reapplies only onc
     type: "timeout",
     winner: "black",
   })
-  expect(ended.ratedMatchCounts["standard-bullet"]).toBe(1)
-  expect(ended.ratedMatchCounts.standard).toBe(0)
+  expect(ended.ratedMatchCounts["standard-bullet-bronze"]).toBe(1)
+  expect(ended.ratedMatchCounts["standard-untimed-bronze"]).toBe(0)
   await expect(
     page.getByRole("dialog").getByText("Bullet · 1+0", { exact: true }),
   ).toBeVisible()
@@ -444,13 +444,13 @@ test("a no-move timeout survives import, retracts on Undo and reapplies only onc
     page.getByRole("button", { name: "Resume clocks", exact: true }),
   ).toBeVisible()
   const undone = await savedProfile(page)
-  expect(undone.ratedMatchCounts["standard-bullet"]).toBe(0)
+  expect(undone.ratedMatchCounts["standard-bullet-bronze"]).toBe(0)
   expect(undone.activeMatch?.clock?.remainingMs.white).toBe(60000)
   await page.getByRole("button", { name: "Redo", exact: true }).click()
   await expect
     .poll(
       async () =>
-        (await savedProfile(page)).ratedMatchCounts["standard-bullet"],
+        (await savedProfile(page)).ratedMatchCounts["standard-bullet-bronze"],
     )
     .toBe(1)
   expect((await savedProfile(page)).totalXp).toBe(ended.totalXp)

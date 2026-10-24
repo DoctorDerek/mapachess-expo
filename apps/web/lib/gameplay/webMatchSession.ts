@@ -27,7 +27,7 @@ import profileMachine, {
 import ProfileMatchPersistenceBridge, {
   persistProfileActiveMatch,
 } from "@mapachess/profile/profile-match-persistence"
-import { playerRatingId } from "@mapachess/profile/rating-context"
+import { startingPlayerElos } from "@mapachess/profile/rating-context"
 import {
   canPlayStoryOpponent,
   selectChallengeUnlockedOpponents,
@@ -392,17 +392,17 @@ export async function openFreshWebMatchSession(
   const mode = playerColor === undefined ? "story" : "challenge"
   const timeControl =
     previousSession?.match.timeControl ?? input.timeControl ?? UNTIMED
+  const playerElosAtStart = startingPlayerElos(
+    playerData.ratings,
+    runtime.startingPosition.variant,
+    timeCategory(timeControl),
+  )
   const freshMatch = buildFreshWebMatch({
     timeControl,
     autoHintMode: playerData.settings.autoHintMode,
     mode,
-    playerEloAtStart:
-      playerData.ratings[
-        playerRatingId(
-          runtime.startingPosition.variant,
-          timeCategory(timeControl),
-        )
-      ],
+    playerEloAtStart: playerElosAtStart.gold,
+    playerElosAtStart,
     runtime,
   })
 

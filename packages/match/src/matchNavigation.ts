@@ -1,3 +1,7 @@
+import {
+  HINT_ASSISTANCE_TIERS,
+  type HintAssistanceTier,
+} from "./autoHintMode.js"
 import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
 import { TIME_CATEGORIES, type TimeCategory } from "./timeControl.js"
 
@@ -10,8 +14,7 @@ export type MatchNavigationOverlay =
   | "classifications"
   | "about-elo"
   | "credits"
-  | `reset-${MatchVariant}`
-  | `reset-${MatchVariant}-${Exclude<TimeCategory, "untimed">}`
+  | `reset-${MatchVariant}-${TimeCategory}-${HintAssistanceTier}`
   | "setup-opponent"
   | "setup-player"
   | "setup-difficulty"
@@ -45,10 +48,11 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "about-elo",
   "credits",
   ...MATCH_VARIANTS.flatMap((variant) =>
-    TIME_CATEGORIES.map((category): MatchNavigationOverlay =>
-      category === "untimed"
-        ? `reset-${variant}`
-        : `reset-${variant}-${category}`,
+    TIME_CATEGORIES.flatMap((category) =>
+      HINT_ASSISTANCE_TIERS.map(
+        (assistance): MatchNavigationOverlay =>
+          `reset-${variant}-${category}-${assistance}`,
+      ),
     ),
   ),
   "setup-opponent",

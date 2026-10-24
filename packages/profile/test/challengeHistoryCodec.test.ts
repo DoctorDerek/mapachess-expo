@@ -94,6 +94,8 @@ describe("durable Challenge history", () => {
     )
     expect(result.data.settings).toEqual({
       ...old.settings,
+      cardRatingContext:
+        createInitialMapachessPlayerData().settings.cardRatingContext,
       locale: null,
       moveReactionPlacement: "top",
       chessAppearance: { boardId: "current", pieceSetId: "current" },

@@ -71,8 +71,8 @@ describe("Mapachess portable backups", () => {
       backup: {
         payload: {
           legacyRatings,
-          ratings: { standard: 100, chess960: 100 },
-          ratedMatchCounts: { standard: 0, chess960: 0 },
+          ratings: createInitialMapachessPlayerData().ratings,
+          ratedMatchCounts: createInitialMapachessPlayerData().ratedMatchCounts,
           processedMatchResultIds: [],
           schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         },
@@ -93,8 +93,8 @@ describe("Mapachess portable backups", () => {
       ok: true,
       data: {
         legacyRatings,
-        ratings: { standard: 100, chess960: 100 },
-        ratedMatchCounts: { standard: 0, chess960: 0 },
+        ratings: createInitialMapachessPlayerData().ratings,
+        ratedMatchCounts: createInitialMapachessPlayerData().ratedMatchCounts,
       },
     })
   })
@@ -170,7 +170,7 @@ describe("Mapachess portable backups", () => {
         schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
         activeMatch: match,
         legacyRatings: payload.ratings,
-        ratings: { standard: 100, chess960: 100 },
+        ratings: createInitialMapachessPlayerData().ratings,
         settings: {
           challengeSetup: { ...DEFAULT_CHALLENGE_SETUP, ...legacySetup },
         },
@@ -261,7 +261,7 @@ describe("Mapachess portable backups", () => {
               pieceHintsUsed: true,
             },
             legacyRatings: fixture.payload.ratings,
-            ratings: { standard: 100, chess960: 100 },
+            ratings: createInitialMapachessPlayerData().ratings,
             schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
             settings: { autoHintMode: "no-auto-hints" },
           },

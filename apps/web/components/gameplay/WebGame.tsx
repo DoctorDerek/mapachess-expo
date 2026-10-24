@@ -14,7 +14,6 @@ import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
 import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import {
-  timeCategory,
   timeControlLabel,
   timeControlNotation,
   UNTIMED,
@@ -26,7 +25,7 @@ import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
-import { playerRatingId } from "@mapachess/profile/rating-context"
+import { matchPlayerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import {
   selectWebMatchSession,
@@ -493,9 +492,10 @@ export default function WebGame({
             moveReactionPlacement={playerData.settings.moveReactionPlacement}
             playerElo={
               savedPlayerData?.ratings[
-                playerRatingId(
-                  session.match.startingPosition.variant,
-                  timeCategory(session.match.timeControl),
+                matchPlayerRatingId(
+                  savedMatch?.matchId === session.match.matchId
+                    ? savedMatch
+                    : session.match,
                 )
               ] ?? session.match.playerEloAtStart
             }

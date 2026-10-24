@@ -12,6 +12,10 @@ import {
 } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
+  playerRatingId,
+  type CardRatingContext,
+} from "@mapachess/profile/rating-context"
+import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
   PROFILE_CARD_WIDTH,
@@ -42,6 +46,7 @@ export type CardFacts = Readonly<{
   level: number
   standard: number
   chess960: number
+  ratingContext: CardRatingContext
 }>
 export type CardInput = Readonly<{
   locale?: ShippedLocale
@@ -50,10 +55,30 @@ export type CardInput = Readonly<{
   content: CardContent
   format: "GIF" | "PNG"
 }>
-export const cardFacts = (data: MapachessPlayerData): CardFacts => ({
+export const cardFacts = (
+  data: MapachessPlayerData,
+  ratingContext = data.settings.cardRatingContext,
+): CardFacts => ({
   level: levelFromTotalXp(data.totalXp),
-  standard: Math.round(data.ratings.standard),
-  chess960: Math.round(data.ratings.chess960),
+  standard: Math.round(
+    data.ratings[
+      playerRatingId(
+        "standard",
+        ratingContext.category,
+        ratingContext.assistance,
+      )
+    ],
+  ),
+  chess960: Math.round(
+    data.ratings[
+      playerRatingId(
+        "chess960",
+        ratingContext.category,
+        ratingContext.assistance,
+      )
+    ],
+  ),
+  ratingContext,
 })
 export type CardArtwork = Readonly<{
   palette: Readonly<{
@@ -219,6 +244,7 @@ export function drawProfileCard(
   const { content, facts } = input
   const catalog = loadCatalog(input.locale ?? "en")
   const copy = catalog.profile
+  const ratingContext = facts.ratingContext
   const hasFacts = content.level || content.standard || content.chess960
   const factsWidth = hasFacts ? layout.factsWidth : 0
   const invitationHeight = layout.invitationHeight
@@ -306,7 +332,10 @@ export function drawProfileCard(
       context.fillText(label, left, center + layout.ratingLabelOffset)
       context.font = `${typography.category.weight} ${typography.category.size}px ${fontFamily}`
       context.fillText(
-        catalog.gameplay.clock.category.untimed,
+        copy.cardRatingContext(
+          catalog.gameplay.clock.category[ratingContext.category],
+          catalog.shared.story.medals[ratingContext.assistance],
+        ),
         left,
         center + layout.categoryOffset,
         available,

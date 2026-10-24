@@ -111,6 +111,7 @@ export default function ProfileSettingsPanel({
       : copy.gameplay.clock.rating(
           copy.setup.variants[resetContext.variant],
           copy.gameplay.clock.category[resetContext.category],
+          copy.shared.story.medals[resetContext.assistance],
         )
 
   return (
@@ -185,35 +186,43 @@ export default function ProfileSettingsPanel({
           <div className="mt-4 grid gap-3">
             {PLAYER_RATING_CONTEXTS.filter(
               ({ category }) => category === ratingCategory,
-            ).map(({ id: variant, variant: chessVariant, category }) => {
-              const label = copy.gameplay.clock.rating(
-                copy.setup.variants[chessVariant],
-                copy.gameplay.clock.category[category],
-              )
-              return (
-                <div
-                  className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
-                  key={variant}
-                >
-                  <div>
-                    <p className="text-mapachito-charcoal font-bold">
-                      {copy.profile.rating(label, ratings[variant])}
-                    </p>
-                    <p className="text-mapachito-charcoal text-sm opacity-76">
-                      {copy.profile.ratedMatches(ratedMatchCounts[variant])}
-                    </p>
-                  </div>
-                  <MapachessButton
-                    disabled={busy}
-                    onClick={() => navigation.open(`reset-${variant}`)}
-                    type="button"
-                    variant="secondary"
+            ).map(
+              ({
+                id: variant,
+                variant: chessVariant,
+                category,
+                assistance,
+              }) => {
+                const label = copy.gameplay.clock.rating(
+                  copy.setup.variants[chessVariant],
+                  copy.gameplay.clock.category[category],
+                  copy.shared.story.medals[assistance],
+                )
+                return (
+                  <div
+                    className="border-mapachito-charcoal flex flex-wrap items-center justify-between gap-3 rounded-lg border-2 p-3"
+                    key={variant}
                   >
-                    {copy.profile.resetRating(label)}
-                  </MapachessButton>
-                </div>
-              )
-            })}
+                    <div>
+                      <p className="text-mapachito-charcoal font-bold">
+                        {copy.profile.rating(label, ratings[variant])}
+                      </p>
+                      <p className="text-mapachito-charcoal text-sm opacity-76">
+                        {copy.profile.ratedMatches(ratedMatchCounts[variant])}
+                      </p>
+                    </div>
+                    <MapachessButton
+                      disabled={busy}
+                      onClick={() => navigation.open(`reset-${variant}`)}
+                      type="button"
+                      variant="secondary"
+                    >
+                      {copy.profile.resetRating(label)}
+                    </MapachessButton>
+                  </div>
+                )
+              },
+            )}
           </div>
           {resetVariant === null ? null : (
             <div

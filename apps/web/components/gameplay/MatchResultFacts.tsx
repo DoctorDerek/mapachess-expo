@@ -1,6 +1,8 @@
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
-import matchVictoryMedal from "@mapachess/profile/match-medal"
+import matchVictoryMedal, {
+  matchMedalEligibility,
+} from "@mapachess/profile/match-medal"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MedalWithHintUse from "./MedalWithHintUse"
@@ -38,6 +40,9 @@ export default function MatchResultFacts({
                   copy.setup.variants[reward.ratedElo.variant],
                   copy.gameplay.clock.category[
                     reward.ratedElo.timeCategory ?? "untimed"
+                  ],
+                  copy.shared.story.medals[
+                    reward.ratedElo.assistance ?? matchMedalEligibility(match)
                   ],
                 ),
                 reward.ratedElo.after,

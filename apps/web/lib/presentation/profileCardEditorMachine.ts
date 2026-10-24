@@ -3,16 +3,33 @@ import {
   samePlayerAppearance as sameAppearance,
   type PlayerAppearance,
 } from "@mapachess/profile/player-appearance"
+import {
+  sameCardRatingContext,
+  type CardRatingContext,
+} from "@mapachess/profile/rating-context"
 
 type EditorContext = {
   saved: PlayerAppearance
   draft: PlayerAppearance
-  requested: PlayerAppearance | null
-  save: (appearance: PlayerAppearance) => void
+  savedRatingContext: CardRatingContext
+  draftRatingContext: CardRatingContext
+  requested: Readonly<{
+    appearance: PlayerAppearance
+    ratingContext: CardRatingContext
+  }> | null
+  save: (appearance: PlayerAppearance, ratingContext: CardRatingContext) => void
 }
+export const isProfileCardEditorDirty = (context: EditorContext): boolean =>
+  !sameAppearance(context.saved, context.draft) ||
+  !sameCardRatingContext(context.savedRatingContext, context.draftRatingContext)
 type EditorEvent =
   | { type: "CARD.APPEARANCE_CHANGED"; appearance: PlayerAppearance }
-  | { type: "CARD.PROFILE_ACCEPTED"; appearance: PlayerAppearance }
+  | { type: "CARD.RATING_CONTEXT_CHANGED"; ratingContext: CardRatingContext }
+  | {
+      type: "CARD.PROFILE_ACCEPTED"
+      appearance: PlayerAppearance
+      ratingContext: CardRatingContext
+    }
   | { type: "CARD.SAVE_REQUESTED" }
   | { type: "CARD.DISCARD_REQUESTED" }
   | { type: "CARD.RETURN_REQUESTED" }
@@ -25,19 +42,24 @@ const profileCardEditorMachine = setup({
     events: {} as EditorEvent,
     input: {} as {
       appearance: PlayerAppearance
-      save: (appearance: PlayerAppearance) => void
+      ratingContext: CardRatingContext
+      save: EditorContext["save"]
     },
   },
   guards: {
-    dirty: ({ context }) => !sameAppearance(context.saved, context.draft),
+    dirty: ({ context }) => isProfileCardEditorDirty(context),
   },
   actions: {
     updateSaved: assign(({ context, event }) =>
       event.type === "CARD.PROFILE_ACCEPTED"
         ? {
             saved: event.appearance,
-            ...(sameAppearance(context.saved, context.draft)
-              ? { draft: event.appearance }
+            savedRatingContext: event.ratingContext,
+            ...(!isProfileCardEditorDirty(context)
+              ? {
+                  draft: event.appearance,
+                  draftRatingContext: event.ratingContext,
+                }
               : {}),
           }
         : {},
@@ -49,16 +71,30 @@ const profileCardEditorMachine = setup({
     ),
     discard: assign(({ context }) => ({
       draft: context.saved,
+      draftRatingContext: context.savedRatingContext,
       requested: null,
     })),
-    captureSave: assign(({ context }) => ({ requested: context.draft })),
-    save: ({ context }) => context.save(context.draft),
+    changeRatingContext: assign(({ event }) =>
+      event.type === "CARD.RATING_CONTEXT_CHANGED"
+        ? { draftRatingContext: event.ratingContext }
+        : {},
+    ),
+    captureSave: assign(({ context }) => ({
+      requested: {
+        appearance: context.draft,
+        ratingContext: context.draftRatingContext,
+      },
+    })),
+    save: ({ context }) =>
+      context.save(context.draft, context.draftRatingContext),
   },
 }).createMachine({
   id: "profileCardEditor",
   context: ({ input }) => ({
     saved: input.appearance,
     draft: input.appearance,
+    savedRatingContext: input.ratingContext,
+    draftRatingContext: input.ratingContext,
     requested: null,
     save: input.save,
   }),
@@ -68,6 +104,7 @@ const profileCardEditorMachine = setup({
     editing: {
       on: {
         "CARD.APPEARANCE_CHANGED": { actions: "changeDraft" },
+        "CARD.RATING_CONTEXT_CHANGED": { actions: "changeRatingContext" },
         "CARD.DISCARD_REQUESTED": { actions: "discard" },
         "CARD.SAVE_REQUESTED": {
           guard: "dirty",
@@ -92,10 +129,16 @@ const profileCardEditorMachine = setup({
         "CARD.PROFILE_ACCEPTED": {
           guard: ({ context, event }) =>
             context.requested !== null &&
-            sameAppearance(context.requested, event.appearance),
+            sameAppearance(context.requested.appearance, event.appearance) &&
+            sameCardRatingContext(
+              context.requested.ratingContext,
+              event.ratingContext,
+            ),
           actions: assign(({ event }) => ({
             saved: event.appearance,
             draft: event.appearance,
+            savedRatingContext: event.ratingContext,
+            draftRatingContext: event.ratingContext,
             requested: null,
           })),
           target: "editing",
@@ -107,7 +150,11 @@ const profileCardEditorMachine = setup({
       always: {
         guard: ({ context }) =>
           context.requested !== null &&
-          sameAppearance(context.saved, context.requested),
+          sameAppearance(context.saved, context.requested.appearance) &&
+          sameCardRatingContext(
+            context.savedRatingContext,
+            context.requested.ratingContext,
+          ),
         actions: "discard",
         target: "editing",
       },

@@ -4,12 +4,14 @@ import {
   timeControlLabel,
   type TimeControl,
 } from "@mapachess/match/time-control"
+import type { MatchMedal } from "@mapachess/profile/match-medal"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchIdentity({
   headingRef,
   playerColor,
   playerElo,
+  assistance,
   opponentName,
   opponentElo,
   playerClock,
@@ -19,6 +21,7 @@ export default function MatchIdentity({
   headingRef: Ref<HTMLHeadingElement>
   playerColor: MatchColor
   playerElo: number
+  assistance: MatchMedal
   opponentName: string
   opponentElo: number
   playerClock?: ReactNode
@@ -46,6 +49,8 @@ export default function MatchIdentity({
         <span className="inline-block">
           <strong>{copy.presentation.playerName}</strong> ·{" "}
           {copy.gameplay.elo(playerElo)}
+          {" · "}
+          {copy.shared.story.medals[assistance]}
           <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
         </span>
         {copy.board.versus}

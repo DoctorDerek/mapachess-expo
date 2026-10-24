@@ -5,6 +5,7 @@ import cx from "classix"
 import { useEffect, useMemo, useState } from "react"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import type { CardRatingContext } from "@mapachess/profile/rating-context"
 import {
   cardFacts,
   INITIAL_CARD_CONTENT,
@@ -33,10 +34,12 @@ const canShareProfileCard = (file: File | null): boolean => {
 export default function ProfileCardPreview({
   data,
   appearance,
+  ratingContext,
   unsaved,
 }: Readonly<{
   data: MapachessPlayerData
   appearance: PlayerAppearance
+  ratingContext: CardRatingContext
   unsaved: boolean
 }>) {
   const copy = useMapachessCopy()
@@ -50,8 +53,14 @@ export default function ProfileCardPreview({
   >(null)
   const [sharing, setSharing] = useState(false)
   const input = useMemo(
-    () => ({ appearance, facts: cardFacts(data), content, format, locale }),
-    [appearance, data, content, format, locale],
+    () => ({
+      appearance,
+      facts: cardFacts(data, ratingContext),
+      content,
+      format,
+      locale,
+    }),
+    [appearance, data, ratingContext, content, format, locale],
   )
   const actor = useActorRef(profileCardExportMachine, { input })
   const snapshot = useSelector(actor, (current) => current)
@@ -114,14 +123,16 @@ export default function ProfileCardPreview({
               "standard",
               copy.gameplay.clock.rating(
                 copy.profile.ratingLabel.standard,
-                copy.gameplay.clock.category.untimed,
+                copy.gameplay.clock.category[ratingContext.category],
+                copy.shared.story.medals[ratingContext.assistance],
               ),
             ],
             [
               "chess960",
               copy.gameplay.clock.rating(
                 copy.profile.ratingLabel.chess960,
-                copy.gameplay.clock.category.untimed,
+                copy.gameplay.clock.category[ratingContext.category],
+                copy.shared.story.medals[ratingContext.assistance],
               ),
             ],
             ["animal", copy.profile.animalCompanion],

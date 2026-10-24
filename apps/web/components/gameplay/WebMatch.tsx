@@ -34,6 +34,7 @@ import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import { timeControlLabel } from "@mapachess/match/time-control"
+import { matchMedalEligibility } from "@mapachess/profile/match-medal"
 import {
   acceptedRewardMatchesEnding,
   type AcceptedMatchReward,
@@ -294,6 +295,9 @@ export default function WebMatch({
           headingRef={heading}
           playerColor={runtime.playerColor}
           playerElo={playerElo}
+          assistance={matchMedalEligibility(
+            savedMatch ?? { pieceHintsUsed: false, moveHintsUsed: false },
+          )}
           opponentName={animalCopy.opponent(opponent.id)}
           opponentElo={runtime.opponentTargetElo}
         />

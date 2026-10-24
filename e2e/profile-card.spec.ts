@@ -13,6 +13,121 @@ const earnedChickenProfile = {
   },
 } as const
 
+for (const width of [390, 1440]) {
+  test(`card rating context saves, cancels and exports at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    test.setTimeout(90000)
+    await page.setViewportSize({ width, height: 900 })
+    const initial = createInitialMapachessPlayerData()
+    await page.goto("/")
+    await importPlayerData(page, {
+      ...initial,
+      ratings: {
+        ...initial.ratings,
+        "standard-blitz-silver": 432.49,
+        "chess960-blitz-silver": 678.76,
+      },
+    })
+    const original = await savedProfile(page)
+    await page
+      .getByRole("button", { name: "Customize profile card", exact: true })
+      .click()
+    await page
+      .getByRole("combobox", { name: "Time category", exact: true })
+      .selectOption("blitz")
+    await page
+      .getByRole("combobox", { name: "Hint tier", exact: true })
+      .selectOption("silver")
+    const card = page.getByRole("region", {
+      name: /^Your profile card:.*Blitz/,
+    })
+    await expect(card).toHaveAccessibleName(/Blitz.*Silver.*432.*679/)
+    await expect(
+      page.getByText("Unsaved changes", { exact: true }),
+    ).toBeVisible()
+    expect((await savedProfile(page)).settings.cardRatingContext).toEqual(
+      original.settings.cardRatingContext,
+    )
+    await page
+      .getByRole("button", { name: "Cancel changes", exact: true })
+      .click()
+    await page
+      .getByRole("button", { name: "Customize profile card", exact: true })
+      .click()
+    await expect(
+      page.getByRole("combobox", { name: "Time category", exact: true }),
+    ).toHaveValue("untimed")
+    await expect(
+      page.getByRole("combobox", { name: "Hint tier", exact: true }),
+    ).toHaveValue("bronze")
+    await page
+      .getByRole("combobox", { name: "Time category", exact: true })
+      .selectOption("blitz")
+    await page
+      .getByRole("combobox", { name: "Hint tier", exact: true })
+      .selectOption("silver")
+    await page
+      .getByRole("button", { name: "Save changes", exact: true })
+      .click()
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
+    const saved = await savedProfile(page)
+    expect(saved.settings.cardRatingContext).toEqual({
+      category: "blitz",
+      assistance: "silver",
+    })
+    expect({
+      ...saved,
+      settings: original.settings,
+      revision: original.revision,
+    }).toEqual(original)
+    await page.screenshot({
+      path: testInfo.outputPath(`card-context-${width}.png`),
+      fullPage: true,
+    })
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true)
+    await page
+      .getByRole("region", { name: "Customize profile card", exact: true })
+      .getByRole("button", { name: "Share profile card", exact: true })
+      .click()
+    await page.getByRole("button", { name: "PNG · Still", exact: true }).click()
+    await expect(
+      page.getByRole("button", { name: "Save PNG", exact: true }),
+    ).toBeEnabled()
+    await expect(
+      page.getByRole("checkbox", {
+        name: "Standard Chess Elo · Blitz · Silver",
+        exact: true,
+      }),
+    ).toBeChecked()
+    await page
+      .getByRole("img", { name: "Profile card PNG preview", exact: true })
+      .screenshot({ path: testInfo.outputPath("contextual-card.png") })
+    await page.getByRole("button", { name: "Back", exact: true }).click()
+    await expect(
+      page.getByRole("heading", {
+        name: "Customize profile card",
+        exact: true,
+      }),
+    ).toBeVisible()
+    await page.getByRole("button", { name: "Back", exact: true }).click()
+    await expect(
+      page.getByRole("heading", {
+        name: "Customize profile card",
+        exact: true,
+      }),
+    ).toHaveCount(0)
+    await page.reload()
+    await expect(
+      page.getByRole("region", { name: /^Your profile card:/ }),
+    ).toHaveAccessibleName(/Blitz.*Silver.*432.*679/)
+  })
+}
+
 for (const mode of [
   "Standard Chess Story",
   "Chess960 Story",
@@ -31,11 +146,9 @@ for (const mode of [
     await page.getByRole("button", { name: "Animal", exact: true }).click()
     await page.getByRole("radio", { name: "Chicken", exact: true }).check()
     await page
-      .getByRole("button", { name: "Save appearance", exact: true })
+      .getByRole("button", { name: "Save changes", exact: true })
       .click()
-    await expect(
-      page.getByText("Saved appearance", { exact: true }),
-    ).toBeVisible()
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
     await page.getByRole("button", { name: "Back", exact: true }).click()
     await page.getByRole("button", { name: mode, exact: true }).click()
     await page.getByRole("button", { name: "Start match", exact: true }).click()
@@ -102,11 +215,9 @@ for (const mode of [
     await page.getByRole("button", { name: "Face", exact: true }).click()
     await page.getByRole("button", { name: "Face 6", exact: true }).click()
     await page
-      .getByRole("button", { name: "Save appearance", exact: true })
+      .getByRole("button", { name: "Save changes", exact: true })
       .click()
-    await expect(
-      page.getByText("Saved appearance", { exact: true }),
-    ).toBeVisible()
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
     await page
       .getByRole("region", { name: "Customize profile card", exact: true })
       .getByRole("button", { name: "Share profile card", exact: true })
@@ -158,9 +269,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await page.getByRole("button", { name: "Face", exact: true }).click()
   await page.getByRole("button", { name: "Face 5", exact: true }).click()
-  await expect(
-    page.getByText("Unsaved appearance", { exact: true }),
-  ).toBeVisible()
+  await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible()
   expect((await savedProfile(page)).appearance).toEqual(before.appearance)
   await page
     .getByRole("region", { name: "Customize profile card", exact: true })
@@ -169,15 +278,13 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await expect(
     page.getByRole("button", { name: "GIF · Animated" }),
   ).toHaveAttribute("aria-pressed", "true")
-  await expect(page.getByText(/Previewing unsaved appearance/)).toBeVisible()
+  await expect(page.getByText(/Previewing unsaved changes/)).toBeVisible()
   await page.getByRole("button", { name: "Back", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Face 5", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
-  await page.getByRole("button", { name: "Save appearance" }).click()
-  await expect(
-    page.getByText("Saved appearance", { exact: true }),
-  ).toBeVisible()
+  await page.getByRole("button", { name: "Save changes" }).click()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   const after = await savedProfile(page)
   expect(after.appearance.face).toBe(5)
   expect({
@@ -198,7 +305,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("radio", { name: "Chicken", exact: true }).check()
   await page.getByRole("button", { name: "Back", exact: true }).click()
   await expect(
-    page.getByRole("alertdialog", { name: "Keep your appearance changes?" }),
+    page.getByRole("alertdialog", { name: "Keep your profile-card changes?" }),
   ).toBeVisible()
   await page.getByRole("button", { name: "Discard changes" }).click()
   await expect(
@@ -224,7 +331,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
     .getByRole("region", { name: "Customize profile card", exact: true })
     .getByRole("button", { name: "Share profile card", exact: true })
     .click()
-  await expect(page.getByText(/Previewing unsaved appearance/)).toBeVisible()
+  await expect(page.getByText(/Previewing unsaved changes/)).toBeVisible()
   await expect(page.getByRole("button", { name: "Save GIF" })).toBeEnabled({
     timeout: 60000,
   })
@@ -298,11 +405,9 @@ test("recovers a failed appearance save without losing the draft", async ({
       throw new DOMException("Test storage failure", "QuotaExceededError")
     }
   })
-  await page.getByRole("button", { name: "Save appearance" }).click()
+  await page.getByRole("button", { name: "Save changes" }).click()
   await page.getByRole("button", { name: "Retry save", exact: true }).click()
-  await expect(
-    page.getByText("Saved appearance", { exact: true }),
-  ).toBeVisible()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Sword", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
@@ -340,7 +445,7 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
     previous = await fingerprint()
   }
   await expect(
-    page.getByRole("button", { name: "Save appearance", exact: true }),
+    page.getByRole("button", { name: "Save changes", exact: true }),
   ).toBeDisabled()
   await page.getByRole("button", { name: "Dagger", exact: true }).click()
   await page.getByRole("button", { name: "Colors", exact: true }).click()
@@ -356,12 +461,8 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
     previous = await fingerprint()
   }
   expect(await savedProfile(page)).toEqual(before)
-  await page
-    .getByRole("button", { name: "Save appearance", exact: true })
-    .click()
-  await expect(
-    page.getByText("Saved appearance", { exact: true }),
-  ).toBeVisible()
+  await page.getByRole("button", { name: "Save changes", exact: true }).click()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Back", exact: true }).click()
   await expect(
     page.getByRole("region", { name: "Customize profile card", exact: true }),

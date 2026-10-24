@@ -54,15 +54,32 @@ describe("saved move-feedback placement", () => {
       ...withoutMoveReactionPlacement(current),
       schemaVersion: 16,
     }
-    const sourceFields = JSON.parse(canonicalPlayerData(current)) as unknown[]
-    expect(sourceFields.pop()).toBe("top")
-    sourceFields[1] = 16
-    const canonical = JSON.stringify(sourceFields)
+    const canonical = canonicalPlayerData(
+      {
+        ...current,
+        ratings: payload.ratings,
+        ratedMatchCounts: payload.ratedMatchCounts,
+        lastAcceptedResultReward: payload.lastAcceptedResultReward,
+      },
+      16,
+    )
     const decoded = decodeMapachessPlayerDataWithSource(payload)
-    expect(decoded).toEqual({
+    expect(decoded).toMatchObject({
       ok: true,
-      data: current,
       source: { schemaVersion: 16, canonical },
+    })
+    if (!decoded.ok) throw new Error("Expected schema16 migration")
+    expect(decoded.data).toEqual({
+      ...current,
+      lastAcceptedResultReward: {
+        ...payload.lastAcceptedResultReward,
+        ratedElo: null,
+        contribution: {
+          ...payload.lastAcceptedResultReward?.contribution,
+          ratedMatchCountBefore: null,
+          eloState: "superseded",
+        },
+      },
     })
     const envelope = {
       format: "mapachess-stored-player-data",
@@ -75,7 +92,7 @@ describe("saved move-feedback placement", () => {
       await decodeStoredPlayerData(JSON.stringify(envelope), sha256),
     ).toEqual({
       ok: true,
-      data: current,
+      data: decoded.data,
     })
     expect(current.schemaVersion).toBe(MAPACHESS_PLAYER_DATA_SCHEMA_VERSION)
     expect(

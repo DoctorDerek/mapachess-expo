@@ -92,6 +92,10 @@ const emergencyCatalog: MapachessCatalog = {
     artworkPreview: unavailableText,
     cardPreview: unavailableText,
     cardDescription: unavailableText,
+    cardRatings: UNAVAILABLE_TEXT,
+    cardTimeCategory: UNAVAILABLE_TEXT,
+    cardAssistance: UNAVAILABLE_TEXT,
+    cardRatingContext: unavailableText,
     level: UNAVAILABLE_TEXT,
     playFree: UNAVAILABLE_TEXT,
     cardFormats: {

@@ -11,6 +11,7 @@ import {
   requireString,
 } from "./decodePrimitives.js"
 import { decodeConclusion, decodeMoveIds } from "./durableMatchCodec.js"
+import { MATCH_MEDALS } from "./matchMedal.js"
 import { type AcceptedMatchReward } from "./playerData.js"
 
 export default function decodeResultContribution(
@@ -29,6 +30,7 @@ export default function decodeResultContribution(
       "ratedMatchCountBefore",
       "eloState",
       ...(object.timeCategory === undefined ? [] : ["timeCategory"]),
+      ...(object.assistance === undefined ? [] : ["assistance"]),
     ],
     path,
   )
@@ -47,6 +49,15 @@ export default function decodeResultContribution(
   const moveIds = decodeMoveIds(ending.moveIds, `${path}.ending.moveIds`)
   if (cursor !== moveIds.length) return failData(`${path}.ending.cursor`)
   return Object.freeze({
+    ...(object.assistance === undefined
+      ? {}
+      : {
+          assistance: requireEnumValue(
+            object.assistance,
+            MATCH_MEDALS,
+            `${path}.assistance`,
+          ),
+        }),
     ...(object.timeCategory === undefined
       ? {}
       : {

@@ -9,6 +9,9 @@ export const AUTO_HINT_MODES = [
 
 export type AutoHintMode = (typeof AUTO_HINT_MODES)[number]
 
+export const HINT_ASSISTANCE_TIERS = ["bronze", "silver", "gold"] as const
+export type HintAssistanceTier = (typeof HINT_ASSISTANCE_TIERS)[number]
+
 export const DEFAULT_AUTO_HINT_MODE: AutoHintMode = "auto-move-hints"
 
 export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
@@ -31,7 +34,7 @@ export const AUTO_HINT_MODE_PRESENTATION = Object.freeze({
       label: string
       description: string
       medal: string
-      medalTier: "bronze" | "silver" | "gold"
+      medalTier: HintAssistanceTier
     }>
   >
 >)

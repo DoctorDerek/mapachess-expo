@@ -54,6 +54,7 @@ import {
   STRONGER_CALIBRATED_WIN_BONUS_XP,
   type LevelAchievementId,
 } from "./globalXp.js"
+import { MATCH_MEDALS } from "./matchMedal.js"
 import {
   decodeLegacyPlayerAppearance,
   decodePlayerAppearance,
@@ -62,6 +63,7 @@ import {
 } from "./playerAppearance.js"
 import {
   acceptedRewardMatchesEnding,
+  ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   CHALLENGE_SETUP_PLAYER_DATA_SCHEMA_VERSION,
   CHESS_APPEARANCE_PLAYER_DATA_SCHEMA_VERSION,
   COACH_COLLECTION_PLAYER_DATA_SCHEMA_VERSION,
@@ -79,7 +81,6 @@ import {
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
   MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_APPEARANCE_DATA_SCHEMA_VERSION,
-  PLAYER_ELO_RATING_IDS,
   REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
@@ -91,14 +92,21 @@ import {
   type MapachessPlayerDataV1,
   type MapachessPlayerDataV6,
   type MapachessPlayerDataV7,
-  type PlayerEloRatings,
-  type RatedMatchCounts,
 } from "./playerData.js"
 import {
   DEFAULT_MOVE_REACTION_PLACEMENT,
   MOVE_REACTION_PLACEMENTS,
 } from "./presentationPreferences.js"
-import { playerRatingId } from "./ratingContext.js"
+import {
+  decodeCardRatingContext,
+  decodeRatingValues,
+  decodeSourceRatingValues,
+  previousRatingId,
+  retirePreviousRatingContribution,
+  sourceRatingIds,
+  type SourceRatingValues,
+} from "./ratingBalancesCodec.js"
+import { DEFAULT_CARD_RATING_CONTEXT, playerRatingId } from "./ratingContext.js"
 import decodeResultContribution from "./resultContributionCodec.js"
 import applyStoryMatchResult, {
   createInitialStoryProgress,
@@ -133,6 +141,7 @@ export type PlayerDataSource = Readonly<{
     | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -168,34 +177,6 @@ const decodeLegacyPlayerEloRatings = (
       `${path}.standardStory`,
     ),
   })
-}
-
-const decodePlayerEloRatings = (
-  received: unknown,
-  path: string,
-  timed: boolean,
-): PlayerEloRatings => {
-  const object = requireObject(received, path)
-  const ids = timed ? PLAYER_ELO_RATING_IDS : MATCH_VARIANTS
-  requireExactKeys(object, ids, path)
-  const ratings = { ...createInitialPlayerEloRatings() }
-  for (const id of ids)
-    ratings[id] = requirePlayerElo(object[id], `${path}.${id}`)
-  return Object.freeze(ratings)
-}
-
-const decodeRatedMatchCounts = (
-  received: unknown,
-  path: string,
-  timed: boolean,
-): RatedMatchCounts => {
-  const object = requireObject(received, path)
-  const ids = timed ? PLAYER_ELO_RATING_IDS : MATCH_VARIANTS
-  requireExactKeys(object, ids, path)
-  const counts = { ...createInitialRatedMatchCounts() }
-  for (const id of ids)
-    counts[id] = requireSafeRevision(object[id], `${path}.${id}`)
-  return Object.freeze(counts)
 }
 
 const decodeProcessedMatchResultIds = (
@@ -321,10 +302,20 @@ const decodeAcceptedMatchReward = (
         "before",
         "after",
         ...(rated.timeCategory === undefined ? [] : ["timeCategory"]),
+        ...(rated.assistance === undefined ? [] : ["assistance"]),
       ],
       `${path}.ratedElo`,
     )
     ratedElo = Object.freeze({
+      ...(rated.assistance === undefined
+        ? {}
+        : {
+            assistance: requireEnumValue(
+              rated.assistance,
+              MATCH_MEDALS,
+              `${path}.ratedElo.assistance`,
+            ),
+          }),
       ...(rated.timeCategory === undefined
         ? {}
         : {
@@ -348,6 +339,7 @@ const decodeAcceptedMatchReward = (
     ((ratedElo === null) !== (contribution.ratedMatchCountBefore === null) ||
       (ratedElo !== null &&
         (ratedElo.variant !== contribution.variant ||
+          ratedElo.assistance !== contribution.assistance ||
           (ratedElo.timeCategory ?? "untimed") !==
             (contribution.timeCategory ?? "untimed") ||
           contribution.eloState !== "active")))
@@ -373,6 +365,7 @@ const migrateFourRatings = (data: MapachessPlayerDataV6): MapachessPlayerData =>
       moveReactionPlacement: DEFAULT_MOVE_REACTION_PLACEMENT,
       inputBindings: DEFAULT_PLAYER_INPUT_BINDINGS,
       locale: null,
+      cardRatingContext: DEFAULT_CARD_RATING_CONTEXT,
     }),
     appearance: DEFAULT_PLAYER_APPEARANCE,
     introductionCompleted: true,
@@ -449,16 +442,18 @@ const canonicalModernPlayerData = (
 }
 
 const canonicalRatings = (
-  values: Readonly<Partial<PlayerEloRatings>>,
+  values: SourceRatingValues,
   sourceSchemaVersion: number,
 ): readonly (number | undefined)[] =>
-  (sourceSchemaVersion >= TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
-    ? PLAYER_ELO_RATING_IDS
-    : MATCH_VARIANTS
-  ).map((id) => values[id])
+  sourceRatingIds(sourceSchemaVersion).map((id) => values[id])
+
+type CanonicalPlayerData = Omit<
+  MapachessPlayerData,
+  "ratings" | "ratedMatchCounts"
+> & { ratings: SourceRatingValues; ratedMatchCounts: SourceRatingValues }
 
 const canonicalTwoVariantFields = (
-  data: MapachessPlayerDataV7 | MapachessPlayerData,
+  data: MapachessPlayerDataV7 | CanonicalPlayerData,
   sourceSchemaVersion: number = data.schemaVersion,
 ): readonly unknown[] => [
   data.schema,
@@ -485,7 +480,7 @@ const canonicalTwoVariantPlayerData = (data: MapachessPlayerDataV7): string =>
   JSON.stringify(canonicalTwoVariantFields(data))
 
 export const canonicalPlayerData = (
-  data: MapachessPlayerData,
+  data: CanonicalPlayerData,
   sourceSchemaVersion: number = data.schemaVersion,
 ): string =>
   JSON.stringify([
@@ -509,6 +504,10 @@ export const canonicalPlayerData = (
                 undefined
                   ? []
                   : [data.lastAcceptedResultReward.ratedElo.timeCategory]),
+                ...(data.lastAcceptedResultReward.ratedElo.assistance ===
+                undefined
+                  ? []
+                  : [data.lastAcceptedResultReward.ratedElo.assistance]),
               ],
           ...(sourceSchemaVersion >=
             REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION &&
@@ -548,6 +547,12 @@ export const canonicalPlayerData = (
     ...(sourceSchemaVersion >=
     MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
       ? [data.settings.moveReactionPlacement]
+      : []),
+    ...(sourceSchemaVersion >= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
+      ? [
+          data.settings.cardRatingContext.category,
+          data.settings.cardRatingContext.assistance,
+        ]
       : []),
   ])
 
@@ -720,6 +725,7 @@ const decodeCurrentPlayerData = (
     | typeof INPUT_BINDINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -769,6 +775,9 @@ const decodeCurrentPlayerData = (
       ...(sourceSchemaVersion >=
       MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
         ? ["moveReactionPlacement"]
+        : []),
+      ...(sourceSchemaVersion >= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
+        ? ["cardRatingContext"]
         : []),
     ],
     "$.settings",
@@ -820,6 +829,19 @@ const decodeCurrentPlayerData = (
           sourceSchemaVersion >= REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
         )
       : null
+  const sourceRatings = decodeSourceRatingValues(
+    object.ratings,
+    "$.ratings",
+    sourceSchemaVersion,
+  )
+  const sourceCounts = decodeSourceRatingValues(
+    object.ratedMatchCounts,
+    "$.ratedMatchCounts",
+    sourceSchemaVersion,
+    true,
+  )
+  const assistanceRatings =
+    sourceSchemaVersion >= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
   const data: MapachessPlayerData = Object.freeze({
     activeMatch,
     introductionCompleted:
@@ -855,20 +877,19 @@ const decodeCurrentPlayerData = (
     ),
     lastAcceptedResultReward,
     processedMatchResultIds,
-    ratedMatchCounts: decodeRatedMatchCounts(
-      object.ratedMatchCounts,
-      "$.ratedMatchCounts",
-      sourceSchemaVersion >= TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION,
-    ),
-    ratings: decodePlayerEloRatings(
-      object.ratings,
-      "$.ratings",
-      sourceSchemaVersion >= TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION,
-    ),
+    ratedMatchCounts: assistanceRatings
+      ? decodeRatingValues(object.ratedMatchCounts, "$.ratedMatchCounts", true)
+      : createInitialRatedMatchCounts(),
+    ratings: assistanceRatings
+      ? decodeRatingValues(object.ratings, "$.ratings")
+      : createInitialPlayerEloRatings(),
     revision: requireSafeRevision(object.revision, "$.revision"),
     schema: MAPACHESS_PLAYER_DATA_SCHEMA,
     schemaVersion: MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
     settings: Object.freeze({
+      cardRatingContext: assistanceRatings
+        ? decodeCardRatingContext(settings.cardRatingContext)
+        : DEFAULT_CARD_RATING_CONTEXT,
       autoHintMode: requireEnumValue(
         settings.autoHintMode,
         AUTO_HINT_MODES,
@@ -916,6 +937,18 @@ const decodeCurrentPlayerData = (
     unlockedAchievementIds,
   })
   const contribution = lastAcceptedResultReward?.contribution
+  if (
+    (!assistanceRatings &&
+      (contribution?.assistance !== undefined ||
+        lastAcceptedResultReward?.ratedElo?.assistance !== undefined)) ||
+    (assistanceRatings &&
+      ((lastAcceptedResultReward?.ratedElo != null &&
+        lastAcceptedResultReward.ratedElo.assistance === undefined) ||
+        (contribution !== undefined &&
+          contribution.assistance === undefined &&
+          contribution.eloState === "active")))
+  )
+    return failData("$.lastAcceptedResultReward")
   if (
     sourceSchemaVersion < TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION &&
     (activeMatch?.timeControl.type === "fischer" ||
@@ -965,7 +998,9 @@ const decodeCurrentPlayerData = (
           timeCategory(activeMatch.timeControl) ||
         contribution.opponentId !== activeMatch.opponentId ||
         contribution.challengeOutcome !== outcome ||
-        completedMatchXpAward(endingMatch) !==
+        (contribution.assistance === "bronze" && !activeMatch.moveHintsUsed) ||
+        (contribution.assistance === "silver" && !activeMatch.pieceHintsUsed) ||
+        completedMatchXpAward(endingMatch, contribution.assistance) !==
           lastAcceptedResultReward.awardedXp ||
         (contribution.applied
           ? !acceptedRewardMatchesEnding(lastAcceptedResultReward, activeMatch)
@@ -973,15 +1008,19 @@ const decodeCurrentPlayerData = (
       )
         return failData("$.lastAcceptedResultReward.contribution")
       const rated = lastAcceptedResultReward.ratedElo
-      const ratingId = playerRatingId(
-        contribution.variant,
-        contribution.timeCategory,
-      )
+      const ratingId =
+        assistanceRatings && contribution.assistance !== undefined
+          ? playerRatingId(
+              contribution.variant,
+              contribution.timeCategory ?? "untimed",
+              contribution.assistance,
+            )
+          : previousRatingId(contribution.variant, contribution.timeCategory)
       if (
         rated !== null &&
-        (data.ratings[ratingId] !==
+        (sourceRatings[ratingId] !==
           (contribution.applied ? rated.after : rated.before) ||
-          data.ratedMatchCounts[ratingId] !==
+          sourceCounts[ratingId] !==
             (contribution.ratedMatchCountBefore ?? 0) +
               Number(contribution.applied))
       )
@@ -1001,13 +1040,33 @@ const decodeCurrentPlayerData = (
     }
   }
   return Object.freeze({
-    data,
+    data: assistanceRatings
+      ? data
+      : Object.freeze({
+          ...data,
+          lastAcceptedResultReward: retirePreviousRatingContribution(data),
+        }),
     source: Object.freeze({
       canonical:
         sourceSchemaVersion >= GLOBAL_XP_PLAYER_DATA_SCHEMA_VERSION
-          ? canonicalPlayerData(data, sourceSchemaVersion)
+          ? canonicalPlayerData(
+              {
+                ...data,
+                ratings: sourceRatings,
+                ratedMatchCounts: sourceCounts,
+              },
+              sourceSchemaVersion,
+            )
           : canonicalTwoVariantPlayerData({
               ...data,
+              ratings: {
+                standard: sourceRatings.standard!,
+                chess960: sourceRatings.chess960!,
+              },
+              ratedMatchCounts: {
+                standard: sourceCounts.standard!,
+                chess960: sourceCounts.chess960!,
+              },
               schemaVersion: TWO_VARIANT_PLAYER_DATA_SCHEMA_VERSION,
             }),
       schemaVersion: sourceSchemaVersion,
@@ -1029,6 +1088,17 @@ export const decodeMapachessPlayerDataWithSource = (
         receivedVersion: object.schemaVersion,
         type: "PROFILE.SCHEMA_VERSION_UNSUPPORTED",
       })
+    }
+
+    if (
+      typeof object.schemaVersion === "number" &&
+      object.schemaVersion < ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION &&
+      object.activeMatch !== null &&
+      object.activeMatch !== undefined
+    ) {
+      const activeMatch = requireObject(object.activeMatch, "$.activeMatch")
+      if ("playerElosAtStart" in activeMatch)
+        failData("$.activeMatch.playerElosAtStart")
     }
 
     const decoded =
@@ -1054,6 +1124,8 @@ export const decodeMapachessPlayerDataWithSource = (
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===

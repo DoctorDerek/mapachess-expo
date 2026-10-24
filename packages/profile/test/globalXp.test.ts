@@ -90,11 +90,11 @@ describe("global match XP", () => {
       ratedElo: {
         variant: "standard",
         before: 100,
-        after: accepted.ratings.standard,
+        after: accepted.ratings["standard-untimed-gold"],
       },
     })
     expect(replaceActiveMatch(accepted, activeResult).totalXp).toBe(8)
-    expect(resetPlayerElo(accepted, "standard").totalXp).toBe(8)
+    expect(resetPlayerElo(accepted, "standard-untimed-gold").totalXp).toBe(8)
     expect(
       decodeMapachessPlayerData(JSON.parse(JSON.stringify(accepted))),
     ).toEqual({ data: accepted, ok: true })

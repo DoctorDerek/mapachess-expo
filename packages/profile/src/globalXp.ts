@@ -1,5 +1,6 @@
 import loadCatalog from "@mapachess/localization/catalog"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
+import { matchMedalEligibility, type MatchMedal } from "./matchMedal.js"
 import { playerResultScore } from "./playerElo.js"
 
 export const GLOBAL_XP_QUANTUM = 4 as const
@@ -38,14 +39,18 @@ export const xpAtLevel = (level: number): number => {
   return Number(xp)
 }
 
-export const completedMatchXpAward = (match: DurableMatchRecord): number => {
+export const completedMatchXpAward = (
+  match: DurableMatchRecord,
+  assistance: MatchMedal = matchMedalEligibility(match),
+): number => {
   if (match.conclusion === null) {
     throw new TypeError("An unfinished match cannot award XP.")
   }
   const strongerCalibratedWin =
     typeof match.ratedOpponentElo === "number" &&
     match.ratedOpponentElo >=
-      match.playerEloAtStart + STRONGER_OPPONENT_MARGIN_ELO &&
+      (match.playerElosAtStart?.[assistance] ?? match.playerEloAtStart) +
+        STRONGER_OPPONENT_MARGIN_ELO &&
     playerResultScore(match.conclusion, match.playerColor) === 1
   return (
     COMPLETED_MATCH_XP +

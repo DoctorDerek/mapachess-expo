@@ -271,20 +271,20 @@ test("Settings retains its recovery and reset controls inside the non-shifting d
   })
   await settings
     .getByRole("button", {
-      name: "Reset Standard Chess · Untimed Elo",
+      name: "Reset Standard Chess · Untimed · Gold Elo",
       exact: true,
     })
     .click()
   await expect(
     settings.getByRole("heading", {
-      name: "Reset Standard Chess · Untimed Elo?",
+      name: "Reset Standard Chess · Untimed · Gold Elo?",
       exact: true,
     }),
   ).toBeVisible()
   await page.keyboard.press("Escape")
   await expect(
     settings.getByRole("heading", {
-      name: "Reset Standard Chess · Untimed Elo?",
+      name: "Reset Standard Chess · Untimed · Gold Elo?",
       exact: true,
     }),
   ).toHaveCount(0)
