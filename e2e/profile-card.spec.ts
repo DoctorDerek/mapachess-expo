@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises"
-import { expect } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
@@ -16,6 +16,17 @@ const earnedChickenProfile = {
     chess960: [],
   },
 } as const
+
+const liveCharacterArtwork = (page: Page): Promise<string> =>
+  page
+    .getByRole("region", { name: "Customize profile card", exact: true })
+    .locator("canvas")
+    .first()
+    .evaluate((canvas) => {
+      if (!(canvas instanceof HTMLCanvasElement))
+        throw new Error("Expected the live character preview")
+      return canvas.toDataURL()
+    })
 
 for (const width of [390, 1440]) {
   test(`card rating context saves, cancels and exports at ${width}px`, async ({
@@ -542,7 +553,7 @@ test("recovers a failed appearance save without losing the draft", async ({
   expect((await savedProfile(page)).appearance.weapon).toBe("weapon1")
 })
 
-test("previews every weapon and dagger palette, then preserves only saved equipment", async ({
+test("previews every weapon without changing saved equipment", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" })
@@ -552,16 +563,7 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
     .click()
   const before = await savedProfile(page)
   await page.getByRole("button", { name: "Weapons", exact: true }).click()
-  const artwork = page
-    .getByRole("region", { name: "Customize profile card", exact: true })
-    .locator("canvas")
-    .first()
-  const fingerprint = () =>
-    artwork.evaluate((canvas) => {
-      if (!(canvas instanceof HTMLCanvasElement))
-        throw new Error("Expected the live character preview")
-      return canvas.toDataURL()
-    })
+  const fingerprint = () => liveCharacterArtwork(page)
   let previous = await fingerprint()
   for (const name of ["Sword", "Spear", "Wand", "Axe", "Dagger", "None"]) {
     await page.getByRole("button", { name, exact: true }).click()
@@ -574,9 +576,23 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
   await expect(
     page.getByRole("button", { name: "Changes saved", exact: true }),
   ).toBeDisabled()
+  expect(await savedProfile(page)).toEqual(before)
+})
+
+test("previews every dagger palette and preserves only explicitly saved equipment", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await page
+    .getByRole("button", { name: "Customize profile card", exact: true })
+    .click()
+  const before = await savedProfile(page)
+  await page.getByRole("button", { name: "Weapons", exact: true }).click()
   await page.getByRole("button", { name: "Dagger", exact: true }).click()
   await page.getByRole("button", { name: "Colors", exact: true }).click()
-  previous = await fingerprint()
+  const fingerprint = () => liveCharacterArtwork(page)
+  let previous = await fingerprint()
   for (const color of [2, 3, 4, 1, 4]) {
     const choice = page.getByRole("button", {
       name: `Dagger color ${color}`,
