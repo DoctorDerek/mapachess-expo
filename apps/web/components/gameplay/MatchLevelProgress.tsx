@@ -85,7 +85,7 @@ export default function MatchLevelProgress({
     >
       <div
         aria-hidden="true"
-        className="flex items-baseline justify-between gap-3"
+        className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
       >
         <span className="font-display text-2xl font-black tabular-nums">
           {copy.gameplay.level(displayed.level)}
