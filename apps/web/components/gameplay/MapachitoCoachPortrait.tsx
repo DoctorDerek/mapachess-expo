@@ -43,7 +43,7 @@ export default function MapachitoCoachPortrait({
 
   return (
     <figure aria-live="polite" className="flex items-center gap-2">
-      <div className="bg-mapachito-violet size-12 shrink-0 overflow-hidden rounded xl:size-16">
+      <div className="bg-mapachito-violet size-16 shrink-0 overflow-hidden rounded">
         <CoachPortraitImage portrait={visiblePortrait} />
       </div>
       <figcaption className="grid gap-1">

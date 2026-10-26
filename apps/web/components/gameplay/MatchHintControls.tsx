@@ -51,9 +51,15 @@ export default function MatchHintControls({
   })
   const nextMedal =
     (stage === "ready" || stage === "failure") && medal === "gold"
-      ? hints.nextMedal["piece-hints"]
+      ? {
+          label: copy.shared.story.medals.silver,
+          description: hints.nextMedal["piece-hints"],
+        }
       : stage === "piece-hints" && medal !== "bronze"
-        ? hints.nextMedal["move-hints"]
+        ? {
+            label: copy.shared.story.medals.bronze,
+            description: hints.nextMedal["move-hints"],
+          }
         : null
   const eligibility = (tier: (typeof MATCH_MEDALS)[number]) =>
     hints.eligibility(
@@ -67,6 +73,7 @@ export default function MatchHintControls({
     <div className="grid min-w-0 gap-2">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] items-stretch gap-2">
         <BetterHintsControl
+          nextMedal={complete ? null : nextMedal}
           busy={selectIsPersistingMutation(snapshot)}
           disabled={frozen}
           hints={selectMatchHints(snapshot)}
@@ -130,18 +137,6 @@ export default function MatchHintControls({
               <MedalSymbol medal={medal} />
               {eligibility(medal)}
             </p>
-          </div>
-          <div className="grid">
-            {Object.entries(hints.nextMedal).map(([kind, label]) => (
-              <span
-                aria-hidden="true"
-                className="invisible col-start-1 row-start-1"
-                key={kind}
-              >
-                {label}
-              </span>
-            ))}
-            <p className="col-start-1 row-start-1">{nextMedal}</p>
           </div>
         </div>
         <MapachessButton

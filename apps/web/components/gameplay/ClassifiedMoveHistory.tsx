@@ -18,7 +18,7 @@ export default function ClassifiedMoveHistory({
   return (
     <section
       aria-labelledby="move-history-title"
-      className="bg-mapachito-white rounded-lg p-3 [grid-area:history]"
+      className="bg-mapachito-white min-w-0 rounded-lg p-3"
     >
       <h2
         className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
