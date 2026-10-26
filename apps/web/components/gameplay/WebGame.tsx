@@ -67,26 +67,25 @@ const profileAllowsMatchOpening = (
   )
 }
 
-type GameFrameProps = Omit<
+type GameHeaderProps = Pick<
   WebGameProps,
-  "actor" | "navigation" | "profileActor"
+  "onSettingsRequested" | "settingsButtonRef" | "settingsOpen"
 > &
+  Readonly<{ home?: boolean }>
+
+type GameFrameProps = GameHeaderProps &
   Readonly<{
     children: ReactNode
     activityMessage?: string | null
     matchSessionActive: boolean
-    home?: boolean
   }>
 
-function GameFrame({
-  children,
-  activityMessage = null,
-  matchSessionActive,
+function GameHeader({
   home = false,
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
-}: GameFrameProps) {
+}: GameHeaderProps) {
   const messages = useMapachessCopy().interface.webGame
 
   const homeTitle = useRef<HTMLHeadingElement>(null)
@@ -101,36 +100,57 @@ function GameFrame({
       onClick={onSettingsRequested}
       ref={settingsButtonRef}
       type="button"
-      className={cx(home && "max-w-full min-w-0 wrap-break-word")}
+      className={cx("max-w-full min-w-0 wrap-break-word", !home && "px-2!")}
     >
       {messages.settings}
     </MapachessButton>
   )
   return (
-    <MapachessShell
-      spacing={matchSessionActive ? "match" : home ? "home" : "page"}
-      className={cx(home && "font-home")}
-    >
-      {matchSessionActive ? null : (
-        <header
-          inert={activityMessage !== null}
-          className="max-w-mapachess mx-auto mb-4 flex w-full flex-wrap items-center justify-between gap-3"
+    <header className="max-w-mapachess mx-auto mb-4 flex w-full flex-wrap items-center justify-between gap-3">
+      {home ? (
+        <h1
+          id="game-modes-title"
+          ref={homeTitle}
+          tabIndex={-1}
+          className="min-w-0 outline-none"
         >
-          {home ? (
-            <h1
-              id="game-modes-title"
-              ref={homeTitle}
-              tabIndex={-1}
-              className="min-w-0 outline-none"
-            >
-              <MapachessWordmark />
-            </h1>
-          ) : (
-            <MapachessWordmark />
-          )}
-          {settingsButton}
-        </header>
+          <MapachessWordmark />
+        </h1>
+      ) : (
+        <MapachessWordmark />
       )}
+      {settingsButton}
+    </header>
+  )
+}
+
+function GameFrame({
+  children,
+  activityMessage = null,
+  matchSessionActive,
+  home = false,
+  onSettingsRequested,
+  settingsButtonRef,
+  settingsOpen,
+}: GameFrameProps) {
+  return (
+    <MapachessShell
+      spacing={matchSessionActive ? "match" : home ? "home" : "setup"}
+      className={cx(
+        home && "font-home",
+        !home && !matchSessionActive && "h-dvh",
+      )}
+    >
+      {home && !matchSessionActive ? (
+        <div inert={activityMessage !== null}>
+          <GameHeader
+            home
+            onSettingsRequested={onSettingsRequested}
+            settingsButtonRef={settingsButtonRef}
+            settingsOpen={settingsOpen}
+          />
+        </div>
+      ) : null}
 
       <p className="sr-only" role="status">
         {activityMessage}
@@ -138,7 +158,10 @@ function GameFrame({
       <div
         aria-busy={activityMessage !== null}
         inert={activityMessage !== null}
-        className="max-w-mapachess mx-auto w-full"
+        className={cx(
+          "max-w-mapachess mx-auto w-full",
+          !home && !matchSessionActive && "h-full min-h-0 min-w-0",
+        )}
       >
         {children}
       </div>
@@ -349,10 +372,20 @@ export default function WebGame({
         </>
       ) : null}
       <div
+        className="h-full min-h-0"
         hidden={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
         inert={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
       >
         <WebMatchSetup
+          header={
+            snapshot.matches({ menu: "setup" }) || openingFreshMatch ? (
+              <GameHeader
+                onSettingsRequested={onSettingsRequested}
+                settingsButtonRef={settingsButtonRef}
+                settingsOpen={settingsOpen}
+              />
+            ) : null
+          }
           ratings={playerData.ratings}
           playerAppearance={playerData.appearance}
           onPlayerAnimalChanged={(animal) => {

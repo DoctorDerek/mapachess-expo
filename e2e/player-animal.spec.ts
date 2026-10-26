@@ -36,16 +36,15 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
   await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(22)
+  const done = page.getByRole("button", { name: "Done", exact: true })
+  await expect(done).toBeInViewport({ ratio: 1 })
+  const doneBounds = await done.boundingBox()
   await gallery.focus()
   await page.keyboard.press("End")
-  const dialog = page.getByRole("dialog", { name: "Play as", exact: true })
-  await expect
-    .poll(() => dialog.evaluate((element) => element.scrollTop))
-    .toBeGreaterThan(0)
-  await gallery
-    .getByRole("radio", { name: /Dragonfly/ })
-    .scrollIntoViewIfNeeded()
-  await expect(gallery.getByText("Dragonfly", { exact: false })).toBeVisible()
+  await expect(gallery.getByText("Dragonfly", { exact: false })).toBeInViewport(
+    { ratio: 1 },
+  )
+  await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })
   const raccoonBounds = await raccoon.boundingBox()

@@ -6,13 +6,11 @@ export default function MapachessDialog({
   children,
   label,
   onClose,
-  contentSized = false,
   fixedContent = false,
 }: Readonly<{
   children: ReactNode
   label: string
   onClose: () => void
-  contentSized?: boolean
   fixedContent?: boolean
 }>) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -40,8 +38,9 @@ export default function MapachessDialog({
     <dialog
       aria-label={label}
       className={cx(
-        "bg-mapachito-white text-mapachito-charcoal fixed inset-0 m-0 h-dvh max-h-dvh w-full max-w-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60 xl:m-auto xl:max-h-[90dvh] xl:max-w-4xl xl:rounded-xl xl:p-6",
-        fixedContent ? "xl:h-[90dvh]" : contentSized ? "xl:h-fit" : "xl:h-auto",
+        "bg-mapachito-white text-mapachito-charcoal fixed inset-0 m-0 h-dvh max-h-dvh w-full max-w-none overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60 xl:m-auto xl:max-h-[90dvh] xl:max-w-4xl xl:rounded-xl xl:p-6",
+        fixedContent ? "xl:h-[90dvh]" : "xl:h-auto",
+        fixedContent ? "overflow-hidden" : "overflow-y-auto",
       )}
       onCancel={(event) => {
         event.preventDefault()

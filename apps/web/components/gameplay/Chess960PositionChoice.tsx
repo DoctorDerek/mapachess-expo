@@ -65,6 +65,7 @@ export default function Chess960PositionChoice({
   })
   return (
     <fieldset
+      className="min-w-0"
       ref={root}
       disabled={disabled}
       data-player-input-layer={editing === null ? undefined : "position-edit"}
@@ -95,6 +96,7 @@ export default function Chess960PositionChoice({
           />
         </label>
         <MapachessButton
+          className="max-w-full min-w-0 px-2! wrap-break-word"
           disabled={disabled}
           onClick={onRandomize}
           type="button"

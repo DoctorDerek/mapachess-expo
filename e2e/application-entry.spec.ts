@@ -526,7 +526,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     await expect(sprite).toHaveCSS("background-image", /chicken_idle/)
     await attentionAnimation.dispose()
     await page.mouse.move(0, 0)
-    await page.getByRole("button", { name: "Done", exact: true }).focus()
+    await page.getByRole("dialog").getByRole("heading").first().focus()
     await page.keyboard.press("Tab")
     await expect(choice).toBeFocused()
     await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
