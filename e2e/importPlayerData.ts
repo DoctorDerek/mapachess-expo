@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto"
 import { expect, type Page } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
+import resolveLocale from "../packages/localization/src/locale.js"
 import type { MapachessPlayerData } from "../packages/profile/src/playerData.js"
 import { createMapachessPortableBackup } from "../packages/profile/src/portableBackup.js"
 import { requireSha256Hex } from "../packages/profile/src/sha256.js"
@@ -29,6 +31,17 @@ export default async function importPlayerData(
       page.getByRole("button", { name: "Customize profile card", exact: true }),
     ).toBeEnabled()
   } else {
-    await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
+    const copy = loadCatalog(
+      resolveLocale({
+        selection: playerData.settings.locale,
+        preferences: await page.evaluate(() => navigator.languages),
+      }),
+    )
+    await expect(
+      page.getByRole("grid", {
+        name: copy.board.orientation(playerData.activeMatch.playerColor),
+        exact: true,
+      }),
+    ).toBeVisible()
   }
 }
