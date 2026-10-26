@@ -22,6 +22,18 @@ const CAPTURE_HINTS = [
 ] as const satisfies readonly BetterHint[]
 
 describe("Better Hint ribbon geometry", () => {
+  it("leaves the opponent head open only where it meets the shaft", () => {
+    const geometry = createBetterHintGeometry(PAWN_HINT, "white")
+    const neck = 2 - BETTER_HINT_RIBBON.headLength
+    const halfShaft = BETTER_HINT_RIBBON.width / 2
+    const halfHead = BETTER_HINT_RIBBON.headWidth / 2
+    expect(geometry.headPath).toBe(
+      `M ${neck} ${-halfShaft} L ${neck} ${-halfHead} L 2 0 L ${neck} ${halfHead} L ${neck} ${halfShaft}`,
+    )
+    expect(geometry.shaftEnd).toBeGreaterThan(neck)
+    expect(geometry.ribbonPath).toContain("Z")
+  })
+
   it.each(["white", "black"] as const)(
     "separates only shared destinations without changing targets for %s",
     (orientation) => {
