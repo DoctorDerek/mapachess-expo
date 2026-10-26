@@ -39,7 +39,9 @@ export const activate = async (
   target: Locator,
   button = 0,
 ): Promise<void> => {
+  await expect(target).toBeEnabled()
   await target.focus()
+  await expect(target).toBeFocused()
   await press(page, button)
 }
 

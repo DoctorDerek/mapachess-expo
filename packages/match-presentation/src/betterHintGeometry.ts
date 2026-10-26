@@ -124,6 +124,12 @@ export default function createBetterHintGeometry(
       `Q ${start - halfWidth} ${-halfWidth} ${start} ${-halfWidth}`,
       "Z",
     ].join(" "),
-    headPath: `M ${neck} ${-halfHead} L ${length} 0 L ${neck} ${halfHead} Z`,
+    headPath: [
+      `M ${neck} ${-halfWidth}`,
+      `L ${neck} ${-halfHead}`,
+      `L ${length} 0`,
+      `L ${neck} ${halfHead}`,
+      `L ${neck} ${halfWidth}`,
+    ].join(" "),
   }
 }

@@ -404,7 +404,7 @@ export default function CanonicalChessboard({
         <div
           aria-labelledby="move-choice-title"
           aria-modal="true"
-          className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center rounded-[clamp(0.75rem,2vw,1.25rem)] p-6 backdrop-blur-sm"
+          className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center overflow-y-auto rounded-[clamp(0.75rem,2vw,1.25rem)] p-2 backdrop-blur-sm"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault()
@@ -430,9 +430,9 @@ export default function CanonicalChessboard({
           role="dialog"
           ref={choiceElement}
         >
-          <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal w-full max-w-md rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-5 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
+          <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal my-auto w-full max-w-md min-w-0 rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-3 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
             <h2
-              className="font-display text-mapachito-charcoal text-[1.35rem] leading-none font-black tracking-[0.015em] uppercase"
+              className="font-display text-mapachito-charcoal text-xl leading-tight font-black wrap-anywhere uppercase"
               id="move-choice-title"
             >
               {choosingPromotion
@@ -441,36 +441,58 @@ export default function CanonicalChessboard({
             </h2>
             <div
               className={cx(
-                "mt-4 grid gap-3",
-                choosingPromotion ? "grid-cols-4" : "grid-cols-1",
+                "mt-4 grid gap-2",
+                choosingPromotion &&
+                  "grid-cols-[repeat(auto-fit,minmax(min(6.5rem,100%),1fr))]",
               )}
             >
-              {choiceMoves.map((move, index) => (
-                <MapachessButton
-                  variant="secondary"
-                  aria-label={moveChoiceLabel(move, copy)}
-                  className={
-                    choosingPromotion
-                      ? "grid aspect-square place-items-center p-1 text-5xl"
-                      : "w-full"
-                  }
-                  disabled={disabled}
-                  key={move.id}
-                  onClick={() => commitMove(move.id)}
-                  ref={index === 0 ? firstChoiceButton : undefined}
-                  type="button"
-                >
-                  {move.kind === "normal" && move.promotion !== null ? (
-                    <ChessPiece color={position.turn} role={move.promotion} />
-                  ) : (
-                    moveChoiceLabel(move, copy)
+              {(choosingPromotion
+                ? [choiceMoves.slice(0, 2), choiceMoves.slice(2)]
+                : [choiceMoves]
+              ).map((group, groupIndex) => (
+                <div
+                  className={cx(
+                    "grid gap-2",
+                    choosingPromotion && "grid-cols-2",
                   )}
-                </MapachessButton>
+                  key={group[0]?.id}
+                >
+                  {group.map((move, index) => (
+                    <MapachessButton
+                      variant="secondary"
+                      aria-label={moveChoiceLabel(move, copy)}
+                      className={
+                        choosingPromotion
+                          ? "grid aspect-square min-w-0 place-items-center p-1!"
+                          : "w-full min-w-0 wrap-anywhere"
+                      }
+                      disabled={disabled}
+                      key={move.id}
+                      onClick={() => commitMove(move.id)}
+                      ref={
+                        groupIndex === 0 && index === 0
+                          ? firstChoiceButton
+                          : undefined
+                      }
+                      type="button"
+                    >
+                      {move.kind === "normal" && move.promotion !== null ? (
+                        <ChessPiece
+                          color={position.turn}
+                          role={move.promotion}
+                          fitToSquare
+                        />
+                      ) : (
+                        moveChoiceLabel(move, copy)
+                      )}
+                    </MapachessButton>
+                  ))}
+                </div>
               ))}
             </div>
             <MapachessButton
               variant="secondary"
-              className="mt-4 w-full"
+              className="mt-4 w-full min-w-0 wrap-anywhere"
               onClick={clearSelection}
               type="button"
             >
