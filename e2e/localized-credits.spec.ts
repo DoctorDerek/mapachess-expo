@@ -258,6 +258,9 @@ test("Spanish appearance corrections update choices and previews while preservin
   await page.screenshot({
     path: testInfo.outputPath("spanish-piece-choices-320.png"),
   })
+  await page
+    .getByRole("button", { name: "Terminar de elegir piezas", exact: true })
+    .click()
   await appearance
     .getByRole("button", { name: "Cambiar tablero", exact: true })
     .click()
@@ -268,12 +271,19 @@ test("Spanish appearance corrections update choices and previews while preservin
     .poll(async () => (await savedProfile(page)).settings.chessAppearance)
     .toEqual({ pieceSetId: "back-fantasy-ii-gold", boardId: "toffee-ice" })
   const original = await savedProfile(page)
+  await page
+    .getByRole("button", { name: "Terminar de elegir tablero", exact: true })
+    .click()
   await page.getByRole("combobox", { name: "Idioma" }).selectOption("en")
+  await page.getByRole("button", { name: "Change board", exact: true }).click()
   await expect(
     page.getByRole("img", {
       name: /^Fantasy II · gold pieces on Toffee · ice board preview$/,
     }),
   ).toBeVisible()
+  await page
+    .getByRole("button", { name: "Done choosing board", exact: true })
+    .click()
   await page.getByRole("combobox", { name: "Language" }).selectOption("es-419")
   await expect
     .poll(() => savedProfile(page))

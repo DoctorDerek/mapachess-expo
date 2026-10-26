@@ -207,7 +207,7 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Settings &amp; Player Data")
     for (const area of ["coach", "pieces", "board"])
       expect(markup).toContain(
-        `aria-expanded="false" aria-label="Change ${area}"`,
+        `aria-haspopup="dialog" aria-label="Change ${area}"`,
       )
     expect(markup).not.toContain("board preview")
     expect(markup).toContain("Auto Piece Hints")

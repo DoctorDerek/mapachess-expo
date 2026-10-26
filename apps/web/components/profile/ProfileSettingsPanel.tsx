@@ -25,6 +25,7 @@ import { PLAYER_RATING_CONTEXTS } from "@mapachess/profile/rating-context"
 import { TimeCategoryChoices } from "../gameplay/TimeControlChoices"
 import InputBindingSettings from "../input/InputBindingSettings"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessDialog from "../presentation/MapachessDialog"
 import MapachessNotice from "../presentation/MapachessNotice"
 import ArtCredits from "./ArtCredits"
 import AutoHintModeChoices from "./AutoHintModeChoices"
@@ -134,11 +135,26 @@ export default function ProfileSettingsPanel({
             onChange={onLocaleChanged}
           />
           <CoachCollectionChoices
+            open={overlays.includes("settings-coach")}
+            onToggle={() =>
+              overlays.includes("settings-coach")
+                ? navigation.back()
+                : navigation.open("settings-coach")
+            }
             collection={coachCollection}
             disabled={presentationPreferencesDisabled}
             onChange={onCoachCollectionChanged}
           />
           <ChessAppearanceChoices
+            open={
+              overlays.includes("settings-pieces")
+                ? "pieces"
+                : overlays.includes("settings-board")
+                  ? "board"
+                  : null
+            }
+            onOpen={(choice) => navigation.open(`settings-${choice}`)}
+            onClose={navigation.back}
             appearance={chessAppearance}
             disabled={presentationPreferencesDisabled}
             onChange={onChessAppearanceChanged}
@@ -164,6 +180,8 @@ export default function ProfileSettingsPanel({
         />
 
         <InputBindingSettings
+          overlays={overlays}
+          navigation={navigation}
           bindings={inputBindings}
           disabled={busy}
           onSave={onInputBindingsSaved}
@@ -227,51 +245,43 @@ export default function ProfileSettingsPanel({
             )}
           </div>
           {resetVariant === null ? null : (
-            <div
-              aria-labelledby="player-elo-reset-title"
-              className="border-mapachito-charcoal bg-mapachito-white mt-4 rounded-lg border-3 p-4"
-              role="group"
+            <MapachessDialog
+              label={copy.profile.resetQuestion(resetLabel)}
+              onClose={navigation.back}
+              fixedContent
             >
-              <h3
-                className="text-mapachito-charcoal text-lg font-black"
-                id="player-elo-reset-title"
+              <SettingsView
+                title={copy.profile.resetQuestion(resetLabel)}
+                closeLabel={messages.cancel}
+                onClose={navigation.back}
+                actions={
+                  <MapachessButton
+                    aria-label={copy.profile.resetConfirmation(resetLabel)}
+                    disabled={busy}
+                    onClick={() => {
+                      onEloResetConfirmed(resetVariant)
+                      navigation.back()
+                    }}
+                    variant="destructive"
+                  >
+                    {copy.profile.resetSubmit}
+                  </MapachessButton>
+                }
               >
-                {copy.profile.resetQuestion(resetLabel)}
-              </h3>
-              <p className="text-mapachito-charcoal mt-2 text-base leading-relaxed">
-                {copy.profile.resetExplanation(resetLabel)}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
+                <p className="mt-4 text-base leading-relaxed">
+                  {copy.profile.resetExplanation(resetLabel)}
+                </p>
                 <MapachessButton
-                  autoFocus
-                  onClick={navigation.back}
-                  type="button"
-                  variant="secondary"
-                >
-                  {messages.cancel}
-                </MapachessButton>
-                <MapachessButton
+                  className="mt-4"
                   aria-busy={exporting}
                   busyLabel={copy.profile.preparingBackup}
                   onClick={onExportPlayerData}
-                  type="button"
                   variant="secondary"
                 >
                   {messages.exportPlayerData}
                 </MapachessButton>
-                <MapachessButton
-                  disabled={busy}
-                  onClick={() => {
-                    onEloResetConfirmed(resetVariant)
-                    navigation.back()
-                  }}
-                  type="button"
-                  variant="destructive"
-                >
-                  {copy.profile.resetConfirmation(resetLabel)}
-                </MapachessButton>
-              </div>
-            </div>
+              </SettingsView>
+            </MapachessDialog>
           )}
         </section>
 
@@ -312,22 +322,30 @@ export default function ProfileSettingsPanel({
           onOpen={() => navigation.open("classifications")}
           onClose={navigation.back}
         />
-        <details
-          open={overlays.includes("about-elo")}
-          className="text-mapachito-charcoal mt-7 text-base"
+
+        <MapachessButton
+          className="mt-7"
+          variant="secondary"
+          onClick={() => navigation.open("about-elo")}
         >
-          <summary
-            onClick={(event) => {
-              event.preventDefault()
-              if (overlays.includes("about-elo")) navigation.back()
-              else navigation.open("about-elo")
-            }}
-            className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+          {messages.aboutEloRatings}
+        </MapachessButton>
+        {overlays.includes("about-elo") ? (
+          <MapachessDialog
+            label={messages.aboutEloRatings}
+            onClose={navigation.back}
+            fixedContent
           >
-            {messages.aboutEloRatings}
-          </summary>
-          <p>{copy.setup.webCalibrationDifficulty}</p>
-        </details>
+            <SettingsView
+              title={messages.aboutEloRatings}
+              closeLabel={copy.shared.settingsControls.back}
+              onClose={navigation.back}
+              focusHeading
+            >
+              <p className="mt-4">{copy.setup.webCalibrationDifficulty}</p>
+            </SettingsView>
+          </MapachessDialog>
+        ) : null}
 
         <div className="mt-7">
           <MapachessButton

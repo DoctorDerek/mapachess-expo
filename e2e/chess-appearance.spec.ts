@@ -16,7 +16,7 @@ import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
 
 const appearanceSection = (page: Page) =>
-  page.getByRole("region", { name: "Board & Pieces", exact: true })
+  page.getByRole("dialog", { name: /^(Pieces|Board)$/ })
 const expectLoadedArtwork = async (surface: Locator): Promise<void> => {
   await expect
     .poll(() =>
@@ -35,10 +35,9 @@ const expectLoadedArtwork = async (surface: Locator): Promise<void> => {
     .toBe(true)
 }
 const expectAccessibleChoices = async (page: Page): Promise<void> => {
-  const headingId =
-    await appearanceSection(page).getAttribute("aria-labelledby")
+  const label = await appearanceSection(page).getAttribute("aria-label")
   const report = await new AxeBuilder({ page })
-    .include(`section[aria-labelledby="${headingId}"]`)
+    .include(`dialog[aria-label="${label}"]`)
     .analyze()
   expect(report.violations).toEqual([])
 }
@@ -46,11 +45,21 @@ const openGallery = async (
   page: Page,
   name: "Pieces" | "Board",
 ): Promise<void> => {
-  const trigger = appearanceSection(page).getByRole("button", {
-    name: new RegExp(`^(Change|Done choosing) ${name.toLowerCase()}$`),
-  })
-  if ((await trigger.getAttribute("aria-expanded")) !== "true")
-    await trigger.click()
+  await expect(
+    page.getByRole("button", { name: "Close Settings", exact: true }),
+  ).toBeVisible()
+  if (await page.getByRole("dialog", { name, exact: true }).count()) return
+  await closeGallery(page)
+  await page
+    .getByRole("button", { name: `Change ${name.toLowerCase()}`, exact: true })
+    .click()
+}
+const closeGallery = async (page: Page): Promise<void> => {
+  const gallery = appearanceSection(page)
+  if (await gallery.count()) {
+    await gallery.getByRole("button", { name: /^Done choosing/ }).click()
+    await expect(gallery).toHaveCount(0)
+  }
 }
 const openSettings = async (page: Page): Promise<void> => {
   const settings = page.getByRole("button", { name: "Settings", exact: true })
@@ -256,6 +265,7 @@ for (const { mode, color, pieceSetId, boardId } of [
     await expect
       .poll(async () => (await savedProfile(page)).settings.chessAppearance)
       .toEqual({ pieceSetId, boardId })
+    await closeGallery(page)
     await page
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
@@ -338,13 +348,14 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
   })
 }
 
-test("retains a pending promotion through appearance changes and uses the selected art", async ({
+test("keeps promotion uncommitted on Cancel and uses changed artwork when reopened", async ({
   page,
 }) => {
   test.setTimeout(90000)
   await page.goto("/")
   await openSettings(page)
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
+  await closeGallery(page)
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
@@ -403,15 +414,23 @@ test("retains a pending promotion through appearance changes and uses the select
   await expect(
     page.getByRole("dialog", { name: "Promote on a8" }),
   ).toBeVisible()
+  const beforePromotion = (await savedProfile(page)).activeMatch
+  await page
+    .getByRole("button", { name: "Cancel promotion", exact: true })
+    .click()
+  expect((await savedProfile(page)).activeMatch).toEqual(beforePromotion)
   await openSettings(page)
   await openGallery(page, "Pieces")
   await appearanceSection(page)
     .getByRole("radio", { name: "Cosunosuke · gold / blue", exact: true })
     .check()
+  await closeGallery(page)
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   const promotion = page.getByRole("dialog", { name: "Promote on a8" })
+  await page.locator('[data-square="b7"]').click()
+  await page.locator('[data-square="a8"]').click()
   await expect(promotion).toBeVisible()
   await expect(promotion.locator('img[src*="cosunosuke"]')).toHaveCount(4)
   await expectLoadedArtwork(promotion)
@@ -462,6 +481,7 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
   await appearanceSection(page).screenshot({
     path: testInfo.outputPath("cosunosuke-settings.png"),
   })
+  await closeGallery(page)
   await page.getByRole("button", { name: "Credits", exact: true }).click()
   const credit = page.getByRole("listitem").filter({
     has: page.getByRole("heading", {
@@ -479,6 +499,7 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
     .getByRole("button", { name: "Back to Settings", exact: true })
     .click()
   await page.setViewportSize({ width: 320, height: 915 })
+  await openGallery(page, "Board")
   await appearanceSection(page).screenshot({
     path: testInfo.outputPath("cosunosuke-settings-narrow.png"),
   })

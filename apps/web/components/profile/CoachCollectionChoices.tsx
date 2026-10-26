@@ -1,7 +1,7 @@
 "use client"
 
 import cx from "classix"
-import { useId, useState } from "react"
+import { useId } from "react"
 import {
   COACH_COLLECTION_IDS,
   type CoachCollectionId,
@@ -43,23 +43,26 @@ export default function CoachCollectionChoices({
   collection,
   disabled,
   onChange,
+  open,
+  onToggle,
 }: Readonly<{
   collection: CoachCollectionId
   disabled: boolean
   onChange: (collection: CoachCollectionId) => void
+  open: boolean
+  onToggle: () => void
 }>) {
   const copy = useMapachessCopy()
   const messages = copy.interface.coachCollectionChoices
 
   const id = useId()
-  const [open, setOpen] = useState(false)
   return (
     <CustomizationChoice
       kind="coach"
       value={copy.profile.coachCollections[collection]}
       preview={<CoachSample collection={collection} expression="neutral" />}
       open={open}
-      onToggle={() => setOpen((current) => !current)}
+      onToggle={onToggle}
     >
       <fieldset
         disabled={disabled}

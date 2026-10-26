@@ -86,9 +86,9 @@ for (const width of [320, 1280]) {
     expect(report.violations).toEqual([])
     await group.screenshot({ path: testInfo.outputPath(`coach-${width}.png`) })
     await page.reload()
-    await page
-      .getByRole("button", { name: "Change coach", exact: true })
-      .click()
+    await expect(
+      page.getByRole("dialog", { name: "Coach", exact: true }),
+    ).toBeVisible()
     await expect(
       coachChoices(page).getByRole("radio", {
         name: "Animal faces",
@@ -138,6 +138,9 @@ test("restores the collection from backup and changes it without replacing the m
     .poll(async () => (await savedProfile(page)).settings.coachCollection)
     .toBe("mapachito")
   await page
+    .getByRole("button", { name: "Done choosing coach", exact: true })
+    .click()
+  await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   await expect(
@@ -176,6 +179,9 @@ test("retains the last decoded coach during a failed switch and explicitly retri
     .getByRole("radio", { name: "Animal faces", exact: true })
     .check()
   await page
+    .getByRole("button", { name: "Done choosing coach", exact: true })
+    .click()
+  await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   await expect(
@@ -209,6 +215,9 @@ test("follows accepted move grades and returns to neutral after Undo without rep
   await coachChoices(page)
     .getByRole("radio", { name: "Animal faces", exact: true })
     .check()
+  await page
+    .getByRole("button", { name: "Done choosing coach", exact: true })
+    .click()
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
@@ -301,6 +310,9 @@ test("ignores a superseded collection decode after switching back", async ({
     release.resolve()
     await page.unrouteAll({ behavior: "wait" })
   }
+  await page
+    .getByRole("button", { name: "Done choosing coach", exact: true })
+    .click()
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
