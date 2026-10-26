@@ -204,10 +204,12 @@ export function ChessPiece({
   color,
   role,
   pieceSetId,
+  fitToSquare = false,
 }: Readonly<{
   color: MatchColor
   role: MatchPieceRole
   pieceSetId?: ChessPieceSetId
+  fitToSquare?: boolean
 }>) {
   const { appearance, attempt } = useContext(ArtworkContext)
   const pieces = chessPieceSet(pieceSetId ?? appearance.pieceSetId)
@@ -223,10 +225,14 @@ export function ChessPiece({
   return (
     <span
       aria-hidden="true"
-      className="relative grid size-full place-items-center select-none"
+      className={cx(
+        "relative grid size-full place-items-center select-none",
+        fitToSquare && "@container",
+      )}
     >
       <span
         className={cx(
+          fitToSquare && "text-[80cqi] leading-none",
           image.visible && "invisible",
           color === "white"
             ? "text-mapachito-white [filter:drop-shadow(0_2px_1px_rgb(30_30_30/0.95))]"
