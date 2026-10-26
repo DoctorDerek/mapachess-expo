@@ -90,6 +90,11 @@ corepack pnpm build
 corepack pnpm test:e2e
 ```
 
+The web typecheck runs `next typegen` before TypeScript so a fresh checkout
+has Next.js's generated route and static-image declarations. It does not
+require starting the app or building it first. Keep `next-env.d.ts` and
+`.next/` ignored; Next.js owns those generated files.
+
 ### Lint ownership and coverage
 
 The root `eslint.config.js` owns lint coverage for JavaScript and TypeScript
