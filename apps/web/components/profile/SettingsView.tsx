@@ -53,6 +53,7 @@ export default function SettingsView({
         <footer className="border-mapachito-charcoal/15 flex flex-wrap-reverse justify-end gap-3 border-t px-1 pt-3 pb-1 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
           <MapachessButton
             aria-label={closeAccessibleLabel}
+            className="px-1!"
             onClick={onClose}
             ref={closeButton}
             variant="secondary"

@@ -9,7 +9,7 @@ import savedProfile from "./savedProfile.js"
 for (const locale of ["en", "es-419"] as const) {
   test(`focused customization keeps Done reachable and returns one level in ${locale}`, async ({
     page,
-  }, testInfo) => {
+  }) => {
     await page.setViewportSize({ width: 320, height: 640 })
     await page.emulateMedia({ reducedMotion: "reduce" })
     await page.goto("/")
@@ -86,11 +86,6 @@ for (const locale of ["en", "es-419"] as const) {
             }),
           ).toBe(true)
         }
-        await page.screenshot({
-          path: testInfo.outputPath(
-            `${locale}-${kind}-${size.width}-${size.scale}.png`,
-          ),
-        })
         await textScale.evaluate((element) => element.remove())
       }
       await page.goBack()
@@ -102,6 +97,33 @@ for (const locale of ["en", "es-419"] as const) {
       await expect(trigger).toBeFocused()
       expect(await savedProfile(page)).toEqual(selected)
     }
+    await page
+      .getByRole("button", {
+        name: copy.interface.moveClassificationFaq.howAreMovesClassified,
+        exact: true,
+      })
+      .click()
+    await page.addStyleTag({ content: ":root{font-size:200%}" })
+    const back = page.getByRole("button", {
+      name: copy.interface.moveClassificationFaq.closeMoveClassifications,
+      exact: true,
+    })
+    await expect(back).toBeInViewport({ ratio: 1 })
+    expect(
+      await back.evaluate((button) => {
+        const text = button.firstChild
+        if (!(text instanceof Text)) throw new Error("Expected the Back label")
+        return [...text.data.matchAll(/\S+/g)]
+          .filter((word) => {
+            const range = document.createRange()
+            range.setStart(text, word.index)
+            range.setEnd(text, word.index + word[0].length)
+            return range.getClientRects().length !== 1
+          })
+          .map((word) => word[0])
+      }),
+    ).toEqual([])
+    await back.click()
   })
 }
 
