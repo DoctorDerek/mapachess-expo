@@ -19,6 +19,8 @@ export const BETTER_HINT_RIBBON = Object.freeze({
   headWidth: 0.86,
   headLength: 0.52,
   sourceOffset: 0.28,
+  sharedDestinationInset: 0.29,
+  minimumShaftLength: 0.12,
   shaftHeadOverlap: 0.05,
   opponentDashLength: 0.65,
   opponentGapLength: 0.24,
@@ -56,23 +58,42 @@ const pointForSquare = (
     : { x: farCenter - file, y: rank + 0.5 }
 }
 
+const ribbonTravel = (hint: BetterHint): Pick<BetterHint, "from" | "to"> => {
+  const rookMovement = hint.from === hint.to ? hint.castling : undefined
+  return {
+    from: rookMovement?.rookFrom ?? hint.from,
+    to: rookMovement?.rookTo ?? hint.to,
+  }
+}
+
 export default function createBetterHintGeometry(
   hint: BetterHint,
   orientation: MatchColor,
+  visibleHints: readonly BetterHint[] = [hint],
 ): BetterHintGeometry {
-  const rookMovement = hint.from === hint.to ? hint.castling : undefined
+  const travel = ribbonTravel(hint)
   const piece = pointForSquare(hint.from, orientation)
-  const source = pointForSquare(
-    rookMovement?.rookFrom ?? hint.from,
-    orientation,
-  )
-  const destination = pointForSquare(
-    rookMovement?.rookTo ?? hint.to,
-    orientation,
-  )
+  const source = pointForSquare(travel.from, orientation)
+  const destination = pointForSquare(travel.to, orientation)
   const deltaX = destination.x - source.x
   const deltaY = destination.y - source.y
-  const length = Math.hypot(deltaX, deltaY)
+  const distance = Math.hypot(deltaX, deltaY)
+  const sharesDestination =
+    visibleHints.filter((visible) => ribbonTravel(visible).to === travel.to)
+      .length > 1
+  const destinationInset = sharesDestination
+    ? Math.min(
+        BETTER_HINT_RIBBON.sharedDestinationInset,
+        Math.max(
+          0,
+          distance -
+            BETTER_HINT_RIBBON.headLength -
+            BETTER_HINT_RIBBON.sourceOffset -
+            BETTER_HINT_RIBBON.minimumShaftLength,
+        ),
+      )
+    : 0
+  const length = distance - destinationInset
   const neck = length - BETTER_HINT_RIBBON.headLength
   const halfWidth = BETTER_HINT_RIBBON.width / 2
   const halfHead = BETTER_HINT_RIBBON.headWidth / 2
