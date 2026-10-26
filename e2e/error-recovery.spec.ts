@@ -174,7 +174,7 @@ test("keeps a prepared card after download and share errors", async ({
   await expect(save).toBeEnabled()
   await expect(
     page.getByRole("button", { name: "Share PNG", exact: true }),
-  ).toBeDisabled()
+  ).toHaveCount(0)
   expect(await savedProfile(page)).toEqual(before)
   expect(errors).toEqual([])
 })

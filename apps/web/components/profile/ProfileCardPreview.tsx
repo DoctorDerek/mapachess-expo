@@ -2,7 +2,7 @@
 
 import { useActorRef, useSelector } from "@xstate/react"
 import cx from "classix"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { CardRatingContext } from "@mapachess/profile/rating-context"
@@ -38,11 +38,13 @@ export default function ProfileCardPreview({
   ratingContext,
   unsaved,
   onBack,
+  heading,
 }: Readonly<{
   data: MapachessPlayerData
   appearance: PlayerAppearance
   ratingContext: CardRatingContext
   unsaved: boolean
+  heading?: ReactNode
   onBack: () => void
 }>) {
   const copy = useMapachessCopy()
@@ -92,32 +94,7 @@ export default function ProfileCardPreview({
       className="mx-auto w-full max-w-5xl"
       actions={
         <>
-          <p role="status" className="mb-2 min-h-12 text-base">
-            {snapshot.matches("preparing")
-              ? copy.profile.preparingFormat(format)
-              : (message === "downloadRequested"
-                  ? copy.profile.downloadRequested(format)
-                  : message === null
-                    ? null
-                    : copy.profile[message]) ||
-                (!shareAvailable && file !== null
-                  ? copy.profile.saveToShare
-                  : "")}
-          </p>
-          {snapshot.matches("failed") ? (
-            <div role="alert" className="mb-3">
-              <p>
-                {messages.imagePreparationFailedYourAppearancePreviewChoices}
-              </p>
-              <ProfileAction
-                onClick={() => actor.send({ type: "CARD.RETRY_REQUESTED" })}
-                className="bg-mapachito-violet mt-3"
-              >
-                {copy.profile.retryFormat(format)}
-              </ProfileAction>
-            </div>
-          ) : null}
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,4.5rem),1fr))] gap-2">
+          <div className="flex flex-wrap-reverse gap-2 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-24">
             <ProfileAction
               onClick={onBack}
               disabled={sharing}
@@ -142,18 +119,21 @@ export default function ProfileCardPreview({
               <span aria-hidden="true">↓</span>{" "}
               {copy.profile.saveFormat(format)}
             </ProfileAction>
-            <ProfileAction
-              onClick={() => void share()}
-              disabled={!shareAvailable || sharing}
-              className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry px-2! py-2! text-base!"
-            >
-              <span aria-hidden="true">↗</span>{" "}
-              {copy.profile.shareFormat(format)}
-            </ProfileAction>
+            {shareAvailable ? (
+              <ProfileAction
+                onClick={() => void share()}
+                disabled={sharing}
+                className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry px-2! py-2! text-base!"
+              >
+                <span aria-hidden="true">↗</span>{" "}
+                {copy.profile.shareFormat(format)}
+              </ProfileAction>
+            ) : null}
           </div>
         </>
       }
     >
+      {heading}
       <div
         role="group"
         aria-label={messages.imageFormat}
@@ -223,6 +203,28 @@ export default function ProfileCardPreview({
           </label>
         ))}
       </fieldset>
+      <p role="status" className="my-3 text-base">
+        {snapshot.matches("preparing")
+          ? copy.profile.preparingFormat(format)
+          : (message === "downloadRequested"
+              ? copy.profile.downloadRequested(format)
+              : message === null
+                ? null
+                : copy.profile[message]) ||
+            (!shareAvailable && file !== null ? copy.profile.saveToShare : "")}
+      </p>
+      {snapshot.matches("failed") ? (
+        <div role="alert" className="mb-3">
+          <p>{messages.imagePreparationFailedYourAppearancePreviewChoices}</p>
+          <ProfileAction
+            onClick={() => actor.send({ type: "CARD.RETRY_REQUESTED" })}
+            className="bg-mapachito-violet mt-3"
+          >
+            {copy.profile.retryFormat(format)}
+          </ProfileAction>
+        </div>
+      ) : null}
+
       {unsaved ? (
         <p className="my-3 text-base">
           {messages.previewingUnsavedAppearanceImageExportDoesNot}

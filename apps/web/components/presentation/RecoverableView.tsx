@@ -1,17 +1,20 @@
 "use client"
 
+import cx from "classix"
 import { Component, useEffect, useRef, type ReactNode } from "react"
 import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MapachessButton from "./MapachessButton"
+import ScrollActions from "./ScrollActions"
 
 type RecoveryProps = Readonly<{
   title: string
   description: string
   actions?: ReactNode
   onRecovery?: () => void
+  fillHeight?: boolean
 }>
 
 function Recovery({
@@ -19,6 +22,7 @@ function Recovery({
   description,
   actions,
   onRetry,
+  fillHeight = false,
 }: RecoveryProps & Readonly<{ onRetry: () => void }>) {
   const messages = useMapachessCopy().interface.recoverableView
 
@@ -26,21 +30,31 @@ function Recovery({
   useEffect(() => heading.current?.focus({ preventScroll: true }), [])
   return (
     <section
-      className="bg-mapachito-white text-mapachito-charcoal mx-auto my-6 grid max-w-2xl gap-4 rounded-xl p-6"
+      className={cx(
+        "bg-mapachito-white text-mapachito-charcoal mx-auto min-h-0 max-w-2xl rounded-xl p-4",
+        fillHeight ? "h-full" : "h-dvh",
+      )}
       role="alert"
     >
-      <h2
-        ref={heading}
-        tabIndex={-1}
-        className="text-2xl font-black outline-none"
+      <ScrollActions
+        actions={
+          <div className="flex flex-wrap-reverse gap-3 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
+            {actions}
+            <MapachessButton onClick={onRetry}>
+              {messages.tryAgain}
+            </MapachessButton>
+          </div>
+        }
       >
-        {title}
-      </h2>
-      <p>{description}</p>
-      <div className="flex flex-wrap gap-3">
-        <MapachessButton onClick={onRetry}>{messages.tryAgain}</MapachessButton>
-        {actions}
-      </div>
+        <h2
+          ref={heading}
+          tabIndex={-1}
+          className="text-2xl font-black outline-none"
+        >
+          {title}
+        </h2>
+        <p className="mt-4">{description}</p>
+      </ScrollActions>
     </section>
   )
 }

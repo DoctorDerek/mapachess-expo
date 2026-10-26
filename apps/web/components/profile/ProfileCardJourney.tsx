@@ -14,6 +14,7 @@ import profileCardEditorMachine, {
   isProfileCardEditorDirty,
 } from "../../lib/presentation/profileCardEditorMachine"
 import RecoverableView from "../presentation/RecoverableView"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
 import ProfileCardPreview from "./ProfileCardPreview"
@@ -93,48 +94,61 @@ export default function ProfileCardJourney({
       {messages.back}
     </ProfileAction>
   )
+  const heading = (
+    <header className="mb-4">
+      <h1
+        id="personal-card-title"
+        ref={title}
+        tabIndex={-1}
+        className="text-xl font-black outline-none"
+      >
+        {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
+      </h1>
+    </header>
+  )
   return (
     <section
       hidden={blocked}
       inert={blocked}
-      aria-labelledby="personal-card-title"
+      aria-labelledby={
+        snapshot.matches("confirmingDiscard")
+          ? "unsaved-card-title"
+          : "personal-card-title"
+      }
       className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-hidden px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
-      <div className="max-w-mapachess mx-auto grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
-        <header className="mb-4">
-          <h1
-            id="personal-card-title"
-            ref={title}
-            tabIndex={-1}
-            className="text-xl font-black outline-none"
-          >
-            {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
-          </h1>
-        </header>
+      <div className="max-w-mapachess mx-auto grid h-full min-h-0 grid-rows-[minmax(0,1fr)]">
         {snapshot.matches("confirmingDiscard") ? (
           <div
             role="alertdialog"
             aria-labelledby="unsaved-card-title"
-            className="mx-auto max-w-xl overflow-y-auto p-5"
+            className="mx-auto h-full min-h-0 w-full max-w-xl"
           >
-            <h2 id="unsaved-card-title" className="text-2xl font-bold">
-              {messages.keepYourAppearanceChanges}
-            </h2>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <ScrollActions
+              actions={
+                <div className="flex flex-wrap-reverse gap-3 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
+                  <ProfileAction
+                    className="bg-mapachito-violet"
+                    onClick={() =>
+                      editor.send({ type: "CARD.RETURN_REQUESTED" })
+                    }
+                  >
+                    {messages.keepEditing}
+                  </ProfileAction>
+                  <ProfileAction
+                    className="bg-mapachito-green"
+                    onClick={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
+                  >
+                    {messages.saveAppearance}
+                  </ProfileAction>
+                </div>
+              }
+            >
+              <h2 id="unsaved-card-title" className="text-2xl font-bold">
+                {messages.keepYourAppearanceChanges}
+              </h2>
               <ProfileAction
-                className="bg-mapachito-violet"
-                onClick={() => editor.send({ type: "CARD.RETURN_REQUESTED" })}
-              >
-                {messages.keepEditing}
-              </ProfileAction>
-              <ProfileAction
-                className="bg-mapachito-green"
-                onClick={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
-              >
-                {messages.saveAppearance}
-              </ProfileAction>
-              <ProfileAction
-                className="bg-mapachito-raspberry"
+                className="bg-mapachito-raspberry mt-6"
                 onClick={() => {
                   editor.send({ type: "CARD.DISCARD_REQUESTED" })
                   navigation.back()
@@ -142,17 +156,19 @@ export default function ProfileCardJourney({
               >
                 {messages.discardChanges}
               </ProfileAction>
-            </div>
+            </ScrollActions>
           </div>
         ) : null}
         {preview ? (
-          <div className="h-full min-h-0 overflow-y-auto">
+          <div className="h-full min-h-0">
             <RecoverableView
+              fillHeight
               title={messages.theProfileCardPreviewCouldNotBe}
               description={messages.yourAppearanceChangesAreStillHereTry}
               actions={recoveryActions}
             >
               <ProfileCardPreview
+                heading={heading}
                 onBack={navigation.back}
                 data={data}
                 appearance={dressing ? snapshot.context.draft : data.appearance}
@@ -168,16 +184,18 @@ export default function ProfileCardJourney({
         ) : null}
         {dressing ? (
           <div
-            className="h-full min-h-0 overflow-y-auto"
+            className="h-full min-h-0"
             hidden={preview || snapshot.matches("confirmingDiscard")}
             inert={preview || snapshot.matches("confirmingDiscard")}
           >
             <RecoverableView
+              fillHeight
               title={messages.customizationCouldNotBeDisplayed}
               description={messages.yourAppearanceChangesAreStillHereTry2}
               actions={recoveryActions}
             >
               <ProfileDressingRoom
+                heading={preview ? null : heading}
                 active={
                   !preview && !snapshot.matches("confirmingDiscard") && !blocked
                 }

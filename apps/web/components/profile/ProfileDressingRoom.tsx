@@ -1,7 +1,7 @@
 "use client"
 
 import cx from "classix"
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { TIME_CATEGORIES } from "@mapachess/match/time-control"
 import {
   HERO_CATALOG,
@@ -24,6 +24,7 @@ import ProfileCard, { ProfileArtwork } from "./ProfileCard"
 type Category = "Clothes" | "Weapons" | "Hair" | "Skin" | "Face" | "Animal"
 export default function ProfileDressingRoom({
   active,
+  heading,
   data,
   draft,
   ratingContext,
@@ -37,6 +38,7 @@ export default function ProfileDressingRoom({
   onShare,
   onRetry,
 }: Readonly<{
+  heading?: ReactNode
   active: boolean
   data: MapachessPlayerData
   draft: PlayerAppearance
@@ -138,21 +140,10 @@ export default function ProfileDressingRoom({
     <ScrollActions
       actions={
         <>
-          {failed ? (
-            <div role="alert" className="mb-3">
-              <p>{messages.appearanceCouldNotBeSavedLocallyYour}</p>
-              <ProfileAction
-                onClick={onRetry}
-                className="bg-mapachito-violet mt-2"
-              >
-                {messages.retrySave}
-              </ProfileAction>
-            </div>
-          ) : null}
           <p role="status" className="sr-only">
             {dirty ? dressing.unsaved : null}
           </p>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-3">
+          <div className="flex flex-wrap-reverse gap-3 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
             <ProfileAction
               className="bg-mapachito-charcoal shadow-mapachess-raised shadow-mapachito-violet px-2! py-2! text-base!"
               onClick={onCancel}
@@ -177,6 +168,16 @@ export default function ProfileDressingRoom({
         </>
       }
     >
+      {heading}
+      {failed ? (
+        <div role="alert" className="mb-3">
+          <p>{messages.appearanceCouldNotBeSavedLocallyYour}</p>
+          <ProfileAction onClick={onRetry} className="bg-mapachito-violet mt-2">
+            {messages.retrySave}
+          </ProfileAction>
+        </div>
+      ) : null}
+
       <div className="grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:grid-rows-[auto_auto_1fr] xl:gap-6">
         <div className="bg-profile-card-cyan from-profile-card-mint relative mx-auto h-36 w-full max-w-sm rounded-lg bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66% xl:col-start-1 xl:row-start-1 xl:h-64 xl:max-w-none">
           <ProfileArtwork
