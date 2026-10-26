@@ -62,7 +62,7 @@ const gameplay = {
   },
   defeatedOpponent: (opponent: string): string => `¡Derrotaste a ${opponent}!`,
   resultActions: {
-    replay: "Volver a jugar contra este oponente",
+    replay: "Jugar de nuevo",
     ladder: "Progresión de Historia",
     next: "Siguiente oponente",
   },

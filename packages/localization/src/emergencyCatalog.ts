@@ -64,6 +64,7 @@ const emergencyCatalog: MapachessCatalog = {
     resetRating: (variant: string): string =>
       `Reset ${ratingVariant(variant)} Elo`,
     resetAction: "Reset",
+    resetSubmit: "Reset Elo",
     resetQuestion: (variant: string): string =>
       `Reset ${ratingVariant(variant)} Elo?`,
     resetExplanation: () =>

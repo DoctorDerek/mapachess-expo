@@ -15,6 +15,7 @@ const profile = {
   ratingLabel: { standard: "Standard Chess Elo", chess960: "Chess960 Elo" },
   resetRating: (variant: string): string => `Reset ${variant} Elo`,
   resetAction: "Reset",
+  resetSubmit: "Reset Elo",
   resetQuestion: (variant: string): string => `Reset ${variant} Elo?`,
   resetExplanation: (variant: string): string =>
     `${variant} Elo returns to 100 and its rated-match count to zero. All other ratings, Story progress, medals, Challenge records, settings, and the active match stay unchanged. Undo/Redo will not restore a completed match’s contribution to this rating. Export your data first if you want a backup.`,

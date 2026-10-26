@@ -218,7 +218,7 @@ const interfaceCopy = {
       "This replaces all local player data, including the active match, Story and Challenge records, all current Elo ratings and their rated-match counts, historical rating values, and settings. It does not affect backup files you already exported.",
     cancel: "Cancel",
     exportUnreadableData: "Export Unreadable Data",
-    resetAllLocalPlayerData2: "Reset All Local Player Data",
+    resetAllLocalPlayerData2: "Reset local data",
     tryAgain: "Try Again",
     restoreLastKnownGoodSave: "Restore Last Known-Good Save",
     reviewFullLocalReset: "Review Full Local Reset",

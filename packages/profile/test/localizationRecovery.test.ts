@@ -314,8 +314,9 @@ describe("shared message recovery", () => {
     )
     expect(copy.interface.profileRecoveryPanel.cancel).toBe("Cancel")
     expect(copy.interface.profileRecoveryPanel.resetAllLocalPlayerData2).toBe(
-      "Reset all local player data",
+      "Reset local data",
     )
+    expect(copy.profile.resetSubmit).toBe("Reset Elo")
     expect(copy.gameplay.xpProgress(500, 1000)).toBe(UNAVAILABLE_TEXT)
     expect(copy.classification.table(thresholds)).toEqual([])
     expect(copy.introduction.paragraphs).toHaveLength(5)

@@ -48,7 +48,7 @@ const interfaceCopy = {
     openingSetup: "Abriendo configuración…",
     nextOpponent: "Siguiente oponente",
     storyLadder: "Progresión de Historia",
-    replayOpponent: "Volver a jugar contra este oponente",
+    replayOpponent: "Jugar de nuevo",
     chooseYourSettingsBeforePlayingAgain:
       "Elige tu configuración antes de volver a jugar.",
   },
@@ -57,7 +57,7 @@ const interfaceCopy = {
     resumeMatch: "Reanudar partida",
     restartMatch: "Reiniciar partida",
     returnToMenu: "Volver al menú",
-    replayOpponent: "Volver a jugar contra este oponente",
+    replayOpponent: "Jugar de nuevo",
     yourLastVerifiedLocalProfileRemainsAvailable:
       "Tu último guardado local verificado sigue disponible. Elige Reintentar para repetir la acción interrumpida.",
     retry: "Reintentar",
@@ -205,7 +205,7 @@ const interfaceCopy = {
       "Esto reemplaza todos los datos locales del jugador, incluida la partida activa, los registros de Historia y Desafío, todas las puntuaciones Elo actuales y sus conteos de partidas con puntuación, las puntuaciones históricas y la configuración. No afecta los archivos de respaldo que ya exportaste.",
     cancel: "Cancelar",
     exportUnreadableData: "Exportar datos ilegibles",
-    resetAllLocalPlayerData2: "Restablecer todos los datos locales del jugador",
+    resetAllLocalPlayerData2: "Restablecer datos locales",
     tryAgain: "Intentar de nuevo",
     restoreLastKnownGoodSave: "Restaurar el último guardado válido conocido",
     reviewFullLocalReset: "Revisar restablecimiento local completo",
