@@ -12,7 +12,129 @@ const PAWN_HINT = {
   uci: "e2e4",
 } as const satisfies BetterHint
 
+const CAPTURE_HINTS = [
+  { color: "white", from: "h5", to: "f7", uci: "h5f7" },
+  { color: "white", from: "d2", to: "d4", uci: "d2d4" },
+  { color: "white", from: "c4", to: "f7", uci: "c4f7" },
+  { color: "black", from: "d8", to: "e7", uci: "d8e7" },
+  { color: "black", from: "g7", to: "g6", uci: "g7g6" },
+  { color: "black", from: "g8", to: "h6", uci: "g8h6" },
+] as const satisfies readonly BetterHint[]
+
 describe("Better Hint ribbon geometry", () => {
+  it.each(["white", "black"] as const)(
+    "separates only shared destinations without changing targets for %s",
+    (orientation) => {
+      const originalHints = structuredClone(CAPTURE_HINTS)
+      for (const hint of CAPTURE_HINTS) {
+        const baseline = createBetterHintGeometry(hint, orientation)
+        const separated = createBetterHintGeometry(
+          hint,
+          orientation,
+          CAPTURE_HINTS,
+        )
+        expect(separated).toMatchObject({
+          piece: baseline.piece,
+          source: baseline.source,
+          destination: baseline.destination,
+          rotationDegrees: baseline.rotationDegrees,
+        })
+        if (hint.to !== "f7") {
+          expect(separated).toEqual(baseline)
+          continue
+        }
+        expect(baseline.shaftEnd - separated.shaftEnd).toBeCloseTo(
+          BETTER_HINT_RIBBON.sharedDestinationInset,
+        )
+        const tipDistance =
+          separated.shaftEnd -
+          BETTER_HINT_RIBBON.shaftHeadOverlap +
+          BETTER_HINT_RIBBON.headLength
+        expect(separated.headPath).toContain(`L ${tipDistance} 0`)
+        expect(separated.ribbonPath).toContain(`L ${tipDistance} 0`)
+        const angle = (separated.rotationDegrees * Math.PI) / 180
+        expect(
+          Math.floor(separated.source.x + Math.cos(angle) * tipDistance),
+        ).toBe(Math.floor(separated.destination.x))
+        expect(
+          Math.floor(separated.source.y + Math.sin(angle) * tipDistance),
+        ).toBe(Math.floor(separated.destination.y))
+        expect(
+          createBetterHintGeometry(
+            hint,
+            orientation,
+            [...CAPTURE_HINTS].reverse(),
+          ),
+        ).toEqual(separated)
+        expect(createBetterHintGeometry(hint, orientation, [hint])).toEqual(
+          baseline,
+        )
+      }
+      expect(CAPTURE_HINTS).toEqual(originalHints)
+    },
+  )
+
+  it.each(["white", "black"] as const)(
+    "keeps a readable dashed shaft for short shared arrivals from %s",
+    (orientation) => {
+      const hints = [
+        PAWN_HINT,
+        { color: "black", from: "e5", to: "e4", uci: "e5e4" },
+        { color: "white", from: "d3", to: "e4", uci: "d3e4" },
+      ] as const satisfies readonly BetterHint[]
+      for (const hint of hints) {
+        const baseline = createBetterHintGeometry(hint, orientation)
+        const separated = createBetterHintGeometry(hint, orientation, hints)
+        const shaftLength =
+          separated.shaftEnd -
+          BETTER_HINT_RIBBON.shaftHeadOverlap -
+          BETTER_HINT_RIBBON.sourceOffset
+        const [dash = 0, gap = 0] = separated.opponentDash
+          .split(" ")
+          .map(Number)
+        expect(separated.shaftEnd).toBeLessThan(baseline.shaftEnd)
+        expect(shaftLength).toBeGreaterThanOrEqual(
+          BETTER_HINT_RIBBON.minimumShaftLength,
+        )
+        expect(dash).toBeGreaterThan(0)
+        expect(gap).toBeGreaterThan(0)
+        expect(dash + gap).toBeLessThan(shaftLength)
+        expect(separated.ribbonPath).not.toMatch(/NaN|Infinity/)
+      }
+    },
+  )
+
+  it.each(["white", "black"] as const)(
+    "separates a stationary-king castle by its rendered rook destination for %s",
+    (orientation) => {
+      const castle = {
+        color: "white",
+        from: "g1",
+        to: "g1",
+        uci: "g1h1",
+        castling: { rookFrom: "h1", rookTo: "f1", side: "king" },
+      } as const satisfies BetterHint
+      const hints = [
+        castle,
+        { color: "white", from: "h2", to: "f1", uci: "h2f1" },
+      ] as const satisfies readonly BetterHint[]
+      const baseline = createBetterHintGeometry(castle, orientation)
+      const separated = createBetterHintGeometry(castle, orientation, hints)
+      expect(separated).toMatchObject({
+        piece: baseline.piece,
+        source: baseline.source,
+        destination: baseline.destination,
+        rotationDegrees: baseline.rotationDegrees,
+      })
+      expect(baseline.shaftEnd - separated.shaftEnd).toBeCloseTo(
+        BETTER_HINT_RIBBON.sharedDestinationInset,
+      )
+      expect(separated.headPath).toContain(
+        `L ${2 - BETTER_HINT_RIBBON.sharedDestinationInset} 0`,
+      )
+    },
+  )
+
   it("rotates the same move and its source frame with the board", () => {
     expect(createBetterHintGeometry(PAWN_HINT, "white")).toMatchObject({
       piece: { x: 4.5, y: 6.5 },
