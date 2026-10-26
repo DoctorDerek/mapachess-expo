@@ -141,11 +141,11 @@ export default function MatchCelebration({
     >
       <ScrollActions
         actions={
-          <div className="relative px-2 pb-6">
-            <div className="flex flex-wrap gap-2">
+          <div>
+            <div className="flex flex-wrap-reverse gap-2">
               <MapachessButton
                 autoFocus
-                className="min-h-12 min-w-0 flex-1 basis-40 px-2! text-base wrap-break-word"
+                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
                 onClick={onDismiss}
                 ref={reviewButton}
                 type="button"
@@ -154,14 +154,14 @@ export default function MatchCelebration({
                 {messages.reviewBoard}
               </MapachessButton>
               <MapachessButton
-                className="min-h-12 min-w-0 flex-1 basis-40 px-2! text-base wrap-break-word"
+                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
                 disabled={disabled}
                 onClick={nextAction}
                 type="button"
               >
                 {copy.gameplay.resultActions[action]}
                 {actionOpponent !== undefined ? (
-                  <span className="mt-1 block text-base font-normal">
+                  <span className="mt-1 block text-base leading-snug font-normal">
                     {actionElo === undefined
                       ? animalCopy.opponent(actionOpponent.id)
                       : copy.gameplay.opponentAndElo(
@@ -172,7 +172,6 @@ export default function MatchCelebration({
                 ) : null}
               </MapachessButton>
             </div>
-            {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
           </div>
         }
       >
@@ -213,7 +212,7 @@ export default function MatchCelebration({
             )}
           </div>
         </div>
-        <div className="relative grid min-w-0 gap-3 px-3 pb-2">
+        <div className="relative grid min-w-0 gap-3 px-3 pb-6">
           {reward === null ? null : (
             <MatchLevelProgress
               afterXp={reward.totalXpBefore + reward.awardedXp}
@@ -251,6 +250,7 @@ export default function MatchCelebration({
           {match.mode === "story" && medal !== null && next === undefined ? (
             <p className="text-sm font-bold">{messages.storyComplete}</p>
           ) : null}
+          {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
         </div>
       </ScrollActions>
     </dialog>
