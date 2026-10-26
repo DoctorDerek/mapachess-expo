@@ -1,5 +1,6 @@
 "use client"
 
+import cx from "classix"
 import {
   useEffect,
   useRef,
@@ -34,13 +35,21 @@ export type FullPageProfilePanelProps = Readonly<{
 export type ProfileCardProps = Readonly<{
   children: ReactNode
   labelledBy: string
+  className?: string
 }>
 
-export function ProfileCard({ children, labelledBy }: ProfileCardProps) {
+export function ProfileCard({
+  children,
+  labelledBy,
+  className,
+}: ProfileCardProps) {
   return (
     <section
       aria-labelledby={labelledBy}
-      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal mx-auto w-full max-w-3xl rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.25rem,4vw,2.5rem)] shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
+      className={cx(
+        "border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal mx-auto w-full max-w-3xl rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.25rem,4vw,2.5rem)] shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none",
+        className,
+      )}
     >
       {children}
     </section>

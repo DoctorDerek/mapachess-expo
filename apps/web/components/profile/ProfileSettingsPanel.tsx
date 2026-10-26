@@ -212,12 +212,14 @@ export default function ProfileSettingsPanel({
                       </p>
                     </div>
                     <MapachessButton
+                      aria-label={copy.profile.resetRating(label)}
+                      className="px-3! py-2! text-base"
                       disabled={busy}
                       onClick={() => navigation.open(`reset-${variant}`)}
                       type="button"
                       variant="secondary"
                     >
-                      {copy.profile.resetRating(label)}
+                      {copy.profile.resetAction}
                     </MapachessButton>
                   </div>
                 )
@@ -283,6 +285,15 @@ export default function ProfileSettingsPanel({
           <p className="text-mapachito-charcoal mt-3 text-sm leading-[1.55] font-semibold opacity-76">
             {messages.dataStaysOnThisDeviceUnlessYou}
           </p>
+          {importIssue === null ? null : (
+            <MapachessNotice
+              tone="warning"
+              className="mt-4 text-sm"
+              role="alert"
+            >
+              {importIssueMessage(importIssue, copy.profile)}
+            </MapachessNotice>
+          )}
           <div className="mt-4 flex flex-wrap gap-3">
             <MapachessButton
               aria-busy={exporting}
@@ -327,11 +338,6 @@ export default function ProfileSettingsPanel({
           </MapachessButton>
         </div>
 
-        {importIssue === null ? null : (
-          <MapachessNotice tone="warning" className="mt-5 text-sm" role="alert">
-            {importIssueMessage(importIssue, copy.profile)}
-          </MapachessNotice>
-        )}
         {activityMessage === null ? null : (
           <p className="sr-only" role="status">
             {activityMessage}
