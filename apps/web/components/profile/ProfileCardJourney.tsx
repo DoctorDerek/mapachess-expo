@@ -84,27 +84,29 @@ export default function ProfileCardJourney({
   }, [open, preview])
   if (!open) return null
   const busy = snapshot.matches("saving") || !profile.matches("ready")
+  const recoveryActions = (
+    <ProfileAction
+      onClick={navigation.back}
+      disabled={busy}
+      className="bg-mapachito-violet"
+    >
+      {messages.back}
+    </ProfileAction>
+  )
   return (
     <section
       hidden={blocked}
       inert={blocked}
       aria-labelledby="personal-card-title"
-      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-y-auto px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
+      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-hidden px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
-      <div className="max-w-mapachess mx-auto">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <ProfileAction
-            onClick={navigation.back}
-            disabled={busy}
-            className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
-          >
-            <span aria-hidden="true">←</span> {messages.back}
-          </ProfileAction>
+      <div className="max-w-mapachess mx-auto grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
+        <header className="mb-4">
           <h1
             id="personal-card-title"
             ref={title}
             tabIndex={-1}
-            className="text-2xl font-black outline-none"
+            className="text-xl font-black outline-none"
           >
             {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
           </h1>
@@ -113,7 +115,7 @@ export default function ProfileCardJourney({
           <div
             role="alertdialog"
             aria-labelledby="unsaved-card-title"
-            className="mx-auto max-w-xl p-5"
+            className="mx-auto max-w-xl overflow-y-auto p-5"
           >
             <h2 id="unsaved-card-title" className="text-2xl font-bold">
               {messages.keepYourAppearanceChanges}
@@ -144,30 +146,36 @@ export default function ProfileCardJourney({
           </div>
         ) : null}
         {preview ? (
-          <RecoverableView
-            title={messages.theProfileCardPreviewCouldNotBe}
-            description={messages.yourAppearanceChangesAreStillHereTry}
-          >
-            <ProfileCardPreview
-              data={data}
-              appearance={dressing ? snapshot.context.draft : data.appearance}
-              ratingContext={
-                dressing
-                  ? snapshot.context.draftRatingContext
-                  : data.settings.cardRatingContext
-              }
-              unsaved={dressing && dirty}
-            />
-          </RecoverableView>
+          <div className="h-full min-h-0 overflow-y-auto">
+            <RecoverableView
+              title={messages.theProfileCardPreviewCouldNotBe}
+              description={messages.yourAppearanceChangesAreStillHereTry}
+              actions={recoveryActions}
+            >
+              <ProfileCardPreview
+                onBack={navigation.back}
+                data={data}
+                appearance={dressing ? snapshot.context.draft : data.appearance}
+                ratingContext={
+                  dressing
+                    ? snapshot.context.draftRatingContext
+                    : data.settings.cardRatingContext
+                }
+                unsaved={dressing && dirty}
+              />
+            </RecoverableView>
+          </div>
         ) : null}
         {dressing ? (
           <div
+            className="h-full min-h-0 overflow-y-auto"
             hidden={preview || snapshot.matches("confirmingDiscard")}
             inert={preview || snapshot.matches("confirmingDiscard")}
           >
             <RecoverableView
               title={messages.customizationCouldNotBeDisplayed}
               description={messages.yourAppearanceChangesAreStillHereTry2}
+              actions={recoveryActions}
             >
               <ProfileDressingRoom
                 active={

@@ -13,6 +13,7 @@ import {
 } from "../../lib/presentation/profileCardArtwork"
 import { saveProfileCardFile } from "../../lib/presentation/profileCardExport"
 import profileCardExportMachine from "../../lib/presentation/profileCardExportMachine"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
 import { ProfileArtwork } from "./ProfileCard"
@@ -36,11 +37,13 @@ export default function ProfileCardPreview({
   appearance,
   ratingContext,
   unsaved,
+  onBack,
 }: Readonly<{
   data: MapachessPlayerData
   appearance: PlayerAppearance
   ratingContext: CardRatingContext
   unsaved: boolean
+  onBack: () => void
 }>) {
   const copy = useMapachessCopy()
   const locale = useMapachessLocale()
@@ -85,7 +88,72 @@ export default function ProfileCardPreview({
     }
   }
   return (
-    <div className="mx-auto max-w-5xl">
+    <ScrollActions
+      className="mx-auto w-full max-w-5xl"
+      actions={
+        <>
+          <p role="status" className="mb-2 min-h-12 text-base">
+            {snapshot.matches("preparing")
+              ? copy.profile.preparingFormat(format)
+              : (message === "downloadRequested"
+                  ? copy.profile.downloadRequested(format)
+                  : message === null
+                    ? null
+                    : copy.profile[message]) ||
+                (!shareAvailable && file !== null
+                  ? copy.profile.saveToShare
+                  : "")}
+          </p>
+          {snapshot.matches("failed") ? (
+            <div role="alert" className="mb-3">
+              <p>
+                {messages.imagePreparationFailedYourAppearancePreviewChoices}
+              </p>
+              <ProfileAction
+                onClick={() => actor.send({ type: "CARD.RETRY_REQUESTED" })}
+                className="bg-mapachito-violet mt-3"
+              >
+                {copy.profile.retryFormat(format)}
+              </ProfileAction>
+            </div>
+          ) : null}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,4.5rem),1fr))] gap-2">
+            <ProfileAction
+              onClick={onBack}
+              disabled={sharing}
+              className="bg-mapachito-charcoal shadow-mapachess-raised shadow-mapachito-violet px-2! py-2! text-base!"
+            >
+              {copy.interface.profileCardJourney.back}
+            </ProfileAction>
+            <ProfileAction
+              onClick={() => {
+                if (file !== null) {
+                  try {
+                    saveProfileCardFile(file)
+                    setMessage("downloadRequested")
+                  } catch {
+                    setMessage("downloadFailed")
+                  }
+                }
+              }}
+              disabled={file === null || sharing}
+              className="bg-mapachito-green shadow-mapachess-raised shadow-mapachito-deep-cyan px-2! py-2! text-base!"
+            >
+              <span aria-hidden="true">↓</span>{" "}
+              {copy.profile.saveFormat(format)}
+            </ProfileAction>
+            <ProfileAction
+              onClick={() => void share()}
+              disabled={!shareAvailable || sharing}
+              className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry px-2! py-2! text-base!"
+            >
+              <span aria-hidden="true">↗</span>{" "}
+              {copy.profile.shareFormat(format)}
+            </ProfileAction>
+          </div>
+        </>
+      }
+    >
       <div
         role="group"
         aria-label={messages.imageFormat}
@@ -160,52 +228,6 @@ export default function ProfileCardPreview({
           {messages.previewingUnsavedAppearanceImageExportDoesNot}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-3">
-        <ProfileAction
-          onClick={() => {
-            if (file !== null) {
-              try {
-                saveProfileCardFile(file)
-                setMessage("downloadRequested")
-              } catch {
-                setMessage("downloadFailed")
-              }
-            }
-          }}
-          disabled={file === null || sharing}
-          className="bg-mapachito-green shadow-mapachess-raised shadow-mapachito-deep-cyan"
-        >
-          <span aria-hidden="true">↓</span> {copy.profile.saveFormat(format)}
-        </ProfileAction>
-        <ProfileAction
-          onClick={() => void share()}
-          disabled={!shareAvailable || sharing}
-          className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
-        >
-          <span aria-hidden="true">↗</span> {copy.profile.shareFormat(format)}
-        </ProfileAction>
-      </div>
-      <p role="status" className="mt-4 min-h-6 text-base">
-        {snapshot.matches("preparing")
-          ? copy.profile.preparingFormat(format)
-          : (message === "downloadRequested"
-              ? copy.profile.downloadRequested(format)
-              : message === null
-                ? null
-                : copy.profile[message]) ||
-            (!shareAvailable && file !== null ? copy.profile.saveToShare : "")}
-      </p>
-      {snapshot.matches("failed") ? (
-        <div role="alert">
-          <p>{messages.imagePreparationFailedYourAppearancePreviewChoices}</p>
-          <ProfileAction
-            onClick={() => actor.send({ type: "CARD.RETRY_REQUESTED" })}
-            className="bg-mapachito-violet mt-3"
-          >
-            {copy.profile.retryFormat(format)}
-          </ProfileAction>
-        </div>
-      ) : null}
-    </div>
+    </ScrollActions>
   )
 }

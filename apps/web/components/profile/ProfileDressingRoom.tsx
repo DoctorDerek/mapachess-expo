@@ -15,6 +15,7 @@ import {
   cardFacts,
   INITIAL_CARD_CONTENT,
 } from "../../lib/presentation/profileCardArtwork"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import PlayerAnimalChoices from "./PlayerAnimalChoices"
 import ProfileAction from "./ProfileAction"
@@ -134,193 +135,223 @@ export default function ProfileDressingRoom({
                 }))
               : []
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="min-w-0">
-        <ProfileCard
-          data={data}
-          appearance={draft}
-          ratingContext={ratingContext}
-        />
-        <fieldset className="mt-5 flex flex-wrap gap-4">
-          <legend className="sr-only">{copy.profile.cardRatings}</legend>
-          <label className="flex min-w-0 flex-col gap-2">
-            {copy.profile.cardTimeCategory}
-            <select
-              value={ratingContext.category}
+    <ScrollActions
+      actions={
+        <>
+          {failed ? (
+            <div role="alert" className="mb-3">
+              <p>{messages.appearanceCouldNotBeSavedLocallyYour}</p>
+              <ProfileAction
+                onClick={onRetry}
+                className="bg-mapachito-violet mt-2"
+              >
+                {messages.retrySave}
+              </ProfileAction>
+            </div>
+          ) : null}
+          <p role="status" className="sr-only">
+            {dirty ? dressing.unsaved : null}
+          </p>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-3">
+            <ProfileAction
+              className="bg-mapachito-charcoal shadow-mapachess-raised shadow-mapachito-violet px-2! py-2! text-base!"
+              onClick={onCancel}
               disabled={busy}
-              onChange={(event) => {
-                const category = TIME_CATEGORIES.find(
-                  (value) => value === event.target.value,
-                )
-                if (category !== undefined)
-                  onRatingContextChanged({ ...ratingContext, category })
-              }}
-              className="bg-mapachito-surface min-h-12 rounded-lg p-3 font-bold"
             >
-              {TIME_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {copy.gameplay.clock.category[category]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex min-w-0 flex-col gap-2">
-            {copy.profile.cardAssistance}
-            <select
-              value={ratingContext.assistance}
-              disabled={busy}
-              onChange={(event) => {
-                const assistance = MATCH_MEDALS.find(
-                  (value) => value === event.target.value,
-                )
-                if (assistance !== undefined)
-                  onRatingContextChanged({ ...ratingContext, assistance })
-              }}
-              className="bg-mapachito-surface min-h-12 rounded-lg p-3 font-bold"
+              {dirty
+                ? messages.cancelChanges
+                : copy.interface.profileCardJourney.back}
+            </ProfileAction>
+            <ProfileAction
+              className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry px-2! py-2! text-base!"
+              onClick={onSave}
+              disabled={busy || !dirty}
             >
-              {MATCH_MEDALS.map((assistance) => (
-                <option key={assistance} value={assistance}>
-                  {copy.shared.story.medals[assistance]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </fieldset>
-        <p role="status" className="mt-4 min-h-6 text-base">
-          {busy ? dressing.saving : dirty ? dressing.unsaved : dressing.saved}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          <ProfileAction
-            className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
-            onClick={onSave}
-            disabled={busy || !dirty}
-          >
-            <span aria-hidden="true">✓</span> {messages.saveAppearance}
-          </ProfileAction>
-          <ProfileAction
-            className="bg-mapachito-blue shadow-mapachess-raised shadow-mapachito-deep-cyan"
-            onClick={onShare}
-            disabled={busy}
-          >
-            <span aria-hidden="true">↗</span> {messages.shareProfileCard}
-          </ProfileAction>
-          <ProfileAction
-            className="bg-mapachito-charcoal shadow-mapachess-raised shadow-mapachito-violet"
-            onClick={onCancel}
-            disabled={busy}
-          >
-            <span aria-hidden="true">×</span> {messages.cancelChanges}
-          </ProfileAction>
+              {busy
+                ? dressing.saving
+                : dirty
+                  ? messages.saveAppearance
+                  : dressing.saved}
+            </ProfileAction>
+          </div>
+        </>
+      }
+    >
+      <div className="grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] xl:grid-rows-[auto_auto_1fr] xl:gap-6">
+        <div className="bg-profile-card-cyan from-profile-card-mint relative mx-auto h-36 w-full max-w-sm rounded-lg bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66% xl:col-start-1 xl:row-start-1 xl:h-64 xl:max-w-none">
+          <ProfileArtwork
+            input={{
+              locale,
+              appearance: draft,
+              facts: cardFacts(data, ratingContext),
+              content: INITIAL_CARD_CONTENT,
+              format: "GIF",
+            }}
+            fitStage
+          />
         </div>
-        {failed ? (
-          <div role="alert" className="mt-4">
-            <p>{messages.appearanceCouldNotBeSavedLocallyYour}</p>
-            <ProfileAction
-              onClick={onRetry}
-              className="bg-mapachito-violet mt-3"
-            >
-              {messages.retrySave}
-            </ProfileAction>
-          </div>
-        ) : null}
-      </div>
-      <div className="min-w-0">
-        <div
-          role="group"
-          aria-label={messages.appearanceCategories}
-          className="flex flex-wrap gap-3"
-        >
-          {(
-            ["Clothes", "Weapons", "Hair", "Skin", "Face", "Animal"] as const
-          ).map((name) => (
-            <ProfileAction
-              key={name}
-              disabled={busy}
-              aria-pressed={category === name}
-              onClick={() => {
-                setCategory(name)
-                setColors(false)
-              }}
-              className={cx(
-                "bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry",
-                category === name &&
-                  "ring-offset-mapachito-charcoal ring-2 ring-white ring-offset-4",
-              )}
-            >
-              {dressing.categories[name]}
-            </ProfileAction>
-          ))}
-        </div>
-        {category === "Clothes" ||
-        category === "Hair" ||
-        (category === "Weapons" && weapon.variants.length > 1) ? (
-          <div
-            className="my-4 flex flex-wrap gap-3"
-            role="group"
-            aria-label={dressing.choices(dressing.categories[category])}
-          >
-            <ProfileAction
-              aria-pressed={!colors}
-              className="bg-mapachito-blue"
-              onClick={() => setColors(false)}
-            >
-              {messages.styles}
-            </ProfileAction>
-            <ProfileAction
-              aria-pressed={colors}
-              className="bg-mapachito-blue"
-              onClick={() => setColors(true)}
-            >
-              {messages.colors}
-            </ProfileAction>
-          </div>
-        ) : null}
-        {category === "Animal" ? (
-          <div className="mt-5">
-            <PlayerAnimalChoices
-              active={active}
-              disabled={busy}
-              onSelected={(animal) => onChange({ ...draft, animal })}
-              selectedId={draft.animal}
-              storyProgress={data.storyProgress}
-            />
-          </div>
-        ) : (
+        <div className="min-w-0 xl:col-start-2 xl:row-span-3 xl:row-start-1">
           <div
             role="group"
-            aria-label={dressing.selection(dressing.categories[category])}
-            className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-3"
+            aria-label={messages.appearanceCategories}
+            className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,5rem),1fr))] gap-2"
           >
-            {options.map(({ label, selected, appearance }) => (
-              <button
-                type="button"
-                key={label}
+            {(
+              ["Clothes", "Weapons", "Hair", "Skin", "Face", "Animal"] as const
+            ).map((name) => (
+              <ProfileAction
+                key={name}
                 disabled={busy}
-                aria-pressed={selected}
-                onClick={() => onChange(appearance)}
+                aria-pressed={category === name}
+                onClick={() => {
+                  setCategory(name)
+                  setColors(false)
+                }}
                 className={cx(
-                  "text-mapachito-white bg-mapachito-surface cursor-pointer rounded-lg px-2 py-2 text-base font-bold",
-                  selected && "ring-profile-card-cyan ring-3",
+                  "bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry px-2! py-2! text-base!",
+                  category === name &&
+                    "ring-offset-mapachito-charcoal ring-2 ring-white ring-offset-4",
                 )}
               >
-                <ProfileArtwork
-                  input={{
-                    locale,
-                    appearance,
-                    facts: cardFacts(data),
-                    content: {
-                      ...INITIAL_CARD_CONTENT,
-                      animal: false,
-                    },
-                    format: "PNG",
-                  }}
-                />
-                <span>{label}</span>
-              </button>
+                {dressing.categories[name]}
+              </ProfileAction>
             ))}
           </div>
-        )}
+          {category === "Clothes" ||
+          category === "Hair" ||
+          (category === "Weapons" && weapon.variants.length > 1) ? (
+            <div
+              className="my-2 flex flex-wrap gap-3"
+              role="group"
+              aria-label={dressing.choices(dressing.categories[category])}
+            >
+              <ProfileAction
+                aria-pressed={!colors}
+                className="bg-mapachito-blue px-2! py-2! text-base!"
+                onClick={() => setColors(false)}
+              >
+                {messages.styles}
+              </ProfileAction>
+              <ProfileAction
+                aria-pressed={colors}
+                className="bg-mapachito-blue px-2! py-2! text-base!"
+                onClick={() => setColors(true)}
+              >
+                {messages.colors}
+              </ProfileAction>
+            </div>
+          ) : null}
+          {category === "Animal" ? (
+            <div className="mt-5">
+              <PlayerAnimalChoices
+                active={active}
+                disabled={busy}
+                onSelected={(animal) => onChange({ ...draft, animal })}
+                selectedId={draft.animal}
+                storyProgress={data.storyProgress}
+              />
+            </div>
+          ) : (
+            <div
+              role="group"
+              aria-label={dressing.selection(dressing.categories[category])}
+              className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(100%,5rem),1fr))] gap-2"
+            >
+              {options.map(({ label, selected, appearance }) => (
+                <button
+                  type="button"
+                  key={label}
+                  disabled={busy}
+                  aria-pressed={selected}
+                  onClick={() => onChange(appearance)}
+                  className={cx(
+                    "text-mapachito-white bg-mapachito-surface cursor-pointer rounded-lg px-2 py-2 text-base font-bold",
+                    selected && "ring-profile-card-cyan ring-3",
+                  )}
+                >
+                  <ProfileArtwork
+                    input={{
+                      locale,
+                      appearance,
+                      facts: cardFacts(data),
+                      content: {
+                        ...INITIAL_CARD_CONTENT,
+                        animal: false,
+                      },
+                      format: "PNG",
+                    }}
+                  />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <details className="min-w-0 xl:col-start-1 xl:row-start-2">
+          <summary className="min-h-12 cursor-pointer content-center text-lg font-bold focus-visible:outline-2">
+            {copy.profile.cardRatings}
+          </summary>
+          <fieldset className="mt-3 flex min-w-0 flex-wrap gap-4">
+            <legend className="sr-only">{copy.profile.cardRatings}</legend>
+            <label className="flex min-w-0 flex-col gap-2">
+              {copy.profile.cardTimeCategory}
+              <select
+                value={ratingContext.category}
+                disabled={busy}
+                onChange={(event) => {
+                  const category = TIME_CATEGORIES.find(
+                    (value) => value === event.target.value,
+                  )
+                  if (category !== undefined)
+                    onRatingContextChanged({ ...ratingContext, category })
+                }}
+                className="bg-mapachito-surface min-h-12 rounded-lg p-3 font-bold"
+              >
+                {TIME_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {copy.gameplay.clock.category[category]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-2">
+              {copy.profile.cardAssistance}
+              <select
+                value={ratingContext.assistance}
+                disabled={busy}
+                onChange={(event) => {
+                  const assistance = MATCH_MEDALS.find(
+                    (value) => value === event.target.value,
+                  )
+                  if (assistance !== undefined)
+                    onRatingContextChanged({ ...ratingContext, assistance })
+                }}
+                className="bg-mapachito-surface min-h-12 rounded-lg p-3 font-bold"
+              >
+                {MATCH_MEDALS.map((assistance) => (
+                  <option key={assistance} value={assistance}>
+                    {copy.shared.story.medals[assistance]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </fieldset>
+          <div className="mt-4">
+            <ProfileCard
+              data={data}
+              appearance={draft}
+              ratingContext={ratingContext}
+            />
+          </div>
+        </details>
+        <ProfileAction
+          className="bg-mapachito-blue shadow-mapachess-raised shadow-mapachito-deep-cyan justify-self-start xl:col-start-1 xl:row-start-3"
+          onClick={onShare}
+          disabled={busy}
+        >
+          <span aria-hidden="true">↗</span> {messages.shareProfileCard}
+        </ProfileAction>
       </div>
-    </div>
+    </ScrollActions>
   )
 }
