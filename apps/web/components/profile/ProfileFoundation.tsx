@@ -20,12 +20,14 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 
 const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
+  actions?: ReactNode
   description: string
   eyebrow: string
   live?: "assertive" | "off" | "polite"
@@ -62,29 +64,61 @@ export default function FullPageProfilePanel({
   eyebrow,
   live = "off",
   title,
+  actions,
 }: FullPageProfilePanelProps) {
-  return (
+  const content = (
+    <>
+      <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
+        {eyebrow}
+      </p>
+      <h1
+        className={cx(
+          "font-display text-mapachito-charcoal mt-4 font-black",
+          actions === undefined
+            ? "text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] tracking-[-0.035em] text-balance uppercase font-stretch-condensed"
+            : "text-3xl leading-tight",
+        )}
+      >
+        {title}
+      </h1>
+      <p className="text-mapachito-charcoal mt-6 max-w-xl text-base leading-[1.65] font-semibold opacity-82">
+        {description}
+      </p>
+      {children}
+    </>
+  )
+  const brand = (
+    <div className="mb-5 pl-1">
+      <MapachessWordmark />
+    </div>
+  )
+  return actions === undefined ? (
     <MapachessShell as="main" className="grid place-items-center">
       <div className="w-full max-w-3xl">
-        <div className="mb-5 pl-1">
-          <MapachessWordmark />
-        </div>
+        {brand}
         <section
           aria-live={live}
           className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal min-h-[min(42rem,calc(100dvh-8rem))] rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-[clamp(1.5rem,5vw,3.5rem)] shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none"
         >
-          <p className="text-mapachito-violet font-mono text-xs leading-[1.3] font-black tracking-[0.18em] uppercase">
-            {eyebrow}
-          </p>
-          <h1 className="font-display text-mapachito-charcoal mt-4 text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.86] font-black tracking-[-0.035em] text-balance uppercase font-stretch-condensed">
-            {title}
-          </h1>
-          <p className="text-mapachito-charcoal mt-6 max-w-xl text-base leading-[1.65] font-semibold opacity-82">
-            {description}
-          </p>
-          {children}
+          {content}
         </section>
       </div>
+    </MapachessShell>
+  ) : (
+    <MapachessShell
+      as="main"
+      spacing="setup"
+      className="h-dvh overflow-hidden!"
+    >
+      <section
+        aria-live={live}
+        className="bg-mapachito-white text-mapachito-charcoal mx-auto h-full max-w-3xl rounded-xl p-3"
+      >
+        <ScrollActions actions={actions}>
+          {brand}
+          {content}
+        </ScrollActions>
+      </section>
     </MapachessShell>
   )
 }
