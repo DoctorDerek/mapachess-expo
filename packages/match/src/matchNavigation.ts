@@ -3,6 +3,7 @@ import {
   type HintAssistanceTier,
 } from "./autoHintMode.js"
 import { MATCH_VARIANTS, type MatchVariant } from "./matchVariant.js"
+import { PLAYER_INPUT_ACTIONS, type PlayerInputAction } from "./playerInput.js"
 import { TIME_CATEGORIES, type TimeCategory } from "./timeControl.js"
 
 export type MatchNavigationOverlay =
@@ -10,6 +11,11 @@ export type MatchNavigationOverlay =
   | "match-details"
   | "match-hints"
   | "settings"
+  | "settings-coach"
+  | "settings-pieces"
+  | "settings-board"
+  | "settings-controls"
+  | `control-binding-${PlayerInputAction}`
   | "auto-hints-help"
   | "classifications"
   | "about-elo"
@@ -43,6 +49,13 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "match-details",
   "match-hints",
   "settings",
+  "settings-coach",
+  "settings-pieces",
+  "settings-board",
+  "settings-controls",
+  ...PLAYER_INPUT_ACTIONS.map(
+    (action): MatchNavigationOverlay => `control-binding-${action}`,
+  ),
   "auto-hints-help",
   "classifications",
   "about-elo",
@@ -114,8 +127,11 @@ export function eligibleMatchNavigationOverlays(
       ((overlay === "classifications" ||
         overlay === "credits" ||
         overlay === "about-elo" ||
+        overlay.startsWith("settings-") ||
         overlay.startsWith("reset-")) &&
         result.includes("settings")) ||
+      (overlay.startsWith("control-binding-") &&
+        result.includes("settings-controls")) ||
       (overlay === "auto-hints-help" &&
         (result.includes("settings") || destination.screen === "match")) ||
       (overlay.startsWith("setup-") && destination.screen === "setup") ||
