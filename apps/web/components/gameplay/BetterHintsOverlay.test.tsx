@@ -1,6 +1,7 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import createBetterHintGeometry from "@mapachess/match-presentation/better-hint-geometry"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -33,6 +34,93 @@ const countOccurrences = (value: string, pattern: string): number =>
   value.match(new RegExp(pattern, "g"))?.length ?? 0
 
 describe("Better Hints board presentation", () => {
+  it.each(["white", "black"] as const)(
+    "renders separated capture heads with unchanged targets and announcements for %s",
+    (orientation) => {
+      const hints = {
+        ...HINTS,
+        player: [
+          { color: "white", from: "h5", to: "f7", uci: "h5f7" },
+          { color: "white", from: "d2", to: "d4", uci: "d2d4" },
+          { color: "white", from: "c4", to: "f7", uci: "c4f7" },
+        ],
+        opponent: [
+          { color: "black", from: "d8", to: "e7", uci: "d8e7" },
+          { color: "black", from: "g7", to: "g6", uci: "g7g6" },
+          { color: "black", from: "g8", to: "h6", uci: "g8h6" },
+        ],
+      } as const satisfies BetterHintsResult
+      const markup = renderToStaticMarkup(
+        createElement(BetterHintsOverlay, {
+          hints,
+          orientation,
+          showMoves: true,
+        }),
+      )
+      expect(countOccurrences(markup, 'data-hint-kind="source"')).toBe(6)
+      expect(countOccurrences(markup, 'data-hint-kind="move"')).toBe(6)
+      expect(countOccurrences(markup, "<path")).toBe(6)
+      expect(
+        countOccurrences(
+          markup,
+          orientation === "white"
+            ? 'data-destination-x="5.5" data-destination-y="1.5"'
+            : 'data-destination-x="2.5" data-destination-y="6.5"',
+        ),
+      ).toBe(2)
+      for (const hint of hints.player) {
+        const geometry = createBetterHintGeometry(
+          hint,
+          orientation,
+          hints.player,
+        )
+        expect(markup).toContain(`d="${geometry.ribbonPath}"`)
+        if (hint.to === "f7")
+          expect(markup).not.toContain(
+            `d="${createBetterHintGeometry(hint, orientation).ribbonPath}"`,
+          )
+      }
+      const announcement = renderToStaticMarkup(
+        createElement(BetterHintsControl, {
+          hints,
+          matchComplete: false,
+          stage: "move-hints",
+          onMoveHintsRequested: vi.fn(),
+          onPieceHintsRequested: vi.fn(),
+        }),
+      )
+      expect(announcement).toContain(
+        "Player Move Hints: h5 to f7; d2 to d4; c4 to f7.",
+      )
+    },
+  )
+
+  it("includes both owners when resolving shared arrow destinations", () => {
+    const opponent = {
+      color: "black",
+      from: "e5",
+      to: "e4",
+      uci: "e5e4",
+    } as const
+    const hints = { ...HINTS, opponent: [opponent] }
+    const markup = renderToStaticMarkup(
+      createElement(BetterHintsOverlay, {
+        hints,
+        orientation: "white",
+        showMoves: true,
+      }),
+    )
+    const geometry = createBetterHintGeometry(opponent, "white", [
+      ...hints.player,
+      ...hints.opponent,
+    ])
+    expect(markup).toContain(`d="${geometry.headPath}"`)
+    expect(markup).not.toContain(
+      `d="${createBetterHintGeometry(opponent, "white").headPath}"`,
+    )
+    expect(markup).toContain(`stroke-dasharray="${geometry.opponentDash}"`)
+  })
+
   it("distinguishes castling gestures from an ordinary king move to the same square", () => {
     const layout = parseChess960PositionId(0)
     if (!layout.ok) throw new Error("Invalid test layout")

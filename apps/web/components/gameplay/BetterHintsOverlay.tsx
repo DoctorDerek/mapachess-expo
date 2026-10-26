@@ -76,11 +76,12 @@ export default function BetterHintsOverlay({
   orientation,
   showMoves,
 }: BetterHintsOverlayProps) {
+  const visibleHints = [...hints.player, ...hints.opponent]
   const ownedHints = (["player", "opponent"] as const).flatMap((owner) =>
     hints[owner].map((hint) => ({
       owner,
       uci: hint.uci,
-      geometry: createBetterHintGeometry(hint, orientation),
+      geometry: createBetterHintGeometry(hint, orientation, visibleHints),
     })),
   )
 
