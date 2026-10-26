@@ -38,6 +38,10 @@ for (const width of [390, 1440]) {
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
     await page
+      .locator("summary")
+      .filter({ hasText: /^Profile-card ratings$/ })
+      .click()
+    await page
       .getByRole("combobox", { name: "Time category", exact: true })
       .selectOption("blitz")
     await page
@@ -69,9 +73,12 @@ for (const width of [390, 1440]) {
       width: 24,
       height: 24,
     })
+    await expect(page.getByText("Unsaved changes", { exact: true })).toHaveText(
+      "Unsaved changes",
+    )
     await expect(
-      page.getByText("Unsaved changes", { exact: true }),
-    ).toBeVisible()
+      page.getByRole("button", { name: "Save changes", exact: true }),
+    ).toBeEnabled()
     expect((await savedProfile(page)).settings.cardRatingContext).toEqual(
       original.settings.cardRatingContext,
     )
@@ -80,6 +87,10 @@ for (const width of [390, 1440]) {
       .click()
     await page
       .getByRole("button", { name: "Customize profile card", exact: true })
+      .click()
+    await page
+      .locator("summary")
+      .filter({ hasText: /^Profile-card ratings$/ })
       .click()
     await expect(
       page.getByRole("combobox", { name: "Time category", exact: true }),
@@ -344,7 +355,12 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await page.getByRole("button", { name: "Face", exact: true }).click()
   await page.getByRole("button", { name: "Face 5", exact: true }).click()
-  await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole("status").filter({ hasText: "Unsaved changes" }),
+  ).toHaveText("Unsaved changes")
+  await expect(
+    page.getByRole("button", { name: "Save changes", exact: true }),
+  ).toBeEnabled()
   expect((await savedProfile(page)).appearance).toEqual(before.appearance)
   await page
     .getByRole("region", { name: "Customize profile card", exact: true })
@@ -378,7 +394,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
     page.getByRole("radio", { name: "Raccoon Selected", exact: true }),
   ).toBeChecked()
   await page.getByRole("radio", { name: "Chicken", exact: true }).check()
-  await page.getByRole("button", { name: "Back", exact: true }).click()
+  await page.goBack()
   await expect(
     page.getByRole("alertdialog", { name: "Keep your profile-card changes?" }),
   ).toBeVisible()
@@ -538,8 +554,8 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
   await page.getByRole("button", { name: "Weapons", exact: true }).click()
   const artwork = page
     .getByRole("region", { name: "Customize profile card", exact: true })
-    .getByRole("region", { name: /^Your profile card:/ })
     .locator("canvas")
+    .first()
   const fingerprint = () =>
     artwork.evaluate((canvas) => {
       if (!(canvas instanceof HTMLCanvasElement))
@@ -556,7 +572,7 @@ test("previews every weapon and dagger palette, then preserves only saved equipm
     previous = await fingerprint()
   }
   await expect(
-    page.getByRole("button", { name: "Save changes", exact: true }),
+    page.getByRole("button", { name: "Changes saved", exact: true }),
   ).toBeDisabled()
   await page.getByRole("button", { name: "Dagger", exact: true }).click()
   await page.getByRole("button", { name: "Colors", exact: true }).click()
