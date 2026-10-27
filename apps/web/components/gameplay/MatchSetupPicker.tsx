@@ -6,22 +6,38 @@ import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchSetupPicker({
   children,
+  onCancel,
   onDone,
+  disabled,
   title,
 }: Readonly<{
   children: ReactNode
+  onCancel: () => void
   onDone: () => void
+  disabled: boolean
   title: string
 }>) {
   const copy = useMapachessCopy().setup
   const heading = useRef<HTMLHeadingElement>(null)
   useLayoutEffect(() => heading.current?.focus({ preventScroll: true }), [])
   return (
-    <MapachessDialog label={title} onClose={onDone} fixedContent>
+    <MapachessDialog label={title} onClose={onCancel} fixedContent>
       <ScrollActions
         actions={
-          <div className="flex justify-end">
-            <MapachessButton onClick={onDone} type="button">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-2">
+            <MapachessButton
+              className="min-w-0 px-2!"
+              onClick={onCancel}
+              variant="secondary"
+            >
+              {copy.cancel}
+            </MapachessButton>
+            <MapachessButton
+              className="min-w-0 px-2!"
+              disabled={disabled}
+              onClick={onDone}
+              type="button"
+            >
               <span aria-hidden="true">✓ </span>
               {copy.done}
             </MapachessButton>

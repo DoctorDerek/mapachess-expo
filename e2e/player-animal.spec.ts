@@ -87,6 +87,8 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   await raccoon.focus()
   await page.keyboard.press("ArrowRight")
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeChecked()
+  expect(await savedProfile(page)).toEqual(before)
+  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).appearance.animal)
     .toBe("chicken-stockfish")
@@ -96,7 +98,6 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
     appearance: before.appearance,
     revision: before.revision,
   }).toEqual(before)
-  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect(
     page.getByRole("button", { name: /^Play as Chicken/ }),
   ).toBeFocused()
@@ -165,9 +166,12 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
   })
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeChecked()
   await gallery.getByRole("radio", { name: /Raccoon/ }).check()
+  expect((await savedProfile(page)).appearance.animal).toBe("chicken-stockfish")
+  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).appearance.animal)
     .toBe("raccoon-stockfish")
   await page.reload()
+  await page.getByRole("button", { name: /^Play as / }).click()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
 })

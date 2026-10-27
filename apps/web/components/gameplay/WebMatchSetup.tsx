@@ -36,17 +36,11 @@ import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MedalSymbol from "../presentation/MedalSymbol"
 import ScrollActions from "../presentation/ScrollActions"
-import AutoHintModeChoices from "../profile/AutoHintModeChoices"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
-import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
-import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
 import Chess960PositionChoice from "./Chess960PositionChoice"
 import MatchColorChoices from "./MatchColorChoices"
-import MatchSetupPicker from "./MatchSetupPicker"
-import StoryLadderProgress from "./StoryLadderProgress"
-import TimeControlChoices from "./TimeControlChoices"
+import MatchSetupEditor, { type SetupEditor } from "./MatchSetupEditor"
 
 export type WebMatchSetupProps = Readonly<{
   header?: ReactNode
@@ -67,9 +61,6 @@ export type WebMatchSetupProps = Readonly<{
   onEditorOpened: (editor: SetupEditor) => void
   onEditorClosed: () => void
 }>
-
-type SetupEditor =
-  "opponent" | "difficulty" | "hints" | "player" | "time-control"
 
 function MatchSetupChoice({
   label,
@@ -163,13 +154,24 @@ export default function WebMatchSetup({
     ),
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
+  const editorTrigger = useRef<HTMLButtonElement | null>(null)
   const openEditor = (
     editor: SetupEditor,
     trigger: HTMLButtonElement,
   ): void => {
     trigger.focus({ preventScroll: true })
+    editorTrigger.current = trigger
     onEditorOpened(editor)
   }
+  useEffect(() => {
+    if (!visible) {
+      editorTrigger.current = null
+      return
+    }
+    if (editing !== null || disabled || opening) return
+    editorTrigger.current?.focus({ preventScroll: true })
+    editorTrigger.current = null
+  }, [disabled, editing, opening, visible])
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
@@ -421,82 +423,46 @@ export default function WebMatchSetup({
           </div>
         </ScrollActions>
         {editing === null ? null : (
-          <MatchSetupPicker
-            onDone={onEditorClosed}
-            title={
-              editing === "player"
-                ? copy.color
-                : editing === "time-control"
-                  ? clockCopy.timeControl
-                  : editing === "hints"
-                    ? copy.betterHints
-                    : editing === "difficulty"
-                      ? copy.chooseDifficulty
-                      : copy.chooseOpponent
-            }
-          >
-            {editing === "player" &&
-            playerAppearance !== undefined &&
-            onPlayerAnimalChanged !== undefined ? (
-              <div className="bg-mapachito-charcoal rounded-lg p-3">
-                <PlayerAnimalChoices
-                  active={visible}
-                  presentation="dialog"
-                  disabled={disabled || opening}
-                  onSelected={onPlayerAnimalChanged}
-                  selectedId={playerAppearance.animal}
-                  storyProgress={storyProgress}
-                />
-              </div>
-            ) : editing === "time-control" ? (
-              <div className="grid gap-3">
-                <TimeControlChoices
-                  control={timeControl}
-                  disabled={disabled || opening}
-                  onChange={setTimeControl}
-                />
-                <p role="status" aria-live="polite">
-                  {timeControl.type === "untimed"
-                    ? clockCopy.untimedExplanation
-                    : clockCopy.explanation(
-                        timeControl.baseSeconds / 60,
-                        timeControl.incrementSeconds,
-                      )}
-                </p>
-              </div>
-            ) : editing === "hints" ? (
-              <AutoHintModeChoices
-                autoHintMode={autoHintMode}
-                disabled={disabled}
-                onAutoHintModeChanged={onAutoHintModeChanged}
-              />
-            ) : editing === "difficulty" ? (
-              <ChallengeDifficultyChoices
-                disabled={disabled}
-                history={challengeHistory[variant]}
-                onSelected={setDifficultyTargetElo}
-                selectedElo={difficultyTargetElo}
-                targets={difficultyTargets}
-              />
-            ) : setup.mode === "story" ? (
-              <StoryLadderProgress
-                progress={storyProgress}
-                variant={variant}
-                selection={{
-                  disabled,
-                  opponentId: selectedOpponentId,
-                  onSelected: setSelectedOpponentId,
-                }}
-              />
-            ) : (
-              <ChallengeOpponentChoices
-                disabled={disabled}
-                onSelected={setSelectedOpponentId}
-                opponents={challengeOpponents}
-                selectedId={selectedOpponentId}
-              />
-            )}
-          </MatchSetupPicker>
+          <MatchSetupEditor
+            key={editing}
+            editor={editing}
+            active={visible}
+            disabled={disabled || opening}
+            mode={setup.mode}
+            variant={variant}
+            storyProgress={storyProgress}
+            challengeHistory={challengeHistory}
+            difficultyTargets={difficultyTargets}
+            initialValues={{
+              player: playerAppearance?.animal,
+              opponent: selectedOpponentId,
+              difficulty: difficultyTargetElo,
+              hints: autoHintMode,
+              "time-control": timeControl,
+            }}
+            onCancel={onEditorClosed}
+            onDone={(values) => {
+              switch (editing) {
+                case "player":
+                  if (values.player !== undefined)
+                    onPlayerAnimalChanged?.(values.player)
+                  break
+                case "opponent":
+                  setSelectedOpponentId(values.opponent)
+                  break
+                case "difficulty":
+                  setDifficultyTargetElo(values.difficulty)
+                  break
+                case "hints":
+                  onAutoHintModeChanged(values.hints)
+                  break
+                case "time-control":
+                  setTimeControl(values["time-control"])
+                  break
+              }
+              onEditorClosed()
+            }}
+          />
         )}
       </form>
     </section>
