@@ -211,5 +211,18 @@ export default function useWebNavigationHistory(
       actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay }),
     [actor],
   )
-  return { back, open }
+  const close = useCallback(
+    (overlay: MatchNavigationOverlay) => {
+      const overlays = actor.getSnapshot().context.overlays
+      const index = overlays.indexOf(overlay)
+      if (index < 0) return
+      const entry = entryFromState(window.history.state)
+      const count = overlays.length - index
+      if (entry?.scope === scope.current && entry.index >= count)
+        window.history.go(-count)
+      else actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED", overlay })
+    },
+    [actor],
+  )
+  return { back, open, close }
 }

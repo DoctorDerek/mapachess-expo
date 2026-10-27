@@ -27,6 +27,49 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
+  it("nests category choices under the dressing room and closes the requested owner without changing the match", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-categories",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-room",
+    })
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-categories",
+    })
+    const destination = selectMatchNavigationDestination(actor.getSnapshot())
+    expect(destination?.overlays).toEqual([
+      "dressing-room",
+      "dressing-categories",
+    ])
+    expect(parseMatchNavigationDestination(destination)).toEqual(destination)
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["dressing-room"])
+    if (destination === null)
+      throw new Error("Expected a navigation destination")
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED", overlay: "settings" })
+    expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_CLOSED",
+      overlay: "dressing-room",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    expect(actor.getSnapshot().context.session).toBe(session)
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it.each([
     "credits",
     "auto-hints-help",

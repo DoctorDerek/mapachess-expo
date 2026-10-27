@@ -89,7 +89,10 @@ export type MatchSessionMachineEvent =
       type: "MATCH_SESSION.OVERLAY_OPENED"
       overlay: MatchNavigationOverlay
     }>
-  | Readonly<{ type: "MATCH_SESSION.OVERLAY_CLOSED" }>
+  | Readonly<{
+      type: "MATCH_SESSION.OVERLAY_CLOSED"
+      overlay?: MatchNavigationOverlay
+    }>
   | Readonly<{ type: "MATCH_SESSION.RESULT_REOPENED"; matchId: string }>
   | Readonly<{
       type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED"
@@ -266,13 +269,22 @@ export default function createMatchSessionMachine<
               : context.presentedRewardMatchId,
         }
       }),
-      closeOverlay: assign(({ context }) => ({
-        overlays: context.overlays.slice(0, -1),
-        dismissedRewardMatchId:
-          context.overlays.at(-1) === "rewards"
+      closeOverlay: assign(({ context, event }) => {
+        const index =
+          event.type === "MATCH_SESSION.OVERLAY_CLOSED" &&
+          event.overlay !== undefined
+            ? context.overlays.indexOf(event.overlay)
+            : context.overlays.length - 1
+        if (index < 0) return {}
+        return {
+          overlays: context.overlays.slice(0, index),
+          dismissedRewardMatchId: context.overlays
+            .slice(index)
+            .includes("rewards")
             ? requireSession(context).match.matchId
             : context.dismissedRewardMatchId,
-      })),
+        }
+      }),
       replayRewards: assign(({ context }) => ({
         overlays: ["rewards"] as const,
         dismissedRewardMatchId: requireSession(context).match.matchId,

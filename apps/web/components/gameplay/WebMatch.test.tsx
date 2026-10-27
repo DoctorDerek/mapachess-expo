@@ -123,7 +123,7 @@ describe("match composition", () => {
             playerElo={100}
             moveReactionPlacement="middle"
             runtime={runtime}
-            navigation={{ open: vi.fn(), back: vi.fn() }}
+            navigation={{ open: vi.fn(), back: vi.fn(), close: vi.fn() }}
             overlays={[]}
             celebrationDismissed
             rewardsReplaySequence={0}
@@ -159,7 +159,7 @@ describe("match composition", () => {
     try {
       const markup = renderToStaticMarkup(
         createElement(WebMatch, {
-          navigation: { open: vi.fn(), back: vi.fn() },
+          navigation: { open: vi.fn(), back: vi.fn(), close: vi.fn() },
           overlays: [],
           celebrationDismissed: false,
           rewardsReplaySequence: 0,
@@ -236,7 +236,7 @@ describe("match composition", () => {
       await waitFor(evaluationActor, (snapshot) => snapshot.matches("failure"))
       const markup = renderToStaticMarkup(
         createElement(WebMatch, {
-          navigation: { open: vi.fn(), back: vi.fn() },
+          navigation: { open: vi.fn(), back: vi.fn(), close: vi.fn() },
           overlays: [],
           celebrationDismissed: false,
           rewardsReplaySequence: 0,
@@ -289,7 +289,7 @@ describe("match composition", () => {
       })
       const markup = renderToStaticMarkup(
         <WebMatch
-          navigation={{ open: vi.fn(), back: vi.fn() }}
+          navigation={{ open: vi.fn(), back: vi.fn(), close: vi.fn() }}
           overlays={[]}
           celebrationDismissed={false}
           rewardsReplaySequence={0}
