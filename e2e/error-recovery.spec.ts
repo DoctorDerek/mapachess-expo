@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test"
 import { test } from "./fixtures.js"
+import chooseDressingCategory from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 test("retries a denied storage accessor without replacing saved player data", async ({
@@ -225,7 +226,7 @@ test("isolates an editor view failure while retaining the unsaved appearance", a
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
   const before = await savedProfile(page)
-  await page.getByRole("button", { name: "Face", exact: true }).click()
+  await chooseDressingCategory(page, "Face")
   await page.evaluate(() => {
     const getContext = HTMLCanvasElement.prototype.getContext
     HTMLCanvasElement.prototype.getContext = function () {
@@ -253,7 +254,7 @@ test("isolates an editor view failure while retaining the unsaved appearance", a
     window.dispatchEvent(new Event("restore-canvas-context")),
   )
   await page.getByRole("button", { name: "Try again", exact: true }).click()
-  await page.getByRole("button", { name: "Face", exact: true }).click()
+  await chooseDressingCategory(page, "Face")
   await expect(
     page.getByRole("button", { name: "Face 5", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")

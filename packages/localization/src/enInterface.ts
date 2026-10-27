@@ -167,8 +167,11 @@ const interfaceCopy = {
       "Your profile-card changes could not be saved locally. Your edits are still here.",
     retrySave: "Retry save",
     appearanceCategories: "Appearance categories",
-    styles: "Styles",
-    colors: "Colors",
+    color: "Color",
+    cancel: "Cancel",
+    save: "Save",
+    share: "Share",
+    backToCategory: (category: string): string => `Back to ${category}`,
   },
   profileFoundation: {
     readingBackup: "Reading backup…",

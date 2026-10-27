@@ -13,6 +13,7 @@ import profileMachine, {
 import profileCardEditorMachine, {
   isProfileCardEditorDirty,
 } from "../../lib/presentation/profileCardEditorMachine"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import RecoverableView from "../presentation/RecoverableView"
 import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
@@ -55,7 +56,17 @@ export default function ProfileCardJourney({
   const preview = overlays.at(-1) === "profile-card"
   const wasDressing = useRef(false)
   const title = useRef<HTMLHeadingElement>(null)
+  const root = useRef<HTMLElement>(null)
   const open = dressing || preview
+  usePlayerInputScope({
+    root,
+    enabled: open && !blocked,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      navigation.back()
+      return true
+    },
+  })
   const dirty = isProfileCardEditorDirty(snapshot.context)
   useEffect(() => {
     editor.send({
@@ -100,7 +111,7 @@ export default function ProfileCardJourney({
         id="personal-card-title"
         ref={title}
         tabIndex={-1}
-        className="text-xl font-black outline-none"
+        className="text-xl leading-tight font-black outline-none"
       >
         {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
       </h1>
@@ -108,6 +119,7 @@ export default function ProfileCardJourney({
   )
   return (
     <section
+      ref={root}
       hidden={blocked}
       inert={blocked}
       aria-labelledby={
@@ -115,7 +127,7 @@ export default function ProfileCardJourney({
           ? "unsaved-card-title"
           : "personal-card-title"
       }
-      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-hidden px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-hidden px-2 pt-[max(16px,env(safe-area-inset-top))] pb-[max(8px,env(safe-area-inset-bottom))] [--spacing:4px] xl:px-12"
     >
       <div className="max-w-mapachess mx-auto grid h-full min-h-0 grid-rows-[minmax(0,1fr)]">
         {snapshot.matches("confirmingDiscard") ? (
@@ -195,6 +207,9 @@ export default function ProfileCardJourney({
               actions={recoveryActions}
             >
               <ProfileDressingRoom
+                choosingCategory={overlays.at(-1) === "dressing-categories"}
+                onChooseCategory={() => navigation.open("dressing-categories")}
+                onCloseCategories={navigation.back}
                 heading={preview ? null : heading}
                 active={
                   !preview && !snapshot.matches("confirmingDiscard") && !blocked
@@ -217,7 +232,7 @@ export default function ProfileCardJourney({
                 onSave={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
                 onCancel={() => {
                   editor.send({ type: "CARD.DISCARD_REQUESTED" })
-                  navigation.back()
+                  navigation.close("dressing-room")
                 }}
                 onShare={() => navigation.open("profile-card")}
                 onRetry={() => {

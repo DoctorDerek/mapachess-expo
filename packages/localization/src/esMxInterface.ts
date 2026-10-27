@@ -152,8 +152,11 @@ const interfaceCopy = {
       "No se pudieron guardar los cambios de tu tarjeta de perfil en este dispositivo. Tus cambios siguen aquí.",
     retrySave: "Reintentar guardado",
     appearanceCategories: "Categorías de apariencia",
-    styles: "Estilos",
-    colors: "Colores",
+    color: "Color",
+    cancel: "Cancelar",
+    save: "Guardar",
+    share: "Compartir",
+    backToCategory: (category: string): string => `Volver a ${category}`,
   },
   profileFoundation: {
     readingBackup: "Leyendo respaldo…",

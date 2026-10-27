@@ -4,6 +4,7 @@ import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
+import chooseDressingCategory from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 async function openStoryPlayerChoices(page: Page): Promise<void> {
@@ -107,7 +108,7 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   await expect(page.getByRole("radio", { name: /Chicken/ })).toBeChecked()
   expect(
     (
@@ -135,7 +136,7 @@ test("all earned animals remain selectable after reload and editing is still a d
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   const gallery = page.getByRole("region", {
     name: "Player animals",
     exact: true,
@@ -146,7 +147,7 @@ test("all earned animals remain selectable after reload and editing is still a d
   await page.getByRole("button", { name: "Save changes", exact: true }).click()
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   await page.reload()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   await expect(gallery.getByRole("radio", { name: /Dragonfly/ })).toBeChecked()
 })
 

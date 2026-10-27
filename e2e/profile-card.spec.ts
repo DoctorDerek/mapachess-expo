@@ -7,6 +7,7 @@ import {
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
+import chooseDressingCategory from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 const earnedChickenProfile = {
@@ -211,7 +212,9 @@ for (const width of [390, 1440]) {
         exact: true,
       }),
     ).toBeVisible()
-    await page.getByRole("button", { name: "Back", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Cancel changes", exact: true })
+      .click()
     await expect(
       page.getByRole("heading", {
         name: "Customize profile card",
@@ -240,13 +243,15 @@ for (const mode of [
     await page
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
-    await page.getByRole("button", { name: "Animal", exact: true }).click()
+    await chooseDressingCategory(page, "Animal")
     await page.getByRole("radio", { name: "Chicken", exact: true }).check()
     await page
       .getByRole("button", { name: "Save changes", exact: true })
       .click()
     await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
-    await page.getByRole("button", { name: "Back", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Cancel changes", exact: true })
+      .click()
     await page.getByRole("button", { name: mode, exact: true }).click()
     await page.getByRole("button", { name: "Start match", exact: true }).click()
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({
@@ -309,7 +314,7 @@ for (const mode of [
     await page
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
-    await page.getByRole("button", { name: "Face", exact: true }).click()
+    await chooseDressingCategory(page, "Face")
     await page.getByRole("button", { name: "Face 6", exact: true }).click()
     await page
       .getByRole("button", { name: "Save changes", exact: true })
@@ -332,7 +337,9 @@ for (const mode of [
       page.getByRole("button", { name: "GIF · Animated", exact: true }),
     ).toBeVisible()
     await page.getByRole("button", { name: "Back", exact: true }).click()
-    await page.getByRole("button", { name: "Back", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Cancel changes", exact: true })
+      .click()
     const after = await savedProfile(page)
     expect(after.activeMatch).toEqual(before.activeMatch)
     expect({
@@ -364,7 +371,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   ).toBeEnabled()
   const before = await savedProfile(page)
   await page.getByRole("button", { name: "Customize profile card" }).click()
-  await page.getByRole("button", { name: "Face", exact: true }).click()
+  await chooseDressingCategory(page, "Face")
   await page.getByRole("button", { name: "Face 5", exact: true }).click()
   await expect(
     page.getByRole("status").filter({ hasText: "Unsaved changes" }),
@@ -394,13 +401,15 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
     appearance: before.appearance,
     revision: before.revision,
   }).toEqual(before)
-  await page.getByRole("button", { name: "Back", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Cancel changes", exact: true })
+    .click()
   await expect(
     page.getByRole("region", { name: "Customize profile card", exact: true }),
   ).toHaveCount(0)
   await page.reload()
   await page.getByRole("button", { name: "Customize profile card" }).click()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   await expect(
     page.getByRole("radio", { name: "Raccoon Selected", exact: true }),
   ).toBeChecked()
@@ -427,7 +436,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
   const before = await savedProfile(page)
-  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await chooseDressingCategory(page, "Weapons")
   await page.getByRole("button", { name: "Axe", exact: true }).click()
   await page
     .getByRole("region", { name: "Customize profile card", exact: true })
@@ -535,9 +544,9 @@ test("recovers a failed appearance save without losing the draft", async ({
 }) => {
   await page.goto("/")
   await page.getByRole("button", { name: "Customize profile card" }).click()
-  await page.getByRole("button", { name: "Skin", exact: true }).click()
+  await chooseDressingCategory(page, "Skin")
   await page.getByRole("button", { name: "Skin 4", exact: true }).click()
-  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await chooseDressingCategory(page, "Weapons")
   await page.getByRole("button", { name: "Sword", exact: true }).click()
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put
@@ -565,7 +574,7 @@ test("previews every weapon without changing saved equipment", async ({
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
   const before = await savedProfile(page)
-  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await chooseDressingCategory(page, "Weapons")
   const fingerprint = () => liveCharacterArtwork(page)
   let previous = await fingerprint()
   for (const name of ["Sword", "Spear", "Wand", "Axe", "Dagger", "None"]) {
@@ -577,7 +586,7 @@ test("previews every weapon without changing saved equipment", async ({
     previous = await fingerprint()
   }
   await expect(
-    page.getByRole("button", { name: "Changes saved", exact: true }),
+    page.getByRole("button", { name: "Save changes", exact: true }),
   ).toBeDisabled()
   expect(await savedProfile(page)).toEqual(before)
 })
@@ -591,9 +600,8 @@ test("previews every dagger palette and preserves only explicitly saved equipmen
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
   const before = await savedProfile(page)
-  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await chooseDressingCategory(page, "Weapons")
   await page.getByRole("button", { name: "Dagger", exact: true }).click()
-  await page.getByRole("button", { name: "Colors", exact: true }).click()
   const fingerprint = () => liveCharacterArtwork(page)
   let previous = await fingerprint()
   for (const color of [2, 3, 4, 1, 4]) {
@@ -609,7 +617,9 @@ test("previews every dagger palette and preserves only explicitly saved equipmen
   expect(await savedProfile(page)).toEqual(before)
   await page.getByRole("button", { name: "Save changes", exact: true }).click()
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Back", exact: true }).click()
+  await page
+    .getByRole("button", { name: "Cancel changes", exact: true })
+    .click()
   await expect(
     page.getByRole("region", { name: "Customize profile card", exact: true }),
   ).toBeHidden()
@@ -618,7 +628,7 @@ test("previews every dagger palette and preserves only explicitly saved equipmen
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
-  await page.getByRole("button", { name: "Weapons", exact: true }).click()
+  await chooseDressingCategory(page, "Weapons")
   await expect(
     page.getByRole("button", { name: "Dagger", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")

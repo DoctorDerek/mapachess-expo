@@ -155,8 +155,11 @@ const emergencyInterface = {
     appearanceCouldNotBeSavedLocallyYour: UNAVAILABLE_TEXT,
     retrySave: "Retry save",
     appearanceCategories: UNAVAILABLE_TEXT,
-    styles: UNAVAILABLE_TEXT,
-    colors: UNAVAILABLE_TEXT,
+    color: "Color",
+    cancel: "Cancel",
+    save: "Save",
+    share: "Share",
+    backToCategory: (category: string): string => `Back to ${category}`,
   },
   profileFoundation: {
     readingBackup: UNAVAILABLE_TEXT,
