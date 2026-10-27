@@ -48,8 +48,14 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })
-  const raccoonBounds = await raccoon.boundingBox()
-  const chickenBounds = await chicken.boundingBox()
+  const [raccoonBounds, chickenBounds] = await raccoon
+    .or(chicken)
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const { x, y } = element.getBoundingClientRect()
+        return { x, y }
+      }),
+    )
   expect(raccoonBounds?.y).toBe(chickenBounds?.y)
   expect(chickenBounds?.x).toBeGreaterThan(raccoonBounds?.x ?? 0)
   expect(
