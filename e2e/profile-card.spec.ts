@@ -515,7 +515,10 @@ test("keeps medal labels and recovers an unavailable medal image without changin
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Save PNG", exact: true }),
-  ).toBeDisabled()
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("button", { name: "Retry PNG", exact: true }),
+  ).toBeInViewport({ ratio: 1 })
   await page.unroute(medalRequest)
   await page.getByRole("button", { name: "Retry artwork", exact: true }).click()
   await page.getByRole("button", { name: "Retry PNG", exact: true }).click()
