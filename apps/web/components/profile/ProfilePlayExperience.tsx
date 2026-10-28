@@ -173,6 +173,7 @@ function ReadyPlayExperience({
             fixedContent
           >
             <RecoverableView
+              fillHeight
               title={messages.settingsCouldNotBeDisplayed}
               description={messages.yourPlayerDataHasNotBeenReset}
               actions={

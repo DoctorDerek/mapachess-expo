@@ -13,7 +13,9 @@ import profileMachine, {
 import profileCardEditorMachine, {
   isProfileCardEditorDirty,
 } from "../../lib/presentation/profileCardEditorMachine"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import RecoverableView from "../presentation/RecoverableView"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 import ProfileAction from "./ProfileAction"
 import ProfileCardPreview from "./ProfileCardPreview"
@@ -54,7 +56,17 @@ export default function ProfileCardJourney({
   const preview = overlays.at(-1) === "profile-card"
   const wasDressing = useRef(false)
   const title = useRef<HTMLHeadingElement>(null)
+  const root = useRef<HTMLElement>(null)
   const open = dressing || preview
+  usePlayerInputScope({
+    root,
+    enabled: open && !blocked,
+    handle: (action) => {
+      if (action !== "cancel") return false
+      navigation.back()
+      return true
+    },
+  })
   const dirty = isProfileCardEditorDirty(snapshot.context)
   useEffect(() => {
     editor.send({
@@ -84,55 +96,71 @@ export default function ProfileCardJourney({
   }, [open, preview])
   if (!open) return null
   const busy = snapshot.matches("saving") || !profile.matches("ready")
+  const recoveryActions = (
+    <ProfileAction
+      onClick={navigation.back}
+      disabled={busy}
+      className="bg-mapachito-violet"
+    >
+      {messages.back}
+    </ProfileAction>
+  )
+  const heading = (
+    <header className="mb-4">
+      <h1
+        id="personal-card-title"
+        ref={title}
+        tabIndex={-1}
+        className="text-xl leading-tight font-black outline-none"
+      >
+        {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
+      </h1>
+    </header>
+  )
   return (
     <section
+      ref={root}
       hidden={blocked}
       inert={blocked}
-      aria-labelledby="personal-card-title"
-      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-y-auto px-[clamp(1rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
+      aria-labelledby={
+        snapshot.matches("confirmingDiscard")
+          ? "unsaved-card-title"
+          : "personal-card-title"
+      }
+      className="text-mapachito-white bg-mapachito-charcoal fixed inset-0 z-40 overflow-hidden px-2 pt-[max(16px,env(safe-area-inset-top))] pb-[max(8px,env(safe-area-inset-bottom))] [--spacing:4px] xl:px-12"
     >
-      <div className="max-w-mapachess mx-auto">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <ProfileAction
-            onClick={navigation.back}
-            disabled={busy}
-            className="bg-mapachito-violet shadow-mapachess-raised shadow-mapachito-raspberry"
-          >
-            <span aria-hidden="true">←</span> {messages.back}
-          </ProfileAction>
-          <h1
-            id="personal-card-title"
-            ref={title}
-            tabIndex={-1}
-            className="text-2xl font-black outline-none"
-          >
-            {preview ? copy.setup.shareProfile : copy.setup.customizeProfile}
-          </h1>
-        </header>
+      <div className="max-w-mapachess mx-auto grid h-full min-h-0 grid-rows-[minmax(0,1fr)]">
         {snapshot.matches("confirmingDiscard") ? (
           <div
             role="alertdialog"
             aria-labelledby="unsaved-card-title"
-            className="mx-auto max-w-xl p-5"
+            className="mx-auto h-full min-h-0 w-full max-w-xl"
           >
-            <h2 id="unsaved-card-title" className="text-2xl font-bold">
-              {messages.keepYourAppearanceChanges}
-            </h2>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <ScrollActions
+              actions={
+                <div className="flex flex-wrap-reverse gap-3 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
+                  <ProfileAction
+                    className="bg-mapachito-violet"
+                    onClick={() =>
+                      editor.send({ type: "CARD.RETURN_REQUESTED" })
+                    }
+                  >
+                    {messages.keepEditing}
+                  </ProfileAction>
+                  <ProfileAction
+                    className="bg-mapachito-green"
+                    onClick={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
+                  >
+                    {messages.saveAppearance}
+                  </ProfileAction>
+                </div>
+              }
+            >
+              <h2 id="unsaved-card-title" className="text-2xl font-bold">
+                {messages.keepYourAppearanceChanges}
+              </h2>
               <ProfileAction
-                className="bg-mapachito-violet"
-                onClick={() => editor.send({ type: "CARD.RETURN_REQUESTED" })}
-              >
-                {messages.keepEditing}
-              </ProfileAction>
-              <ProfileAction
-                className="bg-mapachito-green"
-                onClick={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
-              >
-                {messages.saveAppearance}
-              </ProfileAction>
-              <ProfileAction
-                className="bg-mapachito-raspberry"
+                className="bg-mapachito-raspberry mt-6"
                 onClick={() => {
                   editor.send({ type: "CARD.DISCARD_REQUESTED" })
                   navigation.back()
@@ -140,36 +168,49 @@ export default function ProfileCardJourney({
               >
                 {messages.discardChanges}
               </ProfileAction>
-            </div>
+            </ScrollActions>
           </div>
         ) : null}
         {preview ? (
-          <RecoverableView
-            title={messages.theProfileCardPreviewCouldNotBe}
-            description={messages.yourAppearanceChangesAreStillHereTry}
-          >
-            <ProfileCardPreview
-              data={data}
-              appearance={dressing ? snapshot.context.draft : data.appearance}
-              ratingContext={
-                dressing
-                  ? snapshot.context.draftRatingContext
-                  : data.settings.cardRatingContext
-              }
-              unsaved={dressing && dirty}
-            />
-          </RecoverableView>
+          <div className="h-full min-h-0">
+            <RecoverableView
+              fillHeight
+              title={messages.theProfileCardPreviewCouldNotBe}
+              description={messages.yourAppearanceChangesAreStillHereTry}
+              actions={recoveryActions}
+            >
+              <ProfileCardPreview
+                heading={heading}
+                onBack={navigation.back}
+                data={data}
+                appearance={dressing ? snapshot.context.draft : data.appearance}
+                ratingContext={
+                  dressing
+                    ? snapshot.context.draftRatingContext
+                    : data.settings.cardRatingContext
+                }
+                unsaved={dressing && dirty}
+              />
+            </RecoverableView>
+          </div>
         ) : null}
         {dressing ? (
           <div
+            className="h-full min-h-0"
             hidden={preview || snapshot.matches("confirmingDiscard")}
             inert={preview || snapshot.matches("confirmingDiscard")}
           >
             <RecoverableView
+              fillHeight
               title={messages.customizationCouldNotBeDisplayed}
               description={messages.yourAppearanceChangesAreStillHereTry2}
+              actions={recoveryActions}
             >
               <ProfileDressingRoom
+                choosingCategory={overlays.at(-1) === "dressing-categories"}
+                onChooseCategory={() => navigation.open("dressing-categories")}
+                onCloseCategories={navigation.back}
+                heading={preview ? null : heading}
                 active={
                   !preview && !snapshot.matches("confirmingDiscard") && !blocked
                 }
@@ -191,7 +232,7 @@ export default function ProfileCardJourney({
                 onSave={() => editor.send({ type: "CARD.SAVE_REQUESTED" })}
                 onCancel={() => {
                   editor.send({ type: "CARD.DISCARD_REQUESTED" })
-                  navigation.back()
+                  navigation.close("dressing-room")
                 }}
                 onShare={() => navigation.open("profile-card")}
                 onRetry={() => {

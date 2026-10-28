@@ -1,6 +1,8 @@
-import { useId, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessDialog from "../presentation/MapachessDialog"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
+import SettingsView from "./SettingsView"
 
 export default function CustomizationChoice({
   kind,
@@ -19,7 +21,6 @@ export default function CustomizationChoice({
 }>) {
   const copy = useMapachessCopy()
   const field = copy.profile.customization[kind]
-  const choicesId = useId()
   return (
     <div className="min-w-0">
       <div className="bg-mapachito-violet/8 text-mapachito-charcoal flex flex-wrap items-center gap-3 rounded-xl p-3">
@@ -29,15 +30,14 @@ export default function CustomizationChoice({
         >
           {preview}
         </span>
-        <div className="min-w-0 flex-1 basis-16 wrap-anywhere">
+        <div className="min-w-0 flex-1 basis-24 wrap-break-word">
           <h3 className="font-display text-xl font-black">{field.label}</h3>
           <p className="text-sm leading-snug">{value}</p>
         </div>
         <MapachessButton
-          aria-controls={choicesId}
-          aria-expanded={open}
-          aria-label={open ? field.done : field.change}
-          className="min-w-22 px-3! py-2! text-base"
+          aria-haspopup="dialog"
+          aria-label={field.change}
+          className="ml-auto min-w-22 px-3! py-2! text-base"
           onClick={(event) => {
             event.currentTarget.focus({ preventScroll: true })
             onToggle()
@@ -45,12 +45,22 @@ export default function CustomizationChoice({
           type="button"
           variant="secondary"
         >
-          {open ? copy.setup.done : copy.setup.change}
+          {copy.setup.change}
         </MapachessButton>
       </div>
-      <div id={choicesId} hidden={!open}>
-        {open ? children : null}
-      </div>
+      {open ? (
+        <MapachessDialog label={field.label} onClose={onToggle} fixedContent>
+          <SettingsView
+            title={field.label}
+            closeLabel={copy.setup.done}
+            closeAccessibleLabel={field.done}
+            onClose={onToggle}
+            focusHeading
+          >
+            {children}
+          </SettingsView>
+        </MapachessDialog>
+      ) : null}
     </div>
   )
 }

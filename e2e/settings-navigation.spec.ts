@@ -6,6 +6,162 @@ import { activate, injectControllerInput, press } from "./controllerInput.js"
 import { test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
+for (const locale of ["en", "es-419"] as const) {
+  test(`focused customization keeps Done reachable and returns one level in ${locale}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 })
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await page.goto("/")
+    await page.getByRole("button", { name: "Settings", exact: true }).click()
+    await page
+      .getByRole("combobox", { name: "Language", exact: true })
+      .selectOption(locale)
+    const copy = loadCatalog(locale)
+    await expect
+      .poll(async () => (await savedProfile(page)).settings.locale)
+      .toBe(locale)
+    for (const kind of ["coach", "pieces", "board"] as const) {
+      await expect
+        .poll(() =>
+          page
+            .getByRole("heading", {
+              level: 3,
+              name: copy.profile.customization[kind].label,
+              exact: true,
+            })
+            .evaluate(
+              (heading) =>
+                heading.getBoundingClientRect().height <=
+                Number.parseFloat(getComputedStyle(heading).lineHeight) + 1,
+            ),
+        )
+        .toBe(true)
+      const trigger = page.getByRole("button", {
+        name: copy.profile.customization[kind].change,
+        exact: true,
+      })
+      await trigger.click()
+      const dialog = page.getByRole("dialog", {
+        name: copy.profile.customization[kind].label,
+        exact: true,
+      })
+      const done = dialog.getByRole("button", {
+        name: copy.profile.customization[kind].done,
+        exact: true,
+      })
+      await dialog.getByRole("radio").nth(1).check()
+      const selected = await savedProfile(page)
+      for (const size of [
+        { width: 320, height: 640, scale: 100 },
+        { width: 844, height: 390, scale: 100 },
+        { width: 320, height: 640, scale: 200 },
+      ]) {
+        await page.setViewportSize(size)
+        const textScale = await page.addStyleTag({
+          content: `:root{font-size:${size.scale}%}`,
+        })
+        await page.mouse.move(0, 0)
+        for (const end of [false, true]) {
+          await dialog
+            .getByRole("heading", {
+              name: copy.profile.customization[kind].label,
+              exact: true,
+            })
+            .locator("..")
+            .evaluate((element, end) => {
+              element.scrollTop = end ? element.scrollHeight : 0
+            }, end)
+          await expect(done).toBeInViewport({ ratio: 1 })
+          await done.focus()
+          expect(
+            await done.evaluate((element) => {
+              const r = element.getBoundingClientRect()
+              return element.contains(
+                document.elementFromPoint(
+                  r.x + r.width / 2,
+                  r.y + r.height / 2,
+                ),
+              )
+            }),
+          ).toBe(true)
+        }
+        await textScale.evaluate((element) => element.remove())
+      }
+      await page.goBack()
+      await expect(dialog).toHaveCount(0)
+      await expect(trigger).toBeFocused()
+      await page.goForward()
+      await expect(dialog).toBeVisible()
+      await done.click()
+      await expect(trigger).toBeFocused()
+      expect(await savedProfile(page)).toEqual(selected)
+    }
+    await page
+      .getByRole("button", {
+        name: copy.interface.moveClassificationFaq.howAreMovesClassified,
+        exact: true,
+      })
+      .click()
+    await page.addStyleTag({ content: ":root{font-size:200%}" })
+    const back = page.getByRole("button", {
+      name: copy.interface.moveClassificationFaq.closeMoveClassifications,
+      exact: true,
+    })
+    await expect(back).toBeInViewport({ ratio: 1 })
+    expect(
+      await back.evaluate((button) => {
+        const text = button.firstChild
+        if (!(text instanceof Text)) throw new Error("Expected the Back label")
+        return [...text.data.matchAll(/\S+/g)]
+          .filter((word) => {
+            const range = document.createRange()
+            range.setStart(text, word.index)
+            range.setEnd(text, word.index + word[0].length)
+            return range.getClientRects().length !== 1
+          })
+          .map((word) => word[0])
+      }),
+    ).toEqual([])
+    await back.click()
+  })
+}
+
+test("binding chooser Back preserves the Controls draft and Cancel leaves saved bindings unchanged", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.getByRole("button", { name: "Controls", exact: true }).click()
+  await page.getByRole("button", { name: "Keyboard", exact: true }).click()
+  const before = await savedProfile(page)
+  await page
+    .getByRole("button", { name: "Better Hints H", exact: true })
+    .click()
+  await page.keyboard.press("k")
+  await expect(
+    page.getByRole("button", { name: "Better Hints K", exact: true }),
+  ).toBeVisible()
+  await page
+    .getByRole("button", { name: "Better Hints K", exact: true })
+    .click()
+  await page.goBack()
+  const editor = page.getByRole("dialog", { name: "Controls", exact: true })
+  await expect(
+    editor.getByRole("button", { name: "Better Hints K", exact: true }),
+  ).toBeVisible()
+  await page.goForward()
+  await page.keyboard.press("Escape")
+  await expect(
+    editor.getByRole("button", { name: "Better Hints K", exact: true }),
+  ).toBeVisible()
+  await editor.getByRole("button", { name: "Cancel", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Close Settings", exact: true }),
+  ).toBeVisible()
+  expect(await savedProfile(page)).toEqual(before)
+})
+
 for (const width of [320, 1280]) {
   for (const spanish of [false, true]) {
     test(`${spanish ? "Spanish" : "English"} Settings keeps its footer and returns from help and Credits at ${width}px`, async ({

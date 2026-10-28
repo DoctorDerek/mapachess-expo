@@ -386,7 +386,7 @@ export default function WebMatch({
                     {menuActions}{" "}
                     <details
                       open={overlays.includes("match-details")}
-                      className="text-mapachito-white [grid-area:data]"
+                      className="text-mapachito-white min-w-0"
                     >
                       <summary
                         onClick={(event) => {
@@ -402,7 +402,7 @@ export default function WebMatch({
                       <div className="text-mapachito-charcoal grid gap-3">
                         <dl
                           aria-label={messages.currentMatchData}
-                          className="bg-mapachito-white grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [grid-area:data] [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
+                          className="bg-mapachito-white grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
                         >
                           <dt>{messages.mode}</dt>
                           <dd>{modeLabel}</dd>

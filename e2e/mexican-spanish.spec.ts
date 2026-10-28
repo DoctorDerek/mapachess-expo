@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test"
 import { firstArrivalTest as test } from "./fixtures.js"
+import chooseDressingCategory from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 test("Mexican Spanish preserves Chess960 through language changes, hints and rewards without replacing player data", async ({
@@ -205,7 +206,7 @@ for (const width of [390, 1280]) {
         exact: true,
       })
       .click()
-    await page.getByRole("button", { name: "Armas", exact: true }).click()
+    await chooseDressingCategory(page, "Weapons", "es-419")
     await expect(
       page.getByRole("button", { name: "Espada", exact: true }),
     ).toBeVisible()
@@ -213,7 +214,9 @@ for (const width of [390, 1280]) {
       path: testInfo.outputPath(`spanish-dressing-${width}.png`),
       fullPage: true,
     })
-    await page.getByRole("button", { name: "Atrás", exact: true }).click()
+    await page
+      .getByRole("button", { name: "Cancelar cambios", exact: true })
+      .click()
     await expect(
       page.getByRole("region", {
         name: "Personalizar tarjeta de perfil",

@@ -23,6 +23,7 @@ import {
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MatchLevelProgress from "./MatchLevelProgress"
 import MatchSaveConfirmation from "./MatchSaveConfirmation"
@@ -131,120 +132,127 @@ export default function MatchCelebration({
   return (
     <dialog
       aria-labelledby={titleId}
-      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[min(94vw,30rem)] max-w-none overflow-y-auto overscroll-contain rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-0 shadow-[0.625rem_0.625rem_0_#1e1e1e] backdrop:bg-black/75 forced-colors:shadow-none"
+      className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal fixed inset-0 m-auto h-[min(48rem,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] w-[min(94vw,30rem)] max-w-none overflow-hidden overscroll-contain rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-0 shadow-[0.625rem_0.625rem_0_#1e1e1e] backdrop:bg-black/75 forced-colors:shadow-none"
       onCancel={(event) => {
         event.preventDefault()
         onDismiss()
       }}
       ref={dialog}
     >
-      <div ref={battleStageRef} />
-      <div className="grid min-w-0 gap-3 p-[clamp(1rem,3vw,1.25rem)] text-center">
-        <h2
-          className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance wrap-anywhere"
-          id={titleId}
-        >
-          {playerWon
-            ? copy.gameplay.defeatedOpponent(animalCopy.opponent(opponent.id))
-            : matchConclusionText(
-                conclusion,
-                match.playerColor,
+      <ScrollActions
+        actions={
+          <div>
+            <div className="flex flex-wrap-reverse gap-2">
+              <MapachessButton
+                autoFocus
+                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
+                onClick={onDismiss}
+                ref={reviewButton}
+                type="button"
+                variant="secondary"
+              >
+                {messages.reviewBoard}
+              </MapachessButton>
+              <MapachessButton
+                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
+                disabled={disabled}
+                onClick={nextAction}
+                type="button"
+              >
+                {copy.gameplay.resultActions[action]}
+                {actionOpponent !== undefined ? (
+                  <span className="mt-1 block text-base leading-snug font-normal">
+                    {actionElo === undefined
+                      ? animalCopy.opponent(actionOpponent.id)
+                      : copy.gameplay.opponentAndElo(
+                          animalCopy.opponent(actionOpponent.id),
+                          actionElo,
+                        )}
+                  </span>
+                ) : null}
+              </MapachessButton>
+            </div>
+          </div>
+        }
+      >
+        <div ref={battleStageRef} />
+        <div className="grid min-w-0 gap-3 p-[clamp(1rem,3vw,1.25rem)] text-center">
+          <h2
+            className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance wrap-anywhere"
+            id={titleId}
+          >
+            {playerWon
+              ? copy.gameplay.defeatedOpponent(animalCopy.opponent(opponent.id))
+              : matchConclusionText(
+                  conclusion,
+                  match.playerColor,
+                  animalCopy.opponent(opponent.id),
+                  copy.gameplay.conclusion,
+                )}
+          </h2>
+          {playerWon && conclusion.type === "resignation" ? (
+            <p className="text-base">{messages.opponentResigned}</p>
+          ) : null}
+          {playerWon && conclusion.type === "timeout" ? (
+            <p className="text-base">
+              {copy.gameplay.conclusion.opponentTimedOut(
                 animalCopy.opponent(opponent.id),
-                copy.gameplay.conclusion,
               )}
-        </h2>
-        {playerWon && conclusion.type === "resignation" ? (
-          <p className="text-base">{messages.opponentResigned}</p>
-        ) : null}
-        {playerWon && conclusion.type === "timeout" ? (
-          <p className="text-base">
-            {copy.gameplay.conclusion.opponentTimedOut(
-              animalCopy.opponent(opponent.id),
+            </p>
+          ) : null}
+          <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
+            <span className="font-bold">
+              {timeControlLabel(match.timeControl, copy.gameplay.clock)}
+            </span>
+            {medal === null ? null : <MedalWithHintUse medal={medal} />}
+            {reward === null ? null : (
+              <p className="font-display text-3xl font-black tabular-nums">
+                {copy.gameplay.awardedXp(reward.awardedXp)}
+              </p>
             )}
-          </p>
-        ) : null}
-        <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
-          <span className="font-bold">
-            {timeControlLabel(match.timeControl, copy.gameplay.clock)}
-          </span>
-          {medal === null ? null : <MedalWithHintUse medal={medal} />}
+          </div>
+        </div>
+        <div className="relative grid min-w-0 gap-3 px-3 pb-6">
           {reward === null ? null : (
-            <p className="font-display text-3xl font-black tabular-nums">
-              {copy.gameplay.awardedXp(reward.awardedXp)}
+            <MatchLevelProgress
+              afterXp={reward.totalXpBefore + reward.awardedXp}
+              beforeXp={reward.totalXpBefore}
+            />
+          )}
+          {reward === null || reward.ratedElo === null ? null : (
+            <p className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-base">
+              <span className="grid min-w-0 flex-[1_1_min-content] gap-1 wrap-break-word">
+                <span className="font-bold">
+                  {copy.profile.ratingLabel[reward.ratedElo.variant]}
+                </span>
+                <span>
+                  <MedalSymbol
+                    medal={
+                      reward.ratedElo.assistance ?? matchMedalEligibility(match)
+                    }
+                  />
+                  {copy.profile.cardRatingContext(
+                    copy.gameplay.clock.category[
+                      reward.ratedElo.timeCategory ?? "untimed"
+                    ],
+                    copy.shared.story.medals[
+                      reward.ratedElo.assistance ?? matchMedalEligibility(match)
+                    ],
+                  )}
+                </span>
+              </span>
+              <strong className="font-display text-right text-xl tabular-nums">
+                {copy.gameplay.integer(reward.ratedElo.before)} →{" "}
+                {copy.gameplay.integer(reward.ratedElo.after)}
+              </strong>
             </p>
           )}
+          {match.mode === "story" && medal !== null && next === undefined ? (
+            <p className="text-sm font-bold">{messages.storyComplete}</p>
+          ) : null}
+          {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
         </div>
-      </div>
-      <div className="relative grid min-w-0 gap-3 p-[clamp(1rem,3vw,1.25rem)] pb-10">
-        {reward === null ? null : (
-          <MatchLevelProgress
-            afterXp={reward.totalXpBefore + reward.awardedXp}
-            beforeXp={reward.totalXpBefore}
-          />
-        )}
-        {reward === null || reward.ratedElo === null ? null : (
-          <p className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-base">
-            <span className="grid min-w-0 flex-[1_1_12rem] gap-1 wrap-anywhere">
-              <span className="font-bold">
-                {copy.profile.ratingLabel[reward.ratedElo.variant]}
-              </span>
-              <span>
-                <MedalSymbol
-                  medal={
-                    reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                  }
-                />
-                {copy.profile.cardRatingContext(
-                  copy.gameplay.clock.category[
-                    reward.ratedElo.timeCategory ?? "untimed"
-                  ],
-                  copy.shared.story.medals[
-                    reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                  ],
-                )}
-              </span>
-            </span>
-            <strong className="font-display text-xl tabular-nums">
-              {copy.gameplay.integer(reward.ratedElo.before)} →{" "}
-              {copy.gameplay.integer(reward.ratedElo.after)}
-            </strong>
-          </p>
-        )}
-        {match.mode === "story" && medal !== null && next === undefined ? (
-          <p className="text-sm font-bold">{messages.storyComplete}</p>
-        ) : null}
-        <div className="flex flex-wrap gap-2">
-          <MapachessButton
-            autoFocus
-            className="min-h-12 min-w-0 flex-1 basis-40 px-2! text-base wrap-break-word"
-            onClick={onDismiss}
-            ref={reviewButton}
-            type="button"
-            variant="secondary"
-          >
-            {messages.reviewBoard}
-          </MapachessButton>
-          <MapachessButton
-            className="min-h-12 min-w-0 flex-1 basis-40 px-2! text-base wrap-break-word"
-            disabled={disabled}
-            onClick={nextAction}
-            type="button"
-          >
-            {copy.gameplay.resultActions[action]}
-            {actionOpponent !== undefined ? (
-              <span className="mt-1 block text-base font-normal">
-                {actionElo === undefined
-                  ? animalCopy.opponent(actionOpponent.id)
-                  : copy.gameplay.opponentAndElo(
-                      animalCopy.opponent(actionOpponent.id),
-                      actionElo,
-                    )}
-              </span>
-            ) : null}
-          </MapachessButton>
-        </div>
-        {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
-      </div>
+      </ScrollActions>
     </dialog>
   )
 }

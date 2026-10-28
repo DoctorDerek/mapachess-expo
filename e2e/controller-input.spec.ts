@@ -198,7 +198,7 @@ test("executes a move, Undo, Redo and result review through canonical controller
   const moved = (await savedProfile(page)).activeMatch
   await press(page, 3)
   await expect(page.getByRole("button", { name: "Focus board" })).toBeFocused()
-  await press(page, 15)
+  await press(page, 12)
   await expect(page.getByRole("button", { name: /Undo/ })).toBeFocused()
   await press(page, 0)
   await expect

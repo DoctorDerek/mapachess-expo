@@ -30,6 +30,8 @@ import {
   usePlayerInputScope,
 } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessDialog from "../presentation/MapachessDialog"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BetterHintsOverlay from "./BetterHintsOverlay"
 import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
@@ -148,7 +150,6 @@ export default function CanonicalChessboard({
   const squareElements = useRef(new Map<MatchSquare, HTMLButtonElement>())
   const firstChoiceButton = useRef<HTMLButtonElement>(null)
   const boardElement = useRef<HTMLDivElement>(null)
-  const choiceElement = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setPendingChoice(null)
@@ -257,15 +258,6 @@ export default function CanonicalChessboard({
         return true
       }
       return false
-    },
-  })
-  usePlayerInputScope({
-    root: choiceElement,
-    enabled: pendingChoice !== null,
-    handle: (action) => {
-      if (action !== "cancel") return false
-      clearSelection()
-      return true
     },
   })
 
@@ -401,40 +393,28 @@ export default function CanonicalChessboard({
       </div>
 
       {pendingChoice === null ? null : (
-        <div
-          aria-labelledby="move-choice-title"
-          aria-modal="true"
-          className="bg-mapachito-charcoal/84 absolute inset-0 z-30 grid place-items-center overflow-y-auto rounded-[clamp(0.75rem,2vw,1.25rem)] p-2 backdrop-blur-sm"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault()
-              event.stopPropagation()
-              clearSelection()
-            }
-            if (event.key === "Tab") {
-              const buttons =
-                event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                  "button:not(:disabled)",
-                )
-              const first = buttons[0]
-              const last = buttons[buttons.length - 1]
-              if (event.shiftKey && event.target === first) {
-                event.preventDefault()
-                last?.focus()
-              } else if (!event.shiftKey && event.target === last) {
-                event.preventDefault()
-                first?.focus()
-              }
-            }
-          }}
-          role="dialog"
-          ref={choiceElement}
+        <MapachessDialog
+          label={
+            choosingPromotion
+              ? copy.promoteOn(pendingChoice.to)
+              : copy.chooseMove(pendingChoice.to)
+          }
+          onClose={clearSelection}
+          fixedContent
+          placement="bottom"
         >
-          <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal shadow-mapachito-charcoal my-auto w-full max-w-md min-w-0 rounded-[1.5rem_0.5rem_1.5rem_0.5rem] border-3 p-3 shadow-[0.625rem_0.625rem_0] forced-colors:border-[CanvasText] forced-colors:shadow-none">
-            <h2
-              className="font-display text-mapachito-charcoal text-xl leading-tight font-black wrap-anywhere uppercase"
-              id="move-choice-title"
-            >
+          <ScrollActions
+            actions={
+              <MapachessButton
+                variant="secondary"
+                className="w-full"
+                onClick={clearSelection}
+              >
+                {choosingPromotion ? copy.cancelPromotion : copy.cancelMove}
+              </MapachessButton>
+            }
+          >
+            <h2 className="font-display text-xl leading-tight font-black">
               {choosingPromotion
                 ? copy.promoteOn(pendingChoice.to)
                 : copy.chooseMove(pendingChoice.to)}
@@ -490,16 +470,8 @@ export default function CanonicalChessboard({
                 </div>
               ))}
             </div>
-            <MapachessButton
-              variant="secondary"
-              className="mt-4 w-full min-w-0 wrap-anywhere"
-              onClick={clearSelection}
-              type="button"
-            >
-              {choosingPromotion ? copy.cancelPromotion : copy.cancelMove}
-            </MapachessButton>
-          </div>
-        </div>
+          </ScrollActions>
+        </MapachessDialog>
       )}
     </div>
   )

@@ -74,7 +74,7 @@ describe("web player-data controls", () => {
         onCoachCollectionChanged: vi.fn(),
         onChessAppearanceChanged: vi.fn(),
         overlays: ["settings"],
-        navigation: { open: vi.fn(), back: vi.fn() },
+        navigation: { open: vi.fn(), back: vi.fn(), close: vi.fn() },
         activityMessage: "Saving your hint preference…",
         hintChangesDisabled: false,
         autoHintMode: "no-auto-hints",
@@ -188,7 +188,7 @@ describe("web player-data controls", () => {
         onCoachCollectionChanged: vi.fn(),
         onChessAppearanceChanged: vi.fn(),
         overlays: ["settings"],
-        navigation: { open: vi.fn(), back: vi.fn() },
+        navigation: { open: vi.fn(), back: vi.fn(), close: vi.fn() },
         activityMessage: null,
         autoHintMode: playerData.settings.autoHintMode,
         ratings: playerData.ratings,
@@ -207,7 +207,7 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Settings &amp; Player Data")
     for (const area of ["coach", "pieces", "board"])
       expect(markup).toContain(
-        `aria-expanded="false" aria-label="Change ${area}"`,
+        `aria-haspopup="dialog" aria-label="Change ${area}"`,
       )
     expect(markup).not.toContain("board preview")
     expect(markup).toContain("Auto Piece Hints")

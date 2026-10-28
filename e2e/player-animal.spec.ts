@@ -4,6 +4,7 @@ import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
+import chooseDressingCategory from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 async function openStoryPlayerChoices(page: Page): Promise<void> {
@@ -36,20 +37,25 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
   await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(22)
+  const done = page.getByRole("button", { name: "Done", exact: true })
+  await expect(done).toBeInViewport({ ratio: 1 })
+  const doneBounds = await done.boundingBox()
   await gallery.focus()
   await page.keyboard.press("End")
-  const dialog = page.getByRole("dialog", { name: "Play as", exact: true })
-  await expect
-    .poll(() => dialog.evaluate((element) => element.scrollTop))
-    .toBeGreaterThan(0)
-  await gallery
-    .getByRole("radio", { name: /Dragonfly/ })
-    .scrollIntoViewIfNeeded()
-  await expect(gallery.getByText("Dragonfly", { exact: false })).toBeVisible()
+  await expect(gallery.getByText("Dragonfly", { exact: false })).toBeInViewport(
+    { ratio: 1 },
+  )
+  await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })
-  const raccoonBounds = await raccoon.boundingBox()
-  const chickenBounds = await chicken.boundingBox()
+  const [raccoonBounds, chickenBounds] = await raccoon
+    .or(chicken)
+    .evaluateAll((elements) =>
+      elements.map((element) => {
+        const { x, y } = element.getBoundingClientRect()
+        return { x, y }
+      }),
+    )
   expect(raccoonBounds?.y).toBe(chickenBounds?.y)
   expect(chickenBounds?.x).toBeGreaterThan(raccoonBounds?.x ?? 0)
   expect(
@@ -88,6 +94,8 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   await raccoon.focus()
   await page.keyboard.press("ArrowRight")
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeChecked()
+  expect(await savedProfile(page)).toEqual(before)
+  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).appearance.animal)
     .toBe("chicken-stockfish")
@@ -97,7 +105,6 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
     appearance: before.appearance,
     revision: before.revision,
   }).toEqual(before)
-  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect(
     page.getByRole("button", { name: /^Play as Chicken/ }),
   ).toBeFocused()
@@ -107,7 +114,7 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   await expect(page.getByRole("radio", { name: /Chicken/ })).toBeChecked()
   expect(
     (
@@ -135,7 +142,7 @@ test("all earned animals remain selectable after reload and editing is still a d
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   const gallery = page.getByRole("region", {
     name: "Player animals",
     exact: true,
@@ -146,7 +153,7 @@ test("all earned animals remain selectable after reload and editing is still a d
   await page.getByRole("button", { name: "Save changes", exact: true }).click()
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
   await page.reload()
-  await page.getByRole("button", { name: "Animal", exact: true }).click()
+  await chooseDressingCategory(page, "Animal")
   await expect(gallery.getByRole("radio", { name: /Dragonfly/ })).toBeChecked()
 })
 
@@ -166,9 +173,12 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
   })
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeChecked()
   await gallery.getByRole("radio", { name: /Raccoon/ }).check()
+  expect((await savedProfile(page)).appearance.animal).toBe("chicken-stockfish")
+  await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).appearance.animal)
     .toBe("raccoon-stockfish")
   await page.reload()
+  await page.getByRole("button", { name: /^Play as / }).click()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
 })

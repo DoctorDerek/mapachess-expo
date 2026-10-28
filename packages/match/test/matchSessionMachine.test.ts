@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
+import {
+  eligibleMatchNavigationOverlays,
+  parseMatchNavigationDestination,
+} from "../src/matchNavigation.js"
 import createMatchSessionMachine, {
   selectCanHandleMatchSessionBack,
   selectMatchNavigationDestination,
   type MatchSessionIdentity,
   type MatchSessionOperations,
 } from "../src/matchSessionMachine.js"
+import { PLAYER_INPUT_ACTIONS } from "../src/playerInput.js"
 
 const session = Object.freeze({
   match: Object.freeze({ matchId: "portable-owned-match" }),
@@ -22,7 +27,59 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
-  it.each(["credits", "auto-hints-help"] as const)(
+  it("nests category choices under the dressing room and closes the requested owner without changing the match", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-categories",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-room",
+    })
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "dressing-categories",
+    })
+    const destination = selectMatchNavigationDestination(actor.getSnapshot())
+    expect(destination?.overlays).toEqual([
+      "dressing-room",
+      "dressing-categories",
+    ])
+    expect(parseMatchNavigationDestination(destination)).toEqual(destination)
+    actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    expect(actor.getSnapshot().context.overlays).toEqual(["dressing-room"])
+    if (destination === null)
+      throw new Error("Expected a navigation destination")
+    actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
+    expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED", overlay: "settings" })
+    expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_CLOSED",
+      overlay: "dressing-room",
+    })
+    expect(actor.getSnapshot().context.overlays).toEqual([])
+    expect(actor.getSnapshot().context.session).toBe(session)
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
+  it.each([
+    "credits",
+    "auto-hints-help",
+    "settings-coach",
+    "settings-pieces",
+    "settings-board",
+    "settings-controls",
+    "classifications",
+    "about-elo",
+  ] as const)(
     "restores the Settings context for %s through Back and Forward without replacing the match",
     async (overlay) => {
       const ops = operations()
@@ -32,7 +89,7 @@ describe("portable match session navigation", () => {
       await waitFor(actor, (snapshot) => snapshot.matches("active"))
       actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay })
       expect(actor.getSnapshot().context.overlays).toEqual(
-        overlay === "credits" ? [] : [overlay],
+        overlay === "auto-hints-help" ? [overlay] : [],
       )
       if (overlay === "auto-hints-help")
         actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
@@ -55,6 +112,51 @@ describe("portable match session navigation", () => {
       actor.stop()
     },
   )
+  it("owns each binding choice below Controls and restores it without replacing the match", async () => {
+    const ops = operations()
+    const actor = createActor(machine, {
+      input: { activeMatchExists: true, operations: ops },
+    }).start()
+    await waitFor(actor, (snapshot) => snapshot.matches("active"))
+    actor.send({ type: "MATCH_SESSION.OVERLAY_OPENED", overlay: "settings" })
+    actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "settings-controls",
+    })
+    for (const action of PLAYER_INPUT_ACTIONS) {
+      actor.send({
+        type: "MATCH_SESSION.OVERLAY_OPENED",
+        overlay: `control-binding-${action}`,
+      })
+      const destination = selectMatchNavigationDestination(actor.getSnapshot())
+      if (destination === null)
+        throw new Error("Expected active Controls destination")
+      expect(parseMatchNavigationDestination(destination)).toEqual(destination)
+      expect(destination.overlays).toEqual([
+        "settings",
+        "settings-controls",
+        `control-binding-${action}`,
+      ])
+      expect(
+        eligibleMatchNavigationOverlays(
+          { ...destination, overlays: [`control-binding-${action}`] },
+          false,
+        ),
+      ).toEqual([])
+      actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+      expect(actor.getSnapshot().context.overlays).toEqual([
+        "settings",
+        "settings-controls",
+      ])
+      actor.send({ type: "MATCH_SESSION.NAVIGATION_RESTORED", destination })
+      expect(actor.getSnapshot().context.overlays).toEqual(destination.overlays)
+      actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
+    }
+    expect(actor.getSnapshot().context.session).toBe(session)
+    expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+    expect(ops.openFreshMatch).not.toHaveBeenCalled()
+    actor.stop()
+  })
   it("keeps the match-owned hint picker and help in the portable Back/Forward stack", async () => {
     const ops = operations()
     const actor = createActor(machine, {

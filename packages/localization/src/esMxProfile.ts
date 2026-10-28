@@ -25,6 +25,8 @@ const profile = {
     chess960: "Elo de ajedrez 960",
   },
   resetRating: (variant: string): string => `Restablecer Elo de ${variant}`,
+  resetAction: "Restablecer",
+  resetSubmit: "Restablecer Elo",
   resetQuestion: (variant: string): string => `¿Restablecer Elo de ${variant}?`,
   resetExplanation: (variant: string): string =>
     `El Elo de ${variant} vuelve a 100 y su conteo de partidas con puntuación vuelve a cero. Las demás puntuaciones, el progreso de Historia, las medallas, los registros de Desafío, la configuración y la partida activa no cambian. Deshacer y rehacer no restaurarán el cambio que una partida terminada hizo en esta puntuación. Exporta tus datos primero si quieres un respaldo.`,

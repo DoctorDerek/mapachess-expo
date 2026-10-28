@@ -1,7 +1,7 @@
 "use client"
 
 import cx from "classix"
-import { useId, useState } from "react"
+import { useId } from "react"
 import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
@@ -67,49 +67,52 @@ function ChessAppearancePreview({
   const copy = useMapachessCopy()
 
   return (
-    <div
-      className="border-mapachito-charcoal relative mx-auto my-4 grid aspect-square w-full max-w-80 grid-cols-8 grid-rows-8 overflow-hidden rounded-sm border-2 text-[clamp(1rem,5vw,2.25rem)]"
-      role="img"
-      aria-label={copy.profile.artworkPreview(
-        copy.artwork.pieces[appearance.pieceSetId],
-        copy.artwork.boards[appearance.boardId],
-      )}
-    >
-      <ChessBoardArtwork />
-      {Array.from({ length: 64 }, (_, index) => {
-        const row = Math.floor(index / 8)
-        const column = index % 8
-        const role =
-          row === 0 || row === 7
-            ? BACK_RANK[column]
-            : row === 1 || row === 6
-              ? "pawn"
-              : undefined
-        return (
-          <span key={index} className="relative min-h-0 min-w-0">
-            {role === undefined ? null : (
-              <ChessPiece color={row < 2 ? "black" : "white"} role={role} />
-            )}
-            {column === 0 ? (
-              <span
-                aria-hidden="true"
-                className="bg-mapachito-white/90 text-mapachito-charcoal absolute top-0 left-0 rounded-sm px-0.5 text-[0.5rem] font-black"
-              >
-                {8 - row}
-              </span>
-            ) : null}
-            {row === 7 ? (
-              <span
-                aria-hidden="true"
-                className="bg-mapachito-white/90 text-mapachito-charcoal absolute right-0 bottom-0 rounded-sm px-0.5 text-[0.5rem] font-black"
-              >
-                {String.fromCharCode(97 + column)}
-              </span>
-            ) : null}
-          </span>
-        )
-      })}
-    </div>
+    <>
+      <ChessArtworkRecovery />
+      <div
+        className="border-mapachito-charcoal relative mx-auto my-4 grid aspect-square w-full max-w-40 grid-cols-8 grid-rows-8 overflow-hidden rounded-sm border-2 text-xl"
+        role="img"
+        aria-label={copy.profile.artworkPreview(
+          copy.artwork.pieces[appearance.pieceSetId],
+          copy.artwork.boards[appearance.boardId],
+        )}
+      >
+        <ChessBoardArtwork />
+        {Array.from({ length: 64 }, (_, index) => {
+          const row = Math.floor(index / 8)
+          const column = index % 8
+          const role =
+            row === 0 || row === 7
+              ? BACK_RANK[column]
+              : row === 1 || row === 6
+                ? "pawn"
+                : undefined
+          return (
+            <span key={index} className="relative min-h-0 min-w-0">
+              {role === undefined ? null : (
+                <ChessPiece color={row < 2 ? "black" : "white"} role={role} />
+              )}
+              {column === 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="bg-mapachito-white/90 text-mapachito-charcoal absolute top-0 left-0 rounded-sm px-0.5 text-[0.5rem] font-black"
+                >
+                  {8 - row}
+                </span>
+              ) : null}
+              {row === 7 ? (
+                <span
+                  aria-hidden="true"
+                  className="bg-mapachito-white/90 text-mapachito-charcoal absolute right-0 bottom-0 rounded-sm px-0.5 text-[0.5rem] font-black"
+                >
+                  {String.fromCharCode(97 + column)}
+                </span>
+              ) : null}
+            </span>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
@@ -117,31 +120,34 @@ export default function ChessAppearanceChoices({
   appearance,
   disabled,
   onChange,
+  open,
+  onOpen,
+  onClose,
 }: Readonly<{
   appearance: ChessAppearanceSettings
   disabled: boolean
   onChange: (change: ChessAppearanceChange) => void
+  open: "pieces" | "board" | null
+  onOpen: (choice: "pieces" | "board") => void
+  onClose: () => void
 }>) {
   const copy = useMapachessCopy()
   const messages = copy.interface.chessAppearanceChoices
 
   const id = useId()
-  const [open, setOpen] = useState<"pieces" | "board" | null>(null)
   return (
     <section aria-labelledby={`${id}-title`} className="min-w-0">
       <h2 id={`${id}-title`} className="sr-only">
         {messages.boardPieces}
       </h2>
-      <ChessArtworkRecovery />
+      {open === null ? <ChessArtworkRecovery /> : null}
       <div className="grid gap-3">
         <CustomizationChoice
           kind="pieces"
           value={copy.artwork.pieces[appearance.pieceSetId]}
           preview={<PieceSample id={appearance.pieceSetId} compact />}
           open={open === "pieces"}
-          onToggle={() =>
-            setOpen((current) => (current === "pieces" ? null : "pieces"))
-          }
+          onToggle={() => (open === "pieces" ? onClose() : onOpen("pieces"))}
         >
           <ChessAppearancePreview appearance={appearance} />
           <fieldset
@@ -183,9 +189,7 @@ export default function ChessAppearanceChoices({
             </span>
           }
           open={open === "board"}
-          onToggle={() =>
-            setOpen((current) => (current === "board" ? null : "board"))
-          }
+          onToggle={() => (open === "board" ? onClose() : onOpen("board"))}
         >
           <ChessAppearancePreview appearance={appearance} />
           <fieldset

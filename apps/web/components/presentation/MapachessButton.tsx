@@ -38,7 +38,7 @@ export default function MapachessButton({
       {busyLabel === undefined ? (
         children
       ) : (
-        <span className="grid">
+        <span className="grid min-w-0 grid-cols-1">
           <span
             aria-hidden={props["aria-busy"] === true}
             className={cx(

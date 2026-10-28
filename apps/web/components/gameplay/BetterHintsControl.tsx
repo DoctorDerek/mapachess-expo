@@ -20,6 +20,7 @@ export type BetterHintsControlProps = Readonly<{
   onMoveHintsRequested: () => void
   onPieceHintsRequested: () => void
   stage: MatchHintStage
+  nextMedal?: Readonly<{ label: string; description: string }> | null
 }>
 
 const HINT_ACTIONS = {
@@ -78,6 +79,7 @@ export default function BetterHintsControl({
   onMoveHintsRequested,
   onPieceHintsRequested,
   stage,
+  nextMedal = null,
 }: BetterHintsControlProps) {
   const copy = useMapachessCopy()
   const messages = copy.interface.betterHintsControl
@@ -105,8 +107,9 @@ export default function BetterHintsControl({
       </h2>
       <MapachessButton
         variant="hint"
+        aria-label={control.label}
         aria-busy={(busy && control.action !== null) || stage === "loading"}
-        aria-describedby="better-hints-guidance"
+        aria-describedby="better-hints-guidance better-hints-medal"
         className="flex h-full min-h-20 w-full min-w-0 flex-col items-center justify-center gap-1 px-2! py-2! text-base"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
@@ -114,7 +117,6 @@ export default function BetterHintsControl({
         onClick={activate}
         type="button"
       >
-        <InputPrompt action="hints" fallback="✦" />
         <span className="grid max-w-full min-w-0 wrap-anywhere">
           {Object.entries(copy.gameplay.hints.controls).map(
             ([stage, label]) => (
@@ -129,7 +131,29 @@ export default function BetterHintsControl({
           )}
           <span className="col-start-1 row-start-1">{control.label}</span>
         </span>
+        <span className="flex items-center justify-center gap-1">
+          <InputPrompt action="hints" />
+          <span className="grid text-sm font-semibold">
+            {(["silver", "bronze"] as const).map((tier) => (
+              <span
+                key={tier}
+                aria-hidden="true"
+                className="invisible col-start-1 row-start-1"
+              >
+                → {copy.shared.story.medals[tier]}
+              </span>
+            ))}
+            {nextMedal === null ? null : (
+              <span className="col-start-1 row-start-1">
+                <span aria-hidden="true">→ {nextMedal.label}</span>
+              </span>
+            )}
+          </span>
+        </span>
       </MapachessButton>
+      <span id="better-hints-medal" className="sr-only">
+        {nextMedal?.description}
+      </span>
       <p aria-atomic="true" aria-live="polite" className="sr-only">
         {hintAnnouncement(stage, hints, copy.gameplay.hints)}
       </p>

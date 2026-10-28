@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from "react"
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react"
 import MapachessButton from "../presentation/MapachessButton"
 
 export default function SettingsView({
@@ -9,6 +9,8 @@ export default function SettingsView({
   onClose,
   hidden = false,
   focusHeading = false,
+  actions,
+  initialFocus,
 }: Readonly<{
   children: ReactNode
   title: string
@@ -17,14 +19,18 @@ export default function SettingsView({
   onClose: () => void
   hidden?: boolean
   focusHeading?: boolean
+  actions?: ReactNode
+  initialFocus?: RefObject<HTMLElement | null>
 }>) {
   const titleId = useId()
   const heading = useRef<HTMLHeadingElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => {
-    const target = focusHeading ? heading.current : closeButton.current
+    const target =
+      initialFocus?.current ??
+      (focusHeading ? heading.current : closeButton.current)
     target?.focus({ preventScroll: true })
-  }, [focusHeading])
+  }, [focusHeading, initialFocus])
 
   return (
     <section
@@ -44,15 +50,17 @@ export default function SettingsView({
           </h2>
           {children}
         </div>
-        <footer className="border-mapachito-charcoal/15 flex justify-end border-t px-1 pt-3 pb-1">
+        <footer className="border-mapachito-charcoal/15 flex flex-wrap-reverse justify-end gap-3 border-t px-1 pt-3 pb-1 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:basis-32">
           <MapachessButton
             aria-label={closeAccessibleLabel}
+            className="px-1!"
             onClick={onClose}
             ref={closeButton}
             variant="secondary"
           >
             {closeLabel}
           </MapachessButton>
+          {actions}
         </footer>
       </div>
     </section>

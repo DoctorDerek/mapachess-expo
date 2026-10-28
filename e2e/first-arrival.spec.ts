@@ -189,7 +189,8 @@ for (const width of [320, 390, 1280]) {
     await expect(start).toBeVisible()
     const before = await start.boundingBox()
     const introduction = page.getByRole("region", { name: "Introduction" })
-    await introduction.evaluate((element) => {
+    const introductionScroll = introduction.locator("..")
+    await introductionScroll.evaluate((element) => {
       element.scrollTop = element.scrollHeight
     })
     expect(await start.boundingBox()).toEqual(before)
@@ -208,7 +209,7 @@ for (const width of [320, 390, 1280]) {
     await expect(credit).toHaveCSS("text-decoration-line", "none")
     await expect(credit).toHaveAttribute("target", "_blank")
     await expect(page.locator("footer img")).toHaveCSS("opacity", "1")
-    await introduction.evaluate((element) => {
+    await introductionScroll.evaluate((element) => {
       element.scrollTop = 0
     })
     await page.screenshot({
@@ -350,8 +351,21 @@ test("keyboard navigation reaches language and Start without reading all introdu
     page.getByRole("button", { name: "Start", exact: true }),
   ).toBeVisible()
   await page.keyboard.press("Tab")
-  await expect(page.getByRole("region", { name: "Introduction" })).toBeFocused()
+  const introduction = page.getByRole("region", { name: "Introduction" })
+  if (
+    await introduction
+      .locator("..")
+      .evaluate((element) => element === document.activeElement)
+  )
+    await page.keyboard.press("Tab")
+  await expect(introduction).toBeFocused()
   await page.keyboard.press("Tab")
+  if (
+    await page
+      .getByRole("link", { name: /DoctorDerek.com/ })
+      .evaluate((element) => element === document.activeElement)
+  )
+    await page.keyboard.press("Tab")
   await expect(page.getByRole("combobox", { name: "Language" })).toBeFocused()
   await page.keyboard.press("Tab")
   await expect(

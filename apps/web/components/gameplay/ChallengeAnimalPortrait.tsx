@@ -20,10 +20,12 @@ export default function ChallengeAnimalPortrait({
   opponent,
   active,
   attention = false,
+  compact = false,
 }: Readonly<{
   opponent: StockfishOpponentDefinition
   active: boolean
   attention?: boolean
+  compact?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
 
@@ -167,7 +169,7 @@ export default function ChallengeAnimalPortrait({
   }, [active, attentionOrdinal, attentionActor, attentionStep, images, step])
 
   const portraitStyle: CSSProperties & { "--sprite-scale": number } = {
-    "--sprite-scale": presentation.layout.standaloneScale ?? 2,
+    "--sprite-scale": compact ? 2 : (presentation.layout.standaloneScale ?? 2),
   }
   return (
     <span

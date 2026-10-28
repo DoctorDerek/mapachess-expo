@@ -68,7 +68,7 @@ for (const width of [320, 1280]) {
           name: `Change ${area}`,
           exact: true,
         }),
-      ).toHaveAttribute("aria-expanded", "false")
+      ).toHaveAttribute("aria-haspopup", "dialog")
     }
     await expect(
       settings.getByRole("group", { name: "Coach", exact: true }),

@@ -35,19 +35,15 @@ import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImage
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MedalSymbol from "../presentation/MedalSymbol"
-import AutoHintModeChoices from "../profile/AutoHintModeChoices"
+import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
-import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
-import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
 import Chess960PositionChoice from "./Chess960PositionChoice"
 import MatchColorChoices from "./MatchColorChoices"
-import MatchSetupPicker from "./MatchSetupPicker"
-import StoryLadderProgress from "./StoryLadderProgress"
-import TimeControlChoices from "./TimeControlChoices"
+import MatchSetupEditor, { type SetupEditor } from "./MatchSetupEditor"
 
 export type WebMatchSetupProps = Readonly<{
+  header?: ReactNode
   ratings?: MapachessPlayerData["ratings"]
   playerAppearance?: PlayerAppearance
   onPlayerAnimalChanged?: (animal: StockfishOpponentId) => void
@@ -65,9 +61,6 @@ export type WebMatchSetupProps = Readonly<{
   onEditorOpened: (editor: SetupEditor) => void
   onEditorClosed: () => void
 }>
-
-type SetupEditor =
-  "opponent" | "difficulty" | "hints" | "player" | "time-control"
 
 function MatchSetupChoice({
   label,
@@ -88,14 +81,14 @@ function MatchSetupChoice({
 }>) {
   const copy = useMapachessCopy().setup
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       {preview === undefined ? null : (
-        <span className="pointer-events-none block size-20 shrink-0">
+        <span className="pointer-events-none block size-16 shrink-0">
           {preview}
         </span>
       )}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1 basis-28 wrap-anywhere">
+      <div className="flex min-w-0 flex-1 basis-40 flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1 basis-16 wrap-break-word">
           <p className="text-sm font-semibold">{label}</p>
           <p className="font-display text-xl leading-tight font-black">
             {value}
@@ -107,7 +100,7 @@ function MatchSetupChoice({
         <MapachessButton
           aria-haspopup="dialog"
           aria-label={actionLabel}
-          className="px-3! py-2! text-base"
+          className="px-2! py-2! text-base"
           disabled={disabled}
           onClick={onChange}
           type="button"
@@ -121,6 +114,7 @@ function MatchSetupChoice({
 }
 
 export default function WebMatchSetup({
+  header,
   autoHintMode,
   challengeHistory,
   disabled,
@@ -160,13 +154,24 @@ export default function WebMatchSetup({
     ),
   )
   const [invalidSetup, setInvalidSetup] = useState(false)
+  const editorTrigger = useRef<HTMLButtonElement | null>(null)
   const openEditor = (
     editor: SetupEditor,
     trigger: HTMLButtonElement,
   ): void => {
     trigger.focus({ preventScroll: true })
+    editorTrigger.current = trigger
     onEditorOpened(editor)
   }
+  useEffect(() => {
+    if (!visible) {
+      editorTrigger.current = null
+      return
+    }
+    if (editing !== null || disabled || opening) return
+    editorTrigger.current?.focus({ preventScroll: true })
+    editorTrigger.current = null
+  }, [disabled, editing, opening, visible])
   const [selectedOpponentId, setSelectedOpponentId] = useState(() =>
     setup.mode === "story"
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
@@ -239,245 +244,225 @@ export default function WebMatchSetup({
   }
 
   return (
-    <section aria-labelledby="match-setup-title" className="mx-auto max-w-3xl">
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <MapachessButton
-          disabled={disabled}
-          onClick={onBack}
-          variant="secondary"
+    <section
+      aria-labelledby="match-setup-title"
+      className="mx-auto h-full min-h-0 w-full max-w-3xl"
+    >
+      <form onSubmit={startMatch} className="h-full min-h-0 min-w-0 text-base">
+        <ScrollActions
+          actions={
+            <div className="grid grid-cols-2 items-stretch gap-2">
+              <MapachessButton
+                className="min-w-0 px-0! py-1! text-base wrap-break-word"
+                disabled={disabled}
+                onClick={onBack}
+                variant="secondary"
+              >
+                {copy.allModes}
+              </MapachessButton>
+              <MapachessButton
+                className="min-w-0 px-0! py-1! text-base wrap-break-word"
+                aria-busy={opening}
+                busyLabel={copy.openingMatch}
+                disabled={disabled || !selectionAvailable}
+                type="submit"
+              >
+                <span aria-hidden="true">▶ </span>
+                {copy.startMatch}
+              </MapachessButton>
+            </div>
+          }
         >
-          <span aria-hidden="true">← </span>
-          {copy.allModes}
-        </MapachessButton>
-        <h1
-          className="font-display text-mapachito-white text-2xl leading-tight font-black"
-          id="match-setup-title"
-          ref={heading}
-          tabIndex={-1}
-        >
-          {copy.presentations[variant][setup.mode].title}
-        </h1>
-      </div>
-      <form onSubmit={startMatch} className="grid gap-3 text-base">
-        <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-5 rounded-xl border-3 p-4">
-          {setup.mode === "story" &&
-          playerAnimal !== null &&
-          onPlayerAnimalChanged !== undefined ? (
-            <MatchSetupChoice
-              label={copy.color}
-              value={animalCopy.names[playerAnimal.id]}
-              actionLabel={copy.playAsAction(animalCopy.names[playerAnimal.id])}
-              disabled={disabled || opening}
-              onChange={(event) => openEditor("player", event.currentTarget)}
-              preview={
-                <ChallengeAnimalPortrait
-                  key={playerAnimal.id}
-                  active={visible && editing === null}
-                  opponent={playerAnimal}
+          {header}
+          <h1
+            className="font-display text-mapachito-white mb-4 text-2xl leading-tight font-black"
+            id="match-setup-title"
+            ref={heading}
+            tabIndex={-1}
+          >
+            {copy.presentations[variant][setup.mode].title}
+          </h1>
+          <div className="grid min-w-0 gap-3">
+            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-5 rounded-xl border-3 p-4">
+              {setup.mode === "story" &&
+              playerAnimal !== null &&
+              onPlayerAnimalChanged !== undefined ? (
+                <MatchSetupChoice
+                  label={copy.color}
+                  value={animalCopy.names[playerAnimal.id]}
+                  actionLabel={copy.playAsAction(
+                    animalCopy.names[playerAnimal.id],
+                  )}
+                  disabled={disabled || opening}
+                  onChange={(event) =>
+                    openEditor("player", event.currentTarget)
+                  }
+                  preview={
+                    <ChallengeAnimalPortrait
+                      compact
+                      key={playerAnimal.id}
+                      active={visible && editing === null}
+                      opponent={playerAnimal}
+                    />
+                  }
                 />
-              }
-            />
-          ) : null}
-          <MatchSetupChoice
-            label={copy.opponent}
-            value={animalCopy.opponent(opponent.id)}
-            detail={
-              setup.mode === "story"
-                ? copy.elo(String(opponent.storyTargetElo))
-                : undefined
-            }
-            actionLabel={
-              setup.mode === "story"
-                ? copy.changeStoryOpponent
-                : copy.changeAnimal
-            }
-            disabled={disabled || opening}
-            onChange={(event) => openEditor("opponent", event.currentTarget)}
-            preview={
-              <ChallengeAnimalPortrait
-                key={opponent.id}
-                active={visible && editing === null}
-                opponent={opponent}
-              />
-            }
-          />
-
-          {challenge === null ? null : (
-            <>
+              ) : null}
               <MatchSetupChoice
-                label={copy.difficultyLabel}
-                value={copy.elo(String(difficultyTargetElo))}
-                actionLabel={copy.changeDifficulty}
+                label={copy.opponent}
+                value={animalCopy.opponent(opponent.id)}
+                detail={
+                  setup.mode === "story"
+                    ? copy.elo(String(opponent.storyTargetElo))
+                    : undefined
+                }
+                actionLabel={
+                  setup.mode === "story"
+                    ? copy.changeStoryOpponent
+                    : copy.changeAnimal
+                }
                 disabled={disabled || opening}
                 onChange={(event) =>
-                  openEditor("difficulty", event.currentTarget)
+                  openEditor("opponent", event.currentTarget)
+                }
+                preview={
+                  <ChallengeAnimalPortrait
+                    compact
+                    key={opponent.id}
+                    active={visible && editing === null}
+                    opponent={opponent}
+                  />
                 }
               />
-              <MatchColorChoices
-                disabled={disabled || opening}
-                initialColor={challenge.playerColor}
-              />
-            </>
-          )}
-          {challenge?.variant === "chess960" ? (
-            <Chess960PositionChoice
-              disabled={disabled || opening}
-              numberedPosition={numberedPosition}
-              onChanged={(value) => {
-                setPositionNumber(value)
-                setNumberedPosition(true)
-              }}
-              onRandomize={() => {
-                setPositionNumber(
-                  String(generateWebChess960Position(globalThis.crypto)),
-                )
-                setNumberedPosition(false)
-              }}
-              value={positionNumber}
-            />
-          ) : null}
-          <MatchSetupChoice
-            label={copy.betterHints}
-            value={copy.autoHints[autoHintMode].label}
-            actionLabel={copy.changeHints}
-            disabled={disabled || opening}
-            onChange={(event) => openEditor("hints", event.currentTarget)}
-          />
-          <MatchSetupChoice
-            label={clockCopy.timeControl}
-            value={timeControlLabel(timeControl, clockCopy)}
-            actionLabel={clockCopy.change}
-            disabled={disabled || opening}
-            onChange={(event) =>
-              openEditor("time-control", event.currentTarget)
-            }
-          />
-          {ratings === undefined ? null : (
-            <p className="font-bold">
-              <MedalSymbol medal={startingRatingAssistance(autoHintMode)} />
-              {catalog.profile.rating(
-                clockCopy.rating(
-                  copy.variants[variant],
-                  clockCopy.category[category],
-                  catalog.shared.story.medals[
-                    startingRatingAssistance(autoHintMode)
-                  ],
-                ),
-                ratings[
-                  playerRatingId(
-                    variant,
-                    category,
-                    startingRatingAssistance(autoHintMode),
-                  )
-                ],
+
+              {challenge === null ? null : (
+                <>
+                  <MatchSetupChoice
+                    label={copy.difficultyLabel}
+                    value={copy.elo(String(difficultyTargetElo))}
+                    actionLabel={copy.changeDifficulty}
+                    disabled={disabled || opening}
+                    onChange={(event) =>
+                      openEditor("difficulty", event.currentTarget)
+                    }
+                  />
+                  <MatchColorChoices
+                    disabled={disabled || opening}
+                    initialColor={challenge.playerColor}
+                  />
+                </>
               )}
-            </p>
-          )}
-        </div>
-
-        {!selectionAvailable ? (
-          <MapachessNotice role="status" tone="warning">
-            {copy.unavailableSelection}
-          </MapachessNotice>
-        ) : null}
-        {invalidSetup ? (
-          <MapachessNotice role="alert" tone="warning">
-            {copy.invalidSetup}
-          </MapachessNotice>
-        ) : null}
-        {challenge === null ? (
-          <p className="text-mapachito-white text-sm">{copy.randomColor}</p>
-        ) : null}
-        <div className="grid py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <MapachessButton
-            aria-busy={opening}
-            busyLabel={copy.openingMatch}
-            disabled={disabled || !selectionAvailable}
-            type="submit"
-          >
-            <span aria-hidden="true">▶ </span>
-            {copy.startMatch}
-          </MapachessButton>
-        </div>
-
-        {editing === null ? null : (
-          <MatchSetupPicker
-            contentSized={editing === "time-control"}
-            onDone={onEditorClosed}
-            title={
-              editing === "player"
-                ? copy.color
-                : editing === "time-control"
-                  ? clockCopy.timeControl
-                  : editing === "hints"
-                    ? copy.betterHints
-                    : editing === "difficulty"
-                      ? copy.chooseDifficulty
-                      : copy.chooseOpponent
-            }
-          >
-            {editing === "player" &&
-            playerAppearance !== undefined &&
-            onPlayerAnimalChanged !== undefined ? (
-              <div className="bg-mapachito-charcoal rounded-lg p-3">
-                <PlayerAnimalChoices
-                  active={visible}
-                  presentation="dialog"
+              {challenge?.variant === "chess960" ? (
+                <Chess960PositionChoice
                   disabled={disabled || opening}
-                  onSelected={onPlayerAnimalChanged}
-                  selectedId={playerAppearance.animal}
-                  storyProgress={storyProgress}
+                  numberedPosition={numberedPosition}
+                  onChanged={(value) => {
+                    setPositionNumber(value)
+                    setNumberedPosition(true)
+                  }}
+                  onRandomize={() => {
+                    setPositionNumber(
+                      String(generateWebChess960Position(globalThis.crypto)),
+                    )
+                    setNumberedPosition(false)
+                  }}
+                  value={positionNumber}
                 />
-              </div>
-            ) : editing === "time-control" ? (
-              <div className="grid gap-3">
-                <TimeControlChoices
-                  control={timeControl}
-                  disabled={disabled || opening}
-                  onChange={setTimeControl}
-                />
-                <p role="status" aria-live="polite">
-                  {timeControl.type === "untimed"
-                    ? clockCopy.untimedExplanation
-                    : clockCopy.explanation(
-                        timeControl.baseSeconds / 60,
-                        timeControl.incrementSeconds,
-                      )}
+              ) : null}
+              <MatchSetupChoice
+                label={copy.betterHints}
+                value={copy.autoHints[autoHintMode].label}
+                actionLabel={copy.changeHints}
+                disabled={disabled || opening}
+                onChange={(event) => openEditor("hints", event.currentTarget)}
+              />
+              <MatchSetupChoice
+                label={clockCopy.timeControl}
+                value={timeControlLabel(timeControl, clockCopy)}
+                actionLabel={clockCopy.change}
+                disabled={disabled || opening}
+                onChange={(event) =>
+                  openEditor("time-control", event.currentTarget)
+                }
+              />
+              {ratings === undefined ? null : (
+                <p className="font-bold">
+                  <MedalSymbol medal={startingRatingAssistance(autoHintMode)} />
+                  {catalog.profile.rating(
+                    clockCopy.rating(
+                      copy.variants[variant],
+                      clockCopy.category[category],
+                      catalog.shared.story.medals[
+                        startingRatingAssistance(autoHintMode)
+                      ],
+                    ),
+                    ratings[
+                      playerRatingId(
+                        variant,
+                        category,
+                        startingRatingAssistance(autoHintMode),
+                      )
+                    ],
+                  )}
                 </p>
-              </div>
-            ) : editing === "hints" ? (
-              <AutoHintModeChoices
-                autoHintMode={autoHintMode}
-                disabled={disabled}
-                onAutoHintModeChanged={onAutoHintModeChanged}
-              />
-            ) : editing === "difficulty" ? (
-              <ChallengeDifficultyChoices
-                disabled={disabled}
-                history={challengeHistory[variant]}
-                onSelected={setDifficultyTargetElo}
-                selectedElo={difficultyTargetElo}
-                targets={difficultyTargets}
-              />
-            ) : setup.mode === "story" ? (
-              <StoryLadderProgress
-                progress={storyProgress}
-                variant={variant}
-                selection={{
-                  disabled,
-                  opponentId: selectedOpponentId,
-                  onSelected: setSelectedOpponentId,
-                }}
-              />
-            ) : (
-              <ChallengeOpponentChoices
-                disabled={disabled}
-                onSelected={setSelectedOpponentId}
-                opponents={challengeOpponents}
-                selectedId={selectedOpponentId}
-              />
-            )}
-          </MatchSetupPicker>
+              )}
+            </div>
+
+            {!selectionAvailable ? (
+              <MapachessNotice role="status" tone="warning">
+                {copy.unavailableSelection}
+              </MapachessNotice>
+            ) : null}
+            {invalidSetup ? (
+              <MapachessNotice role="alert" tone="warning">
+                {copy.invalidSetup}
+              </MapachessNotice>
+            ) : null}
+            {challenge === null ? (
+              <p className="text-mapachito-white text-sm">{copy.randomColor}</p>
+            ) : null}
+          </div>
+        </ScrollActions>
+        {editing === null ? null : (
+          <MatchSetupEditor
+            key={editing}
+            editor={editing}
+            active={visible}
+            disabled={disabled || opening}
+            mode={setup.mode}
+            variant={variant}
+            storyProgress={storyProgress}
+            challengeHistory={challengeHistory}
+            difficultyTargets={difficultyTargets}
+            initialValues={{
+              player: playerAppearance?.animal,
+              opponent: selectedOpponentId,
+              difficulty: difficultyTargetElo,
+              hints: autoHintMode,
+              "time-control": timeControl,
+            }}
+            onCancel={onEditorClosed}
+            onDone={(values) => {
+              switch (editing) {
+                case "player":
+                  if (values.player !== undefined)
+                    onPlayerAnimalChanged?.(values.player)
+                  break
+                case "opponent":
+                  setSelectedOpponentId(values.opponent)
+                  break
+                case "difficulty":
+                  setDifficultyTargetElo(values.difficulty)
+                  break
+                case "hints":
+                  onAutoHintModeChanged(values.hints)
+                  break
+                case "time-control":
+                  setTimeControl(values["time-control"])
+                  break
+              }
+              onEditorClosed()
+            }}
+          />
         )}
       </form>
     </section>
