@@ -4,9 +4,9 @@ import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
 } from "../packages/match-presentation/src/chessAppearanceCatalog.js"
-import CHESS_HINT_PALETTES, {
+import CHESS_BOARD_PALETTES, {
   type ChessHintPalette,
-} from "../packages/match-presentation/src/chessHintPalettes.js"
+} from "../packages/match-presentation/src/chessBoardPalettes.js"
 import { parseMatchMoveId } from "../packages/match/src/matchMove.js"
 import { createInitialMatchPosition } from "../packages/match/src/matchPosition.js"
 import {
@@ -308,11 +308,13 @@ for (const { mode, color, pieceSetId, boardId } of [
     ).not.toBeVisible()
     expect(await element.evaluate((node) => node.isConnected)).toBe(true)
     await expect(pawn).toHaveAttribute("aria-selected", "true")
-    await expect(pawn).toHaveCSS("box-shadow", /4px/)
-    await expect(pawn).toHaveCSS("box-shadow", /6px/)
-    await expect(pawn).toHaveCSS("z-index", "10")
+    await expect(pawn.locator("[data-board-selection]")).toHaveCSS(
+      "border-top-color",
+      "rgb(238, 240, 244)",
+    )
+    await expect(pawn).toHaveCSS("z-index", "auto")
     expect(await hintGeometry(page)).toEqual(hints)
-    await expectHintPalette(page, CHESS_HINT_PALETTES[boardId])
+    await expectHintPalette(page, CHESS_BOARD_PALETTES[boardId].hints)
     expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
     await expect(
       board.locator(`img[src*="${pieceSetId}/pieces/"]`).first(),
@@ -363,7 +365,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     "opacity",
     "1",
   )
-  await expectHintPalette(page, CHESS_HINT_PALETTES["toffee-wood"])
+  await expectHintPalette(page, CHESS_BOARD_PALETTES["toffee-wood"].hints)
   const before = await savedProfile(page)
   const geometry = await hintGeometry(page)
 
@@ -381,7 +383,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     "opacity",
     "1",
   )
-  await expectHintPalette(page, CHESS_HINT_PALETTES["toffee-wood"])
+  await expectHintPalette(page, CHESS_BOARD_PALETTES["toffee-wood"].hints)
   expect((await savedProfile(page)).settings.chessAppearance.boardId).toBe(
     "cosunosuke",
   )
@@ -393,7 +395,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   await expect(
     board.locator(':scope > span[aria-hidden="true"] > img'),
   ).toHaveCount(0)
-  await expectHintPalette(page, CHESS_HINT_PALETTES.current)
+  await expectHintPalette(page, CHESS_BOARD_PALETTES.current.hints)
   expect(await hintGeometry(page)).toEqual(geometry)
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
 
@@ -405,7 +407,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     "opacity",
     "1",
   )
-  await expectHintPalette(page, CHESS_HINT_PALETTES.cosunosuke)
+  await expectHintPalette(page, CHESS_BOARD_PALETTES.cosunosuke.hints)
   await expect(
     page.getByRole("button", { name: "Retry chess artwork", exact: true }),
   ).toHaveCount(0)
@@ -415,7 +417,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   await board
     .locator('img[src$="/boards/cosunosuke.png"]')
     .dispatchEvent("error")
-  await expectHintPalette(page, CHESS_HINT_PALETTES.current)
+  await expectHintPalette(page, CHESS_BOARD_PALETTES.current.hints)
   await expect(
     page.getByRole("button", { name: "Retry chess artwork", exact: true }),
   ).toBeVisible()
@@ -426,7 +428,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     "opacity",
     "1",
   )
-  await expectHintPalette(page, CHESS_HINT_PALETTES.cosunosuke)
+  await expectHintPalette(page, CHESS_BOARD_PALETTES.cosunosuke.hints)
   expect(await hintGeometry(page)).toEqual(geometry)
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
 })
