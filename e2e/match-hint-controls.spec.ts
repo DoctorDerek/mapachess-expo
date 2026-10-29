@@ -251,11 +251,13 @@ test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resu
   await page.goForward()
   await expect(picker.getByRole("radio")).toHaveCount(3)
   await page.keyboard.press("Escape")
+  await expect(picker).toHaveCount(0)
   await help.click()
   await expect(
     picker.getByRole("button", { name: "Close", exact: true }),
   ).toBeVisible()
   await page.keyboard.press("Escape")
+  await expect(picker).toHaveCount(0)
   await expect(help).toBeFocused()
   expect((await savedProfile(page)).activeMatch).toMatchObject({
     currentFen: before?.currentFen,
