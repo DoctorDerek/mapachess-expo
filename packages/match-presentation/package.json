@@ -5,6 +5,7 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./chess-board-theme.css": "./styles/chessBoardTheme.css",
     "./medals/*.png": "./assets/medals/*.png",
     "./better-hint-geometry": {
       "types": "./src/betterHintGeometry.ts",
@@ -21,6 +22,14 @@
     "./chess-appearance-catalog": {
       "types": "./src/chessAppearanceCatalog.ts",
       "default": "./dist/chessAppearanceCatalog.js"
+    },
+    "./chess-board-palettes": {
+      "types": "./src/chessBoardPalettes.ts",
+      "default": "./dist/chessBoardPalettes.js"
+    },
+    "./last-move-highlight": {
+      "types": "./src/lastMoveHighlight.ts",
+      "default": "./dist/lastMoveHighlight.js"
     },
     "./create-celebration-recipe": {
       "types": "./src/createCelebrationRecipe.ts",

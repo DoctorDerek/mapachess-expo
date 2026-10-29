@@ -14,6 +14,7 @@ import BetterHintsOverlay from "./BetterHintsOverlay"
 import CanonicalChessboard, {
   boardDestinationMoves,
 } from "./CanonicalChessboard"
+import ChessSquareAnnotations from "./ChessSquareAnnotations"
 
 const HINTS = Object.freeze({
   opponent: Object.freeze([
@@ -34,6 +35,70 @@ const countOccurrences = (value: string, pattern: string): number =>
   value.match(new RegExp(pattern, "g"))?.length ?? 0
 
 describe("Better Hints board presentation", () => {
+  it("keeps check, selection and focus separate from history and legal-target marks", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ChessSquareAnnotations, {
+        checked: true,
+        controller: true,
+        history: "destination",
+        legal: true,
+        selected: true,
+      }),
+    )
+    for (const annotation of [
+      'data-last-move="destination"',
+      'data-checked-king="true"',
+      'data-board-selection="true"',
+      'data-board-focus="true"',
+      'data-legal-destination-shape="corners"',
+    ])
+      expect(countOccurrences(markup, annotation)).toBe(1)
+    expect(markup).not.toContain('role="button"')
+  })
+
+  it("leaves unmarked squares without history, check, selection or legal-target paint", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ChessSquareAnnotations, {
+        checked: false,
+        controller: false,
+        history: null,
+        legal: false,
+        selected: false,
+      }),
+    )
+    expect(markup).not.toContain("data-last-move")
+    expect(markup).not.toContain("data-checked-king")
+    expect(markup).not.toContain("data-board-selection")
+    expect(markup).not.toContain("data-legal-destination-shape")
+  })
+
+  it.each(["white", "black"] as const)(
+    "preserves source and ribbon owner cues facing %s",
+    (orientation) => {
+      for (const showMoves of [false, true]) {
+        const markup = renderToStaticMarkup(
+          createElement(BetterHintsOverlay, {
+            hints: HINTS,
+            orientation,
+            showMoves,
+          }),
+        )
+        expect(countOccurrences(markup, 'data-hint-owner="player"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-owner="opponent"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-pattern="solid"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-pattern="dashed"')).toBe(
+          showMoves ? 6 : 3,
+        )
+      }
+    },
+  )
+
   it.each(["white", "black"] as const)(
     "renders separated capture heads with unchanged targets and announcements for %s",
     (orientation) => {

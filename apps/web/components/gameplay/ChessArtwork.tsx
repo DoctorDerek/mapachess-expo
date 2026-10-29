@@ -51,9 +51,18 @@ const ArtworkContext = createContext<
   Readonly<{
     appearance: ChessAppearanceSettings
     attempt: number
+    onBoardError: ((boardId: ChessBoardId) => void) | null
     retry: (() => void) | null
   }>
->({ appearance: DEFAULT_CHESS_APPEARANCE, attempt: 0, retry: null })
+>({
+  appearance: DEFAULT_CHESS_APPEARANCE,
+  attempt: 0,
+  onBoardError: null,
+  retry: null,
+})
+
+export const useDisplayedChessAppearance = (): ChessAppearanceSettings =>
+  useContext(ArtworkContext).appearance
 
 export function ChessArtworkRecovery() {
   const messages = useMapachessCopy().interface.chessArtwork
@@ -115,7 +124,15 @@ function usePreparedChoice<Id extends string>(
       images.forEach((image) => image.release())
     }
   }, [id, sources, fallback, attempt])
-  return { displayed, failed: failed === id }
+  return {
+    displayed,
+    failed: failed === id,
+    onError: (failedId: Id) => {
+      if (failedId !== displayed) return
+      setDisplayed(fallback)
+      setFailed(id)
+    },
+  }
 }
 
 export default function ChessAppearanceProvider({
@@ -168,6 +185,7 @@ export default function ChessAppearanceProvider({
           boardId: board.displayed,
         },
         attempt,
+        onBoardError: board.onError,
         retry:
           pieces.failed || board.failed
             ? () => setAttempt((value) => value + 1)
@@ -266,7 +284,7 @@ export function ChessBoardArtwork({
   boardId,
   orientation = "white",
 }: Readonly<{ boardId?: ChessBoardId; orientation?: MatchColor }>) {
-  const { appearance, attempt } = useContext(ArtworkContext)
+  const { appearance, attempt, onBoardError } = useContext(ArtworkContext)
   const board = chessBoard(boardId ?? appearance.boardId)
   const source =
     board.kind === "colors"
@@ -302,7 +320,10 @@ export function ChessBoardArtwork({
           width={board.image.width}
           height={board.image.height}
           onLoad={image.onLoad}
-          onError={image.onError}
+          onError={() => {
+            image.onError()
+            if (boardId === undefined) onBoardError?.(board.id)
+          }}
           className={cx(
             "absolute inset-0 size-full object-contain",
             !image.visible && "opacity-0",

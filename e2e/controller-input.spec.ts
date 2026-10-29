@@ -85,6 +85,16 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
   ).toBeFocused()
   await press(page, 12)
   await expect(e2).toBeFocused()
+  await expect(e2.locator("[data-board-focus]")).toBeVisible()
+  await expect(e2.locator("[data-board-focus]")).toHaveCSS(
+    "border-top-style",
+    "dashed",
+  )
+  await expect(e2.locator("[data-board-focus]")).toHaveCSS(
+    "border-top-color",
+    "rgb(238, 240, 244)",
+  )
+  await expect(e2).toHaveCSS("outline-style", "none")
   const before = await savedProfile(page)
   await press(page, 5)
   await expect(
@@ -196,6 +206,17 @@ test("executes a move, Undo, Redo and result review through canonical controller
     })
     .toBe(2)
   const moved = (await savedProfile(page)).activeMatch
+  const lastMove = moved?.moveIds.at(-1)
+  if (lastMove === undefined) throw new Error("Expected latest accepted move")
+  const origin = page.locator(
+    `[data-square="${lastMove.slice(0, 2)}"] [data-last-move="origin"]`,
+  )
+  const destination = page.locator(
+    `[data-square="${lastMove.slice(2, 4)}"] [data-last-move="destination"]`,
+  )
+  await expect(origin).toBeVisible()
+  await expect(destination).toBeVisible()
+  await expect(page.locator("[data-last-move]")).toHaveCount(2)
   await press(page, 3)
   await expect(page.getByRole("button", { name: "Focus board" })).toBeFocused()
   await press(page, 12)
@@ -204,12 +225,19 @@ test("executes a move, Undo, Redo and result review through canonical controller
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.cursor)
     .toBe(0)
+  await expect(page.locator("[data-last-move]")).toHaveCount(0)
   await press(page, 15)
   await expect(page.getByRole("button", { name: /Redo/ })).toBeFocused()
   await press(page, 0)
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.currentFen)
     .toBe(moved?.currentFen)
+  await expect(origin).toBeVisible()
+  await expect(destination).toBeVisible()
+  await page.reload()
+  await expect(origin).toBeVisible()
+  await expect(destination).toBeVisible()
+  await expect(page.locator("[data-last-move]")).toHaveCount(2)
   await press(page, 9)
   await activate(page, page.getByRole("button", { name: /Resign/ }))
   const review = page.getByRole("button", { name: "Review board", exact: true })
@@ -325,9 +353,14 @@ test("keeps promotion modal input isolated and accepts the chosen piece", async 
   })
   const b7 = page.getByRole("gridcell", { name: /^b7, White pawn/ })
   await expect(b7).toHaveAttribute("aria-disabled", "false", { timeout: 30000 })
-  await activate(page, b7)
+  await b7.focus()
+  await expect(b7).toHaveAttribute("tabindex", "0")
+  await press(page, 0)
+  await expect(b7).toHaveAttribute("aria-selected", "true")
   await press(page, 12)
+  await expect(page.getByRole("gridcell", { name: /^b8,/ })).toBeFocused()
   await press(page, 14)
+  await expect(page.getByRole("gridcell", { name: /^a8,/ })).toBeFocused()
   await press(page, 0)
   const promotion = page.getByRole("dialog", { name: "Promote on a8" })
   await expect(promotion).toBeVisible()
@@ -336,9 +369,14 @@ test("keeps promotion modal input isolated and accepts the chosen piece", async 
   await page.keyboard.press("Escape")
   await expect(promotion).toHaveCount(0)
   await expect(page.getByRole("grid")).toBeVisible()
-  await activate(page, b7)
+  await b7.focus()
+  await expect(b7).toHaveAttribute("tabindex", "0")
+  await press(page, 0)
+  await expect(b7).toHaveAttribute("aria-selected", "true")
   await press(page, 12)
+  await expect(page.getByRole("gridcell", { name: /^b8,/ })).toBeFocused()
   await press(page, 14)
+  await expect(page.getByRole("gridcell", { name: /^a8,/ })).toBeFocused()
   await press(page, 0)
   await expect(promotion).toBeVisible()
   await activate(

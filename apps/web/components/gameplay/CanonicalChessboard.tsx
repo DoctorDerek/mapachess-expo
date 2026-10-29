@@ -3,6 +3,8 @@
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
+import CHESS_BOARD_PALETTES from "@mapachess/match-presentation/chess-board-palettes"
+import lastMoveHighlight from "@mapachess/match-presentation/last-move-highlight"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type {
   AppliedMatchMove,
@@ -34,7 +36,12 @@ import MapachessDialog from "../presentation/MapachessDialog"
 import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BetterHintsOverlay from "./BetterHintsOverlay"
-import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
+import {
+  ChessBoardArtwork,
+  ChessPiece,
+  useDisplayedChessAppearance,
+} from "./ChessArtwork"
+import ChessSquareAnnotations from "./ChessSquareAnnotations"
 
 type BoardCopy = MapachessCatalog["board"]
 
@@ -125,7 +132,7 @@ const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "Home"
 
 const baseSquareClasses =
-  "group relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 p-0 text-[clamp(1rem,8cqw,4.75rem)] leading-none transition-[filter,box-shadow] outline-none focus-visible:ring-4 focus-visible:ring-mapachito-orange focus-visible:ring-inset aria-disabled:cursor-default"
+  "group text-mapachito-charcoal relative grid aspect-square min-h-0 min-w-0 cursor-pointer place-items-center overflow-hidden border-0 bg-transparent p-0 text-[clamp(1rem,8cqw,4.75rem)] leading-none outline-none! aria-disabled:cursor-default"
 
 export default function CanonicalChessboard({
   disabled,
@@ -138,6 +145,8 @@ export default function CanonicalChessboard({
   showMoveHints,
 }: CanonicalChessboardProps) {
   const copy = useMapachessCopy().board
+  const appearance = useDisplayedChessAppearance()
+  const palette = CHESS_BOARD_PALETTES[appearance.boardId]
   const input = usePlayerInput()
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
   const initialFocusSquare = orientation === "white" ? "e1" : "e8"
@@ -280,7 +289,17 @@ export default function CanonicalChessboard({
 
   return (
     <div className="[container-type:inline-size] relative w-full min-w-0">
-      <div className="relative">
+      <div
+        className={cx(
+          "relative",
+          "data-[board-palette=light]:[--color-board-hint-player:var(--color-board-hint-player-on-light)]",
+          "data-[board-palette=dark]:[--color-board-hint-player:var(--color-board-hint-player-on-dark)]",
+          "data-[board-palette=textured]:[--color-board-hint-player:var(--color-board-hint-player-on-texture)]",
+          "data-[board-palette=dark]:[--color-board-history-origin:var(--color-board-history-origin-on-dark)]",
+          "data-[board-palette=dark]:[--color-board-history-destination:var(--color-board-history-destination-on-dark)]",
+        )}
+        data-board-palette={palette}
+      >
         <div
           aria-label={copy.orientation(orientation)}
           className="border-mapachito-charcoal relative grid aspect-square w-full grid-rows-8 overflow-hidden border"
@@ -295,8 +314,6 @@ export default function CanonicalChessboard({
                 const selected = selectedSquare === square
                 const legalDestination =
                   boardDestinationMoves(selectedMoves, square).length > 0
-                const partOfLastMove =
-                  lastMove?.from === square || lastMove?.to === square
                 const checkedKing =
                   position.inCheck &&
                   piece?.color === position.turn &&
@@ -321,16 +338,7 @@ export default function CanonicalChessboard({
                       ),
                     )}
                     aria-selected={selected}
-                    className={cx(
-                      baseSquareClasses,
-                      checkedKing
-                        ? "bg-mapachito-red text-mapachito-charcoal ring-mapachito-charcoal ring-4 ring-inset"
-                        : "text-mapachito-charcoal bg-transparent",
-                      selected &&
-                        "ring-mapachito-raspberry z-10 shadow-[inset_0_0_0_6px_var(--color-mapachito-white)] ring-4 ring-inset",
-                      partOfLastMove &&
-                        "after:border-mapachito-orange after:absolute after:inset-[8%] after:rounded-sm after:border-[clamp(2px,0.35vw,4px)] after:shadow-[0_0_0_1px_var(--color-mapachito-charcoal),0_0_0_2px_var(--color-mapachito-white)]",
-                    )}
+                    className={baseSquareClasses}
                     data-square={square}
                     key={square}
                     onClick={() => chooseSquare(square)}
@@ -345,6 +353,13 @@ export default function CanonicalChessboard({
                     tabIndex={focusedSquare === square ? 0 : -1}
                     type="button"
                   >
+                    <ChessSquareAnnotations
+                      checked={checkedKing}
+                      controller={input?.device.method === "controller"}
+                      history={lastMoveHighlight(lastMove, square)}
+                      legal={legalDestination}
+                      selected={selected}
+                    />
                     {piece === undefined ? null : (
                       <span
                         aria-hidden="true"
@@ -353,13 +368,6 @@ export default function CanonicalChessboard({
                         <ChessPiece color={piece.color} role={piece.role} />
                       </span>
                     )}
-                    {legalDestination ? (
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-[11%] z-[5] rounded-sm border-[clamp(3px,0.5vw,6px)] border-[var(--mapachess-board-legal-move)] [box-shadow:0_0_0_2px_var(--mapachess-board-hint-outline),0_0_0_3px_var(--color-mapachito-white)]"
-                        data-legal-destination-shape="square-outline"
-                      />
-                    ) : null}
                     {columnIndex === 0 ? (
                       <span
                         aria-hidden="true"

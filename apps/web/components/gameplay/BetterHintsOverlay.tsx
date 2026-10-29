@@ -17,16 +17,13 @@ export type BetterHintsOverlayProps = Readonly<{
   showMoves: boolean
 }>
 
-const HINT_OUTLINE_COLOR = "var(--mapachess-board-hint-outline)"
-const PLAYER_HINT_COLOR = "var(--mapachess-board-player-hint)"
-const OPPONENT_HINT_COLOR = "var(--mapachess-board-opponent-hint)"
-
 function HintRibbon({
   geometry,
   owner,
-}: Readonly<{ geometry: BetterHintGeometry; owner: HintOwner }>) {
-  const color = owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
-
+}: Readonly<{
+  geometry: BetterHintGeometry
+  owner: HintOwner
+}>) {
   return (
     <g
       opacity={BETTER_HINT_RIBBON.opacity}
@@ -36,7 +33,7 @@ function HintRibbon({
         <>
           <line
             data-hint-stroke="outline"
-            stroke={HINT_OUTLINE_COLOR}
+            className="stroke-board-hint-edge"
             strokeDasharray={geometry.opponentDash}
             strokeLinecap="butt"
             strokeWidth={
@@ -49,7 +46,7 @@ function HintRibbon({
           />
           <line
             data-hint-stroke="owner"
-            stroke={color}
+            className="stroke-current"
             strokeDasharray={geometry.opponentDash}
             strokeLinecap="butt"
             strokeWidth={BETTER_HINT_RIBBON.width}
@@ -62,8 +59,7 @@ function HintRibbon({
       ) : null}
       <path
         d={owner === "player" ? geometry.ribbonPath : geometry.headPath}
-        fill={color}
-        stroke={HINT_OUTLINE_COLOR}
+        className="stroke-board-hint-edge fill-current"
         strokeLinejoin="round"
         strokeWidth={BETTER_HINT_RIBBON.outlineWidth}
       />
@@ -107,6 +103,7 @@ export default function BetterHintsOverlay({
 
         return (
           <g
+            className="text-board-hint-player data-[hint-owner=opponent]:text-board-hint-opponent"
             data-hint-kind="source"
             data-hint-owner={owner}
             data-hint-pattern={owner === "player" ? "solid" : "dashed"}
@@ -117,15 +114,13 @@ export default function BetterHintsOverlay({
             <rect
               {...frame}
               data-hint-stroke="outline"
-              stroke={HINT_OUTLINE_COLOR}
+              className="stroke-board-hint-edge"
               strokeWidth={BETTER_HINT_FRAME.outlineWidth}
             />
             <rect
               {...frame}
               data-hint-stroke="owner"
-              stroke={
-                owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
-              }
+              className="stroke-current"
               strokeWidth={BETTER_HINT_FRAME.width}
             />
           </g>
@@ -135,6 +130,7 @@ export default function BetterHintsOverlay({
       {showMoves
         ? ownedHints.map(({ geometry, owner, uci }) => (
             <g
+              className="text-board-hint-player data-[hint-owner=opponent]:text-board-hint-opponent"
               data-destination-x={geometry.destination.x}
               data-destination-y={geometry.destination.y}
               data-hint-kind="move"
