@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@mapachess/match-presentation/chess-board-theme.css";
 
 @theme inline {
   --font-home: var(--font-nunito-sans);
@@ -28,9 +29,6 @@
   --color-mapachito-charcoal: #1e1e1e;
   --color-mapachito-surface: #333333;
   --color-mapachito-white: #ffffff;
-  --color-board-neutral: #eef0f4;
-  --color-board-neutral-edge: #262a35;
-  --color-board-check: #e83f57;
   --color-profile-card-blue: #009dae;
   --color-profile-card-cyan: #71dfe7;
   --color-profile-card-mint: #c2fff9;

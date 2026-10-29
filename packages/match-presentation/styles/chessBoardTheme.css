@@ -1,0 +1,15 @@
+@theme {
+  --color-board-hint-player: #003cfa;
+  --color-board-hint-player-on-light: #0066ff;
+  --color-board-hint-player-on-dark: #2996ff;
+  --color-board-hint-player-on-texture: #0074ff;
+  --color-board-hint-opponent: #ffd700;
+  --color-board-hint-edge: #14273d;
+  --color-board-history-origin: #d7b7f0;
+  --color-board-history-destination: #a56dd5;
+  --color-board-history-origin-on-dark: #766387;
+  --color-board-history-destination-on-dark: #ac82d4;
+  --color-board-neutral: #eef0f4;
+  --color-board-neutral-edge: #262a35;
+  --color-board-check: #e83f57;
+}
