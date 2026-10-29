@@ -6,6 +6,7 @@ import createBetterHintGeometry, {
   BETTER_HINT_VIEW_BOX,
   type BetterHintGeometry,
 } from "@mapachess/match-presentation/better-hint-geometry"
+import type { ChessHintPalette } from "@mapachess/match-presentation/chess-hint-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type { BoardOrientation } from "../../lib/board/boardPresentation"
 
@@ -14,19 +15,21 @@ type HintOwner = "opponent" | "player"
 export type BetterHintsOverlayProps = Readonly<{
   hints: BetterHintsResult
   orientation: BoardOrientation
+  palette: ChessHintPalette
   showMoves: boolean
 }>
 
 const HINT_OUTLINE_COLOR = "var(--mapachess-board-hint-outline)"
-const PLAYER_HINT_COLOR = "var(--mapachess-board-player-hint)"
-const OPPONENT_HINT_COLOR = "var(--mapachess-board-opponent-hint)"
 
 function HintRibbon({
+  color,
   geometry,
   owner,
-}: Readonly<{ geometry: BetterHintGeometry; owner: HintOwner }>) {
-  const color = owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
-
+}: Readonly<{
+  color: string
+  geometry: BetterHintGeometry
+  owner: HintOwner
+}>) {
   return (
     <g
       opacity={BETTER_HINT_RIBBON.opacity}
@@ -74,6 +77,7 @@ function HintRibbon({
 export default function BetterHintsOverlay({
   hints,
   orientation,
+  palette,
   showMoves,
 }: BetterHintsOverlayProps) {
   const visibleHints = [...hints.player, ...hints.opponent]
@@ -123,9 +127,7 @@ export default function BetterHintsOverlay({
             <rect
               {...frame}
               data-hint-stroke="owner"
-              stroke={
-                owner === "player" ? PLAYER_HINT_COLOR : OPPONENT_HINT_COLOR
-              }
+              stroke={palette[owner]}
               strokeWidth={BETTER_HINT_FRAME.width}
             />
           </g>
@@ -144,7 +146,11 @@ export default function BetterHintsOverlay({
               data-source-y={geometry.source.y}
               key={`move-${owner}-${uci}`}
             >
-              <HintRibbon geometry={geometry} owner={owner} />
+              <HintRibbon
+                color={palette[owner]}
+                geometry={geometry}
+                owner={owner}
+              />
             </g>
           ))
         : null}

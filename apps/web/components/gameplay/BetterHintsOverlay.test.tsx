@@ -2,6 +2,7 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import createBetterHintGeometry from "@mapachess/match-presentation/better-hint-geometry"
+import CHESS_HINT_PALETTES from "@mapachess/match-presentation/chess-hint-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -34,6 +35,41 @@ const countOccurrences = (value: string, pattern: string): number =>
   value.match(new RegExp(pattern, "g"))?.length ?? 0
 
 describe("Better Hints board presentation", () => {
+  it.each(["toffee-ice", "cosunosuke", "toffee-wood"] as const)(
+    "paints source borders and move ribbons with the same %s palette in both orientations",
+    (boardId) => {
+      const palette = CHESS_HINT_PALETTES[boardId]
+      for (const orientation of ["white", "black"] as const) {
+        for (const showMoves of [false, true]) {
+          const markup = renderToStaticMarkup(
+            createElement(BetterHintsOverlay, {
+              hints: HINTS,
+              orientation,
+              palette,
+              showMoves,
+            }),
+          )
+          expect(countOccurrences(markup, `stroke="${palette.player}"`)).toBe(3)
+          expect(countOccurrences(markup, `stroke="${palette.opponent}"`)).toBe(
+            showMoves ? 6 : 3,
+          )
+          expect(countOccurrences(markup, `fill="${palette.player}"`)).toBe(
+            showMoves ? 3 : 0,
+          )
+          expect(countOccurrences(markup, `fill="${palette.opponent}"`)).toBe(
+            showMoves ? 3 : 0,
+          )
+          expect(countOccurrences(markup, 'data-hint-pattern="solid"')).toBe(
+            showMoves ? 6 : 3,
+          )
+          expect(countOccurrences(markup, 'data-hint-pattern="dashed"')).toBe(
+            showMoves ? 6 : 3,
+          )
+        }
+      }
+    },
+  )
+
   it.each(["white", "black"] as const)(
     "renders separated capture heads with unchanged targets and announcements for %s",
     (orientation) => {
@@ -54,6 +90,7 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
+          palette: CHESS_HINT_PALETTES.current,
           showMoves: true,
         }),
       )
@@ -107,6 +144,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints,
         orientation: "white",
+        palette: CHESS_HINT_PALETTES.current,
         showMoves: true,
       }),
     )
@@ -183,6 +221,7 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
+          palette: CHESS_HINT_PALETTES.current,
           showMoves: true,
         }),
       )
@@ -306,6 +345,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
+        palette: CHESS_HINT_PALETTES.current,
         showMoves: false,
       }),
     )
@@ -325,6 +365,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
+        palette: CHESS_HINT_PALETTES.current,
         showMoves: true,
       }),
     )
@@ -332,6 +373,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "black",
+        palette: CHESS_HINT_PALETTES.current,
         showMoves: true,
       }),
     )

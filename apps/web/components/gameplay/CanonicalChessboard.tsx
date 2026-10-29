@@ -3,6 +3,7 @@
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
+import CHESS_HINT_PALETTES from "@mapachess/match-presentation/chess-hint-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type {
   AppliedMatchMove,
@@ -34,7 +35,11 @@ import MapachessDialog from "../presentation/MapachessDialog"
 import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BetterHintsOverlay from "./BetterHintsOverlay"
-import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
+import {
+  ChessBoardArtwork,
+  ChessPiece,
+  useDisplayedChessAppearance,
+} from "./ChessArtwork"
 
 type BoardCopy = MapachessCatalog["board"]
 
@@ -138,6 +143,7 @@ export default function CanonicalChessboard({
   showMoveHints,
 }: CanonicalChessboardProps) {
   const copy = useMapachessCopy().board
+  const appearance = useDisplayedChessAppearance()
   const input = usePlayerInput()
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
   const initialFocusSquare = orientation === "white" ? "e1" : "e8"
@@ -387,6 +393,7 @@ export default function CanonicalChessboard({
           <BetterHintsOverlay
             hints={hints}
             orientation={orientation}
+            palette={CHESS_HINT_PALETTES[appearance.boardId]}
             showMoves={showMoveHints}
           />
         )}
