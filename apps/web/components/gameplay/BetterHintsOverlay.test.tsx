@@ -2,7 +2,7 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import createBetterHintGeometry from "@mapachess/match-presentation/better-hint-geometry"
-import CHESS_HINT_PALETTES from "@mapachess/match-presentation/chess-hint-palettes"
+import CHESS_BOARD_PALETTES from "@mapachess/match-presentation/chess-board-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -15,6 +15,7 @@ import BetterHintsOverlay from "./BetterHintsOverlay"
 import CanonicalChessboard, {
   boardDestinationMoves,
 } from "./CanonicalChessboard"
+import ChessSquareAnnotations from "./ChessSquareAnnotations"
 
 const HINTS = Object.freeze({
   opponent: Object.freeze([
@@ -35,10 +36,50 @@ const countOccurrences = (value: string, pattern: string): number =>
   value.match(new RegExp(pattern, "g"))?.length ?? 0
 
 describe("Better Hints board presentation", () => {
+  it("keeps check, selection and focus separate from history and legal-target marks", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ChessSquareAnnotations, {
+        checked: true,
+        controller: true,
+        history: "destination",
+        legal: true,
+        palette: CHESS_BOARD_PALETTES.cosunosuke,
+        selected: true,
+      }),
+    )
+    for (const annotation of [
+      'data-last-move="destination"',
+      'data-checked-king="true"',
+      'data-board-selection="true"',
+      'data-board-focus="true"',
+      'data-legal-destination-shape="corners"',
+    ])
+      expect(countOccurrences(markup, annotation)).toBe(1)
+    expect(markup).toContain('fill="#ac82d4"')
+    expect(markup).not.toContain('role="button"')
+  })
+
+  it("leaves unmarked squares without history, check, selection or legal-target paint", () => {
+    const markup = renderToStaticMarkup(
+      createElement(ChessSquareAnnotations, {
+        checked: false,
+        controller: false,
+        history: null,
+        legal: false,
+        palette: CHESS_BOARD_PALETTES.current,
+        selected: false,
+      }),
+    )
+    expect(markup).not.toContain("data-last-move")
+    expect(markup).not.toContain("data-checked-king")
+    expect(markup).not.toContain("data-board-selection")
+    expect(markup).not.toContain("data-legal-destination-shape")
+  })
+
   it.each(["toffee-ice", "cosunosuke", "toffee-wood"] as const)(
     "paints source borders and move ribbons with the same %s palette in both orientations",
     (boardId) => {
-      const palette = CHESS_HINT_PALETTES[boardId]
+      const palette = CHESS_BOARD_PALETTES[boardId].hints
       for (const orientation of ["white", "black"] as const) {
         for (const showMoves of [false, true]) {
           const markup = renderToStaticMarkup(
@@ -90,7 +131,7 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
-          palette: CHESS_HINT_PALETTES.current,
+          palette: CHESS_BOARD_PALETTES.current.hints,
           showMoves: true,
         }),
       )
@@ -144,7 +185,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints,
         orientation: "white",
-        palette: CHESS_HINT_PALETTES.current,
+        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )
@@ -221,7 +262,7 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
-          palette: CHESS_HINT_PALETTES.current,
+          palette: CHESS_BOARD_PALETTES.current.hints,
           showMoves: true,
         }),
       )
@@ -345,7 +386,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
-        palette: CHESS_HINT_PALETTES.current,
+        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: false,
       }),
     )
@@ -365,7 +406,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
-        palette: CHESS_HINT_PALETTES.current,
+        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )
@@ -373,7 +414,7 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "black",
-        palette: CHESS_HINT_PALETTES.current,
+        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )

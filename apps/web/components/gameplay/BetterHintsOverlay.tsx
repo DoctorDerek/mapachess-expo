@@ -6,7 +6,7 @@ import createBetterHintGeometry, {
   BETTER_HINT_VIEW_BOX,
   type BetterHintGeometry,
 } from "@mapachess/match-presentation/better-hint-geometry"
-import type { ChessHintPalette } from "@mapachess/match-presentation/chess-hint-palettes"
+import type { ChessHintPalette } from "@mapachess/match-presentation/chess-board-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type { BoardOrientation } from "../../lib/board/boardPresentation"
 
@@ -19,15 +19,15 @@ export type BetterHintsOverlayProps = Readonly<{
   showMoves: boolean
 }>
 
-const HINT_OUTLINE_COLOR = "var(--mapachess-board-hint-outline)"
-
 function HintRibbon({
   color,
   geometry,
+  outline,
   owner,
 }: Readonly<{
   color: string
   geometry: BetterHintGeometry
+  outline: string
   owner: HintOwner
 }>) {
   return (
@@ -39,7 +39,7 @@ function HintRibbon({
         <>
           <line
             data-hint-stroke="outline"
-            stroke={HINT_OUTLINE_COLOR}
+            stroke={outline}
             strokeDasharray={geometry.opponentDash}
             strokeLinecap="butt"
             strokeWidth={
@@ -66,7 +66,7 @@ function HintRibbon({
       <path
         d={owner === "player" ? geometry.ribbonPath : geometry.headPath}
         fill={color}
-        stroke={HINT_OUTLINE_COLOR}
+        stroke={outline}
         strokeLinejoin="round"
         strokeWidth={BETTER_HINT_RIBBON.outlineWidth}
       />
@@ -121,7 +121,7 @@ export default function BetterHintsOverlay({
             <rect
               {...frame}
               data-hint-stroke="outline"
-              stroke={HINT_OUTLINE_COLOR}
+              stroke={palette.outline}
               strokeWidth={BETTER_HINT_FRAME.outlineWidth}
             />
             <rect
@@ -149,6 +149,7 @@ export default function BetterHintsOverlay({
               <HintRibbon
                 color={palette[owner]}
                 geometry={geometry}
+                outline={palette.outline}
                 owner={owner}
               />
             </g>
