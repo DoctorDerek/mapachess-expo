@@ -26,6 +26,10 @@
       "types": "./src/chessHintPalettes.ts",
       "default": "./dist/chessHintPalettes.js"
     },
+    "./last-move-highlight": {
+      "types": "./src/lastMoveHighlight.ts",
+      "default": "./dist/lastMoveHighlight.js"
+    },
     "./create-celebration-recipe": {
       "types": "./src/createCelebrationRecipe.ts",
       "default": "./dist/createCelebrationRecipe.js"
