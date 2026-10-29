@@ -1,56 +1,32 @@
 import type { ChessBoardId } from "./chessAppearanceCatalog.js"
 
-export type ChessHintPalette = Readonly<{
-  player: string
-  opponent: string
-  outline: string
-}>
+export const CHESS_BOARD_PALETTE_IDS = [
+  "blue",
+  "light",
+  "dark",
+  "textured",
+] as const
 
-export type ChessBoardPalette = Readonly<{
-  hints: ChessHintPalette
-  history: Readonly<{ origin: string; destination: string }>
-}>
-
-const LIGHT_HISTORY = Object.freeze({
-  origin: "#d7b7f0",
-  destination: "#a56dd5",
-})
-const DARK_HISTORY = Object.freeze({
-  origin: "#766387",
-  destination: "#ac82d4",
-})
-const createPalette = (
-  player: string,
-  history: ChessBoardPalette["history"],
-): ChessBoardPalette =>
-  Object.freeze({
-    hints: Object.freeze({ player, opponent: "#ffd700", outline: "#14273d" }),
-    history,
-  })
-
-const BLUE_BOARD = createPalette("#003cfa", LIGHT_HISTORY)
-const LIGHT_BOARD = createPalette("#0066ff", LIGHT_HISTORY)
-const DARK_BOARD = createPalette("#2996ff", DARK_HISTORY)
-const MIXED_BOARD = createPalette("#0074ff", LIGHT_HISTORY)
+export type ChessBoardPalette = (typeof CHESS_BOARD_PALETTE_IDS)[number]
 
 const CHESS_BOARD_PALETTES = Object.freeze({
-  current: BLUE_BOARD,
-  "toffee-brown": MIXED_BOARD,
-  "toffee-mono": DARK_BOARD,
-  "toffee-green": MIXED_BOARD,
-  "toffee-wood": MIXED_BOARD,
-  "toffee-ice": LIGHT_BOARD,
-  "back-a": MIXED_BOARD,
-  "back-b": DARK_BOARD,
-  "back-c": DARK_BOARD,
-  "back-d": DARK_BOARD,
-  "back-e": DARK_BOARD,
-  "back-f": MIXED_BOARD,
-  "back-g": MIXED_BOARD,
-  "back-h": DARK_BOARD,
-  "back-i": DARK_BOARD,
-  cosunosuke: DARK_BOARD,
-  "cat-chess": LIGHT_BOARD,
+  current: "blue",
+  "toffee-brown": "textured",
+  "toffee-mono": "dark",
+  "toffee-green": "textured",
+  "toffee-wood": "textured",
+  "toffee-ice": "light",
+  "back-a": "textured",
+  "back-b": "dark",
+  "back-c": "dark",
+  "back-d": "dark",
+  "back-e": "dark",
+  "back-f": "textured",
+  "back-g": "textured",
+  "back-h": "dark",
+  "back-i": "dark",
+  cosunosuke: "dark",
+  "cat-chess": "light",
 }) satisfies Readonly<Record<ChessBoardId, ChessBoardPalette>>
 
 export default CHESS_BOARD_PALETTES

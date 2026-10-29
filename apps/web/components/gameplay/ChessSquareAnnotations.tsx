@@ -1,5 +1,4 @@
 import cx from "classix"
-import type { ChessBoardPalette } from "@mapachess/match-presentation/chess-board-palettes"
 import type { LastMoveHighlight } from "@mapachess/match-presentation/last-move-highlight"
 
 const LEGAL_CORNERS = "M0 24V0H24 M76 0H100V24 M100 76V100H76 M24 100H0V76"
@@ -9,14 +8,12 @@ export default function ChessSquareAnnotations({
   controller,
   history,
   legal,
-  palette,
   selected,
 }: Readonly<{
   checked: boolean
   controller: boolean
   history: LastMoveHighlight | null
   legal: boolean
-  palette: ChessBoardPalette
   selected: boolean
 }>) {
   return (
@@ -24,12 +21,12 @@ export default function ChessSquareAnnotations({
       {history === null ? null : (
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 size-full opacity-94"
+          className="fill-board-history-origin data-[last-move=destination]:fill-board-history-destination pointer-events-none absolute inset-0 size-full opacity-94"
           data-last-move={history}
           preserveAspectRatio="none"
           viewBox="0 0 1 1"
         >
-          <rect fill={palette.history[history]} width="1" height="1" />
+          <rect width="1" height="1" />
         </svg>
       )}
       {checked ? (

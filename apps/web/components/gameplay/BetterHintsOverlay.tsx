@@ -6,7 +6,6 @@ import createBetterHintGeometry, {
   BETTER_HINT_VIEW_BOX,
   type BetterHintGeometry,
 } from "@mapachess/match-presentation/better-hint-geometry"
-import type { ChessHintPalette } from "@mapachess/match-presentation/chess-board-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import type { BoardOrientation } from "../../lib/board/boardPresentation"
 
@@ -15,19 +14,14 @@ type HintOwner = "opponent" | "player"
 export type BetterHintsOverlayProps = Readonly<{
   hints: BetterHintsResult
   orientation: BoardOrientation
-  palette: ChessHintPalette
   showMoves: boolean
 }>
 
 function HintRibbon({
-  color,
   geometry,
-  outline,
   owner,
 }: Readonly<{
-  color: string
   geometry: BetterHintGeometry
-  outline: string
   owner: HintOwner
 }>) {
   return (
@@ -39,7 +33,7 @@ function HintRibbon({
         <>
           <line
             data-hint-stroke="outline"
-            stroke={outline}
+            className="stroke-board-hint-edge"
             strokeDasharray={geometry.opponentDash}
             strokeLinecap="butt"
             strokeWidth={
@@ -52,7 +46,7 @@ function HintRibbon({
           />
           <line
             data-hint-stroke="owner"
-            stroke={color}
+            className="stroke-current"
             strokeDasharray={geometry.opponentDash}
             strokeLinecap="butt"
             strokeWidth={BETTER_HINT_RIBBON.width}
@@ -65,8 +59,7 @@ function HintRibbon({
       ) : null}
       <path
         d={owner === "player" ? geometry.ribbonPath : geometry.headPath}
-        fill={color}
-        stroke={outline}
+        className="stroke-board-hint-edge fill-current"
         strokeLinejoin="round"
         strokeWidth={BETTER_HINT_RIBBON.outlineWidth}
       />
@@ -77,7 +70,6 @@ function HintRibbon({
 export default function BetterHintsOverlay({
   hints,
   orientation,
-  palette,
   showMoves,
 }: BetterHintsOverlayProps) {
   const visibleHints = [...hints.player, ...hints.opponent]
@@ -111,6 +103,7 @@ export default function BetterHintsOverlay({
 
         return (
           <g
+            className="text-board-hint-player data-[hint-owner=opponent]:text-board-hint-opponent"
             data-hint-kind="source"
             data-hint-owner={owner}
             data-hint-pattern={owner === "player" ? "solid" : "dashed"}
@@ -121,13 +114,13 @@ export default function BetterHintsOverlay({
             <rect
               {...frame}
               data-hint-stroke="outline"
-              stroke={palette.outline}
+              className="stroke-board-hint-edge"
               strokeWidth={BETTER_HINT_FRAME.outlineWidth}
             />
             <rect
               {...frame}
               data-hint-stroke="owner"
-              stroke={palette[owner]}
+              className="stroke-current"
               strokeWidth={BETTER_HINT_FRAME.width}
             />
           </g>
@@ -137,6 +130,7 @@ export default function BetterHintsOverlay({
       {showMoves
         ? ownedHints.map(({ geometry, owner, uci }) => (
             <g
+              className="text-board-hint-player data-[hint-owner=opponent]:text-board-hint-opponent"
               data-destination-x={geometry.destination.x}
               data-destination-y={geometry.destination.y}
               data-hint-kind="move"
@@ -146,12 +140,7 @@ export default function BetterHintsOverlay({
               data-source-y={geometry.source.y}
               key={`move-${owner}-${uci}`}
             >
-              <HintRibbon
-                color={palette[owner]}
-                geometry={geometry}
-                outline={palette.outline}
-                owner={owner}
-              />
+              <HintRibbon geometry={geometry} owner={owner} />
             </g>
           ))
         : null}

@@ -289,7 +289,17 @@ export default function CanonicalChessboard({
 
   return (
     <div className="[container-type:inline-size] relative w-full min-w-0">
-      <div className="relative">
+      <div
+        className={cx(
+          "relative",
+          "data-[board-palette=light]:[--color-board-hint-player:var(--color-board-hint-player-on-light)]",
+          "data-[board-palette=dark]:[--color-board-hint-player:var(--color-board-hint-player-on-dark)]",
+          "data-[board-palette=textured]:[--color-board-hint-player:var(--color-board-hint-player-on-texture)]",
+          "data-[board-palette=dark]:[--color-board-history-origin:var(--color-board-history-origin-on-dark)]",
+          "data-[board-palette=dark]:[--color-board-history-destination:var(--color-board-history-destination-on-dark)]",
+        )}
+        data-board-palette={palette}
+      >
         <div
           aria-label={copy.orientation(orientation)}
           className="border-mapachito-charcoal relative grid aspect-square w-full grid-rows-8 overflow-hidden border"
@@ -348,7 +358,6 @@ export default function CanonicalChessboard({
                       controller={input?.device.method === "controller"}
                       history={lastMoveHighlight(lastMove, square)}
                       legal={legalDestination}
-                      palette={palette}
                       selected={selected}
                     />
                     {piece === undefined ? null : (
@@ -386,7 +395,6 @@ export default function CanonicalChessboard({
           <BetterHintsOverlay
             hints={hints}
             orientation={orientation}
-            palette={palette.hints}
             showMoves={showMoveHints}
           />
         )}

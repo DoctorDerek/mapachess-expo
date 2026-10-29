@@ -2,7 +2,6 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import createBetterHintGeometry from "@mapachess/match-presentation/better-hint-geometry"
-import CHESS_BOARD_PALETTES from "@mapachess/match-presentation/chess-board-palettes"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -43,7 +42,6 @@ describe("Better Hints board presentation", () => {
         controller: true,
         history: "destination",
         legal: true,
-        palette: CHESS_BOARD_PALETTES.cosunosuke,
         selected: true,
       }),
     )
@@ -55,7 +53,6 @@ describe("Better Hints board presentation", () => {
       'data-legal-destination-shape="corners"',
     ])
       expect(countOccurrences(markup, annotation)).toBe(1)
-    expect(markup).toContain('fill="#ac82d4"')
     expect(markup).not.toContain('role="button"')
   })
 
@@ -66,7 +63,6 @@ describe("Better Hints board presentation", () => {
         controller: false,
         history: null,
         legal: false,
-        palette: CHESS_BOARD_PALETTES.current,
         selected: false,
       }),
     )
@@ -76,37 +72,29 @@ describe("Better Hints board presentation", () => {
     expect(markup).not.toContain("data-legal-destination-shape")
   })
 
-  it.each(["toffee-ice", "cosunosuke", "toffee-wood"] as const)(
-    "paints source borders and move ribbons with the same %s palette in both orientations",
-    (boardId) => {
-      const palette = CHESS_BOARD_PALETTES[boardId].hints
-      for (const orientation of ["white", "black"] as const) {
-        for (const showMoves of [false, true]) {
-          const markup = renderToStaticMarkup(
-            createElement(BetterHintsOverlay, {
-              hints: HINTS,
-              orientation,
-              palette,
-              showMoves,
-            }),
-          )
-          expect(countOccurrences(markup, `stroke="${palette.player}"`)).toBe(3)
-          expect(countOccurrences(markup, `stroke="${palette.opponent}"`)).toBe(
-            showMoves ? 6 : 3,
-          )
-          expect(countOccurrences(markup, `fill="${palette.player}"`)).toBe(
-            showMoves ? 3 : 0,
-          )
-          expect(countOccurrences(markup, `fill="${palette.opponent}"`)).toBe(
-            showMoves ? 3 : 0,
-          )
-          expect(countOccurrences(markup, 'data-hint-pattern="solid"')).toBe(
-            showMoves ? 6 : 3,
-          )
-          expect(countOccurrences(markup, 'data-hint-pattern="dashed"')).toBe(
-            showMoves ? 6 : 3,
-          )
-        }
+  it.each(["white", "black"] as const)(
+    "preserves source and ribbon owner cues facing %s",
+    (orientation) => {
+      for (const showMoves of [false, true]) {
+        const markup = renderToStaticMarkup(
+          createElement(BetterHintsOverlay, {
+            hints: HINTS,
+            orientation,
+            showMoves,
+          }),
+        )
+        expect(countOccurrences(markup, 'data-hint-owner="player"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-owner="opponent"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-pattern="solid"')).toBe(
+          showMoves ? 6 : 3,
+        )
+        expect(countOccurrences(markup, 'data-hint-pattern="dashed"')).toBe(
+          showMoves ? 6 : 3,
+        )
       }
     },
   )
@@ -131,7 +119,6 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
-          palette: CHESS_BOARD_PALETTES.current.hints,
           showMoves: true,
         }),
       )
@@ -185,7 +172,6 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints,
         orientation: "white",
-        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )
@@ -262,7 +248,6 @@ describe("Better Hints board presentation", () => {
         createElement(BetterHintsOverlay, {
           hints,
           orientation,
-          palette: CHESS_BOARD_PALETTES.current.hints,
           showMoves: true,
         }),
       )
@@ -386,7 +371,6 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
-        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: false,
       }),
     )
@@ -406,7 +390,6 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "white",
-        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )
@@ -414,7 +397,6 @@ describe("Better Hints board presentation", () => {
       createElement(BetterHintsOverlay, {
         hints: HINTS,
         orientation: "black",
-        palette: CHESS_BOARD_PALETTES.current.hints,
         showMoves: true,
       }),
     )
