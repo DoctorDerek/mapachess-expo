@@ -22,6 +22,10 @@
       "types": "./src/chessAppearanceCatalog.ts",
       "default": "./dist/chessAppearanceCatalog.js"
     },
+    "./chess-hint-palettes": {
+      "types": "./src/chessHintPalettes.ts",
+      "default": "./dist/chessHintPalettes.js"
+    },
     "./create-celebration-recipe": {
       "types": "./src/createCelebrationRecipe.ts",
       "default": "./dist/createCelebrationRecipe.js"
