@@ -53,9 +53,9 @@ const profile = {
   artworkPreview: (pieces: string, board: string): string =>
     `${pieces} pieces on ${board} board preview`,
   cardPreview: (format: string): string => `Profile card ${format} preview`,
-  cardRatings: "Profile-card ratings",
+  cardRatings: "Ratings shown",
   cardTimeCategory: "Time category",
-  cardAssistance: "Hint tier",
+  cardAssistance: "Medal tier",
   cardRatingContext: (category: string, assistance: string): string =>
     `${category} · ${assistance}`,
   cardDescription: (

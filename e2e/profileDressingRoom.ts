@@ -14,7 +14,11 @@ export default async function chooseDressingCategory(
     name: copy.setup.customizeProfile,
     exact: true,
   })
-  await editor.getByRole("button", { expanded: false }).click()
+  const back = editor.getByRole("button", {
+    name: copy.interface.profileDressingRoom.backToCategories,
+    exact: true,
+  })
+  if (await back.isVisible()) await back.click()
   await editor
     .getByRole("group", {
       name: copy.interface.profileDressingRoom.appearanceCategories,

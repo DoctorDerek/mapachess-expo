@@ -1,4 +1,5 @@
 import { useActorRef, useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
 import { preload } from "react-dom"
@@ -21,11 +22,13 @@ export default function ChallengeAnimalPortrait({
   active,
   attention = false,
   compact = false,
+  fit = false,
 }: Readonly<{
   opponent: StockfishOpponentDefinition
   active: boolean
   attention?: boolean
   compact?: boolean
+  fit?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
 
@@ -168,13 +171,35 @@ export default function ChallengeAnimalPortrait({
     }
   }, [active, attentionOrdinal, attentionActor, attentionStep, images, step])
 
-  const portraitStyle: CSSProperties & { "--sprite-scale": number } = {
+  const portraitStyle: CSSProperties & {
+    "--sprite-scale": number
+    "--sprite-pixel-size"?: string
+  } = {
     "--sprite-scale": compact ? 2 : (presentation.layout.standaloneScale ?? 2),
+  }
+  if (fit && step !== null) {
+    const geometry = [
+      step.animation.geometry,
+      ...(attentionStep === null ? [] : [attentionStep.animation.geometry]),
+    ]
+    const width =
+      2 *
+      Math.max(
+        ...geometry.flatMap((frame) => [
+          frame.bottomCenterX - frame.visibleX,
+          frame.visibleX + frame.visibleWidth - frame.bottomCenterX,
+        ]),
+      )
+    const height = Math.max(
+      ...geometry.map((frame) => frame.bottomY - frame.visibleY),
+    )
+    portraitStyle["--sprite-pixel-size"] =
+      `min(${portraitStyle["--sprite-scale"]}px, calc(100cqw / ${width}), calc((100cqh - var(--spacing)) / ${height}))`
   }
   return (
     <span
       aria-hidden="true"
-      className="relative block h-full w-full"
+      className={cx("relative block h-full w-full", fit && "@container-size")}
       style={portraitStyle}
     >
       {step === null || unavailable ? (

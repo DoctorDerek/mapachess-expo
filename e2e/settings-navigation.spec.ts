@@ -118,7 +118,14 @@ for (const locale of ["en", "es-419"] as const) {
             const range = document.createRange()
             range.setStart(text, word.index)
             range.setEnd(text, word.index + word[0].length)
-            return range.getClientRects().length !== 1
+            const bounds = range.getBoundingClientRect()
+            const buttonBounds = button.getBoundingClientRect()
+            return (
+              bounds.height >
+                Number.parseFloat(getComputedStyle(button).lineHeight) + 1 ||
+              bounds.left < buttonBounds.left ||
+              bounds.right > buttonBounds.right
+            )
           })
           .map((word) => word[0])
       }),

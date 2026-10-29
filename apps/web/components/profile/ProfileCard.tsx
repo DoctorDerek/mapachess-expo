@@ -181,8 +181,8 @@ export default function ProfileCard({
       )}
       className="font-home shadow-mapachess-raised shadow-profile-card-blue [container-type:inline-size]"
     >
-      <div className="text-profile-card-ink flex min-h-[max(15rem,56cqw)] flex-wrap">
-        <dl className="bg-profile-card-yellow flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-4 p-[max(0.75rem,3cqw)]">
+      <div className="text-profile-card-ink flex min-h-[max(15rem,56cqw)] flex-wrap-reverse">
+        <dl className="bg-profile-card-yellow flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-3 p-[max(0.75rem,3cqw)]">
           {[
             ["level", copy.profile.level, facts.level],
             ["standard", copy.profile.ratingLabel.standard, facts.standard],
@@ -194,19 +194,24 @@ export default function ProfileCard({
                 "flex min-w-0",
                 kind === "level"
                   ? "flex-wrap items-baseline gap-x-1"
-                  : "flex-col-reverse",
+                  : "flex-wrap-reverse items-center justify-between gap-x-2",
               )}
             >
-              <dt className="text-[max(1rem,3.6cqw)] leading-tight font-bold">
+              <dt
+                className={cx(
+                  "text-[max(1rem,3.6cqw)] leading-tight font-bold",
+                  kind !== "level" && "grow basis-[11ch]",
+                )}
+              >
                 {label}
                 {kind === "level" ? null : (
-                  <span className="block text-base">
+                  <span className="block text-sm">
                     <MedalSymbol medal={ratingContext.assistance} />
                     {contextLabel}
                   </span>
                 )}
               </dt>
-              <dd className="mt-1 text-[max(2rem,7cqw)] leading-none font-black break-all tabular-nums">
+              <dd className="mt-1 text-[max(1rem,9cqw)] leading-none font-black break-all tabular-nums">
                 {value}
               </dd>
             </div>

@@ -336,7 +336,7 @@ describe("battle frame and clip contracts", () => {
       backgroundImage: `url("${step.animation.sourceId}")`,
       backgroundPosition: "0% 0",
       backgroundSize: `${step.animation.frameCount * 100}% 100%`,
-      height: `calc(${step.animation.geometry.frameHeight}px * var(--sprite-scale))`,
+      height: `calc(${step.animation.geometry.frameHeight} * var(--sprite-pixel-size, calc(1px * var(--sprite-scale))))`,
     })
     expect(battleSpriteFrameStyle(step, true).backgroundPosition).toBe(
       `${(step.animation.reducedMotionFrameIndex / (step.animation.frameCount - 1)) * 100}% 0`,

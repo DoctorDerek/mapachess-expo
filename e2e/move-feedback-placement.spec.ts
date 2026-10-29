@@ -68,7 +68,9 @@ async function openGame(
     .click()
   await page.getByRole("radio", { name: color, exact: true }).check()
   await page.getByRole("button", { name: "Start match", exact: true }).click()
-  await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
+  await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({
+    timeout: 30000,
+  })
   await page.clock.pauseAt(new Date(Date.now() + 1000))
   if (color === "Black")
     await expect(

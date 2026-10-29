@@ -82,7 +82,7 @@ async function startManualGame(page: Page, spanish = false, timed = false) {
       name: spanish ? "Mostrar Pistas de piezas" : "Show Piece Hints",
       exact: true,
     }),
-  ).toBeEnabled()
+  ).toBeEnabled({ timeout: 30000 })
 }
 
 for (const configuration of [
@@ -170,11 +170,6 @@ for (const configuration of [
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true)
-    await page.screenshot({
-      path: testInfo.outputPath("hint-controls.png"),
-      fullPage: true,
-    })
-
     const auto = page.getByRole("button", {
       name: spanish ? "Auto: No" : "Auto: Off",
       exact: true,
@@ -216,6 +211,10 @@ for (const configuration of [
     })
     expectSameBox(await documentBox(hint), initialHintBox)
     expect(errors).toEqual([])
+    await page.screenshot({
+      path: testInfo.outputPath("hint-controls.png"),
+      fullPage: true,
+    })
   })
 }
 

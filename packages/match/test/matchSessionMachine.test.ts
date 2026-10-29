@@ -27,7 +27,7 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
-  it("nests category choices under the dressing room and closes the requested owner without changing the match", async () => {
+  it("nests category editing under the dressing room and closes the requested owner without changing the match", async () => {
     const ops = operations()
     const actor = createActor(machine, {
       input: { activeMatchExists: true, operations: ops },
@@ -35,7 +35,7 @@ describe("portable match session navigation", () => {
     await waitFor(actor, (snapshot) => snapshot.matches("active"))
     actor.send({
       type: "MATCH_SESSION.OVERLAY_OPENED",
-      overlay: "dressing-categories",
+      overlay: "dressing-category",
     })
     expect(actor.getSnapshot().context.overlays).toEqual([])
     actor.send({
@@ -44,12 +44,12 @@ describe("portable match session navigation", () => {
     })
     actor.send({
       type: "MATCH_SESSION.OVERLAY_OPENED",
-      overlay: "dressing-categories",
+      overlay: "dressing-category",
     })
     const destination = selectMatchNavigationDestination(actor.getSnapshot())
     expect(destination?.overlays).toEqual([
       "dressing-room",
-      "dressing-categories",
+      "dressing-category",
     ])
     expect(parseMatchNavigationDestination(destination)).toEqual(destination)
     actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })

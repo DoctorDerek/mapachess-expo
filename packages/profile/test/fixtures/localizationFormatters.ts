@@ -31,7 +31,6 @@ type FormatterExamples = {
 }
 
 const formatterExamples = {
-  "interface.profileDressingRoom.backToCategory": [["Clothes"], ["Ropa"]],
   "gameplay.clock.label": [["White"], ["negras"]],
   "gameplay.clock.preset": [["Bullet", "1+0"]],
   "gameplay.clock.explanation": [
