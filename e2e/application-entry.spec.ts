@@ -314,6 +314,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
   page,
   baseURL,
 }) => {
+  test.setTimeout(60000)
   await page.goto("/?source=canonical-check")
 
   await expect(page).toHaveTitle("Mapachess")

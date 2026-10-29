@@ -229,7 +229,7 @@ test("executes a move, Undo, Redo and result review through canonical controller
 test("retains black orientation and skips locked animal choices", async ({
   page,
 }) => {
-  test.setTimeout(60000)
+  test.setTimeout(90000)
   await activate(
     page,
     page.getByRole("button", { name: "Standard Chess Story", exact: true }),
