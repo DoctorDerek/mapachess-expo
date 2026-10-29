@@ -28,7 +28,7 @@ export type MatchNavigationOverlay =
   | "setup-time-control"
   | "rewards"
   | "dressing-room"
-  | "dressing-categories"
+  | "dressing-category"
   | "profile-card"
 
 export type MatchNavigationScreen = "menu" | "setup" | "match"
@@ -76,7 +76,7 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   "setup-time-control",
   "rewards",
   "dressing-room",
-  "dressing-categories",
+  "dressing-category",
   "profile-card",
 ]
 
@@ -126,7 +126,7 @@ export function eligibleMatchNavigationOverlays(
       overlay === "settings" ||
       overlay === "dressing-room" ||
       overlay === "profile-card" ||
-      (overlay === "dressing-categories" && result.includes("dressing-room")) ||
+      (overlay === "dressing-category" && result.includes("dressing-room")) ||
       ((overlay === "classifications" ||
         overlay === "credits" ||
         overlay === "about-elo" ||

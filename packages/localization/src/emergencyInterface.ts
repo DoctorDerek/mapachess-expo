@@ -159,7 +159,8 @@ const emergencyInterface = {
     cancel: "Cancel",
     save: "Save",
     share: "Share",
-    backToCategory: (category: string): string => `Back to ${category}`,
+    backToCategories: "Back to categories",
+    customizeAppearance: "Customize appearance",
   },
   profileFoundation: {
     readingBackup: UNAVAILABLE_TEXT,

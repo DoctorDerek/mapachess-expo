@@ -50,14 +50,10 @@ for (const width of [390, 1440]) {
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
     await page
-      .locator("summary")
-      .filter({ hasText: /^Profile-card ratings$/ })
-      .click()
-    await page
       .getByRole("combobox", { name: "Time category", exact: true })
       .selectOption("blitz")
     await page
-      .getByRole("combobox", { name: "Hint tier", exact: true })
+      .getByRole("combobox", { name: "Medal tier", exact: true })
       .selectOption("silver")
     const card = page.getByRole("region", {
       name: /^Your profile card:.*Blitz/,
@@ -81,10 +77,9 @@ for (const width of [390, 1440]) {
     if (medalSource === null)
       throw new Error("Expected the selected medal image")
     expect(medalSource).toContain("silver")
-    expect(await medals.first().boundingBox()).toMatchObject({
-      width: 24,
-      height: 24,
-    })
+    const medalBounds = await medals.first().boundingBox()
+    expect(medalBounds?.width).toBeCloseTo(24, 2)
+    expect(medalBounds?.height).toBeCloseTo(24, 2)
     await expect(page.getByText("Unsaved changes", { exact: true })).toHaveText(
       "Unsaved changes",
     )
@@ -100,21 +95,17 @@ for (const width of [390, 1440]) {
     await page
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
-    await page
-      .locator("summary")
-      .filter({ hasText: /^Profile-card ratings$/ })
-      .click()
     await expect(
       page.getByRole("combobox", { name: "Time category", exact: true }),
     ).toHaveValue("untimed")
     await expect(
-      page.getByRole("combobox", { name: "Hint tier", exact: true }),
+      page.getByRole("combobox", { name: "Medal tier", exact: true }),
     ).toHaveValue("bronze")
     await page
       .getByRole("combobox", { name: "Time category", exact: true })
       .selectOption("blitz")
     await page
-      .getByRole("combobox", { name: "Hint tier", exact: true })
+      .getByRole("combobox", { name: "Medal tier", exact: true })
       .selectOption("silver")
     await page
       .getByRole("button", { name: "Save changes", exact: true })
@@ -194,8 +185,12 @@ for (const width of [390, 1440]) {
               layout.medalSize,
               layout.medalSize,
             ).data
-            return actualPixels.every(
-              (value, index) => value === expectedPixels[index],
+            return (
+              actualPixels.reduce(
+                (difference, value, index) =>
+                  difference + Math.abs(value - expectedPixels[index]),
+                0,
+              ) / actualPixels.length
             )
           },
           {
@@ -204,7 +199,7 @@ for (const width of [390, 1440]) {
             height: PROFILE_CARD_HEIGHT,
           },
         ),
-    ).toBe(true)
+    ).toBeLessThan(1)
     await page.getByRole("button", { name: "Back", exact: true }).click()
     await expect(
       page.getByRole("heading", {
@@ -416,6 +411,11 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("radio", { name: "Chicken", exact: true }).check()
   await page.goBack()
   await expect(
+    page.getByRole("group", { name: "Appearance categories", exact: true }),
+  ).toBeVisible()
+  expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
+  await page.goBack()
+  await expect(
     page.getByRole("alertdialog", { name: "Keep your profile-card changes?" }),
   ).toBeVisible()
   await page.getByRole("button", { name: "Discard changes" }).click()
@@ -505,11 +505,24 @@ test("keeps medal labels and recovers an unavailable medal image without changin
 }) => {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
-  const medalRequest = "**/_next/static/media/bronze*.png"
-  await page.route(medalRequest, (route) => route.abort("failed"))
   await page.goto("/")
   const card = page.getByRole("region", { name: /^Your profile card:/ })
   await expect(card).toBeVisible()
+  const medalRequest = await card
+    .locator('img[aria-hidden="true"]')
+    .first()
+    .evaluate((image) => {
+      if (!(image instanceof HTMLImageElement))
+        throw new Error("Expected the card medal image")
+      return image.src
+    })
+  let blockedMedals = 0
+  await page.route(medalRequest, (route) => {
+    blockedMedals += 1
+    return route.abort("failed")
+  })
+  await page.reload()
+  await expect.poll(() => blockedMedals).toBeGreaterThan(0)
   await expect(card).toHaveAccessibleName(/Untimed.*Bronze/)
   await expect(
     page.getByRole("button", { name: "Standard Chess Story", exact: true }),

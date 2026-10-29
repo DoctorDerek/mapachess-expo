@@ -207,8 +207,8 @@ export default function ProfileCardJourney({
               actions={recoveryActions}
             >
               <ProfileDressingRoom
-                choosingCategory={overlays.at(-1) === "dressing-categories"}
-                onChooseCategory={() => navigation.open("dressing-categories")}
+                editingCategory={overlays.includes("dressing-category")}
+                onChooseCategory={() => navigation.open("dressing-category")}
                 onCloseCategories={navigation.back}
                 heading={preview ? null : heading}
                 active={

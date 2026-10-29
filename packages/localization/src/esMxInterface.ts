@@ -156,7 +156,8 @@ const interfaceCopy = {
     cancel: "Cancelar",
     save: "Guardar",
     share: "Compartir",
-    backToCategory: (category: string): string => `Volver a ${category}`,
+    backToCategories: "Volver a categorías",
+    customizeAppearance: "Personaliza tu apariencia",
   },
   profileFoundation: {
     readingBackup: "Leyendo respaldo…",

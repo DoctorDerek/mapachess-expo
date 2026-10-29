@@ -73,9 +73,9 @@ const profile = {
     context: string,
   ): string =>
     `Tu tarjeta de perfil: nivel ${formatUngroupedInteger(level)}, ${context}, Elo de ajedrez estándar ${formatUngroupedInteger(standard)}, Elo de ajedrez 960 ${formatUngroupedInteger(chess960)}`,
-  cardRatings: "Puntuaciones de la tarjeta de perfil",
+  cardRatings: "Puntuaciones mostradas",
   cardTimeCategory: "Categoría de tiempo",
-  cardAssistance: "Nivel de ayuda",
+  cardAssistance: "Medalla",
   cardRatingContext: (category: string, assistance: string): string =>
     `${category} · ${assistance}`,
   level: "Nivel",
