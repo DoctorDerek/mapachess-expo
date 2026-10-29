@@ -30,6 +30,7 @@ function CategoryArtwork({
         opponent={stockfishOpponent(draft.animal)}
         active={active}
         compact
+        fit
       />
     )
   const head = category === "Hair" || category === "Face"

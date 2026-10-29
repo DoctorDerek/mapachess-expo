@@ -131,6 +131,7 @@ export const battleSpriteFrameStyle = (
 ): CSSProperties => {
   const { animation } = step
   const { geometry } = animation
+  const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
   const frameIndex = reducedMotion
     ? step.playback === "once-hold-final-frame"
       ? animation.frameCount - 1
@@ -140,10 +141,10 @@ export const battleSpriteFrameStyle = (
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: `${animation.frameCount === 1 ? 0 : (frameIndex / (animation.frameCount - 1)) * 100}% 0`,
     backgroundSize: `${animation.frameCount * 100}% 100%`,
-    height: `calc(${geometry.frameHeight}px * var(--sprite-scale))`,
-    left: `calc(${-geometry.bottomCenterX}px * var(--sprite-scale))`,
-    top: `calc(${-geometry.bottomY}px * var(--sprite-scale))`,
-    width: `calc(${geometry.frameWidth}px * var(--sprite-scale))`,
+    height: `calc(${geometry.frameHeight} * ${pixelSize})`,
+    left: `calc(${-geometry.bottomCenterX} * ${pixelSize})`,
+    top: `calc(${-geometry.bottomY} * ${pixelSize})`,
+    width: `calc(${geometry.frameWidth} * ${pixelSize})`,
   }
 }
 
