@@ -4,6 +4,9 @@ import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
 } from "../packages/match-presentation/src/chessAppearanceCatalog.js"
+import CHESS_HINT_PALETTES, {
+  type ChessHintPalette,
+} from "../packages/match-presentation/src/chessHintPalettes.js"
 import { parseMatchMoveId } from "../packages/match/src/matchMove.js"
 import { createInitialMatchPosition } from "../packages/match/src/matchPosition.js"
 import {
@@ -17,6 +20,38 @@ import savedProfile from "./savedProfile.js"
 
 const appearanceSection = (page: Page) =>
   page.getByRole("dialog", { name: /^(Pieces|Board)$/ })
+const hintGeometry = (page: Page): Promise<readonly string[]> =>
+  page.locator("[data-hint-kind]").evaluateAll((elements) =>
+    elements.map((element) => {
+      const geometry = element.cloneNode(true)
+      if (!(geometry instanceof Element))
+        throw new Error("Expected hint geometry")
+      for (const painted of geometry.querySelectorAll("[fill], [stroke]")) {
+        painted.removeAttribute("fill")
+        painted.removeAttribute("stroke")
+      }
+      return geometry.outerHTML
+    }),
+  )
+const expectHintPalette = async (
+  page: Page,
+  palette: ChessHintPalette,
+): Promise<void> => {
+  for (const owner of ["player", "opponent"] as const) {
+    const frames = page.locator(
+      `[data-hint-kind="source"][data-hint-owner="${owner}"] [data-hint-stroke="owner"]`,
+    )
+    const heads = page.locator(
+      `[data-hint-kind="move"][data-hint-owner="${owner}"] path`,
+    )
+    await expect(frames).toHaveCount(3)
+    await expect(heads).toHaveCount(3)
+    for (const frame of await frames.all())
+      await expect(frame).toHaveAttribute("stroke", palette[owner])
+    for (const head of await heads.all())
+      await expect(head).toHaveAttribute("fill", palette[owner])
+  }
+}
 const expectLoadedArtwork = async (surface: Locator): Promise<void> => {
   await expect
     .poll(() =>
@@ -247,9 +282,7 @@ for (const { mode, color, pieceSetId, boardId } of [
     )
     const element = await board.elementHandle()
     if (element === null) throw new Error("Expected live board")
-    const hints = await page
-      .locator('[data-hint-kind="move"]')
-      .evaluateAll((elements) => elements.map((el) => el.outerHTML))
+    const hints = await hintGeometry(page)
     const pieces = CHESS_PIECE_SETS.find(({ id }) => id === pieceSetId)
     const boardArt = CHESS_BOARDS.find(({ id }) => id === boardId)
     if (!pieces || !boardArt) throw new Error("Expected catalog fixture")
@@ -278,11 +311,8 @@ for (const { mode, color, pieceSetId, boardId } of [
     await expect(pawn).toHaveCSS("box-shadow", /4px/)
     await expect(pawn).toHaveCSS("box-shadow", /6px/)
     await expect(pawn).toHaveCSS("z-index", "10")
-    expect(
-      await page
-        .locator('[data-hint-kind="move"]')
-        .evaluateAll((elements) => elements.map((el) => el.outerHTML)),
-    ).toEqual(hints)
+    expect(await hintGeometry(page)).toEqual(hints)
+    await expectHintPalette(page, CHESS_HINT_PALETTES[boardId])
     expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
     await expect(
       board.locator(`img[src*="${pieceSetId}/pieces/"]`).first(),
@@ -297,6 +327,109 @@ for (const { mode, color, pieceSetId, boardId } of [
     })
   })
 }
+
+test("keeps hint colors with the displayed board through pending artwork, failure and retry", async ({
+  page,
+}) => {
+  test.setTimeout(60000)
+  const requestGate = Promise.withResolvers<void>()
+  const requestedBoard =
+    "**/generated/chess-assets/cosunosuke/boards/cosunosuke.png"
+  await page.route(requestedBoard, async (route) => {
+    await requestGate.promise
+    await route.abort()
+  })
+  await page.goto("/")
+  await expect(
+    page.getByRole("button", { name: "Customize profile card", exact: true }),
+  ).toBeEnabled()
+  const original = await savedProfile(page)
+  await importPlayerData(page, {
+    ...original,
+    settings: {
+      ...original.settings,
+      chessAppearance: { pieceSetId: "chessnut", boardId: "toffee-wood" },
+    },
+  })
+  await page
+    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
+    .click()
+  await page.getByRole("button", { name: "Start match", exact: true }).click()
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
+    timeout: 30000,
+  })
+  const board = page.getByRole("grid", { name: /Chessboard/ })
+  await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
+    "opacity",
+    "1",
+  )
+  await expectHintPalette(page, CHESS_HINT_PALETTES["toffee-wood"])
+  const before = await savedProfile(page)
+  const geometry = await hintGeometry(page)
+
+  await openSettings(page)
+  await openGallery(page, "Board")
+  await appearanceSection(page)
+    .getByRole("radio", { name: "Cosunosuke · slate", exact: true })
+    .check()
+  await closeGallery(page)
+  await page
+    .getByRole("button", { name: "Close Settings", exact: true })
+    .click()
+  await page.getByLabel("Match menu", { exact: true }).click()
+  await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
+    "opacity",
+    "1",
+  )
+  await expectHintPalette(page, CHESS_HINT_PALETTES["toffee-wood"])
+  expect((await savedProfile(page)).settings.chessAppearance.boardId).toBe(
+    "cosunosuke",
+  )
+
+  requestGate.resolve()
+  await expect(
+    page.getByRole("button", { name: "Retry chess artwork", exact: true }),
+  ).toBeVisible()
+  await expect(
+    board.locator(':scope > span[aria-hidden="true"] > img'),
+  ).toHaveCount(0)
+  await expectHintPalette(page, CHESS_HINT_PALETTES.current)
+  expect(await hintGeometry(page)).toEqual(geometry)
+  expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
+
+  await page.unroute(requestedBoard)
+  await page
+    .getByRole("button", { name: "Retry chess artwork", exact: true })
+    .click()
+  await expect(board.locator('img[src$="/boards/cosunosuke.png"]')).toHaveCSS(
+    "opacity",
+    "1",
+  )
+  await expectHintPalette(page, CHESS_HINT_PALETTES.cosunosuke)
+  await expect(
+    page.getByRole("button", { name: "Retry chess artwork", exact: true }),
+  ).toHaveCount(0)
+  expect(await hintGeometry(page)).toEqual(geometry)
+  expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
+
+  await board
+    .locator('img[src$="/boards/cosunosuke.png"]')
+    .dispatchEvent("error")
+  await expectHintPalette(page, CHESS_HINT_PALETTES.current)
+  await expect(
+    page.getByRole("button", { name: "Retry chess artwork", exact: true }),
+  ).toBeVisible()
+  await page
+    .getByRole("button", { name: "Retry chess artwork", exact: true })
+    .click()
+  await expect(board.locator('img[src$="/boards/cosunosuke.png"]')).toHaveCSS(
+    "opacity",
+    "1",
+  )
+  await expectHintPalette(page, CHESS_HINT_PALETTES.cosunosuke)
+  expect(await hintGeometry(page)).toEqual(geometry)
+  expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
+})
 
 for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
   test(`retains prepared artwork while loading ${pieceSetId}, falls back on failure and retries the saved selection`, async ({
