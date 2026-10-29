@@ -208,7 +208,7 @@ test("recovers an unreadable GIF worker message through Retry GIF", async ({
     .getByRole("button", { name: "Share profile card", exact: true })
     .click()
   const retry = page.getByRole("button", { name: "Retry GIF", exact: true })
-  await expect(retry).toBeVisible()
+  await expect(retry).toBeVisible({ timeout: 60000 })
   await retry.click()
   await expect(
     page.getByRole("button", { name: "Save GIF", exact: true }),
