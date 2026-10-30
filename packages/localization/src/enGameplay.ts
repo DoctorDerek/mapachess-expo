@@ -44,17 +44,17 @@ const gameplay = {
   challengeList: (opponents: readonly string[]): string =>
     `Unlocked for both Challenge modes: ${opponents.join(", ")}`,
   conclusion: {
-    playerTimedOut: "Your time ran out — you lost.",
+    playerTimedOut: "Your time ran out. You lost.",
     opponentTimedOut: (opponent: string): string =>
-      `${opponent} ran out of time — you won.`,
+      `${opponent} ran out of time. You won.`,
     "timeout-insufficient-material":
       "Time ran out. Draw: the other side has insufficient mating material.",
     playerWon: "You won!",
     opponentWon: (opponent: string): string => `${opponent} won.`,
     opponentResigned: (opponent: string): string =>
-      `${opponent} resigned — you won.`,
+      `${opponent} resigned. You won.`,
     playerResigned: (opponent: string): string =>
-      `You resigned — ${opponent} won.`,
+      `You resigned. ${opponent} won.`,
     "draw-agreement": "Draw by agreement.",
     stalemate: "Draw by stalemate.",
     "insufficient-material": "Draw by insufficient material.",

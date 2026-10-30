@@ -63,14 +63,14 @@ describe("canonical match conclusions", () => {
           playerColor,
           "Chicken Stockfish",
         ),
-      ).toBe("Chicken Stockfish resigned — you won.")
+      ).toBe("Chicken Stockfish resigned. You won.")
       expect(
         matchConclusionText(
           { type: "resignation", winner: opponentColor },
           playerColor,
           "Chicken Stockfish",
         ),
-      ).toBe("You resigned — Chicken Stockfish won.")
+      ).toBe("You resigned. Chicken Stockfish won.")
     },
   )
   it.each([

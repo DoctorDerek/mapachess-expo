@@ -15,7 +15,7 @@ const board = {
   orientation: (color: keyof typeof colors): string =>
     `Chessboard, ${colors[color]} at bottom`,
   castle: (notation: string, to: string, rookTo: string): string =>
-    `Castle ${notation} — king to ${to}, rook to ${rookTo}`,
+    `Castle ${notation}: king to ${to}, rook to ${rookTo}`,
   moveKing: (to: string): string => `Move king to ${to}`,
   promote: (role: keyof typeof pieces): string => `Promote to ${pieces[role]}`,
   promoteOn: (to: string): string => `Promote on ${to}`,

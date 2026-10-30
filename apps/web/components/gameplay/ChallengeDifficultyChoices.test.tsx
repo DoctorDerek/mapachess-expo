@@ -45,7 +45,7 @@ describe("Challenge difficulty history presentation", () => {
     expect(tiles[1]).not.toContain("Best medal")
     expect(tiles[2]).not.toContain("Best medal")
     expect(tiles[2]).not.toContain("Last played")
-    expect(markup).toContain("Gold — no hints")
+    expect(markup).toContain("Gold (no hints)")
     expect(markup).not.toContain("<summary")
     expect(markup).not.toContain("<select")
     expect(markup).not.toContain('type="checkbox"')

@@ -50,7 +50,7 @@ const setup = {
   bestMedal: (medal: string): string => ` · Best medal: ${medal}`,
   lastPlayed: (opponent: string): string => ` · Last played: ${opponent}`,
   difficultyMedals:
-    "Best medal at this difficulty: Gold — no hints; Silver — Piece Hints only; Bronze — Move Hints allowed. The animal is your last played opponent, not your next selection.",
+    "Best medal at this difficulty: Gold (no hints), Silver (Piece Hints only), Bronze (Move Hints allowed). The animal is your last played opponent, not your next selection.",
   variants: { standard: "Standard Chess", chess960: "Chess960" },
   modes: { story: "Story", challenge: "Challenge" },
   presentations: {
