@@ -342,7 +342,7 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
       expectedCursor = 2
     } else if (engine === "better-hints") {
       await page
-        .getByRole("button", { name: "Show Piece Hints", exact: true })
+        .getByRole("button", { name: "Get Hint Show Piece Hints", exact: true })
         .click()
     }
     const retry = page.getByRole("button", {
@@ -351,10 +351,21 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
           ? "Retry Chicken Stockfish’s turn"
           : engine === "evaluation"
             ? "Retry Evaluation"
-            : "Retry Piece Hints",
+            : "Get Hint Retry Piece Hints",
       exact: true,
     })
     await expect(retry).toBeVisible()
+    if (engine === "better-hints") {
+      const guidance = page.locator("#better-hints-guidance")
+      await expect(guidance).toBeVisible()
+      const guidanceBox = await guidance.boundingBox()
+      const hintRow = await page
+        .getByRole("region", { name: "Better Hints", exact: true })
+        .boundingBox()
+      expect(guidanceBox).not.toBeNull()
+      expect(hintRow).not.toBeNull()
+      expect(guidanceBox!.width).toBeCloseTo(hintRow!.width, 0)
+    }
     await retry.click()
     await expect(retry).toBeHidden()
     if (engine === "opponent") {
@@ -369,7 +380,10 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
       ).not.toHaveAttribute("aria-valuetext", /unavailable|waiting/)
     } else {
       await expect(
-        page.getByRole("button", { name: "Show Move Hints", exact: true }),
+        page.getByRole("button", {
+          name: "Get Hint Show Move Hints",
+          exact: true,
+        }),
       ).toBeEnabled({ timeout: 30000 })
     }
     const recovered = (await savedProfile(page)).activeMatch

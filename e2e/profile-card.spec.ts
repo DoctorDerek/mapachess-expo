@@ -262,7 +262,10 @@ for (const mode of [
       mode.endsWith("Story") ? /chicken_/ : /raccoon_/,
     )
     await expect(
-      page.getByRole("button", { name: "Move Hints Shown", exact: true }),
+      page.getByRole("button", {
+        name: "Get Hint Move Hints Shown",
+        exact: true,
+      }),
     ).toBeVisible({ timeout: 30000 })
     const record = (await savedProfile(page)).activeMatch
     if (record === null) throw new Error("Expected a saved, started match")
