@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { AUTO_HINT_MODES } from "@mapachess/match/auto-hint-mode"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
 import SettingsView from "./SettingsView"
@@ -5,7 +6,12 @@ import SettingsView from "./SettingsView"
 export default function AutoHintsHelp({
   onClose,
   closeLabel,
-}: Readonly<{ onClose: () => void; closeLabel?: string }>) {
+  children,
+}: Readonly<{
+  onClose: () => void
+  closeLabel?: string
+  children?: ReactNode
+}>) {
   const copy = useMapachessCopy()
   return (
     <SettingsView
@@ -14,6 +20,7 @@ export default function AutoHintsHelp({
       onClose={onClose}
       focusHeading
     >
+      {children}
       <dl className="mt-5 grid gap-6 text-base leading-relaxed">
         {AUTO_HINT_MODES.map((mode) => (
           <div key={mode}>

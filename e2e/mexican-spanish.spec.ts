@@ -61,10 +61,16 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
     )
     .toBe(2)
   await page
-    .getByRole("button", { name: "Mostrar Pistas de piezas", exact: true })
+    .getByRole("button", {
+      name: "Pedir pista Mostrar Pistas de piezas",
+      exact: true,
+    })
     .click()
   await page
-    .getByRole("button", { name: "Mostrar Pistas de movimientos", exact: true })
+    .getByRole("button", {
+      name: "Pedir pista Mostrar Pistas de movimientos",
+      exact: true,
+    })
     .click()
   await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6)
   await expect
@@ -74,7 +80,6 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 })
     for (const name of [
-      "Enfocar el tablero",
       "Deshacer",
       "Rehacer",
       "Pistas de movimientos visibles",
@@ -87,6 +92,8 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
         ),
       ).toBe(true)
     }
+    await expect(page.locator('[data-player-action="menu"]')).toBeVisible()
+    await expect(page.locator('[data-player-action="controls"]')).toHaveCount(0)
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

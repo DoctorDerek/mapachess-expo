@@ -20,7 +20,6 @@ import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function MatchCommands({
   actor,
-  onBoardFocusRequested,
   hints,
   coach,
   menuActions,
@@ -34,7 +33,6 @@ export default function MatchCommands({
   opponentName,
 }: Readonly<{
   hints: ReactNode
-  onBoardFocusRequested: () => void
   coach: ReactNode
   menuActions?: ReactNode
   menuSummaryRef?: Ref<HTMLElement>
@@ -62,65 +60,34 @@ export default function MatchCommands({
     },
   })
   return (
-    <div className="grid gap-2">
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+    <div className="grid gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {coach}
-        <div className="grid min-w-0 grid-cols-2 gap-2">
-          <MapachessButton
-            aria-busy={persisting && selectHasUndoHistory(snapshot)}
-            className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-base wrap-break-word"
-            disabled={!selectCanUndo(snapshot)}
-            data-player-action="undo"
-            onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
-            type="button"
-            variant="secondary"
+        {hints}
+      </div>
+      <div className="grid min-w-0 grid-cols-3 items-stretch gap-1.5">
+        <details
+          className="relative z-40 min-w-0"
+          open={menuOpen}
+          ref={menu}
+          data-player-input-layer={menuOpen ? "match-menu" : undefined}
+        >
+          <summary
+            aria-label={messages.matchMenu}
+            data-player-action="menu"
+            className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white rounded-mapachess-action shadow-mapachess-button shadow-mapachito-charcoal hover:shadow-mapachess-raised active:shadow-mapachess-pressed flex h-full min-h-12 cursor-pointer flex-wrap items-center justify-center gap-1 border-3 px-1 py-1 text-sm leading-tight font-black transition-[translate,box-shadow] duration-120 ease-[ease] hover:-translate-0.25 active:translate-0.75 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:active:translate-none forced-colors:border-[CanvasText] forced-colors:shadow-none"
+            ref={menuSummaryRef}
+            onClick={(event) => {
+              event.preventDefault()
+              if (menuOpen) onMenuClosed()
+              else onMenuOpened()
+            }}
           >
-            <InputPrompt action="undo" />
-            {messages.undo}
-          </MapachessButton>
-          <MapachessButton
-            aria-busy={persisting && selectHasRedoHistory(snapshot)}
-            className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-base wrap-break-word"
-            disabled={!selectCanRedo(snapshot)}
-            data-player-action="redo"
-            onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
-            type="button"
-            variant="secondary"
-          >
-            <InputPrompt action="redo" />
-            {messages.redo}
-          </MapachessButton>
-          <MapachessButton
-            variant="secondary"
-            aria-label={messages.focusBoard}
-            data-player-action="controls"
-            className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-base wrap-break-word"
-            onClick={onBoardFocusRequested}
-          >
-            <InputPrompt action="controls" />
-            {messages.board}
-          </MapachessButton>
-          <details
-            className="relative z-40 min-w-0"
-            open={menuOpen}
-            ref={menu}
-            data-player-input-layer={menuOpen ? "match-menu" : undefined}
-          >
-            <summary
-              aria-label={messages.matchMenu}
-              data-player-action="menu"
-              className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white rounded-mapachess-action shadow-mapachess-button flex h-full min-h-12 cursor-pointer flex-wrap items-center justify-center gap-1 border-3 px-1 py-1 text-base leading-[1.2] font-black wrap-break-word focus-visible:outline-2"
-              ref={menuSummaryRef}
-              onClick={(event) => {
-                event.preventDefault()
-                if (menuOpen) onMenuClosed()
-                else onMenuOpened()
-              }}
-            >
-              <InputPrompt action="menu" />
-              {messages.menu}
-            </summary>
-            <div className="border-mapachito-white/30 bg-mapachito-charcoal absolute right-0 bottom-full mb-2 grid max-h-[65dvh] w-72 max-w-[calc(100vw-1.5rem)] grid-cols-1 gap-3 overflow-auto rounded-lg border p-3 shadow-xl xl:top-full xl:bottom-auto xl:mt-2 xl:mb-0">
+            <InputPrompt action="menu" />
+            <span className="min-w-0 wrap-anywhere">{messages.menu}</span>
+          </summary>
+          <div className="border-mapachito-white/30 bg-mapachito-charcoal fixed inset-x-3 bottom-[max(--spacing(3),env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-max(--spacing(3),env(safe-area-inset-top))-max(--spacing(3),env(safe-area-inset-bottom)))] flex-col gap-3 rounded-lg border p-3 shadow-xl xl:inset-x-auto xl:bottom-3 xl:max-h-[65dvh] xl:w-96 xl:max-w-[calc(100vw---spacing(6))]">
+            <div className="grid min-h-0 auto-rows-max grid-cols-1 gap-3 overflow-y-auto overscroll-contain px-1 pb-2">
               {menuActions}
               <MapachessButton
                 aria-busy={persisting && drawAvailable}
@@ -158,10 +125,38 @@ export default function MatchCommands({
                 {messages.resign}
               </MapachessButton>
             </div>
-          </details>
-        </div>
+            <MapachessButton
+              className="shrink-0 px-1!"
+              onClick={onMenuClosed}
+              variant="secondary"
+            >
+              {copy.shared.settingsControls.close}
+            </MapachessButton>
+          </div>
+        </details>
+        <MapachessButton
+          aria-busy={persisting && selectHasUndoHistory(snapshot)}
+          className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight"
+          disabled={!selectCanUndo(snapshot)}
+          data-player-action="undo"
+          onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
+          variant="secondary"
+        >
+          <InputPrompt action="undo" />
+          <span className="min-w-0 wrap-anywhere">{messages.undo}</span>
+        </MapachessButton>
+        <MapachessButton
+          aria-busy={persisting && selectHasRedoHistory(snapshot)}
+          className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight"
+          disabled={!selectCanRedo(snapshot)}
+          data-player-action="redo"
+          onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
+          variant="secondary"
+        >
+          <InputPrompt action="redo" />
+          <span className="min-w-0 wrap-anywhere">{messages.redo}</span>
+        </MapachessButton>
       </div>
-      {hints}
     </div>
   )
 }

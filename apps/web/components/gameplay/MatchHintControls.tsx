@@ -1,4 +1,3 @@
-import cx from "classix"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAreMatchMutationsFrozen,
@@ -15,10 +14,7 @@ import type {
   MatchNavigationCommands,
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
-import {
-  MATCH_MEDALS,
-  matchMedalEligibility,
-} from "@mapachess/profile/match-medal"
+import { matchMedalEligibility } from "@mapachess/profile/match-medal"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
 import MedalSymbol from "../presentation/MedalSymbol"
@@ -51,107 +47,60 @@ export default function MatchHintControls({
   })
   const nextMedal =
     (stage === "ready" || stage === "failure") && medal === "gold"
-      ? {
-          label: copy.shared.story.medals.silver,
-          description: hints.nextMedal["piece-hints"],
-        }
+      ? hints.nextMedal["piece-hints"]
       : stage === "piece-hints" && medal !== "bronze"
-        ? {
-            label: copy.shared.story.medals.bronze,
-            description: hints.nextMedal["move-hints"],
-          }
+        ? hints.nextMedal["move-hints"]
         : null
-  const eligibility = (tier: (typeof MATCH_MEDALS)[number]) =>
-    hints.eligibility(
-      copy.shared.story.medals[tier],
-      copy.shared.medalHintUse[tier],
-    )
   const view = overlays.at(-1)
   const helpOpen = view === "auto-hints-help" && !overlays.includes("settings")
 
   return (
-    <div className="grid min-w-0 gap-2">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] items-stretch gap-2">
-        <BetterHintsControl
-          nextMedal={complete ? null : nextMedal}
-          busy={selectIsPersistingMutation(snapshot)}
-          disabled={frozen}
-          hints={selectMatchHints(snapshot)}
-          matchComplete={complete}
-          onMoveHintsRequested={() =>
-            actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-          }
-          onPieceHintsRequested={() =>
-            actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-          }
-          stage={stage}
-        />
-        <MapachessButton
-          aria-haspopup="dialog"
-          aria-expanded={overlays.includes("match-hints")}
-          disabled={complete}
-          onClick={(event) => {
-            event.currentTarget.focus({ preventScroll: true })
-            navigation.open("match-hints")
-          }}
-          variant="secondary"
-          className="flex min-w-0 items-center justify-center gap-2 px-2! py-2! text-base"
-        >
-          <span className="grid min-w-0 wrap-anywhere">
-            {Object.entries(hints.autoMode).map(([mode, label]) => (
-              <span
-                aria-hidden="true"
-                className="invisible col-start-1 row-start-1"
-                key={mode}
-              >
-                {label}
-              </span>
-            ))}
-            <span className="col-start-1 row-start-1">
-              {hints.autoMode[autoHintMode]}
-            </span>
-          </span>
-          <span aria-hidden="true">▾</span>
-        </MapachessButton>
-      </div>
-      <div className="text-mapachito-white flex items-start gap-2">
-        <div
-          className={cx(
-            "min-w-0 flex-1 text-base wrap-anywhere",
-            complete && "invisible",
-          )}
-          aria-hidden={complete}
-        >
-          <div className="grid">
-            {MATCH_MEDALS.map((tier) => (
-              <span
-                aria-hidden="true"
-                className="invisible col-start-1 row-start-1"
-                key={tier}
-              >
-                <MedalSymbol medal={tier} />
-                {eligibility(tier)}
-              </span>
-            ))}
-            <p className="col-start-1 row-start-1" role="status">
-              <MedalSymbol medal={medal} />
-              {eligibility(medal)}
-            </p>
-          </div>
-        </div>
-        <MapachessButton
-          aria-label={copy.shared.settingsControls.explainAutoHints}
-          aria-haspopup="dialog"
-          onClick={(event) => {
-            event.currentTarget.focus({ preventScroll: true })
-            navigation.open("auto-hints-help")
-          }}
-          variant="secondary"
-          className="shrink-0 px-3! py-2!"
-        >
-          <span aria-hidden="true">?</span>
-        </MapachessButton>
-      </div>
+    <section
+      aria-labelledby="better-hints-title"
+      className="grid min-w-0 flex-[1_1_calc(6em+var(--hint-target)+--spacing(7))] grid-cols-[minmax(0,1fr)_var(--hint-target)_minmax(0,1fr)] items-stretch gap-1.5 text-sm [--hint-target:clamp(--spacing(16),3.5rem,--spacing(28))]"
+    >
+      <MapachessButton
+        aria-haspopup="dialog"
+        aria-expanded={overlays.includes("match-hints")}
+        disabled={complete}
+        onClick={(event) => {
+          event.currentTarget.focus({ preventScroll: true })
+          navigation.open("match-hints")
+        }}
+        variant="secondary"
+        className="flex min-h-(--hint-target)! min-w-0 flex-col items-center justify-center px-1! py-1! text-sm leading-tight"
+      >
+        <span>{hints.autoLabel}</span>
+        <span>
+          {hints.autoMode[autoHintMode]} <span aria-hidden="true">▾</span>
+        </span>
+      </MapachessButton>
+      <MapachessButton
+        aria-label={copy.shared.settingsControls.explainAutoHints}
+        aria-haspopup="dialog"
+        onClick={(event) => {
+          event.currentTarget.focus({ preventScroll: true })
+          navigation.open("auto-hints-help")
+        }}
+        variant="secondary"
+        className="min-h-(--hint-target)! min-w-0 px-1! py-1! text-xl leading-tight"
+      >
+        <span aria-hidden="true">?</span>
+      </MapachessButton>
+      <BetterHintsControl
+        nextMedal={complete ? null : nextMedal}
+        busy={selectIsPersistingMutation(snapshot)}
+        disabled={frozen}
+        hints={selectMatchHints(snapshot)}
+        matchComplete={complete}
+        onMoveHintsRequested={() =>
+          actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+        }
+        onPieceHintsRequested={() =>
+          actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+        }
+        stage={stage}
+      />
       {view === "match-hints" || helpOpen ? (
         <MapachessDialog
           label={copy.shared.settingsControls.autoHints}
@@ -162,7 +111,17 @@ export default function MatchHintControls({
             <AutoHintsHelp
               onClose={navigation.back}
               closeLabel={copy.shared.settingsControls.close}
-            />
+            >
+              {complete ? null : (
+                <p role="status" className="mt-4 text-base font-bold">
+                  <MedalSymbol medal={medal} />
+                  {hints.eligibility(
+                    copy.shared.story.medals[medal],
+                    copy.shared.medalHintUse[medal],
+                  )}
+                </p>
+              )}
+            </AutoHintsHelp>
           ) : (
             <SettingsView
               title={copy.shared.settingsControls.autoHints}
@@ -187,6 +146,6 @@ export default function MatchHintControls({
           )}
         </MapachessDialog>
       ) : null}
-    </div>
+    </section>
   )
 }

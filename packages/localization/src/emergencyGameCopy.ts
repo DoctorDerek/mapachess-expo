@@ -325,10 +325,12 @@ const emergencyGameCopy = {
     retryTurn: () => "Retry opponent turn",
     drawDeclined: unavailableText,
     hints: {
+      getHint: "Get Hint",
+      autoLabel: "Auto Hints:",
       autoMode: {
-        "auto-move-hints": "Auto: Move Hints",
-        "auto-piece-hints": "Auto: Piece Hints",
-        "no-auto-hints": "Auto: Off",
+        "auto-move-hints": "Moves",
+        "auto-piece-hints": "Pieces",
+        "no-auto-hints": "Off",
       },
       eligibility: unavailableText,
       nextMedal: {

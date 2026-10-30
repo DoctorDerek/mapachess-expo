@@ -90,10 +90,12 @@ const gameplay = {
   retryTurn: (opponent: string): string => `Retry ${opponent}’s turn`,
   drawDeclined: (opponent: string): string => `${opponent} declines the draw.`,
   hints: {
+    getHint: "Get Hint",
+    autoLabel: "Auto Hints:",
     autoMode: {
-      "auto-move-hints": "Auto: Move Hints",
-      "auto-piece-hints": "Auto: Piece Hints",
-      "no-auto-hints": "Auto: Off",
+      "auto-move-hints": "Moves",
+      "auto-piece-hints": "Pieces",
+      "no-auto-hints": "Off",
     },
     eligibility: (medal: string, hintUse: string): string =>
       `${medal} if you win · ${hintUse}`,

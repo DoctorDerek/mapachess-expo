@@ -186,6 +186,15 @@ test("honors a remapped Home key on the board while preserving unassigned End na
     page.getByRole("button", { name: "Better Hints H", exact: true }),
   )
   await page.keyboard.press("Home")
+  await expect(
+    page.getByRole("dialog", {
+      name: "Change Better Hints binding",
+      exact: true,
+    }),
+  ).not.toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Better Hints Home", exact: true }),
+  ).toBeFocused()
   await activate(
     page,
     page.getByRole("button", { name: "Save controls", exact: true }),

@@ -79,7 +79,9 @@ async function startManualGame(page: Page, spanish = false, timed = false) {
     .click()
   await expect(
     page.getByRole("button", {
-      name: spanish ? "Mostrar Pistas de piezas" : "Show Piece Hints",
+      name: spanish
+        ? "Pedir pista Mostrar Pistas de piezas"
+        : "Get Hint Show Piece Hints",
       exact: true,
     }),
   ).toBeEnabled({ timeout: 30000 })
@@ -91,7 +93,7 @@ for (const configuration of [
   { width: 320, spanish: true, fontSize: 32 },
   { width: 1280, spanish: false, fontSize: 16 },
 ]) {
-  test(`manual hints and sticky eligibility remain legible at ${configuration.width}px / ${configuration.fontSize}px text / ${configuration.spanish ? "es-MX" : "en"}`, async ({
+  test(`compact hints and eligibility help remain legible at ${configuration.width}px / ${configuration.fontSize}px text / ${configuration.spanish ? "es-MX" : "en"}`, async ({
     page,
   }, testInfo) => {
     test.setTimeout(60000)
@@ -120,49 +122,78 @@ for (const configuration of [
       `${fontSize}px`,
     )
     const hint = page.locator('[data-player-action="hints"]')
-    const eligibility = page
-      .getByRole("status")
-      .filter({ hasText: spanish ? "si ganas" : "if you win" })
-    await expect(eligibility).toHaveText(
+    const help = page.getByRole("button", {
+      name: spanish ? "Explicar las pistas automáticas" : "Explain Auto-Hints",
+      exact: true,
+    })
+    const checkEligibility = async (
+      tier: "gold" | "silver" | "bronze",
+      description: string,
+    ) => {
+      await help.click()
+      const eligibility = page.getByRole("dialog").getByRole("status")
+      await expect(eligibility).toHaveText(description)
+      const medal = eligibility.locator('img[aria-hidden="true"]')
+      await expect(medal).toHaveAttribute(
+        "src",
+        new RegExp(`/${tier}\\.[^/]+\\.png$`),
+      )
+      await expect
+        .poll(() =>
+          medal.evaluate(
+            (image) =>
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth > 0,
+          ),
+        )
+        .toBe(true)
+      const close = page.getByRole("dialog").getByRole("button", {
+        name: spanish ? "Cerrar" : "Close",
+        exact: true,
+      })
+      await expect(close).toBeInViewport()
+      await close.click()
+      await expect(help).toBeFocused()
+      await expect(eligibility).toHaveCount(0)
+    }
+    await checkEligibility(
+      "gold",
       spanish
         ? "Oro si ganas · No usaste pistas"
         : "Gold if you win · No hints used",
     )
-    const medal = eligibility.locator('img[aria-hidden="true"]')
-    await expect(medal).toHaveAttribute("src", /\/gold\.[^/]+\.png$/)
     const initialHintBox = await documentBox(hint)
     const board = page.getByRole("grid")
     const initialBoardBox = await documentBox(board)
     await hint.click()
     await expect(hint).toHaveAccessibleName(
-      spanish ? "Mostrar Pistas de movimientos" : "Show Move Hints",
+      spanish
+        ? "Pedir pista Mostrar Pistas de movimientos"
+        : "Get Hint Show Move Hints",
     )
     await expect(page.locator('[data-hint-kind="source"]')).toHaveCount(6)
-    await expect(eligibility).toContainText(
-      spanish ? "Plata si ganas" : "Silver if you win",
+    await checkEligibility(
+      "silver",
+      spanish
+        ? "Plata si ganas · Usaste Pistas de piezas · sin Pistas de movimientos"
+        : "Silver if you win · Piece Hints used · no Move Hints",
     )
-    await expect(medal).toHaveAttribute("src", /\/silver\.[^/]+\.png$/)
     expectSameBox(await documentBox(hint), initialHintBox)
     await hint.click()
     await expect(hint).toHaveAccessibleName(
-      spanish ? "Pistas de movimientos visibles" : "Move Hints Shown",
+      spanish
+        ? "Pedir pista Pistas de movimientos visibles"
+        : "Get Hint Move Hints Shown",
     )
     await expect(hint).toBeDisabled()
     await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6)
-    await expect(eligibility).toContainText(
-      spanish ? "Bronce si ganas" : "Bronze if you win",
+    await checkEligibility(
+      "bronze",
+      spanish
+        ? "Bronce si ganas · Usaste Pistas de movimientos"
+        : "Bronze if you win · Move Hints used",
     )
-    await expect(medal).toHaveAttribute("src", /\/bronze\.[^/]+\.png$/)
-    await expect
-      .poll(() =>
-        medal.evaluate(
-          (image) =>
-            image instanceof HTMLImageElement &&
-            image.complete &&
-            image.naturalWidth > 0,
-        ),
-      )
-      .toBe(true)
     expectSameBox(await documentBox(hint), initialHintBox)
     expectSameBox(await documentBox(board), initialBoardBox)
     expect(
@@ -171,15 +202,24 @@ for (const configuration of [
       ),
     ).toBe(true)
     const auto = page.getByRole("button", {
-      name: spanish ? "Auto: No" : "Auto: Off",
+      name: spanish ? "Pistas auto: No" : "Auto Hints: Off",
       exact: true,
     })
-    for (const control of [hint, auto])
+    for (const control of [hint, auto, help]) {
       expect(
         await control.evaluate(
           (element) => element.scrollWidth <= element.clientWidth,
         ),
       ).toBe(true)
+      const bounds = await documentBox(control)
+      expect(bounds.height).toBeGreaterThanOrEqual(64)
+      expect(bounds.width).toBeGreaterThanOrEqual(44)
+    }
+    expect((await documentBox(help)).width).toBeGreaterThanOrEqual(64)
+    expect((await documentBox(help)).height).toBe(
+      (await documentBox(auto)).height,
+    )
+    await expect(page.locator('[data-player-action="controls"]')).toHaveCount(0)
     await auto.click()
     const picker = page.getByRole("dialog", {
       name: spanish ? "Pistas automáticas" : "Auto-Hints",
@@ -201,8 +241,11 @@ for (const configuration of [
     await page.keyboard.press("Escape")
     await expect(picker).toHaveCount(0)
     await expect(auto).toBeFocused()
-    await expect(eligibility).toContainText(
-      spanish ? "Bronce si ganas" : "Bronze if you win",
+    await checkEligibility(
+      "bronze",
+      spanish
+        ? "Bronce si ganas · Usaste Pistas de movimientos"
+        : "Bronze if you win · Move Hints used",
     )
     expect((await savedProfile(page)).activeMatch).toMatchObject({
       pieceHintsUsed: true,
@@ -225,7 +268,10 @@ test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resu
   await injectControllerInput(page)
   await page.setViewportSize({ width: 390, height: 900 })
   await startManualGame(page, false, true)
-  const auto = page.getByRole("button", { name: "Auto: Off", exact: true })
+  const auto = page.getByRole("button", {
+    name: "Auto Hints: Off",
+    exact: true,
+  })
   const help = page.getByRole("button", {
     name: "Explain Auto-Hints",
     exact: true,
@@ -266,10 +312,10 @@ test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resu
   })
   await page.getByRole("button", { name: "Resume clocks", exact: true }).click()
   await page
-    .getByRole("button", { name: "Show Piece Hints", exact: true })
+    .getByRole("button", { name: "Get Hint Show Piece Hints", exact: true })
     .click()
   await expect(
-    page.getByRole("button", { name: "Show Move Hints", exact: true }),
+    page.getByRole("button", { name: "Get Hint Show Move Hints", exact: true }),
   ).toBeEnabled()
   expect((await savedProfile(page)).activeMatch?.clock?.paused).toBe(false)
   await page.getByRole("gridcell", { name: /^e2,/ }).click()

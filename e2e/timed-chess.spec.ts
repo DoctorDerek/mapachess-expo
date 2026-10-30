@@ -137,8 +137,8 @@ for (const spanish of [false, true]) {
         await expect(
           page.getByRole("button", {
             name: spanish
-              ? "Pistas de movimientos visibles"
-              : "Move Hints Shown",
+              ? "Pedir pista Pistas de movimientos visibles"
+              : "Get Hint Move Hints Shown",
             exact: true,
           }),
         ).toBeVisible({ timeout: 30000 })
