@@ -16,7 +16,7 @@ const homeFont = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://mapachess.com"),
-  title: "Mapachess",
+  title: "Mapachess | Free Chess vs. Stockfish With Better Hints",
   description: loadCatalog("en").presentation.metadataDescription,
   alternates: { canonical: "/" },
   openGraph: { url: "/" },

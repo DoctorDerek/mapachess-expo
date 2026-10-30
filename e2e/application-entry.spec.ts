@@ -317,7 +317,9 @@ test("offers four direct modes with Challenge controls and saved hint preference
   test.setTimeout(60000)
   await page.goto("/?source=canonical-check")
 
-  await expect(page).toHaveTitle("Mapachess")
+  await expect(page).toHaveTitle(
+    "Mapachess | Free Chess vs. Stockfish With Better Hints",
+  )
   await expect(page).toHaveURL(
     new URL("/?source=canonical-check", baseURL).href,
   )

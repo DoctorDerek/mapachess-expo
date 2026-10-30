@@ -16,7 +16,7 @@ import shared from "./esMxShared.js"
 const introduction = Object.freeze({
   title: "Mapachess",
   region: "Introducción",
-  heading: "Ajedrez con Mejores pistas.",
+  heading: "Ajedrez gratis con Mejores pistas para ambos bandos.",
   paragraphs: Object.freeze([
     {
       lead: "",
