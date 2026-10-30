@@ -120,9 +120,9 @@ const gameplay = {
       loading:
         "Buscando Pistas de piezas para ambos bandos sin cambiar el tablero.",
       "move-hints":
-        "Las flechas verdes continuas muestran movimientos del jugador. Las flechas rojas discontinuas muestran movimientos del oponente.",
+        "Las flechas azules continuas muestran movimientos del jugador. Las flechas doradas discontinuas muestran movimientos del oponente.",
       "piece-hints":
-        "Los bordes verdes continuos marcan piezas del jugador. Los bordes rojos discontinuos marcan piezas del oponente.",
+        "Los bordes azules continuos marcan piezas del jugador. Los bordes dorados discontinuos marcan piezas del oponente.",
       ready:
         "Comienza por encontrar las piezas más importantes del jugador y del oponente.",
       unavailable:

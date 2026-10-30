@@ -118,9 +118,9 @@ const gameplay = {
       hidden: "Piece Hints return when it is your turn.",
       loading: "Finding Piece Hints for both sides without changing the board.",
       "move-hints":
-        "Solid green arrows show Player moves. Dashed red arrows show Opponent moves.",
+        "Solid blue arrows show Player moves. Dashed gold arrows show Opponent moves.",
       "piece-hints":
-        "Solid green borders mark Player pieces. Dashed red borders mark Opponent pieces.",
+        "Solid blue borders mark Player pieces. Dashed gold borders mark Opponent pieces.",
       ready: "Start by finding the most important Player and Opponent pieces.",
       unavailable: "Better Hints are unavailable in this version of Mapachess.",
       complete:
