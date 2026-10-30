@@ -321,7 +321,7 @@ for (const config of [
 }
 
 for (const ending of [
-  { action: "Resign", result: "You resigned — Chicken Stockfish won." },
+  { action: "Resign", result: "You resigned. Chicken Stockfish won." },
   { action: "Offer Draw", result: "Draw by agreement." },
 ] as const) {
   test(`${ending.action} remains below stable controls and battle`, async ({

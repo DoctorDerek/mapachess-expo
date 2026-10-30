@@ -16,7 +16,7 @@ import shared from "./enShared.js"
 const introduction = Object.freeze({
   title: "Mapachess",
   region: "Introduction",
-  heading: "Chess with Better Hints.",
+  heading: "Free chess with Better Hints for both sides.",
   paragraphs: Object.freeze([
     {
       lead: "",

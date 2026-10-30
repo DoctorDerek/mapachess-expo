@@ -45,17 +45,17 @@ const gameplay = {
   challengeList: (opponents: readonly string[]): string =>
     `${opponents.length === 1 ? "Desbloqueado" : "Desbloqueados"} para ambos modos Desafío: ${opponents.join(", ")}`,
   conclusion: {
-    playerTimedOut: "Se te acabó el tiempo — perdiste.",
+    playerTimedOut: "Se te acabó el tiempo. Perdiste.",
     opponentTimedOut: (opponent: string): string =>
-      `A ${opponent} se le acabó el tiempo — ganaste.`,
+      `A ${opponent} se le acabó el tiempo. Ganaste.`,
     "timeout-insufficient-material":
       "Se acabó el tiempo. Tablas: el otro bando no tiene material suficiente para dar mate.",
     playerWon: "¡Ganaste!",
     opponentWon: (opponent: string): string => `${opponent} ganó.`,
     opponentResigned: (opponent: string): string =>
-      `${opponent} se rindió — ganaste.`,
+      `${opponent} se rindió. Ganaste.`,
     playerResigned: (opponent: string): string =>
-      `Te rendiste — ${opponent} ganó.`,
+      `Te rendiste. ${opponent} ganó.`,
     "draw-agreement": "Tablas por acuerdo.",
     stalemate: "Tablas por ahogado.",
     "insufficient-material": "Tablas por material insuficiente.",

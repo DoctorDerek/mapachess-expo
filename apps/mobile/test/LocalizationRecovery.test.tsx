@@ -36,7 +36,9 @@ describe("shared catalogs in the native renderer", () => {
       )
     }
     const rendered = await render(<NativeLocaleConsumer />)
-    expect(screen.getByText("Ajedrez con Mejores pistas.")).toBeOnTheScreen()
+    expect(
+      screen.getByText("Ajedrez gratis con Mejores pistas para ambos bandos."),
+    ).toBeOnTheScreen()
     expect(screen.getByText("+1,234 XP")).toBeOnTheScreen()
     expect(screen.getByText("Ajedrez estándar · 445 Elo")).toBeOnTheScreen()
     await fireEvent.press(screen.getByRole("button", { name: "Comenzar" }))
@@ -69,7 +71,9 @@ describe("shared catalogs in the native renderer", () => {
         </Pressable>
       </View>,
     )
-    expect(screen.getByText("Ajedrez con Mejores pistas.")).toBeOnTheScreen()
+    expect(
+      screen.getByText("Ajedrez gratis con Mejores pistas para ambos bandos."),
+    ).toBeOnTheScreen()
     expect(screen.getByText("Idioma")).toBeOnTheScreen()
     await fireEvent.press(screen.getByRole("button", { name: "Start" }))
     expect(onStart).toHaveBeenCalledTimes(1)

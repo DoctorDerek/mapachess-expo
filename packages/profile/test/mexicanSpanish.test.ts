@@ -104,7 +104,7 @@ describe("Mexican Spanish player-facing catalog", () => {
       "enroque largo, rey a c8, torre de a8 a d8",
     )
     expect(copy.board.castle("O-O", "g1", "f1")).toBe(
-      "Enroque O-O — rey a g1, torre a f1",
+      "Enroque O-O: rey a g1, torre a f1",
     )
   })
 

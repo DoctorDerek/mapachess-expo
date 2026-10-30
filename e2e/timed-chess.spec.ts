@@ -419,7 +419,7 @@ test("a no-move timeout survives import, retracts on Undo and reapplies only onc
   await page.getByRole("button", { name: "Resume clocks", exact: true }).click()
   await expect(
     page.getByRole("dialog", {
-      name: "Your time ran out — you lost.",
+      name: "Your time ran out. You lost.",
       exact: true,
     }),
   ).toBeVisible({ timeout: 10000 })

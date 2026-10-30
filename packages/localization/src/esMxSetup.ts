@@ -56,7 +56,7 @@ const setup = {
   bestMedal: (medal: string): string => ` · Mejor medalla: ${medal}`,
   lastPlayed: (opponent: string): string => ` · Último oponente: ${opponent}`,
   difficultyMedals:
-    "Mejor medalla en esta dificultad: Oro — sin pistas; Plata — solo Pistas de piezas; Bronce — se permiten Pistas de movimientos. El animal es tu último oponente, no tu próxima selección.",
+    "Mejor medalla en esta dificultad: Oro (sin pistas), Plata (solo Pistas de piezas), Bronce (se permiten Pistas de movimientos). El animal es tu último oponente, no tu próxima selección.",
   variants: { standard: "Ajedrez estándar", chess960: "Ajedrez 960" },
   modes: { story: "Historia", challenge: "Desafío" },
   presentations: {

@@ -130,12 +130,12 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
   await page.getByRole("button", { name: "Rendirse", exact: true }).click()
   await expect(
     page.getByRole("dialog", {
-      name: "Te rendiste — Pollo Stockfish ganó.",
+      name: "Te rendiste. Pollo Stockfish ganó.",
       exact: true,
     }),
   ).toBeVisible()
   await expect(
-    page.getByText("Te rendiste — Pollo Stockfish ganó.", { exact: true }),
+    page.getByText("Te rendiste. Pollo Stockfish ganó.", { exact: true }),
   ).toBeVisible()
   await page.screenshot({
     path: testInfo.outputPath("spanish-rewards.png"),
@@ -150,7 +150,7 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
     .click()
   await expect(
     page.getByRole("dialog", {
-      name: "Te rendiste — Pollo Stockfish ganó.",
+      name: "Te rendiste. Pollo Stockfish ganó.",
       exact: true,
     }),
   ).toBeVisible()

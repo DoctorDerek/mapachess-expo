@@ -17,7 +17,7 @@ const board = {
   orientation: (color: keyof typeof colors): string =>
     `Tablero de ajedrez, ${colors[color].toLowerCase()} abajo`,
   castle: (notation: string, to: string, rookTo: string): string =>
-    `Enroque ${notation} — rey a ${to}, torre a ${rookTo}`,
+    `Enroque ${notation}: rey a ${to}, torre a ${rookTo}`,
   moveKing: (to: string): string => `Mover el rey a ${to}`,
   promote: (role: keyof typeof pieces): string =>
     `Promocionar a ${pieces[role]}`,
