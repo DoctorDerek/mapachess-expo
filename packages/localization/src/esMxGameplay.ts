@@ -91,10 +91,12 @@ const gameplay = {
   retryTurn: (opponent: string): string => `Reintentar el turno de ${opponent}`,
   drawDeclined: (opponent: string): string => `${opponent} rechaza las tablas.`,
   hints: {
+    getHint: "Pedir pista",
+    autoLabel: "Pistas auto:",
     autoMode: {
-      "auto-move-hints": "Auto: Movimientos",
-      "auto-piece-hints": "Auto: Piezas",
-      "no-auto-hints": "Auto: No",
+      "auto-move-hints": "Movimientos",
+      "auto-piece-hints": "Piezas",
+      "no-auto-hints": "No",
     },
     eligibility: (medal: string, hintUse: string): string =>
       `${medal} si ganas · ${hintUse}`,
