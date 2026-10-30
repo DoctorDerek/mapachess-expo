@@ -10,24 +10,22 @@ pre-production. Its defining design combines:
 - Three Piece Hints for each side, followed by three Move Hints for those pieces
   for each side.
 - Stockfish-powered animal opponents authored from 100 through 2300 Elo, with
-  independently selected unlocked animals and calibrated difficulty through
-  3000+ Elo in Challenge.
+  independently selected unlocked animals and currently calibrated web difficulty
+  through 2300 Elo in Challenge.
 - A Reactive Battle Stage with animated animal combat and Mapachito coach
   portrait reactions.
-- Standard and Chess960 across Story and Challenge, with four separately tracked
+- Standard and Chess960 across Story and Challenge, with 24 separately tracked
   player Elo ratings.
 
-The current web development build offers ten Story opponents, Chicken through
-Raccoon, in both Standard and Chess960. Win to unlock the next animal, or replay
+The current web development build offers 23 Story opponents, Chicken through
+Dragonfly, in both Standard and Chess960. Win to unlock the next animal, or replay
 earlier opponents to improve your medal. Each variant retains its own victories
 and best medals, and active matches save locally for reload and restart.
-The 100–1000 web difficulty presets meet the approved engine-pool calibration
-tolerances in both variants; they are estimates, not certified human ratings.
-Six targets share their random-move setting; four measured Chess960 exceptions
-remain in the same canonical schedule and difficulty implementation.
-These matches still do not update player Elo. Challenge supports independently
+The current web difficulty presets span 100–2300 Elo in both variants;
+they are estimates, not certified human ratings.
+Eligible matches update player Elo. Challenge supports independently
 selected earned animals and difficulty, side, and Chess960-position selection.
-XP/Levels, achievements, and player-rating updates remain in development.
+XP/Levels, level achievements, and player-rating updates are implemented.
 See the [calibration conditions and measured results](packages/calibration/README.md).
 
 ## Current repository
@@ -39,8 +37,8 @@ The implemented foundation currently provides:
   Windows UCI process adapter.
 - Deterministic, resumable, color-reversed calibration matches with preserved
   evidence and local BayesElo rating analysis.
-- Calibrated Standard and Chess960 100–1000 opponent presets using the pinned
-  web Lite WASM artifacts, without automatic player-rating promotion.
+- Calibrated Standard and Chess960 100–2300 opponent presets using the pinned
+  web Lite WASM artifacts, with player-rating updates for eligible matches.
 - Durable Standard and Chess960 browser matches with exact Better Hints, evaluation,
   Undo/Redo, Resign, Offer Draw, reload recovery, Restart Match, and Return to
   Menu.
