@@ -235,7 +235,7 @@ export default function WebMatch({
     if (root === null) return
     const board = root.querySelector<HTMLElement>('[role="grid"]')
     const destination = board?.contains(document.activeElement)
-      ? root.querySelector<HTMLElement>('[data-player-action="controls"]')
+      ? menuSummary.current
       : board?.querySelector<HTMLElement>('[tabindex="0"]')
     if (destination != null) focusInput(destination)
   }
@@ -270,7 +270,7 @@ export default function WebMatch({
           modeLabel,
           animalCopy.opponent(opponent.id),
         )}
-        className="relative grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-x-6 xl:[--playing-width:min(100%,52rem,max(20rem,calc(100svh-13rem)))] xl:[grid-template-areas:'clocks_command'_'identity_command'_'evaluation_command'_'board_command'_'battle_.']"
+        className="relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_command']"
       >
         <MatchIdentity
           timeControl={snapshot.context.timeControl}
@@ -331,11 +331,11 @@ export default function WebMatch({
           />
         </div>
 
-        <div className="contents xl:grid xl:min-h-0 xl:min-w-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-2 xl:self-stretch xl:[grid-area:command]">
+        <div className="contents xl:grid xl:min-h-0 xl:min-w-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-3 xl:self-stretch xl:[grid-area:command]">
           <div className="contents xl:grid xl:gap-2">
             <section
               aria-label={messages.coreMatchActions}
-              className="text-mapachito-charcoal mt-2 grid min-w-0 gap-2 px-3 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
+              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
               {snapshot.matches("paused") ? (
                 <MapachessButton
@@ -348,7 +348,6 @@ export default function WebMatch({
                 </MapachessButton>
               ) : null}
               <MatchCommands
-                onBoardFocusRequested={toggleBoardFocus}
                 opponentName={animalCopy.opponent(opponent.id)}
                 menuOpen={overlays.includes("match-menu")}
                 onMenuOpened={() => {

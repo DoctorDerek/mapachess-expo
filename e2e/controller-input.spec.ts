@@ -95,6 +95,14 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
     "rgb(238, 240, 244)",
   )
   await expect(e2).toHaveCSS("outline-style", "none")
+  await press(page, 3)
+  await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
+  await press(page, 3)
+  await expect(e2).toBeFocused()
+  await page.keyboard.press("c")
+  await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
+  await page.keyboard.press("c")
+  await expect(e2).toBeFocused()
   const before = await savedProfile(page)
   await press(page, 5)
   await expect(
@@ -146,6 +154,13 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
     page.getByRole("button", { name: "Settings", exact: true }),
   ).toBeHidden()
   await expect(page.getByRole("grid")).toBeVisible()
+  await page.locator('[data-player-action="menu"]').click()
+  const close = page.getByRole("button", { name: "Close", exact: true })
+  await expect(close).toBeInViewport()
+  await activate(page, close)
+  await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
+  await press(page, 3)
+  await expect(page.getByRole("grid").locator('[tabindex="0"]')).toBeFocused()
 })
 
 test("starts a match by directional navigation without programmatic focus or pointer input", async ({
@@ -218,8 +233,8 @@ test("executes a move, Undo, Redo and result review through canonical controller
   await expect(destination).toBeVisible()
   await expect(page.locator("[data-last-move]")).toHaveCount(2)
   await press(page, 3)
-  await expect(page.getByRole("button", { name: "Focus board" })).toBeFocused()
-  await press(page, 12)
+  await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
+  await press(page, 15)
   await expect(page.getByRole("button", { name: /Undo/ })).toBeFocused()
   await press(page, 0)
   await expect

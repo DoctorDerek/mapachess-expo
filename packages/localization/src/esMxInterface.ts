@@ -22,8 +22,6 @@ const interfaceCopy = {
     reviewBoard: "Revisar tablero",
   },
   matchCommands: {
-    focusBoard: "Enfocar el tablero",
-    board: "Tablero",
     undo: "Deshacer",
     redo: "Rehacer",
     matchMenu: "Menú de partida",

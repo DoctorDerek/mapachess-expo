@@ -26,8 +26,6 @@ const emergencyInterface = {
     reviewBoard: "Review board",
   },
   matchCommands: {
-    focusBoard: "Focus board",
-    board: "Board",
     undo: "Undo",
     redo: "Redo",
     matchMenu: "Match menu",
