@@ -36,7 +36,7 @@ export default function MatchIdentity({
       className="text-mapachito-white contents"
     >
       {playerClock || opponentClock ? (
-        <div className="mb-2 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
+        <div className="mb-1 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
           <div>{playerClock}</div>
           <div>{opponentClock}</div>
         </div>
@@ -45,7 +45,7 @@ export default function MatchIdentity({
         id="opponent-band-title"
         ref={headingRef}
         tabIndex={-1}
-        className="mb-2 w-full max-w-(--playing-width) min-w-0 justify-self-center px-3 text-center text-base leading-tight [grid-area:identity] xl:px-0"
+        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-3 text-center text-base leading-tight [grid-area:identity] xl:px-0"
       >
         <span className="inline-block">
           <strong>{copy.presentation.playerName}</strong> ·{" "}

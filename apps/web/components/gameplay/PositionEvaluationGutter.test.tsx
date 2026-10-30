@@ -69,7 +69,7 @@ describe("position evaluation gutter", () => {
     expect(markup).toContain('role="meter"')
     expect(markup).toContain('aria-label="Stockfish evaluation"')
     expect(markup).toContain('aria-valuetext="Waiting for evaluation"')
-    expect(markup).toContain("min-h-10 w-full")
+    expect(markup).toContain("min-h-8 w-full")
     expect(markup).not.toContain("xl:h-full")
     expect(markup).not.toContain("writing-mode")
     actor.stop()

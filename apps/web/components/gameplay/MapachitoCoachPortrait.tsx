@@ -42,11 +42,16 @@ export default function MapachitoCoachPortrait({
   const readableLabel = copy.shared.coachPortraitNames[visiblePortrait.label]
 
   return (
-    <figure aria-live="polite" className="flex items-center gap-2">
-      <div className="bg-mapachito-violet size-16 shrink-0 overflow-hidden rounded">
+    <figure
+      aria-live="polite"
+      className="mx-auto flex max-w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-1"
+    >
+      <div className="bg-mapachito-violet size-12 shrink-0 overflow-hidden rounded">
         <CoachPortraitImage portrait={visiblePortrait} />
       </div>
-      <figcaption className="grid gap-1">
+      <figcaption
+        className={visiblePortrait.unavailable ? "grid gap-1" : "sr-only"}
+      >
         <span className="sr-only">
           {copy.presentation.coach(
             copy.profile.coachCollections[visiblePortrait.collection],
@@ -54,7 +59,10 @@ export default function MapachitoCoachPortrait({
         </span>
         <strong className="sr-only">{readableLabel}</strong>
         {visiblePortrait.unavailable ? (
-          <span role="status" className="text-sm font-bold">
+          <span
+            role="status"
+            className="text-mapachito-white text-sm font-bold"
+          >
             {messages.artworkUnavailable}{" "}
             <button
               type="button"

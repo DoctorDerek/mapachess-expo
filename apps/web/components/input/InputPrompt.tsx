@@ -29,6 +29,8 @@ export default function InputPrompt({
           copy.controls.keys,
         )
       : null
+  if (prompt === null && key === null && fallback === undefined) return null
+
   return (
     <span className="inline-grid size-7 shrink-0 place-items-center align-middle text-xs leading-none">
       {prompt !== null ? (

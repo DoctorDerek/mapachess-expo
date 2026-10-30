@@ -42,7 +42,7 @@ export default function ParticipantClock({
       aria-live="off"
       aria-label={copy.gameplay.clock.label(copy.board.colors[color])}
       className={cx(
-        "ml-2 inline-flex min-w-18 items-baseline justify-center gap-1 rounded-md px-2 py-1 text-xl font-black tabular-nums",
+        "inline-flex min-w-18 items-baseline justify-center gap-1 rounded-md px-2 py-0.5 text-xl leading-tight font-black tabular-nums",
         running
           ? "bg-mapachito-white text-mapachito-charcoal"
           : "bg-mapachito-white/15 text-mapachito-white",
