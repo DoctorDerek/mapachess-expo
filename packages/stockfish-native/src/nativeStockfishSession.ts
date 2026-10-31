@@ -6,6 +6,8 @@ import {
   type StockfishEngineSearchResult,
   type StockfishEngineSession,
   type StockfishEngineSessionState,
+  type StockfishPosition,
+  type StockfishRefinementListener,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 import {
@@ -44,6 +46,8 @@ type ActiveSearch = {
   cancellationRequested: boolean
   cleanupAbort: () => void
   latestInformation?: StockfishEngineSearchInformation
+  onRefinement?: StockfishRefinementListener
+  position: StockfishPosition
   reject: (reason: unknown) => void
   requestId: string
   resolve: (result: StockfishEngineSearchResult) => void
@@ -150,6 +154,7 @@ export default class NativeStockfishSession implements StockfishEngineSession {
   public async search(
     request: StockfishSearchRequest,
     signal?: AbortSignal,
+    onRefinement?: StockfishRefinementListener,
   ): Promise<StockfishEngineSearchResult> {
     validateStockfishSearchRequest(request)
     if (this.sessionState !== "ready") {
@@ -168,6 +173,8 @@ export default class NativeStockfishSession implements StockfishEngineSession {
         this.activeSearch = {
           cancellationRequested: false,
           cleanupAbort: () => signal?.removeEventListener("abort", onAbort),
+          ...(onRefinement === undefined ? {} : { onRefinement }),
+          position: request.position,
           reject,
           requestId: request.requestId,
           resolve,
@@ -263,6 +270,12 @@ export default class NativeStockfishSession implements StockfishEngineSession {
 
     try {
       activeSearch.latestInformation = informationFromNative(event)
+      activeSearch.onRefinement?.({
+        ...activeSearch.latestInformation,
+        position: activeSearch.position,
+        principalVariationRank: this.configuration.multiPv === 1 ? 1 : null,
+        requestId: activeSearch.requestId,
+      })
     } catch (error) {
       this.failActiveSearch(error)
     }
