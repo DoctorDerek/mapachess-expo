@@ -5,12 +5,15 @@ import {
   listLegalMatchMoves,
 } from "@mapachess/match/match-move"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import decideChickenDrawOffer from "../src/chickenDrawDecision"
 import positionEvaluationMachine, {
+  selectLivePositionEvaluation,
   selectPositionEvaluation,
   selectPositionEvaluationFailure,
   selectPositionEvaluationStage,
 } from "../src/positionEvaluationMachine"
 import type {
+  PositionEvaluationRefinementListener,
   PositionEvaluationRequest,
   PositionEvaluationResult,
   PositionEvaluator,
@@ -61,6 +64,144 @@ const startActor = (evaluator: PositionEvaluator) =>
   createActor(positionEvaluationMachine, { input: { evaluator } }).start()
 
 describe("position evaluation lifecycle", () => {
+  it("publishes live refinements without completing or replacing the final result", async () => {
+    const pending = deferred<PositionEvaluationResult>()
+    const requested = request("evaluation/refining")
+    let publish: PositionEvaluationRefinementListener | undefined
+    const actor = startActor((_request, _signal, onRefinement) => {
+      publish = onRefinement
+      return pending.promise
+    })
+    actor.send({ request: requested, type: "EVALUATION.POSITION_REQUESTED" })
+    publish?.({ ...result(requested, 80), depth: 4 })
+
+    expect(actor.getSnapshot().matches("analyzing")).toBe(true)
+    expect(actor.getSnapshot().context.refinement?.depth).toBe(4)
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 80,
+    })
+    expect(selectPositionEvaluation(actor.getSnapshot())).toBeNull()
+    expect(actor.getSnapshot().context.result).toBeNull()
+    expect(
+      decideChickenDrawOffer({
+        evaluationResult: actor.getSnapshot().context.result,
+        playerColor: "white",
+        positionFen: requested.position.fen,
+      }),
+    ).toBeNull()
+
+    pending.resolve(result(requested, 35))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(actor.getSnapshot().context.refinement).toBeNull()
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 35,
+    })
+    actor.stop()
+  })
+
+  it("rejects mismatched and superseded refinements while preserving the final-result queue", async () => {
+    const attempts: Array<{
+      request: PositionEvaluationRequest
+      publish: PositionEvaluationRefinementListener | undefined
+      pending: Deferred<PositionEvaluationResult>
+    }> = []
+    const actor = startActor((received, _signal, publish) => {
+      const pending = deferred<PositionEvaluationResult>()
+      attempts.push({ request: received, publish, pending })
+      return pending.promise
+    })
+    const first = request("evaluation/first-live")
+    const second = request("evaluation/second-live")
+    actor.send({ request: first, type: "EVALUATION.POSITION_REQUESTED" })
+    const firstAttempt = attempts[0]!
+    firstAttempt.publish?.(result(second, 900))
+    firstAttempt.publish?.({ ...result(first, 900), positionFen: "wrong-fen" })
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toBeNull()
+    firstAttempt.publish?.(result(first, 25))
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: 25,
+    })
+    actor.send({ request: second, type: "EVALUATION.POSITION_REQUESTED" })
+    firstAttempt.publish?.(result(first, 900))
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toBeNull()
+    expect(attempts).toHaveLength(1)
+    firstAttempt.pending.resolve(result(first, 40))
+    await waitFor(actor, () => attempts.length === 2)
+    const secondAttempt = attempts[1]!
+    firstAttempt.publish?.(result(second, 900))
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toBeNull()
+    secondAttempt.publish?.(result(second, -15))
+    expect(selectLivePositionEvaluation(actor.getSnapshot())).toMatchObject({
+      whiteCentipawns: -15,
+    })
+    expect(actor.getSnapshot().context.result).toBeNull()
+    secondAttempt.pending.resolve(result(second, -20))
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(actor.getSnapshot().context.result).toEqual(result(second, -20))
+    actor.stop()
+  })
+
+  it.each(["completion", "failure"] as const)(
+    "rejects a late callback after %s even when retry or Undo reuses request identity",
+    async (ending) => {
+      const requested = request("evaluation/reused")
+      const attempts: Array<{
+        publish: PositionEvaluationRefinementListener | undefined
+        pending: Deferred<PositionEvaluationResult>
+      }> = []
+      const actor = startActor((_request, _signal, publish) => {
+        const pending = deferred<PositionEvaluationResult>()
+        attempts.push({ publish, pending })
+        return pending.promise
+      })
+      actor.send({ request: requested, type: "EVALUATION.POSITION_REQUESTED" })
+      const first = attempts[0]!
+      first.publish?.(result(requested, 45))
+      if (ending === "completion") first.pending.resolve(result(requested, 20))
+      else first.pending.reject(new Error("Engine failed after a refinement"))
+      await waitFor(actor, (snapshot) => !snapshot.matches("analyzing"))
+      expect(actor.getSnapshot().context.refinement).toBeNull()
+      if (ending === "completion") {
+        actor.send({
+          request: requested,
+          type: "EVALUATION.POSITION_REQUESTED",
+        })
+      } else {
+        expect(selectLivePositionEvaluation(actor.getSnapshot())).toBeNull()
+        actor.send({ type: "EVALUATION.RETRY_REQUESTED" })
+      }
+      first.publish?.(result(requested, 999))
+      expect(actor.getSnapshot().context.refinement).toBeNull()
+      const second = attempts[1]!
+      second.publish?.(result(requested, 30))
+      expect(selectLivePositionEvaluation(actor.getSnapshot())).toMatchObject({
+        whiteCentipawns: 30,
+      })
+      second.pending.resolve(result(requested, 22))
+      await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+      actor.stop()
+    },
+  )
+
+  it("stops live callbacks with the actor-owned abort signal", async () => {
+    const requested = request("evaluation/disposed")
+    const pending = deferred<PositionEvaluationResult>()
+    let publish: PositionEvaluationRefinementListener | undefined
+    let signal: AbortSignal | undefined
+    const actor = startActor((_request, receivedSignal, onRefinement) => {
+      signal = receivedSignal
+      publish = onRefinement
+      return pending.promise
+    })
+    actor.send({ request: requested, type: "EVALUATION.POSITION_REQUESTED" })
+    actor.stop()
+    expect(signal?.aborted).toBe(true)
+    publish?.(result(requested, 999))
+    expect(actor.getSnapshot().context.refinement).toBeNull()
+    pending.resolve(result(requested, 25))
+    await pending.promise
+  })
+
   it("moves from idle through analysis to an accepted result", async () => {
     const evaluator: PositionEvaluator = async (received) =>
       result(received, 18)
