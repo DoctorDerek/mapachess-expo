@@ -206,14 +206,20 @@ test("executes a move, Undo, Redo and result review through canonical controller
     page,
     page.getByRole("button", { name: "Start match", exact: true }),
   )
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
+    timeout: 30000,
+  })
   const e2 = page.getByRole("gridcell", { name: /^e2, White pawn/ })
   await expect(e2).toHaveAttribute("aria-disabled", "false", { timeout: 30000 })
   await press(page, 3)
   await press(page, 12)
   await expect(e2).toBeFocused()
   await press(page, 0)
+  await expect(e2).toHaveAttribute("aria-selected", "true")
   await press(page, 12)
+  await expect(page.getByRole("gridcell", { name: /^e3,/ })).toBeFocused()
   await press(page, 12)
+  await expect(page.getByRole("gridcell", { name: /^e4,/ })).toBeFocused()
   await press(page, 0)
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.cursor, {
@@ -367,10 +373,11 @@ test("keeps promotion modal input isolated and accepts the chosen piece", async 
     },
   })
   const b7 = page.getByRole("gridcell", { name: /^b7, White pawn/ })
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
+    timeout: 30000,
+  })
   await expect(b7).toHaveAttribute("aria-disabled", "false", { timeout: 30000 })
-  await b7.focus()
-  await expect(b7).toHaveAttribute("tabindex", "0")
-  await press(page, 0)
+  await activate(page, b7)
   await expect(b7).toHaveAttribute("aria-selected", "true")
   await press(page, 12)
   await expect(page.getByRole("gridcell", { name: /^b8,/ })).toBeFocused()
@@ -384,9 +391,7 @@ test("keeps promotion modal input isolated and accepts the chosen piece", async 
   await page.keyboard.press("Escape")
   await expect(promotion).toHaveCount(0)
   await expect(page.getByRole("grid")).toBeVisible()
-  await b7.focus()
-  await expect(b7).toHaveAttribute("tabindex", "0")
-  await press(page, 0)
+  await activate(page, b7)
   await expect(b7).toHaveAttribute("aria-selected", "true")
   await press(page, 12)
   await expect(page.getByRole("gridcell", { name: /^b8,/ })).toBeFocused()

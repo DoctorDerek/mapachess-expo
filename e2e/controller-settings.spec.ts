@@ -146,10 +146,11 @@ test("releases held input on new scopes and preserves keyboard remapping and nor
     const pad = window.mapachessTestPads[0]
     if (pad !== undefined) pad.buttons = [0]
   })
-  await frames(page, 35)
   await expect(
     page.getByRole("button", { name: "Start match", exact: true }),
   ).toBeVisible()
+  await frames(page)
+  await expect(page.getByRole("grid")).toHaveCount(0)
   await page.evaluate(() => {
     const pad = window.mapachessTestPads[0]
     if (pad !== undefined) pad.buttons = []
