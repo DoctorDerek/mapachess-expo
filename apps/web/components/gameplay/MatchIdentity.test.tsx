@@ -23,8 +23,12 @@ describe("compact match identity", () => {
           opponentElo={1200.61238123123}
         />,
       )
-      expect(markup).toContain(`<strong>Mapachito</strong> · ${expectedElo}`)
-      expect(markup).toContain("<strong>Dragonfly Stockfish</strong> · 1201")
+      expect(markup).toContain(
+        `<strong>Mapachito</strong>\u00a0·\u00a0${expectedElo}`,
+      )
+      expect(markup).toContain(
+        "<strong>Dragonfly Stockfish</strong>\u00a0·\u00a01201",
+      )
       expect(markup).not.toContain(String(playerElo))
       expect(markup).not.toContain("1200.61238123123")
     },
@@ -44,8 +48,10 @@ describe("compact match identity", () => {
           opponentElo={1200}
         />,
       )
-      expect(markup).toContain("<strong>Mapachito</strong> · 100")
-      expect(markup).toContain("<strong>Dragonfly Stockfish</strong> · 1200")
+      expect(markup).toContain("<strong>Mapachito</strong>\u00a0·\u00a0100")
+      expect(markup).toContain(
+        "<strong>Dragonfly Stockfish</strong>\u00a0·\u00a01200",
+      )
       expect(markup.indexOf("Mapachito")).toBeLessThan(markup.indexOf("vs."))
       expect(markup.indexOf("vs.")).toBeLessThan(markup.indexOf("Dragonfly"))
       expect(markup).toContain(
