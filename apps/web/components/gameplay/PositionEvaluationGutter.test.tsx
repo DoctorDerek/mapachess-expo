@@ -41,6 +41,39 @@ const renderGutter = (actor: ReturnType<typeof startActor>): string =>
   )
 
 describe("position evaluation gutter", () => {
+  it("renders live score semantics before the final evaluation is available", async () => {
+    const pending = Promise.withResolvers<PositionEvaluationResult>()
+    const actor = startActor((requested, _signal, publish) => {
+      publish?.({
+        requestId: requested.requestId,
+        positionFen: requested.position.fen,
+        depth: 4,
+        evaluation: {
+          kind: "centipawns",
+          bound: "lower",
+          whiteCentipawns: 150,
+        },
+      })
+      return pending.promise
+    })
+    actor.send({ request, type: "EVALUATION.POSITION_REQUESTED" })
+    expect(actor.getSnapshot().matches("analyzing")).toBe(true)
+    expect(actor.getSnapshot().context.result).toBeNull()
+    const live = renderGutter(actor)
+    expect(live).toContain(
+      'aria-valuetext="Evaluation from White’s perspective: ≥ +1.50"',
+    )
+    expect(live.match(/role="meter"/g)).toHaveLength(1)
+    pending.resolve(
+      result({ kind: "centipawns", bound: "exact", whiteCentipawns: 75 }),
+    )
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(renderGutter(actor)).toContain(
+      'aria-valuetext="Evaluation from White’s perspective: +0.75"',
+    )
+    actor.stop()
+  })
+
   it("renders current evaluation without owning transient reactions", async () => {
     const actor = startActor(async () =>
       result({ kind: "centipawns", bound: "exact", whiteCentipawns: -250 }),

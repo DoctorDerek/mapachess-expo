@@ -2,10 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import { POSITION_EVALUATION_NODE_LIMIT } from "@mapachess/evaluation/position-evaluator"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
-import type {
-  StockfishEngineConfiguration,
-  StockfishSearchRequest,
-} from "@mapachess/stockfish/engine-session"
+import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
@@ -63,19 +60,30 @@ const createSession = (
 ) => {
   const boot = vi.fn(bootBehavior)
   const close = vi.fn(closeBehavior)
-  const search = vi.fn(async (request: StockfishSearchRequest) => ({
-    bestMove: "e2e4",
-    informationLineCount: 1,
-    latestInformation: {
-      line: "info depth 1 score cp 25 pv e2e4",
-      score: {
-        bound: "exact" as const,
-        kind: "centipawns" as const,
-        value: 25,
-      },
+  const search = vi.fn<StockfishUciSession["search"]>(
+    async (request, _signal, onRefinement) => {
+      onRefinement?.({
+        position: request.position,
+        requestId: request.requestId,
+        principalVariationRank: 1,
+        depth: 1,
+        score: { kind: "centipawns", value: 75, bound: "exact" },
+      })
+      return {
+        bestMove: "e2e4",
+        informationLineCount: 1,
+        latestInformation: {
+          line: "info depth 1 score cp 25 pv e2e4",
+          score: {
+            bound: "exact" as const,
+            kind: "centipawns" as const,
+            value: 25,
+          },
+        },
+        requestId: request.requestId,
+      }
     },
-    requestId: request.requestId,
-  }))
+  )
   const session = {
     boot,
     close,
@@ -467,11 +475,13 @@ describe("web match runtime ownership", () => {
       variant: "standard",
     })
     const signal = new AbortController().signal
+    const refinements = vi.fn()
 
     await expect(
       runtime.positionEvaluator(
         { position, requestId: "evaluation/runtime-isolation" },
         signal,
+        refinements,
       ),
     ).resolves.toMatchObject({
       evaluation: { kind: "centipawns", whiteCentipawns: 25 },
@@ -483,7 +493,14 @@ describe("web match runtime ownership", () => {
         requestId: "evaluation/runtime-isolation",
       },
       signal,
+      expect.any(Function),
     )
+    expect(refinements).toHaveBeenCalledWith({
+      positionFen: position.fen,
+      requestId: "evaluation/runtime-isolation",
+      depth: 1,
+      evaluation: { kind: "centipawns", whiteCentipawns: 75, bound: "exact" },
+    })
     expect(opponent.search).not.toHaveBeenCalled()
     expect(hints.search).not.toHaveBeenCalled()
     await runtime.close()
