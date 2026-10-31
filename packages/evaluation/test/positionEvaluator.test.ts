@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
   createInitialMatchPosition,
   reconstructMatchPosition,
@@ -7,6 +7,7 @@ import {
 import type {
   StockfishEngineSearchResult,
   StockfishEngineSession,
+  StockfishSearchRefinement,
   StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 import {
@@ -55,6 +56,103 @@ const sessionReturning = (
 }
 
 describe("evaluatePositionWithStockfish", () => {
+  it("normalizes current primary refinements while retaining the final exact-PV policy", async () => {
+    const position = requirePosition(
+      "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+    )
+    const request = evaluationRequest(position)
+    const controller = new AbortController()
+    const publish = vi.fn()
+    let publishAfterAbort: () => void = () => undefined
+    const session: StockfishEngineSession = {
+      ...sessionReturning({ bestMove: null, requestId: request.requestId })
+        .session,
+      search: async (search, _signal, onRefinement) => {
+        expect(search.nodeLimit).toBe(POSITION_EVALUATION_NODE_LIMIT)
+        const refinement: StockfishSearchRefinement = {
+          position: search.position,
+          requestId: search.requestId,
+          principalVariationRank: 1,
+          depth: 4,
+          score: { kind: "centipawns", value: 80, bound: "lower" },
+        }
+        onRefinement?.(refinement)
+        onRefinement?.({
+          ...refinement,
+          depth: 5,
+          score: { kind: "mate", value: -3, bound: "upper" },
+        })
+        onRefinement?.({ ...refinement, requestId: "stale" })
+        onRefinement?.({ ...refinement, position: { fen: "stale", moves: [] } })
+        onRefinement?.({
+          ...refinement,
+          position: { ...search.position, moves: ["e7e5"] },
+        })
+        onRefinement?.({ ...refinement, principalVariationRank: 2 })
+        onRefinement?.({ ...refinement, principalVariationRank: null })
+        onRefinement?.({
+          position: search.position,
+          requestId: search.requestId,
+          principalVariationRank: 1,
+        })
+        publishAfterAbort = () => onRefinement?.(refinement)
+        return {
+          bestMove: "c7c5",
+          requestId: request.requestId,
+          latestInformation: {
+            score: { kind: "centipawns", value: 80, bound: "lower" },
+          },
+          latestExactPrincipalVariation: {
+            rank: 1,
+            moves: ["e7e5"],
+            score: { kind: "centipawns", value: 35, bound: "exact" },
+          },
+        }
+      },
+    }
+    const result = await evaluatePositionWithStockfish(
+      session,
+      request,
+      controller.signal,
+      publish,
+    )
+    controller.abort()
+    publishAfterAbort()
+    expect(publish.mock.calls).toEqual([
+      [
+        {
+          requestId: request.requestId,
+          positionFen: position.fen,
+          depth: 4,
+          evaluation: {
+            kind: "centipawns",
+            whiteCentipawns: -80,
+            bound: "upper",
+          },
+        },
+      ],
+      [
+        {
+          requestId: request.requestId,
+          positionFen: position.fen,
+          depth: 5,
+          evaluation: {
+            kind: "mate",
+            winner: "white",
+            moves: 3,
+            bound: "lower",
+          },
+        },
+      ],
+    ])
+    expect(result.bestMove).toBe("e7e5")
+    expect(result.evaluation).toEqual({
+      kind: "centipawns",
+      whiteCentipawns: -35,
+      bound: "exact",
+    })
+  })
+
   it("uses the last exact principal score and its move within the existing search", async () => {
     const request = evaluationRequest()
     const scripted = sessionReturning({

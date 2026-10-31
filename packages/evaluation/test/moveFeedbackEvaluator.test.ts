@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
@@ -9,7 +9,10 @@ import {
 import type { MoveFeedbackRecord } from "@mapachess/match/move-feedback"
 import createMoveFeedbackEvaluator from "../src/moveFeedbackEvaluator.js"
 import positionEvaluationMachine from "../src/positionEvaluationMachine.js"
-import type { PositionEvaluator } from "../src/positionEvaluator.js"
+import type {
+  PositionEvaluationResult,
+  PositionEvaluator,
+} from "../src/positionEvaluator.js"
 
 const initial = createInitialMatchPosition({
   variant: "standard",
@@ -31,6 +34,70 @@ const advance = (
 }
 
 describe("move feedback search integration", () => {
+  it("forwards provisional scores without caching or persisting them as move grades", async () => {
+    const timeline = advance(createMatchTimeline(initial), "e2e4")
+    const after = timeline.transitions[0]!.after
+    const pending = Promise.withResolvers<PositionEvaluationResult>()
+    const records: MoveFeedbackRecord[] = []
+    const publish = vi.fn()
+    const evaluator = createMoveFeedbackEvaluator({
+      matchId: "refinement/feedback",
+      timeline: () => timeline,
+      records: () => records,
+      persist: async (record) => {
+        records.push(record)
+        return true
+      },
+      evaluate: async (request, _signal, onRefinement) => {
+        onRefinement?.({
+          requestId: request.requestId,
+          positionFen: request.position.fen,
+          evaluation: {
+            kind: "centipawns",
+            bound: "exact",
+            whiteCentipawns: 999,
+          },
+        })
+        if (request.position.fen === initial.fen) {
+          return {
+            requestId: request.requestId,
+            positionFen: initial.fen,
+            bestMove: "e2e4",
+            evaluation: {
+              kind: "centipawns",
+              bound: "exact",
+              whiteCentipawns: 0,
+            },
+          }
+        }
+        return pending.promise
+      },
+    })
+    await evaluator(
+      { requestId: "before", position: initial },
+      new AbortController().signal,
+      publish,
+    )
+    const completion = evaluator(
+      { requestId: "after", position: after },
+      new AbortController().signal,
+      publish,
+    )
+    expect(publish).toHaveBeenCalledTimes(2)
+    expect(records).toEqual([])
+    pending.resolve({
+      requestId: "after",
+      positionFen: after.fen,
+      evaluation: { kind: "centipawns", bound: "exact", whiteCentipawns: 15 },
+    })
+    await completion
+    expect(records).toHaveLength(1)
+    expect(records[0]).toMatchObject({
+      before: { whiteCentipawns: 0 },
+      after: { whiteCentipawns: 15 },
+    })
+  })
+
   it("retains both fast plies and uses only one existing-budget search per requested position", async () => {
     let timeline = createMatchTimeline(initial)
     const records: MoveFeedbackRecord[] = []
