@@ -45,6 +45,17 @@ export type StockfishEngineSearchInformation = Readonly<{
   selectiveDepth?: number
 }>
 
+export type StockfishSearchRefinement = StockfishEngineSearchInformation &
+  Readonly<{
+    position: StockfishPosition
+    principalVariationRank: number | null
+    requestId: string
+  }>
+
+export type StockfishRefinementListener = (
+  refinement: StockfishSearchRefinement,
+) => void
+
 export type StockfishPrincipalVariation = StockfishEngineSearchInformation &
   Readonly<{
     moves: readonly string[]
@@ -75,6 +86,7 @@ export type StockfishEngineSession<
   search: (
     request: StockfishSearchRequest,
     signal?: AbortSignal,
+    onRefinement?: StockfishRefinementListener,
   ) => Promise<SearchResult>
   state: () => StockfishEngineSessionState
 }>

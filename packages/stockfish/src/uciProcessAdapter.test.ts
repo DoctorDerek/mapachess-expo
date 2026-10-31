@@ -4,7 +4,10 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 import { parseSha256Hex, STOCKFISH_18_BUILD_IDENTITY } from "./buildIdentity"
-import { StockfishOperationAbortedError } from "./engineSession"
+import {
+  StockfishOperationAbortedError,
+  type StockfishSearchRefinement,
+} from "./engineSession"
 import createStockfishProcessAdapter from "./uciProcessAdapter"
 import createStockfishUciSession, {
   StockfishProtocolError,
@@ -212,6 +215,110 @@ async function createFixture(
 }
 
 describe("Stockfish UCI session", () => {
+  it("forwards scored refinements through the process adapter before terminal completion", async () => {
+    const transport = new FakeTransport({ deferBestMove: true })
+    const session = await createFixture(transport)
+    await session.boot()
+    const updates: StockfishSearchRefinement[] = []
+    const request = {
+      nodeLimit: 200,
+      position: { fen: STANDARD_FEN, moves: [] },
+      requestId: "live/primary",
+    }
+    let completed = false
+    const search = session
+      .search(request, undefined, (update) => updates.push(update))
+      .then((result) => {
+        completed = true
+        return result
+      })
+    await transport.waitForCommandCount("go nodes 200", 1)
+    transport.lines.push(
+      "info string no score yet",
+      "info depth 2 nodes 20",
+      "info depth 3 score cp 18 nodes 40 pv e1e2",
+      "info depth 4 multipv 2 score mate -3 upperbound nodes 80 pv e1d1",
+      "info depth 5 multipv 1 score cp 32 lowerbound nodes 150 pv e1e2",
+    )
+    await expect.poll(() => updates.length).toBe(3)
+    expect(completed).toBe(false)
+    expect(updates).toMatchObject([
+      {
+        requestId: request.requestId,
+        position: request.position,
+        principalVariationRank: 1,
+        depth: 3,
+        score: { kind: "centipawns", value: 18, bound: "exact" },
+      },
+      {
+        principalVariationRank: 2,
+        depth: 4,
+        score: { kind: "mate", value: -3, bound: "upper" },
+      },
+      {
+        principalVariationRank: 1,
+        depth: 5,
+        score: { kind: "centipawns", value: 32, bound: "lower" },
+      },
+    ])
+    transport.lines.push("bestmove e1e2")
+    const result = await search
+    expect(result.latestExactPrincipalVariation).toMatchObject({
+      rank: 1,
+      depth: 3,
+      score: { value: 18, bound: "exact" },
+    })
+    expect(result.latestInformation?.score).toEqual({
+      kind: "centipawns",
+      value: 32,
+      bound: "lower",
+    })
+    expect(
+      transport.commands.filter((command) => command.startsWith("go ")),
+    ).toEqual(["go nodes 200"])
+    await session.close()
+  })
+
+  it.each(["abort", "close"] as const)(
+    "suppresses refinements after %s while releasing the search",
+    async (ending) => {
+      const transport = new FakeTransport({ deferBestMove: true })
+      const session = createStockfishUciSession({
+        configuration: STANDARD_CONFIGURATION,
+        expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+        transport,
+      })
+      await session.boot()
+      const updates: StockfishSearchRefinement[] = []
+      const controller = new AbortController()
+      const search = session.search(
+        {
+          nodeLimit: 200,
+          position: { fen: STANDARD_FEN, moves: [] },
+          requestId: "live/cancel",
+        },
+        controller.signal,
+        (update) => updates.push(update),
+      )
+      const rejected = expect(search).rejects.toThrow()
+      await transport.waitForCommandCount("go nodes 200", 1)
+      transport.lines.push("info depth 1 score cp 14 nodes 20 pv e1e2")
+      await expect.poll(() => updates.length).toBe(1)
+      if (ending === "abort") {
+        controller.abort()
+        transport.lines.push(
+          "info depth 2 score cp 99 nodes 30 pv e1e2",
+          "bestmove e1e2",
+        )
+      } else {
+        await session.close()
+      }
+      await rejected
+      expect(updates).toHaveLength(1)
+      await session.close()
+    },
+  )
+
   it("owns the complete engine lifecycle without a process dependency", async () => {
     const transport = new FakeTransport()
     const session = createStockfishUciSession({

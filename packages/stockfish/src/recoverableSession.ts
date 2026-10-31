@@ -60,14 +60,16 @@ export default function createRecoverableStockfishSession<
         await replaceFailedSession(signal)
         return session.boot(signal)
       }, signal),
-    search: (request, signal) =>
+    search: (request, signal, onRefinement) =>
       operate(async () => {
         validateStockfishSearchRequest(request)
         if (await replaceFailedSession(signal)) {
           await session.boot(signal)
           assertOpen(signal)
         }
-        return session.search(request, signal)
+        return session.search(request, signal, (refinement) => {
+          if (!closed && signal?.aborted !== true) onRefinement?.(refinement)
+        })
       }, signal),
     close: () => {
       closed = true
