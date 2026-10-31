@@ -5,10 +5,12 @@ export default function ScrollActions({
   children,
   actions,
   className,
+  edgeToEdge = false,
 }: Readonly<{
   children: ReactNode
   actions: ReactNode
   className?: string
+  edgeToEdge?: boolean
 }>) {
   return (
     <div
@@ -17,7 +19,12 @@ export default function ScrollActions({
         className,
       )}
     >
-      <div className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-1 pb-4">
+      <div
+        className={cx(
+          "min-h-0 min-w-0 overflow-y-auto overscroll-contain pb-4",
+          !edgeToEdge && "px-1",
+        )}
+      >
         {children}
       </div>
       <footer className="min-w-0 px-2 pt-3 pb-2">{actions}</footer>
