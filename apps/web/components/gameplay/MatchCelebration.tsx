@@ -23,11 +23,13 @@ import {
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
-import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import MatchLevelProgress from "./MatchLevelProgress"
 import MatchSaveConfirmation from "./MatchSaveConfirmation"
 import MedalWithHintUse from "./MedalWithHintUse"
+
+const resultActionClassName =
+  "min-w-0 flex-[1_1_8em] px-2! py-2! text-base wrap-break-word"
 
 export default function MatchCelebration({
   battleStageRef,
@@ -139,45 +141,9 @@ export default function MatchCelebration({
       }}
       ref={dialog}
     >
-      <ScrollActions
-        edgeToEdge
-        actions={
-          <div>
-            <div className="flex flex-wrap-reverse gap-2">
-              <MapachessButton
-                autoFocus
-                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
-                onClick={onDismiss}
-                ref={reviewButton}
-                type="button"
-                variant="secondary"
-              >
-                {messages.reviewBoard}
-              </MapachessButton>
-              <MapachessButton
-                className="min-h-12 min-w-0 flex-1 basis-28 px-2! py-2! text-base wrap-break-word"
-                disabled={disabled}
-                onClick={nextAction}
-                type="button"
-              >
-                {copy.gameplay.resultActions[action]}
-                {actionOpponent !== undefined ? (
-                  <span className="mt-1 block text-base leading-snug font-normal">
-                    {actionElo === undefined
-                      ? animalCopy.opponent(actionOpponent.id)
-                      : copy.gameplay.opponentAndElo(
-                          animalCopy.opponent(actionOpponent.id),
-                          actionElo,
-                        )}
-                  </span>
-                ) : null}
-              </MapachessButton>
-            </div>
-          </div>
-        }
-      >
-        <div ref={battleStageRef} />
-        <div className="grid min-w-0 gap-3 p-[clamp(1rem,3vw,1.25rem)] text-center">
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain">
+        <div className="shrink-0" ref={battleStageRef} />
+        <div className="grid min-w-0 shrink-0 gap-3 p-[clamp(1rem,3vw,1.25rem)] text-center">
           <h2
             className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance wrap-anywhere"
             id={titleId}
@@ -213,13 +179,7 @@ export default function MatchCelebration({
             )}
           </div>
         </div>
-        <div className="relative grid min-w-0 gap-3 px-3 pb-6">
-          {reward === null ? null : (
-            <MatchLevelProgress
-              afterXp={reward.totalXpBefore + reward.awardedXp}
-              beforeXp={reward.totalXpBefore}
-            />
-          )}
+        <div className="relative grid min-w-0 shrink-0 gap-3 px-3 pb-6 xl:order-1 xl:mb-4">
           {reward === null || reward.ratedElo === null ? null : (
             <p className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-base">
               <span className="grid min-w-0 flex-[1_1_min-content] gap-1 wrap-break-word">
@@ -253,7 +213,45 @@ export default function MatchCelebration({
           ) : null}
           {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
         </div>
-      </ScrollActions>
+        <footer className="bg-mapachito-white sticky bottom-0 z-10 mt-auto flex min-w-0 shrink-0 flex-wrap gap-2 px-2 pt-3 pb-2 xl:order-last">
+          <MapachessButton
+            autoFocus
+            className={resultActionClassName}
+            onClick={onDismiss}
+            ref={reviewButton}
+            type="button"
+            variant="secondary"
+          >
+            {messages.reviewBoard}
+          </MapachessButton>
+          <MapachessButton
+            className={resultActionClassName}
+            disabled={disabled}
+            onClick={nextAction}
+            type="button"
+          >
+            {copy.gameplay.resultActions[action]}
+            {actionOpponent !== undefined ? (
+              <span className="mt-1 block text-base leading-snug font-normal">
+                {actionElo === undefined
+                  ? animalCopy.opponent(actionOpponent.id)
+                  : copy.gameplay.opponentAndElo(
+                      animalCopy.opponent(actionOpponent.id),
+                      actionElo,
+                    )}
+              </span>
+            ) : null}
+          </MapachessButton>
+        </footer>
+        {reward === null ? null : (
+          <div className="mx-2 mb-2 shrink-0 xl:mx-3 xl:mb-3">
+            <MatchLevelProgress
+              afterXp={reward.totalXpBefore + reward.awardedXp}
+              beforeXp={reward.totalXpBefore}
+            />
+          </div>
+        )}
+      </div>
     </dialog>
   )
 }
