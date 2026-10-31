@@ -24,9 +24,20 @@ export type PositionEvaluationResult = Readonly<{
   requestId: string
 }>
 
+export type PositionEvaluationRefinement = Pick<
+  PositionEvaluationResult,
+  "evaluation" | "positionFen" | "requestId"
+> &
+  Readonly<{ depth?: number }>
+
+export type PositionEvaluationRefinementListener = (
+  refinement: PositionEvaluationRefinement,
+) => void
+
 export type PositionEvaluator = (
   request: PositionEvaluationRequest,
   signal: AbortSignal,
+  onRefinement?: PositionEvaluationRefinementListener,
 ) => Promise<PositionEvaluationResult>
 
 const requireFinalScore = (
@@ -51,6 +62,7 @@ export const evaluatePositionWithStockfish = async (
   session: StockfishEngineSession,
   request: PositionEvaluationRequest,
   signal: AbortSignal,
+  onRefinement?: PositionEvaluationRefinementListener,
 ): Promise<PositionEvaluationResult> => {
   const terminalEvaluation = terminalPositionEvaluation(request.position)
   if (terminalEvaluation !== undefined) {
@@ -68,6 +80,27 @@ export const evaluatePositionWithStockfish = async (
       requestId: request.requestId,
     },
     signal,
+    (refinement) => {
+      if (
+        onRefinement === undefined ||
+        signal.aborted ||
+        refinement.requestId !== request.requestId ||
+        refinement.position.fen !== request.position.fen ||
+        refinement.position.moves.length !== 0 ||
+        refinement.principalVariationRank !== 1 ||
+        refinement.score === undefined
+      )
+        return
+      onRefinement({
+        evaluation: normalizeStockfishPositionEvaluation(
+          request.position.turn,
+          refinement.score,
+        ),
+        positionFen: request.position.fen,
+        requestId: request.requestId,
+        ...(refinement.depth === undefined ? {} : { depth: refinement.depth }),
+      })
+    },
   )
 
   if (result.requestId !== request.requestId) {

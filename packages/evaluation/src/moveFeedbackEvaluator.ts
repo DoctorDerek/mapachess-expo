@@ -22,8 +22,8 @@ export default function createMoveFeedbackEvaluator({
   persist,
 }: MoveFeedbackEvaluatorInput): PositionEvaluator {
   const evaluations = new Map<string, PositionEvaluationResult>()
-  return async (request, signal) => {
-    const result = await evaluate(request, signal)
+  return async (request, signal, onRefinement) => {
+    const result = await evaluate(request, signal, onRefinement)
     if (signal.aborted)
       throw new DOMException("Move analysis aborted.", "AbortError")
     if (

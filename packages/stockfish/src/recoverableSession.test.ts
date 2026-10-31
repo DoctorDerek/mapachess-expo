@@ -3,6 +3,8 @@ import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
   type StockfishEngineSessionState,
+  type StockfishRefinementListener,
+  type StockfishSearchRefinement,
   type StockfishSearchRequest,
 } from "./engineSession.js"
 import createRecoverableStockfishSession from "./recoverableSession.js"
@@ -44,6 +46,51 @@ const engine = () => {
 }
 
 describe("recoverable engine session", () => {
+  it.each(["abort", "close"] as const)(
+    "forwards refinements until wrapper %s",
+    async (ending) => {
+      const current = engine()
+      const pending = Promise.withResolvers<{
+        bestMove: string
+        requestId: string
+      }>()
+      let publish: StockfishRefinementListener | undefined
+      const underlying: StockfishEngineSession = {
+        ...current.session,
+        search: async (_request, _signal, onRefinement) => {
+          publish = onRefinement
+          return pending.promise
+        },
+      }
+      const session = createRecoverableStockfishSession(() => underlying)
+      await session.boot()
+      const controller = new AbortController()
+      const updates: StockfishSearchRefinement[] = []
+      const searching = session.search(request, controller.signal, (update) =>
+        updates.push(update),
+      )
+      const rejected = expect(searching).rejects.toBeInstanceOf(
+        StockfishOperationAbortedError,
+      )
+      await vi.waitFor(() => expect(publish).toBeDefined())
+      const update: StockfishSearchRefinement = {
+        requestId: request.requestId,
+        position: request.position,
+        principalVariationRank: 1,
+        score: { kind: "centipawns", bound: "exact", value: 25 },
+      }
+      publish?.(update)
+      expect(updates).toEqual([update])
+      if (ending === "abort") controller.abort()
+      else await session.close()
+      publish?.(update)
+      pending.resolve({ bestMove: "e1d1", requestId: request.requestId })
+      await rejected
+      expect(updates).toHaveLength(1)
+      await session.close()
+    },
+  )
+
   it("surfaces the original failure, then boots a fresh session for the next request only", async () => {
     const first = engine()
     const second = engine()
@@ -69,7 +116,11 @@ describe("recoverable engine session", () => {
     })
     expect(first.close).toHaveBeenCalledOnce()
     expect(second.boot).toHaveBeenCalledWith(controller.signal)
-    expect(second.search).toHaveBeenCalledWith(retried, controller.signal)
+    expect(second.search).toHaveBeenCalledWith(
+      retried,
+      controller.signal,
+      expect.any(Function),
+    )
     expect(session.state()).toBe("ready")
     await session.close()
     expect(second.close).toHaveBeenCalledOnce()

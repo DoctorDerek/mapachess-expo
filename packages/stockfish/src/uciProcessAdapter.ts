@@ -94,7 +94,11 @@ export default function createStockfishProcessAdapter(
     }
   }
 
-  const search: StockfishProcessAdapter["search"] = async (request, signal) => {
+  const search: StockfishProcessAdapter["search"] = async (
+    request,
+    signal,
+    onRefinement,
+  ) => {
     if (session === undefined) {
       validateStockfishSearchRequest(request)
       throw new StockfishProtocolError(
@@ -102,7 +106,7 @@ export default function createStockfishProcessAdapter(
       )
     }
 
-    return session.search(request, signal)
+    return session.search(request, signal, onRefinement)
   }
 
   const close = async (): Promise<void> => {

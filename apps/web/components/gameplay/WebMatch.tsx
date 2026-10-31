@@ -154,7 +154,14 @@ export default function WebMatch({
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [actor, visible])
   const snapshot = useSelector(actor, (current) => current)
-  const evaluationSnapshot = useSelector(evaluationActor, (current) => current)
+  const evaluationSnapshot = useSelector(
+    evaluationActor,
+    (current) => current,
+    (previous, current) =>
+      previous.value === current.value &&
+      previous.context.result === current.context.result &&
+      previous.context.failure === current.context.failure,
+  )
   const presentation = useAcceptedMatchPresentation(
     snapshot,
     runtime.playerColor,

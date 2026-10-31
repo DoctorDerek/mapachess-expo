@@ -8,7 +8,7 @@ import {
   type PositionEvaluation,
 } from "@mapachess/evaluation/position-evaluation"
 import positionEvaluationMachine, {
-  selectPositionEvaluation,
+  selectLivePositionEvaluation,
   selectPositionEvaluationStage,
 } from "@mapachess/evaluation/position-evaluation-machine"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
@@ -56,7 +56,7 @@ export default function PositionEvaluationGutter({
   const messages = catalog.interface.positionEvaluationGutter
 
   const snapshot = useSelector(actor, (current) => current)
-  const evaluation = selectPositionEvaluation(snapshot)
+  const evaluation = selectLivePositionEvaluation(snapshot)
   const stage = selectPositionEvaluationStage(snapshot)
   if (stage === "ready" && evaluation === null) {
     throw new Error("Ready position evaluation has no accepted score.")

@@ -227,7 +227,12 @@ export default async function openWebMatchRuntime(
       policy.calibrationFingerprint === undefined ? null : policy.targetElo,
     playerColor,
     startingPosition,
-    positionEvaluator: (request, signal) =>
-      evaluatePositionWithStockfish(evaluationSession, request, signal),
+    positionEvaluator: (request, signal, onRefinement) =>
+      evaluatePositionWithStockfish(
+        evaluationSession,
+        request,
+        signal,
+        onRefinement,
+      ),
   })
 }

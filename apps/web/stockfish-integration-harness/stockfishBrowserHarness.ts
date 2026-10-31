@@ -24,6 +24,7 @@ import {
   type WebOpponentPolicy,
 } from "../lib/gameplay/webOpponentPolicy"
 import createWebStockfishSession from "../lib/stockfish/createWebStockfishSession"
+import runEvaluationBrowserProof from "./evaluationBrowserProof"
 
 const STANDARD_FEN = "8/8/8/8/8/4k3/8/4K3 w - - 0 1"
 const CHESS960_FEN = "bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR w HFhf - 0 1"
@@ -93,6 +94,7 @@ export type BetterHintsBrowserProof = Readonly<{
 }>
 
 export type StockfishBrowserHarness = Readonly<{
+  runEvaluationProof: typeof runEvaluationBrowserProof
   runBetterHintsProof(): Promise<BetterHintsBrowserProof>
   runCalibratedOpponentProof(): Promise<CalibratedOpponentBrowserProof>
   runProof(): Promise<StockfishBrowserProof>
@@ -331,6 +333,7 @@ async function runCalibratedOpponentProof(): Promise<CalibratedOpponentBrowserPr
 }
 
 window.mapachessStockfishBrowserHarness = {
+  runEvaluationProof: runEvaluationBrowserProof,
   runBetterHintsProof,
   runCalibratedOpponentProof,
   runProof,

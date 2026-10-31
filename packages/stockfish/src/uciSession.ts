@@ -166,7 +166,11 @@ export default function createStockfishUciSession(
     }
   }
 
-  const search: StockfishUciSession["search"] = async (request, signal) => {
+  const search: StockfishUciSession["search"] = async (
+    request,
+    signal,
+    onRefinement,
+  ) => {
     validateStockfishSearchRequest(request)
 
     if (sessionState !== "ready") {
@@ -258,6 +262,18 @@ export default function createStockfishUciSession(
                   principalVariationsByRank.get(rank)
               }
             }
+            if (
+              sessionState === "searching" &&
+              activeRequestId === request.requestId &&
+              latestInformation.score !== undefined
+            ) {
+              onRefinement?.({
+                ...latestInformation,
+                position: request.position,
+                principalVariationRank: latestInformation.multiPv ?? 1,
+                requestId: request.requestId,
+              })
+            }
           }
           continue
         }
@@ -315,8 +331,10 @@ export default function createStockfishUciSession(
   const close = async (): Promise<void> => {
     if (sessionState === "closed") return
 
-    if (sessionState === "ready") {
-      sessionState = "closing"
+    const gracefully = sessionState === "ready"
+    sessionState = "closing"
+    activeRequestId = undefined
+    if (gracefully) {
       await writeLine("quit")
       await input.transport.waitForExit()
     } else {

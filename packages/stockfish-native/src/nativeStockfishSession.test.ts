@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
+  type StockfishSearchRefinement,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 import type {
@@ -163,6 +164,82 @@ function informationEvent(
 }
 
 describe("Native Stockfish session", () => {
+  it.each(["complete", "abort", "close", "failure"] as const)(
+    "publishes request-bound native refinements until %s",
+    async (ending) => {
+      const { module, session } = await bootFixture()
+      const controller = new AbortController()
+      const updates: StockfishSearchRefinement[] = []
+      const search = session.search(REQUEST, controller.signal, (update) =>
+        updates.push(update),
+      )
+      const outcome =
+        ending === "complete"
+          ? expect(search).resolves.toMatchObject({
+              bestMove: "e2e3",
+              latestInformation: {
+                score: { kind: "centipawns", value: 34, bound: "exact" },
+              },
+            })
+          : expect(search).rejects.toThrow()
+      module.emitSearchInformation(informationEvent())
+      expect(updates).toMatchObject([
+        {
+          position: REQUEST.position,
+          requestId: REQUEST.requestId,
+          principalVariationRank: 1,
+          depth: 7,
+          score: { kind: "centipawns", value: 34, bound: "exact" },
+        },
+      ])
+      if (ending === "abort") controller.abort()
+      else if (ending === "close") {
+        const closed = session.close()
+        module.emitClosed()
+        await closed
+      } else if (ending === "failure") {
+        module.emitSearchInformation(
+          informationEvent({ requestId: "obsolete" }),
+        )
+      }
+      if (ending === "complete" || ending === "abort") {
+        module.emitBestMove({
+          bestMove: "e2e3",
+          ponderMove: "",
+          requestId: REQUEST.requestId,
+        })
+      }
+      module.emitSearchInformation(informationEvent({ centipawns: 999 }))
+      await outcome
+      expect(updates).toHaveLength(1)
+      const closed = session.close()
+      module.emitClosed()
+      await closed
+    },
+  )
+
+  it("does not invent a primary rank when native MultiPV metadata is unavailable", async () => {
+    const { module, session } = await bootFixture({
+      ...CONFIGURATION,
+      multiPv: 3,
+    })
+    const updates: StockfishSearchRefinement[] = []
+    const search = session.search(REQUEST, undefined, (update) =>
+      updates.push(update),
+    )
+    module.emitSearchInformation(informationEvent())
+    expect(updates[0]?.principalVariationRank).toBeNull()
+    module.emitBestMove({
+      bestMove: "e2e3",
+      ponderMove: "",
+      requestId: REQUEST.requestId,
+    })
+    await search
+    const closed = session.close()
+    module.emitClosed()
+    await closed
+  })
+
   it("boots with one acknowledged native configuration", async () => {
     const module = new FakeNativeModule()
     const session = new NativeStockfishSession(CONFIGURATION, module)
