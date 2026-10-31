@@ -107,7 +107,7 @@ export default function BetterHintsControl({
         aria-labelledby="get-hint-label better-hints-stage"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance better-hints-medal"
-        className="flex h-full min-h-(--hint-target)! w-full min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight"
+        className="flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight wrap-break-word"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
         disabled={disabled || busy || control.action === null}
@@ -129,7 +129,7 @@ export default function BetterHintsControl({
       <p
         className={
           stage === "failure" || stage === "unavailable"
-            ? "text-mapachito-white col-span-full min-w-0 text-base font-semibold"
+            ? "text-mapachito-white min-w-0 basis-full text-base font-semibold"
             : "sr-only"
         }
         id="better-hints-guidance"
