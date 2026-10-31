@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import {
@@ -41,25 +42,31 @@ const reward = {
   ratedElo: null,
 } as const
 
+const renderCelebration = (
+  overrides: Partial<ComponentProps<typeof MatchCelebration>> = {},
+) =>
+  renderToStaticMarkup(
+    <MatchCelebration
+      battleStageRef={vi.fn()}
+      disabled={false}
+      match={completed}
+      onDismiss={vi.fn()}
+      onReplayRequested={vi.fn()}
+      onSetupRequested={vi.fn()}
+      restoreFocusRef={{ current: null }}
+      reward={reward}
+      showSaveConfirmation={true}
+      storyProgress={applyStoryMatchResult(
+        createInitialStoryProgress(),
+        completed,
+      )}
+      {...overrides}
+    />,
+  )
+
 describe("accepted match celebration composition", () => {
   it("shows earned Story facts and safe actions without an invented Elo row", () => {
-    const markup = renderToStaticMarkup(
-      <MatchCelebration
-        battleStageRef={vi.fn()}
-        disabled={false}
-        match={completed}
-        onDismiss={vi.fn()}
-        onReplayRequested={vi.fn()}
-        onSetupRequested={vi.fn()}
-        restoreFocusRef={{ current: null }}
-        reward={reward}
-        showSaveConfirmation={true}
-        storyProgress={applyStoryMatchResult(
-          createInitialStoryProgress(),
-          completed,
-        )}
-      />,
-    )
+    const markup = renderCelebration()
 
     expect(markup).toContain("You defeated Chicken Stockfish!")
     expect(markup).toContain("Gold")
@@ -79,23 +86,15 @@ describe("accepted match celebration composition", () => {
   })
 
   it("shows a Challenge replay and only the variant Elo actually awarded", () => {
-    const markup = renderToStaticMarkup(
-      <MatchCelebration
-        battleStageRef={vi.fn()}
-        disabled={false}
-        match={{ ...completed, mode: "challenge", opponentTargetElo: 900 }}
-        onDismiss={vi.fn()}
-        onReplayRequested={vi.fn()}
-        onSetupRequested={vi.fn()}
-        restoreFocusRef={{ current: null }}
-        reward={{
-          ...reward,
-          ratedElo: { variant: "standard", before: 100, after: 228 },
-        }}
-        showSaveConfirmation={false}
-        storyProgress={createInitialStoryProgress()}
-      />,
-    )
+    const markup = renderCelebration({
+      match: { ...completed, mode: "challenge", opponentTargetElo: 900 },
+      reward: {
+        ...reward,
+        ratedElo: { variant: "standard", before: 100, after: 228 },
+      },
+      showSaveConfirmation: false,
+      storyProgress: createInitialStoryProgress(),
+    })
     expect(markup).toContain("Replay opponent")
     expect(markup).toContain("Standard")
     expect(markup).toContain("100 → 228")
@@ -104,5 +103,16 @@ describe("accepted match celebration composition", () => {
     expect(markup).toContain("Chicken Stockfish")
     expect(markup).toContain("900 Elo")
     expect(markup).not.toContain("Chicken Stockfish · 100 Elo")
+  })
+
+  it("keeps both actions without inventing Level or XP for an ending without reward data", () => {
+    const markup = renderCelebration({
+      reward: null,
+      showSaveConfirmation: false,
+    })
+    expect(markup).toContain("Review board")
+    expect(markup).toContain("Next opponent")
+    expect(markup).not.toContain("Level")
+    expect(markup).not.toContain("XP")
   })
 })
