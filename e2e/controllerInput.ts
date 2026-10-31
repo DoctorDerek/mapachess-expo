@@ -10,6 +10,7 @@ type InjectedPad = {
 declare global {
   interface Window {
     mapachessTestPads: InjectedPad[]
+    mapachessTestTap: (button: number) => Promise<void>
   }
 }
 
@@ -21,19 +22,8 @@ export const frames = async (page: Page, count = 3): Promise<void> =>
       )
   }, count)
 
-export const press = async (page: Page, button: number): Promise<void> => {
-  await frames(page)
-  await page.evaluate((index) => {
-    const pad = window.mapachessTestPads[0]
-    if (pad !== undefined) pad.buttons = [index]
-  }, button)
-  await frames(page)
-  await page.evaluate(() => {
-    const pad = window.mapachessTestPads[0]
-    if (pad !== undefined) pad.buttons = []
-  })
-  await frames(page)
-}
+export const press = async (page: Page, button: number): Promise<void> =>
+  page.evaluate((index) => window.mapachessTestTap(index), button)
 export const activate = async (
   page: Page,
   target: Locator,
@@ -48,21 +38,45 @@ export const activate = async (
 export const isolateControllerInput = async (page: Page): Promise<void> => {
   await page.addInitScript(() => {
     window.mapachessTestPads ??= []
+    let tap: {
+      samples: number[][]
+      complete: () => void
+    } | null = null
+    window.mapachessTestTap = (button) =>
+      new Promise<void>((complete) => {
+        if (window.mapachessTestPads[0] === undefined)
+          throw new Error("A controller must be connected before tapping")
+        if (tap !== null)
+          throw new Error("Await the previous controller tap before tapping")
+        tap = { samples: [[], [button], []], complete }
+      })
     Object.defineProperty(navigator, "getGamepads", {
       configurable: true,
-      value: () =>
-        window.mapachessTestPads.map((pad, index) => ({
-          id: pad.id,
-          index,
-          mapping: pad.mapping,
-          connected: pad.connected,
-          axes: pad.axes,
-          buttons: Array.from({ length: 17 }, (_, button) => ({
-            value: pad.buttons.includes(button) ? 1 : 0,
-            pressed: pad.buttons.includes(button),
-            touched: false,
-          })),
-        })),
+      value: () => {
+        const pads = window.mapachessTestPads.map((pad, index) => {
+          const buttons =
+            index === 0 && tap !== null
+              ? (tap.samples.shift() ?? pad.buttons)
+              : pad.buttons
+          return {
+            id: pad.id,
+            index,
+            mapping: pad.mapping,
+            connected: pad.connected,
+            axes: pad.axes,
+            buttons: Array.from({ length: 17 }, (_, button) => ({
+              value: buttons.includes(button) ? 1 : 0,
+              pressed: buttons.includes(button),
+              touched: false,
+            })),
+          }
+        })
+        if (tap?.samples.length === 0) {
+          tap.complete()
+          tap = null
+        }
+        return pads
+      },
     })
   })
 }
@@ -86,10 +100,15 @@ export default async function prepareControllerInput({
   page,
 }: Readonly<{ page: Page }>): Promise<void> {
   await injectControllerInput(page)
+  const start = page.getByRole("button", { name: "Start", exact: true })
+  await page.removeLocatorHandler(start)
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto("/")
+  await start.click()
+  await page
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
+    .waitFor({ state: "visible" })
   await expect(
     page.getByRole("button", { name: "Standard Chess Story", exact: true }),
   ).toBeVisible()
-  await frames(page)
 }
