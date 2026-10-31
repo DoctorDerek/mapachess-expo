@@ -18,6 +18,9 @@ import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
+const historyActionClassName =
+  "flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight wrap-break-word"
+
 export default function MatchCommands({
   actor,
   hints,
@@ -65,9 +68,9 @@ export default function MatchCommands({
         {coach}
         {hints}
       </div>
-      <div className="grid min-w-0 grid-cols-3 items-stretch gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-stretch gap-1.5">
         <details
-          className="relative z-40 min-w-0"
+          className="relative z-40 min-w-0 flex-[1_1_max-content]"
           open={menuOpen}
           ref={menu}
           data-player-input-layer={menuOpen ? "match-menu" : undefined}
@@ -134,28 +137,30 @@ export default function MatchCommands({
             </MapachessButton>
           </div>
         </details>
-        <MapachessButton
-          aria-busy={persisting && selectHasUndoHistory(snapshot)}
-          className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight"
-          disabled={!selectCanUndo(snapshot)}
-          data-player-action="undo"
-          onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
-          variant="secondary"
-        >
-          <InputPrompt action="undo" />
-          <span className="min-w-0 wrap-anywhere">{messages.undo}</span>
-        </MapachessButton>
-        <MapachessButton
-          aria-busy={persisting && selectHasRedoHistory(snapshot)}
-          className="flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight"
-          disabled={!selectCanRedo(snapshot)}
-          data-player-action="redo"
-          onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
-          variant="secondary"
-        >
-          <InputPrompt action="redo" />
-          <span className="min-w-0 wrap-anywhere">{messages.redo}</span>
-        </MapachessButton>
+        <div className="grid min-w-0 flex-[2_1_max-content] grid-cols-2 gap-1.5">
+          <MapachessButton
+            aria-busy={persisting && selectHasUndoHistory(snapshot)}
+            className={historyActionClassName}
+            disabled={!selectCanUndo(snapshot)}
+            data-player-action="undo"
+            onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
+            variant="secondary"
+          >
+            <InputPrompt action="undo" />
+            <span className="min-w-0">{messages.undo}</span>
+          </MapachessButton>
+          <MapachessButton
+            aria-busy={persisting && selectHasRedoHistory(snapshot)}
+            className={historyActionClassName}
+            disabled={!selectCanRedo(snapshot)}
+            data-player-action="redo"
+            onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
+            variant="secondary"
+          >
+            <InputPrompt action="redo" />
+            <span className="min-w-0">{messages.redo}</span>
+          </MapachessButton>
+        </div>
       </div>
     </div>
   )
