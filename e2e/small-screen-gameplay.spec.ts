@@ -25,6 +25,32 @@ const expectContained = async (surface: Locator): Promise<void> => {
     .toBeLessThanOrEqual(1)
 }
 
+const expectScrollContentVisible = async (surface: Locator) => {
+  await expect(surface).toBeInViewport()
+  const geometry = await surface.evaluate((element) => {
+    const scroll = element
+      .closest("dialog")
+      ?.querySelector("footer")?.previousElementSibling
+    if (!(scroll instanceof HTMLElement))
+      throw new Error("Expected independently scrolling dialog content")
+    const bounds = element.getBoundingClientRect()
+    const content = scroll.getBoundingClientRect()
+    return {
+      leftInset: bounds.left - content.left,
+      visibleInset: Math.min(
+        bounds.left - Math.max(content.left, 0),
+        Math.min(content.right, innerWidth) - bounds.right,
+        bounds.top - Math.max(content.top, 0),
+        Math.min(content.bottom, innerHeight) - bounds.bottom,
+      ),
+      contentWidth: scroll.clientWidth,
+      width: bounds.width,
+    }
+  })
+  expect(geometry.visibleInset).toBeGreaterThanOrEqual(-1)
+  return geometry
+}
+
 const startMatch = async (
   page: Page,
   color: "White" | "Black",
@@ -112,7 +138,9 @@ for (const locale of ["en", "es-419"] as const) {
           expect(geometry.rowOffset).toBeCloseTo(0, 1)
           expect(geometry.contentHeight).toBeGreaterThan(120)
           expect(geometry.actionShift).toBe(0)
-          await scale.evaluate((element) => element.remove())
+          await scale.evaluate((element) =>
+            element.parentNode?.removeChild(element),
+          )
         }
         if (mode === "story") {
           const trigger = page.getByRole("button", {
@@ -208,7 +236,7 @@ for (const locale of ["en", "es-419"] as const) {
           })
           await choice.focus()
           await choice.scrollIntoViewIfNeeded()
-          await expect(choice).toBeInViewport({ ratio: 1 })
+          await expectScrollContentVisible(choice)
           await expectContained(choice)
           const geometry = await choice.evaluate((button) => {
             const bounds = button.getBoundingClientRect()
@@ -240,7 +268,9 @@ for (const locale of ["en", "es-419"] as const) {
           path: testInfo.outputPath(`promotion-${width}-${percent}.png`),
         })
         expect((await savedProfile(page)).activeMatch).toEqual(activeMatch)
-        await scale.evaluate((element) => element.remove())
+        await scale.evaluate((element) =>
+          element.parentNode?.removeChild(element),
+        )
       }
     }
     await promotion
@@ -287,12 +317,23 @@ for (const locale of ["en", "es-419"] as const) {
     const rewards = page.getByRole("dialog")
     await expect(rewards).toBeVisible()
     for (const width of [320, 390, 430, 1280]) {
-      await page.setViewportSize({ width, height: 844 })
+      await page.setViewportSize({ width, height: width >= 1280 ? 720 : 844 })
       for (const percent of [100, 200]) {
         const scale = await page.addStyleTag({
           content: `:root { font-size: ${percent}%; }`,
         })
         await expectContained(rewards)
+        const stage = rewards.getByRole("region", {
+          name: copy.interface.reactiveBattleStage.reactiveBattleStage,
+          exact: true,
+        })
+        await stage.scrollIntoViewIfNeeded()
+        const stageGeometry = await expectScrollContentVisible(stage)
+        expect(stageGeometry.leftInset).toBeCloseTo(0, 1)
+        expect(stageGeometry.width).toBeCloseTo(stageGeometry.contentWidth, 0)
+        await page.screenshot({
+          path: testInfo.outputPath(`rewards-stage-${width}-${percent}.png`),
+        })
         const label = rewards.getByText(copy.profile.ratingLabel.standard, {
           exact: true,
         })
@@ -329,7 +370,9 @@ for (const locale of ["en", "es-419"] as const) {
         await review.scrollIntoViewIfNeeded()
         await expect(review).toBeInViewport({ ratio: 1 })
         await expectContained(review)
-        await scale.evaluate((element) => element.remove())
+        await scale.evaluate((element) =>
+          element.parentNode?.removeChild(element),
+        )
       }
     }
     const beforeDismissal = await savedProfile(page)

@@ -140,6 +140,7 @@ export default function MatchCelebration({
       ref={dialog}
     >
       <ScrollActions
+        edgeToEdge
         actions={
           <div>
             <div className="flex flex-wrap-reverse gap-2">
