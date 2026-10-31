@@ -28,20 +28,27 @@ const expectContained = async (surface: Locator): Promise<void> => {
 const expectScrollContentVisible = async (surface: Locator) => {
   await expect(surface).toBeInViewport()
   const geometry = await surface.evaluate((element) => {
-    const scroll = element
-      .closest("dialog")
-      ?.querySelector("footer")?.previousElementSibling
-    if (!(scroll instanceof HTMLElement))
-      throw new Error("Expected independently scrolling dialog content")
+    let scroll = element.parentElement
+    while (
+      scroll &&
+      !["auto", "scroll"].includes(getComputedStyle(scroll).overflowY)
+    )
+      scroll = scroll.parentElement
+    if (!scroll || !element.closest("dialog")?.contains(scroll))
+      throw new Error(
+        "Expected the control or stage inside a dialog scrollport",
+      )
     const bounds = element.getBoundingClientRect()
     const content = scroll.getBoundingClientRect()
+    const left = content.left + scroll.clientLeft
+    const top = content.top + scroll.clientTop
     return {
-      leftInset: bounds.left - content.left,
+      leftInset: bounds.left - left,
       visibleInset: Math.min(
-        bounds.left - Math.max(content.left, 0),
-        Math.min(content.right, innerWidth) - bounds.right,
-        bounds.top - Math.max(content.top, 0),
-        Math.min(content.bottom, innerHeight) - bounds.bottom,
+        bounds.left - Math.max(left, 0),
+        Math.min(left + scroll.clientWidth, innerWidth) - bounds.right,
+        bounds.top - Math.max(top, 0),
+        Math.min(top + scroll.clientHeight, innerHeight) - bounds.bottom,
       ),
       contentWidth: scroll.clientWidth,
       width: bounds.width,
@@ -50,6 +57,29 @@ const expectScrollContentVisible = async (surface: Locator) => {
   expect(geometry.visibleInset).toBeGreaterThanOrEqual(-1)
   return geometry
 }
+
+const expectExposedWithoutScrolling = async (surface: Locator) => {
+  await expect(surface).toBeInViewport({ ratio: 1 })
+  await expect
+    .poll(() =>
+      surface.evaluate((element) => {
+        const box = element.getBoundingClientRect()
+        return element.contains(
+          document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          ),
+        )
+      }),
+    )
+    .toBe(true)
+}
+
+const verticalEdges = (surface: Locator) =>
+  surface.evaluate((element) => {
+    const { top, bottom } = element.getBoundingClientRect()
+    return { top, bottom }
+  })
 
 const startMatch = async (
   page: Page,
@@ -308,26 +338,40 @@ for (const locale of ["en", "es-419"] as const) {
     )
     await page.getByLabel("Match menu", { exact: true }).click()
     await importPlayerData(page, completed)
-    await page
-      .getByRole("button", {
-        name: copy.interface.webMatch.viewRewards,
-        exact: true,
-      })
-      .click()
+    const viewRewards = page.getByRole("button", {
+      name: copy.interface.webMatch.viewRewards,
+      exact: true,
+    })
     const rewards = page.getByRole("dialog")
-    await expect(rewards).toBeVisible()
-    for (const width of [320, 390, 430, 1280]) {
-      await page.setViewportSize({ width, height: width >= 1280 ? 720 : 844 })
+    const review = rewards.getByRole("button", {
+      name: copy.interface.matchCelebration.reviewBoard,
+      exact: true,
+    })
+    const replay = rewards.getByRole("button", {
+      name: copy.gameplay.resultActions.replay,
+    })
+    const beforeReplay = await savedProfile(page)
+    for (const viewport of [
+      { width: 320, height: 640 },
+      { width: 390, height: 844 },
+      { width: 430, height: 844 },
+      { width: 1280, height: 720 },
+    ]) {
+      const { width } = viewport
+      await page.setViewportSize(viewport)
       for (const percent of [100, 200]) {
         const scale = await page.addStyleTag({
           content: `:root { font-size: ${percent}%; }`,
         })
+        await viewRewards.click()
+        await expect(review).toBeFocused()
+        await expectExposedWithoutScrolling(review)
+        await expectExposedWithoutScrolling(replay)
         await expectContained(rewards)
         const stage = rewards.getByRole("region", {
           name: copy.interface.reactiveBattleStage.reactiveBattleStage,
           exact: true,
         })
-        await stage.scrollIntoViewIfNeeded()
         const stageGeometry = await expectScrollContentVisible(stage)
         expect(stageGeometry.leftInset).toBeCloseTo(0, 1)
         expect(stageGeometry.width).toBeCloseTo(stageGeometry.contentWidth, 0)
@@ -340,7 +384,37 @@ for (const locale of ["en", "es-419"] as const) {
         await expect(label).toBeVisible()
         const level = rewards.getByRole("region", { name: /^Level|^Nivel/ })
         await expectContained(level)
-        await label.scrollIntoViewIfNeeded()
+        if (width < 1280 && width >= 390 && percent === 100)
+          await expectExposedWithoutScrolling(level)
+        const rating = rewards
+          .getByRole("paragraph")
+          .filter({ hasText: copy.profile.ratingLabel.standard })
+        await rating.evaluate((element) =>
+          element.scrollIntoView({ block: "start" }),
+        )
+        await expectExposedWithoutScrolling(rating)
+        if (width < 1280) {
+          await level.evaluate((element) =>
+            element.scrollIntoView({ block: "start" }),
+          )
+          await expectExposedWithoutScrolling(level)
+          await expectExposedWithoutScrolling(review)
+          await expectExposedWithoutScrolling(replay)
+          const reviewBox = await verticalEdges(review)
+          const replayBox = await verticalEdges(replay)
+          const levelBox = await verticalEdges(level)
+          expect(
+            Math.max(reviewBox.bottom, replayBox.bottom),
+          ).toBeLessThanOrEqual(levelBox.top)
+          if (width === 320 && percent === 200)
+            expect(reviewBox.bottom).toBeLessThanOrEqual(replayBox.top)
+          if (width >= 390 && percent === 100)
+            expect(reviewBox.top).toBe(replayBox.top)
+        } else {
+          const levelBox = await verticalEdges(level)
+          const ratingBox = await verticalEdges(label)
+          expect(levelBox.bottom).toBeLessThanOrEqual(ratingBox.top)
+        }
         if (percent === 100) {
           const geometry = await label.locator("..").evaluate((context) => {
             const change = context.parentElement?.querySelector("strong")
@@ -362,32 +436,14 @@ for (const locale of ["en", "es-419"] as const) {
         await page.screenshot({
           path: testInfo.outputPath(`rewards-${width}-${percent}.png`),
         })
-        const review = rewards.getByRole("button", {
-          name: copy.interface.matchCelebration.reviewBoard,
-          exact: true,
-        })
-        await review.focus()
-        await review.scrollIntoViewIfNeeded()
-        await expect(review).toBeInViewport({ ratio: 1 })
         await expectContained(review)
+        await review.click()
+        await expect(rewards).toHaveCount(0)
         await scale.evaluate((element) =>
           element.parentNode?.removeChild(element),
         )
       }
     }
-    const beforeDismissal = await savedProfile(page)
-    await rewards
-      .getByRole("button", {
-        name: copy.interface.matchCelebration.reviewBoard,
-        exact: true,
-      })
-      .click()
-    await page
-      .getByRole("button", {
-        name: copy.interface.webMatch.viewRewards,
-        exact: true,
-      })
-      .click()
-    expect(await savedProfile(page)).toEqual(beforeDismissal)
+    expect(await savedProfile(page)).toEqual(beforeReplay)
   })
 }
