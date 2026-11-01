@@ -222,7 +222,7 @@ describe("web match runtime ownership", () => {
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "uses current %s settings when reopening an obsolete difficulty policy",
+    "refuses an unavailable saved %s policy before opening workers",
     async (variant) => {
       const parsed = parseChess960PositionId(959)
       if (!parsed.ok) throw new Error("Invalid test layout")
@@ -230,31 +230,21 @@ describe("web match runtime ownership", () => {
         variant === "standard"
           ? ({ variant, chess960PositionId: null } as const)
           : ({ variant, chess960PositionId: parsed.positionId } as const)
-      const fresh = await openFixture({ setup })
-      try {
-        const resumed = await openFixture({
-          setup,
-          matchSeed: fresh.runtime.matchSeed,
-          opponentId: "chicken-stockfish",
-          opponentPolicyFingerprint: "obsolete-policy",
-        })
-        try {
-          expect(fresh.runtime.opponentPolicyFingerprint).toBe(
-            (await resolveWebOpponentPolicy("chicken-stockfish", variant))
-              .fingerprint,
-          )
-          expect(resumed.runtime.opponentPolicyFingerprint).toBe(
-            fresh.runtime.opponentPolicyFingerprint,
-          )
-          expect(resumed.runtime.matchId).toBe(fresh.runtime.matchId)
-          expect(resumed.runtime.playerColor).toBe(fresh.runtime.playerColor)
-          expect(resumed.runtime.startingPosition).toEqual(setup)
-        } finally {
-          await resumed.runtime.close()
-        }
-      } finally {
-        await fresh.runtime.close()
+      const openSession = createSessionQueue([])
+      for (const selection of [
+        { mode: "story" },
+        { mode: "challenge", playerColor: "white", difficultyTargetElo: 125 },
+      ] as const) {
+        await expect(
+          openWebMatchRuntime({
+            ...selection,
+            setup,
+            opponentPolicyFingerprint: "obsolete-policy",
+            openSession,
+          }),
+        ).rejects.toThrow("opponent policy is unavailable")
       }
+      expect(openSession).not.toHaveBeenCalled()
     },
   )
 
