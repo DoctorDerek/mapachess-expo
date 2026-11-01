@@ -8,6 +8,8 @@ import type { MatchMedal } from "@mapachess/profile/match-medal"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
+const nameEloSeparator = "\u00a0·\u00a0"
+
 export default function MatchIdentity({
   headingRef,
   playerColor,
@@ -45,26 +47,25 @@ export default function MatchIdentity({
         id="opponent-band-title"
         ref={headingRef}
         tabIndex={-1}
-        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-3 text-center text-base leading-tight [grid-area:identity] xl:px-0"
+        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-1 text-center text-base leading-tight text-balance wrap-break-word [grid-area:identity] xl:px-0"
       >
+        <strong>{copy.presentation.playerName}</strong>
+        {nameEloSeparator}
+        {copy.gameplay.elo(playerElo)}{" "}
         <span className="inline-block">
-          <strong>{copy.presentation.playerName}</strong> ·{" "}
-          {copy.gameplay.elo(playerElo)}
-          {" · "}
           <MedalSymbol medal={assistance} />
           {copy.shared.story.medals[assistance]}
-          <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
         </span>
+        <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
         {copy.board.versus}
-        <span className="inline-block">
-          <strong>{opponentName}</strong> · {copy.gameplay.elo(opponentElo)}
-          <span className="sr-only">
-            {" "}
-            ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
-          </span>
-        </span>
-        <span className="inline-block">
+        <strong>{opponentName}</strong>
+        {nameEloSeparator}
+        {copy.gameplay.elo(opponentElo)}
+        <span className="sr-only">
           {" "}
+          ({copy.board.colors[playerColor === "white" ? "black" : "white"]})
+        </span>{" "}
+        <span className="inline-block">
           · {timeControlLabel(timeControl, copy.gameplay.clock)}
         </span>
       </h1>

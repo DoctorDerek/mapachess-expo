@@ -344,16 +344,6 @@ export default function WebMatch({
               aria-label={messages.coreMatchActions}
               className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
-              {snapshot.matches("paused") ? (
-                <MapachessButton
-                  onClick={() =>
-                    actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
-                  }
-                >
-                  <span aria-hidden="true">▶ </span>
-                  {copy.gameplay.clock.resume}
-                </MapachessButton>
-              ) : null}
               <MatchCommands
                 opponentName={animalCopy.opponent(opponent.id)}
                 menuOpen={overlays.includes("match-menu")}
@@ -446,6 +436,17 @@ export default function WebMatch({
                 snapshot={snapshot}
               />
 
+              {snapshot.matches("paused") ? (
+                <MapachessButton
+                  className="px-2! py-1! text-base leading-tight"
+                  onClick={() =>
+                    actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+                  }
+                >
+                  <span aria-hidden="true">▶ </span>
+                  {copy.gameplay.clock.resume}
+                </MapachessButton>
+              ) : null}
               <MatchRecovery
                 actor={actor}
                 snapshot={snapshot}

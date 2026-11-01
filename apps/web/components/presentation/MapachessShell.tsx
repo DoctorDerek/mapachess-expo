@@ -19,7 +19,7 @@ export default function MapachessShell({
       className={cx(
         "after:border-mapachito-deep-gold/12 relative isolate min-h-dvh overflow-x-clip",
         spacing === "match"
-          ? "pt-[max(0.75rem,env(safe-area-inset-top))] pr-[env(safe-area-inset-right)] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] [--spacing:4px] xl:px-5"
+          ? "pt-[max(--spacing(3),env(safe-area-inset-top))] pr-[env(safe-area-inset-right)] pb-[max(--spacing(3),env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] [--spacing:4px] xl:px-5"
           : spacing === "setup"
             ? "px-[clamp(0.5rem,4vw,3rem)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
             : spacing === "home"

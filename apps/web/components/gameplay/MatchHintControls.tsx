@@ -57,7 +57,7 @@ export default function MatchHintControls({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="grid min-w-0 flex-[1_1_calc(6em+var(--hint-target)+--spacing(7))] grid-cols-[minmax(0,1fr)_var(--hint-target)_minmax(0,1fr)] items-stretch gap-1.5 text-sm [--hint-target:clamp(--spacing(16),3.5rem,--spacing(28))]"
+      className="flex min-w-0 flex-[1_1_min-content] flex-wrap items-stretch gap-1.5 text-sm [--hint-target:max(--spacing(16),2rem)]"
     >
       <MapachessButton
         aria-haspopup="dialog"
@@ -68,7 +68,7 @@ export default function MatchHintControls({
           navigation.open("match-hints")
         }}
         variant="secondary"
-        className="flex min-h-(--hint-target)! min-w-0 flex-col items-center justify-center px-1! py-1! text-sm leading-tight"
+        className="flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-col items-center justify-center px-1! py-1! text-sm leading-tight wrap-break-word"
       >
         <span>{hints.autoLabel}</span>
         <span>
@@ -83,7 +83,7 @@ export default function MatchHintControls({
           navigation.open("auto-hints-help")
         }}
         variant="secondary"
-        className="min-h-(--hint-target)! min-w-0 px-1! py-1! text-xl leading-tight"
+        className="min-h-(--hint-target)! w-(--hint-target) flex-none px-1! py-1! text-xl leading-tight"
       >
         <span aria-hidden="true">?</span>
       </MapachessButton>

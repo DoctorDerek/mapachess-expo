@@ -1,7 +1,8 @@
-import { expect, type Locator, type Page } from "@playwright/test"
+import { expect, type Locator } from "@playwright/test"
 import { activate, injectControllerInput, press } from "./controllerInput.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
+import startHintMatch from "./startHintMatch.js"
 
 async function documentBox(control: Locator) {
   return control.evaluate((element) => {
@@ -25,68 +26,6 @@ function expectSameBox(
   expect(actual.height).toBeCloseTo(expected.height, 2)
 }
 
-async function startManualGame(page: Page, spanish = false, timed = false) {
-  await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.goto("/")
-  if (spanish)
-    await page
-      .getByRole("combobox", { name: "Language" })
-      .selectOption("es-419")
-  await page
-    .getByRole("button", { name: spanish ? "Comenzar" : "Start", exact: true })
-    .click()
-  await page
-    .getByRole("button", {
-      name: spanish ? "Configuración" : "Settings",
-      exact: true,
-    })
-    .click()
-  await page
-    .getByRole("radio", {
-      name: spanish ? "Sin pistas automáticas" : "No Auto Hints",
-      exact: true,
-    })
-    .check()
-  await page
-    .getByRole("button", {
-      name: spanish ? "Cerrar configuración" : "Close Settings",
-      exact: true,
-    })
-    .click()
-  await page
-    .getByRole("button", {
-      name: spanish
-        ? "Desafío de ajedrez estándar"
-        : "Standard Chess Challenge",
-      exact: true,
-    })
-    .click()
-  await page
-    .getByRole("radio", { name: spanish ? "Blancas" : "White", exact: true })
-    .check()
-  if (timed) {
-    await page
-      .getByRole("button", { name: "Change time control", exact: true })
-      .click()
-    await page.getByRole("radio", { name: "Blitz · 3+2", exact: true }).check()
-    await page.getByRole("button", { name: "Done", exact: true }).click()
-  }
-  await page
-    .getByRole("button", {
-      name: spanish ? "Iniciar partida" : "Start match",
-      exact: true,
-    })
-    .click()
-  await expect(
-    page.getByRole("button", {
-      name: spanish
-        ? "Pedir pista Mostrar Pistas de piezas"
-        : "Get Hint Show Piece Hints",
-      exact: true,
-    }),
-  ).toBeEnabled({ timeout: 30000 })
-}
-
 for (const configuration of [
   { width: 320, spanish: false, fontSize: 16 },
   { width: 390, spanish: true, fontSize: 16 },
@@ -101,7 +40,7 @@ for (const configuration of [
     const errors: string[] = []
     page.on("pageerror", (error) => errors.push(error.message))
     await page.setViewportSize({ width, height: 900 })
-    await startManualGame(page, spanish)
+    await startHintMatch(page, { locale: spanish ? "es-419" : "en" })
     await page.addStyleTag({ content: `html { font-size: ${fontSize}px; }` })
     await expect
       .poll(() =>
@@ -267,7 +206,7 @@ test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resu
   test.setTimeout(60000)
   await injectControllerInput(page)
   await page.setViewportSize({ width: 390, height: 900 })
-  await startManualGame(page, false, true)
+  await startHintMatch(page, { preset: "3+2" })
   const auto = page.getByRole("button", {
     name: "Auto Hints: Off",
     exact: true,
