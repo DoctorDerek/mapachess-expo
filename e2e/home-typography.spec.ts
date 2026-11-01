@@ -27,6 +27,9 @@ for (const width of [320, 390, 430, 1279, 1280]) {
       }
       const copy = loadCatalog(locale)
       const home = page.getByRole("region", { name: "Mapachess", exact: true })
+      await expect(
+        home.getByRole("button", { name: copy.interface.webGame.resumeMatch }),
+      ).toHaveCount(0)
       const wordmark = page
         .getByRole("heading", { name: "Mapachess", exact: true })
         .getByText("Mapachess", { exact: true })

@@ -13,11 +13,7 @@ import {
 import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
 import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import {
-  timeControlLabel,
-  timeControlNotation,
-  UNTIMED,
-} from "@mapachess/match/time-control"
+import { timeControlNotation, UNTIMED } from "@mapachess/match/time-control"
 import { samePlayerAppearance } from "@mapachess/profile/player-appearance"
 import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
@@ -316,60 +312,50 @@ export default function WebGame({
       settingsOpen={settingsOpen}
     >
       {snapshot.matches({ menu: "choosingMode" }) ? (
-        <>
-          {session === null ? null : (
-            <div className="mx-auto mb-4 max-w-6xl">
-              <MapachessButton
-                onClick={() =>
-                  actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
+        <MatchModeMenu
+          playerData={playerData}
+          resumeMatch={
+            session === null
+              ? null
+              : {
+                  timeControl: session.match.timeControl,
+                  disabled: settingsOpen,
+                  onResume: () =>
+                    actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" }),
                 }
-                disabled={settingsOpen}
-              >
-                {messages.resumeMatch}
-                <span className="block text-base font-semibold">
-                  {timeControlLabel(
-                    session.match.timeControl,
-                    copy.gameplay.clock,
-                  )}
-                </span>
-              </MapachessButton>
-            </div>
-          )}
-          <MatchModeMenu
-            playerData={playerData}
-            onCustomize={() => navigation.open("dressing-room")}
-            onShare={() => navigation.open("profile-card")}
-            disabled={!profileReady}
-            onModeSelected={(selection) => {
-              if (
-                !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
-                settingsOpen
-              )
-                return
-              const setup = createMatchSetupForMode(
-                selection,
-                playerData.settings.challengeSetup,
-                selectDefaultStoryOpponent(
-                  playerData.storyProgress,
-                  selection.variant,
-                ),
-              )
-              actor.send({
-                type: "MATCH_SESSION.SETUP_REQUESTED",
-                setup:
-                  setup.mode === "challenge" &&
-                  setup.challengeSetup.variant === "chess960"
-                    ? {
-                        ...setup,
-                        displayedChess960PositionId:
-                          setup.challengeSetup.chess960PositionId ??
-                          generateWebChess960Position(globalThis.crypto),
-                      }
-                    : setup,
-              })
-            }}
-          />
-        </>
+          }
+          onCustomize={() => navigation.open("dressing-room")}
+          onShare={() => navigation.open("profile-card")}
+          disabled={!profileReady}
+          onModeSelected={(selection) => {
+            if (
+              !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
+              settingsOpen
+            )
+              return
+            const setup = createMatchSetupForMode(
+              selection,
+              playerData.settings.challengeSetup,
+              selectDefaultStoryOpponent(
+                playerData.storyProgress,
+                selection.variant,
+              ),
+            )
+            actor.send({
+              type: "MATCH_SESSION.SETUP_REQUESTED",
+              setup:
+                setup.mode === "challenge" &&
+                setup.challengeSetup.variant === "chess960"
+                  ? {
+                      ...setup,
+                      displayedChess960PositionId:
+                        setup.challengeSetup.chess960PositionId ??
+                        generateWebChess960Position(globalThis.crypto),
+                    }
+                  : setup,
+            })
+          }}
+        />
       ) : null}
       <div
         className="h-full min-h-0"

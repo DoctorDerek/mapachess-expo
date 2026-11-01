@@ -3,7 +3,12 @@ import {
   MATCH_MODE_CHOICES,
   type MatchModeSelection,
 } from "@mapachess/match/match-setup"
+import {
+  timeControlLabel,
+  type TimeControl,
+} from "@mapachess/match/time-control"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ProfileAction from "../profile/ProfileAction"
 import ProfileCard from "../profile/ProfileCard"
@@ -12,6 +17,11 @@ export type MatchModeMenuProps = Readonly<{
   disabled: boolean
   onModeSelected: (selection: MatchModeSelection) => void
   playerData: MapachessPlayerData
+  resumeMatch: Readonly<{
+    timeControl: TimeControl
+    disabled: boolean
+    onResume: () => void
+  }> | null
   onCustomize: () => void
   onShare: () => void
 }>
@@ -19,10 +29,12 @@ export default function MatchModeMenu({
   disabled,
   onModeSelected,
   playerData,
+  resumeMatch,
   onCustomize,
   onShare,
 }: MatchModeMenuProps) {
-  const copy = useMapachessCopy().setup
+  const catalog = useMapachessCopy()
+  const copy = catalog.setup
   return (
     <section
       aria-labelledby="game-modes-title"
@@ -51,6 +63,21 @@ export default function MatchModeMenu({
           </div>
         </div>
         <div className="flex min-w-0 flex-wrap gap-3 pr-1.5 pb-1.5">
+          {resumeMatch !== null ? (
+            <MapachessButton
+              className="flex min-w-0 basis-full flex-wrap items-baseline justify-center gap-x-2 gap-y-1 wrap-break-word"
+              disabled={resumeMatch.disabled}
+              onClick={resumeMatch.onResume}
+            >
+              <span>{catalog.interface.webGame.resumeMatch}</span>
+              <span className="text-base font-semibold">
+                {timeControlLabel(
+                  resumeMatch.timeControl,
+                  catalog.gameplay.clock,
+                )}
+              </span>
+            </MapachessButton>
+          ) : null}
           {MATCH_MODE_CHOICES.map(({ mode, variant }) => (
             <ProfileAction
               size="home-mode"
