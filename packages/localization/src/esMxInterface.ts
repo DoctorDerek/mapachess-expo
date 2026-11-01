@@ -2,7 +2,7 @@ import type { MapachessCatalog } from "./catalog.js"
 
 const interfaceCopy = {
   betterHintsControl: { betterHints: "Mejores pistas" },
-  challengeDifficultyChoices: { elo: "Elo" },
+  challengeDifficultyChoices: { elo: "Elo", range: "Rango de Elo" },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults:
       "No se pudo cargar el diseño de ajedrez seleccionado. Se muestran los diseños predeterminados; tus elecciones y tu partida se conservan.",
