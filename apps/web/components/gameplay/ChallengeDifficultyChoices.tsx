@@ -1,10 +1,15 @@
 import cx from "classix"
-import { useId, useState } from "react"
+import { useId, useRef, useState } from "react"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
+import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
+
+const ELO_RANGE_WIDTH = 250
+const rangeStart = (target: number): number =>
+  Math.floor(target / ELO_RANGE_WIDTH) * ELO_RANGE_WIDTH
 
 export default function ChallengeDifficultyChoices({
   disabled,
@@ -28,11 +33,72 @@ export default function ChallengeDifficultyChoices({
   const [hoveredTarget, setHoveredTarget] = useState<number | null>(null)
   const [focusedTarget, setFocusedTarget] = useState<number | null>(null)
 
+  const [viewedRange, setViewedRange] = useState(() =>
+    rangeStart(selectedElo ?? targets[0] ?? 0),
+  )
+  const groups = new Map<number, number[]>()
+  for (const target of targets) {
+    const start = rangeStart(target)
+    const group = groups.get(start)
+    if (group === undefined) groups.set(start, [target])
+    else group.push(target)
+  }
+  const showRanges = targets.length > 10
+  const visibleTargets = showRanges ? (groups.get(viewedRange) ?? []) : targets
+  const rangeControl = useRef<HTMLSelectElement>(null)
+  usePlayerInputScope({
+    root: rangeControl,
+    focused: true,
+    enabled: showRanges && !disabled,
+    handle: (action, device) => {
+      const select = rangeControl.current
+      if (device.method !== "controller" || select === null) return false
+      if (action === "left" || action === "right") {
+        const adjacent =
+          select.options[select.selectedIndex + (action === "left" ? -1 : 1)]
+        if (adjacent !== undefined) setViewedRange(Number(adjacent.value))
+        return true
+      }
+      if (action !== "confirm") return false
+      const group = select.closest("fieldset")
+      const tile =
+        group?.querySelector<HTMLInputElement>("input:checked") ??
+        group?.querySelector<HTMLInputElement>("input")
+      tile?.focus()
+      return true
+    },
+  })
+
   return (
     <fieldset className="min-w-0" disabled={disabled}>
-      <legend className="text-lg font-black">{copy.difficulty}</legend>
+      <legend className={showRanges ? "sr-only" : "text-lg font-black"}>
+        {copy.difficulty}
+      </legend>
+      {showRanges ? (
+        <label className="flex flex-wrap items-center gap-2 font-bold">
+          {messages.range}
+          <select
+            className="border-mapachito-charcoal/60 bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet min-h-12 max-w-full rounded-lg border-2 px-3 font-bold focus-visible:outline-3 focus-visible:outline-offset-2"
+            ref={rangeControl}
+            value={viewedRange}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" && event.key !== "Tab")
+                event.stopPropagation()
+            }}
+            onChange={(event) =>
+              setViewedRange(Number(event.currentTarget.value))
+            }
+          >
+            {Array.from(groups, ([start, values]) => (
+              <option key={start} value={start}>
+                {values[0]}–{values.at(-1)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-3">
-        {targets.map((target) => {
+        {visibleTargets.map((target) => {
           const record = history.difficulties.find(
             ({ targetElo }) => targetElo === target,
           )

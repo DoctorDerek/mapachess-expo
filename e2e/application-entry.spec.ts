@@ -354,7 +354,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await initialDifficulty.focus()
       await initialDifficulty.press("ArrowRight")
       await expect(
-        page.getByRole("radio", { name: "200 Elo", exact: true }),
+        page.getByRole("radio", { name: "125 Elo", exact: true }),
       ).toBeChecked()
       await page.getByRole("button", { name: "Done", exact: true }).click()
       await expect(initialDifficulty).toBeHidden()
@@ -363,7 +363,16 @@ test("offers four direct modes with Challenge controls and saved hint preference
       ).toBeFocused()
       await page.getByRole("button", { name: /Change difficulty/ }).click()
       await expect(
-        page.getByRole("radio", { name: "200 Elo", exact: true }),
+        page.getByRole("radio", { name: "125 Elo", exact: true }),
+      ).toBeChecked()
+      const range = page.getByRole("combobox", { name: "Elo range" })
+      await range.selectOption({ label: "2250–2350" })
+      await expect(
+        page.getByRole("radio", { name: "2350 Elo", exact: true }),
+      ).not.toBeChecked()
+      await range.selectOption({ label: "100–225" })
+      await expect(
+        page.getByRole("radio", { name: "125 Elo", exact: true }),
       ).toBeChecked()
       await page.getByRole("button", { name: "Done", exact: true }).click()
       await page.getByRole("button", { name: /Change animal/ }).click()
@@ -530,6 +539,10 @@ test("presents imported Challenge medals with stable animal artwork", async ({
     await attentionAnimation.dispose()
     await page.mouse.move(0, 0)
     await page.getByRole("dialog").getByRole("heading").first().focus()
+    await page.keyboard.press("Tab")
+    await expect(
+      page.getByRole("combobox", { name: "Elo range" }),
+    ).toBeFocused()
     await page.keyboard.press("Tab")
     await expect(choice).toBeFocused()
     await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)

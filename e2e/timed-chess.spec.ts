@@ -58,6 +58,9 @@ async function startTimedMatch(
         exact: true,
       })
       .click()
+    await page
+      .getByRole("combobox", { name: spanish ? "Rango de Elo" : "Elo range" })
+      .selectOption({ label: "2250–2350" })
     const difficulty = page.getByRole("radio", {
       name: "2300 Elo",
       exact: true,

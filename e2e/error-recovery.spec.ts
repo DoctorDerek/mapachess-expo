@@ -325,6 +325,9 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
       .click()
     await page.getByRole("button", { name: /Change difficulty/ }).click()
     await page
+      .getByRole("combobox", { name: "Elo range" })
+      .selectOption({ label: "2250–2350" })
+    await page
       .getByRole("radio", { name: "2300 Elo", exact: true })
       .press("Space")
     await page.getByRole("button", { name: "Done", exact: true }).click()
