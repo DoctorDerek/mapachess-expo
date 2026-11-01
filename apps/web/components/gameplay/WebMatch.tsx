@@ -351,7 +351,11 @@ export default function WebMatch({
                   reactions.clear()
                   navigation.open("match-menu")
                 }}
-                onMenuClosed={navigation.back}
+                onMenuClosed={() => {
+                  menuSummary.current?.focus({ preventScroll: true })
+                  navigation.close("match-menu")
+                }}
+                onBack={navigation.back}
                 coach={
                   <MapachitoCoachPortrait
                     presentationSnapshot={presentation.snapshot}
