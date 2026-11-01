@@ -2,6 +2,8 @@ import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
+import { parseChess960PositionId } from "@mapachess/match/chess960-position"
+import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
   reconstructMatchPosition,
@@ -13,14 +15,17 @@ import {
   type StockfishEngineConfiguration,
   type StockfishEngineSessionState,
 } from "@mapachess/stockfish/engine-session"
+import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSearchResult,
   StockfishUciSession,
 } from "@mapachess/stockfish/uci-session"
 import { WEB_OPPONENT_ENGINE_CONFIGURATION } from "@mapachess/stockfish/web-opponent-policy"
+import createWebOpponent from "../lib/gameplay/webOpponent"
 import {
   resolveWebChallengePolicy,
+  webChallengeDifficultyTargets,
   type WebOpponentPolicy,
 } from "../lib/gameplay/webOpponentPolicy"
 import createWebStockfishSession from "../lib/stockfish/createWebStockfishSession"
@@ -108,8 +113,14 @@ export type CalibratedOpponentBrowserProof = Readonly<{
 type CalibratedOpponentVariantProof = Readonly<{
   finalState: StockfishEngineSessionState
   identity: StockfishUciIdentity
+  rows: readonly CalibratedMoveProof[]
+}>
+
+type CalibratedMoveProof = Readonly<{
   policy: WebOpponentPolicy
-  search: StockfishUciSearchResult
+  highRollMove: string
+  lowRollMove: string
+  searches: readonly Readonly<{ requestId: string; nodeLimit: number }>[]
 }>
 
 declare global {
@@ -302,29 +313,67 @@ async function runProof(): Promise<StockfishBrowserProof> {
 }
 
 async function runCalibratedOpponentProof(): Promise<CalibratedOpponentBrowserProof> {
+  const layout = parseChess960PositionId(0)
+  if (!layout.ok) throw new Error("Invalid Chess960 proof position")
+  const seed = parseDeterministicRandomSeed("00000000000000000000000000000001")
   const runVariant = async (
     variant: "standard" | "chess960",
   ): Promise<CalibratedOpponentVariantProof> => {
-    const policy = await resolveWebChallengePolicy(
-      "chicken-stockfish",
-      variant,
-      1000,
+    const position = createInitialMatchPosition(
+      variant === "standard"
+        ? { variant, chess960PositionId: null }
+        : { variant, chess960PositionId: layout.positionId },
     )
+    const legalMoves = listLegalMatchMoves(position)
+    const signal = new AbortController().signal
     const result = await useClosedSession(
       { ...WEB_OPPONENT_ENGINE_CONFIGURATION, variant },
-      async (session) => ({
-        identity: await session.boot(),
-        search: await session.search({
-          requestId: `calibrated-${variant}-search`,
-          nodeLimit: policy.nodeLimit,
-          position: {
-            fen: variant === "standard" ? STANDARD_FEN : CHESS960_FEN,
-            moves: [],
-          },
-        }),
-      }),
+      async (session) => {
+        const identity = await session.boot()
+        const rows: CalibratedMoveProof[] = []
+        for (const target of webChallengeDifficultyTargets(variant)) {
+          const policy = await resolveWebChallengePolicy(
+            "chicken-stockfish",
+            variant,
+            target,
+          )
+          const searches: { requestId: string; nodeLimit: number }[] = []
+          const opponent = createWebOpponent(
+            {
+              ...session,
+              search: (request, searchSignal) => {
+                searches.push({
+                  requestId: request.requestId,
+                  nodeLimit: request.nodeLimit,
+                })
+                return session.search(request, searchSignal)
+              },
+            },
+            globalThis.crypto,
+            seed,
+            policy,
+          )
+          const request = {
+            initialPosition: position,
+            acceptedMoves: [],
+            position,
+            legalMoves,
+          }
+          // With this match seed the first move-selection draws are 9,999 and 0 respectively.
+          const highRollMove = await opponent.selectMove(
+            { ...request, requestId: "grid-proof-20667" },
+            signal,
+          )
+          const lowRollMove = await opponent.selectMove(
+            { ...request, requestId: "grid-proof-16629" },
+            signal,
+          )
+          rows.push({ policy, highRollMove, lowRollMove, searches })
+        }
+        return { identity, rows }
+      },
     )
-    return { finalState: result.finalState, policy, ...result.value }
+    return { finalState: result.finalState, ...result.value }
   }
   return {
     standard: await runVariant("standard"),
