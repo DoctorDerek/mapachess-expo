@@ -610,7 +610,7 @@ describe("web match session ownership", () => {
       (["story", "challenge"] as const).map((mode) => ({ variant, mode })),
     ),
   )(
-    "resumes $variant $mode with current difficulty without clearing its board, hints or profile",
+    "protects the saved $variant $mode board and rating when the runtime cannot reproduce its policy",
     async ({ variant, mode }) => {
       const parsed = parseChess960PositionId(518)
       if (!parsed.ok) throw new Error("Test layout must parse")
@@ -657,38 +657,22 @@ describe("web match session ownership", () => {
       const before = selectCurrentPlayerData(profile.actor.getSnapshot())
       if (before === null) throw new Error("Test profile must be ready")
       const openRuntime = runtimeOpener(engine.runtime)
-      const resumed = await openCurrentWebMatchSession({
-        openRuntime,
-        profileActor: profile.actor,
-        signal: new AbortController().signal,
-      })
-      const currentMatch = {
-        ...candidate,
-        opponentPolicyFingerprint: policy.fingerprint,
-        ratedOpponentElo: null,
-      }
-      expect(resumed.match).toEqual(currentMatch)
-      expect(
-        resumed.actor.getSnapshot().context.timeline.transitions,
-      ).toHaveLength(2)
-      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual({
-        ...before,
-        activeMatch: currentMatch,
-        revision: before.revision + 1,
-      })
-      expect(openRuntime).toHaveBeenCalledWith(
-        expect.objectContaining({
-          opponentPolicyFingerprint: "obsolete-policy",
-          matchSeed: FIRST_MATCH_SEED,
-          setup: startingPosition,
+      await expect(
+        openCurrentWebMatchSession({
+          openRuntime,
+          profileActor: profile.actor,
+          signal: new AbortController().signal,
         }),
+      ).rejects.toThrow("requires its original opponent policy")
+      expect(engine.close).toHaveBeenCalledOnce()
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        before,
       )
-      await resumed.close()
       await profile.close()
     },
   )
 
-  it("closes the runtime and retains the saved match when a policy refresh is aborted", async () => {
+  it("closes the runtime and retains the saved match when reopening the match is aborted", async () => {
     const profile = await openProfileRuntime()
     const engine = createRuntime(FIRST_MATCH_SEED)
     const candidate = {
@@ -832,6 +816,7 @@ describe("web match session ownership", () => {
       })
       expect(resumeOpener).toHaveBeenCalledWith({
         ...selection,
+        difficultyTargetElo: 1000,
         matchSeed: FIRST_MATCH_SEED,
         setup: startingPosition,
         signal: expect.any(AbortSignal),
