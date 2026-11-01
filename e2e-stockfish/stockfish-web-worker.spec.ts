@@ -4,7 +4,7 @@ import type {
   CalibratedOpponentBrowserProof,
   StockfishBrowserProof,
 } from "../apps/web/stockfish-integration-harness/stockfishBrowserHarness"
-import { WEB_CALIBRATED_LADDER } from "../packages/stockfish/src/webOpponentPolicy"
+import { WEB_CHALLENGE_PRESETS } from "../packages/stockfish/src/webOpponentPolicy"
 
 const UCI_MOVE = /^[a-h][1-8][a-h][1-8][qrbn]?$/
 const EXPECTED_OPTION_NAMES = [
@@ -121,7 +121,7 @@ test("runs and cleans up the real Stockfish Worker lifecycle", async ({
   expect(browserErrors).toEqual([])
 })
 
-test("runs both calibrated 1000-Elo policies through the real local web Worker", async ({
+test("checks every rated Challenge preset through the production opponent and local web Worker", async ({
   page,
 }) => {
   await page.goto("/")
@@ -130,23 +130,34 @@ test("runs both calibrated 1000-Elo policies through the real local web Worker",
   )
   for (const variant of ["standard", "chess960"] as const) {
     const result = proof[variant]
-    expect(result.policy).toMatchObject({
-      calibrationFingerprint:
-        WEB_CALIBRATED_LADDER[variant][9]?.calibrationFingerprint,
-      nodeLimit: 10_000,
-      opponentId: "chicken-stockfish",
-      randomMoveProbabilityBasisPoints:
-        WEB_CALIBRATED_LADDER[variant][9]?.randomMoveProbabilityBasisPoints,
-      targetElo: 1000,
-      variant,
-    })
-    expect(result.policy.fingerprint).not.toBe(
-      result.policy.calibrationFingerprint,
-    )
     expect(result.identity.name).toBe("Stockfish 18 Lite WASM")
-    expect(result.search.requestId).toBe(`calibrated-${variant}-search`)
-    expect(result.search.bestMove).toMatch(UCI_MOVE)
     expect(result.finalState).toBe("closed")
+    expect(result.rows).toHaveLength(91)
+    const randomMoves = new Set<string>()
+    for (const [index, row] of result.rows.entries()) {
+      const preset = WEB_CHALLENGE_PRESETS[variant][index]
+      expect(row.policy).toMatchObject({
+        ...preset,
+        nodeLimit: 10_000,
+        opponentId: "chicken-stockfish",
+        targetElo: 100 + index * 25,
+        variant,
+      })
+      expect(row.policy.fingerprint).not.toBe(row.policy.calibrationFingerprint)
+      expect(row.highRollMove).toMatch(UCI_MOVE)
+      expect(row.lowRollMove).toMatch(UCI_MOVE)
+      const highDraw = { requestId: "grid-proof-20667", nodeLimit: 10_000 }
+      if (row.policy.randomMoveProbabilityBasisPoints === 0) {
+        expect(row.searches).toEqual([
+          highDraw,
+          { requestId: "grid-proof-16629", nodeLimit: 10_000 },
+        ])
+      } else {
+        expect(row.searches).toEqual([highDraw])
+        randomMoves.add(row.lowRollMove)
+      }
+    }
+    expect(randomMoves.size).toBe(1)
   }
   await expect.poll(() => page.workers().length).toBe(0)
 })

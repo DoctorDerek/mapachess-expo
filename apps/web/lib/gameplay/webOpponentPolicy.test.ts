@@ -11,7 +11,7 @@ describe("versioned web opponent policies", () => {
     "separates %s animal identity from every supported Challenge preset",
     async (variant) => {
       expect(webChallengeDifficultyTargets(variant)).toEqual(
-        STOCKFISH_OPPONENTS.map(({ storyTargetElo }) => storyTargetElo),
+        Array.from({ length: 91 }, (_, index) => 100 + 25 * index),
       )
       for (const target of webChallengeDifficultyTargets(variant)) {
         const chicken = await resolveWebChallengePolicy(
@@ -30,7 +30,7 @@ describe("versioned web opponent policies", () => {
           await resolveWebChallengePolicy(
             "raccoon-stockfish",
             variant,
-            undefined,
+            target,
             raccoon.fingerprint,
           ),
         ).toEqual(raccoon)
@@ -40,24 +40,22 @@ describe("versioned web opponent policies", () => {
         variant,
       )
       expect(currentDefault.targetElo).toBe(100)
-      expect(
-        await resolveWebChallengePolicy(
+      await expect(
+        resolveWebChallengePolicy(
           "chicken-stockfish",
           variant,
           undefined,
           "obsolete-policy",
         ),
-      ).toEqual(currentDefault)
-      expect(
-        await resolveWebChallengePolicy(
+      ).rejects.toThrow("saved Challenge opponent policy")
+      await expect(
+        resolveWebChallengePolicy(
           "chicken-stockfish",
           variant,
           1000,
           currentDefault.fingerprint,
         ),
-      ).toEqual(
-        await resolveWebChallengePolicy("chicken-stockfish", variant, 1000),
-      )
+      ).rejects.toThrow("saved Challenge opponent policy")
       expect(currentDefault.fingerprint).not.toBe(
         (
           await resolveWebChallengePolicy(
@@ -113,15 +111,87 @@ describe("versioned web opponent policies", () => {
         ).toEqual(policy)
         expect(otherVariantPolicy.fingerprint).not.toBe(policy.fingerprint)
         expect(
-          (
-            await resolveWebChallengePolicy(
-              policy.opponentId,
-              variant,
-              policy.targetElo,
-            )
-          ).fingerprint,
-        ).toBe(policy.fingerprint)
+          await resolveWebChallengePolicy(
+            policy.opponentId,
+            variant,
+            policy.targetElo,
+            policy.fingerprint,
+          ),
+        ).toEqual(policy)
+        const freshChallenge = await resolveWebChallengePolicy(
+          policy.opponentId,
+          variant,
+          policy.targetElo,
+        )
+        if (
+          variant === "chess960" &&
+          (policy.targetElo === 1900 || policy.targetElo === 2000)
+        ) {
+          expect(freshChallenge.fingerprint).not.toBe(policy.fingerprint)
+          expect(freshChallenge.randomMoveProbabilityBasisPoints).toBe(
+            policy.targetElo === 1900 ? 800 : 524,
+          )
+        } else expect(freshChallenge.fingerprint).toBe(policy.fingerprint)
       }
+    },
+  )
+
+  it.each([
+    [
+      "chess960",
+      "sha256:9f31bfcefacfabb555a83dd097b1ed19cdf7dd38bd845d555227089e56f3bb90",
+      8700,
+    ],
+    [
+      "standard",
+      "sha256:77ee73c925c9837774e83434e2c123bfa03b4a9b0914a21e5a5ff7146443e9b9",
+      8200,
+    ],
+  ] as const)(
+    "restores a pre-independent %s Challenge save with its Story identity",
+    async (variant, fingerprint, probability) => {
+      const story = await resolveWebOpponentPolicy(
+        "bunny-stockfish",
+        variant,
+        globalThis.crypto.subtle,
+        fingerprint,
+      )
+      const challenge = await resolveWebChallengePolicy(
+        "bunny-stockfish",
+        variant,
+        undefined,
+        fingerprint,
+      )
+      expect(challenge).toEqual(story)
+      expect(challenge).toMatchObject({
+        fingerprint,
+        targetElo: 200,
+        randomMoveProbabilityBasisPoints: probability,
+      })
+      expect(challenge.calibrationFingerprint).toBeUndefined()
+    },
+  )
+
+  it.each(["standard", "chess960"] as const)(
+    "keeps the first %s Chicken policy available to saved matches",
+    async (variant) => {
+      const fingerprint = [
+        `mapachess-${variant}-chicken-web-policy/v1`,
+        "stockfish-js-source/31a98753a5d932511693f44775da908377c24513",
+        "wasm-sha256/a8fbc05ec6920b56d7485826dcb02c5ffd2826bcbf751cf973046f237a9096f1",
+        "nodes/10000",
+        "random-basis-points/8000",
+        "mapachess-web-sha256-position-state/v1",
+      ].join("|")
+      const chicken = await resolveWebChallengePolicy(
+        "chicken-stockfish",
+        variant,
+        100,
+        fingerprint,
+      )
+      expect(chicken.fingerprint).toBe(fingerprint)
+      expect(chicken.randomMoveProbabilityBasisPoints).toBe(8000)
+      expect(chicken.calibrationFingerprint).toBeUndefined()
     },
   )
 

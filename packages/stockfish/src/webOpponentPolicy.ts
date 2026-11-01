@@ -1,4 +1,5 @@
 import type { StockfishEngineConfiguration } from "./engineSession.js"
+import webPresetRows from "./webPresetRows.js"
 
 export const WEB_OPPONENT_NODE_LIMIT = 10_000 as const
 
@@ -231,4 +232,39 @@ export const WEB_LADDER_RANDOM_BASIS_POINTS = Object.freeze({
         randomMoveProbabilityBasisPoints,
     ),
   ),
+})
+
+type CalibratedWebPreset = Readonly<{
+  targetElo: number
+  randomMoveProbabilityBasisPoints: number
+  calibrationFingerprint: `sha256:${string}`
+}>
+
+const challengePresets = (
+  variant: StockfishEngineConfiguration["variant"],
+): readonly CalibratedWebPreset[] => {
+  const byTarget = new Map<number, Omit<CalibratedWebPreset, "targetElo">>()
+  for (const [index, preset] of WEB_CALIBRATED_LADDER[variant].entries()) {
+    byTarget.set((index + 1) * 100, preset)
+  }
+  for (const [
+    target,
+    randomMoveProbabilityBasisPoints,
+    calibrationFingerprint,
+  ] of webPresetRows[variant]) {
+    byTarget.set(target, {
+      randomMoveProbabilityBasisPoints,
+      calibrationFingerprint,
+    })
+  }
+  return Object.freeze(
+    Array.from(byTarget, ([targetElo, policy]) =>
+      Object.freeze({ targetElo, ...policy }),
+    ).sort((left, right) => left.targetElo - right.targetElo),
+  )
+}
+
+export const WEB_CHALLENGE_PRESETS = Object.freeze({
+  standard: challengePresets("standard"),
+  chess960: challengePresets("chess960"),
 })

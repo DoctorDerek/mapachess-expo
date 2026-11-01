@@ -237,7 +237,13 @@ export async function openCurrentWebMatchSession({
   const resumedMatch = resumeWebMatch(activeMatch)
   const runtime = await openRuntime({
     ...(activeMatch.mode === "challenge"
-      ? { mode: "challenge" as const, playerColor: activeMatch.playerColor }
+      ? {
+          mode: "challenge" as const,
+          playerColor: activeMatch.playerColor,
+          ...(activeMatch.opponentTargetElo === undefined
+            ? {}
+            : { difficultyTargetElo: activeMatch.opponentTargetElo }),
+        }
       : {}),
     matchSeed: resumedMatch.matchSeed,
     opponentId: activeMatch.opponentId,
@@ -245,21 +251,25 @@ export async function openCurrentWebMatchSession({
     setup: activeMatch.startingPosition,
     signal,
   })
-  const ratedOpponentElo =
-    activeMatch.ratedOpponentElo === null ||
-    activeMatch.opponentPolicyFingerprint !== runtime.opponentPolicyFingerprint
-      ? null
-      : runtime.ratedOpponentElo
-  let match = activeMatch
+  if (signal.aborted) return closeRuntimeAfterFailure(runtime, abortedOpening())
   if (
     activeMatch.opponentPolicyFingerprint !==
       runtime.opponentPolicyFingerprint ||
-    activeMatch.ratedOpponentElo !== ratedOpponentElo
+    (activeMatch.opponentTargetElo !== undefined &&
+      activeMatch.opponentTargetElo !== runtime.opponentTargetElo) ||
+    (typeof activeMatch.ratedOpponentElo === "number" &&
+      activeMatch.ratedOpponentElo !== runtime.ratedOpponentElo)
   ) {
+    return closeRuntimeAfterFailure(
+      runtime,
+      new Error("The saved match requires its original opponent policy."),
+    )
+  }
+  let match = activeMatch
+  if (activeMatch.ratedOpponentElo === undefined) {
     match = Object.freeze({
       ...activeMatch,
-      opponentPolicyFingerprint: runtime.opponentPolicyFingerprint,
-      ratedOpponentElo,
+      ratedOpponentElo: runtime.ratedOpponentElo,
     })
     try {
       await persistProfileActiveMatch({

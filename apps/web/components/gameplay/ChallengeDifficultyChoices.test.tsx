@@ -92,6 +92,24 @@ describe("Challenge difficulty history presentation", () => {
     },
   )
 
+  it("opens the range containing the chosen strength and keeps earned tile details visible", () => {
+    const markup = renderToStaticMarkup(
+      <ChallengeDifficultyChoices
+        disabled={false}
+        targets={Array.from({ length: 91 }, (_, i) => 100 + i * 25)}
+        selectedElo={1000}
+        history={history}
+        onSelected={vi.fn()}
+      />,
+    )
+    expect(markup).toContain("Elo range")
+    expect(markup).toContain("1000–1225")
+    expect(markup).toContain('checked="" value="1000"')
+    expect(markup).toContain("Last played: Raccoon Stockfish")
+    expect(markup.match(/type="radio"/g)).toHaveLength(10)
+    expect(markup).not.toContain('value="2325"')
+  })
+
   it("disables the entire radio group while setup is unavailable", () => {
     const markup = renderToStaticMarkup(
       <ChallengeDifficultyChoices

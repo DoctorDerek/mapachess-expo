@@ -4,6 +4,7 @@ const interfaceCopy = {
   },
   challengeDifficultyChoices: {
     elo: "Elo",
+    range: "Elo range",
   },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults:

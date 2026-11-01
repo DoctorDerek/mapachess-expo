@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import { ratingValues } from "../packages/profile/src/ratingContext.js"
 import { injectControllerInput, press } from "./controllerInput.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
@@ -25,7 +26,7 @@ const choices = [
     mode: "Standard Chess Challenge",
     trigger: /^Change difficulty$/,
     initial: /^100 Elo$/,
-    next: /^300 Elo$/,
+    next: /^150 Elo$/,
   },
   {
     kind: "hints",
@@ -136,5 +137,119 @@ for (const choice of choices) {
       settings: before.settings,
       revision: before.revision,
     }).toEqual(before)
+  })
+}
+
+for (const variant of ["standard", "chess960"] as const) {
+  test(`keeps the animal and 2325 Elo independent through a rated ${variant} Challenge`, async ({
+    page,
+  }, testInfo) => {
+    await injectControllerInput(page)
+    await page.setViewportSize(
+      variant === "standard"
+        ? { width: 390, height: 844 }
+        : { width: 1280, height: 800 },
+    )
+    await page.emulateMedia({ reducedMotion: "reduce" })
+    await page.goto("/")
+    const initial = createInitialMapachessPlayerData()
+    await importPlayerData(page, {
+      ...initial,
+      ratings: ratingValues(() => 2325),
+      storyProgress: {
+        ...initial.storyProgress,
+        standard: [
+          { opponentId: "chicken-stockfish", highestMedal: "bronze" },
+          { opponentId: "bunny-stockfish", highestMedal: "bronze" },
+        ],
+      },
+    })
+    await page
+      .getByRole("button", {
+        name:
+          variant === "standard"
+            ? "Standard Chess Challenge"
+            : "Chess960 Challenge",
+        exact: true,
+      })
+      .click()
+    await page.getByRole("button", { name: /Change animal/ }).click()
+    await page.getByText("Bunny Stockfish", { exact: true }).click()
+    await expect(
+      page.getByRole("radio", { name: "Bunny Stockfish", exact: true }),
+    ).toBeChecked()
+    await page.getByRole("button", { name: "Done", exact: true }).click()
+    await page.getByRole("button", { name: /Change difficulty/ }).click()
+    const picker = page.getByRole("dialog")
+    const range = picker.getByRole("combobox", { name: "Elo range" })
+    await expect(range).toHaveCSS("color", "rgb(30, 30, 30)")
+    await expect(range).toHaveCSS("background-color", "rgb(255, 255, 255)")
+    await range.focus()
+    await press(page, 15)
+    await expect(range).toHaveValue("250")
+    await press(page, 0)
+    await expect(
+      picker.getByRole("radio", { name: "250 Elo", exact: true }),
+    ).toBeFocused()
+    await range.focus()
+    await range.press("Home")
+    await expect(range).toHaveValue("0")
+    await range.selectOption({ label: "2250–2350" })
+    await picker
+      .getByRole("radio", { name: "2325 Elo", exact: true })
+      .press("Space")
+    await expect(picker.getByRole("radio")).toHaveCount(5)
+    await expect(
+      picker.getByRole("button", { name: "Done", exact: true }),
+    ).toBeInViewport({ ratio: 1 })
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath("challenge-picker.png") })
+    await picker.getByRole("button", { name: "Done", exact: true }).click()
+    await page.getByRole("button", { name: "Start match", exact: true }).click()
+    const board = page.getByRole("grid", { name: /Chessboard/ })
+    await expect(board).toBeVisible({ timeout: 30000 })
+    const started = (await savedProfile(page)).activeMatch
+    expect(started).toMatchObject({
+      mode: "challenge",
+      opponentId: "bunny-stockfish",
+      opponentTargetElo: 2325,
+      ratedOpponentElo: 2325,
+    })
+    await page.reload()
+    await expect(board).toBeVisible({ timeout: 30000 })
+    expect((await savedProfile(page)).activeMatch).toMatchObject({
+      matchId: started?.matchId,
+      opponentPolicyFingerprint: started?.opponentPolicyFingerprint,
+      ratedOpponentElo: 2325,
+    })
+    await page.getByLabel("Match menu", { exact: true }).click()
+    await page.getByRole("button", { name: "Resign", exact: true }).click()
+    await expect(
+      page.getByRole("button", { name: "Review board", exact: true }),
+    ).toBeVisible()
+    const finished = await savedProfile(page)
+    expect(
+      Object.values(finished.ratedMatchCounts).reduce(
+        (sum, count) => sum + count,
+        0,
+      ),
+    ).toBe(1)
+    expect(finished.lastAcceptedResultReward?.ratedElo).toMatchObject({
+      variant,
+      before: 2325,
+      after: 2197,
+    })
+    expect(
+      Object.values(finished.ratings).filter((value) => value !== 2325),
+    ).toEqual([2197])
+    expect(finished.challengeHistory[variant].difficulties).toContainEqual({
+      targetElo: 2325,
+      lastPlayedAnimal: "bunny-stockfish",
+      highestMedal: null,
+    })
   })
 }

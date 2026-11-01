@@ -7,6 +7,7 @@ const emergencyInterface = {
   },
   challengeDifficultyChoices: {
     elo: UNAVAILABLE_TEXT,
+    range: UNAVAILABLE_TEXT,
   },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults: UNAVAILABLE_TEXT,
