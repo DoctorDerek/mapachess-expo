@@ -31,6 +31,7 @@ export default function MatchCommands({
   onOfferDraw,
   onMenuOpened,
   onMenuClosed,
+  onBack,
   menuOpen,
   snapshot,
   opponentName,
@@ -44,6 +45,7 @@ export default function MatchCommands({
   onOfferDraw: () => void
   onMenuOpened: () => void
   onMenuClosed: () => void
+  onBack: () => void
   menuOpen: boolean
   snapshot: MatchMachineSnapshot
   opponentName: string
@@ -58,7 +60,7 @@ export default function MatchCommands({
     enabled: menuOpen,
     handle: (action) => {
       if (action !== "cancel" && action !== "menu") return false
-      onMenuClosed()
+      onBack()
       return true
     },
   })
@@ -82,7 +84,7 @@ export default function MatchCommands({
             ref={menuSummaryRef}
             onClick={(event) => {
               event.preventDefault()
-              if (menuOpen) onMenuClosed()
+              if (menuOpen) onBack()
               else onMenuOpened()
             }}
           >
