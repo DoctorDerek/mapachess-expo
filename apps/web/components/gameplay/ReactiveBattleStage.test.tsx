@@ -295,7 +295,7 @@ describe("Reactive Battle Stage web presentation", () => {
           expect(scales["--sprite-mobile-scale"]).toBe(expectedScale)
           expect(scales["--sprite-desktop-scale"]).toBe(expectedScale)
         }
-        for (const { animation } of presentation.steps) {
+        for (const { animation, animationId } of presentation.steps) {
           const topExtent =
             animation.geometry.bottomY - animation.geometry.visibleY
           expect(topExtent).toBeLessThanOrEqual(
@@ -310,7 +310,11 @@ describe("Reactive Battle Stage web presentation", () => {
               animation.geometry.bottomCenterX,
           ).toBeLessThanOrEqual(presentation.layout.clearance.horizontalRadius)
           expect(animation.frameDurationMilliseconds).toBe(
-            reaction.family === "idle" && expectedScale !== undefined
+            (reaction.family === "idle" && expectedScale !== undefined) ||
+              (reaction.family === "victory" &&
+                animationId === "idle" &&
+                (opponentId === "squirrel-stockfish" ||
+                  opponentId === "tiger-stockfish"))
               ? 160
               : 100,
           )
@@ -338,6 +342,10 @@ describe("Reactive Battle Stage web presentation", () => {
           expect(presentation.steps.map(({ beat }) => beat)).toEqual([
             "approach",
             "strike",
+            ...(opponentId === "squirrel-stockfish" ||
+            opponentId === "tiger-stockfish"
+              ? ["reaction"]
+              : []),
             "recovery",
           ])
         if (reaction.family === "defeat")

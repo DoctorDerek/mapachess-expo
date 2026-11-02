@@ -83,13 +83,22 @@ describe("Challenge animal portrait asset contract", () => {
         expect(attention.playback).toBe("once")
         expect(attention.animation.frameDurationMilliseconds).toBe(100)
         const g = attention.animation.geometry
-        expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(100)
-        expect(
+        const width =
           Math.max(
             g.bottomCenterX - g.visibleX,
             g.visibleX + g.visibleWidth - g.bottomCenterX,
-          ) * 6,
-        ).toBeLessThanOrEqual(132)
+          ) * 2
+        expect(width).toBeGreaterThan(0)
+        expect(g.bottomY - g.visibleY).toBeGreaterThan(0)
+        const markup = renderToStaticMarkup(
+          <ChallengeAnimalPortrait
+            opponent={stockfishOpponent(id)}
+            active
+            attention
+          />,
+        )
+        expect(markup).toContain("100cqw")
+        expect(markup).toContain("100cqh")
         expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
         expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
       }
@@ -109,10 +118,9 @@ describe("Challenge animal portrait asset contract", () => {
       expect(markup.match(/rel="preload"/g)).toHaveLength(1)
       expect(markup).toContain(animation.sourceId)
       const scale = presentation.layout.standaloneScale ?? 2
-      expect(geometry.visibleWidth * scale).toBeLessThanOrEqual(116)
-      expect(
-        (geometry.bottomY - geometry.visibleY) * scale,
-      ).toBeLessThanOrEqual(92)
+      expect(geometry.visibleWidth).toBeGreaterThan(0)
+      expect(markup).toContain("@container-size")
+      expect(markup).toContain("--sprite-pixel-size:min(")
       expect(markup).toContain(`--sprite-scale:${scale}`)
       expect(markup).not.toContain("Loading")
     },

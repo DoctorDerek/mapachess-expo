@@ -22,7 +22,7 @@ export default function ChallengeAnimalPortrait({
   active,
   attention = false,
   compact = false,
-  fit = false,
+  fit = true,
 }: Readonly<{
   opponent: Readonly<{ id: AnimalPresentationId }>
   active: boolean
