@@ -1337,6 +1337,114 @@
       "sha256": "7941d5b41daf136718288bdcadee17bbf453be3571e60b7ddc8f32f3754a2d88"
     },
     {
+      "path": "battle/squirrel/squirrel_attack_strip4.png",
+      "sha256": "9e92354b89d86fcbea596beab2bdc696d9d023537d97e32b7df3e72fd5312f4e"
+    },
+    {
+      "path": "battle/squirrel/squirrel_dash_strip10.png",
+      "sha256": "bac9fc309f44b8382c390df422df19cbdf3d8f0cddc120cbf95caa89cc840878"
+    },
+    {
+      "path": "battle/squirrel/squirrel_die_strip8.png",
+      "sha256": "0006bec8fa4483a6d3e102c58c4ea5e8cc392656b4f957cbc536a717e25661bf"
+    },
+    {
+      "path": "battle/squirrel/squirrel_fall_strip2.png",
+      "sha256": "9c3cc73f9cdea5ee867ea1bb4dbfba14fb5e51031353ca3deb2e33f527cd1e3f"
+    },
+    {
+      "path": "battle/squirrel/squirrel_hurt_strip5.png",
+      "sha256": "1c40b58e56b681e5bf71ca79a5b16c2b4595478007cbbd007387def5957bc5eb"
+    },
+    {
+      "path": "battle/squirrel/squirrel_idle_blink_strip8.png",
+      "sha256": "56c97596c9eea71b619c46d23fd255097465cf057c71f0a7a50fd0bf3b4a444a"
+    },
+    {
+      "path": "battle/squirrel/squirrel_idle_strip4.png",
+      "sha256": "62166b7c00681ba5185679bb868ffb1613b81beb1ed475199e2bc593b712f478"
+    },
+    {
+      "path": "battle/squirrel/squirrel_jump_strip12.png",
+      "sha256": "ae040d50b4a5184ee87f10a3c0ec0857e508c5b395b75425484cfb661889779b"
+    },
+    {
+      "path": "battle/squirrel/squirrel_land_strip3.png",
+      "sha256": "8c461a8b34fa3801ad23ff63c26c8b6a158887e24eafd43e58ef985d61fdc6e1"
+    },
+    {
+      "path": "battle/squirrel/squirrel_run_strip4.png",
+      "sha256": "7db66756640a68cb4dfd70fd825938fa07fccda6635017cd446d12200a17f479"
+    },
+    {
+      "path": "battle/squirrel/squirrel_wallclimb_strip4.png",
+      "sha256": "04464a0595061afff23384106cbb14654469e7c085b43476a569323e0ed09235"
+    },
+    {
+      "path": "battle/squirrel/squirrel_wallgrab_strip4.png",
+      "sha256": "4a262aeb98c2e3e31e874863c4ad96f33d5856aae59b28359e1daf6afa23fe5c"
+    },
+    {
+      "path": "battle/tiger/tiger_attack_strip7.png",
+      "sha256": "2486edc9d7b4579870dfe5fedd8495149574cf0448f458b90ce96a6b80cd9d2a"
+    },
+    {
+      "path": "battle/tiger/tiger_crouch_strip8.png",
+      "sha256": "54bd9e9324eb5297afa12637e526fd4d74423268c7abb09006f54357030663c5"
+    },
+    {
+      "path": "battle/tiger/tiger_dash_strip9.png",
+      "sha256": "5f6b454062a680d61c000c38efba74a59893cef79b46fb5d3427f6fede5a10fa"
+    },
+    {
+      "path": "battle/tiger/tiger_die_strip8.png",
+      "sha256": "0986dc1a9ed03114bc0d25c65f610e47079a0f0cbafbe7f3ee066a75563c5e33"
+    },
+    {
+      "path": "battle/tiger/tiger_fall_strip5.png",
+      "sha256": "1dba48fbded5b652d02a1581a6a5edc962000161fc5fa561dd08702892b4419c"
+    },
+    {
+      "path": "battle/tiger/tiger_fright_strip2.png",
+      "sha256": "e150b8a215b67272a2f6bb2549de1a8646e42c2c3f64e5844383eb81d5d0b8a0"
+    },
+    {
+      "path": "battle/tiger/tiger_hurt_strip7.png",
+      "sha256": "7979c1458df1cd37c3f85d9dc80b7710a4f2eddb36337333cb18ba2315c63833"
+    },
+    {
+      "path": "battle/tiger/tiger_idle_blink_strip8.png",
+      "sha256": "09bdd1c3629a7c7042bb71005ffdd596a113323a6c1b666f77d652203c7115f2"
+    },
+    {
+      "path": "battle/tiger/tiger_idle_strip8.png",
+      "sha256": "04ea43efe5d19a7d223e34e0cd534911367cf7a3a3a85e6a7e4082fb43d1ba7d"
+    },
+    {
+      "path": "battle/tiger/tiger_jump_strip8.png",
+      "sha256": "cab8dd187a51525ac4b181cb19d00ebe8bfe748c8167d0486d7a010615ac6a01"
+    },
+    {
+      "path": "battle/tiger/tiger_land_strip3.png",
+      "sha256": "e56745a62632d85692b457490d0293622ef2633603fa77ee8229544338727782"
+    },
+    {
+      "path": "battle/tiger/tiger_roar_strip14.png",
+      "sha256": "173a5a521d1b44ee4d5bc1c5a4655c1bd547dafc8c19407ab18f8daceb3d02f7"
+    },
+    {
+      "path": "battle/tiger/tiger_run_strip8.png",
+      "sha256": "ee7ae81137bd14b0d269fd9cdb01709396bd06efb4aa008ae8cfb33145d95369"
+    },
+    {
+      "path": "battle/tiger/tiger_sit_strip8.png",
+      "sha256": "f3292b977479f7bd45c7acff1ef5271c47c5e66e21c5e149c7c3c6d1e8634af0"
+    },
+    {
+      "path": "battle/tiger/tiger_wallgrab_strip8.png",
+      "sha256": "6e3dca22c07a837363c140bffa6b8d984af6fe40421fc6620778e43619a92c76"
+    },
+    {
       "path": "battle/turtle/turtle_attack_strip8.png",
       "sha256": "e0b297c3c887011180674cab6231ea21c1f1f33932ed854923e2fdea2bc9c70d"
     },
