@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
-import { WEB_CALIBRATED_LADDER } from "@mapachess/stockfish/web-opponent-policy"
 import resolveWebOpponentPolicy, {
   resolveWebChallengePolicy,
   webChallengeDifficultyTargets,
@@ -70,69 +69,82 @@ describe("versioned web opponent policies", () => {
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "uses the frozen %s calibration roster through Dragonfly",
+    "starts 25 distinct rated %s Story opponents at their calibrated target",
     async (variant) => {
       const policies = await Promise.all(
         STOCKFISH_OPPONENTS.map(({ id }) =>
           resolveWebOpponentPolicy(id, variant),
         ),
       )
-      expect(
-        policies.map(
-          ({ randomMoveProbabilityBasisPoints }) =>
-            randomMoveProbabilityBasisPoints,
-        ),
-      ).toEqual(
-        WEB_CALIBRATED_LADDER[variant].map(
-          ({ randomMoveProbabilityBasisPoints }) =>
-            randomMoveProbabilityBasisPoints,
-        ),
-      )
-      expect(policies.at(-1)?.opponentId).toBe("dragonfly-stockfish")
       expect(new Set(policies.map(({ fingerprint }) => fingerprint)).size).toBe(
-        STOCKFISH_OPPONENTS.length,
+        25,
       )
-      for (const policy of policies) {
-        const otherVariantPolicy = await resolveWebOpponentPolicy(
-          policy.opponentId,
-          variant === "standard" ? "chess960" : "standard",
+      for (const [index, policy] of policies.entries()) {
+        expect(policy.targetElo).toBe(
+          STOCKFISH_OPPONENTS[index]?.storyTargetElo,
         )
-        const measured =
-          WEB_CALIBRATED_LADDER[variant][policy.targetElo / 100 - 1]
-        expect(policy.calibrationFingerprint).toBe(
-          measured?.calibrationFingerprint,
-        )
+        expect(policy.calibrationFingerprint).toMatch(/^sha256:[0-9a-f]{64}$/)
         expect(policy.nodeLimit).toBe(10_000)
-        expect(policy.fingerprint).toMatch(/^sha256:[0-9a-f]{64}$/)
-        expect(policy.fingerprint).not.toBe(policy.calibrationFingerprint)
-        expect(Object.isFrozen(policy)).toBe(true)
-        expect(
-          await resolveWebOpponentPolicy(policy.opponentId, variant),
-        ).toEqual(policy)
-        expect(otherVariantPolicy.fingerprint).not.toBe(policy.fingerprint)
         expect(
           await resolveWebChallengePolicy(
             policy.opponentId,
             variant,
             policy.targetElo,
+          ),
+        ).toEqual(policy)
+        expect(
+          await resolveWebOpponentPolicy(
+            policy.opponentId,
+            variant,
+            globalThis.crypto.subtle,
             policy.fingerprint,
           ),
         ).toEqual(policy)
-        const freshChallenge = await resolveWebChallengePolicy(
-          policy.opponentId,
-          variant,
-          policy.targetElo,
-        )
-        if (
-          variant === "chess960" &&
-          (policy.targetElo === 1900 || policy.targetElo === 2000)
-        ) {
-          expect(freshChallenge.fingerprint).not.toBe(policy.fingerprint)
-          expect(freshChallenge.randomMoveProbabilityBasisPoints).toBe(
-            policy.targetElo === 1900 ? 800 : 524,
-          )
-        } else expect(freshChallenge.fingerprint).toBe(policy.fingerprint)
       }
+    },
+  )
+  it.each([
+    [
+      "standard",
+      "frog-stockfish",
+      600,
+      "sha256:b4078c1f2643aa522664928b6e9ed926bf4793e66916932d2489aa422a546f90",
+      5650,
+    ],
+    [
+      "chess960",
+      "frog-stockfish",
+      600,
+      "sha256:f79e6b093668af343ebbfe4f3f6ebe6eb116e113b75126bde29ac2efb7aa0042",
+      5625,
+    ],
+    [
+      "chess960",
+      "crow-stockfish",
+      1900,
+      "sha256:11e6d28be72adf24ca3110694871ca2a834682127d05631065cc1752e0bec166",
+      810,
+    ],
+  ] as const)(
+    "keeps an old %s %s match at its exact %i Elo policy",
+    async (variant, id, targetElo, fingerprint, probability) => {
+      expect(
+        await resolveWebOpponentPolicy(
+          id,
+          variant,
+          globalThis.crypto.subtle,
+          fingerprint,
+        ),
+      ).toMatchObject({
+        opponentId: id,
+        targetElo,
+        fingerprint,
+        randomMoveProbabilityBasisPoints: probability,
+        calibrationFingerprint: expect.stringMatching(/^sha256:/),
+      })
+      expect((await resolveWebOpponentPolicy(id, variant)).targetElo).not.toBe(
+        targetElo,
+      )
     },
   )
 

@@ -96,7 +96,9 @@ export default async function resolveWebOpponentPolicy(
   savedFingerprint?: string,
 ): Promise<WebOpponentPolicy> {
   const opponent = stockfishOpponent(opponentId)
-  const measured = WEB_CALIBRATED_LADDER[variant][opponent.storyPosition - 1]
+  const measured = WEB_CHALLENGE_PRESETS[variant].find(
+    ({ targetElo }) => targetElo === opponent.storyTargetElo,
+  )
   if (measured === undefined) {
     throw new TypeError("This opponent has no measured web policy.")
   }
@@ -113,15 +115,29 @@ export default async function resolveWebOpponentPolicy(
     current.fingerprint === savedFingerprint
   )
     return current
-  const previous = await findProvisionalPolicy(
-    opponentId,
-    variant,
-    opponent.storyTargetElo,
-    "story",
-    savedFingerprint,
-    subtleCrypto,
-  )
-  if (previous !== undefined) return previous
+  const originalTarget = opponent.originalStoryTargetElo
+  if (originalTarget !== null) {
+    const original = WEB_CALIBRATED_LADDER[variant][originalTarget / 100 - 1]
+    if (original !== undefined) {
+      const historical = await createCalibratedWebPolicy(
+        opponentId,
+        variant,
+        originalTarget,
+        original,
+        subtleCrypto,
+      )
+      if (historical.fingerprint === savedFingerprint) return historical
+    }
+    const provisional = await findProvisionalPolicy(
+      opponentId,
+      variant,
+      originalTarget,
+      "story",
+      savedFingerprint,
+      subtleCrypto,
+    )
+    if (provisional !== undefined) return provisional
+  }
   throw new TypeError("The saved Story opponent policy is unavailable.")
 }
 
@@ -245,7 +261,7 @@ export async function resolveWebChallengePolicy(
     )
     if (previous !== undefined) return previous
     // Before independent Challenge strength, matches used the chosen animal's Story policy.
-    if (stockfishOpponent(opponentId).storyTargetElo === target) {
+    if (stockfishOpponent(opponentId).originalStoryTargetElo === target) {
       const story = await findProvisionalPolicy(
         opponentId,
         variant,
