@@ -9,20 +9,20 @@ pre-production. Its defining design combines:
 
 - Three Piece Hints for each side, followed by three Move Hints for those pieces
   for each side.
-- Stockfish-powered animal opponents authored from 100 through 2300 Elo, with
+- Stockfish-powered animal opponents authored from 100 through 2000 Elo, with
   independently selected unlocked animals and currently calibrated web difficulty
-  through 2300 Elo in Challenge.
+  through 2350 Elo in Challenge.
 - A Reactive Battle Stage with animated animal combat and Mapachito coach
   portrait reactions.
 - Standard and Chess960 across Story and Challenge, with 24 separately tracked
   player Elo ratings.
 
-The current web development build offers 23 Story opponents, Chicken through
+The current web development build offers 25 Story opponents, Chicken through
 Dragonfly, in both Standard and Chess960. Win to unlock the next animal, or replay
 earlier opponents to improve your medal. Each variant retains its own victories
 and best medals, and active matches save locally for reload and restart.
-The current web difficulty presets span 100–2300 Elo in both variants;
-they are estimates, not certified human ratings.
+Challenge offers 100 through 2350 Elo in steps of 25 in both variants.
+The displayed strengths are calibrated estimates.
 Eligible matches update player Elo. Challenge supports independently
 selected earned animals and difficulty, side, and Chess960-position selection.
 XP/Levels, level achievements, and player-rating updates are implemented.
@@ -37,7 +37,7 @@ The implemented foundation currently provides:
   Windows UCI process adapter.
 - Deterministic, resumable, color-reversed calibration matches with preserved
   evidence and local BayesElo rating analysis.
-- Calibrated Standard and Chess960 100–2300 opponent presets using the pinned
+- Calibrated Standard and Chess960 100–2350 opponent presets using the pinned
   web Lite WASM artifacts, with player-rating updates for eligible matches.
 - Durable Standard and Chess960 browser matches with exact Better Hints, evaluation,
   Undo/Redo, Resign, Offer Draw, reload recovery, Restart Match, and Return to
@@ -55,8 +55,8 @@ CI never runs Stockfish or calibration games.
 
 1. Playtest and complete the first Standard Story opponent's full QREAM
    presentation, results, progression, and responsive behavior.
-2. Expand the same shared architecture across all twenty-three Story opponents
-   without making Chicken the owner of reusable behavior.
+2. Playtest the 25 Story opponents in both variants, including progression from
+   previously saved games.
 3. Complete Chess960 Story and both Challenge modes through the same canonical
    match, profile, and engine contracts.
 
