@@ -633,9 +633,17 @@ describe("complete Story animal presentation", () => {
       for (const reaction of REACTIONS) {
         const result = resolveSpritePresentation(manifest, reaction, sources)
         if (result.kind !== "sprite") throw new Error("Expected sprite")
-        for (const { animation } of result.steps) {
+        for (const { animation, animationId } of result.steps) {
+          const calmEnding = manifest.reactionPlans.victory.some(
+            (step) =>
+              step.pacing === "calm" && step.animationIds.includes(animationId),
+          )
           expect(animation.frameDurationMilliseconds).toBe(
-            reaction.family === "idle" && !human ? 160 : 100,
+            !human &&
+              (reaction.family === "idle" ||
+                (reaction.family === "victory" && calmEnding))
+              ? 160
+              : 100,
           )
         }
       }
@@ -668,8 +676,8 @@ describe("complete Story animal presentation", () => {
     },
   )
   it("composes the remaining roster without duplicating Chicken or Mapachito", () => {
-    expect(Object.keys(REMAINING_STORY_ANIMAL_SPRITES)).toHaveLength(13)
-    expect(Object.keys(STORY_ANIMAL_SPRITES)).toHaveLength(21)
+    expect(Object.keys(REMAINING_STORY_ANIMAL_SPRITES)).toHaveLength(15)
+    expect(Object.keys(STORY_ANIMAL_SPRITES)).toHaveLength(23)
     expect(STORY_ANIMAL_SPRITES).not.toHaveProperty("chicken-stockfish")
     expect(STORY_ANIMAL_SPRITES).not.toHaveProperty("raccoon-stockfish")
   })
@@ -723,6 +731,9 @@ describe("complete Story animal presentation", () => {
       expect(capture.steps.map(({ beat }) => beat)).toEqual([
         "approach",
         "strike",
+        ...(opponent === "squirrel-stockfish" || opponent === "tiger-stockfish"
+          ? ["reaction"]
+          : []),
         "recovery",
       ])
       const defeat = resolveSpritePresentation(

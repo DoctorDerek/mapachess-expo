@@ -378,7 +378,7 @@ describe("Reactive Battle Stage web presentation", () => {
         clipCount += 1
       }
     }
-    expect(clipCount).toBe(352)
+    expect(clipCount).toBe(379)
     expect(archiveManifest).not.toContain("battle/raccoon/")
     const raccoon = resolveWebOpponentPresentation("raccoon-stockfish")
     if (raccoon.kind !== "sprite") throw new Error("Raccoon sprite expected")
