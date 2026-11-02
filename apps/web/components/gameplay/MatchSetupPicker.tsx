@@ -9,20 +9,27 @@ export default function MatchSetupPicker({
   onCancel,
   onDone,
   disabled,
+  fitContent = false,
   title,
 }: Readonly<{
   children: ReactNode
   onCancel: () => void
   onDone: () => void
   disabled: boolean
+  fitContent?: boolean
   title: string
 }>) {
   const copy = useMapachessCopy().setup
   const heading = useRef<HTMLHeadingElement>(null)
   useLayoutEffect(() => heading.current?.focus({ preventScroll: true }), [])
   return (
-    <MapachessDialog label={title} onClose={onCancel} fixedContent>
+    <MapachessDialog
+      label={title}
+      onClose={onCancel}
+      fixedContent={fitContent ? "fit" : true}
+    >
       <ScrollActions
+        className={fitContent ? "xl:h-auto xl:max-h-[calc(90dvh-3rem)]" : ""}
         actions={
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,7rem),1fr))] gap-2">
             <MapachessButton

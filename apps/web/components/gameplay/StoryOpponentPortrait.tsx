@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 
 type StoryOpponentPortraitProps = Readonly<{
   opponent: StockfishOpponentDefinition
   locked: boolean
+  framed?: boolean
 }>
 
 const PORTRAIT_PIXEL_SCALE = 2
@@ -11,18 +13,33 @@ const PORTRAIT_PIXEL_SCALE = 2
 export default function StoryOpponentPortrait({
   opponent,
   locked,
+  framed = true,
 }: StoryOpponentPortraitProps) {
   const presentation = resolveWebOpponentPresentation(opponent.id)
   const animation =
     presentation.kind === "sprite" ? presentation.steps[0].animation : null
 
+  const geometry = animation?.geometry
+  const pixelSize =
+    framed || geometry === undefined
+      ? `${PORTRAIT_PIXEL_SCALE}px`
+      : `min(${PORTRAIT_PIXEL_SCALE}px, calc(100cqw / ${geometry.visibleWidth}), calc(100cqh / ${geometry.visibleHeight}))`
+  const length = (pixels: number) =>
+    `calc(${pixels} * var(--portrait-pixel-size))`
+
   return (
     <span
       aria-hidden="true"
-      className="bg-mapachito-white border-mapachito-charcoal/30 grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border-2 font-mono font-bold"
+      className={
+        framed
+          ? "bg-mapachito-white border-mapachito-charcoal/30 grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border-2 font-mono font-bold"
+          : "@container-size grid size-full place-items-end-safe justify-items-center"
+      }
     >
       {animation === null ? (
-        opponent.storyPosition
+        framed ? (
+          opponent.storyPosition
+        ) : null
       ) : (
         <span
           className={
@@ -30,14 +47,17 @@ export default function StoryOpponentPortrait({
               ? "block brightness-0 [image-rendering:pixelated]"
               : "block [image-rendering:pixelated]"
           }
-          style={{
-            backgroundImage: `url("${animation.sourceId}")`,
-            backgroundPosition: `${-animation.geometry.visibleX * PORTRAIT_PIXEL_SCALE}px ${-animation.geometry.visibleY * PORTRAIT_PIXEL_SCALE}px`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: `${animation.geometry.frameWidth * animation.frameCount * PORTRAIT_PIXEL_SCALE}px ${animation.geometry.frameHeight * PORTRAIT_PIXEL_SCALE}px`,
-            width: animation.geometry.visibleWidth * PORTRAIT_PIXEL_SCALE,
-            height: animation.geometry.visibleHeight * PORTRAIT_PIXEL_SCALE,
-          }}
+          style={
+            {
+              "--portrait-pixel-size": pixelSize,
+              backgroundImage: `url("${animation.sourceId}")`,
+              backgroundPosition: `${length(-animation.geometry.visibleX)} ${length(-animation.geometry.visibleY)}`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: `${length(animation.geometry.frameWidth * animation.frameCount)} ${length(animation.geometry.frameHeight)}`,
+              width: length(animation.geometry.visibleWidth),
+              height: length(animation.geometry.visibleHeight),
+            } as CSSProperties & { "--portrait-pixel-size": string }
+          }
         />
       )}
     </span>
