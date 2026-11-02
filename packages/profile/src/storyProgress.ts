@@ -1,8 +1,7 @@
 import loadCatalog from "@mapachess/localization/catalog"
-import {
-  IMPLEMENTED_DURABLE_OPPONENT_IDS,
-  type DurableMatchRecord,
-  type ImplementedDurableOpponentId,
+import type {
+  DurableMatchRecord,
+  ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
 import {
   MATCH_VARIANTS,
@@ -26,8 +25,18 @@ export type StoryVictory = Readonly<{
   highestMedal: StoryMedal
 }>
 
+export const RETAINED_STORY_FRONTIERS = [
+  "falcon-stockfish",
+  "frog-stockfish",
+] as const
+export type RetainedStoryFrontier = (typeof RETAINED_STORY_FRONTIERS)[number]
+
 export type StoryProgress = Readonly<
-  Record<MatchVariant, readonly StoryVictory[]>
+  Record<MatchVariant, readonly StoryVictory[]> & {
+    retainedAccess?: Readonly<
+      Partial<Record<MatchVariant, RetainedStoryFrontier>>
+    >
+  }
 >
 
 export type StoryMatchResult = Readonly<
@@ -56,24 +65,42 @@ export const formatStoryCompletion = (percent: number): string =>
 export const createInitialStoryProgress = (): StoryProgress =>
   Object.freeze({ standard: Object.freeze([]), chess960: Object.freeze([]) })
 
+export const isStoryOpponentAvailable = (
+  victories: readonly StoryVictory[],
+  retained: RetainedStoryFrontier | undefined,
+  opponent: StockfishOpponentDefinition,
+): boolean => {
+  const previous = STOCKFISH_OPPONENTS[opponent.storyPosition - 2]
+  return (
+    previous === undefined ||
+    victories.some(
+      ({ opponentId }) =>
+        opponentId === opponent.id || opponentId === previous.id,
+    ) ||
+    (retained !== undefined &&
+      opponent.originalStoryTargetElo !== null &&
+      opponent.storyPosition <= stockfishOpponent(retained).storyPosition)
+  )
+}
+
 export const canPlayStoryOpponent = (
   progress: StoryProgress,
   variant: MatchVariant,
   opponentId: StockfishOpponentId,
 ): boolean =>
-  stockfishOpponent(opponentId).storyPosition <= progress[variant].length + 1
+  isStoryOpponentAvailable(
+    progress[variant],
+    progress.retainedAccess?.[variant],
+    stockfishOpponent(opponentId),
+  )
 
 export const selectDefaultStoryOpponent = (
   progress: StoryProgress,
   variant: MatchVariant,
 ): ImplementedDurableOpponentId =>
-  IMPLEMENTED_DURABLE_OPPONENT_IDS.reduce<ImplementedDurableOpponentId>(
-    (selected, opponentId) =>
-      canPlayStoryOpponent(progress, variant, opponentId)
-        ? opponentId
-        : selected,
-    "chicken-stockfish",
-  )
+  selectStoryLadder(progress, variant).find(
+    ({ status }) => status === "unlocked",
+  )?.opponent.id ?? STOCKFISH_OPPONENTS[STOCKFISH_OPPONENTS.length - 1]!.id
 
 export const storyVictoryMedal = (
   match: StoryMatchResult,
@@ -89,11 +116,12 @@ export default function applyStoryMatchResult(
   if (highestMedal === null) return progress
   const variant = match.startingPosition.variant
   const victories = progress[variant]
-  const index = stockfishOpponent(match.opponentId).storyPosition - 1
-  if (index > victories.length) {
+  if (!canPlayStoryOpponent(progress, variant, match.opponentId)) {
     throw new TypeError("A Story victory cannot skip a locked opponent.")
   }
-  const previous = victories[index]
+  const previous = victories.find(
+    ({ opponentId }) => opponentId === match.opponentId,
+  )
   if (
     previous !== undefined &&
     STORY_MEDALS.indexOf(previous.highestMedal) >=
@@ -101,8 +129,15 @@ export default function applyStoryMatchResult(
   )
     return progress
 
-  const updated = [...victories]
-  updated[index] = Object.freeze({ opponentId: match.opponentId, highestMedal })
+  const victory = Object.freeze({ opponentId: match.opponentId, highestMedal })
+  const updated =
+    previous === undefined
+      ? [...victories, victory].sort(
+          (left, right) =>
+            stockfishOpponent(left.opponentId).storyPosition -
+            stockfishOpponent(right.opponentId).storyPosition,
+        )
+      : victories.map((item) => (item === previous ? victory : item))
   return Object.freeze({ ...progress, [variant]: Object.freeze(updated) })
 }
 
@@ -111,18 +146,25 @@ export const selectStoryLadder = (
   variant: MatchVariant,
 ): readonly StoryLadderStep[] =>
   Object.freeze(
-    STOCKFISH_OPPONENTS.map((opponent, index) =>
-      Object.freeze({
+    STOCKFISH_OPPONENTS.map((opponent) => {
+      const highestMedal =
+        progress[variant].find(({ opponentId }) => opponentId === opponent.id)
+          ?.highestMedal ?? null
+      return Object.freeze({
         opponent,
-        highestMedal: progress[variant][index]?.highestMedal ?? null,
+        highestMedal,
         status:
-          index < progress[variant].length
+          highestMedal !== null
             ? "defeated"
-            : index === progress[variant].length
+            : isStoryOpponentAvailable(
+                  progress[variant],
+                  progress.retainedAccess?.[variant],
+                  opponent,
+                )
               ? "unlocked"
               : "locked",
-      }),
-    ),
+      })
+    }),
   )
 
 export const selectStoryCompletion = (

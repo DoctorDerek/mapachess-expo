@@ -3,7 +3,7 @@ import { createMapachessPortableBackup } from "@mapachess/profile/portable-backu
 import webPackage from "../../package.json"
 import webSha256, { type Sha256SubtleCrypto } from "./webSha256"
 
-export const MAPACHESS_GDD_REVISION = "v2.1" as const
+export const MAPACHESS_GDD_REVISION = "v5.5" as const
 export const MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME =
   "mapachess-player-data.json" as const
 export const MAPACHESS_UNREADABLE_DATA_FILE_NAME =

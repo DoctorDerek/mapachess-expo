@@ -22,7 +22,7 @@ The GDD is a product baseline, not a suggestion. If code, a legacy implementatio
 
 - Better Hints means exactly three Piece Hints for each side followed by three Move Hints for those pieces for each side.
 - Opponent hints analyze the unchanged current position as though it were the opponent’s turn; they do not move the opponent, change actual turn ownership, or predict a reply to a proposed player move.
-- Story offers twenty-three `[Animal] Stockfish` opponents from 100 through 2300 Elo in 100-Elo steps, beginning with Chicken Stockfish; Challenge supports independently selected unlocked animals and calibrated difficulty through 3000+ Elo.
+- Story offers 25 `[Animal] Stockfish` opponents at distinct targets from 100 through 2000 Elo, beginning with Chicken Stockfish. Challenge supports independently selected unlocked animals and 91 rated web difficulty presets from 100 through 2350 Elo in 25-Elo steps.
 - Standard and Chess960 each have Story and Challenge, producing four modes and 24 player Elo rating contexts (2 variants × 4 time categories × 3 assistance tiers), shared by Story and Challenge within each context.
 - The Reactive Battle Stage and Mapachito coach portrait reactions are core presentation, not optional polish.
 - Medals measure hint use: Bronze permits Move Hints, Silver uses no Move Hints, and Gold uses no Piece Hints.
@@ -134,7 +134,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 17. **No Untyped Boundaries:** Public functions, actor inputs and events, schemas, adapters, catalogs, calibration records, and persistence contracts use explicit TypeScript types; external data enters as `unknown`, and `any` or unchecked casts are prohibited.
 18. **Typed Dependency Injection:** Resolve storage, Stockfish, clock, randomness, file/share, locale, input, and platform dependencies once through typed actor input or a scoped provider.
 19. **Scoped Typed Actor Events:** Application and feature communication uses scoped discriminated XState events with explicit owners, rejecting untyped global emitters and duplicated route state.
-20. **No Duplicate Magic Numbers:** Define canonical constants and formulas—including 23 animals, 37 achievements, the 1280 breakpoint, Elo steps, XP/Level math, schema versions, thresholds, durations, and asset geometry—once.
+20. **No Duplicate Magic Numbers:** Define canonical constants and formulas—including 25 Story animals, 39 cataloged achievements, the 1280 breakpoint, Elo steps, XP/Level math, schema versions, thresholds, durations, and asset geometry—once.
 21. **Idiomatic Instantiation:** Create actors, workers, and platform services through supported APIs with complete typed input; validate readiness before accepting play input and prohibit render-time construction rituals.
 22. **No Ceremonial Getters and Setters:** Prefer immutable records, pure transformations, typed events, and direct safe field access, adding encapsulation only for a real invariant or platform boundary.
 23. **Composition Over Inheritance:** Compose screens from focused components, hooks, actors, and adapters; shared behavior lives in pure functions or composition rather than visual superclass hierarchies.

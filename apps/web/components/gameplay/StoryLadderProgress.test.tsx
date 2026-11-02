@@ -18,12 +18,12 @@ const progress: StoryProgress = {
 }
 
 describe("Story ladder presentation structure", () => {
-  it("renders only the globally earned animals in the focused Challenge chooser", () => {
+  it("shows named locks across the roster and offers only globally earned Challenge opponents", () => {
     const markup = renderToStaticMarkup(
       <ChallengeOpponentChoices
         disabled={false}
         onSelected={vi.fn()}
-        opponents={selectChallengeUnlockedOpponents({
+        unlockedOpponents={selectChallengeUnlockedOpponents({
           standard: [],
           chess960: [
             { opponentId: "chicken-stockfish", highestMedal: "gold" },
@@ -36,6 +36,11 @@ describe("Story ladder presentation structure", () => {
     expect(markup).toContain('value="chicken-stockfish"')
     expect(markup).toMatch(/checked=""[^>]*value="bunny-stockfish"/)
     expect(markup).not.toContain('value="dog-stockfish"')
+    expect(markup.match(/<li>/g)).toHaveLength(25)
+    expect(markup.match(/type="radio"/g)).toHaveLength(2)
+    expect(markup).toContain("Squirrel")
+    expect(markup).toContain("Tiger")
+    expect(markup).toContain("Beat an animal in either Story mode")
     expect(markup).not.toContain("<select")
   })
 
@@ -175,8 +180,8 @@ describe("Story ladder presentation structure", () => {
     expect(markup).toContain("Defeated · Gold")
     expect(markup).toContain("Bunny Stockfish")
     expect(markup).not.toContain("Dog Stockfish")
-    expect(markup).toContain("4.3%")
-    expect(markup).toContain("2.2%")
+    expect(markup).toContain("4%")
+    expect(markup).toContain("2%")
     expect(markup).toContain("0%")
     expect(markup).not.toContain("Play through Raccoon now.")
     expect(markup).not.toContain("In development")

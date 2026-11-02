@@ -20,7 +20,7 @@ const introduction = Object.freeze({
   paragraphs: Object.freeze([
     {
       lead: "",
-      body: "Play Standard Chess or Chess960 against animal Stockfish opponents. Climb the 23-opponent Story ladder, or choose your own Challenge.",
+      body: "Play Standard Chess or Chess960 against animal Stockfish opponents. Climb the 25-opponent Story ladder, or choose your own Challenge.",
     },
     {
       lead: "See the possibilities.",

@@ -32,7 +32,7 @@ const setup = {
   storyAvailability:
     "Derrota a cada oponente para desbloquear al siguiente en esta progresión de Historia. Vuelve a jugar las partidas que ganaste para mejorar tu medalla.",
   challengeAvailability:
-    "Elige cualquier animal que hayas derrotado en cualquiera de las dos progresiones de Historia. Pollo siempre está disponible. La apariencia del animal no cambia la dificultad.",
+    "Derrota a un animal en cualquiera de los dos modos Historia para desbloquearlo en Desafío.",
   startMatch: "Iniciar partida",
   openingMatch: "Abriendo partida…",
   restartingMatch: "Reiniciando partida…",

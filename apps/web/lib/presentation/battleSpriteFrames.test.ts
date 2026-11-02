@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import resolveSpritePresentation, {
   type SpriteAssetManifest,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
@@ -15,6 +16,53 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it("extends Tiger's strike only at contact and across its return against Squirrel", () => {
+    const tiger = STORY_ANIMAL_SPRITES["tiger-stockfish"]
+    const squirrel = STORY_ANIMAL_SPRITES["squirrel-stockfish"]
+    const sources = (m: typeof tiger) =>
+      Object.values(m.animations).map((a) => a.sourceId)
+    const attack = resolveSpritePresentation(
+      tiger,
+      { family: "capture", role: "attacker" },
+      sources(tiger),
+    )
+    const hurt = resolveSpritePresentation(
+      squirrel,
+      { family: "capture", role: "victim" },
+      sources(squirrel),
+    )
+    for (const beat of ["approach", "strike"] as const)
+      expect(
+        battleSpriteAnchorStyle(attack, hurt, beat)[
+          "--battle-contact-extension"
+        ],
+      ).toBeUndefined()
+    for (const beat of ["reaction", "recovery"] as const)
+      expect(
+        battleSpriteAnchorStyle(attack, hurt, beat)[
+          "--battle-contact-extension"
+        ],
+      ).toBe("4px")
+    const roar = resolveSpritePresentation(
+      tiger,
+      { family: "check", role: "attacker" },
+      sources(tiger),
+    )
+    expect(
+      battleSpriteAnchorStyle(roar, hurt, "reaction")[
+        "--battle-contact-extension"
+      ],
+    ).toBeUndefined()
+  })
+  it("starts the reaction on the authored cell of the full attack strip", () => {
+    const frames = battleSpriteFrameKeyframes(7, [3, 7])
+    expect(frames.map((frame) => frame.offset)).toEqual([0, 0.25, 0.5, 0.75, 1])
+    expect(frames[0]?.backgroundPosition).toBe("50% 0")
+    expect(frames.at(-1)?.backgroundPosition).toBe("100% 0")
+    expect(
+      battleSpriteFrameKeyframes(7, [0, 3]).at(-1)?.backgroundPosition,
+    ).toBe(`${(2 / 6) * 100}% 0`)
+  })
   it.each([
     {
       name: "Chicken",

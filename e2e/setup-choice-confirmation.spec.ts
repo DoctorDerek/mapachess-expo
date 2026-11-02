@@ -174,7 +174,7 @@ for (const variant of ["standard", "chess960"] as const) {
       })
       .click()
     await page.getByRole("button", { name: /Change animal/ }).click()
-    await page.getByText("Bunny Stockfish", { exact: true }).click()
+    await page.getByRole("dialog").getByText("Bunny", { exact: true }).click()
     await expect(
       page.getByRole("radio", { name: "Bunny Stockfish", exact: true }),
     ).toBeChecked()

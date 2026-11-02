@@ -19,7 +19,7 @@ describe("Mexican Spanish player-facing catalog", () => {
       chess960: "Ajedrez 960",
     })
     expect(copy.introduction.paragraphs[0]?.body).toBe(
-      "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 23 oponentes de Historia o elige tu propio Desafío.",
+      "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 25 oponentes de Historia o elige tu propio Desafío.",
     )
     expect(copy.setup.position).toBe("Posición inicial de ajedrez 960")
     expect(copy.setup.presentations.chess960.story.title).toBe(

@@ -1,119 +1,53 @@
 import loadCatalog from "@mapachess/localization/catalog"
 
-const STOCKFISH_OPPONENT_IDENTITIES = [
-  {
-    id: "chicken-stockfish",
-    displayName: loadCatalog("en").animals.opponent("chicken-stockfish"),
-  },
-  {
-    id: "bunny-stockfish",
-    displayName: loadCatalog("en").animals.opponent("bunny-stockfish"),
-  },
-  {
-    id: "dog-stockfish",
-    displayName: loadCatalog("en").animals.opponent("dog-stockfish"),
-  },
-  {
-    id: "cat-stockfish",
-    displayName: loadCatalog("en").animals.opponent("cat-stockfish"),
-  },
-  {
-    id: "mouse-stockfish",
-    displayName: loadCatalog("en").animals.opponent("mouse-stockfish"),
-  },
-  {
-    id: "frog-stockfish",
-    displayName: loadCatalog("en").animals.opponent("frog-stockfish"),
-  },
-  {
-    id: "turtle-stockfish",
-    displayName: loadCatalog("en").animals.opponent("turtle-stockfish"),
-  },
-  {
-    id: "panda-stockfish",
-    displayName: loadCatalog("en").animals.opponent("panda-stockfish"),
-  },
-  {
-    id: "otter-stockfish",
-    displayName: loadCatalog("en").animals.opponent("otter-stockfish"),
-  },
-  {
-    id: "raccoon-stockfish",
-    displayName: loadCatalog("en").animals.opponent("raccoon-stockfish"),
-  },
-  {
-    id: "axolotl-stockfish",
-    displayName: loadCatalog("en").animals.opponent("axolotl-stockfish"),
-  },
-  {
-    id: "parrot-stockfish",
-    displayName: loadCatalog("en").animals.opponent("parrot-stockfish"),
-  },
-  {
-    id: "hedgehog-stockfish",
-    displayName: loadCatalog("en").animals.opponent("hedgehog-stockfish"),
-  },
-  {
-    id: "deer-stockfish",
-    displayName: loadCatalog("en").animals.opponent("deer-stockfish"),
-  },
-  {
-    id: "fox-stockfish",
-    displayName: loadCatalog("en").animals.opponent("fox-stockfish"),
-  },
-  {
-    id: "wolf-stockfish",
-    displayName: loadCatalog("en").animals.opponent("wolf-stockfish"),
-  },
-  {
-    id: "falcon-stockfish",
-    displayName: loadCatalog("en").animals.opponent("falcon-stockfish"),
-  },
-  {
-    id: "crane-stockfish",
-    displayName: loadCatalog("en").animals.opponent("crane-stockfish"),
-  },
-  {
-    id: "crow-stockfish",
-    displayName: loadCatalog("en").animals.opponent("crow-stockfish"),
-  },
-  {
-    id: "bat-stockfish",
-    displayName: loadCatalog("en").animals.opponent("bat-stockfish"),
-  },
-  {
-    id: "ninja-stockfish",
-    displayName: loadCatalog("en").animals.opponent("ninja-stockfish"),
-  },
-  {
-    id: "war-hero-stockfish",
-    displayName: loadCatalog("en").animals.opponent("war-hero-stockfish"),
-  },
-  {
-    id: "dragonfly-stockfish",
-    displayName: loadCatalog("en").animals.opponent("dragonfly-stockfish"),
-  },
+// The original target is part of a saved policy's identity.
+const STORY_ROSTER = [
+  ["chicken-stockfish", 100, 100],
+  ["bunny-stockfish", 175, 200],
+  ["dog-stockfish", 250, 300],
+  ["cat-stockfish", 350, 400],
+  ["mouse-stockfish", 425, 500],
+  ["squirrel-stockfish", 500, null],
+  ["frog-stockfish", 575, 600],
+  ["turtle-stockfish", 650, 700],
+  ["panda-stockfish", 725, 800],
+  ["otter-stockfish", 825, 900],
+  ["raccoon-stockfish", 900, 1000],
+  ["axolotl-stockfish", 975, 1100],
+  ["parrot-stockfish", 1050, 1200],
+  ["hedgehog-stockfish", 1125, 1300],
+  ["deer-stockfish", 1200, 1400],
+  ["fox-stockfish", 1300, 1500],
+  ["wolf-stockfish", 1375, 1600],
+  ["tiger-stockfish", 1450, null],
+  ["falcon-stockfish", 1525, 1700],
+  ["crane-stockfish", 1600, 1800],
+  ["crow-stockfish", 1675, 1900],
+  ["bat-stockfish", 1775, 2000],
+  ["ninja-stockfish", 1850, 2100],
+  ["war-hero-stockfish", 1925, 2200],
+  ["dragonfly-stockfish", 2000, 2300],
 ] as const
 
-const STORY_OPPONENT_TARGET_ELO_STEP = 100
+export type StockfishOpponentId = (typeof STORY_ROSTER)[number][0]
 
-export type StockfishOpponentId =
-  (typeof STOCKFISH_OPPONENT_IDENTITIES)[number]["id"]
-
-export type StockfishOpponentDefinition =
-  (typeof STOCKFISH_OPPONENT_IDENTITIES)[number] &
-    Readonly<{
-      storyPosition: number
-      storyTargetElo: number
-    }>
+export type StockfishOpponentDefinition = Readonly<{
+  id: StockfishOpponentId
+  displayName: string
+  storyPosition: number
+  storyTargetElo: number
+  originalStoryTargetElo: number | null
+}>
 
 export const STOCKFISH_OPPONENTS: readonly StockfishOpponentDefinition[] =
   Object.freeze(
-    STOCKFISH_OPPONENT_IDENTITIES.map((opponent, index) =>
+    STORY_ROSTER.map(([id, storyTargetElo, originalStoryTargetElo], index) =>
       Object.freeze({
-        ...opponent,
+        id,
+        displayName: loadCatalog("en").animals.opponent(id),
         storyPosition: index + 1,
-        storyTargetElo: (index + 1) * STORY_OPPONENT_TARGET_ELO_STEP,
+        storyTargetElo,
+        originalStoryTargetElo,
       }),
     ),
   )

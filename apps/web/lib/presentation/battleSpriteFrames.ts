@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react"
+import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
   ResolvedSpritePresentation,
   ResolvedSpriteStep,
+  SpriteFrameRange,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
 
@@ -99,6 +101,7 @@ export const battleStageStyle = (
 export const battleSpriteAnchorStyle = (
   presentation: ResolvedSpritePresentation<string, string>,
   opposingPresentation: ResolvedSpritePresentation<string, string>,
+  beat: MatchPresentationBeat = "idle",
 ): CSSProperties &
   Readonly<{
     "--sprite-mobile-scale": number
@@ -106,23 +109,45 @@ export const battleSpriteAnchorStyle = (
     "--sprite-visible-width": string
     "--opponent-mobile-width": string
     "--opponent-desktop-width": string
+    "--battle-contact-extension"?: string
   }> => {
   const sprite = responsiveSpriteGeometry(presentation)
   const opponent = responsiveSpriteGeometry(opposingPresentation)
+  const extension =
+    (beat === "reaction" || beat === "recovery") &&
+    presentation.kind === "sprite" &&
+    opposingPresentation.kind === "sprite" &&
+    opposingPresentation.sourceAnimalId
+      ? presentation.contactAdvanceByTarget?.[
+          opposingPresentation.sourceAnimalId
+        ]
+      : undefined
   return {
     "--sprite-mobile-scale": sprite.mobileScale,
     "--sprite-desktop-scale": sprite.desktopScale,
     "--sprite-visible-width": sprite.visibleWidth,
+    ...(extension === undefined
+      ? {}
+      : { "--battle-contact-extension": `${extension}px` }),
     "--opponent-mobile-width": `calc(${opponent.visibleWidth} * ${opponent.mobileScale})`,
     "--opponent-desktop-width": `calc(${opponent.visibleWidth} * ${opponent.desktopScale})`,
   }
 }
 
-export const battleSpriteFrameKeyframes = (frameCount: number): Keyframe[] =>
-  Array.from({ length: frameCount + 1 }, (_, index) => ({
-    backgroundPosition: `${frameCount === 1 ? 0 : (Math.min(index, frameCount - 1) / (frameCount - 1)) * 100}% 0`,
+export const battleSpriteFramePosition = (frame: number, frameCount: number) =>
+  `${frameCount === 1 ? 0 : (frame / (frameCount - 1)) * 100}% 0`
+
+export const battleSpriteFrameKeyframes = (
+  frameCount: number,
+  [first, end]: SpriteFrameRange = [0, frameCount],
+): Keyframe[] =>
+  Array.from({ length: end - first + 1 }, (_, index) => ({
+    backgroundPosition: battleSpriteFramePosition(
+      Math.min(first + index, end - 1),
+      frameCount,
+    ),
     easing: "step-end",
-    offset: index / frameCount,
+    offset: index / (end - first),
   }))
 
 export const battleSpriteFrameStyle = (
@@ -131,15 +156,19 @@ export const battleSpriteFrameStyle = (
 ): CSSProperties => {
   const { animation } = step
   const { geometry } = animation
+  const [first, end] = step.frames ?? [0, animation.frameCount]
   const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
   const frameIndex = reducedMotion
     ? step.playback === "once-hold-final-frame"
-      ? animation.frameCount - 1
-      : animation.reducedMotionFrameIndex
-    : 0
+      ? end - 1
+      : Math.max(first, Math.min(end - 1, animation.reducedMotionFrameIndex))
+    : first
   return {
     backgroundImage: `url("${animation.sourceId}")`,
-    backgroundPosition: `${animation.frameCount === 1 ? 0 : (frameIndex / (animation.frameCount - 1)) * 100}% 0`,
+    backgroundPosition: battleSpriteFramePosition(
+      frameIndex,
+      animation.frameCount,
+    ),
     backgroundSize: `${animation.frameCount * 100}% 100%`,
     height: `calc(${geometry.frameHeight} * ${pixelSize})`,
     left: `calc(${-geometry.bottomCenterX} * ${pixelSize})`,

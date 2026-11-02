@@ -27,7 +27,7 @@ const setup = {
   storyAvailability:
     "Defeat each opponent to unlock the next in this Story ladder. Replay earlier victories to improve your medal.",
   challengeAvailability:
-    "Choose any animal you have defeated in either Story ladder. Chicken is always available. Animal appearance does not change difficulty.",
+    "Beat an animal in either Story mode to unlock it in Challenge.",
   startMatch: "Start match",
   openingMatch: "Opening match…",
   restartingMatch: "Restarting match…",

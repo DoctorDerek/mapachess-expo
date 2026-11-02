@@ -140,7 +140,7 @@ export default function MatchSetupEditor({
           <ChallengeOpponentChoices
             disabled={disabled}
             onSelected={(opponent) => setDraft({ ...draft, opponent })}
-            opponents={selectChallengeUnlockedOpponents(storyProgress)}
+            unlockedOpponents={selectChallengeUnlockedOpponents(storyProgress)}
             selectedId={draft.opponent}
           />
         )
@@ -148,6 +148,7 @@ export default function MatchSetupEditor({
   }
   return (
     <MatchSetupPicker
+      fitContent={editor === "opponent" && mode === "challenge"}
       onCancel={onCancel}
       onDone={() => onDone(draft)}
       disabled={

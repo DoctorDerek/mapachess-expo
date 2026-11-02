@@ -1,3 +1,4 @@
+import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import type { MatchParticipantReaction } from "@mapachess/match-presentation/match-reaction"
 import resolveSpritePresentation, {
   resolveSpriteAttention,
@@ -6,7 +7,6 @@ import resolveSpritePresentation, {
   type SpriteAssetManifest,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
-import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   CHICKEN_SPRITE_MANIFEST,
   LICENSED_PRESENTATION_ASSETS_ENABLED,
@@ -37,6 +37,9 @@ const WEB_STORY_ANIMAL_SPRITES = {
   "dog-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["dog-stockfish"]),
   "cat-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["cat-stockfish"]),
   "mouse-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["mouse-stockfish"]),
+  "squirrel-stockfish": webAnimalSprite(
+    STORY_ANIMAL_SPRITES["squirrel-stockfish"],
+  ),
   "frog-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["frog-stockfish"]),
   "turtle-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["turtle-stockfish"]),
   "panda-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["panda-stockfish"]),
@@ -50,6 +53,7 @@ const WEB_STORY_ANIMAL_SPRITES = {
   "deer-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["deer-stockfish"]),
   "fox-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["fox-stockfish"]),
   "wolf-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["wolf-stockfish"]),
+  "tiger-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["tiger-stockfish"]),
   "ninja-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["ninja-stockfish"]),
   "war-hero-stockfish": webAnimalSprite(
     STORY_ANIMAL_SPRITES["war-hero-stockfish"],
@@ -65,7 +69,7 @@ const WEB_STORY_ANIMAL_SPRITES = {
 } as const
 
 const opponentManifest = (
-  opponentId: StockfishOpponentId,
+  opponentId: AnimalPresentationId,
 ): SpriteAssetManifest<string, string> => {
   switch (opponentId) {
     case "chicken-stockfish":
@@ -86,7 +90,7 @@ const availableSources = (
     : []
 
 export const resolveWebOpponentAttention = (
-  opponentId: StockfishOpponentId,
+  opponentId: AnimalPresentationId,
   variationOrdinal = 0,
 ): ResolvedSpriteStep<string, string> | null => {
   const manifest = opponentManifest(opponentId)
@@ -98,7 +102,7 @@ export const resolveWebOpponentAttention = (
 }
 
 export default function resolveWebOpponentPresentation(
-  opponentId: StockfishOpponentId,
+  opponentId: AnimalPresentationId,
   reaction: MatchParticipantReaction = { family: "idle" },
   variationOrdinal = 0,
 ): ResolvedSpritePresentation<string, string> {

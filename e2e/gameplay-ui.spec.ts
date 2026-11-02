@@ -241,7 +241,7 @@ test("player animal selection survives Back, Forward and reload without changing
   const chooser = page.getByRole("dialog", { name: "Play as", exact: true })
   await trigger.click()
   await expect(chooser).toBeVisible()
-  await expect(chooser.getByRole("radio")).toHaveCount(23)
+  await expect(chooser.getByRole("radio")).toHaveCount(25)
   await expect(chooser.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
   await page.goBack()
   await expect(chooser).toHaveCount(0)

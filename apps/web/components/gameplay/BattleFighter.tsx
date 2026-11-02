@@ -14,6 +14,7 @@ import createBattleRecipePreparation from "../../lib/presentation/battleRecipePr
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
+  battleSpriteFramePosition,
   battleSpriteFrameStyle,
   showBattleSpriteFrame,
 } from "../../lib/presentation/battleSpriteFrames"
@@ -56,8 +57,14 @@ export default function BattleFighter({
 }: BattleFighterProps) {
   const copy = useMapachessCopy().presentation
   const shouldReduceMotion = useReducedMotion() === true
+  const travelsToOpponent =
+    presentation.reactionSlot.endsWith("attacker") &&
+    !(
+      presentation.kind === "sprite" &&
+      presentation.steps.every((step) => step.beat === "strike")
+    )
   const displayedFacing =
-    beat === "recovery" && presentation.reactionSlot.endsWith("attacker")
+    beat === "recovery" && travelsToOpponent
       ? facing === "left"
         ? "right"
         : "left"
@@ -110,11 +117,10 @@ export default function BattleFighter({
       frames.cancel()
       frames = null
     }
-    const isAttacker = presentation.reactionSlot.endsWith("attacker")
     const isVictim = presentation.reactionSlot.endsWith("victim")
     const travelTarget = shouldReduceMotion
       ? "home"
-      : isAttacker &&
+      : travelsToOpponent &&
           (beat === "approach" || beat === "strike" || beat === "reaction")
         ? "contact"
         : isVictim && beat === "reaction"
@@ -132,7 +138,11 @@ export default function BattleFighter({
       reactionSequence,
       sources,
     })
-    const steps = allSteps.filter((step) => step.beat === beat)
+    const playbackBeat =
+      beat === "conclusion" && presentation.reactionSlot === "idle"
+        ? "idle"
+        : beat
+    const steps = allSteps.filter((step) => step.beat === playbackBeat)
     const repeatSequence =
       presentation.kind === "sprite" &&
       presentation.repeatSequence === true &&
@@ -183,15 +193,15 @@ export default function BattleFighter({
             showBattleSpriteFrame(sprite, step, shouldReduceMotion)
             visibleSource.current = animation.sourceId
             setImageUnavailable(false)
-            const duration =
-              animation.frameCount * animation.frameDurationMilliseconds
+            const [first, end] = step.frames ?? [0, animation.frameCount]
+            const duration = (end - first) * animation.frameDurationMilliseconds
             const travel = move(duration / 1000)
             if (shouldReduceMotion) {
               await travel
               continue
             }
             frames = sprite.animate(
-              battleSpriteFrameKeyframes(animation.frameCount),
+              battleSpriteFrameKeyframes(animation.frameCount, step.frames),
               {
                 duration,
                 fill: "forwards",
@@ -204,7 +214,10 @@ export default function BattleFighter({
             }
             await Promise.all([frames.finished, travel])
             if (cancelled) return
-            sprite.style.backgroundPosition = "100% 0"
+            sprite.style.backgroundPosition = battleSpriteFramePosition(
+              end - 1,
+              animation.frameCount,
+            )
             frames.cancel()
             frames = null
           }
@@ -249,6 +262,7 @@ export default function BattleFighter({
     reactionSequence,
     recipePreparation,
     shouldReduceMotion,
+    travelsToOpponent,
   ])
 
   return (
@@ -262,11 +276,15 @@ export default function BattleFighter({
             : "[--battle-anchor:100%] [--battle-direction:-1]",
         )}
         role="img"
-        style={battleSpriteAnchorStyle(presentation, opposingPresentation)}
+        style={battleSpriteAnchorStyle(
+          presentation,
+          opposingPresentation,
+          beat,
+        )}
       >
         <div
           ref={travelerRef}
-          className="relative h-0 w-full translate-x-[calc(var(--battle-direction)*(var(--battle-advance)*var(--battle-contact-distance)_-_var(--battle-recoil)*min(var(--battle-recoil-limit),var(--battle-contact-distance)/4)))] [--battle-advance:0] [--battle-contact-distance:max(0px,calc(200%_+_var(--battle-gap)_-_(var(--sprite-visible-width)*var(--sprite-scale)_+_var(--opponent-width))/2))] [--battle-recoil:0]"
+          className="relative h-0 w-full translate-x-[calc(var(--battle-direction)*(var(--battle-advance)*var(--battle-contact-distance)_-_var(--battle-recoil)*min(var(--battle-recoil-limit),var(--battle-contact-distance)/4)))] [--battle-advance:0] [--battle-contact-distance:max(0px,calc(200%_+_var(--battle-gap)_-_(var(--sprite-visible-width)*var(--sprite-scale)_+_var(--opponent-width))/2_+_var(--battle-contact-extension,0px)*var(--sprite-scale)))] [--battle-recoil:0]"
         >
           <span
             aria-hidden="true"

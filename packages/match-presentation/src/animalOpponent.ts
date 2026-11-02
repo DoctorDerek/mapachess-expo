@@ -6,6 +6,7 @@ const ANIMAL_OPPONENT_SOURCE_PACKS = Object.freeze({
   "dog-stockfish": Object.freeze(["Dogpack", "Lil Doggies"] as const),
   "cat-stockfish": Object.freeze(["Catset", "Kittens"] as const),
   "mouse-stockfish": Object.freeze(["Mousepack"] as const),
+  "squirrel-stockfish": Object.freeze(["Squirrelpack"] as const),
   "frog-stockfish": Object.freeze(["Frogpack"] as const),
   "turtle-stockfish": Object.freeze(["Turtlepack"] as const),
   "panda-stockfish": Object.freeze(["Pandapack"] as const),
@@ -17,6 +18,7 @@ const ANIMAL_OPPONENT_SOURCE_PACKS = Object.freeze({
   "deer-stockfish": Object.freeze(["Deerpack"] as const),
   "fox-stockfish": Object.freeze(["Foxpack", "Lil Fox"] as const),
   "wolf-stockfish": Object.freeze(["Wolfpack"] as const),
+  "tiger-stockfish": Object.freeze(["Tigerpack"] as const),
   "falcon-stockfish": Object.freeze(["Falconpack"] as const),
   "crane-stockfish": Object.freeze(["Cranepack"] as const),
   "crow-stockfish": Object.freeze(["Crowpack"] as const),
@@ -27,5 +29,7 @@ const ANIMAL_OPPONENT_SOURCE_PACKS = Object.freeze({
 }) satisfies Readonly<
   Record<StockfishOpponentId, readonly [string, ...string[]]>
 >
+
+export type AnimalPresentationId = keyof typeof ANIMAL_OPPONENT_SOURCE_PACKS
 
 export default ANIMAL_OPPONENT_SOURCE_PACKS

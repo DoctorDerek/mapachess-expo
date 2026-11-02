@@ -39,7 +39,7 @@ describe("saved Story result presentation", () => {
     expect(result).toContain("Gold</strong>")
     expect(result).not.toContain("Your best:")
     expect(result).not.toContain("Up next:")
-    expect(result).toContain("Bunny Stockfish · 200 Elo")
+    expect(result).toContain("Bunny Stockfish · 175 Elo")
     expect(result).toContain("Chicken Stockfish · 100 Elo")
     expect(result).toContain("Next opponent")
     expect(result).toContain(

@@ -95,6 +95,10 @@ export const ART_CREDITS = Object.freeze({
         url: "https://seethingswarm.itch.io/mousepack",
       }),
       Object.freeze({
+        label: "Squirrelpack",
+        url: "https://seethingswarm.itch.io/squirrelpack",
+      }),
+      Object.freeze({
         label: "Frogpack",
         url: "https://seethingswarm.itch.io/frogpack",
       }),
@@ -137,6 +141,10 @@ export const ART_CREDITS = Object.freeze({
       Object.freeze({
         label: "Wolfpack",
         url: "https://seethingswarm.itch.io/wolfpack",
+      }),
+      Object.freeze({
+        label: "Tigerpack",
+        url: "https://seethingswarm.itch.io/tigerpack",
       }),
       Object.freeze({
         label: "Falconpack",
