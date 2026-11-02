@@ -142,6 +142,7 @@ export type PlayerDataSource = Readonly<{
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -431,7 +432,7 @@ const canonicalModernPlayerData = (
               : []),
           ],
           ...(sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
-            ? [canonicalStoryProgress(data.storyProgress)]
+            ? [canonicalStoryProgress(data.storyProgress, true)]
             : []),
           ...(sourceSchemaVersion ===
           LEGACY_FOUR_RATINGS_PLAYER_DATA_SCHEMA_VERSION
@@ -469,7 +470,10 @@ const canonicalTwoVariantFields = (
     data.settings.challengeSetup.opponentId,
     data.settings.challengeSetup.difficultyTargetElo,
   ],
-  canonicalStoryProgress(data.storyProgress),
+  canonicalStoryProgress(
+    data.storyProgress,
+    sourceSchemaVersion <= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
+  ),
   canonicalChallengeHistory(data.challengeHistory),
   LEGACY_PLAYER_ELO_RATING_IDS.map((ratingId) => data.legacyRatings[ratingId]),
   canonicalRatings(data.ratedMatchCounts, sourceSchemaVersion),
@@ -676,7 +680,7 @@ const decodeModernPlayerData = (
       : decodeDurableMatch(object.activeMatch, "$.activeMatch")
   const storyProgress =
     sourceSchemaVersion >= STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION
-      ? decodeStoryProgress(object.storyProgress, "$.storyProgress")
+      ? decodeStoryProgress(object.storyProgress, "$.storyProgress", true)
       : applyStoryMatchResult(createInitialStoryProgress(), activeMatch)
   requireRecordedStoryResult(storyProgress, activeMatch)
   const data: MapachessPlayerDataV6 = Object.freeze({
@@ -726,6 +730,7 @@ const decodeCurrentPlayerData = (
     | typeof FIRST_ARRIVAL_PLAYER_DATA_SCHEMA_VERSION
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
+    | typeof ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -791,6 +796,7 @@ const decodeCurrentPlayerData = (
   const storyProgress = decodeStoryProgress(
     object.storyProgress,
     "$.storyProgress",
+    sourceSchemaVersion <= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
   )
   requireRecordedStoryResult(storyProgress, activeMatch)
   const processedMatchResultIds = decodeProcessedMatchResultIds(
@@ -1123,6 +1129,8 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION ||

@@ -127,9 +127,9 @@ describe("earned Story progression", () => {
     ).toEqual(["defeated", "unlocked", "locked"])
     expect(first.chess960).toBe(initial.chess960)
     expect(selectStoryCompletion(first)).toEqual({
-      standard: 100 / 23,
+      standard: 4,
       chess960: 0,
-      overall: 100 / 46,
+      overall: 2,
     })
     expect(selectChallengeUnlockedOpponents(first).map(({ id }) => id)).toEqual(
       ["chicken-stockfish"],
@@ -144,7 +144,7 @@ describe("earned Story progression", () => {
     expect(selectStoryLadder(second, "chess960")[1]?.status).toBe("locked")
     expect(initial.standard).toEqual([])
     expect(formatStoryCompletion(selectStoryCompletion(first).standard)).toBe(
-      "4.3%",
+      "4%",
     )
   })
 
