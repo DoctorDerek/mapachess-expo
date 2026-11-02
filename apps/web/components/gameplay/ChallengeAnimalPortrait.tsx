@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
 import { preload } from "react-dom"
 import animalAttentionMachine from "@mapachess/match-presentation/animal-attention-machine"
-import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import {
   battleSpriteFrameKeyframes,
   battleSpriteFrameStyle,
@@ -24,7 +24,7 @@ export default function ChallengeAnimalPortrait({
   compact = false,
   fit = false,
 }: Readonly<{
-  opponent: StockfishOpponentDefinition
+  opponent: Readonly<{ id: AnimalPresentationId }>
   active: boolean
   attention?: boolean
   compact?: boolean

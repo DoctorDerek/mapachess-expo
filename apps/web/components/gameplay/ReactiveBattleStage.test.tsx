@@ -391,7 +391,11 @@ describe("Reactive Battle Stage web presentation", () => {
     try {
       const { default: resolveWithoutAssets } =
         await import("../../lib/presentation/webOpponentPresentation")
-      for (const { id: opponentId } of STOCKFISH_OPPONENTS)
+      for (const opponentId of [
+        ...STOCKFISH_OPPONENTS.map(({ id }) => id),
+        "squirrel-stockfish",
+        "tiger-stockfish",
+      ] as const)
         expect(resolveWithoutAssets(opponentId)).toMatchObject({
           kind: "authored-fallback",
           reactionSlot: "idle",

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
+import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import {
   selectMatchPresentationAnimalReaction,
   selectMatchPresentationBeat,
@@ -13,18 +14,14 @@ import type {
   MatchPresentationPhase,
 } from "@mapachess/match-presentation/match-reaction"
 import { type ResolvedSpritePresentation } from "@mapachess/match-presentation/presentation-asset-manifest"
-import type {
-  StockfishOpponentDefinition,
-  StockfishOpponentId,
-} from "@mapachess/match/stockfish-opponent"
 import { battleStageStyle } from "../../lib/presentation/battleSpriteFrames"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import BattleFighter from "./BattleFighter"
 
 export type ReactiveBattleStageProps = Readonly<{
-  playerAnimal?: StockfishOpponentId
-  opponentName: StockfishOpponentDefinition["displayName"]
+  playerAnimal?: AnimalPresentationId
+  opponentName: string
   opponentPresentation: ResolvedSpritePresentation<string, string>
   onParticipantAnimationCompleted: (
     participant: MatchPresentationParticipant,

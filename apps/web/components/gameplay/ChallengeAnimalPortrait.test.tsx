@@ -28,6 +28,8 @@ describe("Challenge animal portrait asset contract", () => {
     ["dog-stockfish", ["idle", "idle_blink", "sit"]],
     ["cat-stockfish", ["idle", "idle_blink", "sit"]],
     ["mouse-stockfish", ["idle", "idle_blink"]],
+    ["squirrel-stockfish", ["idle"]],
+    ["tiger-stockfish", ["idle", "idle_blink", "sit"]],
     ["frog-stockfish", ["idle"]],
     ["turtle-stockfish", ["idle", "idle_blink"]],
     ["panda-stockfish", ["idle", "idle_laugh"]],

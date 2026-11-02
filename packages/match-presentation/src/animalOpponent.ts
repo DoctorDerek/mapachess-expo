@@ -30,4 +30,6 @@ const ANIMAL_OPPONENT_SOURCE_PACKS = Object.freeze({
   Record<StockfishOpponentId, readonly [string, ...string[]]>
 >
 
+export type AnimalPresentationId = keyof typeof ANIMAL_OPPONENT_SOURCE_PACKS
+
 export default ANIMAL_OPPONENT_SOURCE_PACKS
