@@ -14,9 +14,9 @@ describe("player animal choices", () => {
         storyProgress={createInitialStoryProgress()}
       />,
     )
-    expect(markup.match(/type="radio"/g)).toHaveLength(23)
-    expect(markup.match(/disabled=""/g)).toHaveLength(22)
-    expect(markup.match(/Locked/g)).toHaveLength(22)
+    expect(markup.match(/type="radio"/g)).toHaveLength(25)
+    expect(markup.match(/disabled=""/g)).toHaveLength(24)
+    expect(markup.match(/Locked/g)).toHaveLength(24)
     expect(markup.match(/checked=""/g)).toHaveLength(1)
     expect(markup).toContain("Play as")
     expect(markup).toContain("Beat animals in Story")
@@ -33,7 +33,7 @@ describe("player animal choices", () => {
         storyProgress={createInitialStoryProgress()}
       />,
     )
-    expect(markup.match(/disabled=""/g)).toHaveLength(21)
+    expect(markup.match(/disabled=""/g)).toHaveLength(23)
     expect(markup.match(/checked=""/g)).toHaveLength(1)
   })
 

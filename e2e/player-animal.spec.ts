@@ -30,13 +30,13 @@ test("opens the complete locked roster from the selected animal and keeps it key
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio")).toHaveCount(23)
+  await expect(gallery.getByRole("radio")).toHaveCount(25)
   await expect(gallery.locator('span[style*="background-image"]')).toHaveCount(
-    23,
+    25,
   )
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
-  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(22)
+  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(24)
   const done = page.getByRole("button", { name: "Done", exact: true })
   await expect(done).toBeInViewport({ ratio: 1 })
   const doneBounds = await done.boundingBox()
@@ -147,7 +147,7 @@ test("all earned animals remain selectable after reload and editing is still a d
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(23)
+  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(25)
   await gallery.getByRole("radio", { name: /Dragonfly/ }).check()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
   await page.getByRole("button", { name: "Save changes", exact: true }).click()

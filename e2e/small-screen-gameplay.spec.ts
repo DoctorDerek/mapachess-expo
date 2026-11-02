@@ -190,7 +190,7 @@ for (const locale of ["en", "es-419"] as const) {
               exact: true,
             })
             .getByRole("listitem")
-          await expect(opponents).toHaveCount(23)
+          await expect(opponents).toHaveCount(25)
           await opponents.last().scrollIntoViewIfNeeded()
           await expect(opponents.last()).toBeInViewport({ ratio: 1 })
           await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
