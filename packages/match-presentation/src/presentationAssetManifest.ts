@@ -34,6 +34,9 @@ export type SpritePlaybackMode = "loop" | "once" | "once-hold-final-frame"
 
 export type SpriteFacing = "left" | "right"
 
+/** Zero-based frames, from the first displayed frame up to the exclusive end. */
+export type SpriteFrameRange = readonly [first: number, end: number]
+
 export type SpriteFrameGeometry = Readonly<{
   bottomCenterX: number
   bottomY: number
@@ -56,6 +59,8 @@ export type SpriteAnimationDefinition<SourceId extends string> = Readonly<{
 export type SpriteReactionStep<AnimationId extends string> = Readonly<{
   animationIds: readonly [AnimationId, ...AnimationId[]]
   beat: MatchPresentationBeat
+  frames?: SpriteFrameRange
+  pacing?: "calm"
   playback: SpritePlaybackMode
 }>
 
@@ -68,6 +73,8 @@ export type SpriteAssetManifest<
   AnimationId extends string,
   SourceId extends string,
 > = Readonly<{
+  sourceAnimalId?: string
+  contactAdvanceByTarget?: Readonly<Record<string, number>>
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   calmFrameDurationMilliseconds?: number
   attentionAnimationIds?: readonly [AnimationId, ...AnimationId[]]
@@ -95,6 +102,7 @@ export type ResolvedSpriteStep<
   animation: SpriteAnimationDefinition<SourceId>
   animationId: AnimationId
   beat: MatchPresentationBeat
+  frames?: SpriteFrameRange
   playback: SpritePlaybackMode
 }>
 
@@ -105,6 +113,8 @@ export type ResolvedSpritePresentation<
   (
     | Readonly<{
         kind: "sprite"
+        sourceAnimalId?: string
+        contactAdvanceByTarget?: Readonly<Record<string, number>>
         repeatSequence?: true
         reactionSlot: MatchSpriteReactionSlot
         referenceGeometry: SpriteFrameGeometry
@@ -143,20 +153,32 @@ const resolveStep = <AnimationId extends string, SourceId extends string>(
   const animationId = step.animationIds.find((candidateId) =>
     availableSourceIds.includes(manifest.animations[candidateId].sourceId),
   )
-  return animationId === undefined
-    ? null
-    : Object.freeze({
-        animation:
-          frameDurationMilliseconds === undefined
-            ? manifest.animations[animationId]
-            : Object.freeze({
-                ...manifest.animations[animationId],
-                frameDurationMilliseconds,
-              }),
-        animationId,
-        beat: step.beat,
-        playback: step.playback,
-      })
+  if (animationId === undefined) return null
+  const animation = manifest.animations[animationId]
+  if (step.frames !== undefined) {
+    const [first, end] = step.frames
+    if (
+      !Number.isInteger(first) ||
+      !Number.isInteger(end) ||
+      first < 0 ||
+      first >= end ||
+      end > animation.frameCount
+    )
+      throw new RangeError(`Invalid frame range for ${animation.sourceId}.`)
+  }
+  return Object.freeze({
+    animation:
+      frameDurationMilliseconds === undefined
+        ? animation
+        : Object.freeze({
+            ...animation,
+            frameDurationMilliseconds,
+          }),
+    animationId,
+    beat: step.beat,
+    ...(step.frames === undefined ? {} : { frames: step.frames }),
+    playback: step.playback,
+  })
 }
 
 export const resolveSpriteAttention = <
@@ -272,7 +294,7 @@ export default function resolveSpritePresentation<
       manifest,
       step,
       availableSourceIds,
-      reactionSlot === "idle"
+      reactionSlot === "idle" || step.pacing === "calm"
         ? manifest.calmFrameDurationMilliseconds
         : undefined,
     ),
@@ -303,6 +325,14 @@ export default function resolveSpritePresentation<
     ? Object.freeze({ kind: "authored-fallback", reactionSlot, layout })
     : Object.freeze({
         kind: "sprite",
+        ...(manifest.sourceAnimalId === undefined
+          ? {}
+          : { sourceAnimalId: manifest.sourceAnimalId }),
+        ...(completeSequenceAvailable &&
+        reactionSlot === "capture-attacker" &&
+        manifest.contactAdvanceByTarget
+          ? { contactAdvanceByTarget: manifest.contactAdvanceByTarget }
+          : {}),
         ...(completeSequenceAvailable &&
         reactionSlot === "victory" &&
         manifest.repeatVictory

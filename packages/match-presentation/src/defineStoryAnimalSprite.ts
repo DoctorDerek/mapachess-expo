@@ -18,6 +18,7 @@ type SpriteClip = readonly [
 
 type StoryAnimalSpriteSource<AnimationId extends string> = Readonly<{
   sourceAnimalId: string
+  contactAdvanceByTarget?: Readonly<Record<string, number>>
   relativeDirectory: string
   filePrefix: string
   frameSize: number
@@ -86,6 +87,10 @@ export default function defineStoryAnimalSprite<AnimationId extends string>(
   )
   return Object.freeze({
     animations: Object.freeze(animations),
+    sourceAnimalId: source.sourceAnimalId,
+    ...(source.contactAdvanceByTarget === undefined
+      ? {}
+      : { contactAdvanceByTarget: source.contactAdvanceByTarget }),
     ...(source.attentionAnimationIds === undefined
       ? {}
       : { attentionAnimationIds: source.attentionAnimationIds }),
