@@ -22,12 +22,10 @@ const original = STOCKFISH_OPPONENTS.filter(
   ({ originalStoryTargetElo }) => originalStoryTargetElo !== null,
 )
 const victories = (count: number) =>
-  original
-    .slice(0, count)
-    .map(({ id }, index) => ({
-      opponentId: id,
-      highestMedal: STORY_MEDALS[index % STORY_MEDALS.length]!,
-    }))
+  original.slice(0, count).map(({ id }, index) => ({
+    opponentId: id,
+    highestMedal: STORY_MEDALS[index % STORY_MEDALS.length]!,
+  }))
 
 describe("Story roster upgrades", () => {
   it.each(["standard", "chess960"] as const)(
@@ -168,6 +166,72 @@ describe("Story roster upgrades", () => {
     ).toMatchObject({
       ok: false,
       issue: { type: "PROFILE.BACKUP_INTEGRITY_MISMATCH" },
+    })
+  })
+  it("keeps a returning player's chosen Wolf, earned achievements and Challenge record", async () => {
+    const initial = createInitialMapachessPlayerData()
+    const animal = "wolf-stockfish"
+    const challengeSetup = {
+      ...initial.settings.challengeSetup,
+      opponentId: animal,
+      difficultyTargetElo: 2325,
+    }
+    const history = {
+      animals: [
+        {
+          opponentId: animal,
+          lifetimeWins: 1,
+          lifetimeLosses: 0,
+          highestMedal: "silver",
+        },
+      ],
+      difficulties: [
+        { targetElo: 2325, lastPlayedAnimal: animal, highestMedal: "silver" },
+      ],
+    }
+    const payload = {
+      ...initial,
+      schemaVersion: 18,
+      introductionCompleted: true,
+      totalXp: 100,
+      storyProgress: { standard: victories(23), chess960: [] },
+      appearance: { ...initial.appearance, animal },
+      settings: { ...initial.settings, challengeSetup },
+      unlockedAchievementIds: [
+        "reach-level-5",
+        "reach-level-10",
+        "reach-level-25",
+        "reach-level-37",
+        "reach-level-50",
+      ],
+      challengeHistory: { ...initial.challengeHistory, chess960: history },
+    }
+    const migrated = await decodeStoredPlayerData(
+      JSON.stringify({
+        format: "mapachess-stored-player-data",
+        formatVersion: 1,
+        saveSchemaVersion: 18,
+        payload,
+        integrity: {
+          algorithm: "SHA-256",
+          payloadHash:
+            "dd28bc2c6cc42b72e7634be2499b113625d6cf1eb21615a75b4b9175892ea774",
+        },
+      }),
+      sha256,
+    )
+    expect(migrated).toMatchObject({
+      ok: true,
+      data: {
+        schemaVersion: 19,
+        totalXp: 100,
+        appearance: payload.appearance,
+        settings: payload.settings,
+        challengeHistory: payload.challengeHistory,
+        unlockedAchievementIds: payload.unlockedAchievementIds,
+        ratings: payload.ratings,
+        ratedMatchCounts: payload.ratedMatchCounts,
+      },
     })
   })
   it("keeps a new player on the new route and rejects unearned access or impossible victory order", () => {
