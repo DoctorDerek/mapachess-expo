@@ -15,6 +15,7 @@ export const STOCKFISH_WEB_WORKER_NAME = "mapachess-stockfish-18" as const
 
 export type CreateWebStockfishSessionOptions = Readonly<{
   workerName?: string
+  workerUrl?: string
 }>
 
 export default function createWebStockfishSession(
@@ -22,7 +23,7 @@ export default function createWebStockfishSession(
   options: CreateWebStockfishSessionOptions = {},
 ): StockfishUciSession {
   return createRecoverableStockfishSession(() => {
-    const worker = new Worker(STOCKFISH_WEB_WORKER_URL, {
+    const worker = new Worker(options.workerUrl ?? STOCKFISH_WEB_WORKER_URL, {
       name: options.workerName ?? STOCKFISH_WEB_WORKER_NAME,
     })
     return createStockfishUciSession({

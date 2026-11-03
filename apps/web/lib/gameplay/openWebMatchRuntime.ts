@@ -24,6 +24,7 @@ import { WEB_OPPONENT_ENGINE_CONFIGURATION } from "@mapachess/stockfish/web-oppo
 import createWebStockfishSession, {
   type CreateWebStockfishSessionOptions,
 } from "../stockfish/createWebStockfishSession"
+import prepareWebStockfishProgram from "../stockfish/prepareWebStockfishProgram"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import createWebOpponent, {
   generateWebMatchSeed,
@@ -163,31 +164,22 @@ export default async function openWebMatchRuntime(
     ...SINGLE_PV_ENGINE_CONFIGURATION,
     variant: startingPosition.variant,
   }
-  const openSession = input.openSession ?? createWebStockfishSession
-  const opponentSession = openSession(singlePvConfiguration, {
-    workerName: OPPONENT_WORKER_NAME,
-  })
-  let hintSession: StockfishUciSession
-  try {
-    hintSession = openSession(
-      { ...singlePvConfiguration, multiPv: BETTER_HINTS_ENGINE_MULTIPV },
-      { workerName: HINT_WORKER_NAME },
-    )
-  } catch (error) {
-    return closeAfterFailedOpen([opponentSession], error)
+  const program=input.openSession ? null : await prepareWebStockfishProgram(input.signal)
+  const openSession=input.openSession ?? createWebStockfishSession
+  const sessions:StockfishUciSession[]=[]
+  const own=(configuration:StockfishEngineConfiguration, workerName:string)=>{
+    const session=openSession(configuration,program ? {workerName,workerUrl:program.url} : {workerName})
+    sessions.push(session)
+    return session
   }
-  let evaluationSession: StockfishUciSession
-  try {
-    evaluationSession = openSession(singlePvConfiguration, {
-      workerName: EVALUATION_WORKER_NAME,
-    })
-  } catch (error) {
-    return closeAfterFailedOpen([opponentSession, hintSession], error)
-  }
-  const sessions = [opponentSession, hintSession, evaluationSession] as const
-
-  let engineIdentity: StockfishUciIdentity
-  try {
+  let opponentSession:StockfishUciSession
+  let hintSession:StockfishUciSession
+  let evaluationSession:StockfishUciSession
+  let engineIdentity:StockfishUciIdentity
+  try{
+    opponentSession=own(singlePvConfiguration,OPPONENT_WORKER_NAME)
+    hintSession=own({...singlePvConfiguration,multiPv:BETTER_HINTS_ENGINE_MULTIPV},HINT_WORKER_NAME)
+    evaluationSession=own(singlePvConfiguration,EVALUATION_WORKER_NAME)
     const identities = await Promise.all([
       opponentSession.boot(input.signal),
       hintSession.boot(input.signal),
@@ -198,11 +190,11 @@ export default async function openWebMatchRuntime(
       throw new DOMException("Web match opening was aborted.", "AbortError")
     }
   } catch (error) {
-    return closeAfterFailedOpen(sessions, error)
+    try {return await closeAfterFailedOpen(sessions,error)} finally {program?.release()}
   }
 
   return Object.freeze({
-    close: () => closeOwnedSessions(sessions),
+    close: async () => {try {await closeOwnedSessions(sessions)} finally {program?.release()}},
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
     matchId: webMatchId(
