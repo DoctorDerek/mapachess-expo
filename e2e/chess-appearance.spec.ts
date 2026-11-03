@@ -313,7 +313,7 @@ for (const { mode, color, pieceSetId, boardId } of [
     await page
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
-    await page.getByLabel("Match menu", { exact: true }).click()
+    await page.locator("details[open]").getByRole("button", {name: "Close", exact:true}).click()
     await expect(
       page.getByRole("button", { name: "Settings", exact: true }),
     ).not.toBeVisible()
@@ -384,7 +384,7 @@ test("resolves the approved hint and history colors across all board families", 
     await page
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
-    await page.getByLabel("Match menu", { exact: true }).click()
+    await page.locator("details[open]").getByRole("button", {name: "Close", exact:true}).click()
     if (choice.kind === "artwork")
       await expect(board.locator(`img[src$="${choice.image.path}"]`)).toHaveCSS(
         "opacity",
@@ -458,7 +458,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
-  await page.getByLabel("Match menu", { exact: true }).click()
+  await page.locator("details[open]").getByRole("button", {name: "Close", exact:true}).click()
   await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
     "opacity",
     "1",
