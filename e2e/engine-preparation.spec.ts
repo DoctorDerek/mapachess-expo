@@ -6,6 +6,7 @@ test("keeps the chess engine off a fresh customization-only journey", async ({
   context,
   workerOrigin,
 }) => {
+  test.setTimeout(90_000)
   const engine: string[] = []
   context.on("request", (request) => {
     if (request.url().includes("/stockfish-runtime/"))

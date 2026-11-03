@@ -46,6 +46,7 @@ for (const size of [
     })
     const sprite = animal.locator('span[style*="background-image"]')
     for (const { id } of STOCKFISH_OPPONENTS) {
+      await animal.scrollIntoViewIfNeeded()
       const previousSource = await sprite.evaluate(
         (element) => getComputedStyle(element).backgroundImage,
       )

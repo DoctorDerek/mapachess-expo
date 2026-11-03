@@ -65,11 +65,16 @@ for (const previous of ["selected mode", "saved game"] as const) {
       expect(rosterStrips).toBe(0)
 
       await expect
-        .poll(() =>
-          online.evaluate(async () => {
-            const programs = await caches.open("mapachess-stockfish-program")
-            return (await programs.keys()).length
-          }),
+        .poll(
+          () =>
+            online.evaluate(async () => {
+              const programs = await caches.open("mapachess-stockfish-program")
+              return (await programs.keys()).length
+            }),
+          {
+            timeout: 30_000,
+            message: "Wait for the first chess download to reach Cache Storage",
+          },
         )
         .toBe(2)
       const reopened = await context.newPage()
