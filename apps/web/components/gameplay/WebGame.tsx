@@ -296,6 +296,7 @@ export default function WebGame({
 
   const isRestoringMatch = snapshot.matches("openingCurrentMatch")
   const showModeMenu = snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
+  const resumableMatch = session?.match ?? (isRestoringMatch ? savedMatch : null)
 
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
   if (savedMatch !== null || snapshot.matches({menu:"setup"}) || openingFreshMatch) {
@@ -319,11 +320,11 @@ export default function WebGame({
         <MatchModeMenu
           playerData={playerData}
           resumeMatch={
-            session === null
+            resumableMatch === null
               ? null
               : {
-                  timeControl: session.match.timeControl,
-                  disabled: settingsOpen,
+                  timeControl: resumableMatch.timeControl,
+                  disabled: settingsOpen || isRestoringMatch,
                   onResume: () =>
                     actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" }),
                 }
