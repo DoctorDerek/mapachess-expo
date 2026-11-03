@@ -1,10 +1,15 @@
 import { fileURLToPath } from "node:url"
 import { ESLint } from "eslint"
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 
 const eslint = new ESLint({ cwd: fileURLToPath(new URL(".", import.meta.url)) })
 
 describe("repository ESLint coverage", () => {
+  beforeAll(async () => {
+    // The first lint imports the TypeScript parser and repository plugins.
+    await eslint.lintText("export {}", {filePath:"apps/web/components/presentation/MapachessWordmark.tsx"})
+  }, 30_000)
+
   it.each([
     "apps/web/components/presentation/MapachessWordmark.tsx",
     "apps/mobile/app/index.tsx",

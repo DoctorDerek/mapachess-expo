@@ -39,4 +39,5 @@ test("keeps the chess engine off a fresh customization-only journey", async ({
     ).toEqual([])
   }
   expect(engine).toEqual([])
+  await page.close()
 })

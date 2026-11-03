@@ -492,6 +492,8 @@ describe("web match session ownership", () => {
       }
       await profile.close()
     },
+    // Each variant persists, reopens and restarts all 25 opponents in order.
+    30_000,
   )
 
   it.each(["standard", "chess960"] as const)(
