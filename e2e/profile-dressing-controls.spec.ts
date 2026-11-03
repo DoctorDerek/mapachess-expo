@@ -126,30 +126,42 @@ for (const size of [
 async function expectReachable(controls: Locator) {
   await expect
     .poll(() =>
-      controls.evaluateAll(
-        (elements) =>
-          elements.length > 0 &&
-          elements.every((element) => {
-            const box = element.getBoundingClientRect()
-            return (
-              box.width >= 44 &&
-              box.height >= 44 &&
-              box.x >= 0 &&
-              box.y >= 0 &&
-              box.right <= innerWidth &&
-              box.bottom <= innerHeight &&
-              element.scrollWidth <= element.clientWidth + 1 &&
-              element.contains(
-                document.elementFromPoint(
-                  box.x + box.width / 2,
-                  box.y + box.height / 2,
-                ),
-              )
-            )
-          }),
-      ),
+      controls.evaluateAll((elements) => {
+        if (elements.length === 0) return ["missing control"]
+        return elements.flatMap((element) => {
+          const box = element.getBoundingClientRect()
+          const hit = document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          )
+          const failures = [
+            box.width < 44 || box.height < 44 ? "target size" : "",
+            box.x < 0 ||
+            box.y < 0 ||
+            box.right > innerWidth ||
+            box.bottom > innerHeight
+              ? "viewport"
+              : "",
+            element.scrollWidth > element.clientWidth + 1
+              ? "text overflow"
+              : "",
+            !element.contains(hit) ? "center covered" : "",
+          ].filter(Boolean)
+          return failures.length
+            ? [
+                {
+                  name:
+                    element.getAttribute("aria-label") ?? element.textContent,
+                  failures,
+                  box: box.toJSON(),
+                  hit: hit?.tagName,
+                },
+              ]
+            : []
+        })
+      }),
     )
-    .toBe(true)
+    .toEqual([])
 }
 
 for (const locale of ["en", "es-419"] as const)
