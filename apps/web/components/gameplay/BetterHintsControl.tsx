@@ -107,7 +107,7 @@ export default function BetterHintsControl({
         aria-labelledby="get-hint-label better-hints-stage"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance better-hints-medal"
-        className="col-start-2 col-end-4 row-start-1 flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight wrap-break-word xl:col-start-3 xl:col-end-4"
+        className="col-start-2 col-end-4 row-start-1 flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] wrap-break-word xl:col-start-3 xl:col-end-4 xl:leading-tight"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
         disabled={disabled || busy || control.action === null}
