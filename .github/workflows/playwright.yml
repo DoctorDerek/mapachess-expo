@@ -13,4 +13,6 @@ jobs:
     uses: DoctorDerek/DoctorDerekCICD/.github/workflows/playwright.yml@c6f1ae0f8f8f20f28475890b0eb85de581e0cb1a
     with:
       trusted-oidc: true
+      suite-timeout-minutes: 75
+      job-timeout-minutes: 90
       prepare-command: pnpm --filter @mapachess/profile... build

@@ -9,9 +9,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  ...(process.env.CI ? { workers: 1 } : {}),
+  ...(process.env.CI ? { workers: 2 } : {}),
   reporter: "html",
   use: {
+    ...(isProtectedPreview
+      ? { extraHTTPHeaders: { "x-vercel-skip-toolbar": "1" } }
+      : {}),
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || localPlaywrightBaseUrl,
     trace: isProtectedPreview ? "off" : "on-first-retry",
   },
