@@ -9,7 +9,7 @@ export default defineConfig({
     name: "web",
     environment: "node",
     setupFiles: ["../../packages/localization/test/catalogHealth.setup.ts"],
-    include: ["components/**/*.test.tsx", "lib/**/*.test.ts"],
+    include: ["components/**/*.test.tsx", "lib/**/*.test.ts", "app/**/*.test.ts"],
     coverage: {
       reportOnFailure: true,
       provider: "v8",
@@ -17,8 +17,8 @@ export default defineConfig({
         "text",
         ["lcov", { projectRoot: resolve(import.meta.dirname, "../..") }],
       ],
-      include: ["lib/**/*.ts"],
-      exclude: ["lib/**/*.test.ts"],
+      include: ["lib/**/*.ts", "components/**/*.tsx", "app/**/*.{ts,tsx}"],
+      exclude: ["**/*.test.{ts,tsx}"],
     },
   },
 })
