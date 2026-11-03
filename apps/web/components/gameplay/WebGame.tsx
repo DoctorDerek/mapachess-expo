@@ -30,8 +30,8 @@ import {
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
 import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
+import { loadWebStockfishBytes } from "../../lib/stockfish/prepareWebStockfishProgram"
 import MapachessButton from "../presentation/MapachessButton"
-
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
@@ -40,8 +40,6 @@ import MatchResultFacts from "./MatchResultFacts"
 import StoryMatchResult from "./StoryMatchResult"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
-import {preload} from "react-dom"
-import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
@@ -295,13 +293,20 @@ export default function WebGame({
   }
 
   const isRestoringMatch = snapshot.matches("openingCurrentMatch")
-  const showModeMenu = snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
-  const resumableMatch = session?.match ?? (isRestoringMatch ? savedMatch : null)
+  const showModeMenu =
+    snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
+  const resumableMatch =
+    session?.match ?? (isRestoringMatch ? savedMatch : null)
 
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
-  if (savedMatch !== null || snapshot.matches({menu:"setup"}) || openingFreshMatch) {
-    preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {as:"fetch",crossOrigin:"anonymous",fetchPriority:"low",type:"application/wasm"})
-  }
+  const chessIntent =
+    savedMatch !== null ||
+    snapshot.matches({ menu: "setup" }) ||
+    openingFreshMatch
+  useEffect(() => {
+    // Opening a match uses the same in-flight download and reports a retryable failure.
+    if (chessIntent) void loadWebStockfishBytes().catch(() => {})
+  }, [chessIntent])
   const retainingMatch =
     snapshot.matches("active") ||
     snapshot.matches("restartingMatch") ||

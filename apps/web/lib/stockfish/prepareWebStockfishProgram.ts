@@ -4,27 +4,54 @@ import {
   type StockfishWebRuntimeArtifact,
 } from "@mapachess/stockfish/web-runtime-identity"
 
+const cacheName = "mapachess-stockfish-program"
+let pending: Promise<readonly [Blob, Blob]> | null = null
+
 async function readProgram(
   artifact: StockfishWebRuntimeArtifact,
-  signal?: AbortSignal,
+  cache: Cache | null,
 ) {
-  const response = await fetch("/stockfish-runtime/" + artifact.fileName, {
-    signal: signal ?? null,
+  const url = "/stockfish-runtime/" + artifact.fileName
+  const key = url + "?sha256=" + artifact.sha256
+  const cached = await cache?.match(key).catch(() => undefined)
+  if (cached) {
+    const blob = await cached.blob()
+    if (blob.size === artifact.byteLength) return blob
+  }
+  const digest = Uint8Array.from(artifact.sha256.match(/../g) ?? [], (pair) =>
+    parseInt(pair, 16),
+  )
+  const response = await fetch(url, {
+    integrity: "sha256-" + btoa(String.fromCharCode(...digest)),
   })
   if (!response.ok) throw Error("Unable to load " + artifact.fileName)
   const blob = await response.blob()
   if (blob.size !== artifact.byteLength)
     throw Error("Incomplete " + artifact.fileName)
+  // Storage can be disabled or full. The downloaded program can still play online.
+  await cache?.put(key, new Response(blob)).catch(() => undefined)
   return blob
 }
 
+export function loadWebStockfishBytes(): Promise<readonly [Blob, Blob]> {
+  if (!pending) {
+    pending = (async () => {
+      const cache = await globalThis.caches?.open(cacheName).catch(() => null)
+      return Promise.all([
+        readProgram(STOCKFISH_18_WEB_LOADER_ARTIFACT, cache ?? null),
+        readProgram(STOCKFISH_18_WEB_WASM_ARTIFACT, cache ?? null),
+      ] as const)
+    })().finally(() => {
+      pending = null
+    })
+  }
+  return pending
+}
+
 export default async function prepareWebStockfishProgram(signal?: AbortSignal) {
-  // Fetch from the controlled page. A dedicated worker can bypass the service
-  // worker in WebKit, even when the exact WASM bytes are already installed.
-  const [loader, binary] = await Promise.all([
-    readProgram(STOCKFISH_18_WEB_LOADER_ARTIFACT, signal),
-    readProgram(STOCKFISH_18_WEB_WASM_ARTIFACT, signal),
-  ])
+  signal?.throwIfAborted()
+  // Fetch from the page. WebKit's dedicated workers can bypass a service worker.
+  const [loader, binary] = await loadWebStockfishBytes()
   signal?.throwIfAborted()
   const loaderUrl = URL.createObjectURL(
     new Blob([loader], { type: "text/javascript" }),

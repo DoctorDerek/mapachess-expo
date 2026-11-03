@@ -1,6 +1,7 @@
 import { once } from "node:events"
 import { createServer } from "node:http"
 import { expect, type APIRequestContext } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 import startHintMatch from "./startHintMatch.js"
@@ -55,7 +56,7 @@ async function startOrigin(upstream: string, request: APIRequestContext) {
     },
   }
 }
-for (const previous of ["first visit", "saved game"] as const) {
+for (const previous of ["selected mode", "saved game"] as const) {
   test(`plays offline after a ${previous} and persists a move with the origin stopped`, async ({
     browser,
     baseURL,
@@ -68,13 +69,23 @@ for (const previous of ["first visit", "saved game"] as const) {
     )
     test.setTimeout(90_000)
     if (!baseURL) throw Error("A built web target is required")
+    const copy = loadCatalog("en")
     const origin = await startOrigin(baseURL, request)
     const context = await browser.newContext({ baseURL: origin.url })
     try {
       const online = await context.newPage()
       const existing = previous === "saved game"
       if (existing) await startHintMatch(online)
-      else await online.goto("/")
+      else {
+        await online.goto("/")
+        await online.getByRole("button", { name: "Start", exact: true }).click()
+        await online
+          .getByRole("button", {
+            name: copy.setup.presentations.standard.challenge.title,
+            exact: true,
+          })
+          .click()
+      }
       await online.evaluate(async () => {
         await navigator.serviceWorker.ready
       })
@@ -104,6 +115,14 @@ for (const previous of ["first visit", "saved game"] as const) {
       })
       expect(rosterStrips).toBe(0)
 
+      await expect
+        .poll(() =>
+          online.evaluate(async () => {
+            const programs = await caches.open("mapachess-stockfish-program")
+            return (await programs.keys()).length
+          }),
+        )
+        .toBe(2)
       const reopened = await context.newPage()
       await online.close()
       await origin.close()
@@ -121,7 +140,20 @@ for (const previous of ["first visit", "saved game"] as const) {
         await expect(board).toBeVisible()
         expect((await savedProfile(reopened)).activeMatch?.matchId).toBe(id)
       } else {
-        await startHintMatch(reopened)
+        await reopened.goto("/")
+        await reopened
+          .getByRole("button", {
+            name: copy.setup.presentations.standard.challenge.title,
+            exact: true,
+          })
+          .click()
+        await reopened
+          .getByRole("radio", { name: copy.setup.white, exact: true })
+          .check()
+        await reopened
+          .getByRole("button", { name: copy.setup.startMatch, exact: true })
+          .click()
+        await expect(board).toBeVisible()
       }
       const pawn = board.getByRole("gridcell", { name: /^e2,/ })
       await expect(pawn).toHaveAttribute("aria-disabled", "false", {

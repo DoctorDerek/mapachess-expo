@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto"
 import { createSerwistRoute } from "@serwist/turbopack"
-import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 
 const route = createSerwistRoute({
   swSrc: "app/sw.ts",
@@ -13,9 +12,7 @@ const route = createSerwistRoute({
     "public/chess-assets/**/*.{png,svg}",
     "public/generated/chess-assets/**/*.{png,svg}",
     "public/input-prompts/**/*.{png,svg}",
-    "public/stockfish-runtime/*.{js,wasm}",
   ],
-  maximumFileSizeToCacheInBytes: STOCKFISH_18_WEB_WASM_ARTIFACT.byteLength,
   additionalPrecacheEntries: [
     { url: "/", revision: process.env.VERCEL_GIT_COMMIT_SHA ?? randomUUID() },
   ],
