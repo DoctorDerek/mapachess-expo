@@ -104,9 +104,6 @@ const interfaceCopy = {
   localSaveError: {
     localSaveError: "Local save error",
   },
-  mapachessLoadingSurface: {
-    loadingMapachess: "Loading Mapachess.",
-  },
   recoverableView: {
     tryAgain: "Try again",
   },
