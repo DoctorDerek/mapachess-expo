@@ -88,6 +88,7 @@ for (const variant of ["standard", "chess960"] as const) {
         name: new RegExp(name + " Stockfish"),
       })
       await expect(selected).toBeChecked()
+      await expect(selected).toBeFocused()
       await expect(
         picker.locator(`span[style*="/battle/${name.toLowerCase()}/"]`).first(),
       ).toBeVisible()

@@ -148,6 +148,7 @@ export default function MatchSetupEditor({
   }
   return (
     <MatchSetupPicker
+      focusSelection={editor === "opponent" || editor === "player"}
       fitContent={editor === "opponent" && mode === "challenge"}
       onCancel={onCancel}
       onDone={() => onDone(draft)}

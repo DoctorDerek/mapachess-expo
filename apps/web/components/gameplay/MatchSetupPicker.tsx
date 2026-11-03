@@ -10,6 +10,7 @@ export default function MatchSetupPicker({
   onDone,
   disabled,
   fitContent = false,
+  focusSelection = false,
   title,
 }: Readonly<{
   children: ReactNode
@@ -17,11 +18,28 @@ export default function MatchSetupPicker({
   onDone: () => void
   disabled: boolean
   fitContent?: boolean
+  focusSelection?: boolean
   title: string
 }>) {
   const copy = useMapachessCopy().setup
   const heading = useRef<HTMLHeadingElement>(null)
-  useLayoutEffect(() => heading.current?.focus({ preventScroll: true }), [])
+  useLayoutEffect(() => {
+    const selected =
+      focusSelection &&
+      heading.current
+        ?.closest("dialog")
+        ?.querySelector<HTMLInputElement>(
+          'input[type="radio"]:checked:not(:disabled)',
+        )
+    if (selected) {
+      selected.focus({ preventScroll: true })
+      selected
+        .closest("label")
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" })
+    } else {
+      heading.current?.focus({ preventScroll: true })
+    }
+  }, [focusSelection])
   return (
     <MapachessDialog
       label={title}
