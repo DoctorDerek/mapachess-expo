@@ -70,7 +70,7 @@ export default function MatchCommands({
         {coach}
         {hints}
       </div>
-      <div className="flex min-w-0 flex-wrap items-stretch gap-1.5">
+      <div className="grid min-w-0 grid-cols-3 items-stretch gap-1.5">
         <details
           className="relative z-40 min-w-0 flex-[1_1_max-content]"
           open={menuOpen}
@@ -139,7 +139,7 @@ export default function MatchCommands({
             </MapachessButton>
           </div>
         </details>
-        <div className="grid min-w-0 flex-[2_1_max-content] grid-cols-2 gap-1.5">
+        <div className="contents">
           <MapachessButton
             aria-busy={persisting && selectHasUndoHistory(snapshot)}
             className={historyActionClassName}

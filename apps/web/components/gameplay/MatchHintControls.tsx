@@ -57,7 +57,7 @@ export default function MatchHintControls({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="flex min-w-0 flex-[1_1_min-content] flex-wrap items-stretch gap-1.5 text-sm [--hint-target:max(--spacing(16),2rem)]"
+      className="grid min-w-0 flex-[1_1_min-content] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-1.5 text-sm [--hint-target:max(--spacing(16),2rem)]"
     >
       <MapachessButton
         aria-haspopup="dialog"
@@ -83,7 +83,7 @@ export default function MatchHintControls({
           navigation.open("auto-hints-help")
         }}
         variant="secondary"
-        className="min-h-(--hint-target)! w-(--hint-target) flex-none px-1! py-1! text-xl leading-tight"
+        className="min-h-(--hint-target)! w-12 flex-none px-1! py-1! text-xl leading-tight"
       >
         <span aria-hidden="true">?</span>
       </MapachessButton>

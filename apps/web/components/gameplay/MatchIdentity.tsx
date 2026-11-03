@@ -4,7 +4,7 @@ import {
   timeControlLabel,
   type TimeControl,
 } from "@mapachess/match/time-control"
-import type { MatchMedal } from "@mapachess/profile/match-medal"
+import { MATCH_MEDALS, type MatchMedal } from "@mapachess/profile/match-medal"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
@@ -47,14 +47,20 @@ export default function MatchIdentity({
         id="opponent-band-title"
         ref={headingRef}
         tabIndex={-1}
-        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-1 text-center text-base leading-tight text-balance wrap-break-word [grid-area:identity] xl:px-0"
+        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-1 text-center text-base leading-[1.1] wrap-break-word [grid-area:identity] xl:px-0 xl:leading-tight xl:text-balance"
       >
         <strong>{copy.presentation.playerName}</strong>
         {nameEloSeparator}
         {copy.gameplay.elo(playerElo)}{" "}
         <span className="inline-block">
           <MedalSymbol medal={assistance} />
-          {copy.shared.story.medals[assistance]}
+          <span className="inline-grid align-baseline">
+            {MATCH_MEDALS.map(medal=>(
+              <span key={medal} aria-hidden={medal!==assistance || undefined} className={medal===assistance?"col-start-1 row-start-1":"invisible col-start-1 row-start-1"}>
+                {copy.shared.story.medals[medal]}
+              </span>
+            ))}
+          </span>
         </span>
         <span className="sr-only"> ({copy.board.colors[playerColor]})</span>
         {copy.board.versus}
