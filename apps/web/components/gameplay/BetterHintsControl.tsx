@@ -114,7 +114,9 @@ export default function BetterHintsControl({
         onClick={activate}
         type="button"
       >
-        <span id="get-hint-label" className="min-w-0 max-w-full wrap-anywhere">{copy.gameplay.hints.getHint}</span>
+        <span id="get-hint-label" className="max-w-full min-w-0 wrap-anywhere">
+          {copy.gameplay.hints.getHint}
+        </span>
         <span id="better-hints-stage" className="sr-only">
           {control.label}
         </span>

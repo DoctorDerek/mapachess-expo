@@ -29,8 +29,7 @@ describe("frozen 100–2300 initial web calibration baseline", () => {
           calibrationFingerprint: fingerprint,
           randomMoveProbabilityBasisPoints: probability,
         })
-        if (Math.abs(estimate - measuredTarget) <= 10)
-          pointCloseTargets += 1
+        if (Math.abs(estimate - measuredTarget) <= 10) pointCloseTargets += 1
         expect(lower).toBeLessThan(estimate)
         expect(upper).toBeGreaterThan(estimate)
         expect(estimate).toBeGreaterThan(previousEstimate)
@@ -63,15 +62,22 @@ describe("frozen 100–2300 initial web calibration baseline", () => {
 })
 
 describe("November 1 calibrated web Challenge presets", () => {
-  it.each(["standard","chess960"] as const)("resolves all 25 current %s Story targets on the calibrated grid", variant=>{
-    expect(STOCKFISH_OPPONENTS).toHaveLength(25)
-    const targets = STOCKFISH_OPPONENTS.map(opponent=>opponent.storyTargetElo)
-    expect(targets[0]).toBe(100)
-    expect(targets.at(-1)).toBe(2000)
-    expect(new Set(targets).size).toBe(25)
-    const grid=new Set(WEB_CHALLENGE_PRESETS[variant].map(preset=>preset.targetElo))
-    expect(targets.every(target=>grid.has(target))).toBe(true)
-  })
+  it.each(["standard", "chess960"] as const)(
+    "resolves all 25 current %s Story targets on the calibrated grid",
+    (variant) => {
+      expect(STOCKFISH_OPPONENTS).toHaveLength(25)
+      const targets = STOCKFISH_OPPONENTS.map(
+        (opponent) => opponent.storyTargetElo,
+      )
+      expect(targets[0]).toBe(100)
+      expect(targets.at(-1)).toBe(2000)
+      expect(new Set(targets).size).toBe(25)
+      const grid = new Set(
+        WEB_CHALLENGE_PRESETS[variant].map((preset) => preset.targetElo),
+      )
+      expect(targets.every((target) => grid.has(target))).toBe(true)
+    },
+  )
 
   it.each([
     [

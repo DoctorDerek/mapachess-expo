@@ -1,14 +1,13 @@
 import type { CSSProperties } from "react"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
+import { usePortraitViewport } from "./PortraitViewport"
 
 type StoryOpponentPortraitProps = Readonly<{
   opponent: StockfishOpponentDefinition
   locked: boolean
   framed?: boolean
 }>
-
-import {usePortraitViewport} from "./PortraitViewport"
 
 const PORTRAIT_PIXEL_SCALE = 2
 
@@ -17,7 +16,7 @@ export default function StoryOpponentPortrait({
   locked,
   framed = true,
 }: StoryOpponentPortraitProps) {
-  const {ref,near} = usePortraitViewport()
+  const { ref, near } = usePortraitViewport()
   const presentation = resolveWebOpponentPresentation(opponent.id)
   const animation =
     presentation.kind === "sprite" ? presentation.steps[0].animation : null
@@ -54,7 +53,9 @@ export default function StoryOpponentPortrait({
           style={
             {
               "--portrait-pixel-size": pixelSize,
-              backgroundImage: near ? `url("${animation.sourceId}")` : undefined,
+              backgroundImage: near
+                ? `url("${animation.sourceId}")`
+                : undefined,
               backgroundPosition: `${length(-animation.geometry.visibleX)} ${length(-animation.geometry.visibleY)}`,
               backgroundRepeat: "no-repeat",
               backgroundSize: `${length(animation.geometry.frameWidth * animation.frameCount)} ${length(animation.geometry.frameHeight)}`,

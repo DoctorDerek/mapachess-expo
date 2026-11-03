@@ -164,22 +164,33 @@ export default async function openWebMatchRuntime(
     ...SINGLE_PV_ENGINE_CONFIGURATION,
     variant: startingPosition.variant,
   }
-  const program=input.openSession ? null : await prepareWebStockfishProgram(input.signal)
-  const openSession=input.openSession ?? createWebStockfishSession
-  const sessions:StockfishUciSession[]=[]
-  const own=(configuration:StockfishEngineConfiguration, workerName:string)=>{
-    const session=openSession(configuration,program ? {workerName,workerUrl:program.url} : {workerName})
+  const program = input.openSession
+    ? null
+    : await prepareWebStockfishProgram(input.signal)
+  const openSession = input.openSession ?? createWebStockfishSession
+  const sessions: StockfishUciSession[] = []
+  const own = (
+    configuration: StockfishEngineConfiguration,
+    workerName: string,
+  ) => {
+    const session = openSession(
+      configuration,
+      program ? { workerName, workerUrl: program.url } : { workerName },
+    )
     sessions.push(session)
     return session
   }
-  let opponentSession:StockfishUciSession
-  let hintSession:StockfishUciSession
-  let evaluationSession:StockfishUciSession
-  let engineIdentity:StockfishUciIdentity
-  try{
-    opponentSession=own(singlePvConfiguration,OPPONENT_WORKER_NAME)
-    hintSession=own({...singlePvConfiguration,multiPv:BETTER_HINTS_ENGINE_MULTIPV},HINT_WORKER_NAME)
-    evaluationSession=own(singlePvConfiguration,EVALUATION_WORKER_NAME)
+  let opponentSession: StockfishUciSession
+  let hintSession: StockfishUciSession
+  let evaluationSession: StockfishUciSession
+  let engineIdentity: StockfishUciIdentity
+  try {
+    opponentSession = own(singlePvConfiguration, OPPONENT_WORKER_NAME)
+    hintSession = own(
+      { ...singlePvConfiguration, multiPv: BETTER_HINTS_ENGINE_MULTIPV },
+      HINT_WORKER_NAME,
+    )
+    evaluationSession = own(singlePvConfiguration, EVALUATION_WORKER_NAME)
     const identities = await Promise.all([
       opponentSession.boot(input.signal),
       hintSession.boot(input.signal),
@@ -190,11 +201,21 @@ export default async function openWebMatchRuntime(
       throw new DOMException("Web match opening was aborted.", "AbortError")
     }
   } catch (error) {
-    try {return await closeAfterFailedOpen(sessions,error)} finally {program?.release()}
+    try {
+      return await closeAfterFailedOpen(sessions, error)
+    } finally {
+      program?.release()
+    }
   }
 
   return Object.freeze({
-    close: async () => {try {await closeOwnedSessions(sessions)} finally {program?.release()}},
+    close: async () => {
+      try {
+        await closeOwnedSessions(sessions)
+      } finally {
+        program?.release()
+      }
+    },
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
     matchId: webMatchId(

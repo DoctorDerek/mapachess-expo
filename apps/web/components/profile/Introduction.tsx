@@ -36,7 +36,11 @@ export default function Introduction({
     >
       <ScrollActions
         actions={
-          <div inert={!onStart} aria-hidden={!onStart || undefined} className="relative z-30 mx-auto grid w-full max-w-xl shrink-0 gap-3 px-6 pt-4 pb-5">
+          <div
+            inert={!onStart}
+            aria-hidden={!onStart || undefined}
+            className="relative z-30 mx-auto grid w-full max-w-xl shrink-0 gap-3 px-6 pt-4 pb-5"
+          >
             <LanguageChoice
               locale={locale}
               disabled={pending || !onStart}

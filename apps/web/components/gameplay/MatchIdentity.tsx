@@ -55,8 +55,16 @@ export default function MatchIdentity({
         <span className="inline-block">
           <MedalSymbol medal={assistance} />
           <span className="inline-grid align-baseline">
-            {MATCH_MEDALS.map(medal=>(
-              <span key={medal} aria-hidden={medal!==assistance || undefined} className={medal===assistance?"col-start-1 row-start-1":"invisible col-start-1 row-start-1"}>
+            {MATCH_MEDALS.map((medal) => (
+              <span
+                key={medal}
+                aria-hidden={medal !== assistance || undefined}
+                className={
+                  medal === assistance
+                    ? "col-start-1 row-start-1"
+                    : "invisible col-start-1 row-start-1"
+                }
+              >
                 {copy.shared.story.medals[medal]}
               </span>
             ))}

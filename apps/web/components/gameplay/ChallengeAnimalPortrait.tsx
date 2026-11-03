@@ -16,7 +16,6 @@ import resolveWebOpponentPresentation, {
   resolveWebOpponentAttention,
 } from "../../lib/presentation/webOpponentPresentation"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
 import { usePortraitViewport } from "./PortraitViewport"
 
 export default function ChallengeAnimalPortrait({
@@ -33,7 +32,7 @@ export default function ChallengeAnimalPortrait({
   fit?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
-  const {ref:viewportRef,near} = usePortraitViewport()
+  const { ref: viewportRef, near } = usePortraitViewport()
   const isPlaying = active && near
 
   const attentionActor = useActorRef(animalAttentionMachine)
@@ -46,7 +45,7 @@ export default function ChallengeAnimalPortrait({
   useEffect(() => {
     attentionActor.send({
       type: "ANIMAL_ATTENTION.INPUT_CHANGED",
-      active:isPlaying,
+      active: isPlaying,
       attention,
     })
   }, [isPlaying, attention, attentionActor])
@@ -77,7 +76,10 @@ export default function ChallengeAnimalPortrait({
   useEffect(() => () => images.retain([]), [images])
   useEffect(() => {
     const sprite = spriteRef.current
-    if (!isPlaying) { images.retain([]); return }
+    if (!isPlaying) {
+      images.retain([])
+      return
+    }
     if (step === null || sprite === null) return
     let cancelled = false
     let readyStep: BattleSpriteStep | null = null
@@ -210,11 +212,13 @@ export default function ChallengeAnimalPortrait({
         </span>
       ) : null}
       <span className="absolute bottom-1 left-1/2 block size-0">
-        {near && <span
-          ref={spriteRef}
-          className="absolute block bg-no-repeat [image-rendering:pixelated]"
-          style={initialFrameStyle}
-        />}
+        {near && (
+          <span
+            ref={spriteRef}
+            className="absolute block bg-no-repeat [image-rendering:pixelated]"
+            style={initialFrameStyle}
+          />
+        )}
       </span>
     </span>
   )
