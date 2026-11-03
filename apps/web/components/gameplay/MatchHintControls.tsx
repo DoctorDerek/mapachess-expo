@@ -70,8 +70,8 @@ export default function MatchHintControls({
         variant="secondary"
         className="flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-col items-center justify-center px-1! py-1! text-sm leading-tight wrap-break-word"
       >
-        <span>{hints.autoLabel}</span>
-        <span>
+        <span className="min-w-0 max-w-full wrap-anywhere">{hints.autoLabel}</span>
+        <span className="min-w-0 max-w-full wrap-anywhere">
           {hints.autoMode[autoHintMode]} <span aria-hidden="true">▾</span>
         </span>
       </MapachessButton>

@@ -58,7 +58,7 @@ export default function MapachessDialog({
     <dialog
       aria-label={label}
       className={cx(
-        "bg-mapachito-white text-mapachito-charcoal fixed inset-0 w-full overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60",
+        "bg-mapachito-white text-mapachito-charcoal fixed inset-0 w-full overscroll-contain p-4 px-[min(--spacing(4),5vw)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60",
         placement === "bottom"
           ? "mx-auto mt-auto mb-0 h-112 max-h-[calc(100dvh-1rem)] max-w-md rounded-t-xl"
           : "m-0 h-dvh max-h-dvh max-w-none xl:m-auto xl:max-h-[90dvh] xl:rounded-xl xl:p-6",
