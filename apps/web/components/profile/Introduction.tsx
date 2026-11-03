@@ -7,6 +7,12 @@ import FirstArrivalRaccoon from "../presentation/FirstArrivalRaccoon"
 import MapachessButton from "../presentation/MapachessButton"
 import ScrollActions from "../presentation/ScrollActions"
 import LanguageChoice from "./LanguageChoice"
+import { useMapachessLocale } from "./MapachessLocaleProvider"
+
+export function RestoringIntroduction() {
+  const locale = useMapachessLocale()
+  return <Introduction locale={locale} pending={false} blocked={false} />
+}
 
 export default function Introduction({
   locale,
@@ -18,11 +24,11 @@ export default function Introduction({
   locale: ShippedLocale
   pending: boolean
   blocked: boolean
-  onLocaleChanged: (locale: ShippedLocale) => void
-  onStart: () => void
+  onLocaleChanged?: (locale: ShippedLocale) => void
+  onStart?: () => void
 }>) {
   const copy = loadCatalog(locale).introduction
-  const motion = useFirstArrivalMotion(!pending && !blocked)
+  const motion = useFirstArrivalMotion(Boolean(onStart) && !pending && !blocked)
   return (
     <div
       inert={blocked}
@@ -30,22 +36,23 @@ export default function Introduction({
     >
       <ScrollActions
         actions={
-          <div className="relative z-30 mx-auto grid w-full max-w-xl shrink-0 gap-3 px-6 pt-4 pb-5">
+          <div inert={!onStart} aria-hidden={!onStart || undefined} className="relative z-30 mx-auto grid w-full max-w-xl shrink-0 gap-3 px-6 pt-4 pb-5">
             <LanguageChoice
               locale={locale}
-              disabled={pending}
+              disabled={pending || !onStart}
               onChange={(selected) => {
                 motion.cancel()
-                onLocaleChanged(selected)
+                onLocaleChanged?.(selected)
               }}
             />
             <MapachessButton
               aria-busy={pending}
+              disabled={!onStart}
               busyLabel={copy.starting}
               className="focus-visible:outline-mapachito-deep-cyan min-h-14 w-full text-2xl"
               onClick={() => {
                 motion.cancel()
-                onStart()
+                onStart?.()
               }}
             >
               {copy.start}

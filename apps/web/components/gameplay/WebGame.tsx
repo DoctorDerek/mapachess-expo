@@ -31,7 +31,7 @@ import {
 } from "../../lib/gameplay/webMatchSessionMachine"
 import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
 import MapachessButton from "../presentation/MapachessButton"
-import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
+
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
@@ -292,9 +292,8 @@ export default function WebGame({
     actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
   }
 
-  if (snapshot.matches("openingCurrentMatch")) {
-    return <MapachessLoadingSurface />
-  }
+  const isRestoringMatch = snapshot.matches("openingCurrentMatch")
+  const showModeMenu = snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
 
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
   const retainingMatch =
@@ -306,12 +305,12 @@ export default function WebGame({
     <GameFrame
       activityMessage={openingTitle(actor, copy)}
       matchSessionActive={retainingMatch}
-      home={snapshot.matches({ menu: "choosingMode" })}
+      home={showModeMenu}
       onSettingsRequested={onSettingsRequested}
       settingsButtonRef={settingsButtonRef}
       settingsOpen={settingsOpen}
     >
-      {snapshot.matches({ menu: "choosingMode" }) ? (
+      {showModeMenu ? (
         <MatchModeMenu
           playerData={playerData}
           resumeMatch={
@@ -326,7 +325,7 @@ export default function WebGame({
           }
           onCustomize={() => navigation.open("dressing-room")}
           onShare={() => navigation.open("profile-card")}
-          disabled={!profileReady}
+          disabled={!profileReady || isRestoringMatch}
           onModeSelected={(selection) => {
             if (
               !profileAllowsMatchOpening(profileActor.getSnapshot()) ||

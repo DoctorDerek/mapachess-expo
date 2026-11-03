@@ -25,7 +25,7 @@ import WebGame from "../gameplay/WebGame"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
-import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
+import { RestoringIntroduction } from "./Introduction"
 import RecoverableView from "../presentation/RecoverableView"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileCardJourney from "./ProfileCardJourney"
@@ -236,7 +236,7 @@ export default function ProfilePlayExperience(
   })
   const actor = useWebMatchSession(props.profileActor)
   return actor === null ? (
-    <MapachessLoadingSurface />
+    <RestoringIntroduction />
   ) : (
     <ReadyPlayExperience {...props} actor={actor} />
   )
