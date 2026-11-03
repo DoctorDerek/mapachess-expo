@@ -25,6 +25,7 @@
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@rive-app/canvas-lite": "^2",
+    "@serwist/turbopack": "^9.5.12",
     "@vercel/analytics": "^2",
     "@xstate/react": "^6",
     "classix": "^2",
@@ -33,12 +34,14 @@
     "next": "^16",
     "react": "^19",
     "react-dom": "^19",
+    "serwist": "^9.5.12",
     "xstate": "^5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "fake-indexeddb": "^6",
     "postcss": "^8",
     "tailwindcss": "^4",

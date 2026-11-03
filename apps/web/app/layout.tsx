@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import localFont from "next/font/local"
 import type { ReactNode } from "react"
 import loadCatalog from "@mapachess/localization/catalog"
+import OfflineRegistration from "../components/OfflineRegistration"
 import WebsiteAnalytics from "../components/WebsiteAnalytics"
 
 const homeFont = localFont({
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={homeFont.variable}>
       <body>
         {children}
+        <OfflineRegistration />
         {process.env.VERCEL_ENV === "production" && <WebsiteAnalytics />}
       </body>
     </html>
