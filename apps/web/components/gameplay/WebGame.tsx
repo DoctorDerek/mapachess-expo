@@ -40,6 +40,8 @@ import MatchResultFacts from "./MatchResultFacts"
 import StoryMatchResult from "./StoryMatchResult"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
+import {preload} from "react-dom"
+import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
@@ -296,6 +298,9 @@ export default function WebGame({
   const showModeMenu = snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
 
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
+  if (savedMatch !== null || snapshot.matches({menu:"setup"}) || openingFreshMatch) {
+    preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {as:"fetch",crossOrigin:"anonymous",fetchPriority:"low",type:"application/wasm"})
+  }
   const retainingMatch =
     snapshot.matches("active") ||
     snapshot.matches("restartingMatch") ||

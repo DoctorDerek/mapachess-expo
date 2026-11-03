@@ -2,7 +2,6 @@
 
 import { useSelector } from "@xstate/react"
 import { useRef } from "react"
-import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
@@ -13,7 +12,6 @@ import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
-import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
@@ -228,12 +226,6 @@ function ReadyPlayExperience({
 export default function ProfilePlayExperience(
   props: ProfilePlayExperienceProps,
 ) {
-  preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {
-    as: "fetch",
-    crossOrigin: "anonymous",
-    fetchPriority: "low",
-    type: "application/wasm",
-  })
   const actor = useWebMatchSession(props.profileActor)
   return actor === null ? (
     <RestoringIntroduction />

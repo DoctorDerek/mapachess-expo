@@ -188,7 +188,7 @@ export default function WebMatchSetup({
       ? null
       : stockfishOpponent(playerAppearance.animal)
   usePreparedMatchImages(
-    selectedOpponentId,
+    visible ? selectedOpponentId : null,
     setup.mode === "story" ? playerAppearance?.animal : "raccoon-stockfish",
   )
   const selectionAvailable =
