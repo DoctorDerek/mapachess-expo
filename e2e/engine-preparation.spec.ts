@@ -4,13 +4,14 @@ import { firstArrivalTest as test } from "./fixtures.js"
 test("keeps the chess engine off a fresh customization-only journey", async ({
   page,
   context,
+  workerOrigin,
 }) => {
   const engine: string[] = []
   context.on("request", (request) => {
     if (request.url().includes("/stockfish-runtime/"))
       engine.push(request.url())
   })
-  await page.goto("/")
+  await page.goto(workerOrigin)
   await page.getByRole("button", { name: "Start", exact: true }).click()
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })

@@ -575,6 +575,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
 test("loads the app icon without browser console errors", async ({
   page,
   request,
+  workerOrigin,
 }) => {
   const browserConsoleErrors: string[] = []
 
@@ -582,7 +583,7 @@ test("loads the app icon without browser console errors", async ({
     if (message.type() === "error") browserConsoleErrors.push(message.text())
   })
 
-  await page.goto("/")
+  await page.goto(workerOrigin)
   await expectModeMenu(page)
 
   const iconHref = await page
