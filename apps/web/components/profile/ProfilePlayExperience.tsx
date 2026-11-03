@@ -20,6 +20,7 @@ import ChessAppearanceProvider, {
   ChessArtworkRecovery,
 } from "../gameplay/ChessArtwork"
 import WebGame from "../gameplay/WebGame"
+import PortraitViewport from "../gameplay/PortraitViewport"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
@@ -150,7 +151,7 @@ function ReadyPlayExperience({
     },
   }
   return (
-    <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
+    <PortraitViewport><ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
       <CoachCollectionContext value={settingsProps.coachCollection}>
         <ProfileCardJourney
           blocked={blocked}
@@ -219,7 +220,7 @@ function ReadyPlayExperience({
           </RecoverableView>
         </div>
       </CoachCollectionContext>
-    </ChessAppearanceProvider>
+    </ChessAppearanceProvider></PortraitViewport>
   )
 }
 

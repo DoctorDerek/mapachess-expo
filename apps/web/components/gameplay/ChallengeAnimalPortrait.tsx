@@ -17,6 +17,8 @@ import resolveWebOpponentPresentation, {
 } from "../../lib/presentation/webOpponentPresentation"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
+import { usePortraitViewport } from "./PortraitViewport"
+
 export default function ChallengeAnimalPortrait({
   opponent,
   active,
@@ -31,6 +33,8 @@ export default function ChallengeAnimalPortrait({
   fit?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
+  const {ref:viewportRef,near} = usePortraitViewport()
+  const isPlaying = active && near
 
   const attentionActor = useActorRef(animalAttentionMachine)
   const attentionOrdinal = useSelector(attentionActor, (snapshot) =>
@@ -42,10 +46,10 @@ export default function ChallengeAnimalPortrait({
   useEffect(() => {
     attentionActor.send({
       type: "ANIMAL_ATTENTION.INPUT_CHANGED",
-      active,
+      active:isPlaying,
       attention,
     })
-  }, [active, attention, attentionActor])
+  }, [isPlaying, attention, attentionActor])
   const presentation = useMemo(
     () =>
       resolveWebOpponentPresentation(
@@ -67,12 +71,13 @@ export default function ChallengeAnimalPortrait({
   const hasVisiblePose = useRef(false)
   const [images] = useState(() => createPresentationImages())
   const [unavailable, setUnavailable] = useState(false)
-  if (active && step !== null)
+  if (isPlaying && step !== null)
     preload(step.animation.sourceId, { as: "image", fetchPriority: "low" })
 
   useEffect(() => () => images.retain([]), [images])
   useEffect(() => {
     const sprite = spriteRef.current
+    if (!isPlaying) { images.retain([]); return }
     if (step === null || sprite === null) return
     let cancelled = false
     let readyStep: BattleSpriteStep | null = null
@@ -125,10 +130,6 @@ export default function ChallengeAnimalPortrait({
       if (document.visibilityState === "hidden") frames?.pause()
       else frames?.play()
     }
-    if (!active) {
-      images.retain([])
-      return
-    }
     const sources = [
       step.animation.sourceId,
       ...(attentionStep === null ? [] : [attentionStep.animation.sourceId]),
@@ -169,7 +170,7 @@ export default function ChallengeAnimalPortrait({
       document.removeEventListener("visibilitychange", updatePlayback)
       motionPreference.removeEventListener("change", updatePlayback)
     }
-  }, [active, attentionOrdinal, attentionActor, attentionStep, images, step])
+  }, [isPlaying, attentionOrdinal, attentionActor, attentionStep, images, step])
 
   const portraitStyle: CSSProperties & {
     "--sprite-scale": number
@@ -198,6 +199,7 @@ export default function ChallengeAnimalPortrait({
   }
   return (
     <span
+      ref={viewportRef}
       aria-hidden="true"
       className={cx("relative block h-full w-full", fit && "@container-size")}
       style={portraitStyle}
@@ -208,11 +210,11 @@ export default function ChallengeAnimalPortrait({
         </span>
       ) : null}
       <span className="absolute bottom-1 left-1/2 block size-0">
-        <span
+        {near && <span
           ref={spriteRef}
           className="absolute block bg-no-repeat [image-rendering:pixelated]"
           style={initialFrameStyle}
-        />
+        />}
       </span>
     </span>
   )
