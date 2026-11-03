@@ -127,7 +127,10 @@ for (const { locale, preset } of [
     await expect
       .poll(async () => (await savedProfile(page)).activeMatch?.currentFen)
       .toBe(moved.currentFen)
-    expect(await page.evaluate(() => scrollY)).toBeCloseTo(restingScroll, 0)
+    // Scroll offsets round to CSS pixels when a fractional row is laid out again.
+    expect(
+      Math.abs((await page.evaluate(() => scrollY)) - restingScroll),
+    ).toBeLessThanOrEqual(1)
     if (bullet) {
       await resume.scrollIntoViewIfNeeded()
       await tapInPlace(page, resume)
