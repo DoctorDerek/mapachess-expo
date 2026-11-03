@@ -19,7 +19,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const historyActionClassName =
-  "flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] xl:leading-tight wrap-break-word"
+  "flex min-w-0 scroll-mb-1 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] xl:leading-tight wrap-break-word"
 
 export default function MatchCommands({
   actor,
@@ -70,7 +70,7 @@ export default function MatchCommands({
         {coach}
         {hints}
       </div>
-      <div className="grid min-w-0 grid-cols-3 items-stretch gap-1.5">
+      <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_repeat(2,minmax(0,1.15fr))] items-stretch gap-1.5 xl:grid-cols-3">
         <details
           className="relative z-40 min-w-0 flex-[1_1_max-content]"
           open={menuOpen}
