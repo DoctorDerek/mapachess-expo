@@ -66,7 +66,7 @@ export default function MatchCommands({
   })
   return (
     <div className="grid gap-1.5">
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-1.5 xl:flex xl:flex-wrap xl:items-center">
         {coach}
         {hints}
       </div>

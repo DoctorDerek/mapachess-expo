@@ -57,38 +57,8 @@ export default function MatchHintControls({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="grid min-w-0 flex-[1_1_min-content] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-1.5 text-sm [--hint-target:max(--spacing(16),2rem)]"
+      className="contents text-sm [--hint-target:max(--spacing(16),2rem)] xl:grid xl:min-w-0 xl:flex-[1_1_min-content] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-stretch xl:gap-1.5"
     >
-      <MapachessButton
-        aria-haspopup="dialog"
-        aria-expanded={overlays.includes("match-hints")}
-        disabled={complete}
-        onClick={(event) => {
-          event.currentTarget.focus({ preventScroll: true })
-          navigation.open("match-hints")
-        }}
-        variant="secondary"
-        className="flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-col items-center justify-center px-1! py-1! text-sm leading-tight wrap-break-word"
-      >
-        <span className="max-w-full min-w-0 wrap-anywhere">
-          {hints.autoLabel}
-        </span>
-        <span className="max-w-full min-w-0 wrap-anywhere">
-          {hints.autoMode[autoHintMode]} <span aria-hidden="true">▾</span>
-        </span>
-      </MapachessButton>
-      <MapachessButton
-        aria-label={copy.shared.settingsControls.explainAutoHints}
-        aria-haspopup="dialog"
-        onClick={(event) => {
-          event.currentTarget.focus({ preventScroll: true })
-          navigation.open("auto-hints-help")
-        }}
-        variant="secondary"
-        className="min-h-(--hint-target)! w-12 flex-none px-1! py-1! text-xl leading-tight"
-      >
-        <span aria-hidden="true">?</span>
-      </MapachessButton>
       <BetterHintsControl
         nextMedal={complete ? null : nextMedal}
         busy={selectIsPersistingMutation(snapshot)}
@@ -103,6 +73,39 @@ export default function MatchHintControls({
         }
         stage={stage}
       />
+      <MapachessButton
+        aria-haspopup="dialog"
+        aria-expanded={overlays.includes("match-hints")}
+        disabled={complete}
+        onClick={(event) => {
+          event.currentTarget.focus({ preventScroll: true })
+          navigation.open("match-hints")
+        }}
+        variant="secondary"
+        className="col-span-2 row-start-2 flex min-h-(--hint-target)! max-w-full min-w-0 flex-wrap items-center justify-center gap-x-1 px-1! py-1! text-sm leading-tight wrap-break-word xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex-col"
+      >
+        <span className="max-w-full min-w-0 wrap-anywhere">
+          {hints.autoLabel}
+        </span>
+        <span className="max-w-full min-w-0 wrap-anywhere">
+          {hints.autoMode[autoHintMode]}{" "}
+          <span aria-hidden="true" className="text-[0.5em] leading-none">
+            ▾
+          </span>
+        </span>
+      </MapachessButton>
+      <MapachessButton
+        aria-label={copy.shared.settingsControls.explainAutoHints}
+        aria-haspopup="dialog"
+        onClick={(event) => {
+          event.currentTarget.focus({ preventScroll: true })
+          navigation.open("auto-hints-help")
+        }}
+        variant="secondary"
+        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-tight xl:col-start-2 xl:row-start-1"
+      >
+        <span aria-hidden="true">?</span>
+      </MapachessButton>
       {view === "match-hints" || helpOpen ? (
         <MapachessDialog
           label={copy.shared.settingsControls.autoHints}
