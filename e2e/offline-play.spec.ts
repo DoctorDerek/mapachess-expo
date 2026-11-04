@@ -172,8 +172,13 @@ for (const [variant, previous] of [
         timeout: 30000,
       })
       await piece.click()
+      await expect(piece).toHaveAttribute("aria-selected", "true")
       await board
-        .getByRole("gridcell", { name: isChess960 ? /^c3,/ : /^e4,/ })
+        .getByRole("gridcell", {
+          name: isChess960
+            ? /^c3, empty, legal destination/
+            : /^e4, empty, legal destination/,
+        })
         .click()
       await expect
         .poll(async () => (await savedProfile(reopened)).activeMatch, {
