@@ -470,7 +470,7 @@ export async function returnWebMatchSessionToMenu({
 }: ReturnWebMatchSessionToMenuInput): Promise<void> {
   await session.close()
 
-  // A hint or move already handed to the profile can finish after its match closes.
+  // ONE-TIME EXCEPTION: A dispatched save can finish after its match closes.
   const settled = await waitFor(
     profileActor,
     (snapshot) =>

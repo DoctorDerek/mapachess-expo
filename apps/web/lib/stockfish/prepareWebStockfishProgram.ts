@@ -45,7 +45,7 @@ function programFile(artifact: StockfishWebRuntimeArtifact) {
         await cache.put(key, new Response(blob))
         unpersisted = undefined
       } catch {
-        // Keep these verified bytes for this page when persistent storage is full.
+        // ONE-TIME EXCEPTION: Keep verified bytes when persistent storage is full.
       }
     }
     return blob
@@ -69,7 +69,7 @@ export function loadWebStockfishBytes(): Promise<readonly [Blob, Blob]> {
       try {
         cache = await globalThis.caches?.open(cacheName)
       } catch {
-        // Online matches can still use this page's copy if CacheStorage is denied.
+        // ONE-TIME EXCEPTION: Online chess can use memory when storage is denied.
       }
       return Promise.all([readLoader(cache), readBinary(cache)] as const)
     })().finally(() => {

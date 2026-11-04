@@ -44,10 +44,10 @@ const expectScrollContentVisible = async (
     const left = content.left + scroll.clientLeft
     const top = content.top + scroll.clientTop
     if (align === "end") {
-      // Include the last card's margin instead of aligning two fractional edges.
+      // ONE-TIME EXCEPTION: The last card's margin prevents fractional clipping.
       scroll.scrollTo({ top: scroll.scrollHeight, behavior: "instant" })
     } else if (align === "center") {
-      // Scroll the dialog's reader. Its fixed footer and the page stay in place.
+      // ONE-TIME EXCEPTION: Scroll the reader to preserve the page and fixed footer.
       const target = element.getBoundingClientRect()
       const space = scroll.clientHeight - target.height
       scroll.scrollBy({
