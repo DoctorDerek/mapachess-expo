@@ -164,6 +164,16 @@ for (const [variant, previous] of [
           .click()
         await startWhiteChallenge(reopened, variant)
       }
+      await expect
+        .poll(
+          async () => (await savedProfile(reopened)).activeMatch?.moveHintsUsed,
+          {
+            timeout: 30_000,
+            message:
+              "Wait for the default automatic hints to finish saving offline",
+          },
+        )
+        .toBe(true)
       const isChess960 = variant === "chess960"
       const piece = board.getByRole("gridcell", {
         name: isChess960 ? /^d1, White knight/ : /^e2, White pawn/,
