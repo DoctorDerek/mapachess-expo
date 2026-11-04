@@ -7,6 +7,12 @@ import savedProfile from "./savedProfile.js"
 
 const setup = loadCatalog("en").setup
 
+test.skip(
+  !process.env.PLAYWRIGHT_TEST_BASE_URL &&
+    process.env.PLAYWRIGHT_VERCEL_TRUSTED_OIDC !== "true",
+  "The service worker is shipped in production builds.",
+)
+
 async function startWhiteChallenge(page: Page, variant: MatchVariant) {
   await page.getByRole("radio", { name: setup.white, exact: true }).check()
   if (variant === "chess960") await page.getByRole("spinbutton").fill("0")
@@ -29,6 +35,51 @@ async function reopenSavedBoard(page: Page) {
   await expect(board).toBeVisible()
 }
 
+test("a refused offline installation keeps Home usable and retries on the next visit", async ({
+  page,
+  workerOrigin,
+}) => {
+  const refusal = "test-only service worker refusal"
+  const diagnostics: string[] = []
+  page.on("console", (message) => diagnostics.push(message.text()))
+  page.on("pageerror", (error) => diagnostics.push(error.message))
+  await page.addInitScript((reason) => {
+    if (sessionStorage.getItem(reason)) return
+    navigator.serviceWorker.register = async () => {
+      sessionStorage.setItem(reason, "refused")
+      throw new Error(reason)
+    }
+  }, refusal)
+  await page.goto(workerOrigin)
+  await page.getByRole("button", { name: "Start", exact: true }).click()
+  await expect(
+    page.getByRole("button", {
+      name: setup.presentations.standard.story.title,
+      exact: true,
+    }),
+  ).toBeEnabled()
+  await expect
+    .poll(() => page.evaluate((key) => sessionStorage.getItem(key), refusal))
+    .toBe("refused")
+  expect(
+    await page.evaluate(async () =>
+      Boolean(await navigator.serviceWorker.getRegistration()),
+    ),
+  ).toBe(false)
+  await page.reload()
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          async () =>
+            (await navigator.serviceWorker.getRegistration())?.active?.state,
+        ),
+      { timeout: 30_000 },
+    )
+    .toBe("activated")
+  expect(diagnostics.join("\n")).not.toContain(refusal)
+})
+
 for (const [variant, previous] of [
   ["standard", "selected mode"],
   ["standard", "saved game"],
@@ -40,11 +91,6 @@ for (const [variant, previous] of [
     baseURL,
     request,
   }) => {
-    test.skip(
-      !process.env.PLAYWRIGHT_TEST_BASE_URL &&
-        process.env.PLAYWRIGHT_VERCEL_TRUSTED_OIDC !== "true",
-      "The service worker is shipped in production builds.",
-    )
     test.setTimeout(90_000)
     if (!baseURL) throw Error("A built web target is required")
     const modeTitle = setup.presentations[variant].challenge.title
