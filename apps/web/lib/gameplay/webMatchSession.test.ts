@@ -1176,6 +1176,56 @@ describe("web match session ownership", () => {
     await profileRuntime.close()
   })
 
+  it.each([
+    ["the same match", FIRST_MATCH_SEED],
+    ["a replacement match", SECOND_MATCH_SEED],
+  ])(
+    "preserves ownership when returning to the menu during a save for %s",
+    async (_name, pendingSeed) => {
+      const profile = await openProfileRuntime()
+      const engine = createRuntime(FIRST_MATCH_SEED)
+      const signal = new AbortController().signal
+      const session = await openFreshWebMatchSession({
+        variant: "standard",
+        openRuntime: runtimeOpener(engine.runtime),
+        previousSession: null,
+        profileActor: profile.actor,
+        signal,
+      })
+      try {
+        const pending = {
+          ...session.match,
+          matchId: createRuntime(pendingSeed).runtime.matchId,
+          matchSeed: pendingSeed,
+          pieceHintsUsed: true,
+        }
+        profile.actor.send({
+          type: "PROFILE.ACTIVE_MATCH_SAVE_REQUESTED",
+          activeMatch: pending,
+        })
+        expect(profile.actor.getSnapshot().matches("persisting")).toBe(true)
+        const leaving = returnWebMatchSessionToMenu({
+          profileActor: profile.actor,
+          session,
+          signal,
+        })
+        if (pendingSeed === FIRST_MATCH_SEED) {
+          await leaving
+          expect(
+            selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch,
+          ).toBeNull()
+        } else {
+          await expect(leaving).rejects.toThrow("A different active match")
+          expect(
+            selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch,
+          ).toEqual(pending)
+        }
+      } finally {
+        await profile.close()
+      }
+    },
+  )
+
   it("closes the session before clearing its verified active match", async () => {
     const profileRuntime = await openProfileRuntime()
     const engineRuntime = createRuntime(FIRST_MATCH_SEED)
