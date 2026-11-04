@@ -503,14 +503,16 @@ test("presents imported Challenge medals with stable animal artwork", async ({
   await expect(choice).toBeChecked()
   const tile = page.locator("label").filter({ has: choice })
   const sprite = tile.locator('span[style*="background-image"]')
-  if (await sprite.count()) {
+  const fallback = tile.getByText("Chicken Stockfish", { exact: true })
+  await tile.scrollIntoViewIfNeeded()
+  await expect(sprite.or(fallback).first()).toBeVisible()
+  if (await sprite.isVisible()) {
     const spriteElement = await sprite.elementHandle()
     if (spriteElement === null)
       throw new Error("Expected mounted animal sprite")
     await expect
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))
       .toBe(1)
-    await tile.scrollIntoViewIfNeeded()
     const tileBounds = await tile.boundingBox()
     await tile.hover()
     await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
@@ -566,9 +568,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
       .poll(() => sprite.evaluate((element) => element.getAnimations().length))
       .toBe(1)
   } else {
-    await expect(
-      tile.getByText("Chicken Stockfish", { exact: true }),
-    ).toBeVisible()
+    await expect(fallback).toBeVisible()
   }
 })
 
