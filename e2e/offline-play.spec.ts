@@ -1,9 +1,22 @@
-import { expect } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import loadCatalog from "../packages/localization/src/catalog.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import startOrigin from "./offlineOrigin.js"
 import savedProfile from "./savedProfile.js"
 import startHintMatch from "./startHintMatch.js"
+
+async function reopenSavedBoard(page: Page) {
+  await page.goto("/", { waitUntil: "domcontentloaded" })
+  const board = page.getByRole("grid", { name: /Chessboard/ })
+  const resume = page.getByRole("button", {
+    name: "Resume match Untimed",
+    exact: true,
+    disabled: false,
+  })
+  await expect(board.or(resume).first()).toBeVisible()
+  if (await resume.isVisible()) await resume.click()
+  await expect(board).toBeVisible()
+}
 
 for (const previous of ["selected mode", "saved game"] as const) {
   test(`plays offline after a ${previous} and persists a move with the origin stopped`, async ({
@@ -83,15 +96,7 @@ for (const previous of ["selected mode", "saved game"] as const) {
       await expect(fetch(origin.url)).rejects.toThrow()
       const board = reopened.getByRole("grid", { name: /Chessboard/ })
       if (existing) {
-        await reopened.goto("/", { waitUntil: "domcontentloaded" })
-        const resume = reopened.getByRole("button", {
-          name: "Resume match Untimed",
-          exact: true,
-          disabled: false,
-        })
-        await expect(board.or(resume).first()).toBeVisible()
-        if (await resume.isVisible()) await resume.click()
-        await expect(board).toBeVisible()
+        await reopenSavedBoard(reopened)
         expect((await savedProfile(reopened)).activeMatch?.matchId).toBe(id)
       } else {
         await reopened.goto("/")
@@ -116,11 +121,27 @@ for (const previous of ["selected mode", "saved game"] as const) {
       await pawn.click()
       await board.getByRole("gridcell", { name: /^e4,/ }).click()
       await expect
-        .poll(
-          async () =>
-            (await savedProfile(reopened)).activeMatch?.moveIds.length,
-        )
-        .toBeGreaterThan(0)
+        .poll(async () => (await savedProfile(reopened)).activeMatch, {
+          timeout: 30_000,
+        })
+        .toMatchObject({
+          cursor: 2,
+          moveIds: ["e2e4", expect.any(String)],
+          playerColor: "white",
+          startingPosition: { variant: "standard", chess960PositionId: null },
+        })
+      const played = (await savedProfile(reopened)).activeMatch
+      if (!played) throw new Error("Expected the saved two-ply game")
+      await reopened.close()
+      const restored = await context.newPage()
+      await reopenSavedBoard(restored)
+      expect((await savedProfile(restored)).activeMatch).toMatchObject({
+        matchId: played.matchId,
+        startingPosition: played.startingPosition,
+        currentFen: played.currentFen,
+        cursor: played.cursor,
+        moveIds: played.moveIds,
+      })
     } finally {
       await context.close()
       await origin.close()
