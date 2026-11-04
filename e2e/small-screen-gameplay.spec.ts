@@ -25,9 +25,11 @@ const expectContained = async (surface: Locator): Promise<void> => {
     .toBeLessThanOrEqual(1)
 }
 
-const expectScrollContentVisible = async (surface: Locator) => {
-  await expect(surface).toBeInViewport()
-  const geometry = await surface.evaluate((element) => {
+const expectScrollContentVisible = async (
+  surface: Locator,
+  align?: "center" | "end",
+) => {
+  const geometry = await surface.evaluate((element, align) => {
     let scroll = element.parentElement
     while (
       scroll &&
@@ -38,10 +40,17 @@ const expectScrollContentVisible = async (surface: Locator) => {
       throw new Error(
         "Expected the control or stage inside a dialog scrollport",
       )
-    const bounds = element.getBoundingClientRect()
     const content = scroll.getBoundingClientRect()
     const left = content.left + scroll.clientLeft
     const top = content.top + scroll.clientTop
+    if (align) {
+      // Scroll the dialog's reader. Its fixed footer and the page stay in place.
+      const target = element.getBoundingClientRect()
+      const space = scroll.clientHeight - target.height
+      const offset = align === "center" ? space / 2 : space
+      scroll.scrollBy({ top: target.top - top - offset, behavior: "instant" })
+    }
+    const bounds = element.getBoundingClientRect()
     return {
       leftInset: bounds.left - left,
       visibleInset: Math.min(
@@ -53,7 +62,8 @@ const expectScrollContentVisible = async (surface: Locator) => {
       contentWidth: scroll.clientWidth,
       width: bounds.width,
     }
-  })
+  }, align)
+  await expect(surface).toBeInViewport()
   expect(geometry.visibleInset).toBeGreaterThanOrEqual(-1)
   return geometry
 }
@@ -173,7 +183,10 @@ for (const locale of ["en", "es-419"] as const) {
           })
           expect(geometry.rowOffset).toBeCloseTo(0, 1)
           expect(geometry.contentHeight).toBeGreaterThan(120)
-          expect(geometry.horizontalOverflow).toBe(0)
+          expect(
+            geometry.horizontalOverflow,
+            `${locale} ${variant} ${mode} setup at ${percent}% text`,
+          ).toBe(0)
           expect(geometry.actionShift).toBe(0)
           await scale.evaluate((element) =>
             element.parentNode?.removeChild(element),
@@ -272,8 +285,7 @@ for (const locale of ["en", "es-419"] as const) {
             exact: true,
           })
           await choice.focus()
-          await choice.scrollIntoViewIfNeeded()
-          await expectScrollContentVisible(choice)
+          await expectScrollContentVisible(choice, "center")
           await expectContained(choice)
           const geometry = await choice.evaluate((button) => {
             const bounds = button.getBoundingClientRect()
@@ -401,9 +413,7 @@ for (const locale of ["en", "es-419"] as const) {
         )
         await expectExposedWithoutScrolling(rating)
         if (width < 1280) {
-          await level.evaluate((element) =>
-            element.scrollIntoView({ block: "start" }),
-          )
+          await expectScrollContentVisible(level, "end")
           await expectExposedWithoutScrolling(level)
           await expectExposedWithoutScrolling(review)
           await expectExposedWithoutScrolling(replay)
