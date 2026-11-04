@@ -64,9 +64,9 @@ export default function Introduction({
           </div>
         }
       >
-        <header className="relative flex min-h-24 shrink-0 items-center justify-center px-4 py-5 xl:min-h-32">
+        <header className="@container relative flex min-h-24 shrink-0 items-center justify-center px-4 py-5 xl:min-h-32">
           {motion.runRaccoon ? <FirstArrivalRaccoon /> : null}
-          <h1 className="font-display text-mapachito-deep-cyan relative z-30 text-center text-[clamp(2.875rem,10vw,4.75rem)] leading-none font-black tracking-tight">
+          <h1 className="font-display text-mapachito-deep-cyan relative z-30 text-center text-[min(clamp(2.875rem,10vw,4.75rem),21cqi)] leading-none font-black tracking-tight">
             {copy.title}
           </h1>
         </header>
@@ -97,11 +97,11 @@ export default function Introduction({
             alt=""
             className="pointer-events-none absolute inset-0 mx-auto h-full w-full max-w-80 object-cover"
           />
-          <div className="text-mapachito-white relative z-30 grid justify-items-center text-center text-xl leading-7 font-black">
+          <div className="text-mapachito-white relative z-30 grid min-w-0 grid-cols-1 justify-items-center text-center text-xl leading-7 font-black wrap-anywhere">
             <p>{copy.credit}</p>
             <p>{copy.author}</p>
             <a
-              className="hover:text-mapachito-orange active:text-mapachito-orange inline-flex min-h-11 items-center no-underline transition-colors motion-reduce:transition-none"
+              className="hover:text-mapachito-orange active:text-mapachito-orange inline-flex min-h-11 max-w-full items-center no-underline transition-colors motion-reduce:transition-none"
               href="https://DoctorDerek.com"
               rel="noopener noreferrer"
               target="_blank"

@@ -9,6 +9,37 @@ import {
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
+test("the enlarged introduction title and website fit its reading area", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  const title = page.getByRole("heading", { level: 1, name: "Mapachess" })
+  const website = page.getByRole("link", { name: /DoctorDerek\.com/i })
+  await expect(
+    page.getByRole("button", { name: "Start", exact: true }),
+  ).toBeEnabled()
+  await expect(title).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
+  const readingArea = title.locator("../..")
+  const bounds = await readingArea.boundingBox()
+  if (!bounds) throw Error("Missing introduction reading area")
+  for (const element of [title, website]) {
+    await element.scrollIntoViewIfNeeded()
+    const box = await element.boundingBox()
+    if (!box) throw Error("Missing introduction content")
+    expect(box.x).toBeGreaterThanOrEqual(bounds.x)
+    expect(box.x + box.width).toBeLessThanOrEqual(bounds.x + bounds.width)
+  }
+  expect(
+    await readingArea.evaluate((el) => el.scrollWidth - el.clientWidth),
+  ).toBe(0)
+})
+
 test("choosing English persists only the locale before Start and retains the document language", async ({
   page,
 }) => {
