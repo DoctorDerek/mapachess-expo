@@ -220,6 +220,35 @@ for (const width of [320, 390, 1280]) {
   })
 }
 
+for (const width of [390, 1440]) {
+  test(`the running raccoon never widens the introduction at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto("/")
+    const crossing = page.locator('header [data-ready="true"]')
+    await crossing.waitFor({ state: "attached", timeout: 20_000 })
+    const maxOverflow = await crossing.evaluate(async (runner) => {
+      const scrollport = runner.closest("header")?.parentElement
+      if (!scrollport) throw new Error("Missing introduction scrollport")
+      let excess = scrollport.scrollWidth - scrollport.clientWidth
+      // Exercise a narrower scrollport even when the browser overlays its scrollbars.
+      scrollport.style.maxInlineSize = "calc(100% - 1rem)"
+      while (runner.isConnected) {
+        excess = Math.max(
+          excess,
+          scrollport.scrollWidth - scrollport.clientWidth,
+        )
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve()),
+        )
+      }
+      return excess
+    })
+    expect(maxOverflow).toBe(0)
+  })
+}
+
 test("plays the real self-hosted animation and completes the full raccoon crossing independently", async ({
   page,
 }, testInfo) => {
