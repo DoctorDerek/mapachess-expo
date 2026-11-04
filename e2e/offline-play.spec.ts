@@ -1,9 +1,20 @@
 import { expect, type Page } from "@playwright/test"
 import loadCatalog from "../packages/localization/src/catalog.js"
+import type { MatchVariant } from "../packages/match/src/matchVariant.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import startOrigin from "./offlineOrigin.js"
 import savedProfile from "./savedProfile.js"
-import startHintMatch from "./startHintMatch.js"
+
+const setup = loadCatalog("en").setup
+
+async function startWhiteChallenge(page: Page, variant: MatchVariant) {
+  await page.getByRole("radio", { name: setup.white, exact: true }).check()
+  if (variant === "chess960") await page.getByRole("spinbutton").fill("0")
+  await page
+    .getByRole("button", { name: setup.startMatch, exact: true })
+    .click()
+  await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
+}
 
 async function reopenSavedBoard(page: Page) {
   await page.goto("/", { waitUntil: "domcontentloaded" })
@@ -18,8 +29,13 @@ async function reopenSavedBoard(page: Page) {
   await expect(board).toBeVisible()
 }
 
-for (const previous of ["selected mode", "saved game"] as const) {
-  test(`plays offline after a ${previous} and persists a move with the origin stopped`, async ({
+for (const [variant, previous] of [
+  ["standard", "selected mode"],
+  ["standard", "saved game"],
+  ["chess960", "selected mode"],
+  ["chess960", "saved game"],
+] as const) {
+  test(`plays ${variant} offline after a ${previous} and restores both plies with the origin stopped`, async ({
     browser,
     baseURL,
     request,
@@ -31,22 +47,20 @@ for (const previous of ["selected mode", "saved game"] as const) {
     )
     test.setTimeout(90_000)
     if (!baseURL) throw Error("A built web target is required")
-    const copy = loadCatalog("en")
+    const modeTitle = setup.presentations[variant].challenge.title
     const origin = await startOrigin(baseURL, request)
     const context = await browser.newContext({ baseURL: origin.url })
     try {
       const online = await context.newPage()
       const existing = previous === "saved game"
-      if (existing) await startHintMatch(online)
-      else {
-        await online.goto("/")
-        await online.getByRole("button", { name: "Start", exact: true }).click()
-        await online
-          .getByRole("button", {
-            name: copy.setup.presentations.standard.challenge.title,
-            exact: true,
-          })
-          .click()
+      await online.goto("/")
+      await online.getByRole("button", { name: "Start", exact: true }).click()
+      await online.getByRole("button", { name: modeTitle, exact: true }).click()
+      if (existing) {
+        await startWhiteChallenge(online, variant)
+        await expect
+          .poll(async () => (await savedProfile(online)).activeMatch?.matchId)
+          .toBeTruthy()
       }
       await online.evaluate(async () => {
         await navigator.serviceWorker.ready
@@ -59,7 +73,6 @@ for (const previous of ["selected mode", "saved game"] as const) {
       const id = existing
         ? (await savedProfile(online)).activeMatch?.matchId
         : undefined
-      if (existing) expect(id).toBeTruthy()
       const rosterStrips = await online.evaluate(async () => {
         const names = (await caches.keys()).filter((name) =>
           name.includes("precache"),
@@ -101,34 +114,33 @@ for (const previous of ["selected mode", "saved game"] as const) {
       } else {
         await reopened.goto("/")
         await reopened
-          .getByRole("button", {
-            name: copy.setup.presentations.standard.challenge.title,
-            exact: true,
-          })
+          .getByRole("button", { name: modeTitle, exact: true })
           .click()
-        await reopened
-          .getByRole("radio", { name: copy.setup.white, exact: true })
-          .check()
-        await reopened
-          .getByRole("button", { name: copy.setup.startMatch, exact: true })
-          .click()
-        await expect(board).toBeVisible()
+        await startWhiteChallenge(reopened, variant)
       }
-      const pawn = board.getByRole("gridcell", { name: /^e2,/ })
-      await expect(pawn).toHaveAttribute("aria-disabled", "false", {
+      const isChess960 = variant === "chess960"
+      const piece = board.getByRole("gridcell", {
+        name: isChess960 ? /^d1, White knight/ : /^e2, White pawn/,
+      })
+      await expect(piece).toHaveAttribute("aria-disabled", "false", {
         timeout: 30000,
       })
-      await pawn.click()
-      await board.getByRole("gridcell", { name: /^e4,/ }).click()
+      await piece.click()
+      await board
+        .getByRole("gridcell", { name: isChess960 ? /^c3,/ : /^e4,/ })
+        .click()
       await expect
         .poll(async () => (await savedProfile(reopened)).activeMatch, {
           timeout: 30_000,
         })
         .toMatchObject({
           cursor: 2,
-          moveIds: ["e2e4", expect.any(String)],
+          moveIds: [isChess960 ? "d1c3" : "e2e4", expect.any(String)],
           playerColor: "white",
-          startingPosition: { variant: "standard", chess960PositionId: null },
+          startingPosition: {
+            variant,
+            chess960PositionId: isChess960 ? 0 : null,
+          },
         })
       const played = (await savedProfile(reopened)).activeMatch
       if (!played) throw new Error("Expected the saved two-ply game")
