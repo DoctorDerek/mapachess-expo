@@ -304,8 +304,8 @@ export default function WebGame({
     snapshot.matches({ menu: "setup" }) ||
     openingFreshMatch
   useEffect(() => {
-    // Opening a match uses the same in-flight download and reports a retryable failure.
-    if (chessIntent) void loadWebStockfishBytes().catch(() => {})
+    // Match startup owns retries for a failed speculative download.
+    if (chessIntent) void loadWebStockfishBytes().catch(() => undefined)
   }, [chessIntent])
   const retainingMatch =
     snapshot.matches("active") ||

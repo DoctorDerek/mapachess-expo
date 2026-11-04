@@ -12,9 +12,7 @@ export default function OfflineRegistration() {
     const register = () => {
       void navigator.serviceWorker
         .register("/sw.js", { scope: "/", updateViaCache: "none" })
-        .catch((error: unknown) =>
-          console.warn("Mapachess offline installation failed.", error),
-        )
+        .catch(() => undefined)
     }
     if (document.readyState === "complete") register()
     else window.addEventListener("load", register, { once: true })
