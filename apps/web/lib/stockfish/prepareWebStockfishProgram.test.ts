@@ -94,6 +94,36 @@ it("one chess intent installs both pinned files and a later match can read them 
   expect(read).toHaveBeenCalledTimes(2)
   expect(open).toHaveBeenCalledTimes(2)
 })
+it("retries only the missing binary after a partial offline install", async () => {
+  const loaderKey =
+    "/stockfish-runtime/" + loader.fileName + "?sha256=" + loader.sha256
+  const binaryUrl = "/stockfish-runtime/" + binary.fileName
+  const cache = {
+    match: async (key: string) =>
+      key === loaderKey
+        ? new Response(new Uint8Array(loader.byteLength))
+        : undefined,
+    put: vi.fn(async () => undefined),
+  }
+  vi.stubGlobal("caches", { open: async () => cache })
+  const read = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+    .mockResolvedValueOnce(new Response(new Uint8Array(binary.byteLength)))
+  vi.stubGlobal("fetch", read)
+
+  await expect(loadWebStockfishBytes()).rejects.toThrow(
+    "Unable to load " + binary.fileName,
+  )
+  expect(cache.put).not.toHaveBeenCalled()
+  const bytes = await loadWebStockfishBytes()
+  expect(bytes.map((file) => file.size)).toEqual([
+    loader.byteLength,
+    binary.byteLength,
+  ])
+  expect(read.mock.calls.map(([url]) => url)).toEqual([binaryUrl, binaryUrl])
+  expect(cache.put).toHaveBeenCalledOnce()
+})
 it("an already canceled match starts no program download", async () => {
   const read = vi.fn()
   vi.stubGlobal("fetch", read)
