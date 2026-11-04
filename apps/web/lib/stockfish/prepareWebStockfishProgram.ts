@@ -48,7 +48,9 @@ export function loadWebStockfishBytes(): Promise<readonly [Blob, Blob]> {
   return pending
 }
 
-export default async function prepareWebStockfishProgram(signal?: AbortSignal) {
+export default async function prepareWebStockfishProgram(
+  signal?: AbortSignal,
+): Promise<Readonly<{ url: string; release: () => void }>> {
   signal?.throwIfAborted()
   // Fetch from the page. WebKit's dedicated workers can bypass a service worker.
   const [loader, binary] = await loadWebStockfishBytes()

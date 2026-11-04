@@ -11,7 +11,7 @@ const isOptionalArtwork = (path: string) =>
 export default function partitionOfflineAssets(
   entries: readonly (string | PrecacheEntry)[],
   origin: string,
-) {
+): { core: (string | PrecacheEntry)[]; art: ReadonlyMap<string, string> } {
   const core: (string | PrecacheEntry)[] = []
   const art = new Map<string, string>()
   for (const entry of entries) {
