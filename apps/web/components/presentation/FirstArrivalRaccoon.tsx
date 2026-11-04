@@ -61,7 +61,7 @@ export default function FirstArrivalRaccoon() {
     <div
       aria-hidden="true"
       style={geometry}
-      className="pointer-events-none absolute bottom-0 left-1/2 z-20 h-(--arrival-sprite-height) w-screen -translate-x-1/2 overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-(--arrival-sprite-height) overflow-hidden"
     >
       <div
         data-ready={ready}
