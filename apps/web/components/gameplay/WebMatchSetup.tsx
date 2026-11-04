@@ -275,7 +275,7 @@ export default function WebMatchSetup({
         >
           {header}
           <h1
-            className="font-display text-mapachito-white mb-4 text-2xl leading-tight font-black"
+            className="font-display text-mapachito-white mb-4 text-2xl leading-tight font-black wrap-anywhere"
             id="match-setup-title"
             ref={heading}
             tabIndex={-1}
