@@ -1,3 +1,4 @@
+import cx from "classix"
 import {
   useEffect,
   useRef,
@@ -81,13 +82,20 @@ function MatchSetupChoice({
 }>) {
   const copy = useMapachessCopy().setup
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="@container flex min-w-0 flex-wrap items-center gap-2">
       {preview === undefined ? null : (
         <span className="pointer-events-none block size-16 shrink-0">
           {preview}
         </span>
       )}
-      <div className="flex min-w-0 flex-1 basis-40 flex-wrap items-center gap-2">
+      <div
+        className={cx(
+          "min-w-0 flex-1 basis-40 items-center gap-2",
+          preview === undefined
+            ? "flex flex-wrap"
+            : "grid grid-cols-1 justify-items-start @xs:grid-cols-[minmax(0,1fr)_auto]",
+        )}
+      >
         <div className="min-w-0 flex-1 basis-16 wrap-break-word">
           <p className="text-sm font-semibold">{label}</p>
           <p className="font-display text-xl leading-tight font-black">

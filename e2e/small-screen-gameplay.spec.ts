@@ -50,7 +50,10 @@ const expectScrollContentVisible = async (
       // Scroll the dialog's reader. Its fixed footer and the page stay in place.
       const target = element.getBoundingClientRect()
       const space = scroll.clientHeight - target.height
-      scroll.scrollBy({ top: target.top - top - space / 2, behavior: "instant" })
+      scroll.scrollBy({
+        top: target.top - top - space / 2,
+        behavior: "instant",
+      })
     }
     const bounds = element.getBoundingClientRect()
     return {
@@ -175,12 +178,15 @@ for (const locale of ["en", "es-419"] as const) {
             content.style.maxInlineSize = maxInlineSize
             const startBounds = start.getBoundingClientRect()
             const rowOffset = modes.getBoundingClientRect().y - startBounds.y
+            const initialScrollTop = content.scrollTop
             content.scrollTop = content.scrollHeight
+            const actionShift = start.getBoundingClientRect().y - startBounds.y
+            content.scrollTop = initialScrollTop
             return {
               rowOffset,
               contentHeight: content.clientHeight,
               horizontalOverflow,
-              actionShift: start.getBoundingClientRect().y - startBounds.y,
+              actionShift,
             }
           })
           expect(geometry.rowOffset).toBeCloseTo(0, 1)
@@ -199,6 +205,8 @@ for (const locale of ["en", "es-419"] as const) {
             name: copy.setup.changeStoryOpponent,
             exact: true,
           })
+          await trigger.scrollIntoViewIfNeeded()
+          await expectExposedWithoutScrolling(trigger)
           await trigger.click()
           const done = page.getByRole("button", {
             name: copy.setup.done,
