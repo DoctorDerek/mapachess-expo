@@ -43,12 +43,14 @@ const expectScrollContentVisible = async (
     const content = scroll.getBoundingClientRect()
     const left = content.left + scroll.clientLeft
     const top = content.top + scroll.clientTop
-    if (align) {
+    if (align === "end") {
+      // Include the last card's margin instead of aligning two fractional edges.
+      scroll.scrollTo({ top: scroll.scrollHeight, behavior: "instant" })
+    } else if (align === "center") {
       // Scroll the dialog's reader. Its fixed footer and the page stay in place.
       const target = element.getBoundingClientRect()
       const space = scroll.clientHeight - target.height
-      const offset = align === "center" ? space / 2 : space
-      scroll.scrollBy({ top: target.top - top - offset, behavior: "instant" })
+      scroll.scrollBy({ top: target.top - top - space / 2, behavior: "instant" })
     }
     const bounds = element.getBoundingClientRect()
     return {
