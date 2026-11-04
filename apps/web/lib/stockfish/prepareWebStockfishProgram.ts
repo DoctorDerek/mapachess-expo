@@ -7,17 +7,10 @@ import {
 const cacheName = "mapachess-stockfish-program"
 let pending: Promise<readonly [Blob, Blob]> | null = null
 
-async function readProgram(
+async function downloadProgram(
   artifact: StockfishWebRuntimeArtifact,
-  cache: Cache | null,
+  url: string,
 ) {
-  const url = "/stockfish-runtime/" + artifact.fileName
-  const key = url + "?sha256=" + artifact.sha256
-  const cached = await cache?.match(key).catch(() => undefined)
-  if (cached) {
-    const blob = await cached.blob()
-    if (blob.size === artifact.byteLength) return blob
-  }
   const digest = Uint8Array.from(artifact.sha256.match(/../g) ?? [], (pair) =>
     parseInt(pair, 16),
   )
@@ -28,19 +21,57 @@ async function readProgram(
   const blob = await response.blob()
   if (blob.size !== artifact.byteLength)
     throw Error("Incomplete " + artifact.fileName)
-  // Storage can be disabled or full. The downloaded program can still play online.
-  await cache?.put(key, new Response(blob)).catch(() => undefined)
   return blob
 }
+
+function programFile(artifact: StockfishWebRuntimeArtifact) {
+  const url = "/stockfish-runtime/" + artifact.fileName
+  const key = url + "?sha256=" + artifact.sha256
+  let inFlight: Promise<Blob> | undefined
+  let unpersisted: Blob | undefined
+
+  async function read(cache: Cache | undefined) {
+    if (!unpersisted) {
+      const cached = await cache
+        ?.match(key)
+        .then((response) => response?.blob())
+        .catch(() => undefined)
+      if (cached?.size === artifact.byteLength) return cached
+      unpersisted = await downloadProgram(artifact, url)
+    }
+    const blob = unpersisted
+    if (cache) {
+      try {
+        await cache.put(key, new Response(blob))
+        unpersisted = undefined
+      } catch {
+        // Keep these verified bytes for this page when persistent storage is full.
+      }
+    }
+    return blob
+  }
+
+  return (cache: Cache | undefined) => {
+    inFlight ??= read(cache).finally(() => {
+      inFlight = undefined
+    })
+    return inFlight
+  }
+}
+
+const readLoader = programFile(STOCKFISH_18_WEB_LOADER_ARTIFACT)
+const readBinary = programFile(STOCKFISH_18_WEB_WASM_ARTIFACT)
 
 export function loadWebStockfishBytes(): Promise<readonly [Blob, Blob]> {
   if (!pending) {
     pending = (async () => {
-      const cache = await globalThis.caches?.open(cacheName).catch(() => null)
-      return Promise.all([
-        readProgram(STOCKFISH_18_WEB_LOADER_ARTIFACT, cache ?? null),
-        readProgram(STOCKFISH_18_WEB_WASM_ARTIFACT, cache ?? null),
-      ] as const)
+      let cache: Cache | undefined
+      try {
+        cache = await globalThis.caches?.open(cacheName)
+      } catch {
+        // Online matches can still use this page's copy if CacheStorage is denied.
+      }
+      return Promise.all([readLoader(cache), readBinary(cache)] as const)
     })().finally(() => {
       pending = null
     })
