@@ -283,7 +283,7 @@ export default function WebMatchSetup({
             {copy.presentations[variant][setup.mode].title}
           </h1>
           <div className="grid min-w-0 gap-3">
-            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-5 rounded-xl border-3 p-4">
+            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid min-w-0 grid-cols-1 gap-5 rounded-xl border-3 p-4 wrap-anywhere">
               {setup.mode === "story" &&
               playerAnimal !== null &&
               onPlayerAnimalChanged !== undefined ? (

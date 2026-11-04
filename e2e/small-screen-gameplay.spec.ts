@@ -156,17 +156,24 @@ for (const locale of ["en", "es-419"] as const) {
               !(content instanceof HTMLElement)
             )
               throw new Error("Expected setup choices above their two actions")
+            const maxInlineSize = content.style.maxInlineSize
+            if (content.offsetWidth === content.clientWidth)
+              content.style.maxInlineSize = "calc(100% - 0.5rem)"
+            const horizontalOverflow = content.scrollWidth - content.clientWidth
+            content.style.maxInlineSize = maxInlineSize
             const startBounds = start.getBoundingClientRect()
             const rowOffset = modes.getBoundingClientRect().y - startBounds.y
             content.scrollTop = content.scrollHeight
             return {
               rowOffset,
               contentHeight: content.clientHeight,
+              horizontalOverflow,
               actionShift: start.getBoundingClientRect().y - startBounds.y,
             }
           })
           expect(geometry.rowOffset).toBeCloseTo(0, 1)
           expect(geometry.contentHeight).toBeGreaterThan(120)
+          expect(geometry.horizontalOverflow).toBe(0)
           expect(geometry.actionShift).toBe(0)
           await scale.evaluate((element) =>
             element.parentNode?.removeChild(element),
