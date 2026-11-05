@@ -25,7 +25,7 @@
     "@mapachess/profile": "workspace:*",
     "@mapachess/stockfish": "workspace:*",
     "@rive-app/canvas-lite": "^2",
-    "@serwist/turbopack": "^9.5.12",
+    "@serwist/turbopack": "^9",
     "@vercel/analytics": "^2",
     "@xstate/react": "^6",
     "classix": "^2",
@@ -34,7 +34,7 @@
     "next": "^16",
     "react": "^19",
     "react-dom": "^19",
-    "serwist": "^9.5.12",
+    "serwist": "^9",
     "xstate": "^5"
   },
   "devDependencies": {
