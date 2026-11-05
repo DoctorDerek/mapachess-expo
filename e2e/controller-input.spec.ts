@@ -31,15 +31,15 @@ for (const mode of [
       const before = await position.inputValue()
       await activate(page, position)
       await press(page, 15)
-      expect(await position.inputValue()).toBe(
+      await expect(position).toHaveValue(
         String(Math.min(959, Number(before) + 10)),
       )
       await press(page, 1)
-      expect(await position.inputValue()).toBe(before)
+      await expect(position).toHaveValue(before)
       await activate(page, position)
       await press(page, 12)
       await press(page, 0)
-      expect(await position.inputValue()).toBe(
+      await expect(position).toHaveValue(
         String(Math.min(959, Number(before) + 1)),
       )
     }
