@@ -19,7 +19,7 @@ import MapachessButton from "../presentation/MapachessButton"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 const historyActionClassName =
-  "flex min-w-0 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight wrap-break-word"
+  "flex min-w-0 scroll-mb-1 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] xl:leading-tight wrap-break-word"
 
 export default function MatchCommands({
   actor,
@@ -65,12 +65,12 @@ export default function MatchCommands({
     },
   })
   return (
-    <div className="grid gap-1.5">
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+    <div className="grid gap-1 xl:gap-1.5">
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-x-1.5 gap-y-1 xl:flex xl:flex-wrap xl:items-center xl:gap-1.5">
         {coach}
         {hints}
       </div>
-      <div className="flex min-w-0 flex-wrap items-stretch gap-1.5">
+      <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_repeat(2,minmax(0,1.15fr))] items-stretch gap-1.5 xl:grid-cols-3">
         <details
           className="relative z-40 min-w-0 flex-[1_1_max-content]"
           open={menuOpen}
@@ -80,7 +80,7 @@ export default function MatchCommands({
           <summary
             aria-label={messages.matchMenu}
             data-player-action="menu"
-            className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white rounded-mapachess-action shadow-mapachess-button shadow-mapachito-charcoal hover:shadow-mapachess-raised active:shadow-mapachess-pressed flex h-full min-h-12 cursor-pointer flex-wrap items-center justify-center gap-1 border-3 px-1 py-1 text-sm leading-tight font-black transition-[translate,box-shadow] duration-120 ease-[ease] hover:-translate-0.25 active:translate-0.75 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:active:translate-none forced-colors:border-[CanvasText] forced-colors:shadow-none"
+            className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white rounded-mapachess-action shadow-mapachess-button shadow-mapachito-charcoal hover:shadow-mapachess-raised active:shadow-mapachess-pressed flex h-full min-h-12 cursor-pointer flex-wrap items-center justify-center gap-1 border-3 px-1 py-1 text-sm leading-[1.1] font-black transition-[translate,box-shadow] duration-120 ease-[ease] hover:-translate-0.25 active:translate-0.75 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:active:translate-none xl:leading-tight forced-colors:border-[CanvasText] forced-colors:shadow-none"
             ref={menuSummaryRef}
             onClick={(event) => {
               event.preventDefault()
@@ -139,7 +139,7 @@ export default function MatchCommands({
             </MapachessButton>
           </div>
         </details>
-        <div className="grid min-w-0 flex-[2_1_max-content] grid-cols-2 gap-1.5">
+        <div className="contents">
           <MapachessButton
             aria-busy={persisting && selectHasUndoHistory(snapshot)}
             className={historyActionClassName}

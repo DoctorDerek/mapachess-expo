@@ -1,3 +1,4 @@
+import { withSerwist } from "@serwist/turbopack"
 import type { NextConfig } from "next"
 import { hasPublishedLicensedPresentationAssets } from "../../scripts/ghost-assets/presentationAssetArchive"
 
@@ -13,4 +14,4 @@ const nextConfig = async (): Promise<NextConfig> => ({
   reactStrictMode: true,
 })
 
-export default nextConfig
+export default async () => withSerwist(await nextConfig())

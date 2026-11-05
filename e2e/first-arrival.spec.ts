@@ -9,6 +9,37 @@ import {
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
+test("the enlarged introduction title and website fit its reading area", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%"
+  })
+  const title = page.getByRole("heading", { level: 1, name: "Mapachess" })
+  const website = page.getByRole("link", { name: /DoctorDerek\.com/i })
+  await expect(
+    page.getByRole("button", { name: "Start", exact: true }),
+  ).toBeEnabled()
+  await expect(title).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
+  const readingArea = title.locator("../..")
+  const bounds = await readingArea.boundingBox()
+  if (!bounds) throw Error("Missing introduction reading area")
+  for (const element of [title, website]) {
+    await element.scrollIntoViewIfNeeded()
+    const box = await element.boundingBox()
+    if (!box) throw Error("Missing introduction content")
+    expect(box.x).toBeGreaterThanOrEqual(bounds.x)
+    expect(box.x + box.width).toBeLessThanOrEqual(bounds.x + bounds.width)
+  }
+  expect(
+    await readingArea.evaluate((el) => el.scrollWidth - el.clientWidth),
+  ).toBe(0)
+})
+
 test("choosing English persists only the locale before Start and retains the document language", async ({
   page,
 }) => {
@@ -217,6 +248,35 @@ for (const width of [320, 390, 1280]) {
       fullPage: true,
     })
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  })
+}
+
+for (const width of [390, 1440]) {
+  test(`the running raccoon never widens the introduction at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto("/")
+    const crossing = page.locator('header [data-ready="true"]')
+    await crossing.waitFor({ state: "attached", timeout: 20_000 })
+    const maxOverflow = await crossing.evaluate(async (runner) => {
+      const scrollport = runner.closest("header")?.parentElement
+      if (!scrollport) throw new Error("Missing introduction scrollport")
+      let excess = scrollport.scrollWidth - scrollport.clientWidth
+      // Exercise a narrower scrollport even when the browser overlays its scrollbars.
+      scrollport.style.maxInlineSize = "calc(100% - 1rem)"
+      while (runner.isConnected) {
+        excess = Math.max(
+          excess,
+          scrollport.scrollWidth - scrollport.clientWidth,
+        )
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve()),
+        )
+      }
+      return excess
+    })
+    expect(maxOverflow).toBe(0)
   })
 }
 

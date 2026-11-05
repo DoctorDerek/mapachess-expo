@@ -1,6 +1,7 @@
 "use client"
 
 import { useSelector } from "@xstate/react"
+import dynamic from "next/dynamic"
 import { useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
@@ -26,10 +27,9 @@ import PlayerInputProvider, {
   usePlayerInputScope,
 } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
-import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
-import Introduction from "./Introduction"
+import Introduction, { RestoringIntroduction } from "./Introduction"
 import MapachessLocaleProvider, {
   useMapachessCopy,
   useMapachessLocale,
@@ -37,9 +37,7 @@ import MapachessLocaleProvider, {
 import FullPageProfilePanel from "./ProfileFoundation"
 import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
 import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
-import ProfilePlayExperience, {
-  type ProfilePlayExperienceProps,
-} from "./ProfilePlayExperience"
+import type { ProfilePlayExperienceProps } from "./ProfilePlayExperience"
 import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
 
 type ProfileRuntimeState =
@@ -48,6 +46,10 @@ type ProfileRuntimeState =
   | Readonly<{ status: "unsupported" }>
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
+const ProfilePlayExperience = dynamic(() => import("./ProfilePlayExperience"), {
+  loading: RestoringIntroduction,
+})
+
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const copy = useMapachessCopy()
   const messages = copy.interface.webMapachessApplication
@@ -267,7 +269,12 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     )
   }
 
-  if (!snapshot.matches("importDecoding")) return <MapachessLoadingSurface />
+  if (!snapshot.matches("importDecoding"))
+    return (
+      <main>
+        <RestoringIntroduction />
+      </main>
+    )
 
   return (
     <FullPageProfilePanel
@@ -333,7 +340,12 @@ export default function WebMapachessApplication() {
     )
   }
 
-  if (runtimeState.status === "opening") return <MapachessLoadingSurface />
+  if (runtimeState.status === "opening")
+    return (
+      <main>
+        <RestoringIntroduction />
+      </main>
+    )
 
   return (
     <PlayerInputProvider profileActor={null}>

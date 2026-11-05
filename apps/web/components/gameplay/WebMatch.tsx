@@ -277,7 +277,7 @@ export default function WebMatch({
           modeLabel,
           animalCopy.opponent(opponent.id),
         )}
-        className="relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_command']"
+        className="relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_.']"
       >
         <MatchIdentity
           timeControl={snapshot.context.timeControl}
@@ -338,7 +338,7 @@ export default function WebMatch({
           />
         </div>
 
-        <div className="contents xl:grid xl:min-h-0 xl:min-w-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-3 xl:self-stretch xl:[grid-area:command]">
+        <div className="contents xl:grid xl:min-h-0 xl:min-w-0 xl:grid-rows-[auto_minmax(0,1fr)] xl:gap-2 xl:self-stretch xl:[grid-area:command]">
           <div className="contents xl:grid xl:gap-2">
             <section
               aria-label={messages.coreMatchActions}

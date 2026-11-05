@@ -2,7 +2,6 @@
 
 import { useSelector } from "@xstate/react"
 import { useRef } from "react"
-import { preload } from "react-dom"
 import type { ActorRefFrom } from "xstate"
 import matchMachine, {
   selectAutoHintMode,
@@ -13,7 +12,6 @@ import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
-import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
@@ -21,12 +19,13 @@ import CoachCollectionContext from "../../lib/presentation/CoachCollectionContex
 import ChessAppearanceProvider, {
   ChessArtworkRecovery,
 } from "../gameplay/ChessArtwork"
+import PortraitViewport from "../gameplay/PortraitViewport"
 import WebGame from "../gameplay/WebGame"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
-import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import RecoverableView from "../presentation/RecoverableView"
+import { RestoringIntroduction } from "./Introduction"
 import { useMapachessCopy, useMapachessLocale } from "./MapachessLocaleProvider"
 import ProfileCardJourney from "./ProfileCardJourney"
 import ProfileSettingsPanel, {
@@ -152,91 +151,90 @@ function ReadyPlayExperience({
     },
   }
   return (
-    <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
-      <CoachCollectionContext value={settingsProps.coachCollection}>
-        <ProfileCardJourney
-          blocked={blocked}
-          profileActor={profileActor}
-          overlays={snapshot.context.overlays}
-          navigation={navigation}
-        />
-        {settingsOpen ? (
-          <MapachessDialog
-            label={
-              snapshot.context.overlays.at(-1) === "credits"
-                ? copy.shared.creditControls.title
-                : snapshot.context.overlays.at(-1) === "auto-hints-help"
-                  ? copy.shared.settingsControls.autoHints
-                  : copy.profile.settingsTitle
-            }
-            onClose={navigation.back}
-            fixedContent
+    <PortraitViewport>
+      <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
+        <CoachCollectionContext value={settingsProps.coachCollection}>
+          <ProfileCardJourney
+            blocked={blocked}
+            profileActor={profileActor}
+            overlays={snapshot.context.overlays}
+            navigation={navigation}
+          />
+          {settingsOpen ? (
+            <MapachessDialog
+              label={
+                snapshot.context.overlays.at(-1) === "credits"
+                  ? copy.shared.creditControls.title
+                  : snapshot.context.overlays.at(-1) === "auto-hints-help"
+                    ? copy.shared.settingsControls.autoHints
+                    : copy.profile.settingsTitle
+              }
+              onClose={navigation.back}
+              fixedContent
+            >
+              <RecoverableView
+                fillHeight
+                title={messages.settingsCouldNotBeDisplayed}
+                description={messages.yourPlayerDataHasNotBeenReset}
+                actions={
+                  <MapachessButton onClick={navigation.back}>
+                    {messages.closeSettings}
+                  </MapachessButton>
+                }
+              >
+                {matchActor === null ? (
+                  <ProfileSettingsPanel {...settingsProps} />
+                ) : (
+                  <MatchSettings {...settingsProps} actor={matchActor} />
+                )}
+              </RecoverableView>
+            </MapachessDialog>
+          ) : null}
+          <div
+            ref={gameSurface}
+            inert={blocked || settingsOpen || personalOpen}
           >
+            {settingsOpen ? null : <ChessArtworkRecovery />}
             <RecoverableView
-              fillHeight
-              title={messages.settingsCouldNotBeDisplayed}
-              description={messages.yourPlayerDataHasNotBeenReset}
+              title={messages.thisScreenCouldNotBeDisplayed}
+              onRecovery={() =>
+                matchActor?.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
+              }
+              description={messages.yourPlayerDataIsStillHeldIn}
               actions={
-                <MapachessButton onClick={navigation.back}>
-                  {messages.closeSettings}
+                <MapachessButton
+                  disabled={settings.exporting}
+                  onClick={settings.onExportPlayerData}
+                >
+                  {messages.exportPlayerData}
                 </MapachessButton>
               }
             >
-              {matchActor === null ? (
-                <ProfileSettingsPanel {...settingsProps} />
-              ) : (
-                <MatchSettings {...settingsProps} actor={matchActor} />
-              )}
+              <WebGame
+                actor={actor}
+                navigation={navigation}
+                profileActor={profileActor}
+                onSettingsRequested={() => {
+                  settingsButton.current?.focus({ preventScroll: true })
+                  navigation.open("settings")
+                }}
+                settingsButtonRef={settingsButton}
+                settingsOpen={settingsOpen}
+              />
             </RecoverableView>
-          </MapachessDialog>
-        ) : null}
-        <div ref={gameSurface} inert={blocked || settingsOpen || personalOpen}>
-          {settingsOpen ? null : <ChessArtworkRecovery />}
-          <RecoverableView
-            title={messages.thisScreenCouldNotBeDisplayed}
-            onRecovery={() =>
-              matchActor?.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
-            }
-            description={messages.yourPlayerDataIsStillHeldIn}
-            actions={
-              <MapachessButton
-                disabled={settings.exporting}
-                onClick={settings.onExportPlayerData}
-              >
-                {messages.exportPlayerData}
-              </MapachessButton>
-            }
-          >
-            <WebGame
-              actor={actor}
-              navigation={navigation}
-              profileActor={profileActor}
-              onSettingsRequested={() => {
-                settingsButton.current?.focus({ preventScroll: true })
-                navigation.open("settings")
-              }}
-              settingsButtonRef={settingsButton}
-              settingsOpen={settingsOpen}
-            />
-          </RecoverableView>
-        </div>
-      </CoachCollectionContext>
-    </ChessAppearanceProvider>
+          </div>
+        </CoachCollectionContext>
+      </ChessAppearanceProvider>
+    </PortraitViewport>
   )
 }
 
 export default function ProfilePlayExperience(
   props: ProfilePlayExperienceProps,
 ) {
-  preload(`/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}`, {
-    as: "fetch",
-    crossOrigin: "anonymous",
-    fetchPriority: "low",
-    type: "application/wasm",
-  })
   const actor = useWebMatchSession(props.profileActor)
   return actor === null ? (
-    <MapachessLoadingSurface />
+    <RestoringIntroduction />
   ) : (
     <ReadyPlayExperience {...props} actor={actor} />
   )

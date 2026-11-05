@@ -100,9 +100,6 @@ const emergencyInterface = {
   localSaveError: {
     localSaveError: UNAVAILABLE_TEXT,
   },
-  mapachessLoadingSurface: {
-    loadingMapachess: UNAVAILABLE_TEXT,
-  },
   recoverableView: {
     tryAgain: "Try again",
   },

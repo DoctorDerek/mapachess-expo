@@ -25,9 +25,11 @@ const expectContained = async (surface: Locator): Promise<void> => {
     .toBeLessThanOrEqual(1)
 }
 
-const expectScrollContentVisible = async (surface: Locator) => {
-  await expect(surface).toBeInViewport()
-  const geometry = await surface.evaluate((element) => {
+const expectScrollContentVisible = async (
+  surface: Locator,
+  align?: "center" | "end",
+) => {
+  const geometry = await surface.evaluate((element, align) => {
     let scroll = element.parentElement
     while (
       scroll &&
@@ -38,10 +40,22 @@ const expectScrollContentVisible = async (surface: Locator) => {
       throw new Error(
         "Expected the control or stage inside a dialog scrollport",
       )
-    const bounds = element.getBoundingClientRect()
     const content = scroll.getBoundingClientRect()
     const left = content.left + scroll.clientLeft
     const top = content.top + scroll.clientTop
+    if (align === "end") {
+      // ONE-TIME EXCEPTION: The last card's margin prevents fractional clipping.
+      scroll.scrollTo({ top: scroll.scrollHeight, behavior: "instant" })
+    } else if (align === "center") {
+      // ONE-TIME EXCEPTION: Scroll the reader to preserve the page and fixed footer.
+      const target = element.getBoundingClientRect()
+      const space = scroll.clientHeight - target.height
+      scroll.scrollBy({
+        top: target.top - top - space / 2,
+        behavior: "instant",
+      })
+    }
+    const bounds = element.getBoundingClientRect()
     return {
       leftInset: bounds.left - left,
       visibleInset: Math.min(
@@ -53,7 +67,8 @@ const expectScrollContentVisible = async (surface: Locator) => {
       contentWidth: scroll.clientWidth,
       width: bounds.width,
     }
-  })
+  }, align)
+  await expect(surface).toBeInViewport()
   expect(geometry.visibleInset).toBeGreaterThanOrEqual(-1)
   return geometry
 }
@@ -156,17 +171,30 @@ for (const locale of ["en", "es-419"] as const) {
               !(content instanceof HTMLElement)
             )
               throw new Error("Expected setup choices above their two actions")
+            const maxInlineSize = content.style.maxInlineSize
+            if (content.offsetWidth === content.clientWidth)
+              content.style.maxInlineSize = "calc(100% - 0.5rem)"
+            const horizontalOverflow = content.scrollWidth - content.clientWidth
+            content.style.maxInlineSize = maxInlineSize
             const startBounds = start.getBoundingClientRect()
             const rowOffset = modes.getBoundingClientRect().y - startBounds.y
+            const initialScrollTop = content.scrollTop
             content.scrollTop = content.scrollHeight
+            const actionShift = start.getBoundingClientRect().y - startBounds.y
+            content.scrollTop = initialScrollTop
             return {
               rowOffset,
               contentHeight: content.clientHeight,
-              actionShift: start.getBoundingClientRect().y - startBounds.y,
+              horizontalOverflow,
+              actionShift,
             }
           })
           expect(geometry.rowOffset).toBeCloseTo(0, 1)
           expect(geometry.contentHeight).toBeGreaterThan(120)
+          expect(
+            geometry.horizontalOverflow,
+            `${locale} ${variant} ${mode} setup at ${percent}% text`,
+          ).toBe(0)
           expect(geometry.actionShift).toBe(0)
           await scale.evaluate((element) =>
             element.parentNode?.removeChild(element),
@@ -177,6 +205,8 @@ for (const locale of ["en", "es-419"] as const) {
             name: copy.setup.changeStoryOpponent,
             exact: true,
           })
+          await trigger.scrollIntoViewIfNeeded()
+          await expectExposedWithoutScrolling(trigger)
           await trigger.click()
           const done = page.getByRole("button", {
             name: copy.setup.done,
@@ -265,8 +295,7 @@ for (const locale of ["en", "es-419"] as const) {
             exact: true,
           })
           await choice.focus()
-          await choice.scrollIntoViewIfNeeded()
-          await expectScrollContentVisible(choice)
+          await expectScrollContentVisible(choice, "center")
           await expectContained(choice)
           const geometry = await choice.evaluate((button) => {
             const bounds = button.getBoundingClientRect()
@@ -394,10 +423,10 @@ for (const locale of ["en", "es-419"] as const) {
         )
         await expectExposedWithoutScrolling(rating)
         if (width < 1280) {
-          await level.evaluate((element) =>
-            element.scrollIntoView({ block: "start" }),
-          )
-          await expectExposedWithoutScrolling(level)
+          await expect(async () => {
+            await expectScrollContentVisible(level, "end")
+            await expectExposedWithoutScrolling(level)
+          }).toPass({ timeout: 15000 })
           await expectExposedWithoutScrolling(review)
           await expectExposedWithoutScrolling(replay)
           const reviewBox = await verticalEdges(review)

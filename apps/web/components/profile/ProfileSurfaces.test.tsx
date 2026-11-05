@@ -48,13 +48,15 @@ describe("web player-data controls", () => {
     expect(markup).not.toContain("Player content")
   })
 
-  it("defers the engine preload until the player enters the game", () => {
+  it("renders the chess premise in the first HTML without requesting the engine", () => {
     const markup = renderToStaticMarkup(createElement(WebMapachessApplication))
     expect(markup).not.toContain(
       `href="/stockfish-runtime/${STOCKFISH_18_WEB_WASM_ARTIFACT.fileName}"`,
     )
     expect(markup).not.toMatch(/<link[^>]*rel="preload"[^>]*as="fetch"/)
-    expect(markup).toContain("Loading Mapachess.")
+    expect(markup).toContain("See the possibilities.")
+    expect(markup).not.toContain("Loading Mapachess.")
+    expect(markup).toContain("DoctorDerek.com")
     expect(markup).not.toContain("Saving player data")
     expect(markup).not.toContain("Opening local storage")
   })

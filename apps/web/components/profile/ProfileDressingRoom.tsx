@@ -144,73 +144,75 @@ export default function ProfileDressingRoom({
           <div
             key={category}
             className={cx(
-              "order-3 min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-1 py-2 xl:block",
+              "order-3 min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain xl:contents",
               !editingCategory && "hidden",
             )}
           >
-            <div className="bg-profile-card-cyan from-profile-card-mint relative mb-3 h-28 w-full rounded-lg bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66% xl:hidden">
-              <ProfileArtwork
-                input={{
-                  locale,
-                  appearance: draft,
-                  facts: cardFacts(data, ratingContext),
-                  content: INITIAL_CARD_CONTENT,
-                  format: "GIF",
-                }}
-                fitStage
-              />
+            <div className="order-3 min-h-0 min-w-0 px-1 py-2 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain">
+              <div className="bg-profile-card-cyan from-profile-card-mint relative mb-3 h-28 w-full rounded-lg bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66% xl:hidden">
+                <ProfileArtwork
+                  input={{
+                    locale,
+                    appearance: draft,
+                    facts: cardFacts(data, ratingContext),
+                    content: INITIAL_CARD_CONTENT,
+                    format: "GIF",
+                  }}
+                  fitStage
+                />
+              </div>
+              {category === "Animal" ? (
+                <PlayerAnimalChoices
+                  presentation="dialog"
+                  active={active}
+                  disabled={busy}
+                  onSelected={(animal) => onChange({ ...draft, animal })}
+                  selectedId={draft.animal}
+                  storyProgress={data.storyProgress}
+                />
+              ) : (
+                <div
+                  role="group"
+                  aria-label={dressing.selection(categoryName)}
+                  className="grid grid-cols-[repeat(auto-fit,minmax(min(6rem,100%),1fr))] items-stretch gap-3 px-1 pt-1"
+                >
+                  {choices.styles.map((choice) => (
+                    <ProfileAppearanceChoice
+                      key={choice.label}
+                      choice={choice}
+                      data={data}
+                      disabled={busy}
+                      onChange={onChange}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            {category === "Animal" ? (
-              <PlayerAnimalChoices
-                presentation="dialog"
-                active={active}
-                disabled={busy}
-                onSelected={(animal) => onChange({ ...draft, animal })}
-                selectedId={draft.animal}
-                storyProgress={data.storyProgress}
-              />
-            ) : (
+            {choices.colors.length > 0 ? (
               <div
                 role="group"
-                aria-label={dressing.selection(categoryName)}
-                className="grid grid-cols-[repeat(auto-fit,minmax(min(6rem,100%),1fr))] items-stretch gap-3 px-1 pt-1"
+                aria-label={dressing.choices(categoryName)}
+                className={cx(
+                  "order-4 shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-1 pb-1 xl:order-2 xl:grid",
+                  editingCategory ? "grid" : "hidden",
+                )}
               >
-                {choices.styles.map((choice) => (
-                  <ProfileAppearanceChoice
-                    key={choice.label}
-                    choice={choice}
-                    data={data}
-                    disabled={busy}
-                    onChange={onChange}
-                  />
-                ))}
+                <span className="text-base font-bold">{messages.color}</span>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(44px,1fr))] gap-2">
+                  {choices.colors.map((choice) => (
+                    <ProfileAppearanceChoice
+                      key={choice.label}
+                      choice={choice}
+                      data={data}
+                      disabled={busy}
+                      onChange={onChange}
+                      compact
+                    />
+                  ))}
+                </div>
               </div>
-            )}
+            ) : null}
           </div>
-          {choices.colors.length > 0 ? (
-            <div
-              role="group"
-              aria-label={dressing.choices(categoryName)}
-              className={cx(
-                "order-4 shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 px-1 pb-1 xl:order-2 xl:grid",
-                editingCategory ? "grid" : "hidden",
-              )}
-            >
-              <span className="text-base font-bold">{messages.color}</span>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(44px,1fr))] gap-2">
-                {choices.colors.map((choice) => (
-                  <ProfileAppearanceChoice
-                    key={choice.label}
-                    choice={choice}
-                    data={data}
-                    disabled={busy}
-                    onChange={onChange}
-                    compact
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
           {editingCategory ? (
             <ProfileAction
               size="compact"

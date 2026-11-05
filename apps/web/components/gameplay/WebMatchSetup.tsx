@@ -1,3 +1,4 @@
+import cx from "classix"
 import {
   useEffect,
   useRef,
@@ -81,13 +82,20 @@ function MatchSetupChoice({
 }>) {
   const copy = useMapachessCopy().setup
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="@container flex min-w-0 flex-wrap items-center gap-2">
       {preview === undefined ? null : (
         <span className="pointer-events-none block size-16 shrink-0">
           {preview}
         </span>
       )}
-      <div className="flex min-w-0 flex-1 basis-40 flex-wrap items-center gap-2">
+      <div
+        className={cx(
+          "min-w-0 flex-1 basis-40 items-center gap-2",
+          preview === undefined
+            ? "flex flex-wrap"
+            : "grid grid-cols-1 justify-items-start @xs:grid-cols-[minmax(0,1fr)_auto]",
+        )}
+      >
         <div className="min-w-0 flex-1 basis-16 wrap-break-word">
           <p className="text-sm font-semibold">{label}</p>
           <p className="font-display text-xl leading-tight font-black">
@@ -188,7 +196,7 @@ export default function WebMatchSetup({
       ? null
       : stockfishOpponent(playerAppearance.animal)
   usePreparedMatchImages(
-    selectedOpponentId,
+    visible ? selectedOpponentId : null,
     setup.mode === "story" ? playerAppearance?.animal : "raccoon-stockfish",
   )
   const selectionAvailable =
@@ -275,7 +283,7 @@ export default function WebMatchSetup({
         >
           {header}
           <h1
-            className="font-display text-mapachito-white mb-4 text-2xl leading-tight font-black"
+            className="font-display text-mapachito-white mb-4 text-2xl leading-tight font-black wrap-anywhere"
             id="match-setup-title"
             ref={heading}
             tabIndex={-1}
@@ -283,7 +291,7 @@ export default function WebMatchSetup({
             {copy.presentations[variant][setup.mode].title}
           </h1>
           <div className="grid min-w-0 gap-3">
-            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid gap-5 rounded-xl border-3 p-4">
+            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid min-w-0 grid-cols-1 gap-5 rounded-xl border-3 p-4 wrap-anywhere">
               {setup.mode === "story" &&
               playerAnimal !== null &&
               onPlayerAnimalChanged !== undefined ? (

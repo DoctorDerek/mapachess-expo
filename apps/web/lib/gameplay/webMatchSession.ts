@@ -1,4 +1,4 @@
-import { createActor, type ActorRefFrom } from "xstate"
+import { createActor, waitFor, type ActorRefFrom } from "xstate"
 import bindMatchPositionEvaluation, {
   type MatchPositionEvaluationBinding,
 } from "@mapachess/evaluation/match-position-evaluation"
@@ -470,6 +470,16 @@ export async function returnWebMatchSessionToMenu({
 }: ReturnWebMatchSessionToMenuInput): Promise<void> {
   await session.close()
 
+  // ONE-TIME EXCEPTION: A dispatched save can finish after its match closes.
+  const settled = await waitFor(
+    profileActor,
+    (snapshot) =>
+      !snapshot.matches("persisting") &&
+      !snapshot.matches("retryingPersistence"),
+    { signal },
+  )
+  if (!settled.matches("ready"))
+    throw new Error("A saved profile is required to return to the menu.")
   const activeMatch = requirePlayerData(profileActor).activeMatch
   if (activeMatch === null) return
   if (activeMatch.matchId !== session.match.matchId) {

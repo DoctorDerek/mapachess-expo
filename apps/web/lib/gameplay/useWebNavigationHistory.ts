@@ -73,9 +73,13 @@ export default function useWebNavigationHistory(
     const returnFocus = new Map<number, HTMLElement>()
     const restoreFocus = (index: number): void => {
       const trigger = returnFocus.get(index + 1)
+      const focusAtNavigation = document.activeElement
       if (focusFrame !== null) cancelAnimationFrame(focusFrame)
       focusFrame = requestAnimationFrame(() => {
         focusFrame = null
+        // Back may have already restored focus and the player moved on before this frame.
+        const focused = document.activeElement
+        if (focused !== focusAtNavigation && focused !== document.body) return
         if (
           trigger?.isConnected &&
           trigger.closest("[hidden], [inert]") === null

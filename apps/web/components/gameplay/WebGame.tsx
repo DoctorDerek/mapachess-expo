@@ -30,8 +30,8 @@ import {
   type WebMatchSessionFailureOperation,
 } from "../../lib/gameplay/webMatchSessionMachine"
 import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
+import { loadWebStockfishBytes } from "../../lib/stockfish/prepareWebStockfishProgram"
 import MapachessButton from "../presentation/MapachessButton"
-import MapachessLoadingSurface from "../presentation/MapachessLoadingSurface"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
@@ -292,11 +292,21 @@ export default function WebGame({
     actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
   }
 
-  if (snapshot.matches("openingCurrentMatch")) {
-    return <MapachessLoadingSurface />
-  }
+  const isRestoringMatch = snapshot.matches("openingCurrentMatch")
+  const showModeMenu =
+    snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
+  const resumableMatch =
+    session?.match ?? (isRestoringMatch ? savedMatch : null)
 
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
+  const chessIntent =
+    savedMatch !== null ||
+    snapshot.matches({ menu: "setup" }) ||
+    openingFreshMatch
+  useEffect(() => {
+    // Match startup owns retries for a failed speculative download.
+    if (chessIntent) void loadWebStockfishBytes().catch(() => undefined)
+  }, [chessIntent])
   const retainingMatch =
     snapshot.matches("active") ||
     snapshot.matches("restartingMatch") ||
@@ -306,27 +316,27 @@ export default function WebGame({
     <GameFrame
       activityMessage={openingTitle(actor, copy)}
       matchSessionActive={retainingMatch}
-      home={snapshot.matches({ menu: "choosingMode" })}
+      home={showModeMenu}
       onSettingsRequested={onSettingsRequested}
       settingsButtonRef={settingsButtonRef}
       settingsOpen={settingsOpen}
     >
-      {snapshot.matches({ menu: "choosingMode" }) ? (
+      {showModeMenu ? (
         <MatchModeMenu
           playerData={playerData}
           resumeMatch={
-            session === null
+            resumableMatch === null
               ? null
               : {
-                  timeControl: session.match.timeControl,
-                  disabled: settingsOpen,
+                  timeControl: resumableMatch.timeControl,
+                  disabled: settingsOpen || isRestoringMatch,
                   onResume: () =>
                     actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" }),
                 }
           }
           onCustomize={() => navigation.open("dressing-room")}
           onShare={() => navigation.open("profile-card")}
-          disabled={!profileReady}
+          disabled={!profileReady || isRestoringMatch}
           onModeSelected={(selection) => {
             if (
               !profileAllowsMatchOpening(profileActor.getSnapshot()) ||

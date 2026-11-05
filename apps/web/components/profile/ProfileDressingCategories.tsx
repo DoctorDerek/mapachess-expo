@@ -27,6 +27,7 @@ function CategoryArtwork({
   if (category === "Animal")
     return (
       <ChallengeAnimalPortrait
+        key={draft.animal}
         opponent={stockfishOpponent(draft.animal)}
         active={active}
         compact

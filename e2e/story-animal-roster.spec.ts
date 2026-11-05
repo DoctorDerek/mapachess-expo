@@ -55,6 +55,7 @@ for (const variant of ["standard", "chess960"] as const) {
         .filter({ hasText: new RegExp(name + " · Locked") })
       await expect(locked).toBeVisible()
       await expect(locked.getByRole("radio")).toHaveCount(0)
+      await locked.scrollIntoViewIfNeeded()
       const silhouette = locked.locator('span[style*="background-image"]')
       await expect(silhouette).toHaveCSS("filter", "brightness(0)")
       await expect(silhouette).toHaveCSS(
@@ -87,6 +88,7 @@ for (const variant of ["standard", "chess960"] as const) {
         name: new RegExp(name + " Stockfish"),
       })
       await expect(selected).toBeChecked()
+      await expect(selected).toBeFocused()
       await expect(
         picker.locator(`span[style*="/battle/${name.toLowerCase()}/"]`).first(),
       ).toBeVisible()
@@ -149,3 +151,29 @@ for (const variant of ["standard", "chess960"] as const) {
     })
   }
 }
+test("keeps all 25 Challenge names and loads a distant silhouette when it enters scroll reach", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  const requests = new Set<string>()
+  page.on("request", (request) => requests.add(new URL(request.url()).pathname))
+  await page.goto("/")
+  await page.getByRole("button", { name: /Standard Chess Challenge/ }).click()
+  await page.getByRole("button", { name: "Change animal", exact: true }).click()
+  const rows = page.getByRole("dialog").getByRole("listitem")
+  await expect(rows).toHaveCount(25)
+  const last = rows.last()
+  await expect(last).toContainText(/Locked/)
+  await expect(last.getByRole("radio")).toHaveCount(0)
+  await expect(last.locator('span[style*="background-image"]')).toHaveCount(0)
+  const before = new Set(requests)
+  await last.scrollIntoViewIfNeeded()
+  const silhouette = last.locator('span[style*="background-image"]')
+  await expect(silhouette).toHaveCSS("filter", "brightness(0)")
+  const artwork = await silhouette.evaluate((element) => {
+    const css = getComputedStyle(element).backgroundImage
+    return new URL(css.slice(5, -2)).pathname
+  })
+  expect(before.has(artwork)).toBe(false)
+  await expect.poll(() => requests.has(artwork)).toBe(true)
+})

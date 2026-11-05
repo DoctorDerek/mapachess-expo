@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright"
-import { expect, type Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
@@ -31,9 +31,12 @@ test("opens the complete locked roster from the selected animal and keeps it key
     exact: true,
   })
   await expect(gallery.getByRole("radio")).toHaveCount(25)
-  await expect(gallery.locator('span[style*="background-image"]')).toHaveCount(
-    25,
-  )
+  const selected = gallery.getByRole("radio", { name: /Raccoon/ })
+  const last = gallery.getByRole("radio", { name: /Dragonfly/ })
+  const sprite = (radio: Locator) =>
+    radio.locator("..").locator('span[style*="background-image"]')
+  await expect(sprite(selected)).toHaveCount(1)
+  await expect(sprite(last)).toHaveCount(0)
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
   await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(24)
@@ -45,6 +48,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect(gallery.getByText("Dragonfly", { exact: false })).toBeInViewport(
     { ratio: 1 },
   )
+  await expect(sprite(last)).toHaveCount(1)
   await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })

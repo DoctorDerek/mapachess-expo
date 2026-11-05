@@ -107,14 +107,16 @@ export default function BetterHintsControl({
         aria-labelledby="get-hint-label better-hints-stage"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance better-hints-medal"
-        className="flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-tight wrap-break-word"
+        className="col-start-2 col-end-4 row-start-1 flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] wrap-break-word xl:col-start-3 xl:col-end-4 xl:leading-tight"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
         disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
-        <span id="get-hint-label">{copy.gameplay.hints.getHint}</span>
+        <span id="get-hint-label" className="max-w-full min-w-0 wrap-anywhere">
+          {copy.gameplay.hints.getHint}
+        </span>
         <span id="better-hints-stage" className="sr-only">
           {control.label}
         </span>
@@ -129,7 +131,7 @@ export default function BetterHintsControl({
       <p
         className={
           stage === "failure" || stage === "unavailable"
-            ? "text-mapachito-white min-w-0 basis-full text-base font-semibold"
+            ? "text-mapachito-white col-span-full min-w-0 basis-full text-base font-semibold"
             : "sr-only"
         }
         id="better-hints-guidance"

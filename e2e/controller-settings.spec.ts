@@ -231,6 +231,40 @@ test("honors a remapped Home key on the board while preserving unassigned End na
   await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6)
 })
 
+test("closing a binding dialog preserves focus moved to Save before the next frame", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
+  await page.getByRole("button", { name: "Controls", exact: true }).click()
+  await page.getByRole("button", { name: "Keyboard", exact: true }).click()
+  const binding = page.locator('button[aria-labelledby~="binding-hints"]')
+  await binding.click()
+  await binding.evaluate((trigger) => {
+    const save = Array.from(
+      trigger.closest("dialog")?.querySelectorAll("button") ?? [],
+    ).find((button) => button.textContent === "Save controls")
+    if (!save) throw Error("Missing controls Save action")
+    // Move focus just after the dialog returns it to the binding, before history's next frame.
+    trigger.addEventListener(
+      "focus",
+      () => queueMicrotask(() => save.focus()),
+      { once: true },
+    )
+  })
+  await page.keyboard.press("Home")
+  const save = page.getByRole("button", { name: "Save controls", exact: true })
+  await expect(save).toBeFocused()
+  await frames(page)
+  await expect(save).toBeFocused()
+  await page.keyboard.press("Enter")
+  await expect
+    .poll(
+      async () =>
+        (await savedProfile(page)).settings.inputBindings.keyboard.hints,
+    )
+    .toBe("Home")
+})
+
 test("retains last intentional device and rejects reconnect, background and second-pad held input", async ({
   page,
 }) => {

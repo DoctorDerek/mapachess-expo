@@ -91,7 +91,6 @@ const interfaceCopy = {
     cancelBindingChange: "Cancelar cambio de asignación",
   },
   localSaveError: { localSaveError: "Error de guardado local" },
-  mapachessLoadingSurface: { loadingMapachess: "Cargando Mapachess." },
   recoverableView: { tryAgain: "Intentar de nuevo" },
   chessAppearanceChoices: {
     boardPieces: "Tablero y piezas",
