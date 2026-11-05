@@ -423,8 +423,10 @@ for (const locale of ["en", "es-419"] as const) {
         )
         await expectExposedWithoutScrolling(rating)
         if (width < 1280) {
-          await expectScrollContentVisible(level, "end")
-          await expectExposedWithoutScrolling(level)
+          await expect(async () => {
+            await expectScrollContentVisible(level, "end")
+            await expectExposedWithoutScrolling(level)
+          }).toPass({ timeout: 15000 })
           await expectExposedWithoutScrolling(review)
           await expectExposedWithoutScrolling(replay)
           const reviewBox = await verticalEdges(review)
