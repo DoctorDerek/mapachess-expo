@@ -86,19 +86,27 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
     ]) {
       const action = page.getByRole("button", { name: new RegExp(`${name}$`) })
       await expect(action).toBeVisible()
-      expect(
-        await action.evaluate(
-          (element) => element.scrollWidth <= element.clientWidth,
-        ),
-      ).toBe(true)
+      await expect
+        .poll(
+          () =>
+            action.evaluate(
+              (element) => element.scrollWidth - element.clientWidth,
+            ),
+          { message: `${name} has no horizontal overflow at ${width}px` },
+        )
+        .toBeLessThanOrEqual(0)
     }
     await expect(page.locator('[data-player-action="menu"]')).toBeVisible()
     await expect(page.locator('[data-player-action="controls"]')).toHaveCount(0)
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-    ).toBe(true)
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth - innerWidth,
+          ),
+        { message: `The match has no horizontal overflow at ${width}px` },
+      )
+      .toBeLessThanOrEqual(0)
     await page.screenshot({
       path: testInfo.outputPath(`spanish-match-hints-${width}.png`),
       fullPage: true,
