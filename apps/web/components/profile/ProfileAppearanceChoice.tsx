@@ -38,6 +38,7 @@ export default function ProfileAppearanceChoice({
     >
       <span className={cx("relative block", compact ? "h-full" : "h-20")}>
         <ProfileArtwork
+          allowRetry={false}
           input={{
             locale,
             appearance: choice.appearance,
