@@ -81,6 +81,10 @@ export const persistProfileActiveMatch = ({
     const onAbort = (): void => settle(abortedPersistence())
     const inspect = (snapshot: ProfileMachineSnapshot): void => {
       if (settled) return
+      if (snapshot.status === "stopped") {
+        settle(actorStopped())
+        return
+      }
       const playerData = selectCurrentPlayerData(snapshot)
       if (
         playerData !== null &&

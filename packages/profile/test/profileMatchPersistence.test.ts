@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import {
   DEFAULT_CHALLENGE_SETUP,
@@ -90,6 +90,113 @@ const openProfile = async () => {
 }
 
 describe("profile-owned match persistence bridge", () => {
+  it("rejects cross-match and impossible hint requests without modifying an established profile", async () => {
+    const actor = await openProfile()
+    onTestFinished(() => {
+      actor.stop()
+    })
+    const initial = durableMatch()
+    const signal = new AbortController().signal
+    expect(
+      () =>
+        new ProfileMatchPersistenceBridge({
+          actor,
+          initialMatch: initial,
+          expectedActiveMatch: durableMatch("00000005000000060000000700000008"),
+        }),
+    ).toThrow("different IDs")
+    const bridge = new ProfileMatchPersistenceBridge({
+      actor,
+      initialMatch: initial,
+      expectedActiveMatch: null,
+    })
+    const request = { ...initial, requestId: "guarded-request" }
+    await expect(bridge.persist(request, signal)).rejects.toThrow(
+      "not established",
+    )
+    await bridge.establish(signal)
+    const before = selectCurrentPlayerData(actor.getSnapshot())
+    await bridge.establish(signal)
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toBe(before)
+    await expect(
+      bridge.persist({ ...request, matchId: "unrelated-match" }, signal),
+    ).rejects.toThrow("different matchId")
+    await expect(
+      bridge.persist(
+        { ...request, moveHintsUsed: true, pieceHintsUsed: false },
+        signal,
+      ),
+    ).rejects.toThrow("requires Piece Hint")
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toBe(before)
+    const aborted = new AbortController()
+    aborted.abort()
+    await expect(
+      bridge.persist({ ...request, pieceHintsUsed: true }, aborted.signal),
+    ).rejects.toMatchObject({ name: "AbortError" })
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toBe(before)
+    await bridge.persist(
+      { ...request, pieceHintsUsed: true, requestId: "after-rejection" },
+      signal,
+    )
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch?.pieceHintsUsed,
+    ).toBe(true)
+  })
+
+  it("rejects an aborted waiting operation without rolling back a write already owned by the profile actor", async () => {
+    const actor = await openProfile()
+    onTestFinished(() => {
+      actor.stop()
+    })
+    const initial = durableMatch()
+    const bridge = new ProfileMatchPersistenceBridge({
+      actor,
+      initialMatch: initial,
+      expectedActiveMatch: null,
+    })
+    await bridge.establish(new AbortController().signal)
+    const store = actor.getSnapshot().context.store
+    const original = store.commitCurrent.bind(store)
+    const gate = Promise.withResolvers<void>()
+    onTestFinished(() => gate.resolve())
+    const spy = vi
+      .spyOn(store, "commitCurrent")
+      .mockImplementationOnce(async (...args) => {
+        await gate.promise
+        return original(...args)
+      })
+    onTestFinished(() => spy.mockRestore())
+    const controller = new AbortController()
+    const writing = bridge.persist(
+      { ...initial, requestId: "abort-waiter", pieceHintsUsed: true },
+      controller.signal,
+    )
+    const rejected = expect(writing).rejects.toMatchObject({
+      name: "AbortError",
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("persisting"))
+    controller.abort()
+    await rejected
+    gate.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(
+      selectCurrentPlayerData(actor.getSnapshot())?.activeMatch,
+    ).toMatchObject({ matchId: initial.matchId, pieceHintsUsed: true })
+  })
+
+  it("rejects pending persistence when its owner stops instead of leaving an unresolved operation", async () => {
+    const actor = await openProfile()
+    const candidate = durableMatch()
+    actor.stop()
+    await expect(
+      persistProfileActiveMatch({
+        actor,
+        candidate,
+        expectedActiveMatch: null,
+        signal: new AbortController().signal,
+      }),
+    ).rejects.toThrow("actor stopped")
+  })
   it.each([new Error("Actor failed"), { message: "Foreign actor failure" }])(
     "retains a stopped actor's original failure as the rejection cause",
     async (failure) => {
@@ -267,6 +374,10 @@ describe("profile-owned match persistence bridge", () => {
       cursor: 2,
       moveFeedback: [record],
     })
+    await expect(bridge.persistMoveFeedback(record, signal)).resolves.toBe(true)
+    expect(selectCurrentPlayerData(actor.getSnapshot())?.revision).toBe(
+      data.revision,
+    )
     const backup = await createMapachessPortableBackup({
       applicationVersion: "test",
       gddRevision: "v3.1",
