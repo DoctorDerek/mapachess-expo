@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
+import { DEFAULT_CHALLENGE_SETUP } from "../src/challengeSetup.js"
 import {
   eligibleMatchNavigationOverlays,
   parseMatchNavigationDestination,
@@ -7,6 +8,8 @@ import {
 import createMatchSessionMachine, {
   selectCanHandleMatchSessionBack,
   selectMatchNavigationDestination,
+  selectMatchSession,
+  selectMatchSessionFailure,
   type MatchSessionIdentity,
   type MatchSessionOperations,
 } from "../src/matchSessionMachine.js"
@@ -27,6 +30,104 @@ const operations = (): MatchSessionOperations<typeof session> => ({
 })
 
 describe("portable match session navigation", () => {
+  it.each(["restart", "return"] as const)(
+    "retains the owned match through %s failure and retries only the failed operation",
+    async (operation) => {
+      const failure = new Error("Platform lifecycle failed")
+      const restart = vi
+        .fn<MatchSessionOperations<typeof session>["openFreshMatch"]>()
+        .mockRejectedValueOnce(failure)
+        .mockResolvedValueOnce(session)
+      const returning = vi
+        .fn<MatchSessionOperations<typeof session>["returnToMenu"]>()
+        .mockRejectedValueOnce(failure)
+        .mockResolvedValueOnce(undefined)
+      const ops = {
+        ...operations(),
+        openFreshMatch: restart,
+        returnToMenu: returning,
+      }
+      const actor = createActor(machine, {
+        input: { activeMatchExists: true, operations: ops },
+      }).start()
+      try {
+        await waitFor(actor, (snapshot) => snapshot.matches("active"))
+        actor.send(
+          operation === "restart"
+            ? { type: "MATCH_SESSION.RESTART_REQUESTED" }
+            : { type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED" },
+        )
+        await waitFor(actor, (snapshot) => snapshot.matches("failed"))
+        expect(selectMatchSession(actor.getSnapshot())).toBe(session)
+        expect(selectMatchSessionFailure(actor.getSnapshot())).toMatchObject({
+          cause: failure,
+          operation:
+            operation === "restart" ? "restart-match" : "return-to-menu",
+        })
+        expect(selectMatchNavigationDestination(actor.getSnapshot())).toBeNull()
+        actor.send({ type: "MATCH_SESSION.RETRY_REQUESTED" })
+        await waitFor(actor, (snapshot) =>
+          operation === "restart"
+            ? snapshot.matches("active")
+            : snapshot.matches({ menu: "setup" }),
+        )
+        expect(selectMatchSessionFailure(actor.getSnapshot())).toBeNull()
+        expect(selectMatchSession(actor.getSnapshot())).toBe(
+          operation === "restart" ? session : null,
+        )
+        expect(
+          operation === "restart" ? restart : returning,
+        ).toHaveBeenCalledTimes(2)
+        expect(
+          operation === "restart" ? returning : restart,
+        ).not.toHaveBeenCalled()
+        expect(ops.openCurrentMatch).toHaveBeenCalledOnce()
+      } finally {
+        actor.stop()
+      }
+    },
+  )
+
+  it("retries a failed Challenge start with the original choices and no invented session", async () => {
+    const failure = new Error("Challenge runtime unavailable")
+    const openFreshMatch = vi
+      .fn<MatchSessionOperations<typeof session>["openFreshMatch"]>()
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(session)
+    const actor = createActor(machine, {
+      input: {
+        activeMatchExists: false,
+        operations: { ...operations(), openFreshMatch },
+      },
+    }).start()
+    try {
+      const setup = {
+        mode: "challenge",
+        challengeSetup: DEFAULT_CHALLENGE_SETUP,
+      } as const
+      actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+      expect(
+        selectMatchNavigationDestination(actor.getSnapshot())?.setupKey,
+      ).toBe("challenge:standard")
+      actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
+      await waitFor(actor, (snapshot) => snapshot.matches("failed"))
+      expect(selectMatchSession(actor.getSnapshot())).toBeNull()
+      expect(selectMatchSessionFailure(actor.getSnapshot())).toMatchObject({
+        cause: failure,
+        operation: "start-match",
+      })
+      actor.send({ type: "MATCH_SESSION.RETRY_REQUESTED" })
+      await waitFor(actor, (snapshot) => snapshot.matches("active"))
+      expect(openFreshMatch).toHaveBeenCalledTimes(2)
+      expect(openFreshMatch).toHaveBeenLastCalledWith(
+        null,
+        setup,
+        expect.any(AbortSignal),
+      )
+    } finally {
+      actor.stop()
+    }
+  })
   it("nests category editing under the dressing room and closes the requested owner without changing the match", async () => {
     const ops = operations()
     const actor = createActor(machine, {

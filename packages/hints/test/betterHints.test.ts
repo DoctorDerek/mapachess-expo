@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
+import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
   reconstructMatchPosition,
@@ -54,6 +55,191 @@ const createEngine = (search: SearchHandler): StockfishEngineSession => ({
 })
 
 describe("Better Hints analysis", () => {
+  it("recognizes opponent checkmate and stalemate candidates while analyzing a checked player without spending search nodes on terminal children", async () => {
+    const position = requirePosition("8/8/8/8/8/5qk1/8/7K w - - 0 1")
+    const requests: StockfishSearchRequest[] = []
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) => {
+        requests.push(request)
+        return request.requestId.endsWith("/player")
+          ? rankedResult(request.requestId, ["h1g1"])
+          : {
+              requestId: request.requestId,
+              bestMove: null,
+              latestInformation: {
+                score: { kind: "centipawns", value: 0, bound: "exact" },
+              },
+            }
+      }),
+    })
+    const result = await analyst.analyze({
+      playerColor: "white",
+      position,
+      requestId: "terminal-children",
+    })
+    expect(requirePosition("8/8/8/8/8/6k1/8/3q3K w - - 1 2").status).toEqual({
+      type: "checkmate",
+      winner: "black",
+    })
+    expect(requirePosition("8/8/8/8/8/6k1/5q2/7K w - - 1 2").status).toEqual({
+      type: "stalemate",
+    })
+    expect(result.opponent[0]?.uci).toBe("f3d1")
+    expect(
+      requests.some(
+        (request) =>
+          request.requestId.endsWith("/f3g2") ||
+          request.requestId.endsWith("/f3f2"),
+      ),
+    ).toBe(false)
+    expect(result.positionFen).toBe(position.fen)
+    expect(position.turn).toBe("white")
+  })
+
+  it("returns no invented opponent hint when that side has no legal move on the unchanged projection", async () => {
+    const position = requirePosition("7k/5Q2/5K2/8/8/8/8/8 w - - 0 1")
+    const requests: StockfishSearchRequest[] = []
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) => {
+        requests.push(request)
+        return rankedResult(
+          request.requestId,
+          listLegalMatchMoves(position).map((move) => move.uci),
+        )
+      }),
+    })
+    const result = await analyst.analyze({
+      playerColor: "white",
+      position,
+      requestId: "opponent-stalemate",
+    })
+    expect(result.player).toHaveLength(2)
+    expect(result.opponent).toEqual([])
+    expect(requests).toHaveLength(1)
+    expect(requests[0]?.requestId).toBe("opponent-stalemate/player")
+  })
+  it.each([false, true])(
+    "scores all checked-position opponent promotions and preserves ranking when mate scores use principal variations: %s",
+    async (principalScores) => {
+      const position = requirePosition("4k3/8/8/8/8/8/p3r3/4K3 w - - 0 1")
+      const searched: StockfishSearchRequest[] = []
+      const analyst = createBetterHintsAnalyst({
+        engine: createEngine(async (request) => {
+          searched.push(request)
+          if (request.requestId.endsWith("/player"))
+            return rankedResult(request.requestId, ["e1e2"])
+          const score = {
+            bound: "exact" as const,
+            kind: "mate" as const,
+            value: request.requestId.includes("a2a1q") ? -1 : 8,
+          }
+          return {
+            requestId: request.requestId,
+            bestMove: null,
+            ...(principalScores
+              ? { principalVariations: [{ rank: 1, moves: [], score }] }
+              : { latestInformation: { score } }),
+          }
+        }),
+      })
+      const result = await analyst.analyze({
+        playerColor: "white",
+        position,
+        requestId: "checked-promotion",
+      })
+      expect(result.opponent[0]?.uci).toBe("a2a1q")
+      expect(result.opponent.map((hint) => hint.from)).toEqual([
+        "a2",
+        "e2",
+        "e8",
+      ])
+      expect(
+        searched.some((request) => request.requestId.endsWith("a2a1r")),
+      ).toBe(true)
+      expect(
+        searched.some((request) => request.requestId.endsWith("a2a1b")),
+      ).toBe(true)
+      expect(
+        searched.some((request) => request.requestId.endsWith("a2a1n")),
+      ).toBe(true)
+      expect(
+        searched
+          .slice(1)
+          .reduce((total, request) => total + request.nodeLimit, 0),
+      ).toBeLessThanOrEqual(BETTER_HINTS_NODE_LIMIT)
+      expect(result.positionFen).toBe(position.fen)
+    },
+  )
+
+  it("rejects scoreless checked-position output rather than fabricating hint quality", async () => {
+    const position = requirePosition("4k3/8/8/8/8/8/4r3/R3K2R w KQ - 0 1")
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) =>
+        request.requestId.endsWith("/player")
+          ? rankedResult(request.requestId, ["e1e2"])
+          : { requestId: request.requestId, bestMove: null },
+      ),
+    })
+    await expect(
+      analyst.analyze({
+        playerColor: "white",
+        position,
+        requestId: "scoreless",
+      }),
+    ).rejects.toThrow("no score")
+  })
+
+  it("stops checked-position candidate work after cancellation instead of searching the remaining board", async () => {
+    const controller = new AbortController()
+    const searched: StockfishSearchRequest[] = []
+    const position = requirePosition("4k3/8/8/8/8/8/4r3/R3K2R w KQ - 0 1")
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) => {
+        searched.push(request)
+        if (request.requestId.endsWith("/player"))
+          return rankedResult(request.requestId, ["e1e2"])
+        controller.abort()
+        return {
+          requestId: request.requestId,
+          bestMove: null,
+          latestInformation: {
+            score: { bound: "exact", kind: "centipawns", value: 0 },
+          },
+        }
+      }),
+    })
+    await expect(
+      analyst.analyze(
+        { playerColor: "white", position, requestId: "cancel-checked" },
+        controller.signal,
+      ),
+    ).rejects.toBeInstanceOf(StockfishOperationAbortedError)
+    expect(searched).toHaveLength(2)
+  })
+
+  it("uses both projected colors when the player is Black without changing the canonical board", async () => {
+    const position = requirePosition(
+      "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
+    )
+    const analyst = createBetterHintsAnalyst({
+      engine: createEngine(async (request) =>
+        rankedResult(
+          request.requestId,
+          request.requestId.endsWith("/player")
+            ? ["e7e5", "g8f6", "d7d5"]
+            : ["e2e4", "g1f3", "d2d4"],
+        ),
+      ),
+    })
+    const result = await analyst.analyze({
+      playerColor: "black",
+      position,
+      requestId: "black-hints",
+    })
+    expect(result.player.every((hint) => hint.color === "black")).toBe(true)
+    expect(result.opponent.every((hint) => hint.color === "white")).toBe(true)
+    expect(position.turn).toBe("black")
+  })
   it("keeps Chess960 castling intent for both sides on the unchanged board", async () => {
     const layout = parseChess960PositionId(0)
     if (!layout.ok) throw new Error("Invalid test layout")
