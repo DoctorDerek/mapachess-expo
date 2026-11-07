@@ -8,12 +8,12 @@ import {
   within,
 } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { selectStoryPlayerColor } from "@mapachess/gameplay/match-identity"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import type { OpenWebMatchRuntimeInput } from "../../lib/gameplay/openWebMatchRuntime"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
-import { selectStoryPlayerColor } from "../../lib/gameplay/webOpponent"
 import type createWebOpponent from "../../lib/gameplay/webOpponent"
 import { createWebPlayerDataBackup } from "../../lib/profile/webPlayerDataFiles"
 import { bootApplication, savedProfile } from "../../test/applicationHarness"

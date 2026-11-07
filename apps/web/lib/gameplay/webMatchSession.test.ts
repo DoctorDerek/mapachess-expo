@@ -2,6 +2,11 @@ import { webcrypto } from "node:crypto"
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb"
 import { describe, expect, it, vi, type TestContext } from "vitest"
 import { waitFor } from "xstate"
+import { buildFreshMatch as buildFreshWebMatch } from "@mapachess/gameplay/durable-match"
+import {
+  createMatchId,
+  selectStoryPlayerColor,
+} from "@mapachess/gameplay/match-identity"
 import {
   DEFAULT_CHALLENGE_SETUP,
   type ChallengeSetup,
@@ -50,14 +55,12 @@ import openWebProfileRuntime, {
 } from "../profile/openWebProfileRuntime"
 import webSha256 from "../profile/webSha256"
 import type { OpenWebMatchRuntimeInput } from "./openWebMatchRuntime"
-import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import {
   openCurrentWebMatchSession,
   openFreshWebMatchSession,
   returnWebMatchSessionToMenu,
 } from "./webMatchSession"
-import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
   resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
@@ -103,7 +106,7 @@ const createRuntime = (
     variant: "standard",
     chess960PositionId: null,
   },
-  selection: NonNullable<Parameters<typeof webMatchId>[2]> = {
+  selection: NonNullable<Parameters<typeof createMatchId>[2]> = {
     mode: "story",
   },
   policyFingerprint = "session-test-policy",
@@ -124,7 +127,7 @@ const createRuntime = (
         throw new Error("Session ownership tests do not request hints.")
       }),
     }),
-    matchId: webMatchId(matchSeed, startingPosition, selection, opponentId),
+    matchId: createMatchId(matchSeed, startingPosition, selection, opponentId),
     matchSeed,
     opponent: Object.freeze({
       selectMove: vi.fn(async (request) => {

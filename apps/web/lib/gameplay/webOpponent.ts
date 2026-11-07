@@ -8,12 +8,7 @@ import type {
   MatchOpponentRequest,
 } from "@mapachess/match/match-machine"
 import type { LegalMatchMove } from "@mapachess/match/match-move"
-import type {
-  MatchColor,
-  MatchStartingPosition,
-} from "@mapachess/match/match-position"
 import type { MatchVariant } from "@mapachess/match/match-variant"
-import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSession,
@@ -55,13 +50,6 @@ export function generateWebMatchSeed(
   return parseDeterministicRandomSeed(seed, "Web match seed")
 }
 
-export function selectStoryPlayerColor(
-  matchSeed: DeterministicRandomSeed,
-): "black" | "white" {
-  const random = createDeterministicRandom(matchSeed)
-  return random.nextIndex(2) === 0 ? "white" : "black"
-}
-
 export function generateWebChess960Position(
   cryptography: WebOpponentCryptography,
 ): Chess960PositionId {
@@ -71,30 +59,6 @@ export function generateWebChess960Position(
   )
   if (!parsed.ok) throw new Error("Generated Chess960 position is invalid.")
   return parsed.positionId
-}
-
-export function webMatchId(
-  matchSeed: DeterministicRandomSeed,
-  startingPosition: MatchStartingPosition = {
-    variant: "standard",
-    chess960PositionId: null,
-  },
-  selection:
-    | Readonly<{ mode: "story" }>
-    | Readonly<{ mode: "challenge"; playerColor: MatchColor }> = {
-    mode: "story",
-  },
-  opponentId: StockfishOpponentId = "chicken-stockfish",
-): string {
-  const animalId = opponentId.replace(/-stockfish$/, "")
-  if (selection.mode === "challenge") {
-    return startingPosition.variant === "standard"
-      ? `standard-challenge-${animalId}/${selection.playerColor}/${matchSeed}`
-      : `chess960-challenge-${animalId}/${String(startingPosition.chess960PositionId)}/${selection.playerColor}/${matchSeed}`
-  }
-  return startingPosition.variant === "standard"
-    ? `standard-story-${animalId}/${matchSeed}`
-    : `chess960-story-${animalId}/${String(startingPosition.chess960PositionId)}/${matchSeed}`
 }
 
 const requireVariantPosition = (

@@ -1,4 +1,9 @@
 import { evaluatePositionWithStockfish } from "@mapachess/evaluation/position-evaluator"
+import {
+  createMatchId,
+  selectStoryPlayerColor,
+} from "@mapachess/gameplay/match-identity"
+import type { OpenMatchRuntimeInput } from "@mapachess/gameplay/match-runtime"
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
@@ -6,16 +11,9 @@ import {
   CHESS960_POSITION_COUNT,
   parseChess960PositionId,
 } from "@mapachess/match/chess960-position"
-import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
-import type {
-  MatchColor,
-  MatchStartingPosition,
-} from "@mapachess/match/match-position"
+import type { MatchStartingPosition } from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
-import {
-  createDeterministicRandom,
-  type DeterministicRandomSeed,
-} from "@mapachess/stockfish/opponent-move-selection"
+import { createDeterministicRandom } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
@@ -28,8 +26,6 @@ import prepareWebStockfishProgram from "../stockfish/prepareWebStockfishProgram"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import createWebOpponent, {
   generateWebMatchSeed,
-  selectStoryPlayerColor,
-  webMatchId,
   type WebOpponentCryptography,
 } from "./webOpponent"
 import resolveWebOpponentPolicy, {
@@ -46,32 +42,14 @@ const OPPONENT_WORKER_NAME = "mapachess-stockfish-18-opponent" as const
 const HINT_WORKER_NAME = "mapachess-stockfish-18-better-hints" as const
 const EVALUATION_WORKER_NAME = "mapachess-stockfish-18-evaluation" as const
 
-export type OpenWebMatchRuntimeInput = Readonly<{
-  cryptography?: WebOpponentCryptography
-  openSession?: (
-    configuration: StockfishEngineConfiguration,
-    options?: CreateWebStockfishSessionOptions,
-  ) => StockfishUciSession
-  matchSeed?: DeterministicRandomSeed
-  opponentId?: ImplementedDurableOpponentId
-  opponentPolicyFingerprint?: string
-  setup?:
-    | MatchStartingPosition
-    | Readonly<{ variant: "chess960"; chess960PositionId?: never }>
-  signal?: AbortSignal
-}> &
-  (
-    | Readonly<{
-        mode?: "story"
-        playerColor?: never
-        difficultyTargetElo?: never
-      }>
-    | Readonly<{
-        mode: "challenge"
-        playerColor: MatchColor | "random"
-        difficultyTargetElo?: number
-      }>
-  )
+export type OpenWebMatchRuntimeInput = OpenMatchRuntimeInput &
+  Readonly<{
+    cryptography?: WebOpponentCryptography
+    openSession?: (
+      configuration: StockfishEngineConfiguration,
+      options?: CreateWebStockfishSessionOptions,
+    ) => StockfishUciSession
+  }>
 
 const closeOwnedSessions = async (
   sessions: readonly StockfishUciSession[],
@@ -208,7 +186,7 @@ export default async function openWebMatchRuntime(
     }
   }
 
-  return Object.freeze({
+  return Object.freeze<WebMatchRuntime>({
     close: async () => {
       try {
         await closeOwnedSessions(sessions)
@@ -218,7 +196,7 @@ export default async function openWebMatchRuntime(
     },
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
-    matchId: webMatchId(
+    matchId: createMatchId(
       matchSeed,
       startingPosition,
       input.mode === "challenge"

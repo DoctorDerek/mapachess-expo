@@ -18,6 +18,7 @@
   "dependencies": {
     "@mapachess/diagnostics": "workspace:*",
     "@mapachess/evaluation": "workspace:*",
+    "@mapachess/gameplay": "workspace:*",
     "@mapachess/hints": "workspace:*",
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",

@@ -44,7 +44,7 @@ export default defineConfig([
     name: "mapachess/aggregate-open-and-close-failures",
     files: [
       "apps/web/lib/gameplay/openWebMatchRuntime.ts",
-      "apps/web/lib/gameplay/webMatchSession.ts",
+      "packages/gameplay/src/matchSession.ts",
     ],
     rules: { "preserve-caught-error": "off" },
   },

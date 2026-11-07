@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
+import { buildFreshMatch as buildFreshWebMatch } from "@mapachess/gameplay/durable-match"
+import { createMatchId } from "@mapachess/gameplay/match-identity"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import type {
@@ -22,7 +24,6 @@ import createMatchSetupForMode, {
   type MatchSetup,
 } from "@mapachess/match/match-setup"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import { buildFreshWebMatch } from "./webDurableMatch"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import webMatchSessionMachine, {
   selectWebMatchSession,
@@ -31,7 +32,6 @@ import webMatchSessionMachine, {
   type WebMatchSession,
   type WebMatchSessionOperations,
 } from "./webMatchSessionMachine"
-import { webMatchId } from "./webOpponent"
 
 const createSession = (
   seed: string,
@@ -57,7 +57,7 @@ const createSession = (
         throw new Error("Web session test does not request hints.")
       }),
     }),
-    matchId: webMatchId(
+    matchId: createMatchId(
       matchSeed,
       startingPosition,
       { mode, playerColor },

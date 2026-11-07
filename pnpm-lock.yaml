@@ -193,6 +193,9 @@ importers:
       '@mapachess/evaluation':
         specifier: workspace:*
         version: link:../../packages/evaluation
+      '@mapachess/gameplay':
+        specifier: workspace:*
+        version: link:../../packages/gameplay
       '@mapachess/hints':
         specifier: workspace:*
         version: link:../../packages/hints
@@ -310,6 +313,24 @@ importers:
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match
+      '@mapachess/stockfish':
+        specifier: workspace:*
+        version: link:../stockfish
+      xstate:
+        specifier: ^5
+        version: 5.32.6
+
+  packages/gameplay:
+    dependencies:
+      '@mapachess/evaluation':
+        specifier: workspace:*
+        version: link:../evaluation
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
+      '@mapachess/profile':
+        specifier: workspace:*
+        version: link:../profile
       '@mapachess/stockfish':
         specifier: workspace:*
         version: link:../stockfish

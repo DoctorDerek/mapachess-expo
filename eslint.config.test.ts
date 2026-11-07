@@ -25,6 +25,7 @@ describe("repository ESLint coverage", () => {
     "packages/stockfish/src/engineValidation.ts",
     "apps/web/lib/gameplay/openWebMatchRuntime.ts",
     "apps/web/lib/gameplay/webMatchSession.ts",
+    "packages/gameplay/src/matchSession.ts",
     "apps/web/lib/stockfish/webWorkerUciTransport.test.ts",
   ])(
     "detects TypeScript findings in %s without ignoring the file",
@@ -155,7 +156,7 @@ describe("repository ESLint coverage", () => {
 
   it.each([
     "apps/web/lib/gameplay/openWebMatchRuntime.ts",
-    "apps/web/lib/gameplay/webMatchSession.ts",
+    "packages/gameplay/src/matchSession.ts",
   ])(
     "allows aggregate failures in their owning module %s",
     async (filePath) => {
