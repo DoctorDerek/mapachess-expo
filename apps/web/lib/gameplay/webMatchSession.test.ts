@@ -440,6 +440,117 @@ describe("retained web match recovery", () => {
 })
 
 describe("web match session ownership", () => {
+  it("rejects Resume before profile hydration or without an active match instead of opening an engine", async () => {
+    const openingProfile = openWebProfileRuntime({
+      indexedDb: new IDBFactory(),
+      subtleCrypto: webcrypto.subtle,
+    })
+    const opener = runtimeOpener(createRuntime(FIRST_MATCH_SEED).runtime)
+    try {
+      await expect(
+        openCurrentWebMatchSession({
+          profileActor: openingProfile.actor,
+          openRuntime: opener,
+          signal: new AbortController().signal,
+        }),
+      ).rejects.toThrow("valid player profile")
+      await waitFor(openingProfile.actor, (snapshot) =>
+        snapshot.matches("ready"),
+      )
+      await expect(
+        openCurrentWebMatchSession({
+          profileActor: openingProfile.actor,
+          openRuntime: opener,
+          signal: new AbortController().signal,
+        }),
+      ).rejects.toThrow("no active match")
+      expect(opener).not.toHaveBeenCalled()
+    } finally {
+      await openingProfile.close()
+    }
+  })
+
+  it("keeps both the opening failure and cleanup failure without committing a mismatched Challenge", async () => {
+    const profile = await openProfileRuntime()
+    const engine = createRuntime(
+      FIRST_MATCH_SEED,
+      { variant: "standard", chess960PositionId: null },
+      { mode: "challenge", playerColor: "white" },
+    )
+    const closeFailure = new Error("Owned runtime cleanup failed")
+    engine.close.mockRejectedValueOnce(closeFailure)
+    const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+    try {
+      const result: unknown = await openFreshWebMatchSession({
+        mode: "challenge",
+        challengeSetup: {
+          ...DEFAULT_CHALLENGE_SETUP,
+          difficultyTargetElo: 1000,
+        },
+        previousSession: null,
+        profileActor: profile.actor,
+        openRuntime: runtimeOpener(engine.runtime),
+        signal: new AbortController().signal,
+      }).catch((error: unknown) => error)
+      expect(result).toBeInstanceOf(AggregateError)
+      if (!(result instanceof AggregateError))
+        throw new Error("Both failures must be preserved together.")
+      expect(result.errors).toEqual([
+        expect.objectContaining({
+          message:
+            "The opened Challenge difficulty does not match the selection.",
+        }),
+        closeFailure,
+      ])
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        before,
+      )
+    } finally {
+      await profile.close()
+    }
+  })
+
+  it("does not restart a session whose saved match was explicitly cleared", async () => {
+    const profile = await openProfileRuntime()
+    const engine = createRuntime(FIRST_MATCH_SEED)
+    const signal = new AbortController().signal
+    const session = await openFreshWebMatchSession({
+      variant: "standard",
+      previousSession: null,
+      profileActor: profile.actor,
+      openRuntime: runtimeOpener(engine.runtime),
+      signal,
+    })
+    try {
+      await returnWebMatchSessionToMenu({
+        profileActor: profile.actor,
+        session,
+        signal,
+      })
+      await returnWebMatchSessionToMenu({
+        profileActor: profile.actor,
+        session,
+        signal,
+      })
+      const opener = runtimeOpener(createRuntime(SECOND_MATCH_SEED).runtime)
+      await expect(
+        openFreshWebMatchSession({
+          variant: "standard",
+          previousSession: session,
+          profileActor: profile.actor,
+          openRuntime: opener,
+          signal,
+        }),
+      ).rejects.toThrow("no longer active")
+      expect(opener).not.toHaveBeenCalled()
+      expect(
+        selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch,
+      ).toBeNull()
+      expect(engine.close).toHaveBeenCalledOnce()
+    } finally {
+      await profile.close()
+    }
+  })
   it("starts selected setup rather than silently resuming a retained session, closing the old actor only after acceptance", async () => {
     const profile = await openProfileRuntime()
     const firstRuntime = createRuntime(FIRST_MATCH_SEED)
