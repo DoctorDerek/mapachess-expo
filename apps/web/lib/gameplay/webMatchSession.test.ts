@@ -159,9 +159,10 @@ const createRuntime = (
 const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
 
-async function savePlayedMatchWithoutRatedOpponent(
+async function savePlayedBulletMatch(
   profile: WebProfileRuntime,
   runtime: WebMatchRuntime,
+  ratingMetadata: "missing" | "recorded",
 ) {
   const bullet = TIME_CONTROL_PRESETS.find(({ id }) => id === "1+0")
   if (bullet === undefined) throw new Error("The test requires Bullet 1+0.")
@@ -173,7 +174,7 @@ async function savePlayedMatchWithoutRatedOpponent(
       timeControl: bullet.control,
     }),
   }
-  delete fresh.ratedOpponentElo
+  if (ratingMetadata === "missing") delete fresh.ratedOpponentElo
   if (fresh.clock == null) throw new Error("The test requires timed clocks.")
 
   let timeline = createMatchTimeline(
@@ -225,10 +226,7 @@ async function interruptResumeWrite(
     await storage.close()
   })
   const engine = createRuntime(FIRST_MATCH_SEED)
-  const saved = await savePlayedMatchWithoutRatedOpponent(
-    profile,
-    engine.runtime,
-  )
+  const saved = await savePlayedBulletMatch(profile, engine.runtime, "missing")
   expect(saved.match.ratedOpponentElo).toBeUndefined()
   const storedBeforeResume = await storage.read()
   const controller = new AbortController()
@@ -372,6 +370,73 @@ describe("retained web match recovery", () => {
     expect(engine.close).toHaveBeenCalledOnce()
     expect(retryEngine.close).not.toHaveBeenCalled()
   })
+
+  it.for(["missing", "recorded"] as const)(
+    "protects a replacement save from a late Resume with %s rating metadata",
+    async (ratingMetadata, { onTestFinished }) => {
+      const indexedDb = new IDBFactory()
+      const profile = await openProfileRuntime(undefined, indexedDb)
+      const storage = new IndexedDbDurableStore(indexedDb)
+      onTestFinished(async () => {
+        await profile.close()
+        await storage.close()
+      })
+      const oldEngine = createRuntime(FIRST_MATCH_SEED)
+      const { match } = await savePlayedBulletMatch(
+        profile,
+        oldEngine.runtime,
+        ratingMetadata,
+      )
+      expect(match.ratedOpponentElo).toBe(
+        ratingMetadata === "recorded"
+          ? oldEngine.runtime.ratedOpponentElo
+          : undefined,
+      )
+      const controller = new AbortController()
+      const engineOpening = Promise.withResolvers<WebMatchRuntime>()
+      const openRuntime = vi.fn(() => engineOpening.promise)
+      const opening = openCurrentWebMatchSession({
+        openRuntime,
+        profileActor: profile.actor,
+        signal: controller.signal,
+      })
+      void opening.catch(() => undefined)
+      onTestFinished(async () => {
+        controller.abort()
+        engineOpening.resolve(oldEngine.runtime)
+        await opening.then(
+          (session) => session.close(),
+          () => undefined,
+        )
+      })
+      expect(openRuntime).toHaveBeenCalledOnce()
+
+      const replacement = buildFreshWebMatch({
+        autoHintMode: match.autoHintMode,
+        playerEloAtStart: match.playerEloAtStart,
+        runtime: createRuntime(SECOND_MATCH_SEED).runtime,
+        timeControl: match.timeControl,
+      })
+      await persistProfileActiveMatch({
+        actor: profile.actor,
+        candidate: replacement,
+        expectedActiveMatch: match,
+        signal: new AbortController().signal,
+      })
+      const accepted = selectCurrentPlayerData(profile.actor.getSnapshot())
+      expect(accepted?.activeMatch).toEqual(replacement)
+      const storedReplacement = await storage.read()
+
+      engineOpening.resolve(oldEngine.runtime)
+      await expect(opening).rejects.toThrow("Canonical active match changed")
+      expect(oldEngine.close).toHaveBeenCalledOnce()
+      expect(oldEngine.runtime.positionEvaluator).not.toHaveBeenCalled()
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        accepted,
+      )
+      expect(await storage.read()).toEqual(storedReplacement)
+    },
+  )
 })
 
 describe("web match session ownership", () => {
