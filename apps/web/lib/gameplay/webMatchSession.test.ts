@@ -1,6 +1,6 @@
 import { webcrypto } from "node:crypto"
-import { IDBFactory } from "fake-indexeddb"
-import { describe, expect, it, vi } from "vitest"
+import { IDBFactory, IDBObjectStore } from "fake-indexeddb"
+import { describe, expect, it, vi, type TestContext } from "vitest"
 import { waitFor } from "xstate"
 import {
   DEFAULT_CHALLENGE_SETUP,
@@ -12,7 +12,12 @@ import {
   type DurableMatchRecord,
   type ImplementedDurableOpponentId,
 } from "@mapachess/match/durable-match-record"
+import { durableMatchClock } from "@mapachess/match/match-clock"
 import { deriveRetainedBranchConclusion } from "@mapachess/match/match-conclusion"
+import {
+  selectMatchPosition,
+  selectMatchTimeline,
+} from "@mapachess/match/match-machine"
 import { parseMatchMoveId } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
@@ -23,10 +28,15 @@ import {
   createMatchTimeline,
   currentMatchPosition,
 } from "@mapachess/match/match-timeline"
+import { TIME_CONTROL_PRESETS } from "@mapachess/match/time-control"
 import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import { MATCH_MEDALS } from "@mapachess/profile/match-medal"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
-import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
+import {
+  selectCurrentPlayerData,
+  selectPendingPlayerData,
+  selectPersistenceFailure,
+} from "@mapachess/profile/profile-machine"
 import { persistProfileActiveMatch } from "@mapachess/profile/profile-match-persistence"
 import { playerRatingId } from "@mapachess/profile/rating-context"
 import {
@@ -35,7 +45,9 @@ import {
 } from "@mapachess/profile/story-progress"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import IndexedDbDurableStore from "../profile/IndexedDbDurableStore"
-import openWebProfileRuntime from "../profile/openWebProfileRuntime"
+import openWebProfileRuntime, {
+  type WebProfileRuntime,
+} from "../profile/openWebProfileRuntime"
 import webSha256 from "../profile/webSha256"
 import type { OpenWebMatchRuntimeInput } from "./openWebMatchRuntime"
 import { buildFreshWebMatch } from "./webDurableMatch"
@@ -146,6 +158,221 @@ const createRuntime = (
 
 const runtimeOpener = (runtime: WebMatchRuntime) =>
   vi.fn(async (_input?: OpenWebMatchRuntimeInput) => runtime)
+
+async function savePlayedMatchWithoutRatedOpponent(
+  profile: WebProfileRuntime,
+  runtime: WebMatchRuntime,
+) {
+  const bullet = TIME_CONTROL_PRESETS.find(({ id }) => id === "1+0")
+  if (bullet === undefined) throw new Error("The test requires Bullet 1+0.")
+  const fresh = {
+    ...buildFreshWebMatch({
+      autoHintMode: "no-auto-hints",
+      playerEloAtStart: 100,
+      runtime,
+      timeControl: bullet.control,
+    }),
+  }
+  delete fresh.ratedOpponentElo
+  if (fresh.clock == null) throw new Error("The test requires timed clocks.")
+
+  let timeline = createMatchTimeline(
+    createInitialMatchPosition(fresh.startingPosition),
+  )
+  for (const uci of ["e2e4", "e7e5"]) {
+    const parsed = parseMatchMoveId(uci)
+    if (!parsed.ok) throw new Error("The fixture move must parse.")
+    const played = applyMatchTimelineMove(timeline, parsed.moveId)
+    if (!played.ok) throw new Error("The fixture move must be legal.")
+    timeline = played.timeline
+  }
+  const position = currentMatchPosition(timeline)
+  const afterWhite = { ...fresh.clock.remainingMs, white: 52_000 }
+  const afterBlack = { ...afterWhite, black: 54_000 }
+  const candidate = {
+    ...fresh,
+    currentFen: position.fen,
+    cursor: timeline.cursor,
+    moveIds: timeline.transitions.map(({ move }) => move.id),
+    clock: durableMatchClock({
+      activeColor: position.turn,
+      history: [...fresh.clock.history, afterWhite, afterBlack],
+      remainingMs: afterBlack,
+      paused: true,
+      startedAt: null,
+    }),
+  } satisfies DurableMatchRecord
+  await persistProfileActiveMatch({
+    actor: profile.actor,
+    candidate,
+    expectedActiveMatch: null,
+    signal: new AbortController().signal,
+  })
+  const saved = selectCurrentPlayerData(profile.actor.getSnapshot())
+  if (saved === null || saved.activeMatch === null)
+    throw new Error("The played fixture must be saved.")
+  return { playerData: saved, match: saved.activeMatch }
+}
+
+async function interruptResumeWrite(
+  onTestFinished: TestContext["onTestFinished"],
+) {
+  const indexedDb = new IDBFactory()
+  const profile = await openProfileRuntime(undefined, indexedDb)
+  const storage = new IndexedDbDurableStore(indexedDb)
+  onTestFinished(async () => {
+    await profile.close()
+    await storage.close()
+  })
+  const engine = createRuntime(FIRST_MATCH_SEED)
+  const saved = await savePlayedMatchWithoutRatedOpponent(
+    profile,
+    engine.runtime,
+  )
+  expect(saved.match.ratedOpponentElo).toBeUndefined()
+  const storedBeforeResume = await storage.read()
+  const controller = new AbortController()
+  const put = IDBObjectStore.prototype.put
+  const interruptedWrite = vi
+    .spyOn(IDBObjectStore.prototype, "put")
+    .mockImplementationOnce(function (this: IDBObjectStore, value, key) {
+      const request = put.call(this, value, key)
+      queueMicrotask(() => this.transaction.abort())
+      return request
+    })
+  try {
+    const openRuntime = runtimeOpener(engine.runtime)
+    const opening = openCurrentWebMatchSession({
+      openRuntime,
+      profileActor: profile.actor,
+      signal: controller.signal,
+    })
+    void opening.catch(() => undefined)
+    onTestFinished(async () => {
+      controller.abort()
+      await opening.then(
+        (session) => session.close(),
+        () => undefined,
+      )
+    })
+    const failed = await waitFor(profile.actor, (snapshot) =>
+      snapshot.matches("persistenceFailure"),
+    )
+    expect(selectPersistenceFailure(failed)?.type).toBe(
+      "PROFILE.STORAGE_REQUEST_FAILED",
+    )
+    expect(selectCurrentPlayerData(failed)).toEqual(saved.playerData)
+    expect(selectPendingPlayerData(failed)?.activeMatch).toEqual({
+      ...saved.match,
+      ratedOpponentElo: engine.runtime.ratedOpponentElo,
+    })
+    expect(await storage.read()).toEqual(storedBeforeResume)
+    expect(engine.close).not.toHaveBeenCalled()
+    expect(engine.runtime.positionEvaluator).not.toHaveBeenCalled()
+    return {
+      controller,
+      engine,
+      indexedDb,
+      opening,
+      openRuntime,
+      profile,
+      saved,
+      storage,
+      storedBeforeResume,
+    }
+  } finally {
+    interruptedWrite.mockRestore()
+  }
+}
+
+describe("retained web match recovery", () => {
+  it("resumes the same paused game only after retry accepts the interrupted rating backfill", async ({
+    onTestFinished,
+  }) => {
+    const { engine, opening, openRuntime, profile, saved } =
+      await interruptResumeWrite(onTestFinished)
+
+    profile.actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    const resumed = await opening
+    const ready = await waitFor(profile.actor, (snapshot) =>
+      snapshot.matches("ready"),
+    )
+    const acceptedMatch = {
+      ...saved.match,
+      ratedOpponentElo: engine.runtime.ratedOpponentElo,
+    }
+
+    expect(openRuntime).toHaveBeenCalledOnce()
+    expect(resumed.runtime).toBe(engine.runtime)
+    expect(resumed.match).toEqual(acceptedMatch)
+    expect(resumed.clockStartsOnArrival).toBe(false)
+    const matchSnapshot = resumed.actor.getSnapshot()
+    expect(selectMatchPosition(matchSnapshot).fen).toBe(saved.match.currentFen)
+    const timeline = selectMatchTimeline(matchSnapshot)
+    expect(timeline.cursor).toBe(saved.match.cursor)
+    expect(timeline.transitions.map(({ move }) => move.id)).toEqual(
+      saved.match.moveIds,
+    )
+    expect(durableMatchClock(matchSnapshot.context.clock)).toEqual(
+      saved.match.clock,
+    )
+    expect(matchSnapshot.context.clock?.startedAt).toBeNull()
+    expect(selectCurrentPlayerData(ready)).toEqual({
+      ...saved.playerData,
+      revision: saved.playerData.revision + 1,
+      activeMatch: acceptedMatch,
+    })
+    expect(selectPendingPlayerData(ready)).toBeNull()
+    expect(engine.close).not.toHaveBeenCalled()
+    expect(engine.runtime.opponent.selectMove).not.toHaveBeenCalled()
+    await resumed.close()
+    expect(engine.close).toHaveBeenCalledOnce()
+  })
+
+  it("closes an abandoned Resume and reopens the unchanged save with a fresh runtime", async ({
+    onTestFinished,
+  }) => {
+    const {
+      controller,
+      engine,
+      indexedDb,
+      opening,
+      profile,
+      saved,
+      storage,
+      storedBeforeResume,
+    } = await interruptResumeWrite(onTestFinished)
+
+    controller.abort()
+    await expect(opening).rejects.toMatchObject({ name: "AbortError" })
+    expect(engine.close).toHaveBeenCalledOnce()
+    expect(engine.runtime.positionEvaluator).not.toHaveBeenCalled()
+    expect(await storage.read()).toEqual(storedBeforeResume)
+    await profile.close()
+
+    const reloaded = await openProfileRuntime(undefined, indexedDb)
+    onTestFinished(reloaded.close)
+    expect(selectCurrentPlayerData(reloaded.actor.getSnapshot())).toEqual(
+      saved.playerData,
+    )
+    const retryEngine = createRuntime(FIRST_MATCH_SEED)
+    const resumed = await openCurrentWebMatchSession({
+      openRuntime: runtimeOpener(retryEngine.runtime),
+      profileActor: reloaded.actor,
+      signal: new AbortController().signal,
+    })
+    onTestFinished(resumed.close)
+    expect(resumed.match).toEqual({
+      ...saved.match,
+      ratedOpponentElo: retryEngine.runtime.ratedOpponentElo,
+    })
+    expect(
+      durableMatchClock(resumed.actor.getSnapshot().context.clock),
+    ).toEqual(saved.match.clock)
+    expect(engine.close).toHaveBeenCalledOnce()
+    expect(retryEngine.close).not.toHaveBeenCalled()
+  })
+})
 
 describe("web match session ownership", () => {
   it("starts selected setup rather than silently resuming a retained session, closing the old actor only after acceptance", async () => {
