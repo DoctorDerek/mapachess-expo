@@ -71,6 +71,7 @@ export default function MapachessDialog({
       )}
       onCancel={(event) => {
         event.preventDefault()
+        event.stopPropagation()
         onClose()
       }}
       ref={dialog}
