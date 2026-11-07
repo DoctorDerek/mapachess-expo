@@ -3,6 +3,7 @@ import DEFAULT_PLAYER_INPUT_BINDINGS, {
   changePlayerInputBinding,
   parsePlayerInputBindings,
   PLAYER_INPUT_ACTIONS,
+  samePlayerInputBindings,
 } from "../src/playerInput.js"
 import advanceControllerFrame, {
   initialControllerFrame,
@@ -31,6 +32,97 @@ const step = (
   )
 
 describe("semantic player input", () => {
+  it.each([
+    null,
+    [],
+    {},
+    { ...DEFAULT_PLAYER_INPUT_BINDINGS, unexpected: true },
+    { ...DEFAULT_PLAYER_INPUT_BINDINGS, keyboard: [] },
+    { ...DEFAULT_PLAYER_INPUT_BINDINGS, controller: [] },
+    {
+      ...DEFAULT_PLAYER_INPUT_BINDINGS,
+      keyboard: {
+        ...DEFAULT_PLAYER_INPUT_BINDINGS.keyboard,
+        additional: "KeyQ",
+      },
+    },
+    {
+      ...DEFAULT_PLAYER_INPUT_BINDINGS,
+      controller: {
+        ...DEFAULT_PLAYER_INPUT_BINDINGS.controller,
+        confirm: "south",
+      },
+    },
+    {
+      ...DEFAULT_PLAYER_INPUT_BINDINGS,
+      controller: {
+        ...DEFAULT_PLAYER_INPUT_BINDINGS.controller,
+        confirm: ["south", "view", "leftStick"],
+      },
+    },
+    {
+      ...DEFAULT_PLAYER_INPUT_BINDINGS,
+      controller: {
+        ...DEFAULT_PLAYER_INPUT_BINDINGS.controller,
+        confirm: ["unknown"],
+      },
+    },
+  ])(
+    "rejects malformed portable bindings (%#) without changing defaults",
+    (candidate) => {
+      expect(parsePlayerInputBindings(candidate)).toBeNull()
+      expect(parsePlayerInputBindings(DEFAULT_PLAYER_INPUT_BINDINGS)).toEqual(
+        DEFAULT_PLAYER_INPUT_BINDINGS,
+      )
+    },
+  )
+
+  it("preserves optional unbound actions and avoids duplicate secondary bindings during remapping", () => {
+    const unchanged = changePlayerInputBinding(DEFAULT_PLAYER_INPUT_BINDINGS, {
+      device: "controller",
+      action: "confirm",
+      slot: 1,
+      control: "south",
+    })
+    expect(unchanged.bindings?.controller.confirm).toEqual(["south"])
+    expect(unchanged.displaced).toBeNull()
+    const undo = changePlayerInputBinding(DEFAULT_PLAYER_INPUT_BINDINGS, {
+      device: "controller",
+      action: "undo",
+      control: "view",
+    }).bindings
+    if (undo === null)
+      throw new Error("An optional Undo mapping must be valid.")
+    const redo = changePlayerInputBinding(undo, {
+      device: "controller",
+      action: "redo",
+      control: "view",
+    })
+    expect(redo.displaced).toBe("undo")
+    expect(redo.bindings?.controller.undo).toEqual([])
+    expect(redo.bindings?.controller.redo).toEqual(["view"])
+    const keyboard = changePlayerInputBinding(DEFAULT_PLAYER_INPUT_BINDINGS, {
+      device: "keyboard",
+      action: "confirm",
+      code: "KeyQ",
+    })
+    expect(keyboard.displaced).toBeNull()
+    expect(keyboard.bindings?.keyboard.confirm).toBe("KeyQ")
+    if (keyboard.bindings === null || redo.bindings === null)
+      throw new Error("The remaps must remain complete.")
+    expect(
+      samePlayerInputBindings(DEFAULT_PLAYER_INPUT_BINDINGS, keyboard.bindings),
+    ).toBe(false)
+    expect(
+      samePlayerInputBindings(DEFAULT_PLAYER_INPUT_BINDINGS, redo.bindings),
+    ).toBe(false)
+    expect(
+      samePlayerInputBindings(
+        DEFAULT_PLAYER_INPUT_BINDINGS,
+        DEFAULT_PLAYER_INPUT_BINDINGS,
+      ),
+    ).toBe(true)
+  })
   it("validates a complete map and rejects missing or colliding controls", () => {
     expect(parsePlayerInputBindings(DEFAULT_PLAYER_INPUT_BINDINGS)).toEqual(
       DEFAULT_PLAYER_INPUT_BINDINGS,

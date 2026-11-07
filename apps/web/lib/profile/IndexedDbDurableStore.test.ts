@@ -23,6 +23,96 @@ const snapshot = (
   Object.freeze({ current, lastKnownGood, preImportBackup })
 
 describe("IndexedDB durable player-data storage", () => {
+  it("aborts and restores all slots when readback does not match the written candidate", async () => {
+    const adapter = new IndexedDbDurableStore(new IDBFactory())
+    const before = snapshot("accepted", "known-good", "pre-import")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    const get = IDBObjectStore.prototype.get
+    let reads = 0
+    const injected = vi
+      .spyOn(IDBObjectStore.prototype, "get")
+      .mockImplementation(function (this: IDBObjectStore, key) {
+        return get.call(
+          this,
+          ++reads === 4 ? "owned-missing-readback-key" : key,
+        )
+      })
+    await expect(
+      adapter.compareAndSwapVerified({
+        expected: before,
+        next: snapshot("candidate", "new-backup", "new-import"),
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      type: "PROFILE.STORAGE_VERIFICATION_FAILED",
+      actual: before,
+    })
+    injected.mockRestore()
+    expect(await adapter.read()).toEqual(before)
+    await adapter.close()
+  })
+
+  it("rejects a non-string durable value and rolls the entire transaction back before retry", async () => {
+    const adapter = new IndexedDbDurableStore(new IDBFactory())
+    const before = snapshot("accepted", "known-good", "pre-import")
+    await adapter.compareAndSwapVerified({
+      expected: EMPTY_DURABLE_STORE_SNAPSHOT,
+      next: before,
+    })
+    const put = IDBObjectStore.prototype.put
+    const injected = vi
+      .spyOn(IDBObjectStore.prototype, "put")
+      .mockImplementationOnce(function (this: IDBObjectStore, _value, key) {
+        return put.call(this, { corrupted: true }, key)
+      })
+    await expect(
+      adapter.compareAndSwapVerified({
+        expected: before,
+        next: snapshot("candidate"),
+      }),
+    ).rejects.toThrow("non-string durable value")
+    injected.mockRestore()
+    expect(await adapter.read()).toEqual(before)
+    await expect(
+      adapter.compareAndSwapVerified({
+        expected: before,
+        next: snapshot("candidate"),
+      }),
+    ).resolves.toEqual({ ok: true, snapshot: snapshot("candidate") })
+    await adapter.close()
+  })
+
+  it("rejects a blocked open, aborts its abandoned upgrade, and retries a fresh connection", async () => {
+    const factory = new IDBFactory()
+    const open = factory.open.bind(factory)
+    const abandoned = Promise.withResolvers<void>()
+    const injected = vi
+      .spyOn(factory, "open")
+      .mockImplementationOnce((...args) => {
+        const request = open(...args)
+        request.addEventListener("error", () => abandoned.resolve(), {
+          once: true,
+        })
+        queueMicrotask(() =>
+          request.dispatchEvent(
+            new IDBVersionChangeEvent("blocked", {
+              oldVersion: 0,
+              newVersion: 1,
+            }),
+          ),
+        )
+        return request
+      })
+    const adapter = new IndexedDbDurableStore(factory)
+    await expect(adapter.read()).rejects.toThrow("upgrade is blocked")
+    await abandoned.promise
+    injected.mockRestore()
+    expect(await adapter.read()).toEqual(EMPTY_DURABLE_STORE_SNAPSHOT)
+    await adapter.close()
+  })
   afterEach(() => vi.restoreAllMocks())
 
   it("rolls back every slot when a later write throws, then retries the same candidate", async () => {

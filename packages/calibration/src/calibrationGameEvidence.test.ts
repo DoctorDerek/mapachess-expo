@@ -27,6 +27,111 @@ function createFixture(seed = 42): Readonly<{
 }
 
 describe("calibration game evidence", () => {
+  it.each([0, -1, 0.5, Number.NaN])(
+    "rejects an invalid evidence execution bound %s",
+    (maxPlies) => {
+      const fixture = createFixture()
+      expect(() =>
+        createCalibrationGameEvidence({ ...fixture, maxPlies }),
+      ).toThrow("positive safe integer")
+    },
+  )
+
+  it("rejects broken pair identity, ply order, FEN chains, and missing policy ownership", () => {
+    const { plan, evidence } = mateInOneEvidenceFixture()
+    const result = evidence.result
+    const move = result.moves[0]
+    if (move === undefined)
+      throw new Error("The mate fixture must contain a legal move.")
+    const base = { plan, maxPlies: evidence.maxPlies }
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        result: { ...result, pairId: createFixture(43).result.pairId },
+      }),
+    ).toThrow("pair does not match")
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        result: { ...result, moves: [{ ...move, ply: 2 }] },
+      }),
+    ).toThrow("has ply")
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        result: { ...result, moves: [{ ...move, fenBefore: result.finalFen }] },
+      }),
+    ).toThrow("breaks the FEN chain")
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        result: { ...result, finalFen: evidence.game.fen },
+      }),
+    ).toThrow("final FEN breaks")
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        maxPlies: 1,
+        result: { ...result, moves: [move, move] },
+      }),
+    ).toThrow("exceeds its")
+    expect(() =>
+      createCalibrationGameEvidence({
+        ...base,
+        plan: {
+          ...plan,
+          policies: plan.policies.filter(
+            ({ fingerprint }) =>
+              fingerprint !== evidence.game.black.policyFingerprint,
+          ),
+        },
+        result,
+      }),
+    ).toThrow("black policy is missing")
+    expect(() =>
+      serializeCalibrationGamePgn({
+        ...evidence,
+        result: { ...result, finalFen: evidence.game.fen },
+      }),
+    ).toThrow("recorded final FEN")
+  })
+
+  it("exports a legacy-rules promotion as a strict replayable completed game", () => {
+    const fen = "7k/P7/5KQ1/8/8/8/8/8 w - - 0 1"
+    const plan = standardPlanFixture(fen)
+    const game = plan.games[0]
+    if (game === undefined)
+      throw new Error("The promotion fixture must schedule a game.")
+    const rules = new Chess(fen)
+    rules.move({ from: "a7", to: "a8", promotion: "q" })
+    expect(rules.isCheckmate()).toBe(true)
+    const evidence = createCalibrationGameEvidence({
+      plan,
+      maxPlies: 1,
+      result: {
+        status: "completed",
+        gameId: game.gameId,
+        pairId: game.pairId,
+        finalFen: rules.fen(),
+        termination: { kind: "checkmate", winner: "white" },
+        moves: [
+          {
+            ply: 1,
+            color: "white",
+            source: "stockfish",
+            uci: "a7a8q",
+            policyFingerprint: game.white.policyFingerprint,
+            fenBefore: fen,
+            fenAfter: rules.fen(),
+          },
+        ],
+      },
+    })
+    const replay = new Chess()
+    replay.loadPgn(serializeCalibrationGamePgn(evidence), { strict: true })
+    expect(replay.fen()).toBe(rules.fen())
+    expect(replay.isCheckmate()).toBe(true)
+  })
   it("replays canonical Standard evidence and rejects a false recorded final FEN", () => {
     const fixture = mateInOneEvidenceFixture()
     const policies = fixture.plan.policies.map(({ policy }) => ({

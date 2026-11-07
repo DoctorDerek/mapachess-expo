@@ -114,6 +114,100 @@ function createSession(worker: FakeStockfishWorker) {
 }
 
 describe("Stockfish web Worker transport", () => {
+  it("drains buffered CRLF output, completes every waiting consumer on termination, and releases listeners once", async () => {
+    const worker = new FakeStockfishWorker()
+    const remove = vi.spyOn(worker, "removeEventListener")
+    const terminate = vi.spyOn(worker, "terminate")
+    const transport = createWebWorkerUciTransport(worker)
+    const reader = transport.lines[Symbol.asyncIterator]()
+    worker.dispatchEvent(new FakeMessageEvent("first\r\n\nsecond\n"))
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: "first",
+    })
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: "second",
+    })
+    const waiting = [reader.next(), reader.next()]
+    await transport.terminate()
+    await expect(Promise.all(waiting)).resolves.toEqual([
+      { done: true, value: undefined },
+      { done: true, value: undefined },
+    ])
+    await expect(reader.next()).resolves.toEqual({
+      done: true,
+      value: undefined,
+    })
+    await expect(transport.waitForExit()).resolves.toEqual({
+      code: null,
+      signal: "worker-terminated",
+    })
+    await transport.terminate()
+    expect(terminate).toHaveBeenCalledOnce()
+    expect(remove.mock.calls.map(([type]) => type)).toEqual([
+      "message",
+      "error",
+      "messageerror",
+    ])
+    await expect(transport.writeLine("isready")).rejects.toThrow("not running")
+  })
+
+  it("retains already-received lines but rejects subsequent reads after message deserialization fails", async () => {
+    const worker = new FakeStockfishWorker()
+    const transport = createWebWorkerUciTransport(worker)
+    const reader = transport.lines[Symbol.asyncIterator]()
+    worker.dispatchEvent(new FakeMessageEvent("accepted-before-error"))
+    const exit = expect(transport.waitForExit()).rejects.toThrow(
+      "deserialization",
+    )
+    worker.dispatchEvent(new Event("messageerror"))
+    worker.dispatchEvent(new FakeMessageEvent("must-not-be-enqueued"))
+    worker.dispatchEvent(new FakeMessageEvent(42))
+    await expect(reader.next()).resolves.toEqual({
+      done: false,
+      value: "accepted-before-error",
+    })
+    await expect(reader.next()).rejects.toThrow("deserialization")
+    await exit
+    expect(transport.diagnosticText()).toBe(
+      "Stockfish Worker message deserialization failed.",
+    )
+    await expect(transport.writeLine("quit")).rejects.toThrow("not running")
+    await transport.terminate()
+  })
+
+  it.each([
+    {},
+    { message: "   " },
+    { message: "owned failure", filename: "engine.js" },
+  ])(
+    "normalizes incomplete Worker error events without losing pending consumers (%#)",
+    async (fields) => {
+      const worker = new FakeStockfishWorker()
+      const transport = createWebWorkerUciTransport(worker)
+      const waiting = expect(
+        transport.lines[Symbol.asyncIterator]().next(),
+      ).rejects.toThrow("Stockfish Worker failed")
+      const exit = expect(transport.waitForExit()).rejects.toThrow(
+        "Stockfish Worker failed",
+      )
+      const error = new Event("error", { cancelable: true })
+      Object.assign(error, fields)
+      worker.dispatchEvent(error)
+      await waiting
+      await exit
+      expect(error.defaultPrevented).toBe(true)
+      expect(transport.diagnosticText()).toContain(
+        "message" in fields && fields.message?.trim()
+          ? fields.message
+          : "Unknown Worker error",
+      )
+      if ("filename" in fields)
+        expect(transport.diagnosticText()).toContain("engine.js:0:0")
+      await transport.terminate()
+    },
+  )
   afterEach(() => {
     vi.unstubAllGlobals()
   })
