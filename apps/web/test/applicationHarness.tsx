@@ -1,5 +1,6 @@
 import { webcrypto } from "node:crypto"
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -24,7 +25,10 @@ export async function bootApplication() {
     name: copy.introduction.start,
   })
   await waitFor(() => expect(start.hasAttribute("disabled")).toBe(false))
-  fireEvent.click(start)
+  await act(async () => {
+    fireEvent.click(start)
+    await vi.dynamicImportSettled()
+  })
   await screen.findByRole(
     "button",
     { name: new RegExp(copy.setup.presentations.standard.story.title) },
