@@ -102,6 +102,131 @@ ResultSet-EloRating>ResultSet>`
 }
 
 describe("BayesElo rating evidence", () => {
+  it.each([
+    {
+      problem: "missing ratings header",
+      change: (text: string) => text.replace("Rank Name", "Missing header"),
+    },
+    {
+      problem: "missing second rating",
+      change: (text: string) => text.replace(/^\s+2 P\d+.*$/m, ""),
+    },
+    {
+      problem: "unknown rated alias",
+      change: (text: string) => text.replace(/(\s+1 )P\d+/, "$1P999"),
+    },
+    {
+      problem: "unsafe integer estimate",
+      change: (text: string) =>
+        text.replace(/(\s+1 P\d+\s+)1320/, "$19007199254740992"),
+    },
+    {
+      problem: "incorrect game seats",
+      change: (text: string) =>
+        text.replace(/(\s+1 P\d+\s+1320\s+100\s+90\s+)2/, "$13"),
+    },
+    {
+      problem: "wrong bridge offset",
+      change: (text: string) => text.replace(/(\s+1 P\d+\s+)1320/, "$11319"),
+    },
+    {
+      problem: "missing likelihood header",
+      change: (text: string) =>
+        text.replace(/ResultSet-EloRating>\s+P\d+ P\d+\r?\n/, ""),
+    },
+    {
+      problem: "missing row alias",
+      change: (text: string) => text.replace(/^(P\d+)(\s+5000)/m, "????$2"),
+    },
+    {
+      problem: "unknown row alias",
+      change: (text: string) => text.replace(/^(P\d+)(\s+5000)/m, "P999$2"),
+    },
+    {
+      problem: "nonempty diagonal",
+      change: (text: string) =>
+        text.replace(/^(P\d+) {6}5000/m, "$1    1 5000"),
+    },
+    {
+      problem: "missing likelihood",
+      change: (text: string) => text.replace("      5000", "          "),
+    },
+    {
+      problem: "out-of-range likelihood",
+      change: (text: string) => text.replace(" 5000", "10001"),
+    },
+    {
+      problem: "negative likelihood",
+      change: (text: string) => text.replace(" 5000", "   -1"),
+    },
+    {
+      problem: "unexpected trailing columns",
+      change: (text: string) => text.replace("      5000", "      5000 extra"),
+    },
+    {
+      problem: "incomplete likelihood matrix",
+      change: (text: string) => text.replace(/^P\d+ 4999\r?\n/m, ""),
+    },
+  ])(
+    "rejects $problem instead of publishing false calibration evidence",
+    async ({ change }) => {
+      const input = await completedInput()
+      const [first, second] = input.policyAliases
+      if (first === undefined || second === undefined)
+        throw new Error("The fixture requires two policy aliases.")
+      const stdout = observedOutput(first.alias, second.alias)
+      const bridgeOffset = {
+        anchorElo: 1320,
+        alias: first.alias,
+        policyFingerprint: first.policyFingerprint,
+      }
+      expect(() =>
+        parseBayesEloRatingEvidence({
+          input,
+          bridgeOffset,
+          stdout,
+          stderr: observedStderr(),
+        }),
+      ).not.toThrow()
+      const corrupted = change(stdout)
+      expect(corrupted).not.toBe(stdout)
+      expect(() =>
+        parseBayesEloRatingEvidence({
+          input,
+          bridgeOffset,
+          stdout: corrupted,
+          stderr: observedStderr(),
+        }),
+      ).toThrow()
+    },
+  )
+
+  it.each([
+    "",
+    "1 game(s) loaded, 0 game(s) with unknown result ignored.",
+    "9007199254740992 game(s) loaded, 0 game(s) with unknown result ignored.",
+  ])(
+    "rejects missing, incomplete, or unsafe load summaries (%#)",
+    async (stderr) => {
+      const input = await completedInput()
+      const [first, second] = input.policyAliases
+      if (first === undefined || second === undefined)
+        throw new Error("The fixture requires two policy aliases.")
+      expect(() =>
+        parseBayesEloRatingEvidence({
+          input,
+          bridgeOffset: {
+            anchorElo: 1320,
+            alias: first.alias,
+            policyFingerprint: first.policyFingerprint,
+          },
+          stdout: observedOutput(first.alias, second.alias),
+          stderr,
+        }),
+      ).toThrow()
+    },
+  )
+
   it("accepts cumulative loading progress without losing final count validation", async () => {
     const original = await completedInput()
     const [first, second] = original.policyAliases

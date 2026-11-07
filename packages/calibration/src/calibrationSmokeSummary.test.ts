@@ -37,6 +37,63 @@ const unexpectedEngine = () => {
 }
 
 describe("calibration smoke evidence summaries", () => {
+  it.each([
+    { fen: "7k/8/5KQ1/8/8/8/8/8 w - - 0 1", move: "g6g7" },
+    { fen: "8/8/8/8/8/5kq1/8/7K b - - 0 7", move: "g3g2" },
+  ])(
+    "scores both reversed seats after a decisive game from $fen",
+    async ({ fen, move }) => {
+      const rootDirectory = await temporaryEvidenceRoot()
+      const plan = standardPlanFixture(fen)
+      await executeCalibrationSmokeBatch({
+        rootDirectory,
+        plan,
+        maxPlies: 1,
+        maximumNewGames: 2,
+        openEngine: () => ({
+          boot: async () => ({
+            name: "Owned protocol fixture",
+            author: "Owned fixture",
+          }),
+          close: async () => undefined,
+          state: () => "ready",
+          search: async (request) => ({
+            requestId: request.requestId,
+            bestMove: move,
+          }),
+        }),
+      })
+      const summary = await summarizeCalibrationSmokeEvidence({
+        rootDirectory,
+        plan,
+        maxPlies: 1,
+      })
+      expect(summary.scoredPairCount).toBe(1)
+      expect(
+        summary.policyScores.every(
+          (score) =>
+            score.wins === 1 &&
+            score.losses === 1 &&
+            score.draws === 0 &&
+            score.scoreHalfPoints === 2,
+        ),
+      ).toBe(true)
+      expect(summary.connectivity.isConnected).toBe(true)
+    },
+  )
+
+  it.each([0, -1, 0.5])(
+    "rejects an invalid summary bound %s before loading evidence",
+    async (maxPlies) => {
+      await expect(
+        summarizeCalibrationSmokeEvidence({
+          rootDirectory: await temporaryEvidenceRoot(),
+          plan: standardPlanFixture(),
+          maxPlies,
+        }),
+      ).rejects.toThrow("positive safe integer")
+    },
+  )
   it("withholds scores and connectivity until both paired games exist", async () => {
     const rootDirectory = await temporaryEvidenceRoot()
     const plan = standardPlanFixture()

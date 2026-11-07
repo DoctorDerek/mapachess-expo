@@ -28,10 +28,12 @@ export function ProfileArtwork({
   input,
   exportPreview = false,
   fitStage = false,
+  allowRetry = true,
 }: Readonly<{
   input: CardInput
   exportPreview?: boolean
   fitStage?: boolean
+  allowRetry?: boolean
 }>) {
   const messages = useMapachessCopy().interface.profileCard
 
@@ -127,16 +129,18 @@ export function ProfileArtwork({
         )}
       />
       {failure ? (
-        <div role="alert" className="p-3 text-base">
-          <p>{messages.profileArtworkCouldNotLoad}</p>
-          <button
-            type="button"
-            onClick={() => setRetry((value) => value + 1)}
-            className="mt-2 underline"
-          >
-            {messages.retryArtwork}
-          </button>
-        </div>
+        <span role="alert" className="block p-3 text-base">
+          <span className="block">{messages.profileArtworkCouldNotLoad}</span>
+          {allowRetry ? (
+            <button
+              type="button"
+              onClick={() => setRetry((value) => value + 1)}
+              className="mt-2 underline"
+            >
+              {messages.retryArtwork}
+            </button>
+          ) : null}
+        </span>
       ) : null}
     </>
   )

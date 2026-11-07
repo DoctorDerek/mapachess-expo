@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { parseSha256Hex, STOCKFISH_18_BUILD_IDENTITY } from "./buildIdentity"
 import {
   StockfishOperationAbortedError,
@@ -215,6 +215,108 @@ async function createFixture(
 }
 
 describe("Stockfish UCI session", () => {
+  it.each([
+    { information: [] },
+    { information: ["info pv e1e2"] },
+    { information: ["info score cp 15 pv e1e2"] },
+    { information: ["info depth 2 pv e1e2"] },
+  ])(
+    "accepts sparse terminal search evidence without inventing optional analysis fields (%#)",
+    async ({ information }) => {
+      const transport = new FakeTransport({ deferBestMove: true })
+      const session = createStockfishUciSession({
+        configuration: STANDARD_CONFIGURATION,
+        expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+        transport,
+      })
+      try {
+        await session.boot()
+        const search = session.search({
+          requestId: "sparse-result",
+          nodeLimit: 200,
+          position: { fen: STANDARD_FEN, moves: ["e1d1"] },
+        })
+        await transport.waitForCommandCount("go nodes 200", 1)
+        transport.lines.push(...information, "bestmove e3e4")
+        const result = await search
+        expect(result.bestMove).toBe("e3e4")
+        expect(result.informationLineCount).toBe(information.length)
+        expect(transport.commands).toContain(
+          `position fen ${STANDARD_FEN} moves e1d1`,
+        )
+        if (information.length === 0) {
+          expect(result.latestInformation).toBeUndefined()
+          expect(result.principalVariations).toBeUndefined()
+        } else {
+          expect(result.principalVariations?.[0]?.moves).toEqual(["e1e2"])
+          expect(result.principalVariations?.[0]?.nodes).toBeUndefined()
+        }
+      } finally {
+        await session.close()
+      }
+    },
+  )
+
+  it("rejects a repeated boot without destroying its ready session and ignores readiness chatter", async () => {
+    const transport = new FakeTransport()
+    const write = transport.writeLine.bind(transport)
+    vi.spyOn(transport, "writeLine").mockImplementation(async (line) => {
+      if (line === "isready")
+        transport.lines.push("info string preparing tables")
+      await write(line)
+    })
+    const session = createStockfishUciSession({
+      configuration: STANDARD_CONFIGURATION,
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+    try {
+      await session.boot()
+      await expect(session.boot()).rejects.toThrow(
+        "cannot boot from state ready",
+      )
+      expect(session.state()).toBe("ready")
+      expect(transport.terminated).toBe(false)
+    } finally {
+      await session.close()
+    }
+  })
+
+  it("fails and terminates an engine whose cancellation command cannot be written", async () => {
+    const transport = new FakeTransport({ deferBestMove: true })
+    const write = transport.writeLine.bind(transport)
+    vi.spyOn(transport, "writeLine").mockImplementation(async (line) => {
+      if (line === "stop") throw new Error("Engine pipe closed before stop")
+      await write(line)
+    })
+    const session = createStockfishUciSession({
+      configuration: STANDARD_CONFIGURATION,
+      expectedIdentity: STOCKFISH_18_UCI_EXPECTATION,
+      transport,
+    })
+    try {
+      await session.boot()
+      const controller = new AbortController()
+      const search = session.search(
+        {
+          requestId: "broken-stop",
+          nodeLimit: 200,
+          position: { fen: STANDARD_FEN, moves: [] },
+        },
+        controller.signal,
+      )
+      const rejected = expect(search).rejects.toThrow(
+        "Engine pipe closed before stop",
+      )
+      await transport.waitForCommandCount("go nodes 200", 1)
+      controller.abort()
+      await rejected
+      expect(session.state()).toBe("failed")
+      expect(transport.terminated).toBe(true)
+    } finally {
+      await session.close()
+    }
+  })
   it("forwards scored refinements through the process adapter before terminal completion", async () => {
     const transport = new FakeTransport({ deferBestMove: true })
     const session = await createFixture(transport)
