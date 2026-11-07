@@ -15,6 +15,72 @@ function positionFromFen(fen: string) {
 }
 
 describe("canonical Chess960 calibration positions", () => {
+  it.each([
+    {
+      fen: "7k/6Q1/5K2/8/8/8/8/8 b - - 0 1",
+      outcome: { kind: "checkmate", winner: "white" },
+    },
+    {
+      fen: "8/8/8/8/8/5k2/6q1/7K w - - 0 1",
+      outcome: { kind: "checkmate", winner: "black" },
+    },
+    { fen: STALEMATE_FEN, outcome: { kind: "stalemate" } },
+    {
+      fen: "4k3/8/8/8/8/8/8/R3K3 w - - 100 1",
+      outcome: { kind: "fifty-move-rule" },
+    },
+    {
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      outcome: { kind: "insufficient-material" },
+    },
+  ])(
+    "recognizes terminal Standard evidence under both supported rules implementations: $fen",
+    ({ fen, outcome }) => {
+      const game = standardPlanFixture(fen).games[0]
+      if (game === undefined)
+        throw new Error("The terminal fixture must schedule a game.")
+      expect(createCalibrationChessPosition(game).termination()).toEqual(
+        outcome,
+      )
+      expect(
+        createCalibrationChessPosition(
+          game,
+          CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+        ).termination(),
+      ).toEqual(outcome)
+    },
+  )
+
+  it("preserves standard underpromotion and legacy repetition adjudication", () => {
+    const promotionGame = standardPlanFixture("4k3/P7/8/8/8/8/8/4K3 w - - 0 1")
+      .games[0]
+    const repetitionGame = standardPlanFixture(
+      "4k1n1/8/8/8/8/8/8/R3K1N1 w - - 0 1",
+    ).games[0]
+    if (promotionGame === undefined || repetitionGame === undefined)
+      throw new Error("The fixtures must schedule games.")
+    const promotion = createCalibrationChessPosition(promotionGame)
+    expect(promotion.play("a7a8n")).toBe("a8=N")
+    expect(promotion.turn()).toBe("black")
+    const repeated = createCalibrationChessPosition(repetitionGame)
+    for (let cycle = 0; cycle < 2; cycle++)
+      for (const uci of ["g1f3", "g8f6", "f3g1", "f6g8"]) repeated.play(uci)
+    expect(repeated.termination()).toEqual({ kind: "threefold-repetition" })
+    const before = repeated.fen()
+    expect(() => repeated.play("a1b2")).toThrow()
+    expect(repeated.fen()).toBe(before)
+  })
+
+  it("rejects invalid canonical starting evidence before any move is accepted", () => {
+    const game = standardPlanFixture().games[0]
+    if (game === undefined) throw new Error("The fixture must schedule a game.")
+    expect(() =>
+      createCalibrationChessPosition(
+        { ...game, fen: "not FEN" },
+        CALIBRATION_CANONICAL_LEGAL_MOVE_GENERATOR_VERSION,
+      ),
+    ).toThrow("position is invalid")
+  })
   it("uses canonical Standard rules without changing historical castling notation", () => {
     const game = standardPlanFixture("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1")
       .games[0]

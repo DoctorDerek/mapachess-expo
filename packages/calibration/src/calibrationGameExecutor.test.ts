@@ -182,6 +182,147 @@ function openFakeEngine(
 }
 
 describe("calibration game execution", () => {
+  it.each([0, -1, 0.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects an invalid ply budget %s before opening either engine",
+    async (maxPlies) => {
+      const plan = createPlan(MATE_IN_ONE_FEN)
+      const game = plan.games[0]
+      if (game === undefined)
+        throw new Error("The fixture must schedule a game.")
+      const engines: FakeEngine[] = []
+      await expect(
+        executeCalibrationGame({
+          game,
+          policies: plan.policies,
+          maxPlies,
+          openEngine: openFakeEngine("g6g7", engines),
+        }),
+      ).rejects.toThrow("positive safe integer")
+      expect(engines).toHaveLength(0)
+    },
+  )
+
+  it.each([new Error("Engine close rejected"), "Foreign close failure"])(
+    "surfaces close failure only after both seat engines have been closed: %s",
+    async (reason) => {
+      const plan = createPlan(MATE_IN_ONE_FEN)
+      const game = plan.games[0]
+      if (game === undefined)
+        throw new Error("The fixture must schedule a game.")
+      const closed: string[] = []
+      const result = executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: ({ color }) => {
+          const engine = new FakeEngine("g6g7")
+          return {
+            boot: () => engine.boot(),
+            state: () => engine.state(),
+            search: (request) => engine.search(request),
+            close: async () => {
+              closed.push(color)
+              if (color === "white") throw reason
+              await engine.close()
+            },
+          }
+        },
+      })
+      await expect(result).rejects.toThrow(
+        reason instanceof Error
+          ? reason.message
+          : "close failed with a non-Error",
+      )
+      expect(closed).toEqual(["white", "black"])
+    },
+  )
+
+  it("retains a foreign boot failure as the cause and still closes every opened seat", async () => {
+    const plan = createPlan(MATE_IN_ONE_FEN)
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("The fixture must schedule a game.")
+    const engines: FakeEngine[] = []
+    const failure = { reason: "Owned fixture boot failure" }
+    const result = executeCalibrationGame({
+      game,
+      policies: plan.policies,
+      maxPlies: 1,
+      openEngine: () => {
+        const engine = new FakeEngine("g6g7")
+        engines.push(engine)
+        return {
+          boot: async () => {
+            throw failure
+          },
+          state: () => engine.state(),
+          search: (request) => engine.search(request),
+          close: () => engine.close(),
+        }
+      },
+    })
+    await expect(result).rejects.toMatchObject({
+      message: "Calibration game execution failed with a non-Error value.",
+      cause: failure,
+    })
+    expect(engines).toHaveLength(2)
+    expect(engines.every((engine) => engine.state() === "closed")).toBe(true)
+  })
+
+  it("closes the first engine when the second seat cannot be opened", async () => {
+    const plan = createPlan(MATE_IN_ONE_FEN)
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("The fixture must schedule a game.")
+    const first = new FakeEngine("g6g7")
+    await expect(
+      executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: ({ color }) => {
+          if (color === "black") throw new Error("Second seat unavailable")
+          return first
+        },
+      }),
+    ).rejects.toThrow("Second seat unavailable")
+    expect(first.state()).toBe("closed")
+  })
+
+  it("rejects reusing the same process for both calibration seats", async () => {
+    const plan = createPlan(MATE_IN_ONE_FEN)
+    const game = plan.games[0]
+    if (game === undefined) throw new Error("The fixture must schedule a game.")
+    const shared = new FakeEngine("g6g7")
+    await expect(
+      executeCalibrationGame({
+        game,
+        policies: plan.policies,
+        maxPlies: 1,
+        openEngine: () => shared,
+      }),
+    ).rejects.toThrow("distinct engine")
+    expect(shared.state()).toBe("closed")
+    expect(shared.searches).toHaveLength(0)
+  })
+
+  it.each([0, 1, 3])(
+    "rejects a purported pair containing %i games without starting work",
+    async (count) => {
+      const plan = createPlan(MATE_IN_ONE_FEN)
+      const first = plan.games[0]
+      if (first === undefined)
+        throw new Error("The fixture must schedule a game.")
+      const engines: FakeEngine[] = []
+      await expect(
+        executeCalibrationPair({
+          games: Array.from({ length: count }, () => first),
+          policies: plan.policies,
+          maxPlies: 1,
+          openEngine: openFakeEngine("g6g7", engines),
+        }),
+      ).rejects.toThrow("exactly two")
+      expect(engines).toHaveLength(0)
+    },
+  )
   it.each(["standard", "chess960"] as const)(
     "uses position-owned request identities for a web-policy %s game",
     async (variant) => {

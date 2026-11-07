@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { standardPlanFixture } from "../test/calibrationFixtures"
 import type { BayesEloRating } from "./bayesEloRatingEvidence"
 import type { CalibrationSmokeEvidenceSummary } from "./calibrationSmokeSummary"
 import standardChickenCandidatePlan, {
@@ -82,6 +83,111 @@ function ratings(
 }
 
 describe("Standard Chicken shortlist", () => {
+  it.each([
+    {
+      problem: "plan",
+      change: { planId: standardPlanFixture().planId },
+      reason: "plan-mismatch",
+    },
+    {
+      problem: "execution bound",
+      change: { maxPlies: STANDARD_CHICKEN_MAX_PLIES - 1 },
+      reason: "execution-bound-mismatch",
+    },
+    {
+      problem: "scheduled count",
+      change: { scheduledGameCount: 239 },
+      reason: "incomplete-evidence",
+    },
+    {
+      problem: "stored count",
+      change: { storedGameCount: 239 },
+      reason: "incomplete-evidence",
+    },
+    {
+      problem: "completed count",
+      change: { completedGameCount: 239 },
+      reason: "incomplete-evidence",
+    },
+    {
+      problem: "unterminated game",
+      change: { unterminatedGameCount: 1 },
+      reason: "incomplete-evidence",
+    },
+    {
+      problem: "scored pair count",
+      change: { scoredPairCount: 119 },
+      reason: "incomplete-evidence",
+    },
+  ])(
+    "withholds a shortlist for a mismatched $problem even when all other evidence is complete",
+    ({ change, reason }) => {
+      expect(
+        createStandardChickenShortlist({
+          summary: { ...completeSummary(), ...change },
+          ratings: ratings(),
+        }),
+      ).toMatchObject({
+        status: "no-justified-shortlist",
+        reasons: [reason],
+        rankedCandidates: [],
+        anchor: null,
+      })
+    },
+  )
+
+  it("rejects duplicate/missing ratings and a shifted calibration anchor", () => {
+    const complete = ratings()
+    const first = complete[0]
+    if (first === undefined)
+      throw new Error("The catalog must contain a rated anchor.")
+    for (const invalid of [complete.slice(1), [...complete, first]])
+      expect(
+        createStandardChickenShortlist({
+          summary: completeSummary(),
+          ratings: invalid,
+        }).reasons,
+      ).toEqual(["missing-policy-ratings"])
+    expect(
+      createStandardChickenShortlist({
+        summary: completeSummary(),
+        ratings: ratings({ ...COMPLETE_ESTIMATES, "uci-elo-1320": 1321 }),
+      }).reasons,
+    ).toEqual(["anchor-offset-mismatch"])
+  })
+
+  it("does not nominate a weaker endpoint when every candidate is below the target", () => {
+    const report = createStandardChickenShortlist({
+      summary: completeSummary(),
+      ratings: ratings({
+        ...COMPLETE_ESTIMATES,
+        "random-05000": 90,
+        "random-06500": 80,
+        "random-08000": 70,
+        "random-09000": 60,
+        "random-10000": 50,
+      }),
+    })
+    expect(report.reasons).toEqual(["target-not-bracketed"])
+    expect(report.bracket).toBeNull()
+  })
+
+  it("uses the declared probability tie-breaker rather than input order for equidistant estimates", () => {
+    const report = createStandardChickenShortlist({
+      summary: completeSummary(),
+      ratings: [
+        ...ratings({
+          ...COMPLETE_ESTIMATES,
+          "random-05000": 100,
+          "random-06500": 100,
+        }),
+      ].reverse(),
+    })
+    expect(report.rankedCandidates.slice(0, 2).map(({ id }) => id)).toEqual([
+      "random-05000",
+      "random-06500",
+    ])
+  })
   it("ranks the five modified policies without nominating one", () => {
     const report = createStandardChickenShortlist({
       summary: completeSummary(),

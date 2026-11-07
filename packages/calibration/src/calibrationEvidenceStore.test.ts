@@ -32,6 +32,100 @@ afterEach(async () => {
 })
 
 describe("calibration evidence storage", () => {
+  it.each([
+    { schemaVersion: 99 },
+    { blackPolicyFingerprint: null },
+    { evidenceSha256: "invalid" },
+    { gameId: 5 },
+    { gameInPair: 9 },
+    { maxPlies: 0 },
+    { pairId: null },
+    { pgnSha256: "invalid" },
+    { planId: null },
+    { resultStatus: "unknown" },
+    { resultTag: "unknown" },
+    { termination: "unknown" },
+    { whitePolicyFingerprint: null },
+    { resultTag: "*" },
+    { termination: "max-plies" },
+    { pgnSha256: null },
+    { resultStatus: "unterminated" },
+    { gameInPair: 2 },
+    { maxPlies: 11 },
+    { whitePolicyFingerprint: "replaced" },
+  ])(
+    "rejects an invalid or mismatched completion marker (%#) without accepting evidence",
+    async (corruption) => {
+      const rootDirectory = await temporaryEvidenceRoot()
+      const { plan, evidence } = mateInOneEvidenceFixture()
+      const stored = await persistCalibrationGameEvidence({
+        rootDirectory,
+        plan,
+        evidence,
+      })
+      await writeFile(
+        stored.storedGame.completionMarkerPath,
+        JSON.stringify({ ...stored.storedGame.marker, ...corruption }),
+      )
+      await expect(
+        loadStoredCalibrationGame({
+          rootDirectory,
+          plan,
+          game: evidence.game,
+          maxPlies: evidence.maxPlies,
+        }),
+      ).rejects.toThrow(/marker/)
+    },
+  )
+
+  it.each(["evidence", "pgn"] as const)(
+    "rejects tampered %s bytes even when the completion marker still exists",
+    async (file) => {
+      const rootDirectory = await temporaryEvidenceRoot()
+      const { plan, evidence } = mateInOneEvidenceFixture()
+      const stored = await persistCalibrationGameEvidence({
+        rootDirectory,
+        plan,
+        evidence,
+      })
+      const path =
+        file === "evidence"
+          ? stored.storedGame.evidencePath
+          : stored.storedGame.pgnPath
+      if (path === undefined)
+        throw new Error("Completed evidence must include PGN.")
+      await writeFile(path, "tampered bytes")
+      await expect(
+        loadStoredCalibrationGame({
+          rootDirectory,
+          plan,
+          game: evidence.game,
+          maxPlies: evidence.maxPlies,
+        }),
+      ).rejects.toThrow("SHA-256 does not match")
+    },
+  )
+
+  it("rejects manufactured PGN for an unterminated game", async () => {
+    const rootDirectory = await temporaryEvidenceRoot()
+    const { plan, evidence } = onePlyUnterminatedEvidenceFixture()
+    await persistCalibrationGameEvidence({ rootDirectory, plan, evidence })
+    const paths = resolveCalibrationEvidencePaths(
+      rootDirectory,
+      plan,
+      evidence.game,
+    )
+    await writeFile(paths.pgnPath, "1-0")
+    await expect(
+      loadStoredCalibrationGame({
+        rootDirectory,
+        plan,
+        game: evidence.game,
+        maxPlies: evidence.maxPlies,
+      }),
+    ).rejects.toThrow("must not have PGN")
+  })
+
   it("persists once and resumes from verified completed evidence", async () => {
     const rootDirectory = await temporaryEvidenceRoot()
     const { plan, evidence } = mateInOneEvidenceFixture()
