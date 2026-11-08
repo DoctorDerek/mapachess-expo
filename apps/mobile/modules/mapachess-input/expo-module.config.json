@@ -1,0 +1,5 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["MapachessInputModule"] },
+  "android": { "modules": ["expo.modules.mapachessinput.MapachessInputModule"] }
+}
