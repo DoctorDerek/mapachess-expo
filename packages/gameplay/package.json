@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./opponent": {
+      "types": "./src/opponent.ts",
+      "default": "./dist/opponent.js"
+    },
     "./match-runtime": {
       "types": "./src/matchRuntime.ts",
       "default": "./dist/matchRuntime.js"
