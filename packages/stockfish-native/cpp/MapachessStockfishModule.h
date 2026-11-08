@@ -134,6 +134,7 @@ class MapachessStockfishModule final
 
  private:
   class Core;
+  class Sessions;
 
   void emitBestMove(std::string sessionId, MapachessStockfishBestMoveEvent event);
   void emitClosed(std::string sessionId);
@@ -142,9 +143,7 @@ class MapachessStockfishModule final
   void emitSearchInformation(
       std::string sessionId, MapachessStockfishSearchInformationEvent event);
 
-  std::uint64_t nextSessionId_ = 0;
-  std::string activeSessionId_;
-  std::unique_ptr<Core> core_;
+  std::unique_ptr<Sessions> sessions_;
 };
 
 }  // namespace facebook::react

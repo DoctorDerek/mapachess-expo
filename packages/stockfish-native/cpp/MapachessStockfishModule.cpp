@@ -6,7 +6,9 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <map>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -538,83 +540,206 @@ class MapachessStockfishModule::Core {
   mutable std::mutex stateMutex_;
 };
 
+class MapachessStockfishModule::Sessions {
+ public:
+  explicit Sessions(MapachessStockfishModule& module)
+      : module_(module), worker_([this] { run(); }) {}
+
+  ~Sessions() { shutdown(); }
+
+  std::string reserve() {
+    std::string sessionId;
+    {
+      std::lock_guard lock(queueMutex_);
+      if (stopping_) return {};
+      sessionId = "native-stockfish/" + std::to_string(++nextSessionId_);
+      commands_.push_back({.sessionId = sessionId, .operation = std::nullopt});
+    }
+    commandAvailable_.notify_one();
+    return sessionId;
+  }
+
+  void send(std::string sessionId, EngineCommand operation) {
+    const auto requestId = requestIdForCommand(operation);
+    bool accepted = false;
+    {
+      std::lock_guard lock(queueMutex_);
+      if (!stopping_) {
+        commands_.push_back({.sessionId = sessionId,
+                             .operation = std::move(operation)});
+        accepted = true;
+      }
+    }
+    if (accepted) {
+      commandAvailable_.notify_one();
+    } else {
+      module_.emitFailure(std::move(sessionId),
+                          {.code = "closed",
+                           .message = "The native module is closing.",
+                           .requestId = requestId});
+    }
+  }
+
+  void shutdown() {
+    {
+      std::lock_guard lock(queueMutex_);
+      stopping_ = true;
+    }
+    commandAvailable_.notify_one();
+    if (worker_.joinable()) worker_.join();
+  }
+
+ private:
+  struct Command {
+    std::string sessionId;
+    std::optional<EngineCommand> operation;
+  };
+
+  std::optional<Command> nextCommand() {
+    std::unique_lock lock(queueMutex_);
+    commandAvailable_.wait(lock, [this] {
+      return stopping_ || !commands_.empty();
+    });
+    if (commands_.empty()) return std::nullopt;
+    Command command = std::move(commands_.front());
+    commands_.pop_front();
+    return command;
+  }
+
+  void run() {
+    while (auto command = nextCommand()) {
+      const std::string sessionId = command->sessionId;
+      const std::string requestId = command->operation
+          ? requestIdForCommand(*command->operation) : std::string{};
+      try {
+        dispatch(std::move(*command));
+      } catch (const std::exception& error) {
+        module_.emitFailure(sessionId,
+                            {.code = "native-session-error",
+                             .message = error.what(),
+                             .requestId = requestId});
+      } catch (...) {
+        module_.emitFailure(sessionId,
+                            {.code = "native-session-error",
+                             .message = "The native session failed unexpectedly.",
+                             .requestId = requestId});
+      }
+    }
+    for (auto& [sessionId, core] : cores_) {
+      if (core) core->close();
+    }
+    for (auto& [sessionId, core] : cores_) {
+      if (core) core->shutdown();
+    }
+    cores_.clear();
+  }
+
+  void dispatch(Command command) {
+    const auto& sessionId = command.sessionId;
+    if (!command.operation) {
+      cores_.emplace(sessionId, nullptr);
+      return;
+    }
+    auto found = cores_.find(sessionId);
+    if (std::holds_alternative<CloseCommand>(*command.operation)) {
+      if (found != cores_.end()) {
+        if (found->second) {
+          found->second->shutdown();
+        } else {
+          module_.emitClosed(sessionId);
+        }
+        cores_.erase(found);
+      } else {
+        module_.emitClosed(sessionId);
+      }
+      return;
+    }
+    if (found == cores_.end()) {
+      throw std::invalid_argument("The native session is not allocated.");
+    }
+    std::visit([&](auto&& operation) {
+      using Operation = std::decay_t<decltype(operation)>;
+      if constexpr (std::is_same_v<Operation, BootCommand>) {
+        if (found->second) {
+          throw std::invalid_argument("The native session has already booted.");
+        }
+        found->second = createCore(sessionId);
+        found->second->boot(operation.configuration);
+      } else if constexpr (std::is_same_v<Operation, SearchCommand>) {
+        if (!found->second ||
+            !found->second->search(std::move(operation.request))) {
+          throw std::invalid_argument("The native session cannot search.");
+        }
+      } else if constexpr (std::is_same_v<Operation, StopCommand>) {
+        if (!found->second ||
+            !found->second->stop(std::move(operation.requestId))) {
+          throw std::invalid_argument("The native session cannot stop.");
+        }
+      }
+    }, std::move(*command.operation));
+  }
+
+  std::unique_ptr<Core> createCore(const std::string& sessionId) {
+    return std::make_unique<Core>(Core::Callbacks{
+        .bestMove = [this, sessionId](MapachessStockfishBestMoveEvent event) {
+          module_.emitBestMove(sessionId, std::move(event));
+        },
+        .closed = [this, sessionId] { module_.emitClosed(sessionId); },
+        .failure = [this, sessionId](MapachessStockfishFailureEvent event) {
+          module_.emitFailure(sessionId, std::move(event));
+        },
+        .ready = [this, sessionId](MapachessStockfishReadyEvent event) {
+          module_.emitReady(sessionId, std::move(event));
+        },
+        .searchInformation =
+            [this, sessionId](MapachessStockfishSearchInformationEvent event) {
+              module_.emitSearchInformation(sessionId, std::move(event));
+            },
+    });
+  }
+
+  MapachessStockfishModule& module_;
+  std::map<std::string, std::unique_ptr<Core>> cores_;
+  std::condition_variable commandAvailable_;
+  std::deque<Command> commands_;
+  std::mutex queueMutex_;
+  std::uint64_t nextSessionId_ = 0;
+  bool stopping_ = false;
+  std::thread worker_;
+};
+
 MapachessStockfishModule::MapachessStockfishModule(
     std::shared_ptr<CallInvoker> jsInvoker)
     : NativeMapachessStockfishCxxSpec(std::move(jsInvoker)),
-      core_(std::make_unique<Core>(Core::Callbacks{
-          .bestMove = [this](MapachessStockfishBestMoveEvent event) {
-            emitBestMove(activeSessionId_, std::move(event));
-          },
-          .closed = [this] { emitClosed(activeSessionId_); },
-          .failure = [this](MapachessStockfishFailureEvent event) {
-            emitFailure(activeSessionId_, std::move(event));
-          },
-          .ready = [this](MapachessStockfishReadyEvent event) {
-            emitReady(activeSessionId_, std::move(event));
-          },
-          .searchInformation =
-              [this](MapachessStockfishSearchInformationEvent event) {
-                emitSearchInformation(activeSessionId_, std::move(event));
-              },
-      })) {}
+      sessions_(std::make_unique<Sessions>(*this)) {}
 
 MapachessStockfishModule::~MapachessStockfishModule() {
-  core_->shutdown();
+  sessions_->shutdown();
 }
 
 std::string MapachessStockfishModule::createSession(jsi::Runtime&) {
-  return "native-stockfish/" + std::to_string(++nextSessionId_);
+  return sessions_->reserve();
 }
 
 void MapachessStockfishModule::boot(
     jsi::Runtime&, std::string sessionId,
     MapachessStockfishConfiguration configuration) {
-  if (sessionId.empty() || !activeSessionId_.empty()) {
-    emitFailure(
-        sessionId,
-        {.code = "invalid-state",
-         .message = "The native engine session cannot boot again.",
-         .requestId = ""});
-    return;
-  }
-  activeSessionId_ = sessionId;
-  if (!core_->boot(configuration)) {
-    emitFailure(sessionId,
-                {.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = ""});
-  }
+  sessions_->send(std::move(sessionId), BootCommand{.configuration = configuration});
 }
 
 void MapachessStockfishModule::close(jsi::Runtime&, std::string sessionId) {
-  if (sessionId == activeSessionId_) {
-    core_->close();
-  } else {
-    emitClosed(std::move(sessionId));
-  }
+  sessions_->send(std::move(sessionId), CloseCommand{});
 }
 
 void MapachessStockfishModule::startSearch(
     jsi::Runtime&, std::string sessionId,
     MapachessStockfishSearchRequest request) {
-  const std::string requestId = request.requestId;
-  if (sessionId != activeSessionId_ || !core_->search(std::move(request))) {
-    emitFailure(sessionId,
-                {.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = requestId});
-  }
+  sessions_->send(std::move(sessionId), SearchCommand{.request = std::move(request)});
 }
 
 void MapachessStockfishModule::stop(jsi::Runtime&, std::string sessionId,
                                   std::string requestId) {
-  const std::string retainedRequestId = requestId;
-  if (sessionId != activeSessionId_ || !core_->stop(std::move(requestId))) {
-    emitFailure(sessionId,
-                {.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = retainedRequestId});
-  }
+  sessions_->send(std::move(sessionId), StopCommand{.requestId = std::move(requestId)});
 }
 
 void MapachessStockfishModule::emitBestMove(
