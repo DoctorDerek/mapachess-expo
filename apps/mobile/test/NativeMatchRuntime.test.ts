@@ -1,11 +1,10 @@
-import { createHash } from "node:crypto"
 import { describe, expect, it, jest } from "@jest/globals"
 import { BETTER_HINTS_NODE_LIMIT } from "@mapachess/hints/better-hints"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import createNativeStockfishSession from "@mapachess/stockfish-native/open-session"
-import type { NativeMatchCryptography } from "@/lib/gameplay/nativeCryptography"
 import openNativeMatchRuntime from "@/lib/gameplay/openNativeMatchRuntime"
+import cryptography from "./nativeCryptographyFixture"
 import NativeEngineFixture from "./nativeEngineFixture"
 
 jest.mock("expo-crypto", () => ({
@@ -14,16 +13,6 @@ jest.mock("expo-crypto", () => ({
   digestStringAsync: jest.fn(),
   getRandomValues: jest.fn(),
 }))
-
-const cryptography: NativeMatchCryptography = {
-  digestBytes: async (bytes) =>
-    Uint8Array.from(createHash("sha256").update(bytes).digest()).buffer,
-  fillRandomWords: (words) => {
-    words.set([1, 2, 3, 4])
-    return words
-  },
-  sha256: async (text) => createHash("sha256").update(text).digest("hex"),
-}
 
 describe("native match runtime", () => {
   it("connects real native session wrappers to shared hints, evaluation, and opponent behavior", async () => {
