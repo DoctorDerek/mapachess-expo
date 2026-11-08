@@ -10,6 +10,7 @@ import AsyncStorageDurableStore, {
 } from "@/lib/profile/AsyncStorageDurableStore"
 import expoSha256 from "@/lib/profile/expoSha256"
 import portableActiveChickenV1 from "../../../packages/profile/test/fixtures/portableActiveChickenV1.json"
+import InMemoryAsyncStorage from "./nativeStorageFixture"
 
 jest.mock("expo-crypto", () => ({
   CryptoDigestAlgorithm: { SHA256: "SHA-256" },
@@ -20,24 +21,6 @@ jest.mock("expo-crypto", () => ({
   }),
 }))
 
-class InMemoryAsyncStorage implements AsyncStorageValueStore {
-  readonly values = new Map<string, string>()
-
-  async multiGet(keys: readonly string[]) {
-    return keys.map((key) => [key, this.values.get(key) ?? null] as const)
-  }
-
-  async multiRemove(keys: readonly string[]): Promise<void> {
-    for (const key of keys) this.values.delete(key)
-  }
-
-  async multiSet(
-    entries: readonly (readonly [string, string])[],
-  ): Promise<void> {
-    for (const [key, value] of entries) this.values.set(key, value)
-  }
-}
-
 const snapshot = (
   current: string | null,
   lastKnownGood: string | null = null,
@@ -46,6 +29,33 @@ const snapshot = (
   Object.freeze({ current, lastKnownGood, preImportBackup })
 
 describe("AsyncStorage durable player-data storage", () => {
+  it("drains queued native storage work without inventing another write", async () => {
+    const gate = Promise.withResolvers<void>()
+    const storage: AsyncStorageValueStore = {
+      multiGet: async (keys) => {
+        await gate.promise
+        return keys.map((key) => [key, null] as const)
+      },
+      multiRemove: async () => {
+        throw new Error("Unexpected removal")
+      },
+      multiSet: async () => {
+        throw new Error("Unexpected write")
+      },
+    }
+    const adapter = new AsyncStorageDurableStore(storage)
+    const reading = adapter.read()
+    let drained = false
+    const draining = adapter.flush().then(() => {
+      drained = true
+    })
+    await Promise.resolve()
+    expect(drained).toBe(false)
+    gate.resolve()
+    await Promise.all([reading, draining])
+    expect(drained).toBe(true)
+  })
+
   it("imports the shared portable match fixture without semantic loss", async () => {
     const decoded = await decodeMapachessPortableBackup(
       JSON.stringify(portableActiveChickenV1),

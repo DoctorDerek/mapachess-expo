@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./profile-runtime": {
+      "types": "./src/profileRuntime.ts",
+      "default": "./dist/profileRuntime.js"
+    },
     "./presentation-preferences": {
       "types": "./src/presentationPreferences.ts",
       "default": "./dist/presentationPreferences.js"

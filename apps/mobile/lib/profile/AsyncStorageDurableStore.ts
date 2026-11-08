@@ -118,6 +118,10 @@ export default class AsyncStorageDurableStore implements DurableStoreAdapter {
     })
   }
 
+  public flush(): Promise<void> {
+    return this.#operationTail
+  }
+
   #serialize<Result>(operation: () => Promise<Result>): Promise<Result> {
     const result = this.#operationTail.then(operation, operation)
     this.#operationTail = result.then(
