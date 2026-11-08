@@ -1,12 +1,12 @@
 import {
   StockfishOperationAbortedError,
   type StockfishEngineSessionState,
-  type StockfishPrincipalVariation,
 } from "./engineSession.js"
 import {
   assertStockfishOperationNotAborted,
   validateStockfishSearchRequest,
 } from "./engineValidation.js"
+import createStockfishSearchAnalysis from "./searchAnalysis.js"
 import {
   createConfigurationCommands,
   parseBestMove,
@@ -223,11 +223,7 @@ export default function createStockfishUciSession(
 
       let informationLineCount = 0
       let latestInformation: StockfishUciSearchInformation | undefined
-      let latestExactPrincipalVariation: StockfishPrincipalVariation | undefined
-      const principalVariationsByRank = new Map<
-        number,
-        StockfishPrincipalVariation
-      >()
+      const analysis = createStockfishSearchAnalysis()
 
       while (true) {
         const line = await Promise.race([readLine(operation), stopWriteFailure])
@@ -238,29 +234,11 @@ export default function createStockfishUciSession(
             latestInformation = parseInformation(line)
             if (latestInformation.principalVariation !== undefined) {
               const rank = latestInformation.multiPv ?? 1
-              principalVariationsByRank.set(
+              analysis.record(
                 rank,
-                Object.freeze({
-                  rank,
-                  moves: latestInformation.principalVariation,
-                  ...(latestInformation.depth === undefined
-                    ? {}
-                    : { depth: latestInformation.depth }),
-                  ...(latestInformation.selectiveDepth === undefined
-                    ? {}
-                    : { selectiveDepth: latestInformation.selectiveDepth }),
-                  ...(latestInformation.nodes === undefined
-                    ? {}
-                    : { nodes: latestInformation.nodes }),
-                  ...(latestInformation.score === undefined
-                    ? {}
-                    : { score: latestInformation.score }),
-                }),
+                latestInformation.principalVariation,
+                latestInformation,
               )
-              if (rank === 1 && latestInformation.score?.bound === "exact") {
-                latestExactPrincipalVariation =
-                  principalVariationsByRank.get(rank)
-              }
             }
             if (
               sessionState === "searching" &&
@@ -293,11 +271,6 @@ export default function createStockfishUciSession(
           }
 
           const result = parseBestMove(line)
-          const principalVariations = Object.freeze(
-            [...principalVariationsByRank.values()].sort(
-              (left, right) => left.rank - right.rank,
-            ),
-          )
           activeRequestId = undefined
           sessionState = "ready"
 
@@ -309,12 +282,7 @@ export default function createStockfishUciSession(
               ? {}
               : { ponderMove: result.ponderMove }),
             ...(latestInformation === undefined ? {} : { latestInformation }),
-            ...(latestExactPrincipalVariation === undefined
-              ? {}
-              : { latestExactPrincipalVariation }),
-            ...(principalVariations.length === 0
-              ? {}
-              : { principalVariations }),
+            ...analysis.complete(),
           }
         }
       }

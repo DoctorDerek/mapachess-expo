@@ -97,6 +97,39 @@ function scoreFromNative(
 export function informationFromNative(
   event: NativeStockfishSearchInformationEvent,
 ): StockfishEngineSearchInformation {
+  for (const value of [event.depth, event.nodes, event.selectiveDepth]) {
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new StockfishNativeSessionError(
+        "invalid-search-information",
+        "The native engine emitted invalid search progress.",
+        event.requestId,
+      )
+    }
+  }
+  if (
+    !Number.isSafeInteger(event.principalVariationRank) ||
+    event.principalVariationRank < 1 ||
+    !Array.isArray(event.principalVariationMoves)
+  ) {
+    throw new StockfishNativeSessionError(
+      "invalid-search-information",
+      "The native engine emitted an invalid principal variation.",
+      event.requestId,
+    )
+  }
+  for (const move of event.principalVariationMoves) {
+    assertStockfishUciMove(move, "native principal variation")
+  }
+  if (
+    !Number.isSafeInteger(event.centipawns) ||
+    !Number.isSafeInteger(event.mateMoves)
+  ) {
+    throw new StockfishNativeSessionError(
+      "invalid-search-information",
+      "The native engine emitted an invalid score.",
+      event.requestId,
+    )
+  }
   return {
     depth: event.depth,
     nodes: event.nodes,
