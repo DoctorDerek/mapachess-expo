@@ -1,19 +1,17 @@
 import { evaluatePositionWithStockfish } from "@mapachess/evaluation/position-evaluator"
 import {
   createMatchId,
+  selectMatchStartingPosition,
   selectStoryPlayerColor,
 } from "@mapachess/gameplay/match-identity"
 import type { OpenMatchRuntimeInput } from "@mapachess/gameplay/match-runtime"
+import closeAfterFailedRuntimeOpen, {
+  closeOwnedEngineSessions,
+} from "@mapachess/gameplay/runtime-lifetime"
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
-import {
-  CHESS960_POSITION_COUNT,
-  parseChess960PositionId,
-} from "@mapachess/match/chess960-position"
-import type { MatchStartingPosition } from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
-import { createDeterministicRandom } from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
@@ -51,46 +49,10 @@ export type OpenWebMatchRuntimeInput = OpenMatchRuntimeInput &
     ) => StockfishUciSession
   }>
 
-const closeOwnedSessions = async (
-  sessions: readonly StockfishUciSession[],
-): Promise<void> => {
-  const results = await Promise.allSettled(
-    sessions.map((session) => session.close()),
-  )
-  const errors: unknown[] = []
-  for (const result of results) {
-    if (result.status === "rejected") {
-      const reason: unknown = result.reason
-      errors.push(reason)
-    }
-  }
-
-  if (errors.length === 1) throw errors[0]
-  if (errors.length > 1) {
-    throw new AggregateError(
-      errors,
-      "Web match sessions failed to close cleanly.",
-    )
-  }
-}
-
-const closeAfterFailedOpen = async (
-  sessions: readonly StockfishUciSession[],
-  openError: unknown,
-): Promise<never> => {
-  try {
-    await closeOwnedSessions(sessions)
-  } catch (closeError) {
-    const closeErrors: readonly unknown[] =
-      closeError instanceof AggregateError ? closeError.errors : [closeError]
-    throw new AggregateError(
-      [openError, ...closeErrors],
-      "Web match failed to open and close cleanly.",
-    )
-  }
-
-  throw openError
-}
+const RUNTIME_FAILURE_MESSAGES = {
+  close: "Web match sessions failed to close cleanly.",
+  openAndClose: "Web match failed to open and close cleanly.",
+} as const
 
 export default async function openWebMatchRuntime(
   input: OpenWebMatchRuntimeInput = {},
@@ -122,22 +84,7 @@ export default async function openWebMatchRuntime(
     input.mode === "challenge" && input.playerColor !== "random"
       ? input.playerColor
       : selectStoryPlayerColor(matchSeed)
-  let startingPosition: MatchStartingPosition
-  if (setup.variant === "chess960" && setup.chess960PositionId === undefined) {
-    const random = createDeterministicRandom(matchSeed)
-    // Invariant: Story color owns the first draw; layout uses the next draw.
-    random.nextIndex(2)
-    const parsed = parseChess960PositionId(
-      random.nextIndex(CHESS960_POSITION_COUNT),
-    )
-    if (!parsed.ok) throw new Error("Generated Chess960 layout is invalid.")
-    startingPosition = {
-      variant: "chess960",
-      chess960PositionId: parsed.positionId,
-    }
-  } else {
-    startingPosition = setup
-  }
+  const startingPosition = selectMatchStartingPosition(setup, matchSeed)
   const singlePvConfiguration: StockfishEngineConfiguration = {
     ...SINGLE_PV_ENGINE_CONFIGURATION,
     variant: startingPosition.variant,
@@ -180,7 +127,11 @@ export default async function openWebMatchRuntime(
     }
   } catch (error) {
     try {
-      return await closeAfterFailedOpen(sessions, error)
+      return await closeAfterFailedRuntimeOpen(
+        sessions,
+        error,
+        RUNTIME_FAILURE_MESSAGES,
+      )
     } finally {
       program?.release()
     }
@@ -189,7 +140,7 @@ export default async function openWebMatchRuntime(
   return Object.freeze<WebMatchRuntime>({
     close: async () => {
       try {
-        await closeOwnedSessions(sessions)
+        await closeOwnedEngineSessions(sessions, RUNTIME_FAILURE_MESSAGES.close)
       } finally {
         program?.release()
       }

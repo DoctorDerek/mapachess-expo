@@ -155,7 +155,7 @@ describe("repository ESLint coverage", () => {
   )
 
   it.each([
-    "apps/web/lib/gameplay/openWebMatchRuntime.ts",
+    "packages/gameplay/src/runtimeLifetime.ts",
     "packages/gameplay/src/matchSession.ts",
   ])(
     "allows aggregate failures in their owning module %s",

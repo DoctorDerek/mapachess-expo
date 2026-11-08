@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./runtime-lifetime": {
+      "types": "./src/runtimeLifetime.ts",
+      "default": "./dist/runtimeLifetime.js"
+    },
     "./opponent-policy": {
       "types": "./src/opponentPolicy.ts",
       "default": "./dist/opponentPolicy.js"
