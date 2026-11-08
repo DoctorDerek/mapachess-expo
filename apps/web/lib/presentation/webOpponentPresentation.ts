@@ -1,116 +1,29 @@
 import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import type { MatchParticipantReaction } from "@mapachess/match-presentation/match-reaction"
-import resolveSpritePresentation, {
-  resolveSpriteAttention,
-  type ResolvedSpritePresentation,
-  type ResolvedSpriteStep,
-  type SpriteAssetManifest,
+import resolveOpponentPresentation, {
+  resolveOpponentAttention,
+} from "@mapachess/match-presentation/opponent-presentation"
+import type {
+  ResolvedSpritePresentation,
+  ResolvedSpriteStep,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
-import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-sprites"
-import {
-  CHICKEN_SPRITE_MANIFEST,
-  LICENSED_PRESENTATION_ASSETS_ENABLED,
-  MAPACHITO_SPRITE_MANIFEST,
-  presentationAssetSource,
-} from "./webPresentationAssets"
+import { LICENSED_PRESENTATION_ASSETS_ENABLED } from "./webPresentationAssets"
 
-const webAnimalSprite = (
-  manifest: SpriteAssetManifest<string, string>,
-): SpriteAssetManifest<string, string> =>
-  Object.freeze({
-    ...manifest,
-    animations: Object.freeze(
-      Object.fromEntries(
-        Object.entries(manifest.animations).map(([animationId, animation]) => [
-          animationId,
-          Object.freeze({
-            ...animation,
-            sourceId: presentationAssetSource(animation.sourceId),
-          }),
-        ]),
-      ),
-    ),
-  })
-
-const WEB_STORY_ANIMAL_SPRITES = {
-  "bunny-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["bunny-stockfish"]),
-  "dog-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["dog-stockfish"]),
-  "cat-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["cat-stockfish"]),
-  "mouse-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["mouse-stockfish"]),
-  "squirrel-stockfish": webAnimalSprite(
-    STORY_ANIMAL_SPRITES["squirrel-stockfish"],
-  ),
-  "frog-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["frog-stockfish"]),
-  "turtle-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["turtle-stockfish"]),
-  "panda-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["panda-stockfish"]),
-  "otter-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["otter-stockfish"]),
-  "axolotl-stockfish": webAnimalSprite(
-    STORY_ANIMAL_SPRITES["axolotl-stockfish"],
-  ),
-  "hedgehog-stockfish": webAnimalSprite(
-    STORY_ANIMAL_SPRITES["hedgehog-stockfish"],
-  ),
-  "deer-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["deer-stockfish"]),
-  "fox-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["fox-stockfish"]),
-  "wolf-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["wolf-stockfish"]),
-  "tiger-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["tiger-stockfish"]),
-  "ninja-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["ninja-stockfish"]),
-  "war-hero-stockfish": webAnimalSprite(
-    STORY_ANIMAL_SPRITES["war-hero-stockfish"],
-  ),
-  "parrot-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["parrot-stockfish"]),
-  "falcon-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["falcon-stockfish"]),
-  "crane-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["crane-stockfish"]),
-  "crow-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["crow-stockfish"]),
-  "bat-stockfish": webAnimalSprite(STORY_ANIMAL_SPRITES["bat-stockfish"]),
-  "dragonfly-stockfish": webAnimalSprite(
-    STORY_ANIMAL_SPRITES["dragonfly-stockfish"],
-  ),
-} as const
-
-const opponentManifest = (
-  opponentId: AnimalPresentationId,
-): SpriteAssetManifest<string, string> => {
-  switch (opponentId) {
-    case "chicken-stockfish":
-      return CHICKEN_SPRITE_MANIFEST
-    case "raccoon-stockfish":
-      return MAPACHITO_SPRITE_MANIFEST
-    default: {
-      return WEB_STORY_ANIMAL_SPRITES[opponentId]
-    }
-  }
-}
-
-const availableSources = (
-  manifest: SpriteAssetManifest<string, string>,
-): readonly string[] =>
-  LICENSED_PRESENTATION_ASSETS_ENABLED
-    ? Object.values(manifest.animations).map(({ sourceId }) => sourceId)
-    : []
-
+const sourceAvailable = (): boolean => LICENSED_PRESENTATION_ASSETS_ENABLED
 export const resolveWebOpponentAttention = (
   opponentId: AnimalPresentationId,
   variationOrdinal = 0,
-): ResolvedSpriteStep<string, string> | null => {
-  const manifest = opponentManifest(opponentId)
-  return resolveSpriteAttention(
-    manifest,
-    availableSources(manifest),
-    variationOrdinal,
-  )
-}
-
+): ResolvedSpriteStep<string, string> | null =>
+  resolveOpponentAttention(opponentId, variationOrdinal, sourceAvailable)
 export default function resolveWebOpponentPresentation(
   opponentId: AnimalPresentationId,
   reaction: MatchParticipantReaction = { family: "idle" },
   variationOrdinal = 0,
 ): ResolvedSpritePresentation<string, string> {
-  const manifest = opponentManifest(opponentId)
-  return resolveSpritePresentation(
-    manifest,
+  return resolveOpponentPresentation(
+    opponentId,
     reaction,
-    availableSources(manifest),
     variationOrdinal,
+    sourceAvailable,
   )
 }

@@ -70,7 +70,24 @@
     "./sprite-presentation-geometry": {
       "types": "./src/spritePresentationGeometry.ts",
       "default": "./dist/spritePresentationGeometry.js"
-    }
+    },
+    "./presentation-assets": {
+      "types": "./src/presentationAssets.ts",
+      "default": "./dist/presentationAssets.js"
+    },
+    "./opponent-presentation": {
+      "types": "./src/opponentPresentation.ts",
+      "default": "./dist/opponentPresentation.js"
+    },
+    "./board-presentation": {
+      "types": "./src/boardPresentation.ts",
+      "default": "./dist/boardPresentation.js"
+    },
+    "./clock-display": {
+      "types": "./src/clockDisplay.ts",
+      "default": "./dist/clockDisplay.js"
+    },
+    "./mapachess-theme.css": "./styles/mapachessTheme.css"
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",

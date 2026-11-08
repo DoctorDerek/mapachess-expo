@@ -21,8 +21,10 @@ import {
   isInputDirection,
 } from "@mapachess/match/player-input"
 import {
+  boardDestinationMoves,
   createBoardSquareRows,
   cycleOwnPieceFocus,
+  hintDescriptionsForSquare,
   nextFocusedBoardSquare,
   type BoardNavigationKey,
   type BoardOrientation,
@@ -43,6 +45,8 @@ import {
 } from "./ChessArtwork"
 import ChessSquareAnnotations from "./ChessSquareAnnotations"
 
+export { boardDestinationMoves } from "@mapachess/match-presentation/board-presentation"
+
 type BoardCopy = MapachessCatalog["board"]
 
 const PROMOTION_ROLES = ["queen", "rook", "bishop", "knight"] as const
@@ -51,16 +55,6 @@ type PendingMoveChoice = Readonly<{
   moves: readonly LegalMatchMove[]
   to: MatchSquare
 }>
-
-export const boardDestinationMoves = (
-  moves: readonly LegalMatchMove[],
-  square: MatchSquare,
-): readonly LegalMatchMove[] =>
-  moves.filter(
-    (move) =>
-      move.to === square ||
-      (move.kind === "castle" && move.rookFrom === square),
-  )
 
 const moveChoiceLabel = (move: LegalMatchMove, copy: BoardCopy): string => {
   if (move.kind === "castle") return copy.castle(move.san, move.to, move.rookTo)
@@ -85,43 +79,6 @@ const pieceAtSquare = (
   square: MatchSquare,
 ): MatchBoardPiece | undefined =>
   position.pieces.find((piece) => piece.square === square)
-
-const hintDescriptionsForSquare = (
-  hints: BetterHintsResult | null,
-  showMoveHints: boolean,
-  square: MatchSquare,
-  copy: BoardCopy,
-): readonly string[] => {
-  if (hints === null) return []
-
-  const descriptions: string[] = []
-  for (const [owner, ownedHints] of [
-    ["player", hints.player],
-    ["opponent", hints.opponent],
-  ] as const) {
-    if (ownedHints.some((hint) => hint.from === square)) {
-      descriptions.push(copy.pieceHint(owner))
-    }
-    if (showMoveHints) {
-      descriptions.push(
-        ...ownedHints
-          .filter((hint) => hint.to === square)
-          .map((hint) =>
-            hint.castling === undefined
-              ? copy.moveHint(owner, hint.from)
-              : copy.castleHint(
-                  owner,
-                  hint.castling.side,
-                  hint.to,
-                  hint.castling.rookFrom,
-                  hint.castling.rookTo,
-                ),
-          ),
-      )
-    }
-  }
-  return descriptions
-}
 
 const isNavigationKey = (key: string): key is BoardNavigationKey =>
   key === "ArrowDown" ||

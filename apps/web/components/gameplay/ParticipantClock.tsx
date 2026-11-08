@@ -3,15 +3,16 @@
 import cx from "classix"
 import { useEffect, useState } from "react"
 import {
+  CLOCK_DISPLAY_INTERVAL_MS,
+  LOW_TIME_MS,
+} from "@mapachess/match-presentation/clock-display"
+import {
   remainingClockTime,
   type MatchClock,
   type MonotonicClock,
 } from "@mapachess/match/match-clock"
 import type { MatchColor } from "@mapachess/match/match-position"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const CLOCK_DISPLAY_INTERVAL_MS = 100
-const LOW_TIME_MS = 10_000
 
 export default function ParticipantClock({
   clock,
