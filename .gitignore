@@ -25,6 +25,7 @@ apps/web/public/generated/first-arrival/
 .calibration/
 
 # Test output
+.artifacts/
 coverage/
 lighthouse-pages/
 lighthouse-results/
