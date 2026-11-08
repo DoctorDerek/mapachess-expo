@@ -16,8 +16,10 @@
 #include <utility>
 #include <variant>
 
+#include "bitboard.h"
 #include "engine.h"
 #include "misc.h"
+#include "position.h"
 #include "score.h"
 #include "search.h"
 
@@ -25,6 +27,20 @@ namespace facebook::react {
 namespace {
 
 constexpr double kMaximumJavaScriptSafeInteger = 9007199254740991.0;
+
+void initializeEmbeddedStockfish() {
+  static std::once_flag initialized;
+  std::call_once(initialized, [] {
+    Stockfish::Bitboards::init();
+    Stockfish::Position::init();
+  });
+}
+
+void rejectNetworkVerificationFailure(std::string_view message) {
+  if (message.starts_with("ERROR:")) {
+    throw std::runtime_error(std::string(message));
+  }
+}
 
 enum class EngineState {
   Created,
@@ -279,6 +295,7 @@ class MapachessStockfishModule::Core {
       return;
     }
 
+    initializeEmbeddedStockfish();
     engine_ = std::make_unique<Stockfish::Engine>();
     installEngineCallbacks();
     applyConfiguration(command.configuration);
@@ -392,7 +409,7 @@ class MapachessStockfishModule::Core {
               .requestId = std::move(requestId),
           });
         });
-    engine_->set_on_verify_networks([](std::string_view) {});
+    engine_->set_on_verify_networks(rejectNetworkVerificationFailure);
   }
 
   void emitSearchInformation(int depth, int selectiveDepth, std::size_t nodes,
