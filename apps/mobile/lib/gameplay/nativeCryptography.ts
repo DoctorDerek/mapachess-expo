@@ -1,5 +1,7 @@
 import { CryptoDigestAlgorithm, digest, getRandomValues } from "expo-crypto"
-import type { generateMatchSeed } from "@mapachess/gameplay/opponent"
+import { selectMatchStartingPosition } from "@mapachess/gameplay/match-identity"
+import { generateMatchSeed } from "@mapachess/gameplay/opponent"
+import type { Chess960PositionId } from "@mapachess/match/chess960-position"
 import type { Sha256HexDigest } from "@mapachess/profile/portable-backup"
 import type { OpponentSeedDigest } from "@mapachess/stockfish/opponent-move-selection"
 import expoSha256 from "../profile/expoSha256"
@@ -17,3 +19,13 @@ const nativeCryptography: NativeMatchCryptography = Object.freeze({
 })
 
 export default nativeCryptography
+
+export function generateNativeChess960Position(): Chess960PositionId {
+  const position = selectMatchStartingPosition(
+    { variant: "chess960" },
+    generateMatchSeed(nativeCryptography.fillRandomWords),
+  )
+  if (position.variant !== "chess960")
+    throw new Error("Chess960 setup requires a Chess960 position.")
+  return position.chess960PositionId
+}

@@ -1,5 +1,16 @@
 import { jest } from "@jest/globals"
 
+jest.mock("react-native-reanimated", () =>
+  jest.requireActual<typeof import("react-native-reanimated")>(
+    "react-native-reanimated/mock",
+  ),
+)
+jest.mock("react-native-worklets", () =>
+  jest.requireActual<typeof import("react-native-worklets")>(
+    "react-native-worklets/src/mock",
+  ),
+)
+
 jest.mock("uniwind", () => {
   const fs = jest.requireActual<typeof import("node:fs")>("node:fs")
   const path = jest.requireActual<typeof import("node:path")>("node:path")
