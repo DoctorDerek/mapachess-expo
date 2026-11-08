@@ -5,6 +5,26 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./profile-messages": {
+      "types": "./src/profileMessages.ts",
+      "default": "./dist/profileMessages.js"
+    },
+    "./profile-card-model": {
+      "types": "./src/profileCardModel.ts",
+      "default": "./dist/profileCardModel.js"
+    },
+    "./profile-card-editor-machine": {
+      "types": "./src/profileCardEditorMachine.ts",
+      "default": "./dist/profileCardEditorMachine.js"
+    },
+    "./dressing-room-choices": {
+      "types": "./src/dressingRoomChoices.ts",
+      "default": "./dist/dressingRoomChoices.js"
+    },
+    "./portable-files": {
+      "types": "./src/portableFiles.ts",
+      "default": "./dist/portableFiles.js"
+    },
     "./profile-runtime": {
       "types": "./src/profileRuntime.ts",
       "default": "./dist/profileRuntime.js"
