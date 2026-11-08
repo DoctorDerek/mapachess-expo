@@ -57,4 +57,4 @@ export interface Spec extends TurboModule {
   readonly stop: (requestId: string) => void
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>("MapachessStockfish")
+export default TurboModuleRegistry.get<Spec>("MapachessStockfish")

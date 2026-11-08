@@ -1,6 +1,7 @@
 import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
-import nativeStockfishModule from "@mapachess/stockfish-native/native-module"
-import NativeStockfishSession from "@mapachess/stockfish-native/session"
+import NativeStockfishSession, {
+  StockfishNativeSessionError,
+} from "@mapachess/stockfish-native/session"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
@@ -71,10 +72,7 @@ export default async function runNativeStockfishProof(
   signal: AbortSignal,
   onProgress: (progress: EngineProofProgress) => void,
 ): Promise<EngineProofResult> {
-  const session = new NativeStockfishSession(
-    ENGINE_CONFIGURATION,
-    nativeStockfishModule,
-  )
+  let session: NativeStockfishSession | undefined
   const completedSteps: EngineProofStep[] = []
   let currentStep: EngineProofStep = "boot"
   let engineName = ""
@@ -91,6 +89,18 @@ export default async function runNativeStockfishProof(
 
   try {
     beginStep("boot")
+    const { default: nativeStockfishModule } =
+      await import("@mapachess/stockfish-native/native-module")
+    if (nativeStockfishModule === null) {
+      throw new StockfishNativeSessionError(
+        "unavailable",
+        "The native Stockfish module is not available in this application.",
+      )
+    }
+    session = new NativeStockfishSession(
+      ENGINE_CONFIGURATION,
+      nativeStockfishModule,
+    )
     const identity = await session.boot(signal)
     engineName = identity.name
     completeStep()
@@ -124,12 +134,14 @@ export default async function runNativeStockfishProof(
   } catch (error) {
     failure = { error, step: currentStep }
   } finally {
-    beginStep("close")
-    try {
-      await session.close()
-      completeStep()
-    } catch (error) {
-      failure ??= { error, step: "close" }
+    if (session !== undefined) {
+      beginStep("close")
+      try {
+        await session.close()
+        completeStep()
+      } catch (error) {
+        failure ??= { error, step: "close" }
+      }
     }
   }
 
