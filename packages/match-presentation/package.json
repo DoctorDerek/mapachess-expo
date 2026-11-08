@@ -81,6 +81,7 @@
   "dependencies": {
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
-    "xstate": "^5"
+    "xstate": "^5",
+    "gifenc": "^1"
   }
 }
