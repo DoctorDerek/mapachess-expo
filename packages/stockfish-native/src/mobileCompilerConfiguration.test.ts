@@ -24,9 +24,13 @@ describe("Stockfish mobile compiler configuration", () => {
 
   it("selects the same Lite inputs and shared configuration for both native compiler owners", async () => {
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-    const [android, ios] = await Promise.all([
+    const [android, ios, disabledTablebases] = await Promise.all([
       readFile(resolve(packageRoot, "android", "CMakeLists.txt"), "utf8"),
       readFile(resolve(packageRoot, "MapachessStockfish.podspec"), "utf8"),
+      readFile(
+        resolve(packageRoot, "cpp", "StockfishNoTablebases.cpp"),
+        "utf8",
+      ),
     ])
     const { inputId, network } = STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST
 
@@ -35,9 +39,14 @@ describe("Stockfish mobile compiler configuration", () => {
       expect(compiler).toContain("StockfishMobileConfig.h")
     }
     expect(android).toContain(network.fileName)
+    expect(android).toContain("../cpp/StockfishNoTablebases.cpp")
     expect(android).not.toContain("syzygy/tbprobe.cpp")
+    expect(ios).toContain('"cpp/**/*.{h,hpp,cpp}"')
     expect(ios).toMatch(
       /specification\.exclude_files =\s*"third_party\/stockfish\/src\/main\.cpp",\s*"third_party\/stockfish\/src\/syzygy\/tbprobe\.cpp"/u,
     )
+    expect(disabledTablebases).toContain("#if defined(__NO_SYZYGY__)")
+    expect(disabledTablebases).toContain("Config rank_root_moves(")
+    expect(disabledTablebases).toMatch(/\{\s*return \{\};\s*\}/u)
   })
 })
