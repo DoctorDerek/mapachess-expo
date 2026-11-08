@@ -286,6 +286,7 @@ export default function NativeInputProvider({
               () =>
                 inputRevision.current === revision &&
                 activity.isActive() &&
+                scope.enabled() &&
                 scopes.current.has(scope),
             )
         },

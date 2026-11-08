@@ -32,6 +32,7 @@ import type {
   MatchNavigationOverlay,
 } from "@mapachess/match/match-navigation"
 import type { MatchSetup } from "@mapachess/match/match-setup"
+import type { PlayerInputAction } from "@mapachess/match/player-input"
 import { timeControlLabel } from "@mapachess/match/time-control"
 import {
   acceptedRewardMatchesEnding,
@@ -42,6 +43,7 @@ import useNativeMoveReactions from "@/lib/gameplay/useNativeMoveReactions"
 import useNativeMatchPresentation from "@/lib/presentation/useNativeMatchPresentation"
 import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import useActorSnapshot from "@/lib/useActorSnapshot"
+import { NativeInputSurface } from "../input/NativeInputProvider"
 import NativeButton from "../presentation/NativeButton"
 import NativeText from "../presentation/NativeText"
 import NativeCoachPortrait from "../profile/NativeCoachPortrait"
@@ -98,6 +100,7 @@ export default function NativeMatch({
   replaySequence,
   onSetup,
   onReplay,
+  onAction,
 }: Readonly<{
   session: MatchSession<NativeMatchRuntime>
   appActor: MatchSessionController<NativeMatchRuntime>["actor"]
@@ -110,6 +113,7 @@ export default function NativeMatch({
   replaySequence: number
   onSetup: (setup: MatchSetup) => void
   onReplay: () => void
+  onAction: (action: PlayerInputAction) => boolean
 }>) {
   const { copy } = useNativeLocale()
   const snapshot = useActorSnapshot(session.actor)
@@ -180,7 +184,11 @@ export default function NativeMatch({
   const ratings =
     reactions === null ? null : <NativeMoveRatings controller={reactions} />
   return (
-    <View className="relative min-h-0 flex-1">
+    <NativeInputSurface
+      enabled={visible}
+      onAction={onAction}
+      className="relative min-h-0 flex-1"
+    >
       <ScrollView
         className="min-h-0 flex-1"
         contentContainerClassName="gap-2 p-2"
@@ -380,6 +388,6 @@ export default function NativeMatch({
           overlays={overlays}
         />
       ) : null}
-    </View>
+    </NativeInputSurface>
   )
 }

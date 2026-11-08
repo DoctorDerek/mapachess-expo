@@ -23,7 +23,11 @@ module.exports = {
   },
   collectCoverageFrom: [
     "<rootDir>/app/index.tsx",
-    "<rootDir>/lib/profile/**/*.ts",
+    "<rootDir>/components/**/*.tsx",
+    "<rootDir>/lib/**/*.ts",
+    "!<rootDir>/lib/**/*.d.ts",
+    "!<rootDir>/lib/presentation/nativeAssetManifest.js",
+    "!<rootDir>/lib/presentation/nativeAnimationManifest.js",
   ],
   coverageDirectory: "<rootDir>/../../coverage/native",
   coverageReporters: [
