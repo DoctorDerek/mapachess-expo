@@ -1,2 +1,9 @@
 @import "tailwindcss";
 @import "uniwind";
+@import "@mapachess/match-presentation/mapachess-theme.css";
+@import "@mapachess/match-presentation/chess-board-theme.css";
+
+@theme {
+  --font-native: "NunitoSans_800ExtraBold";
+  --font-native-body: "NunitoSans_600SemiBold";
+}

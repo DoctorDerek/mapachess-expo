@@ -1,4 +1,3 @@
-import { AppState, Platform } from "react-native"
 import type { OpenMatchRuntime } from "@mapachess/gameplay/match-runtime"
 import { challengeDifficultyTargets } from "@mapachess/gameplay/opponent-policy"
 import createMatchSessionController, {
@@ -7,34 +6,10 @@ import createMatchSessionController, {
 } from "@mapachess/gameplay/session-controller"
 import type { MonotonicClock } from "@mapachess/match/match-clock"
 import type { ProfileActor } from "@mapachess/profile/profile-runtime"
+import nativeApplicationActivity from "./nativeApplicationActivity"
 import openNativeMatchRuntime, {
   type NativeMatchRuntime,
 } from "./openNativeMatchRuntime"
-
-function nativeApplicationActivity(): ApplicationActivity {
-  let focused = true
-  return {
-    isActive: () => focused && AppState.currentState === "active",
-    subscribe: (listener) => {
-      const subscriptions = [AppState.addEventListener("change", listener)]
-      if (Platform.OS === "android") {
-        subscriptions.push(
-          AppState.addEventListener("blur", () => {
-            focused = false
-            listener()
-          }),
-          AppState.addEventListener("focus", () => {
-            focused = true
-            listener()
-          }),
-        )
-      }
-      return () => {
-        for (const subscription of subscriptions) subscription.remove()
-      }
-    },
-  }
-}
 
 export default function createNativeSessionController(
   profileActor: ProfileActor,
