@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./session-controller": {
+      "types": "./src/sessionController.ts",
+      "default": "./dist/sessionController.js"
+    },
     "./runtime-lifetime": {
       "types": "./src/runtimeLifetime.ts",
       "default": "./dist/runtimeLifetime.js"
