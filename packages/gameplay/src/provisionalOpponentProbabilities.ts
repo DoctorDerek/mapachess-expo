@@ -46,7 +46,7 @@ const provisionalPresets = {
   ],
 } as const
 
-export default function provisionalWebProbabilities(
+export default function provisionalOpponentProbabilities(
   variant: MatchVariant,
   targetElo: number,
 ): readonly number[] {

@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./opponent-policy": {
+      "types": "./src/opponentPolicy.ts",
+      "default": "./dist/opponentPolicy.js"
+    },
     "./opponent": {
       "types": "./src/opponent.ts",
       "default": "./dist/opponent.js"
