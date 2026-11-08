@@ -543,18 +543,18 @@ MapachessStockfishModule::MapachessStockfishModule(
     : NativeMapachessStockfishCxxSpec(std::move(jsInvoker)),
       core_(std::make_unique<Core>(Core::Callbacks{
           .bestMove = [this](MapachessStockfishBestMoveEvent event) {
-            emitBestMove(std::move(event));
+            emitBestMove(activeSessionId_, std::move(event));
           },
-          .closed = [this] { emitClosed(); },
+          .closed = [this] { emitClosed(activeSessionId_); },
           .failure = [this](MapachessStockfishFailureEvent event) {
-            emitFailure(std::move(event));
+            emitFailure(activeSessionId_, std::move(event));
           },
           .ready = [this](MapachessStockfishReadyEvent event) {
-            emitReady(std::move(event));
+            emitReady(activeSessionId_, std::move(event));
           },
           .searchInformation =
               [this](MapachessStockfishSearchInformationEvent event) {
-                emitSearchInformation(std::move(event));
+                emitSearchInformation(activeSessionId_, std::move(event));
               },
       })) {}
 
@@ -562,60 +562,88 @@ MapachessStockfishModule::~MapachessStockfishModule() {
   core_->shutdown();
 }
 
+std::string MapachessStockfishModule::createSession(jsi::Runtime&) {
+  return "native-stockfish/" + std::to_string(++nextSessionId_);
+}
+
 void MapachessStockfishModule::boot(
-    jsi::Runtime&, MapachessStockfishConfiguration configuration) {
+    jsi::Runtime&, std::string sessionId,
+    MapachessStockfishConfiguration configuration) {
+  if (sessionId.empty() || !activeSessionId_.empty()) {
+    emitFailure(
+        sessionId,
+        {.code = "invalid-state",
+         .message = "The native engine session cannot boot again.",
+         .requestId = ""});
+    return;
+  }
+  activeSessionId_ = sessionId;
   if (!core_->boot(configuration)) {
-    emitFailure({.code = "closed",
+    emitFailure(sessionId,
+                {.code = "closed",
                  .message = "The native engine is closing or closed.",
                  .requestId = ""});
   }
 }
 
-void MapachessStockfishModule::close(jsi::Runtime&) {
-  core_->close();
+void MapachessStockfishModule::close(jsi::Runtime&, std::string sessionId) {
+  if (sessionId == activeSessionId_) {
+    core_->close();
+  } else {
+    emitClosed(std::move(sessionId));
+  }
 }
 
 void MapachessStockfishModule::startSearch(
-    jsi::Runtime&, MapachessStockfishSearchRequest request) {
+    jsi::Runtime&, std::string sessionId,
+    MapachessStockfishSearchRequest request) {
   const std::string requestId = request.requestId;
-  if (!core_->search(std::move(request))) {
-    emitFailure({.code = "closed",
+  if (sessionId != activeSessionId_ || !core_->search(std::move(request))) {
+    emitFailure(sessionId,
+                {.code = "closed",
                  .message = "The native engine is closing or closed.",
                  .requestId = requestId});
   }
 }
 
-void MapachessStockfishModule::stop(jsi::Runtime&, std::string requestId) {
+void MapachessStockfishModule::stop(jsi::Runtime&, std::string sessionId,
+                                  std::string requestId) {
   const std::string retainedRequestId = requestId;
-  if (!core_->stop(std::move(requestId))) {
-    emitFailure({.code = "closed",
+  if (sessionId != activeSessionId_ || !core_->stop(std::move(requestId))) {
+    emitFailure(sessionId,
+                {.code = "closed",
                  .message = "The native engine is closing or closed.",
                  .requestId = retainedRequestId});
   }
 }
 
 void MapachessStockfishModule::emitBestMove(
-    MapachessStockfishBestMoveEvent event) {
-  emitOnBestMove(std::move(event));
+    std::string sessionId, MapachessStockfishBestMoveEvent event) {
+  emitOnBestMove(MapachessStockfishSessionMessage<MapachessStockfishBestMoveEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
-void MapachessStockfishModule::emitClosed() {
-  emitOnClosed();
+void MapachessStockfishModule::emitClosed(std::string sessionId) {
+  emitOnClosed(MapachessStockfishClosedMessage{.sessionId = std::move(sessionId)});
 }
 
 void MapachessStockfishModule::emitFailure(
-    MapachessStockfishFailureEvent event) {
-  emitOnFailure(std::move(event));
+    std::string sessionId, MapachessStockfishFailureEvent event) {
+  emitOnFailure(MapachessStockfishSessionMessage<MapachessStockfishFailureEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 void MapachessStockfishModule::emitReady(
-    MapachessStockfishReadyEvent event) {
-  emitOnReady(std::move(event));
+    std::string sessionId, MapachessStockfishReadyEvent event) {
+  emitOnReady(MapachessStockfishSessionMessage<MapachessStockfishReadyEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 void MapachessStockfishModule::emitSearchInformation(
-    MapachessStockfishSearchInformationEvent event) {
-  emitOnSearchInformation(std::move(event));
+    std::string sessionId, MapachessStockfishSearchInformationEvent event) {
+  emitOnSearchInformation(
+      MapachessStockfishSessionMessage<MapachessStockfishSearchInformationEvent>{
+          .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 }  // namespace facebook::react

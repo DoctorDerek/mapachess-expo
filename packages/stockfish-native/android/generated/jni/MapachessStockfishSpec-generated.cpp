@@ -12,32 +12,38 @@
 
 namespace facebook::react {
 
+static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_createSession(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
+  static jmethodID cachedMethodId = nullptr;
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, StringKind, "createSession", "()Ljava/lang/String;", args, count, cachedMethodId);
+}
+
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_boot(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "boot", "(Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "boot", "(Ljava/lang/String;Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
 }
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_close(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "close", "()V", args, count, cachedMethodId);
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "close", "(Ljava/lang/String;)V", args, count, cachedMethodId);
 }
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_startSearch(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "startSearch", "(Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "startSearch", "(Ljava/lang/String;Lcom/facebook/react/bridge/ReadableMap;)V", args, count, cachedMethodId);
 }
 
 static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_stop(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
   static jmethodID cachedMethodId = nullptr;
-  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "stop", "(Ljava/lang/String;)V", args, count, cachedMethodId);
+  return static_cast<JavaTurboModule &>(turboModule).invokeJavaMethod(rt, VoidKind, "stop", "(Ljava/lang/String;Ljava/lang/String;)V", args, count, cachedMethodId);
 }
 
 NativeMapachessStockfishSpecJSI::NativeMapachessStockfishSpecJSI(const JavaTurboModule::InitParams &params)
   : JavaTurboModule(params) {
-  methodMap_["boot"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
-  methodMap_["close"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_close};
-  methodMap_["startSearch"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
-  methodMap_["stop"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_stop};
+  methodMap_["createSession"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_createSession};
+  methodMap_["boot"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
+  methodMap_["close"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_close};
+  methodMap_["startSearch"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
+  methodMap_["stop"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_stop};
   eventEmitterMap_["onBestMove"] = std::make_shared<AsyncEventEmitter<folly::dynamic>>();
   eventEmitterMap_["onClosed"] = std::make_shared<AsyncEventEmitter<folly::dynamic>>();
   eventEmitterMap_["onFailure"] = std::make_shared<AsyncEventEmitter<folly::dynamic>>();

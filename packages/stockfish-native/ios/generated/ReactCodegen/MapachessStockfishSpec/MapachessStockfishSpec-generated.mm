@@ -19,9 +19,9 @@
 {
   _eventEmitterCallback("onBestMove", value);
 }
-- (void)emitOnClosed
+- (void)emitOnClosed:(NSDictionary *)value
 {
-  _eventEmitterCallback("onClosed", nil);
+  _eventEmitterCallback("onClosed", value);
 }
 - (void)emitOnFailure:(NSDictionary *)value
 {
@@ -56,35 +56,42 @@
 @end
 namespace facebook::react {
   
+    static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_createSession(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, StringKind, "createSession", @selector(createSession), args, count);
+    }
+
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_boot(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "boot", @selector(boot:), args, count);
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "boot", @selector(boot:configuration:), args, count);
     }
 
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_close(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "close", @selector(close), args, count);
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "close", @selector(close:), args, count);
     }
 
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_startSearch(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "startSearch", @selector(startSearch:), args, count);
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "startSearch", @selector(startSearch:request:), args, count);
     }
 
     static facebook::jsi::Value __hostFunction_NativeMapachessStockfishSpecJSI_stop(facebook::jsi::Runtime& rt, TurboModule &turboModule, const facebook::jsi::Value* args, size_t count) {
-      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "stop", @selector(stop:), args, count);
+      return static_cast<ObjCTurboModule&>(turboModule).invokeObjCMethod(rt, VoidKind, "stop", @selector(stop:requestId:), args, count);
     }
 
   NativeMapachessStockfishSpecJSI::NativeMapachessStockfishSpecJSI(const ObjCTurboModule::InitParams &params)
     : ObjCTurboModule(params) {
       
-        methodMap_["boot"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
-        setMethodArgConversionSelector(@"boot", 0, @"JS_NativeMapachessStockfish_NativeStockfishConfiguration:");
-        
-        methodMap_["close"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_close};
+        methodMap_["createSession"] = MethodMetadata {0, __hostFunction_NativeMapachessStockfishSpecJSI_createSession};
         
         
-        methodMap_["startSearch"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
-        setMethodArgConversionSelector(@"startSearch", 0, @"JS_NativeMapachessStockfish_NativeStockfishSearchRequest:");
+        methodMap_["boot"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_boot};
+        setMethodArgConversionSelector(@"boot", 1, @"JS_NativeMapachessStockfish_NativeStockfishConfiguration:");
         
-        methodMap_["stop"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_stop};
+        methodMap_["close"] = MethodMetadata {1, __hostFunction_NativeMapachessStockfishSpecJSI_close};
+        
+        
+        methodMap_["startSearch"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_startSearch};
+        setMethodArgConversionSelector(@"startSearch", 1, @"JS_NativeMapachessStockfish_NativeStockfishSearchRequest:");
+        
+        methodMap_["stop"] = MethodMetadata {2, __hostFunction_NativeMapachessStockfishSpecJSI_stop};
         
         eventEmitterMap_["onBestMove"] = std::make_shared<AsyncEventEmitter<id>>();
         eventEmitterMap_["onClosed"] = std::make_shared<AsyncEventEmitter<id>>();

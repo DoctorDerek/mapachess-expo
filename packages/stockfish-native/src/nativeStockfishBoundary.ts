@@ -14,7 +14,7 @@ import type {
 } from "./NativeMapachessStockfish.js"
 
 type NativeEventSubscription = Readonly<{ remove: () => void }>
-type NativeEvent<T> = (
+export type NativeEvent<T> = (
   listener: (event: T) => void | Promise<void>,
 ) => NativeEventSubscription
 

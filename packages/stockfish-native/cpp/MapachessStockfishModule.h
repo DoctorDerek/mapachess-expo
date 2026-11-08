@@ -2,6 +2,7 @@
 
 #include <MapachessStockfishSpecJSI.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,6 +53,16 @@ struct MapachessStockfishFailureEvent {
   std::string requestId;
 };
 
+template <typename Payload>
+struct MapachessStockfishSessionMessage {
+  std::string sessionId;
+  Payload payload;
+};
+
+struct MapachessStockfishClosedMessage {
+  std::string sessionId;
+};
+
 template <>
 struct Bridging<MapachessStockfishConfiguration>
     : NativeMapachessStockfishNativeStockfishConfigurationBridging<
@@ -82,28 +93,57 @@ struct Bridging<MapachessStockfishFailureEvent>
     : NativeMapachessStockfishNativeStockfishFailureEventBridging<
           MapachessStockfishFailureEvent> {};
 
+template <>
+struct Bridging<MapachessStockfishSessionMessage<MapachessStockfishBestMoveEvent>>
+    : NativeMapachessStockfishNativeStockfishBestMoveMessageBridging<
+          MapachessStockfishSessionMessage<MapachessStockfishBestMoveEvent>> {};
+
+template <>
+struct Bridging<MapachessStockfishClosedMessage>
+    : NativeMapachessStockfishNativeStockfishClosedMessageBridging<
+          MapachessStockfishClosedMessage> {};
+
+template <>
+struct Bridging<MapachessStockfishSessionMessage<MapachessStockfishFailureEvent>>
+    : NativeMapachessStockfishNativeStockfishFailureMessageBridging<
+          MapachessStockfishSessionMessage<MapachessStockfishFailureEvent>> {};
+
+template <>
+struct Bridging<MapachessStockfishSessionMessage<MapachessStockfishReadyEvent>>
+    : NativeMapachessStockfishNativeStockfishReadyMessageBridging<
+          MapachessStockfishSessionMessage<MapachessStockfishReadyEvent>> {};
+
+template <>
+struct Bridging<MapachessStockfishSessionMessage<MapachessStockfishSearchInformationEvent>>
+    : NativeMapachessStockfishNativeStockfishSearchInformationMessageBridging<
+          MapachessStockfishSessionMessage<MapachessStockfishSearchInformationEvent>> {};
+
 class MapachessStockfishModule final
     : public NativeMapachessStockfishCxxSpec<MapachessStockfishModule> {
  public:
   explicit MapachessStockfishModule(std::shared_ptr<CallInvoker> jsInvoker);
   ~MapachessStockfishModule() override;
 
-  void boot(jsi::Runtime& runtime,
+  std::string createSession(jsi::Runtime& runtime);
+  void boot(jsi::Runtime& runtime, std::string sessionId,
             MapachessStockfishConfiguration configuration);
-  void close(jsi::Runtime& runtime);
-  void startSearch(jsi::Runtime& runtime,
+  void close(jsi::Runtime& runtime, std::string sessionId);
+  void startSearch(jsi::Runtime& runtime, std::string sessionId,
                    MapachessStockfishSearchRequest request);
-  void stop(jsi::Runtime& runtime, std::string requestId);
+  void stop(jsi::Runtime& runtime, std::string sessionId, std::string requestId);
 
  private:
   class Core;
 
-  void emitBestMove(MapachessStockfishBestMoveEvent event);
-  void emitClosed();
-  void emitFailure(MapachessStockfishFailureEvent event);
-  void emitReady(MapachessStockfishReadyEvent event);
-  void emitSearchInformation(MapachessStockfishSearchInformationEvent event);
+  void emitBestMove(std::string sessionId, MapachessStockfishBestMoveEvent event);
+  void emitClosed(std::string sessionId);
+  void emitFailure(std::string sessionId, MapachessStockfishFailureEvent event);
+  void emitReady(std::string sessionId, MapachessStockfishReadyEvent event);
+  void emitSearchInformation(
+      std::string sessionId, MapachessStockfishSearchInformationEvent event);
 
+  std::uint64_t nextSessionId_ = 0;
+  std::string activeSessionId_;
   std::unique_ptr<Core> core_;
 };
 

@@ -2,6 +2,7 @@ import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
 import NativeStockfishSession, {
   StockfishNativeSessionError,
 } from "@mapachess/stockfish-native/session"
+import bindNativeStockfishSession from "@mapachess/stockfish-native/session-binding"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
@@ -99,7 +100,7 @@ export default async function runNativeStockfishProof(
     }
     session = new NativeStockfishSession(
       ENGINE_CONFIGURATION,
-      nativeStockfishModule,
+      bindNativeStockfishSession(nativeStockfishModule),
     )
     const identity = await session.boot(signal)
     engineName = identity.name
