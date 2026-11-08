@@ -379,13 +379,14 @@ class MapachessStockfishModule::Core {
   void installEngineCallbacks() {
     engine_->set_on_update_no_moves(
         [this](const Stockfish::Engine::InfoShort& information) {
-          emitSearchInformation(information.depth, 0, 0, information.score, "");
+          emitSearchInformation(information.depth, 0, 0, information.score, "", 1, "");
         });
     engine_->set_on_update_full(
         [this](const Stockfish::Engine::InfoFull& information) {
           emitSearchInformation(
               information.depth, information.selDepth, information.nodes,
-              information.score, std::string(information.bound));
+              information.score, std::string(information.bound),
+              information.multiPV, information.pv);
         });
     engine_->set_on_iter([](const Stockfish::Engine::InfoIter&) {});
     engine_->set_on_bestmove(
@@ -416,7 +417,8 @@ class MapachessStockfishModule::Core {
 
   void emitSearchInformation(int depth, int selectiveDepth, std::size_t nodes,
                              const Stockfish::Score& score,
-                             std::string bound) {
+                             std::string bound, std::size_t principalVariationRank,
+                             std::string_view principalVariation) {
     std::string requestId;
     {
       std::lock_guard lock(stateMutex_);
@@ -427,12 +429,19 @@ class MapachessStockfishModule::Core {
     }
 
     ConvertedScore convertedScore = convertScore(score);
+    std::vector<std::string> principalVariationMoves;
+    std::istringstream variation{std::string(principalVariation)};
+    for (std::string move; variation >> move;) {
+      principalVariationMoves.push_back(std::move(move));
+    }
     callbacks_.searchInformation({
         .bound = std::move(bound),
         .centipawns = convertedScore.centipawns,
         .depth = depth,
         .mateMoves = convertedScore.mateMoves,
         .nodes = static_cast<double>(nodes),
+        .principalVariationMoves = std::move(principalVariationMoves),
+        .principalVariationRank = static_cast<int>(principalVariationRank),
         .requestId = std::move(requestId),
         .scoreKind = std::move(convertedScore.kind),
         .selectiveDepth = selectiveDepth,

@@ -423,18 +423,20 @@ struct NativeMapachessStockfishNativeStockfishReadyMessageBridging {
 
 #pragma mark - NativeMapachessStockfishNativeStockfishSearchInformationEvent
 
-template <typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+template <typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct NativeMapachessStockfishNativeStockfishSearchInformationEvent {
   P0 bound{};
   P1 centipawns{};
   P2 depth{};
   P3 mateMoves{};
   P4 nodes{};
-  P5 requestId{};
-  P6 scoreKind{};
-  P7 selectiveDepth;
+  P5 principalVariationMoves{};
+  P6 principalVariationRank{};
+  P7 requestId{};
+  P8 scoreKind{};
+  P9 selectiveDepth;
   bool operator==(const NativeMapachessStockfishNativeStockfishSearchInformationEvent &other) const {
-    return bound == other.bound && centipawns == other.centipawns && depth == other.depth && mateMoves == other.mateMoves && nodes == other.nodes && requestId == other.requestId && scoreKind == other.scoreKind && selectiveDepth == other.selectiveDepth;
+    return bound == other.bound && centipawns == other.centipawns && depth == other.depth && mateMoves == other.mateMoves && nodes == other.nodes && principalVariationMoves == other.principalVariationMoves && principalVariationRank == other.principalVariationRank && requestId == other.requestId && scoreKind == other.scoreKind && selectiveDepth == other.selectiveDepth;
   }
 };
 
@@ -452,6 +454,8 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
       bridging::fromJs<decltype(types.depth)>(rt, value.getProperty(rt, "depth"), jsInvoker),
       bridging::fromJs<decltype(types.mateMoves)>(rt, value.getProperty(rt, "mateMoves"), jsInvoker),
       bridging::fromJs<decltype(types.nodes)>(rt, value.getProperty(rt, "nodes"), jsInvoker),
+      bridging::fromJs<decltype(types.principalVariationMoves)>(rt, value.getProperty(rt, "principalVariationMoves"), jsInvoker),
+      bridging::fromJs<decltype(types.principalVariationRank)>(rt, value.getProperty(rt, "principalVariationRank"), jsInvoker),
       bridging::fromJs<decltype(types.requestId)>(rt, value.getProperty(rt, "requestId"), jsInvoker),
       bridging::fromJs<decltype(types.scoreKind)>(rt, value.getProperty(rt, "scoreKind"), jsInvoker),
       bridging::fromJs<decltype(types.selectiveDepth)>(rt, value.getProperty(rt, "selectiveDepth"), jsInvoker)};
@@ -472,6 +476,12 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
     return bridging::toJs(rt, value);
   }
   static double nodesToJs(jsi::Runtime &rt, decltype(types.nodes) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Array principalVariationMovesToJs(jsi::Runtime &rt, decltype(types.principalVariationMoves) value) {
+    return bridging::toJs(rt, value);
+  }
+  static int principalVariationRankToJs(jsi::Runtime &rt, decltype(types.principalVariationRank) value) {
     return bridging::toJs(rt, value);
   }
   static jsi::String requestIdToJs(jsi::Runtime &rt, decltype(types.requestId) value) {
@@ -495,6 +505,8 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
     result.setProperty(rt, "depth", bridging::toJs(rt, value.depth, jsInvoker));
     result.setProperty(rt, "mateMoves", bridging::toJs(rt, value.mateMoves, jsInvoker));
     result.setProperty(rt, "nodes", bridging::toJs(rt, value.nodes, jsInvoker));
+    result.setProperty(rt, "principalVariationMoves", bridging::toJs(rt, value.principalVariationMoves, jsInvoker));
+    result.setProperty(rt, "principalVariationRank", bridging::toJs(rt, value.principalVariationRank, jsInvoker));
     result.setProperty(rt, "requestId", bridging::toJs(rt, value.requestId, jsInvoker));
     result.setProperty(rt, "scoreKind", bridging::toJs(rt, value.scoreKind, jsInvoker));
     result.setProperty(rt, "selectiveDepth", bridging::toJs(rt, value.selectiveDepth, jsInvoker));

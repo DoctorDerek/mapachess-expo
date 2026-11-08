@@ -36,6 +36,8 @@ struct MapachessStockfishSearchInformationEvent {
   int depth;
   int mateMoves;
   double nodes;
+  std::vector<std::string> principalVariationMoves;
+  int principalVariationRank;
   std::string requestId;
   std::string scoreKind;
   int selectiveDepth;

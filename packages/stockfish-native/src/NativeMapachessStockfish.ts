@@ -28,6 +28,8 @@ export type NativeStockfishSearchInformationEvent = {
   depth: CodegenTypes.Int32
   mateMoves: CodegenTypes.Int32
   nodes: number
+  principalVariationMoves: ReadonlyArray<string>
+  principalVariationRank: CodegenTypes.Int32
   requestId: string
   scoreKind: string
   selectiveDepth: CodegenTypes.Int32

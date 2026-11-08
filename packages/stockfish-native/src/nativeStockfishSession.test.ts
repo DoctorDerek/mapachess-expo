@@ -156,6 +156,8 @@ function informationEvent(
     depth: 7,
     mateMoves: 0,
     nodes: 200,
+    principalVariationMoves: [],
+    principalVariationRank: 1,
     requestId: REQUEST.requestId,
     scoreKind: "centipawns",
     selectiveDepth: 9,
