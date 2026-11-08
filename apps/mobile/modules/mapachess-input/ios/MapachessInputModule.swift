@@ -61,4 +61,3 @@ public class MapachessInputModule: Module {
     return codes[key]
   }
 }
-
