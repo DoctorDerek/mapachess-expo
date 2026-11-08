@@ -69,5 +69,15 @@ export default defineConfig([
       },
     },
   },
+  {
+    name: "mapachess/exported-gifenc-source-ambient-contract",
+    files: ["packages/match-presentation/src/profileCardGif.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": [
+        "error",
+        { path: "always" },
+      ],
+    },
+  },
   eslintConfigPrettier,
 ])
