@@ -1,9 +1,9 @@
 import cx from "classix"
 import {
   NativeModule,
-  requireNativeViewManager,
+  requireNativeView,
   requireOptionalNativeModule,
-} from "expo-modules-core"
+} from "expo"
 import {
   createContext,
   useCallback,
@@ -182,7 +182,7 @@ function resolveInputView() {
     return requireOptionalNativeModule("MapachessInput") === null
       ? View
       : withUniwind(
-          requireNativeViewManager<
+          requireNativeView<
             ViewProps & { onInput?: (event: { nativeEvent: unknown }) => void }
           >("MapachessInput"),
         )
