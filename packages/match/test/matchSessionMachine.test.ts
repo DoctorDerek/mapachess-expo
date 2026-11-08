@@ -767,7 +767,7 @@ describe("portable match session navigation", () => {
     actor.stop()
   })
 
-  it("does not let system Back bypass an opening or failed lifecycle operation", async () => {
+  it("waits during opening but lets an unavailable unopened match return Home without discarding its save", async () => {
     const gate = Promise.withResolvers<typeof session>()
     const actor = createActor(machine, {
       input: {
@@ -781,8 +781,12 @@ describe("portable match session navigation", () => {
     gate.reject(new Error("Unavailable platform runtime"))
     await waitFor(actor, (snapshot) => snapshot.matches("failed"))
     actor.send({ type: "MATCH_SESSION.BACK_REQUESTED" })
-    expect(actor.getSnapshot().matches("failed")).toBe(true)
-    expect(selectCanHandleMatchSessionBack(actor.getSnapshot())).toBe(true)
+    expect(actor.getSnapshot().matches({ menu: "choosingMode" })).toBe(true)
+    expect(selectCanHandleMatchSessionBack(actor.getSnapshot())).toBe(false)
+    expect(actor.getSnapshot().context.activeMatchExists).toBe(true)
+    expect(actor.getSnapshot().context.session).toBeNull()
+    actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
+    expect(actor.getSnapshot().matches("openingCurrentMatch")).toBe(true)
     actor.stop()
   })
 })

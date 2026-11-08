@@ -106,7 +106,8 @@ export default function createMatchSessionController<
   const updateClockAvailability = (): void => {
     const current = actor.getSnapshot()
     const session = current.context.session
-    if (session === null) return
+    if (session === null || session.actor.getSnapshot().status !== "active")
+      return
     if (
       !current.matches("active") ||
       current.context.overlays.length > 0 ||
@@ -125,9 +126,9 @@ export default function createMatchSessionController<
     profileActor.getSnapshot().context.loaded?.snapshot.preImportBackup ?? null
   const profileSubscription = profileActor.subscribe((snapshot) => {
     if (!selectCanNavigateProfile(snapshot)) {
-      actor
-        .getSnapshot()
-        .context.session?.actor.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
+      const session = actor.getSnapshot().context.session
+      if (session?.actor.getSnapshot().status === "active")
+        session.actor.send({ type: "MATCH.CLOCK_PAUSE_REQUESTED" })
     }
     if (!snapshot.matches("ready") || disposed) return
     const current = selectCurrentPlayerData(snapshot)
