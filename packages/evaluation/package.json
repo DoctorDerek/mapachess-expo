@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./move-reaction-controller": {
+      "types": "./src/moveReactionController.ts",
+      "default": "./dist/moveReactionController.js"
+    },
     "./move-classification-copy": {
       "types": "./src/moveClassificationCopy.ts",
       "default": "./dist/moveClassificationCopy.js"

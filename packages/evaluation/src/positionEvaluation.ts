@@ -13,6 +13,19 @@ export type {
   PositionEvaluationBound,
 } from "@mapachess/match/move-feedback"
 
+const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
+export function whiteEvaluationSharePercent(
+  evaluation: PositionEvaluation | null,
+): number {
+  if (evaluation === null || evaluation.kind === "draw") return 50
+  if (evaluation.kind === "mate") return evaluation.winner === "white" ? 100 : 0
+  const bounded = Math.max(
+    -FULL_GUTTER_ADVANTAGE_CENTIPAWNS,
+    Math.min(FULL_GUTTER_ADVANTAGE_CENTIPAWNS, evaluation.whiteCentipawns),
+  )
+  return 50 + (bounded / FULL_GUTTER_ADVANTAGE_CENTIPAWNS) * 50
+}
+
 export const positionEvaluationLabel = (
   evaluation: PositionEvaluation,
   copy: MapachessCatalog["evaluation"] = loadCatalog("en").evaluation,
