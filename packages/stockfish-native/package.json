@@ -8,6 +8,11 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./open-session": {
+      "types": "./src/openNativeSession.ts",
+      "react-native": "./dist/openNativeSession.js",
+      "default": "./dist/openNativeSession.js"
+    },
     "./session-binding": {
       "types": "./src/bindNativeStockfishSession.ts",
       "react-native": "./dist/bindNativeStockfishSession.js",

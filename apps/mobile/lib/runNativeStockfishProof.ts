@@ -1,11 +1,11 @@
 import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
-import NativeStockfishSession, {
-  StockfishNativeSessionError,
-} from "@mapachess/stockfish-native/session"
-import bindNativeStockfishSession from "@mapachess/stockfish-native/session-binding"
+import createNativeStockfishSession, {
+  loadNativeStockfishBridge,
+} from "@mapachess/stockfish-native/open-session"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
+  type StockfishEngineSession,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 
@@ -73,7 +73,7 @@ export default async function runNativeStockfishProof(
   signal: AbortSignal,
   onProgress: (progress: EngineProofProgress) => void,
 ): Promise<EngineProofResult> {
-  let session: NativeStockfishSession | undefined
+  let session: StockfishEngineSession | undefined
   const completedSteps: EngineProofStep[] = []
   let currentStep: EngineProofStep = "boot"
   let engineName = ""
@@ -90,17 +90,9 @@ export default async function runNativeStockfishProof(
 
   try {
     beginStep("boot")
-    const { default: nativeStockfishModule } =
-      await import("@mapachess/stockfish-native/native-module")
-    if (nativeStockfishModule === null) {
-      throw new StockfishNativeSessionError(
-        "unavailable",
-        "The native Stockfish module is not available in this application.",
-      )
-    }
-    session = new NativeStockfishSession(
+    session = createNativeStockfishSession(
       ENGINE_CONFIGURATION,
-      bindNativeStockfishSession(nativeStockfishModule),
+      await loadNativeStockfishBridge(),
     )
     const identity = await session.boot(signal)
     engineName = identity.name
