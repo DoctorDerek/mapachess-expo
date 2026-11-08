@@ -6,7 +6,9 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <map>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -16,8 +18,10 @@
 #include <utility>
 #include <variant>
 
+#include "bitboard.h"
 #include "engine.h"
 #include "misc.h"
+#include "position.h"
 #include "score.h"
 #include "search.h"
 
@@ -25,6 +29,20 @@ namespace facebook::react {
 namespace {
 
 constexpr double kMaximumJavaScriptSafeInteger = 9007199254740991.0;
+
+void initializeEmbeddedStockfish() {
+  static std::once_flag initialized;
+  std::call_once(initialized, [] {
+    Stockfish::Bitboards::init();
+    Stockfish::Position::init();
+  });
+}
+
+void rejectNetworkVerificationFailure(std::string_view message) {
+  if (message.starts_with("ERROR:")) {
+    throw std::runtime_error(std::string(message));
+  }
+}
 
 enum class EngineState {
   Created,
@@ -279,6 +297,7 @@ class MapachessStockfishModule::Core {
       return;
     }
 
+    initializeEmbeddedStockfish();
     engine_ = std::make_unique<Stockfish::Engine>();
     installEngineCallbacks();
     applyConfiguration(command.configuration);
@@ -360,13 +379,14 @@ class MapachessStockfishModule::Core {
   void installEngineCallbacks() {
     engine_->set_on_update_no_moves(
         [this](const Stockfish::Engine::InfoShort& information) {
-          emitSearchInformation(information.depth, 0, 0, information.score, "");
+          emitSearchInformation(information.depth, 0, 0, information.score, "", 1, "");
         });
     engine_->set_on_update_full(
         [this](const Stockfish::Engine::InfoFull& information) {
           emitSearchInformation(
               information.depth, information.selDepth, information.nodes,
-              information.score, std::string(information.bound));
+              information.score, std::string(information.bound),
+              information.multiPV, information.pv);
         });
     engine_->set_on_iter([](const Stockfish::Engine::InfoIter&) {});
     engine_->set_on_bestmove(
@@ -392,12 +412,13 @@ class MapachessStockfishModule::Core {
               .requestId = std::move(requestId),
           });
         });
-    engine_->set_on_verify_networks([](std::string_view) {});
+    engine_->set_on_verify_networks(rejectNetworkVerificationFailure);
   }
 
   void emitSearchInformation(int depth, int selectiveDepth, std::size_t nodes,
                              const Stockfish::Score& score,
-                             std::string bound) {
+                             std::string bound, std::size_t principalVariationRank,
+                             std::string_view principalVariation) {
     std::string requestId;
     {
       std::lock_guard lock(stateMutex_);
@@ -408,12 +429,19 @@ class MapachessStockfishModule::Core {
     }
 
     ConvertedScore convertedScore = convertScore(score);
+    std::vector<std::string> principalVariationMoves;
+    std::istringstream variation{std::string(principalVariation)};
+    for (std::string move; variation >> move;) {
+      principalVariationMoves.push_back(std::move(move));
+    }
     callbacks_.searchInformation({
         .bound = std::move(bound),
         .centipawns = convertedScore.centipawns,
         .depth = depth,
         .mateMoves = convertedScore.mateMoves,
         .nodes = static_cast<double>(nodes),
+        .principalVariationMoves = std::move(principalVariationMoves),
+        .principalVariationRank = static_cast<int>(principalVariationRank),
         .requestId = std::move(requestId),
         .scoreKind = std::move(convertedScore.kind),
         .selectiveDepth = selectiveDepth,
@@ -521,84 +549,235 @@ class MapachessStockfishModule::Core {
   mutable std::mutex stateMutex_;
 };
 
+class MapachessStockfishModule::Sessions {
+ public:
+  explicit Sessions(MapachessStockfishModule& module)
+      : module_(module), worker_([this] { run(); }) {}
+
+  ~Sessions() { shutdown(); }
+
+  std::string reserve() {
+    std::string sessionId;
+    {
+      std::lock_guard lock(queueMutex_);
+      if (stopping_) return {};
+      sessionId = "native-stockfish/" + std::to_string(++nextSessionId_);
+      commands_.push_back({.sessionId = sessionId, .operation = std::nullopt});
+    }
+    commandAvailable_.notify_one();
+    return sessionId;
+  }
+
+  void send(std::string sessionId, EngineCommand operation) {
+    const auto requestId = requestIdForCommand(operation);
+    bool accepted = false;
+    {
+      std::lock_guard lock(queueMutex_);
+      if (!stopping_) {
+        commands_.push_back({.sessionId = sessionId,
+                             .operation = std::move(operation)});
+        accepted = true;
+      }
+    }
+    if (accepted) {
+      commandAvailable_.notify_one();
+    } else {
+      module_.emitFailure(std::move(sessionId),
+                          {.code = "closed",
+                           .message = "The native module is closing.",
+                           .requestId = requestId});
+    }
+  }
+
+  void shutdown() {
+    {
+      std::lock_guard lock(queueMutex_);
+      stopping_ = true;
+    }
+    commandAvailable_.notify_one();
+    if (worker_.joinable()) worker_.join();
+  }
+
+ private:
+  struct Command {
+    std::string sessionId;
+    std::optional<EngineCommand> operation;
+  };
+
+  std::optional<Command> nextCommand() {
+    std::unique_lock lock(queueMutex_);
+    commandAvailable_.wait(lock, [this] {
+      return stopping_ || !commands_.empty();
+    });
+    if (commands_.empty()) return std::nullopt;
+    Command command = std::move(commands_.front());
+    commands_.pop_front();
+    return command;
+  }
+
+  void run() {
+    while (auto command = nextCommand()) {
+      const std::string sessionId = command->sessionId;
+      const std::string requestId = command->operation
+          ? requestIdForCommand(*command->operation) : std::string{};
+      try {
+        dispatch(std::move(*command));
+      } catch (const std::exception& error) {
+        module_.emitFailure(sessionId,
+                            {.code = "native-session-error",
+                             .message = error.what(),
+                             .requestId = requestId});
+      } catch (...) {
+        module_.emitFailure(sessionId,
+                            {.code = "native-session-error",
+                             .message = "The native session failed unexpectedly.",
+                             .requestId = requestId});
+      }
+    }
+    for (auto& [sessionId, core] : cores_) {
+      if (core) core->close();
+    }
+    for (auto& [sessionId, core] : cores_) {
+      if (core) core->shutdown();
+    }
+    cores_.clear();
+  }
+
+  void dispatch(Command command) {
+    const auto& sessionId = command.sessionId;
+    if (!command.operation) {
+      cores_.emplace(sessionId, nullptr);
+      return;
+    }
+    auto found = cores_.find(sessionId);
+    if (std::holds_alternative<CloseCommand>(*command.operation)) {
+      if (found != cores_.end()) {
+        if (found->second) {
+          found->second->shutdown();
+        } else {
+          module_.emitClosed(sessionId);
+        }
+        cores_.erase(found);
+      } else {
+        module_.emitClosed(sessionId);
+      }
+      return;
+    }
+    if (found == cores_.end()) {
+      throw std::invalid_argument("The native session is not allocated.");
+    }
+    std::visit([&](auto&& operation) {
+      using Operation = std::decay_t<decltype(operation)>;
+      if constexpr (std::is_same_v<Operation, BootCommand>) {
+        if (found->second) {
+          throw std::invalid_argument("The native session has already booted.");
+        }
+        found->second = createCore(sessionId);
+        found->second->boot(operation.configuration);
+      } else if constexpr (std::is_same_v<Operation, SearchCommand>) {
+        if (!found->second ||
+            !found->second->search(std::move(operation.request))) {
+          throw std::invalid_argument("The native session cannot search.");
+        }
+      } else if constexpr (std::is_same_v<Operation, StopCommand>) {
+        if (!found->second ||
+            !found->second->stop(std::move(operation.requestId))) {
+          throw std::invalid_argument("The native session cannot stop.");
+        }
+      }
+    }, std::move(*command.operation));
+  }
+
+  std::unique_ptr<Core> createCore(const std::string& sessionId) {
+    return std::make_unique<Core>(Core::Callbacks{
+        .bestMove = [this, sessionId](MapachessStockfishBestMoveEvent event) {
+          module_.emitBestMove(sessionId, std::move(event));
+        },
+        .closed = [this, sessionId] { module_.emitClosed(sessionId); },
+        .failure = [this, sessionId](MapachessStockfishFailureEvent event) {
+          module_.emitFailure(sessionId, std::move(event));
+        },
+        .ready = [this, sessionId](MapachessStockfishReadyEvent event) {
+          module_.emitReady(sessionId, std::move(event));
+        },
+        .searchInformation =
+            [this, sessionId](MapachessStockfishSearchInformationEvent event) {
+              module_.emitSearchInformation(sessionId, std::move(event));
+            },
+    });
+  }
+
+  MapachessStockfishModule& module_;
+  std::map<std::string, std::unique_ptr<Core>> cores_;
+  std::condition_variable commandAvailable_;
+  std::deque<Command> commands_;
+  std::mutex queueMutex_;
+  std::uint64_t nextSessionId_ = 0;
+  bool stopping_ = false;
+  std::thread worker_;
+};
+
 MapachessStockfishModule::MapachessStockfishModule(
     std::shared_ptr<CallInvoker> jsInvoker)
     : NativeMapachessStockfishCxxSpec(std::move(jsInvoker)),
-      core_(std::make_unique<Core>(Core::Callbacks{
-          .bestMove = [this](MapachessStockfishBestMoveEvent event) {
-            emitBestMove(std::move(event));
-          },
-          .closed = [this] { emitClosed(); },
-          .failure = [this](MapachessStockfishFailureEvent event) {
-            emitFailure(std::move(event));
-          },
-          .ready = [this](MapachessStockfishReadyEvent event) {
-            emitReady(std::move(event));
-          },
-          .searchInformation =
-              [this](MapachessStockfishSearchInformationEvent event) {
-                emitSearchInformation(std::move(event));
-              },
-      })) {}
+      sessions_(std::make_unique<Sessions>(*this)) {}
 
 MapachessStockfishModule::~MapachessStockfishModule() {
-  core_->shutdown();
+  sessions_->shutdown();
+}
+
+std::string MapachessStockfishModule::createSession(jsi::Runtime&) {
+  return sessions_->reserve();
 }
 
 void MapachessStockfishModule::boot(
-    jsi::Runtime&, MapachessStockfishConfiguration configuration) {
-  if (!core_->boot(configuration)) {
-    emitFailure({.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = ""});
-  }
+    jsi::Runtime&, std::string sessionId,
+    MapachessStockfishConfiguration configuration) {
+  sessions_->send(std::move(sessionId), BootCommand{.configuration = configuration});
 }
 
-void MapachessStockfishModule::close(jsi::Runtime&) {
-  core_->close();
+void MapachessStockfishModule::close(jsi::Runtime&, std::string sessionId) {
+  sessions_->send(std::move(sessionId), CloseCommand{});
 }
 
 void MapachessStockfishModule::startSearch(
-    jsi::Runtime&, MapachessStockfishSearchRequest request) {
-  const std::string requestId = request.requestId;
-  if (!core_->search(std::move(request))) {
-    emitFailure({.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = requestId});
-  }
+    jsi::Runtime&, std::string sessionId,
+    MapachessStockfishSearchRequest request) {
+  sessions_->send(std::move(sessionId), SearchCommand{.request = std::move(request)});
 }
 
-void MapachessStockfishModule::stop(jsi::Runtime&, std::string requestId) {
-  const std::string retainedRequestId = requestId;
-  if (!core_->stop(std::move(requestId))) {
-    emitFailure({.code = "closed",
-                 .message = "The native engine is closing or closed.",
-                 .requestId = retainedRequestId});
-  }
+void MapachessStockfishModule::stop(jsi::Runtime&, std::string sessionId,
+                                  std::string requestId) {
+  sessions_->send(std::move(sessionId), StopCommand{.requestId = std::move(requestId)});
 }
 
 void MapachessStockfishModule::emitBestMove(
-    MapachessStockfishBestMoveEvent event) {
-  emitOnBestMove(std::move(event));
+    std::string sessionId, MapachessStockfishBestMoveEvent event) {
+  emitOnBestMove(MapachessStockfishSessionMessage<MapachessStockfishBestMoveEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
-void MapachessStockfishModule::emitClosed() {
-  emitOnClosed();
+void MapachessStockfishModule::emitClosed(std::string sessionId) {
+  emitOnClosed(MapachessStockfishClosedMessage{.sessionId = std::move(sessionId)});
 }
 
 void MapachessStockfishModule::emitFailure(
-    MapachessStockfishFailureEvent event) {
-  emitOnFailure(std::move(event));
+    std::string sessionId, MapachessStockfishFailureEvent event) {
+  emitOnFailure(MapachessStockfishSessionMessage<MapachessStockfishFailureEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 void MapachessStockfishModule::emitReady(
-    MapachessStockfishReadyEvent event) {
-  emitOnReady(std::move(event));
+    std::string sessionId, MapachessStockfishReadyEvent event) {
+  emitOnReady(MapachessStockfishSessionMessage<MapachessStockfishReadyEvent>{
+      .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 void MapachessStockfishModule::emitSearchInformation(
-    MapachessStockfishSearchInformationEvent event) {
-  emitOnSearchInformation(std::move(event));
+    std::string sessionId, MapachessStockfishSearchInformationEvent event) {
+  emitOnSearchInformation(
+      MapachessStockfishSessionMessage<MapachessStockfishSearchInformationEvent>{
+          .sessionId = std::move(sessionId), .payload = std::move(event)});
 }
 
 }  // namespace facebook::react

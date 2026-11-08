@@ -14,22 +14,22 @@ import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchTimeline } from "@mapachess/match/match-timeline"
 import { UNTIMED, type TimeControl } from "@mapachess/match/time-control"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
-import type { WebMatchRuntime } from "./webMatchRuntime"
-import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+import { createMatchId, selectStoryPlayerColor } from "./matchIdentity.js"
+import type { MatchRuntime } from "./matchRuntime.js"
 
-export type ResumedWebMatch = Readonly<{
-  matchSeed: WebMatchRuntime["matchSeed"]
+export type ResumedMatch = Readonly<{
+  matchSeed: MatchRuntime["matchSeed"]
   timeline: MatchTimeline
 }>
 
-export type FreshWebMatchInput = Readonly<{
+export type FreshMatchInput = Readonly<{
   timeControl?: TimeControl
   autoHintMode: AutoHintMode
   mode?: MatchMode
   playerEloAtStart: number
   playerElosAtStart?: StartingPlayerElos
   runtime: Pick<
-    WebMatchRuntime,
+    MatchRuntime,
     | "matchId"
     | "matchSeed"
     | "opponentId"
@@ -41,9 +41,7 @@ export type FreshWebMatchInput = Readonly<{
   >
 }>
 
-export function buildFreshWebMatch(
-  input: FreshWebMatchInput,
-): DurableMatchRecord {
+export function buildFreshMatch(input: FreshMatchInput): DurableMatchRecord {
   const initialPosition = createInitialMatchPosition(
     input.runtime.startingPosition,
   )
@@ -81,16 +79,14 @@ export function buildFreshWebMatch(
   })
 }
 
-export default function resumeWebMatch(
-  record: DurableMatchRecord,
-): ResumedWebMatch {
+export default function resumeMatch(record: DurableMatchRecord): ResumedMatch {
   const matchSeed = parseDeterministicRandomSeed(
     record.matchSeed,
     "Saved opponent match seed",
   )
   if (
     record.matchId !==
-      webMatchId(
+      createMatchId(
         matchSeed,
         record.startingPosition,
         { mode: record.mode, playerColor: record.playerColor },

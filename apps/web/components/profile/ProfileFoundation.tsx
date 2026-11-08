@@ -8,22 +8,13 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react"
-import loadCatalog, {
-  type MapachessCatalog,
-} from "@mapachess/localization/catalog"
-import { MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS } from "@mapachess/profile/portable-backup"
-import type {
-  ProfileImportIssue,
-  ProfilePersistenceFailure,
-} from "@mapachess/profile/profile-machine"
+import { MAX_PORTABLE_BACKUP_UTF8_BYTES } from "@mapachess/profile/portable-files"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
 import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
-
-const MAX_PORTABLE_BACKUP_UTF8_BYTES = MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS * 3
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -213,37 +204,7 @@ export function ImportBackupButton({
   )
 }
 
-export const importIssueMessage = (
-  issue: ProfileImportIssue,
-  copy: MapachessCatalog["profile"] = loadCatalog("en").profile,
-): string => {
-  switch (issue.type) {
-    case "PROFILE.BACKUP_INTEGRITY_MISMATCH":
-      return copy.importIssue.integrity
-    case "PROFILE.BACKUP_TOO_LARGE":
-      return copy.importIssue.size
-    case "PROFILE.BACKUP_VERSION_UNSUPPORTED":
-    case "PROFILE.SCHEMA_VERSION_UNSUPPORTED":
-      return copy.importIssue.version
-    case "PROFILE.BACKUP_READ_FAILED":
-      return copy.importIssue.read
-    default:
-      return copy.importIssue.invalid
-  }
-}
-
-export const persistenceFailureMessage = (
-  failure: ProfilePersistenceFailure,
-  copy: MapachessCatalog["profile"] = loadCatalog("en").profile,
-): string => {
-  switch (failure.type) {
-    case "PROFILE.STORAGE_CONFLICT":
-      return copy.persistenceFailure.conflict
-    case "PROFILE.STORAGE_VERIFICATION_FAILED":
-      return copy.persistenceFailure.verification
-    case "PROFILE.STORAGE_REQUEST_FAILED":
-      return copy.persistenceFailure.request
-    default:
-      return copy.persistenceFailure.unsafe
-  }
-}
+export {
+  importIssueMessage,
+  persistenceFailureMessage,
+} from "@mapachess/profile/profile-messages"

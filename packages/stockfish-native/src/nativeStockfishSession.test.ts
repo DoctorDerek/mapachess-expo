@@ -156,6 +156,8 @@ function informationEvent(
     depth: 7,
     mateMoves: 0,
     nodes: 200,
+    principalVariationMoves: [],
+    principalVariationRank: 1,
     requestId: REQUEST.requestId,
     scoreKind: "centipawns",
     selectiveDepth: 9,
@@ -164,6 +166,91 @@ function informationEvent(
 }
 
 describe("Native Stockfish session", () => {
+  it("returns ranked variations and preserves the last exact primary analysis", async () => {
+    const { module, session } = await bootFixture({
+      ...CONFIGURATION,
+      multiPv: 3,
+    })
+    const updates: StockfishSearchRefinement[] = []
+    const search = session.search(REQUEST, undefined, (update) =>
+      updates.push(update),
+    )
+    module.emitSearchInformation(
+      informationEvent({
+        principalVariationRank: 3,
+        principalVariationMoves: ["e2f3"],
+        centipawns: 10,
+      }),
+    )
+    module.emitSearchInformation(
+      informationEvent({
+        principalVariationMoves: ["e2e3"],
+        centipawns: 35,
+      }),
+    )
+    module.emitSearchInformation(
+      informationEvent({
+        principalVariationMoves: ["e2d3"],
+        bound: "lowerbound",
+        centipawns: 50,
+      }),
+    )
+    module.emitSearchInformation(
+      informationEvent({
+        principalVariationRank: 2,
+        principalVariationMoves: ["e2d2"],
+        centipawns: 20,
+      }),
+    )
+    module.emitBestMove({
+      bestMove: "e2d3",
+      ponderMove: "",
+      requestId: REQUEST.requestId,
+    })
+    const result = await search
+    expect(
+      updates.map(({ principalVariationRank }) => principalVariationRank),
+    ).toEqual([3, 1, 1, 2])
+    expect(result.principalVariations?.map(({ rank }) => rank)).toEqual([
+      1, 2, 3,
+    ])
+    expect(result.principalVariations?.[0]?.score?.bound).toBe("lower")
+    expect(result.latestExactPrincipalVariation).toMatchObject({
+      rank: 1,
+      moves: ["e2e3"],
+      score: { kind: "centipawns", value: 35, bound: "exact" },
+    })
+    const closed = session.close()
+    module.emitClosed()
+    await closed
+  })
+
+  it.each([
+    { principalVariationRank: 0 },
+    { principalVariationRank: 1.5 },
+    { principalVariationMoves: ["invalid"] },
+    { nodes: Number.NaN },
+    { depth: -1 },
+    { centipawns: Number.POSITIVE_INFINITY },
+  ])(
+    "rejects invalid native analysis without publishing refinements: %o",
+    async (invalid) => {
+      const { module, session } = await bootFixture()
+      const updates: StockfishSearchRefinement[] = []
+      const search = session.search(REQUEST, undefined, (update) =>
+        updates.push(update),
+      )
+      const outcome = expect(search).rejects.toThrow()
+      module.emitSearchInformation(informationEvent(invalid))
+      await outcome
+      expect(updates).toEqual([])
+      expect(session.state()).toBe("failed")
+      const closed = session.close()
+      module.emitClosed()
+      await closed
+    },
+  )
+
   it.each(["complete", "abort", "close", "failure"] as const)(
     "publishes request-bound native refinements until %s",
     async (ending) => {
@@ -218,7 +305,7 @@ describe("Native Stockfish session", () => {
     },
   )
 
-  it("does not invent a primary rank when native MultiPV metadata is unavailable", async () => {
+  it("publishes the actual native MultiPV rank rather than guessing a primary result", async () => {
     const { module, session } = await bootFixture({
       ...CONFIGURATION,
       multiPv: 3,
@@ -227,8 +314,10 @@ describe("Native Stockfish session", () => {
     const search = session.search(REQUEST, undefined, (update) =>
       updates.push(update),
     )
-    module.emitSearchInformation(informationEvent())
-    expect(updates[0]?.principalVariationRank).toBeNull()
+    module.emitSearchInformation(
+      informationEvent({ principalVariationRank: 2 }),
+    )
+    expect(updates[0]?.principalVariationRank).toBe(2)
     module.emitBestMove({
       bestMove: "e2e3",
       ponderMove: "",

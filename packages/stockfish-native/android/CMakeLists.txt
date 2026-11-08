@@ -39,6 +39,7 @@ add_library(
     mapachess_stockfish
     STATIC
     ../cpp/MapachessStockfishModule.cpp
+    ../cpp/StockfishNoTablebases.cpp
     ${STOCKFISH_SOURCES}
 )
 

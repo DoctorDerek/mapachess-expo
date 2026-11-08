@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./search-analysis": {
+      "types": "./src/searchAnalysis.ts",
+      "default": "./dist/searchAnalysis.js"
+    },
     "./recoverable-session": {
       "types": "./src/recoverableSession.ts",
       "default": "./dist/recoverableSession.js"

@@ -206,6 +206,28 @@ describe("licensed presentation asset preparation", () => {
     await expectExtractionCleaned()
   })
 
+  it("prepares the same verified inventory for native without mutating web output", async () => {
+    await prepareLicensedPresentationAssets(repositoryRoot)
+    const webBytes = await readFile(join(publicAssets, FIXTURE_PATH))
+    await prepareLicensedPresentationAssets(
+      repositoryRoot,
+      "presentation",
+      "native",
+    )
+    const nativeRoot = join(
+      repositoryRoot,
+      LICENSED_ASSET_BUNDLES.presentation.nativeAssets,
+    )
+    expect(await readFile(join(nativeRoot, FIXTURE_PATH))).toEqual(
+      FIXTURE_BYTES,
+    )
+    expect(await readFile(join(publicAssets, FIXTURE_PATH))).toEqual(webBytes)
+    expect(await readFile(join(localSource, FIXTURE_PATH))).toEqual(
+      FIXTURE_BYTES,
+    )
+    await expectExtractionCleaned()
+  })
+
   it("decrypts and publishes the allowlisted archive without retaining staging", async () => {
     await useArchiveOnly()
 

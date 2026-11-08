@@ -28,6 +28,8 @@ export type NativeStockfishSearchInformationEvent = {
   depth: CodegenTypes.Int32
   mateMoves: CodegenTypes.Int32
   nodes: number
+  principalVariationMoves: ReadonlyArray<string>
+  principalVariationRank: CodegenTypes.Int32
   requestId: string
   scoreKind: string
   selectiveDepth: CodegenTypes.Int32
@@ -45,16 +47,47 @@ export type NativeStockfishFailureEvent = {
   requestId: string
 }
 
-export interface Spec extends TurboModule {
-  readonly boot: (configuration: NativeStockfishConfiguration) => void
-  readonly close: () => void
-  readonly onBestMove: CodegenTypes.EventEmitter<NativeStockfishBestMoveEvent>
-  readonly onClosed: CodegenTypes.EventEmitter<void>
-  readonly onFailure: CodegenTypes.EventEmitter<NativeStockfishFailureEvent>
-  readonly onReady: CodegenTypes.EventEmitter<NativeStockfishReadyEvent>
-  readonly onSearchInformation: CodegenTypes.EventEmitter<NativeStockfishSearchInformationEvent>
-  readonly startSearch: (request: NativeStockfishSearchRequest) => void
-  readonly stop: (requestId: string) => void
+export type NativeStockfishReadyMessage = {
+  sessionId: string
+  payload: NativeStockfishReadyEvent
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>("MapachessStockfish")
+export type NativeStockfishSearchInformationMessage = {
+  sessionId: string
+  payload: NativeStockfishSearchInformationEvent
+}
+
+export type NativeStockfishBestMoveMessage = {
+  sessionId: string
+  payload: NativeStockfishBestMoveEvent
+}
+
+export type NativeStockfishFailureMessage = {
+  sessionId: string
+  payload: NativeStockfishFailureEvent
+}
+
+export type NativeStockfishClosedMessage = {
+  sessionId: string
+}
+
+export interface Spec extends TurboModule {
+  readonly createSession: () => string
+  readonly boot: (
+    sessionId: string,
+    configuration: NativeStockfishConfiguration,
+  ) => void
+  readonly close: (sessionId: string) => void
+  readonly onBestMove: CodegenTypes.EventEmitter<NativeStockfishBestMoveMessage>
+  readonly onClosed: CodegenTypes.EventEmitter<NativeStockfishClosedMessage>
+  readonly onFailure: CodegenTypes.EventEmitter<NativeStockfishFailureMessage>
+  readonly onReady: CodegenTypes.EventEmitter<NativeStockfishReadyMessage>
+  readonly onSearchInformation: CodegenTypes.EventEmitter<NativeStockfishSearchInformationMessage>
+  readonly startSearch: (
+    sessionId: string,
+    request: NativeStockfishSearchRequest,
+  ) => void
+  readonly stop: (sessionId: string, requestId: string) => void
+}
+
+export default TurboModuleRegistry.get<Spec>("MapachessStockfish")

@@ -16,6 +16,9 @@ import {
   validateStockfishEngineConfiguration,
   validateStockfishSearchRequest,
 } from "@mapachess/stockfish/engine-validation"
+import createStockfishSearchAnalysis, {
+  type StockfishSearchAnalysis,
+} from "@mapachess/stockfish/search-analysis"
 import type {
   NativeStockfishBestMoveEvent,
   NativeStockfishFailureEvent,
@@ -43,6 +46,7 @@ type PendingBoot = Readonly<{
 }>
 
 type ActiveSearch = {
+  analysis: StockfishSearchAnalysis
   cancellationRequested: boolean
   cleanupAbort: () => void
   latestInformation?: StockfishEngineSearchInformation
@@ -171,6 +175,7 @@ export default class NativeStockfishSession implements StockfishEngineSession {
         const onAbort = (): void => this.requestSearchCancellation(request)
         signal?.addEventListener("abort", onAbort, { once: true })
         this.activeSearch = {
+          analysis: createStockfishSearchAnalysis(),
           cancellationRequested: false,
           cleanupAbort: () => signal?.removeEventListener("abort", onAbort),
           ...(onRefinement === undefined ? {} : { onRefinement }),
@@ -270,10 +275,17 @@ export default class NativeStockfishSession implements StockfishEngineSession {
 
     try {
       activeSearch.latestInformation = informationFromNative(event)
+      if (event.principalVariationMoves.length > 0) {
+        activeSearch.analysis.record(
+          event.principalVariationRank,
+          event.principalVariationMoves,
+          activeSearch.latestInformation,
+        )
+      }
       activeSearch.onRefinement?.({
         ...activeSearch.latestInformation,
         position: activeSearch.position,
-        principalVariationRank: this.configuration.multiPv === 1 ? 1 : null,
+        principalVariationRank: event.principalVariationRank,
         requestId: activeSearch.requestId,
       })
     } catch (error) {
@@ -327,6 +339,7 @@ export default class NativeStockfishSession implements StockfishEngineSession {
         ...(activeSearch.latestInformation === undefined
           ? {}
           : { latestInformation: activeSearch.latestInformation }),
+        ...activeSearch.analysis.complete(),
       })
     } catch (error) {
       this.sessionState = "failed"

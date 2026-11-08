@@ -1,13 +1,14 @@
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import { createMapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import { MAPACHESS_GDD_REVISION } from "@mapachess/profile/portable-files"
 import webPackage from "../../package.json"
 import webSha256, { type Sha256SubtleCrypto } from "./webSha256"
 
-export const MAPACHESS_GDD_REVISION = "v5.5" as const
-export const MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME =
-  "mapachess-player-data.json" as const
-export const MAPACHESS_UNREADABLE_DATA_FILE_NAME =
-  "mapachess-unreadable-player-data.txt" as const
+export {
+  MAPACHESS_GDD_REVISION,
+  MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
+  MAPACHESS_UNREADABLE_DATA_FILE_NAME,
+} from "@mapachess/profile/portable-files"
 
 export const createWebPlayerDataBackup = (
   playerData: MapachessPlayerData,

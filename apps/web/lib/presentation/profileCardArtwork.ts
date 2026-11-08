@@ -1,20 +1,11 @@
 import loadCatalog from "@mapachess/localization/catalog"
-import type { ShippedLocale } from "@mapachess/localization/locale"
 import type { SpriteAnimationDefinition } from "@mapachess/match-presentation/presentation-asset-manifest"
-import { levelFromTotalXp } from "@mapachess/profile/global-xp"
 import {
   HERO_IDLE_GEOMETRY,
   heroWeaponDefinition,
 } from "@mapachess/profile/hero-catalog"
-import {
-  heroLayerPaths,
-  type PlayerAppearance,
-} from "@mapachess/profile/player-appearance"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import {
-  playerRatingId,
-  type CardRatingContext,
-} from "@mapachess/profile/rating-context"
+import { heroLayerPaths } from "@mapachess/profile/player-appearance"
+import type { CardInput } from "@mapachess/profile/profile-card-model"
 import medalArtworkSource from "./medalArtwork"
 import {
   PROFILE_CARD_HEIGHT,
@@ -31,56 +22,15 @@ import {
   presentationAssetSource,
 } from "./webPresentationAssets"
 
-export type CardContent = Readonly<{
-  level: boolean
-  standard: boolean
-  chess960: boolean
-  animal: boolean
-}>
-export const INITIAL_CARD_CONTENT: CardContent = Object.freeze({
-  level: true,
-  standard: true,
-  chess960: true,
-  animal: true,
-})
-export type CardFacts = Readonly<{
-  level: number
-  standard: number
-  chess960: number
-  ratingContext: CardRatingContext
-}>
-export type CardInput = Readonly<{
-  locale?: ShippedLocale
-  appearance: PlayerAppearance
-  facts: CardFacts
-  content: CardContent
-  format: "GIF" | "PNG"
-}>
-export const cardFacts = (
-  data: MapachessPlayerData,
-  ratingContext = data.settings.cardRatingContext,
-): CardFacts => ({
-  level: levelFromTotalXp(data.totalXp),
-  standard: Math.round(
-    data.ratings[
-      playerRatingId(
-        "standard",
-        ratingContext.category,
-        ratingContext.assistance,
-      )
-    ],
-  ),
-  chess960: Math.round(
-    data.ratings[
-      playerRatingId(
-        "chess960",
-        ratingContext.category,
-        ratingContext.assistance,
-      )
-    ],
-  ),
-  ratingContext,
-})
+export {
+  cardFacts,
+  INITIAL_CARD_CONTENT,
+} from "@mapachess/profile/profile-card-model"
+export type {
+  CardContent,
+  CardFacts,
+  CardInput,
+} from "@mapachess/profile/profile-card-model"
 export type CardArtwork = Readonly<{
   palette: Readonly<{
     blue: string

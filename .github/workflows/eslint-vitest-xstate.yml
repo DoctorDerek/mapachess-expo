@@ -22,7 +22,7 @@ jobs:
     with:
       typecheck-command: pnpm typecheck
       vitest-command: pnpm test:coverage --continue=dependencies-successful
-      coverage-files: apps/web/coverage/lcov.info,packages/calibration/coverage/lcov.info,packages/diagnostics/coverage/lcov.info,packages/evaluation/coverage/lcov.info,packages/hints/coverage/lcov.info,packages/match/coverage/lcov.info,packages/match-presentation/coverage/lcov.info,packages/profile/coverage/lcov.info,packages/stockfish/coverage/lcov.info,packages/stockfish-native/coverage/lcov.info
+      coverage-files: apps/web/coverage/lcov.info,packages/calibration/coverage/lcov.info,packages/diagnostics/coverage/lcov.info,packages/evaluation/coverage/lcov.info,packages/gameplay/coverage/lcov.info,packages/hints/coverage/lcov.info,packages/match/coverage/lcov.info,packages/match-presentation/coverage/lcov.info,packages/profile/coverage/lcov.info,packages/stockfish/coverage/lcov.info,packages/stockfish-native/coverage/lcov.info
       coverage-artifact-paths: |
         apps/*/coverage/
         packages/*/coverage/

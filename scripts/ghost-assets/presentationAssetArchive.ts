@@ -45,6 +45,7 @@ const ASSET_FAILURE_MESSAGES = Object.freeze({
 const resolvePresentationAssetPaths = (
   repositoryRoot: string,
   bundleId: LicensedAssetBundleId = "presentation",
+  target: "web" | "native" = "web",
 ) => ({
   bundleId,
   manifest: join(repositoryRoot, LICENSED_ASSET_BUNDLES[bundleId].manifest),
@@ -61,7 +62,9 @@ const resolvePresentationAssetPaths = (
   vendor: join(repositoryRoot, "vendor"),
   publicAssets: join(
     repositoryRoot,
-    LICENSED_ASSET_BUNDLES[bundleId].publicAssets,
+    target === "web"
+      ? LICENSED_ASSET_BUNDLES[bundleId].publicAssets
+      : LICENSED_ASSET_BUNDLES[bundleId].nativeAssets,
   ),
 })
 
@@ -315,8 +318,9 @@ const publishAssetFiles = async (
 export const prepareLicensedPresentationAssets = async (
   repositoryRoot: string = REPOSITORY_ROOT,
   bundleId: LicensedAssetBundleId = "presentation",
+  target: "web" | "native" = "web",
 ): Promise<void> => {
-  const paths = resolvePresentationAssetPaths(repositoryRoot, bundleId)
+  const paths = resolvePresentationAssetPaths(repositoryRoot, bundleId, target)
   loadLocalEnvironment(paths.localEnvironment)
 
   try {

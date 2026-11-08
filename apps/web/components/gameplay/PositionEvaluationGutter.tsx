@@ -5,6 +5,7 @@ import type { CSSProperties } from "react"
 import type { ActorRefFrom } from "xstate"
 import {
   positionEvaluationLabel,
+  whiteEvaluationSharePercent,
   type PositionEvaluation,
 } from "@mapachess/evaluation/position-evaluation"
 import positionEvaluationMachine, {
@@ -13,8 +14,6 @@ import positionEvaluationMachine, {
 } from "@mapachess/evaluation/position-evaluation-machine"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const FULL_GUTTER_ADVANTAGE_CENTIPAWNS = 1_000
 
 type EvaluationGutterStyle = CSSProperties &
   Readonly<{ "--white-share": string }>
@@ -35,19 +34,6 @@ const evaluationText = (
   return copy.whiteRelative(label)
 }
 
-const whiteSharePercent = (evaluation: PositionEvaluation | null): number => {
-  if (evaluation === null || evaluation.kind === "draw") return 50
-  if (evaluation.kind === "mate") {
-    return evaluation.winner === "white" ? 100 : 0
-  }
-
-  const boundedCentipawns = Math.max(
-    -FULL_GUTTER_ADVANTAGE_CENTIPAWNS,
-    Math.min(FULL_GUTTER_ADVANTAGE_CENTIPAWNS, evaluation.whiteCentipawns),
-  )
-  return 50 + (boundedCentipawns / FULL_GUTTER_ADVANTAGE_CENTIPAWNS) * 50
-}
-
 export default function PositionEvaluationGutter({
   actor,
 }: PositionEvaluationGutterProps) {
@@ -65,7 +51,7 @@ export default function PositionEvaluationGutter({
     evaluation === null ? null : evaluationText(evaluation, copy)
   const statusText =
     acceptedText ?? (stage === "failure" ? copy.unavailable : copy.waiting)
-  const whiteShare = whiteSharePercent(evaluation)
+  const whiteShare = whiteEvaluationSharePercent(evaluation)
   const style: EvaluationGutterStyle = {
     "--white-share": `${String(whiteShare)}%`,
   }

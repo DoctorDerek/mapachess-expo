@@ -1,21 +1,17 @@
 import { evaluatePositionWithStockfish } from "@mapachess/evaluation/position-evaluator"
+import {
+  createMatchId,
+  selectMatchStartingPosition,
+  selectStoryPlayerColor,
+} from "@mapachess/gameplay/match-identity"
+import type { OpenMatchRuntimeInput } from "@mapachess/gameplay/match-runtime"
+import closeAfterFailedRuntimeOpen, {
+  closeOwnedEngineSessions,
+} from "@mapachess/gameplay/runtime-lifetime"
 import createBetterHintsAnalyst, {
   BETTER_HINTS_ENGINE_MULTIPV,
 } from "@mapachess/hints/better-hints"
-import {
-  CHESS960_POSITION_COUNT,
-  parseChess960PositionId,
-} from "@mapachess/match/chess960-position"
-import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
-import type {
-  MatchColor,
-  MatchStartingPosition,
-} from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
-import {
-  createDeterministicRandom,
-  type DeterministicRandomSeed,
-} from "@mapachess/stockfish/opponent-move-selection"
 import type {
   StockfishUciIdentity,
   StockfishUciSession,
@@ -28,8 +24,6 @@ import prepareWebStockfishProgram from "../stockfish/prepareWebStockfishProgram"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 import createWebOpponent, {
   generateWebMatchSeed,
-  selectStoryPlayerColor,
-  webMatchId,
   type WebOpponentCryptography,
 } from "./webOpponent"
 import resolveWebOpponentPolicy, {
@@ -46,73 +40,19 @@ const OPPONENT_WORKER_NAME = "mapachess-stockfish-18-opponent" as const
 const HINT_WORKER_NAME = "mapachess-stockfish-18-better-hints" as const
 const EVALUATION_WORKER_NAME = "mapachess-stockfish-18-evaluation" as const
 
-export type OpenWebMatchRuntimeInput = Readonly<{
-  cryptography?: WebOpponentCryptography
-  openSession?: (
-    configuration: StockfishEngineConfiguration,
-    options?: CreateWebStockfishSessionOptions,
-  ) => StockfishUciSession
-  matchSeed?: DeterministicRandomSeed
-  opponentId?: ImplementedDurableOpponentId
-  opponentPolicyFingerprint?: string
-  setup?:
-    | MatchStartingPosition
-    | Readonly<{ variant: "chess960"; chess960PositionId?: never }>
-  signal?: AbortSignal
-}> &
-  (
-    | Readonly<{
-        mode?: "story"
-        playerColor?: never
-        difficultyTargetElo?: never
-      }>
-    | Readonly<{
-        mode: "challenge"
-        playerColor: MatchColor | "random"
-        difficultyTargetElo?: number
-      }>
-  )
+export type OpenWebMatchRuntimeInput = OpenMatchRuntimeInput &
+  Readonly<{
+    cryptography?: WebOpponentCryptography
+    openSession?: (
+      configuration: StockfishEngineConfiguration,
+      options?: CreateWebStockfishSessionOptions,
+    ) => StockfishUciSession
+  }>
 
-const closeOwnedSessions = async (
-  sessions: readonly StockfishUciSession[],
-): Promise<void> => {
-  const results = await Promise.allSettled(
-    sessions.map((session) => session.close()),
-  )
-  const errors: unknown[] = []
-  for (const result of results) {
-    if (result.status === "rejected") {
-      const reason: unknown = result.reason
-      errors.push(reason)
-    }
-  }
-
-  if (errors.length === 1) throw errors[0]
-  if (errors.length > 1) {
-    throw new AggregateError(
-      errors,
-      "Web match sessions failed to close cleanly.",
-    )
-  }
-}
-
-const closeAfterFailedOpen = async (
-  sessions: readonly StockfishUciSession[],
-  openError: unknown,
-): Promise<never> => {
-  try {
-    await closeOwnedSessions(sessions)
-  } catch (closeError) {
-    const closeErrors: readonly unknown[] =
-      closeError instanceof AggregateError ? closeError.errors : [closeError]
-    throw new AggregateError(
-      [openError, ...closeErrors],
-      "Web match failed to open and close cleanly.",
-    )
-  }
-
-  throw openError
-}
+const RUNTIME_FAILURE_MESSAGES = {
+  close: "Web match sessions failed to close cleanly.",
+  openAndClose: "Web match failed to open and close cleanly.",
+} as const
 
 export default async function openWebMatchRuntime(
   input: OpenWebMatchRuntimeInput = {},
@@ -144,22 +84,7 @@ export default async function openWebMatchRuntime(
     input.mode === "challenge" && input.playerColor !== "random"
       ? input.playerColor
       : selectStoryPlayerColor(matchSeed)
-  let startingPosition: MatchStartingPosition
-  if (setup.variant === "chess960" && setup.chess960PositionId === undefined) {
-    const random = createDeterministicRandom(matchSeed)
-    // Invariant: Story color owns the first draw; layout uses the next draw.
-    random.nextIndex(2)
-    const parsed = parseChess960PositionId(
-      random.nextIndex(CHESS960_POSITION_COUNT),
-    )
-    if (!parsed.ok) throw new Error("Generated Chess960 layout is invalid.")
-    startingPosition = {
-      variant: "chess960",
-      chess960PositionId: parsed.positionId,
-    }
-  } else {
-    startingPosition = setup
-  }
+  const startingPosition = selectMatchStartingPosition(setup, matchSeed)
   const singlePvConfiguration: StockfishEngineConfiguration = {
     ...SINGLE_PV_ENGINE_CONFIGURATION,
     variant: startingPosition.variant,
@@ -202,23 +127,27 @@ export default async function openWebMatchRuntime(
     }
   } catch (error) {
     try {
-      return await closeAfterFailedOpen(sessions, error)
+      return await closeAfterFailedRuntimeOpen(
+        sessions,
+        error,
+        RUNTIME_FAILURE_MESSAGES,
+      )
     } finally {
       program?.release()
     }
   }
 
-  return Object.freeze({
+  return Object.freeze<WebMatchRuntime>({
     close: async () => {
       try {
-        await closeOwnedSessions(sessions)
+        await closeOwnedEngineSessions(sessions, RUNTIME_FAILURE_MESSAGES.close)
       } finally {
         program?.release()
       }
     },
     engineIdentity,
     hintAnalyst: createBetterHintsAnalyst({ engine: hintSession }),
-    matchId: webMatchId(
+    matchId: createMatchId(
       matchSeed,
       startingPosition,
       input.mode === "challenge"

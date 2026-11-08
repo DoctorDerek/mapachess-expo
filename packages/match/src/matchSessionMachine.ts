@@ -430,11 +430,18 @@ export default function createMatchSessionMachine<
             actions: "acceptProfileReplacement",
             target: "routing",
           },
-          "MATCH_SESSION.RESUME_REQUESTED": {
-            guard: "hasSession",
-            actions: ["clearOverlays", "rememberResumePredecessor"],
-            target: "active",
-          },
+          "MATCH_SESSION.RESUME_REQUESTED": [
+            {
+              guard: "hasSession",
+              actions: ["clearOverlays", "rememberResumePredecessor"],
+              target: "active",
+            },
+            {
+              guard: ({ context }) =>
+                context.activeMatchExists && context.operations.canNavigate(),
+              target: "openingCurrentMatch",
+            },
+          ],
           "MATCH_SESSION.OVERLAY_OPENED": {
             guard: { type: "canOpenOverlay", params: { screen: "menu" } },
             actions: "openOverlay",
@@ -687,6 +694,31 @@ export default function createMatchSessionMachine<
       failed: {
         on: {
           ...lifecycleNavigation,
+          "MATCH_SESSION.BACK_REQUESTED": [
+            {
+              guard: ({ context }) =>
+                context.session === null &&
+                context.failure?.operation === "open-current-match" &&
+                context.operations.canNavigate(),
+              actions: [
+                "clearOverlays",
+                assign({ failure: null, deferredNavigation: null }),
+              ],
+              target: "menu.choosingMode",
+            },
+            {
+              guard: ({ context }) =>
+                context.session === null &&
+                context.failure?.operation === "start-match" &&
+                context.operations.canNavigate(),
+              actions: [
+                "clearOverlays",
+                assign({ failure: null, deferredNavigation: null }),
+              ],
+              target: "menu.setup",
+            },
+            { actions: "deferBackNavigation" },
+          ],
           "MATCH_SESSION.RETRY_REQUESTED": [
             {
               guard: "failureWasOpenCurrent",

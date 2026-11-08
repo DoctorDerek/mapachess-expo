@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./directional-input-target": {
+      "types": "./src/directionalInputTarget.ts",
+      "default": "./dist/directionalInputTarget.js"
+    },
     "./time-control": {
       "types": "./src/timeControl.ts",
       "default": "./dist/timeControl.js"

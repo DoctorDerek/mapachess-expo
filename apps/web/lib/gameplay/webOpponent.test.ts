@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { selectStoryPlayerColor } from "@mapachess/gameplay/match-identity"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import type { MatchOpponentRequest } from "@mapachess/match/match-machine"
 import {
@@ -21,7 +22,6 @@ import {
 } from "@mapachess/stockfish/opponent-move-selection"
 import createWebOpponent, {
   generateWebMatchSeed,
-  selectStoryPlayerColor,
   type WebOpponentCryptography,
 } from "./webOpponent"
 import resolveWebOpponentPolicy from "./webOpponentPolicy"

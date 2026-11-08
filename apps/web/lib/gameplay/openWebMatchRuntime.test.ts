@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 import { POSITION_EVALUATION_NODE_LIMIT } from "@mapachess/evaluation/position-evaluator"
+import {
+  createMatchId,
+  selectStoryPlayerColor,
+} from "@mapachess/gameplay/match-identity"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { StockfishEngineConfiguration } from "@mapachess/stockfish/engine-session"
@@ -11,7 +15,6 @@ import type {
 import type { CreateWebStockfishSessionOptions } from "../stockfish/createWebStockfishSession"
 import openWebMatchRuntime from "./openWebMatchRuntime"
 import type { WebOpponentCryptography } from "./webOpponent"
-import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
 import resolveWebOpponentPolicy, {
   resolveWebChallengePolicy,
 } from "./webOpponentPolicy"
@@ -300,13 +303,13 @@ describe("web match runtime ownership", () => {
         expect(opened.runtime.playerColor).toBe(resolvedColor)
         expect(opened.runtime.startingPosition).toEqual(startingPosition)
         expect(opened.runtime.matchId).toBe(
-          webMatchId(opened.runtime.matchSeed, startingPosition, {
+          createMatchId(opened.runtime.matchSeed, startingPosition, {
             mode: "challenge",
             playerColor: resolvedColor,
           }),
         )
         expect(opened.runtime.matchId).not.toBe(
-          webMatchId(opened.runtime.matchSeed, startingPosition),
+          createMatchId(opened.runtime.matchSeed, startingPosition),
         )
         expect(
           opened.openSession.mock.calls.map(

@@ -1,25 +1,18 @@
 "use client"
 
 import { useActorRef, useSelector } from "@xstate/react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
-import matchPresentationMachine from "@mapachess/match-presentation/match-presentation-machine"
-import type { MatchPresentationMachineSnapshot } from "@mapachess/match-presentation/match-presentation-machine"
-import {
-  deriveAcceptedMatchPresentationUpdate,
-  deriveConcludingMatchPresentationPhases,
-  deriveConclusionPresentationPhase,
-  type AcceptedMatchPresentationObservation,
-} from "@mapachess/match-presentation/match-presentation-observation"
-import type {
-  MatchPresentationParticipant,
-  MatchPresentationPhase,
-} from "@mapachess/match-presentation/match-reaction"
-import {
-  selectMatchConclusion,
-  selectMatchTimeline,
-  type MatchMachineSnapshot,
-} from "@mapachess/match/match-machine"
+import bindAcceptedMatchPresentation, {
+  type AcceptedMatchPresentationBinding,
+} from "@mapachess/match-presentation/accepted-match-presentation"
+import matchPresentationMachine, {
+  type MatchPresentationMachineSnapshot,
+} from "@mapachess/match-presentation/match-presentation-machine"
+import { deriveConclusionPresentationPhase } from "@mapachess/match-presentation/match-presentation-observation"
+import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
+import type matchMachine from "@mapachess/match/match-machine"
+import { selectMatchConclusion } from "@mapachess/match/match-machine"
 import type { MatchColor } from "@mapachess/match/match-position"
 
 export type AcceptedMatchPresentation = Readonly<{
@@ -31,89 +24,40 @@ export type AcceptedMatchPresentation = Readonly<{
   snapshot: MatchPresentationMachineSnapshot
 }>
 
-const initialConclusionPhase = (
-  matchSnapshot: MatchMachineSnapshot,
-  playerColor: MatchColor,
-): MatchPresentationPhase | null => {
-  const conclusion = selectMatchConclusion(matchSnapshot)
-  return conclusion === null
-    ? null
-    : deriveConclusionPresentationPhase({ conclusion, playerColor })
-}
-
-const requestPresentationPhases = (
-  presentationActor: ActorRefFrom<typeof matchPresentationMachine>,
-  phases: readonly MatchPresentationPhase[],
-): void => {
-  const [firstPhase, ...remainingPhases] = phases
-  if (firstPhase === undefined) return
-
-  presentationActor.send({
-    phases: Object.freeze([firstPhase, ...remainingPhases]),
-    type: "MATCH_PRESENTATION.REACTIONS_REQUESTED",
-  })
-}
-
 export default function useAcceptedMatchPresentation(
-  matchSnapshot: MatchMachineSnapshot,
+  matchActor: ActorRefFrom<typeof matchMachine>,
   playerColor: MatchColor,
   rewardsReplaySequence: number,
 ): AcceptedMatchPresentation {
-  const [startingConclusionPhase] = useState(() =>
-    initialConclusionPhase(matchSnapshot, playerColor),
-  )
+  const [startingConclusionPhase] = useState(() => {
+    const conclusion = selectMatchConclusion(matchActor.getSnapshot())
+    return conclusion === null
+      ? null
+      : deriveConclusionPresentationPhase({ conclusion, playerColor })
+  })
   const presentationActor = useActorRef(matchPresentationMachine, {
     input: { initialConclusionPhase: startingConclusionPhase },
   })
-  const presentationSnapshot = useSelector(
-    presentationActor,
-    (current) => current,
-  )
-  const currentConclusion = selectMatchConclusion(matchSnapshot)
-  const currentTimeline = selectMatchTimeline(matchSnapshot)
-  const currentObservation = useMemo(
-    () =>
-      Object.freeze({
-        conclusion: currentConclusion,
-        timeline: currentTimeline,
-      }),
-    [currentConclusion, currentTimeline],
-  )
-  const previousObservation =
-    useRef<AcceptedMatchPresentationObservation>(currentObservation)
+  const snapshot = useSelector(presentationActor, (current) => current)
+  const binding = useRef<AcceptedMatchPresentationBinding | null>(null)
   const previousReplaySequence = useRef(rewardsReplaySequence)
-
   useEffect(() => {
-    const update = deriveAcceptedMatchPresentationUpdate(
-      previousObservation.current,
-      currentObservation,
+    const opened = bindAcceptedMatchPresentation(
+      matchActor,
       playerColor,
+      presentationActor,
     )
-    previousObservation.current = currentObservation
-    if (update.reset) {
-      presentationActor.send({
-        type: "MATCH_PRESENTATION.RESET_REQUESTED",
-      })
+    binding.current = opened
+    return () => {
+      binding.current = null
+      opened.close()
     }
-    requestPresentationPhases(presentationActor, update.phases)
-  }, [currentObservation, playerColor, presentationActor])
-
+  }, [matchActor, playerColor, presentationActor])
   useEffect(() => {
     if (previousReplaySequence.current === rewardsReplaySequence) return
     previousReplaySequence.current = rewardsReplaySequence
-    if (rewardsReplaySequence === 0) return
-    presentationActor.send({ type: "MATCH_PRESENTATION.RESET_REQUESTED" })
-    requestPresentationPhases(
-      presentationActor,
-      deriveConcludingMatchPresentationPhases(currentObservation, playerColor),
-    )
-  }, [
-    currentObservation,
-    playerColor,
-    presentationActor,
-    rewardsReplaySequence,
-  ])
-
+    if (rewardsReplaySequence > 0) binding.current?.replay()
+  }, [rewardsReplaySequence])
   const notifyParticipantAnimationCompleted = useCallback(
     (
       participant: MatchPresentationParticipant,
@@ -121,17 +65,13 @@ export default function useAcceptedMatchPresentation(
       reactionSequence: number,
     ): void => {
       presentationActor.send({
+        type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
         participant,
         phaseIndex,
         reactionSequence,
-        type: "MATCH_PRESENTATION.PARTICIPANT_ANIMATION_COMPLETED",
       })
     },
     [presentationActor],
   )
-
-  return Object.freeze({
-    notifyParticipantAnimationCompleted,
-    snapshot: presentationSnapshot,
-  })
+  return { notifyParticipantAnimationCompleted, snapshot }
 }

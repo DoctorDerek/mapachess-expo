@@ -1,4 +1,5 @@
 import { MAX_DIAGNOSTIC_CHARACTERS } from "@mapachess/diagnostics/error-diagnostic"
+import { profileCardAnimationFrameCount } from "@mapachess/match-presentation/profile-card-format"
 import { HERO_IDLE_GEOMETRY } from "@mapachess/profile/hero-catalog"
 import {
   drawProfileCard,
@@ -13,7 +14,6 @@ import {
 } from "./profileCardFormat"
 import loadProfileCardFont from "./profileCardTypography"
 
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b))
 const nextPaint = (signal: AbortSignal): Promise<void> =>
   new Promise((resolve, reject) => {
     signal.throwIfAborted()
@@ -117,9 +117,10 @@ export default async function createProfileCardFile(
     return new File([blob], "Mapachess-profile.png", { type: "image/png" })
   }
   const animalFrames = artwork.animal?.animation.frameCount ?? 1
-  const frameCount =
-    (HERO_IDLE_GEOMETRY.frameCount * animalFrames) /
-    gcd(HERO_IDLE_GEOMETRY.frameCount, animalFrames)
+  const frameCount = profileCardAnimationFrameCount(
+    HERO_IDLE_GEOMETRY.frameCount,
+    animalFrames,
+  )
   const frames: Uint8Array<ArrayBuffer>[] = []
   for (let frame = 0; frame < frameCount; frame++) {
     await nextPaint(signal)

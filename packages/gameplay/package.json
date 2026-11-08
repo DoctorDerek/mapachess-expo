@@ -1,0 +1,54 @@
+{
+  "name": "@mapachess/gameplay",
+  "version": "0.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    "./session-controller": {
+      "types": "./src/sessionController.ts",
+      "default": "./dist/sessionController.js"
+    },
+    "./runtime-lifetime": {
+      "types": "./src/runtimeLifetime.ts",
+      "default": "./dist/runtimeLifetime.js"
+    },
+    "./opponent-policy": {
+      "types": "./src/opponentPolicy.ts",
+      "default": "./dist/opponentPolicy.js"
+    },
+    "./opponent": {
+      "types": "./src/opponent.ts",
+      "default": "./dist/opponent.js"
+    },
+    "./match-runtime": {
+      "types": "./src/matchRuntime.ts",
+      "default": "./dist/matchRuntime.js"
+    },
+    "./match-identity": {
+      "types": "./src/matchIdentity.ts",
+      "default": "./dist/matchIdentity.js"
+    },
+    "./durable-match": {
+      "types": "./src/durableMatch.ts",
+      "default": "./dist/durableMatch.js"
+    },
+    "./match-session": {
+      "types": "./src/matchSession.ts",
+      "default": "./dist/matchSession.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@mapachess/evaluation": "workspace:*",
+    "@mapachess/match": "workspace:*",
+    "@mapachess/profile": "workspace:*",
+    "@mapachess/stockfish": "workspace:*",
+    "xstate": "^5"
+  }
+}

@@ -163,7 +163,7 @@ export default function WebMatch({
       previous.context.failure === current.context.failure,
   )
   const presentation = useAcceptedMatchPresentation(
-    snapshot,
+    actor,
     runtime.playerColor,
     rewardsReplaySequence,
   )

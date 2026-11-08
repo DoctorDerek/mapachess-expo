@@ -1,6 +1,7 @@
 import { cleanup, render } from "@testing-library/react"
 import type { TestContext } from "vitest"
 import { createActor, waitFor } from "xstate"
+import { createMatchId } from "@mapachess/gameplay/match-identity"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialPlayerData from "@mapachess/profile/player-data"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
@@ -13,7 +14,6 @@ import { openFreshWebMatchSession } from "../lib/gameplay/webMatchSession"
 import webMatchSessionMachine, {
   type WebMatchSessionActor,
 } from "../lib/gameplay/webMatchSessionMachine"
-import { webMatchId } from "../lib/gameplay/webOpponent"
 import { readyProfile } from "./domHarness"
 
 export async function playableMatch(
@@ -36,7 +36,7 @@ export async function playableMatch(
   const runtime: WebMatchRuntime = {
     matchSeed,
     startingPosition,
-    matchId: webMatchId(matchSeed, startingPosition, {
+    matchId: createMatchId(matchSeed, startingPosition, {
       mode: "challenge",
       playerColor: "white",
     }),

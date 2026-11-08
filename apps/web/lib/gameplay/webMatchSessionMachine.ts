@@ -1,28 +1,16 @@
-import type { ActorRefFrom } from "xstate"
-import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
-import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import matchMachine from "@mapachess/match/match-machine"
+import type { MatchSession } from "@mapachess/gameplay/match-session"
 import createMatchSessionMachine, {
   selectMatchNavigationDestination,
   selectMatchSession,
   selectMatchSessionFailure,
   type MatchSessionActor,
   type MatchSessionFailureOperation,
-  type MatchSessionIdentity,
   type MatchSessionMachineSnapshot,
   type MatchSessionOperations,
 } from "@mapachess/match/match-session-machine"
 import type { WebMatchRuntime } from "./webMatchRuntime"
 
-export type WebMatchSession = MatchSessionIdentity &
-  Readonly<{
-    clockStartsOnArrival?: boolean
-    actor: ActorRefFrom<typeof matchMachine>
-    close: () => Promise<void>
-    evaluationActor: ActorRefFrom<typeof positionEvaluationMachine>
-    match: DurableMatchRecord
-    runtime: WebMatchRuntime
-  }>
+export type WebMatchSession = MatchSession<WebMatchRuntime>
 
 export type WebMatchSessionFailureOperation = MatchSessionFailureOperation
 export type WebMatchSessionOperations = MatchSessionOperations<WebMatchSession>

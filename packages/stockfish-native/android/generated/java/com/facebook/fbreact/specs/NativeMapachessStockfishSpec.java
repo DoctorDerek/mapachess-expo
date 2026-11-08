@@ -36,8 +36,8 @@ public abstract class NativeMapachessStockfishSpec extends ReactContextBaseJavaM
     mEventEmitterCallback.invoke("onBestMove", value);
   }
 
-  protected final void emitOnClosed() {
-    mEventEmitterCallback.invoke("onClosed");
+  protected final void emitOnClosed(ReadableMap value) {
+    mEventEmitterCallback.invoke("onClosed", value);
   }
 
   protected final void emitOnFailure(ReadableMap value) {
@@ -52,19 +52,23 @@ public abstract class NativeMapachessStockfishSpec extends ReactContextBaseJavaM
     mEventEmitterCallback.invoke("onSearchInformation", value);
   }
 
-  @ReactMethod
+  @ReactMethod(isBlockingSynchronousMethod = true)
   @DoNotStrip
-  public abstract void boot(ReadableMap configuration);
+  public abstract String createSession();
 
   @ReactMethod
   @DoNotStrip
-  public abstract void close();
+  public abstract void boot(String sessionId, ReadableMap configuration);
 
   @ReactMethod
   @DoNotStrip
-  public abstract void startSearch(ReadableMap request);
+  public abstract void close(String sessionId);
 
   @ReactMethod
   @DoNotStrip
-  public abstract void stop(String requestId);
+  public abstract void startSearch(String sessionId, ReadableMap request);
+
+  @ReactMethod
+  @DoNotStrip
+  public abstract void stop(String sessionId, String requestId);
 }

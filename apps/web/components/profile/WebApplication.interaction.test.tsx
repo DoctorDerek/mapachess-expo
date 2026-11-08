@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -46,7 +47,10 @@ describe("local application boot and player journeys", () => {
       name: spanish.introduction.start,
     })
     await waitFor(() => expect(start).toHaveProperty("disabled", false))
-    fireEvent.click(start)
+    await act(async () => {
+      fireEvent.click(start)
+      await vi.dynamicImportSettled()
+    })
     await screen.findByRole(
       "button",
       { name: new RegExp(spanish.setup.presentations.standard.story.title) },

@@ -5,6 +5,7 @@ export const LICENSED_ASSET_BUNDLES = Object.freeze({
     localSource: "vendor/presentation-assets",
     archiveSource: "vendor/presentation-assets-archive",
     publicAssets: "apps/web/public/generated/presentation-assets",
+    nativeAssets: "apps/mobile/.prepared-assets/presentation",
   }),
   chess: Object.freeze({
     archive: "ghost_assets/backterria-toffeecraft-chess.zip",
@@ -12,6 +13,7 @@ export const LICENSED_ASSET_BUNDLES = Object.freeze({
     localSource: "vendor/chess-runtime-assets",
     archiveSource: "vendor/chess-assets-archive",
     publicAssets: "apps/web/public/generated/chess-assets",
+    nativeAssets: "apps/mobile/.prepared-assets/chess",
   }),
 })
 

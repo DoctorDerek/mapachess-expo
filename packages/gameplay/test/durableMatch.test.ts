@@ -18,11 +18,11 @@ import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { decodeMapachessPlayerData } from "@mapachess/profile/player-data-codec"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import {
-  buildFreshWebMatch,
-  default as resumeWebMatch,
-  type FreshWebMatchInput,
-} from "./webDurableMatch"
-import { selectStoryPlayerColor, webMatchId } from "./webOpponent"
+  buildFreshMatch,
+  default as resumeMatch,
+  type FreshMatchInput,
+} from "../src/durableMatch.js"
+import { createMatchId, selectStoryPlayerColor } from "../src/matchIdentity.js"
 
 const matchSeed = parseDeterministicRandomSeed(
   "00000001000000020000000300000004",
@@ -30,7 +30,7 @@ const matchSeed = parseDeterministicRandomSeed(
 )
 
 const runtime = Object.freeze({
-  matchId: webMatchId(matchSeed),
+  matchId: createMatchId(matchSeed),
   matchSeed,
   opponentId: "chicken-stockfish",
   opponentPolicyFingerprint: "test-policy",
@@ -38,7 +38,7 @@ const runtime = Object.freeze({
   ratedOpponentElo: 100,
   playerColor: selectStoryPlayerColor(matchSeed),
   startingPosition: { variant: "standard", chess960PositionId: null } as const,
-}) satisfies FreshWebMatchInput["runtime"]
+}) satisfies FreshMatchInput["runtime"]
 
 const requireMoveId = (uci: string) => {
   const result = parseMatchMoveId(uci)
@@ -46,7 +46,7 @@ const requireMoveId = (uci: string) => {
   return result.moveId
 }
 
-describe("web durable match mapping", () => {
+describe("durable match mapping", () => {
   it.each(["white", "black"] as const)(
     "round-trips Challenge identities for chosen %s without accepting Story or opposite-color identities",
     async (playerColor) => {
@@ -58,7 +58,7 @@ describe("web durable match mapping", () => {
       ]
       for (const startingPosition of positions) {
         const selection = { mode: "challenge", playerColor } as const
-        const fresh = buildFreshWebMatch({
+        const fresh = buildFreshMatch({
           mode: "challenge",
           autoHintMode: "no-auto-hints",
           playerEloAtStart: 550,
@@ -66,7 +66,7 @@ describe("web durable match mapping", () => {
             ...runtime,
             playerColor,
             startingPosition,
-            matchId: webMatchId(matchSeed, startingPosition, selection),
+            matchId: createMatchId(matchSeed, startingPosition, selection),
             opponentPolicyFingerprint: "test-policy",
           },
         })
@@ -77,14 +77,12 @@ describe("web durable match mapping", () => {
         if (!decoded.ok || decoded.data.activeMatch === null)
           throw new Error("Challenge save must decode.")
         expect(decoded.data.activeMatch).toEqual(fresh)
-        expect(resumeWebMatch(decoded.data.activeMatch).matchSeed).toBe(
-          matchSeed,
-        )
-        expect(() => resumeWebMatch({ ...fresh, mode: "story" })).toThrow(
+        expect(resumeMatch(decoded.data.activeMatch).matchSeed).toBe(matchSeed)
+        expect(() => resumeMatch({ ...fresh, mode: "story" })).toThrow(
           "identity does not match",
         )
         expect(() =>
-          resumeWebMatch({
+          resumeMatch({
             ...fresh,
             playerColor: playerColor === "white" ? "black" : "white",
           }),
@@ -102,13 +100,13 @@ describe("web durable match mapping", () => {
         variant: "chess960",
         chess960PositionId: parsed.positionId,
       } as const
-      const fresh = buildFreshWebMatch({
+      const fresh = buildFreshMatch({
         autoHintMode: "auto-piece-hints",
         playerEloAtStart: 725,
         runtime: {
           ...runtime,
           startingPosition,
-          matchId: webMatchId(matchSeed, startingPosition),
+          matchId: createMatchId(matchSeed, startingPosition),
           opponentPolicyFingerprint: "test-policy",
         },
       })
@@ -128,20 +126,20 @@ describe("web durable match mapping", () => {
         throw new Error(
           `Chess960 profile must decode: ${JSON.stringify(decoded)}`,
         )
-      const resumed = resumeWebMatch(decoded.data.activeMatch)
+      const resumed = resumeMatch(decoded.data.activeMatch)
       expect(resumed.timeline.cursor).toBe(0)
       expect(resumed.timeline.transitions).toHaveLength(2)
       expect(resumed.matchSeed).toBe(matchSeed)
       expect(currentMatchPosition(resumed.timeline).fen).toBe(fresh.currentFen)
       expect(decoded.data.activeMatch).toEqual(saved)
       expect(() =>
-        resumeWebMatch({ ...saved, matchId: webMatchId(matchSeed) }),
+        resumeMatch({ ...saved, matchId: createMatchId(matchSeed) }),
       ).toThrow("identity does not match")
     },
   )
 
   it("builds the exact cursor-zero record for a fresh runtime", () => {
-    const record = buildFreshWebMatch({
+    const record = buildFreshMatch({
       autoHintMode: "no-auto-hints",
       playerEloAtStart: 100,
       runtime,
@@ -170,7 +168,7 @@ describe("web durable match mapping", () => {
   })
 
   it("reconstructs the full branch while retaining the saved cursor", async () => {
-    const fresh = buildFreshWebMatch({
+    const fresh = buildFreshMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -192,7 +190,7 @@ describe("web durable match mapping", () => {
       pieceHintsUsed: true,
     })
 
-    const resumed = resumeWebMatch(saved)
+    const resumed = resumeMatch(saved)
     expect(resumed.matchSeed).toBe(matchSeed)
     expect(resumed.timeline.cursor).toBe(0)
     expect(resumed.timeline.transitions).toHaveLength(2)
@@ -200,22 +198,33 @@ describe("web durable match mapping", () => {
   })
 
   it("reconstructs chess state independently of the saved difficulty fingerprint", () => {
-    const fresh = buildFreshWebMatch({
+    const fresh = buildFreshMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
     })
 
     expect(
-      resumeWebMatch({
+      resumeMatch({
         ...fresh,
         opponentPolicyFingerprint: "obsolete-policy",
       }),
-    ).toEqual(resumeWebMatch(fresh))
+    ).toEqual(resumeMatch(fresh))
+  })
+
+  it("rejects an impossible saved timeline after its identity is validated", () => {
+    const fresh = buildFreshMatch({
+      autoHintMode: "no-auto-hints",
+      playerEloAtStart: 100,
+      runtime,
+    })
+    expect(() =>
+      resumeMatch({ ...fresh, moveIds: [requireMoveId("e2e5")] }),
+    ).toThrow("timeline could not reconstruct")
   })
 
   it("round-trips the implemented identity but rejects unknown opponents", async () => {
-    const record = buildFreshWebMatch({
+    const record = buildFreshMatch({
       autoHintMode: "auto-move-hints",
       playerEloAtStart: 100,
       runtime,
@@ -230,9 +239,7 @@ describe("web durable match mapping", () => {
     if (!decoded.ok || decoded.data.activeMatch === null) {
       throw new Error("The implemented Chicken match must round-trip.")
     }
-    expect(resumeWebMatch(decoded.data.activeMatch)).toEqual(
-      resumeWebMatch(record),
-    )
+    expect(resumeMatch(decoded.data.activeMatch)).toEqual(resumeMatch(record))
     expect(
       decodeMapachessPlayerData({
         ...playerData,

@@ -73,10 +73,14 @@ namespace JS {
 @end
 @protocol NativeMapachessStockfishSpec <RCTBridgeModule, RCTTurboModule>
 
-- (void)boot:(JS::NativeMapachessStockfish::NativeStockfishConfiguration &)configuration;
-- (void)close;
-- (void)startSearch:(JS::NativeMapachessStockfish::NativeStockfishSearchRequest &)request;
-- (void)stop:(NSString *)requestId;
+- (NSString *)createSession;
+- (void)boot:(NSString *)sessionId
+configuration:(JS::NativeMapachessStockfish::NativeStockfishConfiguration &)configuration;
+- (void)close:(NSString *)sessionId;
+- (void)startSearch:(NSString *)sessionId
+            request:(JS::NativeMapachessStockfish::NativeStockfishSearchRequest &)request;
+- (void)stop:(NSString *)sessionId
+   requestId:(NSString *)requestId;
 
 @end
 
@@ -87,7 +91,7 @@ facebook::react::EventEmitterCallback _eventEmitterCallback;
 - (void)setEventEmitterCallback:(EventEmitterCallbackWrapper *)eventEmitterCallbackWrapper;
 
 - (void)emitOnBestMove:(NSDictionary *)value;
-- (void)emitOnClosed;
+- (void)emitOnClosed:(NSDictionary *)value;
 - (void)emitOnFailure:(NSDictionary *)value;
 - (void)emitOnReady:(NSDictionary *)value;
 - (void)emitOnSearchInformation:(NSDictionary *)value;

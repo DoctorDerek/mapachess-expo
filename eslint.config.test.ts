@@ -5,6 +5,29 @@ import { beforeAll, describe, expect, it } from "vitest"
 const eslint = new ESLint({ cwd: fileURLToPath(new URL(".", import.meta.url)) })
 
 describe("repository ESLint coverage", () => {
+  it("allows the shared GIF ambient typing reference only in its source export owner", async () => {
+    const source = '/// <reference path="./gifenc.d.ts" />\nexport {}'
+    const allowed = await eslint.lintText(source, {
+      filePath: "packages/match-presentation/src/profileCardGif.ts",
+    })
+    expect(allowed[0]?.messages).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "@typescript-eslint/triple-slash-reference",
+        }),
+      ]),
+    )
+    const other = await eslint.lintText(source, {
+      filePath: "packages/match-presentation/src/coachPortrait.ts",
+    })
+    expect(other[0]?.messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: "@typescript-eslint/triple-slash-reference",
+        }),
+      ]),
+    )
+  })
   beforeAll(async () => {
     // The first lint imports the TypeScript parser and repository plugins.
     await eslint.lintText("export {}", {
@@ -25,6 +48,7 @@ describe("repository ESLint coverage", () => {
     "packages/stockfish/src/engineValidation.ts",
     "apps/web/lib/gameplay/openWebMatchRuntime.ts",
     "apps/web/lib/gameplay/webMatchSession.ts",
+    "packages/gameplay/src/matchSession.ts",
     "apps/web/lib/stockfish/webWorkerUciTransport.test.ts",
   ])(
     "detects TypeScript findings in %s without ignoring the file",
@@ -154,8 +178,8 @@ describe("repository ESLint coverage", () => {
   )
 
   it.each([
-    "apps/web/lib/gameplay/openWebMatchRuntime.ts",
-    "apps/web/lib/gameplay/webMatchSession.ts",
+    "packages/gameplay/src/runtimeLifetime.ts",
+    "packages/gameplay/src/matchSession.ts",
   ])(
     "allows aggregate failures in their owning module %s",
     async (filePath) => {

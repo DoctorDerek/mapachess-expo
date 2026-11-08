@@ -1,12 +1,12 @@
 import { describe, expect, it, jest } from "@jest/globals"
 import { act, render, screen } from "@testing-library/react-native"
-import HomeScreen from "@/app/index"
+import HomeScreen from "./fixtures/NativeEngineProofScreen"
 import runNativeStockfishProof, {
   type EngineProofProgress,
   type EngineProofResult,
-} from "@/lib/runNativeStockfishProof"
+} from "./fixtures/runNativeStockfishProof"
 
-jest.mock("@/lib/runNativeStockfishProof", () => ({
+jest.mock("./fixtures/runNativeStockfishProof", () => ({
   __esModule: true,
   default: jest.fn(),
   ENGINE_PROOF_STEPS: [
@@ -46,7 +46,7 @@ function proofInvocation(): readonly [
   return invocation
 }
 
-describe("HomeScreen", () => {
+describe("native engine diagnostic harness", () => {
   it("presents running progress through native accessibility semantics", async () => {
     const proof = deferred<EngineProofResult>()
     mockedRunNativeStockfishProof.mockReturnValue(proof.promise)

@@ -1,9 +1,11 @@
 import { getErrorMessage } from "@mapachess/diagnostics/error-diagnostic"
-import nativeStockfishModule from "@mapachess/stockfish-native/native-module"
-import NativeStockfishSession from "@mapachess/stockfish-native/session"
+import createNativeStockfishSession, {
+  loadNativeStockfishBridge,
+} from "@mapachess/stockfish-native/open-session"
 import {
   StockfishOperationAbortedError,
   type StockfishEngineConfiguration,
+  type StockfishEngineSession,
   type StockfishSearchRequest,
 } from "@mapachess/stockfish/engine-session"
 
@@ -71,10 +73,7 @@ export default async function runNativeStockfishProof(
   signal: AbortSignal,
   onProgress: (progress: EngineProofProgress) => void,
 ): Promise<EngineProofResult> {
-  const session = new NativeStockfishSession(
-    ENGINE_CONFIGURATION,
-    nativeStockfishModule,
-  )
+  let session: StockfishEngineSession | undefined
   const completedSteps: EngineProofStep[] = []
   let currentStep: EngineProofStep = "boot"
   let engineName = ""
@@ -91,6 +90,10 @@ export default async function runNativeStockfishProof(
 
   try {
     beginStep("boot")
+    session = createNativeStockfishSession(
+      ENGINE_CONFIGURATION,
+      await loadNativeStockfishBridge(),
+    )
     const identity = await session.boot(signal)
     engineName = identity.name
     completeStep()
@@ -124,12 +127,14 @@ export default async function runNativeStockfishProof(
   } catch (error) {
     failure = { error, step: currentStep }
   } finally {
-    beginStep("close")
-    try {
-      await session.close()
-      completeStep()
-    } catch (error) {
-      failure ??= { error, step: "close" }
+    if (session !== undefined) {
+      beginStep("close")
+      try {
+        await session.close()
+        completeStep()
+      } catch (error) {
+        failure ??= { error, step: "close" }
+      }
     }
   }
 

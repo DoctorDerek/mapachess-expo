@@ -43,8 +43,8 @@ export default defineConfig([
   {
     name: "mapachess/aggregate-open-and-close-failures",
     files: [
-      "apps/web/lib/gameplay/openWebMatchRuntime.ts",
-      "apps/web/lib/gameplay/webMatchSession.ts",
+      "packages/gameplay/src/runtimeLifetime.ts",
+      "packages/gameplay/src/matchSession.ts",
     ],
     rules: { "preserve-caught-error": "off" },
   },
@@ -67,6 +67,16 @@ export default defineConfig([
         module: "readonly",
         require: "readonly",
       },
+    },
+  },
+  {
+    name: "mapachess/exported-gifenc-source-ambient-contract",
+    files: ["packages/match-presentation/src/profileCardGif.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": [
+        "error",
+        { path: "always" },
+      ],
     },
   },
   eslintConfigPrettier,

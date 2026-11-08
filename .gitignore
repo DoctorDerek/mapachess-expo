@@ -14,6 +14,9 @@ dist/
 packages/stockfish-native/.stockfish-networks/
 apps/mobile/android/
 apps/mobile/ios/
+apps/mobile/.prepared-assets/
+apps/mobile/lib/presentation/nativeAssetManifest.js
+apps/mobile/lib/presentation/nativeAnimationManifest.js
 apps/web/public/stockfish-runtime/
 apps/web/public/generated/presentation-assets/
 apps/web/public/generated/chess-assets/
@@ -22,6 +25,7 @@ apps/web/public/generated/first-arrival/
 .calibration/
 
 # Test output
+.artifacts/
 coverage/
 lighthouse-pages/
 lighthouse-results/

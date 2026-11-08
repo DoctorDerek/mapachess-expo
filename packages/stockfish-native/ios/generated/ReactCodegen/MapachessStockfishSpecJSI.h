@@ -68,6 +68,94 @@ struct NativeMapachessStockfishNativeStockfishBestMoveEventBridging {
 
 
 
+#pragma mark - NativeMapachessStockfishNativeStockfishBestMoveMessage
+
+template <typename P0, typename P1>
+struct NativeMapachessStockfishNativeStockfishBestMoveMessage {
+  P0 sessionId{};
+  P1 payload;
+  bool operator==(const NativeMapachessStockfishNativeStockfishBestMoveMessage &other) const {
+    return sessionId == other.sessionId && payload == other.payload;
+  }
+};
+
+template <typename T>
+struct NativeMapachessStockfishNativeStockfishBestMoveMessageBridging {
+  static T types;
+
+  static T fromJs(
+      jsi::Runtime &rt,
+      const jsi::Object &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    T result{
+      bridging::fromJs<decltype(types.sessionId)>(rt, value.getProperty(rt, "sessionId"), jsInvoker),
+      bridging::fromJs<decltype(types.payload)>(rt, value.getProperty(rt, "payload"), jsInvoker)};
+    return result;
+  }
+
+#ifdef DEBUG
+  static jsi::String sessionIdToJs(jsi::Runtime &rt, decltype(types.sessionId) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Object payloadToJs(jsi::Runtime &rt, decltype(types.payload) value) {
+    return bridging::toJs(rt, value);
+  }
+#endif
+
+  static jsi::Object toJs(
+      jsi::Runtime &rt,
+      const T &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    auto result = facebook::jsi::Object(rt);
+    result.setProperty(rt, "sessionId", bridging::toJs(rt, value.sessionId, jsInvoker));
+    result.setProperty(rt, "payload", bridging::toJs(rt, value.payload, jsInvoker));
+    return result;
+  }
+};
+
+
+
+#pragma mark - NativeMapachessStockfishNativeStockfishClosedMessage
+
+template <typename P0>
+struct NativeMapachessStockfishNativeStockfishClosedMessage {
+  P0 sessionId;
+  bool operator==(const NativeMapachessStockfishNativeStockfishClosedMessage &other) const {
+    return sessionId == other.sessionId;
+  }
+};
+
+template <typename T>
+struct NativeMapachessStockfishNativeStockfishClosedMessageBridging {
+  static T types;
+
+  static T fromJs(
+      jsi::Runtime &rt,
+      const jsi::Object &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    T result{
+      bridging::fromJs<decltype(types.sessionId)>(rt, value.getProperty(rt, "sessionId"), jsInvoker)};
+    return result;
+  }
+
+#ifdef DEBUG
+  static jsi::String sessionIdToJs(jsi::Runtime &rt, decltype(types.sessionId) value) {
+    return bridging::toJs(rt, value);
+  }
+#endif
+
+  static jsi::Object toJs(
+      jsi::Runtime &rt,
+      const T &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    auto result = facebook::jsi::Object(rt);
+    result.setProperty(rt, "sessionId", bridging::toJs(rt, value.sessionId, jsInvoker));
+    return result;
+  }
+};
+
+
+
 #pragma mark - NativeMapachessStockfishNativeStockfishConfiguration
 
 template <typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
@@ -198,6 +286,53 @@ struct NativeMapachessStockfishNativeStockfishFailureEventBridging {
 
 
 
+#pragma mark - NativeMapachessStockfishNativeStockfishFailureMessage
+
+template <typename P0, typename P1>
+struct NativeMapachessStockfishNativeStockfishFailureMessage {
+  P0 sessionId{};
+  P1 payload;
+  bool operator==(const NativeMapachessStockfishNativeStockfishFailureMessage &other) const {
+    return sessionId == other.sessionId && payload == other.payload;
+  }
+};
+
+template <typename T>
+struct NativeMapachessStockfishNativeStockfishFailureMessageBridging {
+  static T types;
+
+  static T fromJs(
+      jsi::Runtime &rt,
+      const jsi::Object &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    T result{
+      bridging::fromJs<decltype(types.sessionId)>(rt, value.getProperty(rt, "sessionId"), jsInvoker),
+      bridging::fromJs<decltype(types.payload)>(rt, value.getProperty(rt, "payload"), jsInvoker)};
+    return result;
+  }
+
+#ifdef DEBUG
+  static jsi::String sessionIdToJs(jsi::Runtime &rt, decltype(types.sessionId) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Object payloadToJs(jsi::Runtime &rt, decltype(types.payload) value) {
+    return bridging::toJs(rt, value);
+  }
+#endif
+
+  static jsi::Object toJs(
+      jsi::Runtime &rt,
+      const T &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    auto result = facebook::jsi::Object(rt);
+    result.setProperty(rt, "sessionId", bridging::toJs(rt, value.sessionId, jsInvoker));
+    result.setProperty(rt, "payload", bridging::toJs(rt, value.payload, jsInvoker));
+    return result;
+  }
+};
+
+
+
 #pragma mark - NativeMapachessStockfishNativeStockfishReadyEvent
 
 template <typename P0>
@@ -239,20 +374,69 @@ struct NativeMapachessStockfishNativeStockfishReadyEventBridging {
 
 
 
+#pragma mark - NativeMapachessStockfishNativeStockfishReadyMessage
+
+template <typename P0, typename P1>
+struct NativeMapachessStockfishNativeStockfishReadyMessage {
+  P0 sessionId{};
+  P1 payload;
+  bool operator==(const NativeMapachessStockfishNativeStockfishReadyMessage &other) const {
+    return sessionId == other.sessionId && payload == other.payload;
+  }
+};
+
+template <typename T>
+struct NativeMapachessStockfishNativeStockfishReadyMessageBridging {
+  static T types;
+
+  static T fromJs(
+      jsi::Runtime &rt,
+      const jsi::Object &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    T result{
+      bridging::fromJs<decltype(types.sessionId)>(rt, value.getProperty(rt, "sessionId"), jsInvoker),
+      bridging::fromJs<decltype(types.payload)>(rt, value.getProperty(rt, "payload"), jsInvoker)};
+    return result;
+  }
+
+#ifdef DEBUG
+  static jsi::String sessionIdToJs(jsi::Runtime &rt, decltype(types.sessionId) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Object payloadToJs(jsi::Runtime &rt, decltype(types.payload) value) {
+    return bridging::toJs(rt, value);
+  }
+#endif
+
+  static jsi::Object toJs(
+      jsi::Runtime &rt,
+      const T &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    auto result = facebook::jsi::Object(rt);
+    result.setProperty(rt, "sessionId", bridging::toJs(rt, value.sessionId, jsInvoker));
+    result.setProperty(rt, "payload", bridging::toJs(rt, value.payload, jsInvoker));
+    return result;
+  }
+};
+
+
+
 #pragma mark - NativeMapachessStockfishNativeStockfishSearchInformationEvent
 
-template <typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+template <typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 struct NativeMapachessStockfishNativeStockfishSearchInformationEvent {
   P0 bound{};
   P1 centipawns{};
   P2 depth{};
   P3 mateMoves{};
   P4 nodes{};
-  P5 requestId{};
-  P6 scoreKind{};
-  P7 selectiveDepth;
+  P5 principalVariationMoves{};
+  P6 principalVariationRank{};
+  P7 requestId{};
+  P8 scoreKind{};
+  P9 selectiveDepth;
   bool operator==(const NativeMapachessStockfishNativeStockfishSearchInformationEvent &other) const {
-    return bound == other.bound && centipawns == other.centipawns && depth == other.depth && mateMoves == other.mateMoves && nodes == other.nodes && requestId == other.requestId && scoreKind == other.scoreKind && selectiveDepth == other.selectiveDepth;
+    return bound == other.bound && centipawns == other.centipawns && depth == other.depth && mateMoves == other.mateMoves && nodes == other.nodes && principalVariationMoves == other.principalVariationMoves && principalVariationRank == other.principalVariationRank && requestId == other.requestId && scoreKind == other.scoreKind && selectiveDepth == other.selectiveDepth;
   }
 };
 
@@ -270,6 +454,8 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
       bridging::fromJs<decltype(types.depth)>(rt, value.getProperty(rt, "depth"), jsInvoker),
       bridging::fromJs<decltype(types.mateMoves)>(rt, value.getProperty(rt, "mateMoves"), jsInvoker),
       bridging::fromJs<decltype(types.nodes)>(rt, value.getProperty(rt, "nodes"), jsInvoker),
+      bridging::fromJs<decltype(types.principalVariationMoves)>(rt, value.getProperty(rt, "principalVariationMoves"), jsInvoker),
+      bridging::fromJs<decltype(types.principalVariationRank)>(rt, value.getProperty(rt, "principalVariationRank"), jsInvoker),
       bridging::fromJs<decltype(types.requestId)>(rt, value.getProperty(rt, "requestId"), jsInvoker),
       bridging::fromJs<decltype(types.scoreKind)>(rt, value.getProperty(rt, "scoreKind"), jsInvoker),
       bridging::fromJs<decltype(types.selectiveDepth)>(rt, value.getProperty(rt, "selectiveDepth"), jsInvoker)};
@@ -290,6 +476,12 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
     return bridging::toJs(rt, value);
   }
   static double nodesToJs(jsi::Runtime &rt, decltype(types.nodes) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Array principalVariationMovesToJs(jsi::Runtime &rt, decltype(types.principalVariationMoves) value) {
+    return bridging::toJs(rt, value);
+  }
+  static int principalVariationRankToJs(jsi::Runtime &rt, decltype(types.principalVariationRank) value) {
     return bridging::toJs(rt, value);
   }
   static jsi::String requestIdToJs(jsi::Runtime &rt, decltype(types.requestId) value) {
@@ -313,9 +505,58 @@ struct NativeMapachessStockfishNativeStockfishSearchInformationEventBridging {
     result.setProperty(rt, "depth", bridging::toJs(rt, value.depth, jsInvoker));
     result.setProperty(rt, "mateMoves", bridging::toJs(rt, value.mateMoves, jsInvoker));
     result.setProperty(rt, "nodes", bridging::toJs(rt, value.nodes, jsInvoker));
+    result.setProperty(rt, "principalVariationMoves", bridging::toJs(rt, value.principalVariationMoves, jsInvoker));
+    result.setProperty(rt, "principalVariationRank", bridging::toJs(rt, value.principalVariationRank, jsInvoker));
     result.setProperty(rt, "requestId", bridging::toJs(rt, value.requestId, jsInvoker));
     result.setProperty(rt, "scoreKind", bridging::toJs(rt, value.scoreKind, jsInvoker));
     result.setProperty(rt, "selectiveDepth", bridging::toJs(rt, value.selectiveDepth, jsInvoker));
+    return result;
+  }
+};
+
+
+
+#pragma mark - NativeMapachessStockfishNativeStockfishSearchInformationMessage
+
+template <typename P0, typename P1>
+struct NativeMapachessStockfishNativeStockfishSearchInformationMessage {
+  P0 sessionId{};
+  P1 payload;
+  bool operator==(const NativeMapachessStockfishNativeStockfishSearchInformationMessage &other) const {
+    return sessionId == other.sessionId && payload == other.payload;
+  }
+};
+
+template <typename T>
+struct NativeMapachessStockfishNativeStockfishSearchInformationMessageBridging {
+  static T types;
+
+  static T fromJs(
+      jsi::Runtime &rt,
+      const jsi::Object &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    T result{
+      bridging::fromJs<decltype(types.sessionId)>(rt, value.getProperty(rt, "sessionId"), jsInvoker),
+      bridging::fromJs<decltype(types.payload)>(rt, value.getProperty(rt, "payload"), jsInvoker)};
+    return result;
+  }
+
+#ifdef DEBUG
+  static jsi::String sessionIdToJs(jsi::Runtime &rt, decltype(types.sessionId) value) {
+    return bridging::toJs(rt, value);
+  }
+  static jsi::Object payloadToJs(jsi::Runtime &rt, decltype(types.payload) value) {
+    return bridging::toJs(rt, value);
+  }
+#endif
+
+  static jsi::Object toJs(
+      jsi::Runtime &rt,
+      const T &value,
+      const std::shared_ptr<CallInvoker> &jsInvoker) {
+    auto result = facebook::jsi::Object(rt);
+    result.setProperty(rt, "sessionId", bridging::toJs(rt, value.sessionId, jsInvoker));
+    result.setProperty(rt, "payload", bridging::toJs(rt, value.payload, jsInvoker));
     return result;
   }
 };
@@ -387,12 +628,13 @@ public:
 
 protected:
   NativeMapachessStockfishCxxSpec(std::shared_ptr<CallInvoker> jsInvoker) : TurboModule(std::string{NativeMapachessStockfishCxxSpec::kModuleName}, jsInvoker) {
-    methodMap_["boot"] = MethodMetadata {.argCount = 1, .invoker = __boot};
-    methodMap_["close"] = MethodMetadata {.argCount = 0, .invoker = __close};
-    methodMap_["startSearch"] = MethodMetadata {.argCount = 1, .invoker = __startSearch};
-    methodMap_["stop"] = MethodMetadata {.argCount = 1, .invoker = __stop};
+    methodMap_["createSession"] = MethodMetadata {.argCount = 0, .invoker = __createSession};
+    methodMap_["boot"] = MethodMetadata {.argCount = 2, .invoker = __boot};
+    methodMap_["close"] = MethodMetadata {.argCount = 1, .invoker = __close};
+    methodMap_["startSearch"] = MethodMetadata {.argCount = 2, .invoker = __startSearch};
+    methodMap_["stop"] = MethodMetadata {.argCount = 2, .invoker = __stop};
     eventEmitterMap_["onBestMove"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
-    eventEmitterMap_["onClosed"] = std::make_shared<AsyncEventEmitter<>>();
+    eventEmitterMap_["onClosed"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
     eventEmitterMap_["onFailure"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
     eventEmitterMap_["onReady"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
     eventEmitterMap_["onSearchInformation"] = std::make_shared<AsyncEventEmitter<jsi::Value>>();
@@ -405,8 +647,11 @@ protected:
     });
   }
 
-  void emitOnClosed() {
-    static_cast<AsyncEventEmitter<>&>(*eventEmitterMap_["onClosed"]).emit();
+  template <typename OnClosedType> void emitOnClosed(OnClosedType value) {
+    static_assert(bridging::supportsFromJs<OnClosedType, jsi::Object>, "value cannnot be converted to jsi::Object");
+    static_cast<AsyncEventEmitter<jsi::Value>&>(*eventEmitterMap_["onClosed"]).emit([jsInvoker = jsInvoker_, eventValue = value](jsi::Runtime& rt) -> jsi::Value {
+      return bridging::toJs(rt, eventValue, jsInvoker);
+    });
   }
 
   template <typename OnFailureType> void emitOnFailure(OnFailureType value) {
@@ -430,35 +675,46 @@ protected:
     });
   }
 private:
-  static jsi::Value __boot(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
+  static jsi::Value __createSession(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* /*args*/, size_t /*count*/) {
     static_assert(
-      bridging::getParameterCount(&T::boot) == 2,
-      "Expected boot(...) to have 2 parameters");
-    bridging::callFromJs<void>(rt, &T::boot,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
-      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asObject(rt));return jsi::Value::undefined();
+      bridging::getParameterCount(&T::createSession) == 1,
+      "Expected createSession(...) to have 1 parameters");
+    return bridging::callFromJs<jsi::String>(rt, &T::createSession,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule));
   }
 
-  static jsi::Value __close(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* /*args*/, size_t /*count*/) {
+  static jsi::Value __boot(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
     static_assert(
-      bridging::getParameterCount(&T::close) == 1,
-      "Expected close(...) to have 1 parameters");
-    bridging::callFromJs<void>(rt, &T::close,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule));return jsi::Value::undefined();
+      bridging::getParameterCount(&T::boot) == 3,
+      "Expected boot(...) to have 3 parameters");
+    bridging::callFromJs<void>(rt, &T::boot,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
+      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
+      count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asObject(rt));return jsi::Value::undefined();
+  }
+
+  static jsi::Value __close(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
+    static_assert(
+      bridging::getParameterCount(&T::close) == 2,
+      "Expected close(...) to have 2 parameters");
+    bridging::callFromJs<void>(rt, &T::close,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
+      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt));return jsi::Value::undefined();
   }
 
   static jsi::Value __startSearch(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
     static_assert(
-      bridging::getParameterCount(&T::startSearch) == 2,
-      "Expected startSearch(...) to have 2 parameters");
+      bridging::getParameterCount(&T::startSearch) == 3,
+      "Expected startSearch(...) to have 3 parameters");
     bridging::callFromJs<void>(rt, &T::startSearch,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
-      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asObject(rt));return jsi::Value::undefined();
+      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
+      count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asObject(rt));return jsi::Value::undefined();
   }
 
   static jsi::Value __stop(jsi::Runtime &rt, TurboModule &turboModule, const jsi::Value* args, size_t count) {
     static_assert(
-      bridging::getParameterCount(&T::stop) == 2,
-      "Expected stop(...) to have 2 parameters");
+      bridging::getParameterCount(&T::stop) == 3,
+      "Expected stop(...) to have 3 parameters");
     bridging::callFromJs<void>(rt, &T::stop,  static_cast<NativeMapachessStockfishCxxSpec*>(&turboModule)->jsInvoker_, static_cast<T*>(&turboModule),
-      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt));return jsi::Value::undefined();
+      count <= 0 ? throw jsi::JSError(rt, "Expected argument in position 0 to be passed") : args[0].asString(rt),
+      count <= 1 ? throw jsi::JSError(rt, "Expected argument in position 1 to be passed") : args[1].asString(rt));return jsi::Value::undefined();
   }
 };
 

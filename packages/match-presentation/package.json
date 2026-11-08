@@ -5,6 +5,35 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./profile-card-gif": {
+      "types": "./src/profileCardGif.ts",
+      "default": "./dist/profileCardGif.js"
+    },
+    "./profile-card-format": {
+      "types": "./src/profileCardFormat.ts",
+      "default": "./dist/profileCardFormat.js"
+    },
+    "./accepted-match-presentation": {
+      "types": "./src/acceptedMatchPresentation.ts",
+      "default": "./dist/acceptedMatchPresentation.js"
+    },
+    "./clock-display": {
+      "types": "./src/clockDisplay.ts",
+      "default": "./dist/clockDisplay.js"
+    },
+    "./board-presentation": {
+      "types": "./src/boardPresentation.ts",
+      "default": "./dist/boardPresentation.js"
+    },
+    "./opponent-presentation": {
+      "types": "./src/opponentPresentation.ts",
+      "default": "./dist/opponentPresentation.js"
+    },
+    "./mapachess-theme.css": "./styles/mapachessTheme.css",
+    "./presentation-assets": {
+      "types": "./src/presentationAssets.ts",
+      "default": "./dist/presentationAssets.js"
+    },
     "./chess-board-theme.css": "./styles/chessBoardTheme.css",
     "./medals/*.png": "./assets/medals/*.png",
     "./better-hint-geometry": {
@@ -79,6 +108,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "gifenc": "^1",
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "xstate": "^5"

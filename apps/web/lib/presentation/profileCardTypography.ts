@@ -1,11 +1,8 @@
+import { PROFILE_CARD_TYPOGRAPHY } from "@mapachess/match-presentation/profile-card-format"
+
 export const PROFILE_CARD_FALLBACK_FONT = '"Trebuchet MS", Arial, sans-serif'
 
-export const PROFILE_CARD_TYPOGRAPHY = {
-  label: { weight: 700, size: 33 },
-  value: { weight: 900, size: 65 },
-  category: { weight: 700, size: 24 },
-  invitation: { weight: 700, size: 34 },
-} as const
+export { PROFILE_CARD_TYPOGRAPHY } from "@mapachess/match-presentation/profile-card-format"
 
 export default async function loadProfileCardFont(): Promise<string> {
   try {
