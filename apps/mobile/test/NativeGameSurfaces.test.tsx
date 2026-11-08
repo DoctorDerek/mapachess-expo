@@ -6,7 +6,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
+import Svg from "react-native-svg"
 import loadCatalog from "@mapachess/localization/catalog"
+import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
@@ -14,6 +16,7 @@ import {
 } from "@mapachess/match/match-position"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import type { ProfileRuntime } from "@mapachess/profile/profile-runtime"
+import NativeBattleFighter from "@/components/gameplay/NativeBattleFighter"
 import NativeChessboard from "@/components/gameplay/NativeChessboard"
 import NativeHome from "@/components/gameplay/NativeHome"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
@@ -42,6 +45,48 @@ async function readyProfile() {
 }
 
 describe("native gameplay surfaces", () => {
+  it("settles a missing-artwork presentation once without blocking the accepted battle sequence", async () => {
+    const presentation = resolveOpponentPresentation(
+      "chicken-stockfish",
+      { family: "defeat" },
+      0,
+      () => false,
+    )
+    expect(presentation.kind).toBe("authored-fallback")
+    const complete = jest.fn()
+    const props = {
+      participant: "opponent" as const,
+      displayName: copy.animals.names["chicken-stockfish"],
+      presentation,
+      idle: presentation,
+      opposing: presentation,
+      beat: "conclusion" as const,
+      phaseIndex: 3,
+      sequence: 7,
+      report: true,
+      active: true,
+      reducedMotion: true,
+      onComplete: complete,
+    }
+    const rendered = await render(
+      <Svg>
+        <NativeBattleFighter {...props} />
+      </Svg>,
+    )
+    await waitFor(() => expect(complete).toHaveBeenCalledWith("opponent", 3, 7))
+    await rendered.rerender(
+      <Svg>
+        <NativeBattleFighter {...props} active={false} />
+      </Svg>,
+    )
+    await rendered.rerender(
+      <Svg>
+        <NativeBattleFighter {...props} />
+      </Svg>,
+    )
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+
   it("offers all four real game modes and separate profile actions", async () => {
     const { runtime, data } = await readyProfile()
     const select = jest.fn()

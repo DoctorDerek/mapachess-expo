@@ -8,8 +8,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated"
-import Svg, { G, Image } from "react-native-svg"
+import Svg, { G, Image, Rect, Text } from "react-native-svg"
 import { scheduleOnRN } from "react-native-worklets"
+import { useCSSVariable } from "uniwind"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import type {
@@ -24,6 +25,7 @@ const FALLBACK_TRAVEL_MS = 360
 
 export default function NativeBattleFighter({
   participant,
+  displayName,
   presentation,
   idle,
   opposing,
@@ -36,6 +38,7 @@ export default function NativeBattleFighter({
   onComplete,
 }: Readonly<{
   participant: MatchPresentationParticipant
+  displayName: string
   presentation: ResolvedSpritePresentation<string, string>
   idle: ResolvedSpritePresentation<string, string>
   opposing: ResolvedSpritePresentation<string, string>
@@ -51,6 +54,13 @@ export default function NativeBattleFighter({
     sequence: number,
   ) => void
 }>) {
+  const fallbackColors = useCSSVariable([
+    "--color-mapachito-orange",
+    "--color-mapachito-white",
+    "--color-mapachito-charcoal",
+  ])
+  const fallbackColor = fallbackColors[participant === "player" ? 0 : 1]
+  const fallbackInk = fallbackColors[2]
   const steps = useMemo(
     () =>
       presentation.kind === "sprite"
@@ -230,23 +240,46 @@ export default function NativeBattleFighter({
         (geometry?.frameWidth ?? 1) -
       (geometry?.bottomCenterX ?? 0),
   }))
-  return source === undefined || geometry === undefined ? null : (
+  return (
     <AnimatedGroup animatedProps={groupProps}>
-      <Svg
-        x={-geometry.bottomCenterX}
-        y={-geometry.bottomY}
-        width={geometry.frameWidth}
-        height={geometry.frameHeight}
-        viewBox={`${String(-geometry.bottomCenterX)} ${String(-geometry.bottomY)} ${String(geometry.frameWidth)} ${String(geometry.frameHeight)}`}
-      >
-        <AnimatedImage
-          animatedProps={imageProps}
-          href={source}
+      {source === undefined || geometry === undefined ? (
+        <>
+          <Rect
+            x={-24}
+            y={-48}
+            width={48}
+            height={48}
+            fill={typeof fallbackColor === "string" ? fallbackColor : undefined}
+            stroke={typeof fallbackInk === "string" ? fallbackInk : undefined}
+            strokeWidth={2}
+          />
+          <Text
+            x={0}
+            y={-12}
+            textAnchor="middle"
+            fontSize={36}
+            fill={typeof fallbackInk === "string" ? fallbackInk : undefined}
+          >
+            {displayName.slice(0, 1)}
+          </Text>
+        </>
+      ) : (
+        <Svg
+          x={-geometry.bottomCenterX}
           y={-geometry.bottomY}
-          width={geometry.frameWidth * (step?.animation.frameCount ?? 1)}
+          width={geometry.frameWidth}
           height={geometry.frameHeight}
-        />
-      </Svg>
+          viewBox={`${String(-geometry.bottomCenterX)} ${String(-geometry.bottomY)} ${String(geometry.frameWidth)} ${String(geometry.frameHeight)}`}
+        >
+          <AnimatedImage
+            animatedProps={imageProps}
+            href={source}
+            y={-geometry.bottomY}
+            width={geometry.frameWidth * (step?.animation.frameCount ?? 1)}
+            height={geometry.frameHeight}
+          />
+        </Svg>
+      )}
     </AnimatedGroup>
   )
 }

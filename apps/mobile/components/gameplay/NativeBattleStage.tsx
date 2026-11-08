@@ -109,6 +109,7 @@ export default function NativeBattleStage({
       <Svg width="100%" height="100%" viewBox="0 0 360 120">
         <NativeBattleFighter
           participant="player"
+          displayName={copy.animals.names[playerAnimal]}
           presentation={player}
           idle={playerIdle}
           opposing={opponent}
@@ -125,6 +126,7 @@ export default function NativeBattleStage({
         />
         <NativeBattleFighter
           participant="opponent"
+          displayName={copy.animals.names[opponentAnimal]}
           presentation={opponent}
           idle={opponentIdle}
           opposing={player}
