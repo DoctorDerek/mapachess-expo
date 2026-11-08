@@ -51,19 +51,23 @@ design document, commercial assets, and player data are never committed. Web
 builds provision the exact pinned browser runtime, but ordinary GitHub quality
 CI never runs Stockfish or calibration games.
 
-## Next implementation phases
+## Application ownership and verification
 
-1. Playtest and complete the first Standard Story opponent's full QREAM
-   presentation, results, progression, and responsive behavior.
-2. Playtest the 25 Story opponents in both variants, including progression from
-   previously saved games.
-3. Complete Chess960 Story and both Challenge modes through the same canonical
-   match, profile, and engine contracts.
+The web and native applications consume shared gameplay, profile, hint,
+evaluation, input-binding, localization, and presentation contracts. Native
+rendering uses the production application route rather than the former engine
+diagnostic screen. The diagnostic renderer remains a test fixture.
 
-The planned application stack uses Next.js, React, Tailwind CSS, shadcn/ui, and
+The application stack uses Next.js, React, Tailwind CSS, shadcn/ui, and
 Motion for web; React Native, Expo, Uniwind, React Native Reusables, and React
 Native Reanimated for native; and shared TypeScript and XState domain behavior
 across both platforms.
+
+Native TypeScript and Jest/React Native Testing Library checks exercise the
+application with substituted engine and OS boundaries. They do not establish
+native compilation, device behavior, pixel quality, or calibration equivalence.
+The custom Stockfish and hardware-input modules require a development build,
+not the standard Expo Go client.
 
 ## Local development
 
@@ -84,7 +88,7 @@ corepack pnpm format:check
 corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm test:coverage
-corepack pnpm build
+corepack pnpm --filter @mapachess/web... build
 corepack pnpm test:e2e
 ```
 
@@ -92,6 +96,31 @@ The web typecheck runs `next typegen` before TypeScript so a fresh checkout
 has Next.js's generated route and static-image declarations. It does not
 require starting the app or building it first. Keep `next-env.d.ts` and
 `.next/` ignored; Next.js owns those generated files.
+
+### Native application preparation
+
+```powershell
+corepack pnpm --filter @mapachess/mobile app:prepare
+corepack pnpm --filter @mapachess/mobile test:native:coverage
+```
+
+The app preparation command builds the shared gameplay dependencies and the
+native Stockfish TypeScript adapter, then prepares the existing licensed and
+public artwork for Metro's static asset resolution. These are TypeScript and
+asset operations, not native compilation, Expo export, Metro startup, or device
+QA. Development/start/build hooks and the existing native test preparation
+delegate to this one command. A clean checkout does not depend on old `dist/`
+directories from another task.
+
+Native artwork and static require manifests remain ignored under
+`apps/mobile/.prepared-assets/` and `apps/mobile/lib/presentation/`. The animation
+manifest is separate so the optional first-arrival runtime can load lazily.
+Use the existing Ghost Assets inputs and configured key; do not commit decoded
+artwork or introduce another key or publication path.
+
+Root `pnpm build` also invokes the mobile Expo export. Keep native compilation,
+exports, Metro sessions, EAS builds, and device acceptance separate from these
+source-only checks and subject to their explicit approval gates.
 
 ### Lint ownership and coverage
 
@@ -182,9 +211,10 @@ status alone does not prove licensed artwork shipped. See
 [licensed asset setup](ghost_assets/README.md) for source ownership, cache
 behavior, and safe verification.
 
-The current EAS hook provisions native Stockfish only. Its secret is configured,
-but native animal presentation still needs its consumer and build integration;
-secret configuration and verified native asset delivery are separate milestones.
+The EAS post-install hook provisions the pinned native Stockfish inputs and runs
+the same native application preparation. Native presentation consumers and
+ignored static asset manifests are implemented. Hook configuration and local
+asset verification do not establish a successful EAS build or device delivery.
 
 ## Rights and third-party software
 
