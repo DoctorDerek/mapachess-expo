@@ -260,22 +260,25 @@ export async function openCurrentMatchSession<Runtime extends MatchRuntime>({
   }
 
   const resumedMatch = resumeMatch(activeMatch)
-  const runtime = await openRuntime({
-    ...(activeMatch.mode === "challenge"
-      ? {
-          mode: "challenge" as const,
-          playerColor: activeMatch.playerColor,
-          ...(activeMatch.opponentTargetElo === undefined
-            ? {}
-            : { difficultyTargetElo: activeMatch.opponentTargetElo }),
-        }
-      : {}),
+  const commonRuntimeInput = {
     matchSeed: resumedMatch.matchSeed,
     opponentId: activeMatch.opponentId,
     opponentPolicyFingerprint: activeMatch.opponentPolicyFingerprint,
     setup: activeMatch.startingPosition,
     signal,
-  })
+  }
+  const runtime = await openRuntime(
+    activeMatch.mode === "challenge"
+      ? {
+          ...commonRuntimeInput,
+          mode: "challenge",
+          playerColor: activeMatch.playerColor,
+          ...(activeMatch.opponentTargetElo === undefined
+            ? {}
+            : { difficultyTargetElo: activeMatch.opponentTargetElo }),
+        }
+      : commonRuntimeInput,
+  )
   if (signal.aborted) return closeRuntimeAfterFailure(runtime, abortedOpening())
   if (
     activeMatch.opponentPolicyFingerprint !==
@@ -407,17 +410,8 @@ export default async function openFreshMatchSession<
         : variant === "standard"
           ? { variant, chess960PositionId: null }
           : { variant })
-  const runtime = await openRuntime({
+  const commonRuntimeInput = {
     opponentId,
-    ...(playerColor === undefined
-      ? {}
-      : {
-          mode: "challenge" as const,
-          playerColor,
-          ...(challengeSetup === undefined
-            ? {}
-            : { difficultyTargetElo: challengeSetup.difficultyTargetElo }),
-        }),
     ...(previousSession === null
       ? {}
       : {
@@ -426,7 +420,19 @@ export default async function openFreshMatchSession<
         }),
     setup,
     signal,
-  })
+  }
+  const runtime = await openRuntime(
+    playerColor === undefined
+      ? commonRuntimeInput
+      : {
+          ...commonRuntimeInput,
+          mode: "challenge",
+          playerColor,
+          ...(challengeSetup === undefined
+            ? {}
+            : { difficultyTargetElo: challengeSetup.difficultyTargetElo }),
+        },
+  )
   const mode = playerColor === undefined ? "story" : "challenge"
   const timeControl =
     previousSession?.match.timeControl ?? input.timeControl ?? UNTIMED
