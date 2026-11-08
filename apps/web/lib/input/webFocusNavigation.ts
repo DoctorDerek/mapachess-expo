@@ -1,3 +1,4 @@
+import directionalInputTarget from "@mapachess/match/directional-input-target"
 import type { InputDirection } from "@mapachess/match/player-input"
 
 const INPUT_CONTROL_SELECTOR =
@@ -70,23 +71,22 @@ export function moveInputFocus(
     return
   }
   const rect = inputFocusTarget(current).getBoundingClientRect()
-  const horizontal = direction === "left" || direction === "right"
-  const sign = direction === "left" || direction === "up" ? -1 : 1
-  const cx = rect.left + rect.width / 2
-  const cy = rect.top + rect.height / 2
-  const candidates = controls
-    .flatMap((element) => {
-      if (element === current) return []
+  const next = directionalInputTarget(
+    {
+      value: current,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    },
+    controls.map((element) => {
       const next = inputFocusTarget(element).getBoundingClientRect()
-      const dx = next.left + next.width / 2 - cx
-      const dy = next.top + next.height / 2 - cy
-      const forward = (horizontal ? dx : dy) * sign
-      if (forward <= 1) return []
-      const perpendicular = Math.abs(horizontal ? dy : dx)
-      return [{ element, distance: forward + perpendicular * 3 }]
-    })
-    .sort((left, right) => left.distance - right.distance)
-  const next = candidates[0]?.element
+      return {
+        value: element,
+        x: next.left + next.width / 2,
+        y: next.top + next.height / 2,
+      }
+    }),
+    direction,
+  )
   if (next !== undefined) focusInput(next)
 }
 
