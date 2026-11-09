@@ -1,10 +1,44 @@
 import { describe, expect, it } from "vitest"
 import levelProgressionSpans, {
   easeOutQuad,
+  levelProgressFrame,
   levelProgressionTiming,
+  levelProgressSpanFrame,
 } from "../src/levelProgression.js"
 
 describe("distance-proportional Level progression", () => {
+  it("projects the XP counter and bar together within each traversed span", () => {
+    const [first, next] = [...levelProgressionSpans(1, 5)]
+    expect(levelProgressSpanFrame(first!, easeOutQuad(0.5))).toEqual({
+      level: 1,
+      current: 1,
+      required: 2,
+      fraction: 0.875,
+    })
+    expect(levelProgressSpanFrame(first!, 1)).toMatchObject({
+      level: 1,
+      current: 2,
+      fraction: 1,
+    })
+    expect(levelProgressSpanFrame(next!, 0)).toEqual(levelProgressFrame(2))
+    expect(levelProgressFrame(5)).toEqual({
+      level: 3,
+      current: 1,
+      required: 2,
+      fraction: 0.5,
+    })
+  })
+
+  it("projects a descending span without changing the final XP frame", () => {
+    const [span] = [...levelProgressionSpans(4, 3)]
+    expect(levelProgressSpanFrame(span!, 0)).toMatchObject({
+      level: 2,
+      current: 2,
+      fraction: 1,
+    })
+    expect(levelProgressSpanFrame(span!, 1)).toEqual(levelProgressFrame(3))
+  })
+
   it("applies the exact monotonic quadratic without overshoot", () => {
     expect([0, 0.25, 0.5, 0.75, 1].map(easeOutQuad)).toEqual([
       0, 0.4375, 0.75, 0.9375, 1,

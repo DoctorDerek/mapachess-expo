@@ -12,6 +12,33 @@ export type LevelProgressionSpan = Readonly<{
   durationMs: number
 }>
 
+type LevelProgressFrame = Readonly<{
+  level: number
+  current: number
+  required: number
+  fraction: number
+}>
+
+export function levelProgressFrame(xp: number): LevelProgressFrame {
+  const progress = levelProgress(xp)
+  return { ...progress, fraction: progress.current / progress.required }
+}
+
+export function levelProgressSpanFrame(
+  span: LevelProgressionSpan,
+  easedFraction: number,
+): LevelProgressFrame {
+  const start = xpAtLevel(span.level)
+  const xp = span.fromXp + (span.toXp - span.fromXp) * easedFraction
+  return {
+    level: span.level,
+    current: Math.floor(xp) - start,
+    required: xpAtLevel(span.level + 1) - start,
+    fraction:
+      span.fromFraction + (span.toFraction - span.fromFraction) * easedFraction,
+  }
+}
+
 export const easeOutQuad = (elapsedFraction: number): number =>
   1 - (1 - elapsedFraction) ** 2
 

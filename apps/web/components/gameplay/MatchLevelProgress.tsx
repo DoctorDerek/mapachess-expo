@@ -2,17 +2,13 @@
 
 import { animate, useReducedMotion } from "motion/react"
 import { useEffect, useState } from "react"
-import { levelProgress, xpAtLevel } from "@mapachess/profile/global-xp"
 import levelProgressionSpans, {
   easeOutQuad,
+  levelProgressFrame,
+  levelProgressSpanFrame,
 } from "@mapachess/profile/level-progression"
 import pausePresentationWhileHidden from "../../lib/presentation/pausePresentationWhileHidden"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const progressFrame = (xp: number) => {
-  const progress = levelProgress(xp)
-  return { ...progress, fraction: progress.current / progress.required }
-}
 
 export default function MatchLevelProgress({
   beforeXp,
@@ -20,51 +16,41 @@ export default function MatchLevelProgress({
 }: Readonly<{ beforeXp: number; afterXp: number }>) {
   const copy = useMapachessCopy()
 
-  const [displayed, setDisplayed] = useState(() => progressFrame(beforeXp))
+  const [displayed, setDisplayed] = useState(() => levelProgressFrame(beforeXp))
   const reduceMotion = useReducedMotion() === true
-  const final = levelProgress(afterXp)
+  const final = levelProgressFrame(afterXp)
 
   useEffect(() => {
     if (reduceMotion) {
-      setDisplayed(progressFrame(afterXp))
+      setDisplayed(levelProgressFrame(afterXp))
       return
     }
     let active = true
     let playback: ReturnType<typeof animate> | undefined
     let stopFollowingVisibility: (() => void) | undefined
-    setDisplayed(progressFrame(beforeXp))
+    setDisplayed(levelProgressFrame(beforeXp))
     const traverse = async (): Promise<void> => {
       for (const span of levelProgressionSpans(beforeXp, afterXp)) {
         if (!active) return
-        const start = xpAtLevel(span.level)
-        const required = xpAtLevel(span.level + 1) - start
         playback = animate(0, 1, {
           duration: span.durationMs / 1000,
           ease: easeOutQuad,
           onUpdate: (fraction) => {
             if (!active) return
-            const xp = span.fromXp + (span.toXp - span.fromXp) * fraction
-            setDisplayed({
-              level: span.level,
-              current: Math.floor(xp) - start,
-              required,
-              fraction:
-                span.fromFraction +
-                (span.toFraction - span.fromFraction) * fraction,
-            })
+            setDisplayed(levelProgressSpanFrame(span, fraction))
           },
         })
         stopFollowingVisibility = pausePresentationWhileHidden(playback)
         await playback
         stopFollowingVisibility()
         if (!active) return
-        setDisplayed(progressFrame(span.toXp))
+        setDisplayed(levelProgressFrame(span.toXp))
       }
     }
     void traverse().catch(() => {
       stopFollowingVisibility?.()
       playback?.stop()
-      if (active) setDisplayed(progressFrame(afterXp))
+      if (active) setDisplayed(levelProgressFrame(afterXp))
     })
 
     return () => {
