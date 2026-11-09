@@ -82,6 +82,7 @@ import {
   MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION,
   PLAYER_APPEARANCE_DATA_SCHEMA_VERSION,
   REVERSIBLE_RESULT_PLAYER_DATA_SCHEMA_VERSION,
+  SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION,
   STORY_PROGRESS_PLAYER_DATA_SCHEMA_VERSION,
   THREE_HINT_MODES_PLAYER_DATA_SCHEMA_VERSION,
   TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION,
@@ -114,6 +115,7 @@ import applyStoryMatchResult, {
 import decodeStoryProgress, {
   canonicalStoryProgress,
   requireRecordedStoryResult,
+  retainPreBearStoryAccess,
 } from "./storyProgressCodec.js"
 
 export type { PlayerDataDecodeIssue } from "./decodePrimitives.js"
@@ -143,6 +145,7 @@ export type PlayerDataSource = Readonly<{
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION
 }>
 
@@ -731,6 +734,7 @@ const decodeCurrentPlayerData = (
     | typeof TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION
     | typeof MOVE_REACTION_PLACEMENT_PLAYER_DATA_SCHEMA_VERSION
     | typeof ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION
+    | typeof SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION
     | typeof MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 ): Readonly<{ data: MapachessPlayerData; source: PlayerDataSource }> => {
   requireExactKeys(
@@ -797,6 +801,7 @@ const decodeCurrentPlayerData = (
     object.storyProgress,
     "$.storyProgress",
     sourceSchemaVersion <= ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION,
+    sourceSchemaVersion === SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION,
   )
   requireRecordedStoryResult(storyProgress, activeMatch)
   const processedMatchResultIds = decodeProcessedMatchResultIds(
@@ -1047,7 +1052,12 @@ const decodeCurrentPlayerData = (
   }
   return Object.freeze({
     data: assistanceRatings
-      ? data
+      ? sourceSchemaVersion === SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION
+        ? Object.freeze({
+            ...data,
+            storyProgress: retainPreBearStoryAccess(storyProgress),
+          })
+        : data
       : Object.freeze({
           ...data,
           lastAcceptedResultReward: retirePreviousRatingContribution(data),
@@ -1129,6 +1139,8 @@ export const decodeMapachessPlayerDataWithSource = (
               object.schemaVersion ===
                 HERO_EQUIPMENT_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === MAPACHESS_PLAYER_DATA_SCHEMA_VERSION ||
+              object.schemaVersion ===
+                SQUIRREL_TIGER_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion ===
                 ASSISTANCE_RATINGS_PLAYER_DATA_SCHEMA_VERSION ||
               object.schemaVersion === TIMED_CHESS_PLAYER_DATA_SCHEMA_VERSION ||

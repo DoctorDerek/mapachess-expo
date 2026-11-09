@@ -22,14 +22,22 @@ import {
 const ORIGINAL_ROSTER = STOCKFISH_OPPONENTS.filter(
   ({ originalStoryTargetElo }) => originalStoryTargetElo !== null,
 )
+const SQUIRREL_TIGER_ROSTER = STOCKFISH_OPPONENTS.filter(
+  ({ id }) => id !== "bear-stockfish",
+)
 
 const decodeStoryVictories = (
   received: unknown,
   path: string,
   original: boolean,
   retained: RetainedStoryFrontier | undefined,
+  beforeBear: boolean,
 ): readonly StoryVictory[] => {
-  const roster = original ? ORIGINAL_ROSTER : STOCKFISH_OPPONENTS
+  const roster = original
+    ? ORIGINAL_ROSTER
+    : beforeBear
+      ? SQUIRREL_TIGER_ROSTER
+      : STOCKFISH_OPPONENTS
   if (!Array.isArray(received) || received.length > roster.length)
     return failData(path)
   const victories: StoryVictory[] = []
@@ -45,7 +53,8 @@ const decodeStoryVictories = (
       opponent === undefined ||
       opponent.id !== object.opponentId ||
       opponent.storyPosition <= priorPosition ||
-      (!original && !isStoryOpponentAvailable(victories, retained, opponent))
+      (!original &&
+        !isStoryOpponentAvailable(victories, retained, opponent, roster))
     )
       return failData(`${itemPath}.opponentId`)
     priorPosition = opponent.storyPosition
@@ -77,6 +86,7 @@ export default function decodeStoryProgress(
   received: unknown,
   path: string,
   original = false,
+  beforeBear = false,
 ): StoryProgress {
   const object = requireObject(received, path)
   const hasRetainedAccess = !original && object.retainedAccess !== undefined
@@ -112,6 +122,7 @@ export default function decodeStoryProgress(
       `${path}.${variant}`,
       original,
       frontier,
+      beforeBear,
     )
     if (original || frontier !== undefined) {
       const earned = originalFrontier(victories)
@@ -138,6 +149,25 @@ export default function decodeStoryProgress(
       ? { retainedAccess: Object.freeze(retainedAccess) }
       : {}),
   })
+}
+
+export const retainPreBearStoryAccess = (
+  progress: StoryProgress,
+): StoryProgress => {
+  const retainedAccess = { ...progress.retainedAccess }
+  for (const variant of ["standard", "chess960"] as const)
+    if (
+      progress[variant].some(
+        ({ opponentId }) => opponentId === "tiger-stockfish",
+      )
+    )
+      retainedAccess[variant] = "falcon-stockfish"
+  return Object.keys(retainedAccess).length
+    ? Object.freeze({
+        ...progress,
+        retainedAccess: Object.freeze(retainedAccess),
+      })
+    : progress
 }
 
 export const requireRecordedStoryResult = (

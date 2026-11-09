@@ -28,6 +28,87 @@ const victories = (count: number) =>
   }))
 
 describe("Story roster upgrades", () => {
+  it("verifies the original v19 checksum before retaining Falcon access and adding unplayed Bear", async () => {
+    const payload = {
+      ...createInitialMapachessPlayerData(),
+      schemaVersion: 19,
+      introductionCompleted: true,
+      storyProgress: {
+        standard: STOCKFISH_OPPONENTS.slice(0, 18).map(({ id }) => ({
+          opponentId: id,
+          highestMedal: "gold",
+        })),
+        chess960: [],
+      },
+    }
+    const envelope = {
+      formatVersion: 1,
+      saveSchemaVersion: 19,
+      payload,
+      integrity: {
+        algorithm: "SHA-256",
+        payloadHash:
+          "0f44aa2f33d5521dc87a0b7ae5be547312f8beb829b1cf27bf0304922857f218",
+      },
+    }
+    const stored = await decodeStoredPlayerData(
+      JSON.stringify({ ...envelope, format: "mapachess-stored-player-data" }),
+      sha256,
+    )
+    if (!stored.ok) throw new Error(JSON.stringify(stored.issue))
+    expect(stored.data).toEqual({
+      ...payload,
+      schemaVersion: 20,
+      storyProgress: {
+        ...payload.storyProgress,
+        retainedAccess: { standard: "falcon-stockfish" },
+      },
+    })
+    for (const id of ["bear-stockfish", "falcon-stockfish"] as const)
+      expect(
+        canPlayStoryOpponent(stored.data.storyProgress, "standard", id),
+      ).toBe(true)
+    expect(
+      selectChallengeUnlockedOpponents(stored.data.storyProgress).map(
+        ({ id }) => id,
+      ),
+    ).not.toContain("bear-stockfish")
+    expect(
+      selectStoryCompletion(stored.data.storyProgress).standard,
+    ).toBeCloseTo((100 * 18) / 26)
+    const backup = {
+      ...envelope,
+      format: "mapachess-portable-backup",
+      applicationVersion: "historical-v19",
+      gddRevision: "5.6",
+    }
+    expect(
+      await decodeMapachessPortableBackup(JSON.stringify(backup), sha256),
+    ).toMatchObject({ ok: true, backup: { payload: stored.data } })
+    expect(
+      await decodeMapachessPortableBackup(
+        await createMapachessPortableBackup({
+          playerData: stored.data,
+          applicationVersion: "test",
+          gddRevision: "5.7",
+          sha256,
+        }),
+        sha256,
+      ),
+    ).toMatchObject({
+      ok: true,
+      backup: { saveSchemaVersion: 20, payload: stored.data },
+    })
+    expect(
+      await decodeMapachessPortableBackup(
+        JSON.stringify({ ...backup, payload: { ...payload, totalXp: 4 } }),
+        sha256,
+      ),
+    ).toMatchObject({
+      ok: false,
+      issue: { type: "PROFILE.BACKUP_INTEGRITY_MISMATCH" },
+    })
+  })
   it.each(["standard", "chess960"] as const)(
     "retains every old %s frontier by identity, without awarding new wins",
     (variant) => {
@@ -64,7 +145,7 @@ describe("Story roster upgrades", () => {
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "records 23 → 24 → 25 in %s and shares only the defeated animal with Challenge",
+    "records 23 → 24 → 25 → 26 in %s and shares only the defeated animal with Challenge",
     (variant) => {
       const progress = decodeStoryProgress(
         { standard: [], chess960: [], [variant]: victories(23) },
@@ -72,7 +153,9 @@ describe("Story roster upgrades", () => {
         true,
       )
       const win = completedStoryMatch(variant)
-      expect(selectStoryCompletion(progress)[variant]).toBe(92)
+      expect(selectStoryCompletion(progress)[variant]).toBeCloseTo(
+        (100 * 23) / 26,
+      )
       expect(selectDefaultStoryOpponent(progress, variant)).toBe(
         "squirrel-stockfish",
       )
@@ -80,7 +163,7 @@ describe("Story roster upgrades", () => {
         ...win,
         opponentId: "tiger-stockfish",
       })
-      expect(selectStoryCompletion(tiger)[variant]).toBe(96)
+      expect(selectStoryCompletion(tiger)[variant]).toBeCloseTo((100 * 24) / 26)
       expect(
         selectChallengeUnlockedOpponents(tiger).map(({ id }) => id),
       ).toContain("tiger-stockfish")
@@ -91,9 +174,16 @@ describe("Story roster upgrades", () => {
         ...win,
         opponentId: "squirrel-stockfish",
       })
-      expect(selectStoryCompletion(squirrel)[variant]).toBe(100)
+      expect(selectStoryCompletion(squirrel)[variant]).toBeCloseTo(
+        (100 * 25) / 26,
+      )
+      const bear = applyStoryMatchResult(squirrel, {
+        ...win,
+        opponentId: "bear-stockfish",
+      })
+      expect(selectStoryCompletion(bear)[variant]).toBe(100)
       expect(
-        selectStoryLadder(squirrel, variant).every(
+        selectStoryLadder(bear, variant).every(
           ({ status }) => status === "defeated",
         ),
       ).toBe(true)
@@ -156,7 +246,7 @@ describe("Story roster upgrades", () => {
     )
     expect(roundTrip).toMatchObject({
       ok: true,
-      backup: { saveSchemaVersion: 19, payload: migrated },
+      backup: { saveSchemaVersion: 20, payload: migrated },
     })
     expect(
       await decodeMapachessPortableBackup(
@@ -223,7 +313,7 @@ describe("Story roster upgrades", () => {
     expect(migrated).toMatchObject({
       ok: true,
       data: {
-        schemaVersion: 19,
+        schemaVersion: 20,
         totalXp: 100,
         appearance: payload.appearance,
         settings: payload.settings,

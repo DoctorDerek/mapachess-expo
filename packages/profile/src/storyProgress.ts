@@ -69,8 +69,9 @@ export const isStoryOpponentAvailable = (
   victories: readonly StoryVictory[],
   retained: RetainedStoryFrontier | undefined,
   opponent: StockfishOpponentDefinition,
+  roster: readonly StockfishOpponentDefinition[] = STOCKFISH_OPPONENTS,
 ): boolean => {
-  const previous = STOCKFISH_OPPONENTS[opponent.storyPosition - 2]
+  const previous = roster[roster.findIndex(({ id }) => id === opponent.id) - 1]
   return (
     previous === undefined ||
     victories.some(
