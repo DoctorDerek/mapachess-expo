@@ -185,7 +185,7 @@ export default function NativeMatch({
     reactions === null ? null : <NativeMoveRatings controller={reactions} />
   return (
     <NativeInputSurface
-      enabled={visible}
+      enabled={visible && !rewardOpen}
       onAction={onAction}
       className="relative min-h-0 flex-1"
     >
@@ -347,38 +347,34 @@ export default function NativeMatch({
           </NativeButton>
         )}
       </ScrollView>
-      <View
-        accessibilityViewIsModal={rewardOpen}
-        className={cx(
-          "bg-mapachito-charcoal",
-          rewardOpen ? "absolute inset-0 z-50 min-h-0 flex-1" : "shrink-0",
-        )}
-      >
-        {binding === null ? null : (
-          <NativeBattleStage
-            binding={binding}
-            visible={
-              visible && !overlays.some((overlay) => overlay !== "rewards")
-            }
-            playerAnimal={
-              session.match.mode === "story"
-                ? data.appearance.animal
-                : "raccoon-stockfish"
-            }
-            opponentAnimal={session.match.opponentId}
-          />
-        )}
-        {rewardOpen && saved !== null ? (
+      <NativeBattleStage
+        binding={binding}
+        visible={visible && !overlays.some((overlay) => overlay !== "rewards")}
+        playerAnimal={
+          session.match.mode === "story"
+            ? data.appearance.animal
+            : "raccoon-stockfish"
+        }
+        opponentAnimal={session.match.opponentId}
+        renderHost={(stage, stageHeightClassName) => (
           <NativeMatchRewards
-            match={saved}
-            reward={reward}
-            data={data}
-            onDismiss={() => navigation.close("rewards")}
-            onSetup={onSetup}
-            onReplay={onReplay}
+            stage={stage}
+            stageHeightClassName={stageHeightClassName}
+            celebration={
+              rewardOpen && saved !== null
+                ? {
+                    match: saved,
+                    reward,
+                    data,
+                    onDismiss: () => navigation.close("rewards"),
+                    onSetup,
+                    onReplay,
+                  }
+                : null
+            }
           />
-        ) : null}
-      </View>
+        )}
+      />
       {visible ? (
         <NativeMatchOverlay
           session={session}

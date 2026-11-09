@@ -1,4 +1,7 @@
+import cx from "classix"
+import { useLayoutEffect, useRef, type ReactNode } from "react"
 import { ScrollView, View } from "react-native"
+import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
@@ -20,22 +23,19 @@ import NativeText from "../presentation/NativeText"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
 import NativeLevelProgress from "./NativeLevelProgress"
 
-export default function NativeMatchRewards({
-  match,
-  reward,
-  data,
-  onDismiss,
-  onSetup,
-  onReplay,
-}: Readonly<{
+type Celebration = Readonly<{
   match: DurableMatchRecord
   reward: AcceptedMatchReward | null
   data: MapachessPlayerData
   onDismiss: () => void
   onSetup: (setup: MatchSetup) => void
   onReplay: () => void
-}>) {
-  const { copy } = useNativeLocale()
+}>
+
+function rewardContents(
+  { match, reward, data, onDismiss, onSetup, onReplay }: Celebration,
+  copy: MapachessCatalog,
+) {
   if (match.conclusion === null) return null
   const medal = matchVictoryMedal(match)
   const assistance = matchMedalEligibility(match)
@@ -58,20 +58,9 @@ export default function NativeMatchRewards({
         : "next"
   const target =
     action === "next" && next !== undefined ? next.opponent : opponent
-  return (
-    <NativeInputSurface
-      modal
-      className="bg-mapachito-charcoal"
-      onAction={(action) => {
-        if (action !== "cancel" && action !== "menu") return false
-        onDismiss()
-        return true
-      }}
-    >
-      <ScrollView
-        className="min-h-0 flex-1"
-        contentContainerClassName="gap-3 p-4"
-      >
+  return {
+    facts: (
+      <View className="gap-3 p-4">
         <NativeText
           accessibilityRole="header"
           className="font-native text-center text-3xl"
@@ -141,11 +130,14 @@ export default function NativeMatchRewards({
             )}
           </NativeText>
         ))}
-      </ScrollView>
+      </View>
+    ),
+    actions: (
       <View className="shrink-0 gap-2 px-3 pt-3 pb-2">
         <View className="flex-row flex-wrap gap-2">
           <NativeButton
             variant="secondary"
+            focusRequested
             className="min-w-28 flex-1"
             onPress={onDismiss}
           >
@@ -186,6 +178,70 @@ export default function NativeMatchRewards({
           />
         )}
       </View>
-    </NativeInputSurface>
+    ),
+  }
+}
+
+export default function NativeMatchRewards({
+  celebration,
+  stage,
+  stageHeightClassName,
+}: Readonly<{
+  celebration: Celebration | null
+  stage: ReactNode
+  stageHeightClassName: string
+}>) {
+  const { copy } = useNativeLocale()
+  const scroll = useRef<ScrollView>(null)
+  const content =
+    celebration === null ? null : rewardContents(celebration, copy)
+  const open = content !== null
+  useLayoutEffect(() => {
+    if (!open) scroll.current?.scrollTo({ y: 0, animated: false })
+  }, [open])
+
+  return (
+    <>
+      {open ? (
+        <View
+          importantForAccessibility="no-hide-descendants"
+          pointerEvents="none"
+          className={cx("w-full shrink-0", stageHeightClassName)}
+        />
+      ) : null}
+      <View
+        accessibilityViewIsModal={open}
+        className={cx(
+          "bg-mapachito-charcoal",
+          open ? "absolute inset-0 z-50 min-h-0" : "shrink-0",
+          !open && stageHeightClassName,
+        )}
+      >
+        <NativeInputSurface
+          enabled={open}
+          modal
+          onAccessibilityEscape={celebration?.onDismiss}
+          onAction={(action) => {
+            if (
+              celebration === null ||
+              (action !== "cancel" && action !== "menu")
+            )
+              return false
+            celebration.onDismiss()
+            return true
+          }}
+        >
+          <ScrollView
+            ref={scroll}
+            className="min-h-0 flex-1"
+            scrollEnabled={open}
+          >
+            {stage}
+            {content?.facts}
+          </ScrollView>
+          {content?.actions}
+        </NativeInputSurface>
+      </View>
+    </>
   )
 }
