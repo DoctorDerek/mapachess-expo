@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react"
+import {
+  spriteStepPlayback,
+  type BattleSpriteStep,
+} from "@mapachess/match-presentation/battle-sprite-playback"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
   ResolvedSpritePresentation,
-  ResolvedSpriteStep,
   SpriteFrameRange,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
 import {
@@ -10,7 +13,7 @@ import {
   battleSpriteGeometry,
 } from "@mapachess/match-presentation/sprite-presentation-geometry"
 
-export type BattleSpriteStep = ResolvedSpriteStep<string, string>
+export type { BattleSpriteStep }
 
 export const battleStageStyle = (
   player: ResolvedSpritePresentation<string, string>,
@@ -32,10 +35,7 @@ export const battleStageStyle = (
   const playerGeometry = battleSpriteGeometry(player)
   const opponentGeometry = battleSpriteGeometry(opponent)
   const bounds = [playerGeometry, opponentGeometry]
-  const extent = (
-    axis: "above" | "below",
-    layout: "mobile" | "desktop",
-  ) =>
+  const extent = (axis: "above" | "below", layout: "mobile" | "desktop") =>
     `max(${bounds
       .map((geometry) =>
         geometry.kind === "authored-fallback"
@@ -124,13 +124,12 @@ export const battleSpriteFrameStyle = (
 ): CSSProperties => {
   const { animation } = step
   const { geometry } = animation
-  const [first, end] = step.frames ?? [0, animation.frameCount]
+  const {
+    frames: [first],
+    stillFrame,
+  } = spriteStepPlayback(step)
   const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
-  const frameIndex = reducedMotion
-    ? step.playback === "once-hold-final-frame"
-      ? end - 1
-      : Math.max(first, Math.min(end - 1, animation.reducedMotionFrameIndex))
-    : first
+  const frameIndex = reducedMotion ? stillFrame : first
   return {
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: battleSpriteFramePosition(

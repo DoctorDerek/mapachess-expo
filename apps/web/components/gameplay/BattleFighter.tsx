@@ -3,7 +3,11 @@
 import cx from "classix"
 import { animate } from "motion"
 import { useReducedMotion } from "motion/react"
-import { useEffect, useEffectEvent, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
+import battleSpritePlayback, {
+  BATTLE_FALLBACK_TRAVEL_MILLISECONDS,
+  type BattleTravelTarget,
+} from "@mapachess/match-presentation/battle-sprite-playback"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import type {
@@ -20,9 +24,6 @@ import {
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const FALLBACK_MOVEMENT_SECONDS = 0.36
-type BattleTravelTarget = "home" | "contact" | "recoil"
 
 export type BattleFighterProps = Readonly<{
   beat: MatchPresentationBeat
@@ -57,18 +58,10 @@ export default function BattleFighter({
 }: BattleFighterProps) {
   const copy = useMapachessCopy().presentation
   const shouldReduceMotion = useReducedMotion() === true
-  const travelsToOpponent =
-    presentation.reactionSlot.endsWith("attacker") &&
-    !(
-      presentation.kind === "sprite" &&
-      presentation.steps.every((step) => step.beat === "strike")
-    )
-  const displayedFacing =
-    beat === "recovery" && travelsToOpponent
-      ? facing === "left"
-        ? "right"
-        : "left"
-      : facing
+  const playback = useMemo(
+    () => battleSpritePlayback(presentation, beat, facing, shouldReduceMotion),
+    [presentation, beat, facing, shouldReduceMotion],
+  )
   const spriteRef = useRef<HTMLSpanElement>(null)
   const travelerRef = useRef<HTMLDivElement>(null)
   const visibleSource = useRef<string | null>(null)
@@ -117,17 +110,7 @@ export default function BattleFighter({
       frames.cancel()
       frames = null
     }
-    const isVictim = presentation.reactionSlot.endsWith("victim")
-    const travelTarget = shouldReduceMotion
-      ? "home"
-      : travelsToOpponent &&
-          (beat === "approach" || beat === "strike" || beat === "reaction")
-        ? "contact"
-        : isVictim && beat === "reaction"
-          ? "recoil"
-          : "home"
-    const allSteps = presentation.kind === "sprite" ? presentation.steps : []
-    const sources = allSteps.map((step) => step.animation.sourceId)
+    const { repeatSequence, sources, steps, travelTarget } = playback
     images.retain(
       visibleSource.current === null
         ? sources
@@ -138,16 +121,6 @@ export default function BattleFighter({
       reactionSequence,
       sources,
     })
-    const playbackBeat =
-      beat === "conclusion" && presentation.reactionSlot === "idle"
-        ? "idle"
-        : beat
-    const steps = allSteps.filter((step) => step.beat === playbackBeat)
-    const repeatSequence =
-      presentation.kind === "sprite" &&
-      presentation.repeatSequence === true &&
-      !shouldReduceMotion
-
     const move = async (
       duration: number,
       target: BattleTravelTarget = travelTarget,
@@ -185,27 +158,30 @@ export default function BattleFighter({
         return
       }
       if (steps.length === 0) {
-        await move(FALLBACK_MOVEMENT_SECONDS)
+        await move(BATTLE_FALLBACK_TRAVEL_MILLISECONDS / 1000)
       } else {
         do {
-          for (const step of shouldReduceMotion ? steps.slice(-1) : steps) {
-            const { animation, playback } = step
+          for (const {
+            step,
+            frames: frameRange,
+            durationMilliseconds: duration,
+          } of steps) {
+            const { animation, playback: stepPlayback } = step
             showBattleSpriteFrame(sprite, step, shouldReduceMotion)
             visibleSource.current = animation.sourceId
             setImageUnavailable(false)
-            const [first, end] = step.frames ?? [0, animation.frameCount]
-            const duration = (end - first) * animation.frameDurationMilliseconds
+            const [, end] = frameRange
             const travel = move(duration / 1000)
             if (shouldReduceMotion) {
               await travel
               continue
             }
             frames = sprite.animate(
-              battleSpriteFrameKeyframes(animation.frameCount, step.frames),
+              battleSpriteFrameKeyframes(animation.frameCount, frameRange),
               {
                 duration,
                 fill: "forwards",
-                iterations: playback === "loop" ? Infinity : 1,
+                iterations: stepPlayback === "loop" ? Infinity : 1,
               },
             )
             if (document.visibilityState === "hidden") {
@@ -258,11 +234,10 @@ export default function BattleFighter({
     images,
     participant,
     phaseIndex,
-    presentation,
+    playback,
     reactionSequence,
     recipePreparation,
     shouldReduceMotion,
-    travelsToOpponent,
   ])
 
   return (
@@ -291,7 +266,7 @@ export default function BattleFighter({
             className={cx(
               "relative left-(--battle-anchor) block size-0",
               presentation.kind === "sprite" &&
-                displayedFacing !== presentation.sourceFacing &&
+                playback.facing !== presentation.sourceFacing &&
                 "-scale-x-100",
             )}
           >
