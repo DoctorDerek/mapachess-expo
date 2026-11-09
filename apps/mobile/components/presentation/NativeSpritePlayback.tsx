@@ -127,6 +127,7 @@ function SpriteLayer({
             resizeMethod="scale"
             resizeMode="stretch"
             source={layer.request.source}
+            testID={layer.request.sourceId}
           />
         </AnimatedStrip>
       </View>
@@ -205,23 +206,24 @@ export default function NativeSpritePlayback({
   )
     setRetained(visible)
 
-  const finishCurrent = useEffectEvent((finishedIdentity: string) => {
-    if (identity === finishedIdentity) onComplete?.()
-  })
-  const travelPosition = travel?.position
-  const travelTarget = travel?.target ?? 0
-  useEffect(() => {
-    if (!active || (!ready && !failed) || completed.current === identity) return
-    let disposed = false
-    const selected = failed ? undefined : step
-    const [first, end] = selected?.frames ?? [0, 1]
-    const key = `${programIdentity}:${String(stepIndex)}:${String(cycle)}:${selected?.step.animation.sourceId ?? "fallback"}`
-    if (selected !== undefined && frameIdentity.current !== key) {
-      frameIdentity.current = key
-      frame.set(first)
-    }
-    const finish = () => {
-      if (disposed || completed.current === identity) return
+  const finishCurrent = useEffectEvent(
+    (
+      finished: PlaybackPosition,
+      finishedPlayback: typeof playback,
+      finishedWithFallback: boolean,
+    ) => {
+      if (
+        !active ||
+        (!ready && !failed) ||
+        finished.identity !== programIdentity ||
+        finished.stepIndex !== stepIndex ||
+        finished.cycle !== cycle ||
+        finishedPlayback !== playback ||
+        finishedWithFallback !== failed ||
+        completed.current === identity
+      )
+        return
+
       if (!failed && stepIndex + 1 < playback.steps.length) {
         setPosition({
           identity: programIdentity,
@@ -236,11 +238,33 @@ export default function NativeSpritePlayback({
         })
       } else {
         completed.current = identity
-        finishCurrent(identity)
+        onComplete?.()
       }
+    },
+  )
+  const travelPosition = travel?.position
+  const travelTarget = travel?.target ?? 0
+  useEffect(() => {
+    if (!active || (!ready && !failed) || completed.current === identity) return
+    let pending = true
+    const selected = failed ? undefined : step
+    const [first, end] = selected?.frames ?? [0, 1]
+    const key = `${programIdentity}:${String(stepIndex)}:${String(cycle)}:${selected?.step.animation.sourceId ?? "fallback"}`
+    if (selected !== undefined && frameIdentity.current !== key) {
+      frameIdentity.current = key
+      frame.set(first)
+    }
+    const finish = () => {
+      if (!pending) return
+      pending = false
+      finishCurrent(
+        { identity: programIdentity, stepIndex, cycle },
+        playback,
+        failed,
+      )
     }
     const dispose = () => {
-      disposed = true
+      pending = false
       cancelAnimation(frame)
       if (travelPosition !== undefined) cancelAnimation(travelPosition)
     }
@@ -325,8 +349,7 @@ export default function NativeSpritePlayback({
     failed,
     frame,
     identity,
-    playback.repeatSequence,
-    playback.steps.length,
+    playback,
     programIdentity,
     ready,
     reducedMotion,
