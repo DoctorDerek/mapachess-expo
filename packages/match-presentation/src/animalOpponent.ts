@@ -19,6 +19,7 @@ const ANIMAL_OPPONENT_SOURCE_PACKS = Object.freeze({
   "fox-stockfish": Object.freeze(["Foxpack", "Lil Fox"] as const),
   "wolf-stockfish": Object.freeze(["Wolfpack"] as const),
   "tiger-stockfish": Object.freeze(["Tigerpack"] as const),
+  "bear-stockfish": Object.freeze(["Bearpack"] as const),
   "falcon-stockfish": Object.freeze(["Falconpack"] as const),
   "crane-stockfish": Object.freeze(["Cranepack"] as const),
   "crow-stockfish": Object.freeze(["Crowpack"] as const),

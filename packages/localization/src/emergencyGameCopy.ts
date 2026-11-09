@@ -386,6 +386,7 @@ const emergencyGameCopy = {
       "fox-stockfish": UNAVAILABLE_TEXT,
       "wolf-stockfish": UNAVAILABLE_TEXT,
       "tiger-stockfish": UNAVAILABLE_TEXT,
+      "bear-stockfish": UNAVAILABLE_TEXT,
       "falcon-stockfish": UNAVAILABLE_TEXT,
       "crane-stockfish": UNAVAILABLE_TEXT,
       "crow-stockfish": UNAVAILABLE_TEXT,

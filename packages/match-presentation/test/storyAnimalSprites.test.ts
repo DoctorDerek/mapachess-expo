@@ -4,6 +4,7 @@ import type { MatchParticipantReaction } from "../src/matchReaction"
 import resolveSpritePresentation, {
   matchSpriteReactionSlot,
   resolveSpriteAttention,
+  resolveSpriteAttentionSequence,
   type SpriteAssetManifest,
 } from "../src/presentationAssetManifest"
 import REMAINING_STORY_ANIMAL_SPRITES from "../src/remainingStoryAnimalSprites"
@@ -20,6 +21,68 @@ const REACTIONS = [
 ] as const satisfies readonly MatchParticipantReaction[]
 
 describe("complete Story animal presentation", () => {
+  it("keeps Bear upright attention complete and filters strikes by the actual target", () => {
+    const bear = STORY_ANIMAL_SPRITES["bear-stockfish"]
+    const sources = Object.values(bear.animations).map(
+      ({ sourceId }) => sourceId,
+    )
+    const attention = (ordinal: number, available = sources) =>
+      resolveSpriteAttentionSequence(bear, available, ordinal).map(
+        ({ animationId }) => animationId,
+      )
+    expect([0, 1, 2, 3].map((ordinal) => attention(ordinal))).toEqual([
+      ["stand_go_up", "stand_idle_blink", "stand_go_down"],
+      ["roar"],
+      ["stand_go_up", "stand_idle", "stand_go_down"],
+      ["stand_go_up", "stand_roar", "stand_go_down"],
+    ])
+    expect(
+      attention(
+        0,
+        sources.filter((id) => id !== bear.animations.stand_go_down.sourceId),
+      ),
+    ).toEqual(["roar"])
+    for (let ordinal = 0; ordinal < 3; ordinal++) {
+      const full = resolveSpritePresentation(
+        bear,
+        { family: "capture", role: "attacker" },
+        sources,
+        ordinal,
+        "raccoon",
+      )
+      const small = resolveSpritePresentation(
+        bear,
+        { family: "capture", role: "attacker" },
+        sources,
+        ordinal,
+        "squirrelpack",
+      )
+      if (full.kind !== "sprite" || small.kind !== "sprite")
+        throw new Error("Expected Bear")
+      expect(full.steps.map(({ animationId }) => animationId)).toEqual(
+        ordinal === 0
+          ? ["run", "bite", "bite", "run"]
+          : [
+              "run",
+              "stand_go_up",
+              ordinal === 1 ? "stand_attack01" : "stand_attack02",
+              ordinal === 1 ? "stand_attack01" : "stand_attack02",
+              "stand_go_down",
+              "run",
+            ],
+      )
+      expect(
+        full.steps.find(({ beat }) => beat === "reaction")?.frames?.[0],
+      ).toBe(4)
+      expect(small.steps.map(({ animationId }) => animationId)).toEqual([
+        "run",
+        "bite",
+        "bite",
+        "run",
+      ])
+      expect(full.layout.clearance).toEqual(small.layout.clearance)
+    }
+  })
   it.each([
     ["mouse-stockfish", "sniff"],
     ["otter-stockfish", "crouch"],
@@ -677,7 +740,7 @@ describe("complete Story animal presentation", () => {
   )
   it("composes the remaining roster without duplicating Chicken or Mapachito", () => {
     expect(Object.keys(REMAINING_STORY_ANIMAL_SPRITES)).toHaveLength(15)
-    expect(Object.keys(STORY_ANIMAL_SPRITES)).toHaveLength(23)
+    expect(Object.keys(STORY_ANIMAL_SPRITES)).toHaveLength(24)
     expect(STORY_ANIMAL_SPRITES).not.toHaveProperty("chicken-stockfish")
     expect(STORY_ANIMAL_SPRITES).not.toHaveProperty("raccoon-stockfish")
   })

@@ -2,6 +2,7 @@ import type { AnimalPresentationId } from "./animalOpponent.js"
 import type { MatchParticipantReaction } from "./matchReaction.js"
 import resolveSpritePresentation, {
   resolveSpriteAttention,
+  resolveSpriteAttentionSequence,
   type ResolvedSpritePresentation,
   type ResolvedSpriteStep,
   type SpriteAssetManifest,
@@ -55,6 +56,7 @@ const STORY_ANIMAL_ASSET_MANIFESTS = {
   "fox-stockfish": assetAnimalSprite(STORY_ANIMAL_SPRITES["fox-stockfish"]),
   "wolf-stockfish": assetAnimalSprite(STORY_ANIMAL_SPRITES["wolf-stockfish"]),
   "tiger-stockfish": assetAnimalSprite(STORY_ANIMAL_SPRITES["tiger-stockfish"]),
+  "bear-stockfish": assetAnimalSprite(STORY_ANIMAL_SPRITES["bear-stockfish"]),
   "ninja-stockfish": assetAnimalSprite(STORY_ANIMAL_SPRITES["ninja-stockfish"]),
   "war-hero-stockfish": assetAnimalSprite(
     STORY_ANIMAL_SPRITES["war-hero-stockfish"],
@@ -110,11 +112,28 @@ export default function resolveOpponentPresentation(
   reaction: MatchParticipantReaction = { family: "idle" },
   variationOrdinal = 0,
   sourceAvailable: PresentationSourceAvailable = allSourcesAvailable,
+  targetSourceAnimalId?: string,
 ): ResolvedSpritePresentation<string, string> {
   const manifest = opponentManifest(opponentId)
   return resolveSpritePresentation(
     manifest,
     reaction,
+    Object.values(manifest.animations)
+      .map(({ sourceId }) => sourceId)
+      .filter(sourceAvailable),
+    variationOrdinal,
+    targetSourceAnimalId,
+  )
+}
+
+export const resolveOpponentAttentionSequence = (
+  opponentId: AnimalPresentationId,
+  variationOrdinal = 0,
+  sourceAvailable: PresentationSourceAvailable = allSourcesAvailable,
+): readonly ResolvedSpriteStep<string, string>[] => {
+  const manifest = opponentManifest(opponentId)
+  return resolveSpriteAttentionSequence(
+    manifest,
     Object.values(manifest.animations)
       .map(({ sourceId }) => sourceId)
       .filter(sourceAvailable),

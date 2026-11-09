@@ -19,6 +19,7 @@ const names = {
   "fox-stockfish": "Zorro",
   "wolf-stockfish": "Lobo",
   "tiger-stockfish": "Tigre",
+  "bear-stockfish": "Oso",
   "falcon-stockfish": "Halcón",
   "crane-stockfish": "Grulla",
   "crow-stockfish": "Cuervo",
