@@ -65,6 +65,10 @@
       "types": "./src/matchMedal.ts",
       "default": "./dist/matchMedal.js"
     },
+    "./match-result-presentation": {
+      "types": "./src/matchResultPresentation.ts",
+      "default": "./dist/matchResultPresentation.js"
+    },
     "./story-progress": {
       "types": "./src/storyProgress.ts",
       "default": "./dist/storyProgress.js"
