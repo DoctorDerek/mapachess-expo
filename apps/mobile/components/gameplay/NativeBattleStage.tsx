@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react"
 import { View } from "react-native"
-import Svg from "react-native-svg"
+import { ScopedVariables, useCSSVariable } from "uniwind"
 import type { AcceptedMatchPresentationBinding } from "@mapachess/match-presentation/accepted-match-presentation"
 import {
   selectMatchPresentationAnimalReaction,
@@ -9,15 +9,47 @@ import {
 } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
 import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
+import {
+  battleSpriteGeometry,
+  type BattleSpriteGeometry,
+  type BattleSpriteScale,
+} from "@mapachess/match-presentation/sprite-presentation-geometry"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
-import assets from "@/lib/presentation/nativeAssetManifest"
+import { hasNativeArtwork } from "@/lib/presentation/useNativeArtworkReadiness"
 import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import useActorSnapshot from "@/lib/useActorSnapshot"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
-import NativeBattleFighter from "./NativeBattleFighter"
+import NativeBattleFighter, {
+  type NativeFighterGeometry,
+} from "./NativeBattleFighter"
 
-const sourceAvailable = (sourceId: string): boolean =>
-  assets.images[sourceId] !== undefined
+function stageFighterGeometry(
+  geometry: BattleSpriteGeometry,
+  fallbackSize: number,
+): NativeFighterGeometry {
+  if (geometry.kind === "sprite") return geometry
+  const fallback: BattleSpriteScale = {
+    integerScale: 1,
+    visibleWidthPixels: fallbackSize,
+    clearance: {
+      above: fallbackSize,
+      below: 0,
+      horizontalRadius: fallbackSize / 2,
+    },
+  }
+  return { mobile: fallback, desktop: fallback }
+}
+
+function stageExtent(
+  player: NativeFighterGeometry,
+  opponent: NativeFighterGeometry,
+  layout: keyof NativeFighterGeometry,
+) {
+  const first = player[layout].clearance
+  const second = opponent[layout].clearance
+  const below = Math.max(first.below, second.below)
+  return { below, height: below + Math.max(first.above, second.above) }
+}
 
 export default function NativeBattleStage({
   binding,
@@ -33,6 +65,10 @@ export default function NativeBattleStage({
   const snapshot = useActorSnapshot(binding.actor)
   const { copy } = useNativeLocale()
   const { active, reducedMotion } = useNativePresentationActivity()
+  const [fallbackSize, recoilLimit] = useCSSVariable([
+    "--spacing-battle-fallback",
+    "--spacing-battle-recoil-limit",
+  ])
   const beat = selectMatchPresentationBeat(snapshot)
   const playerReaction = selectMatchPresentationAnimalReaction(
     snapshot,
@@ -56,7 +92,7 @@ export default function NativeBattleStage({
         playerAnimal,
         playerReaction,
         playerOrdinal,
-        sourceAvailable,
+        hasNativeArtwork,
       ),
     [playerAnimal, playerReaction, playerOrdinal],
   )
@@ -66,24 +102,9 @@ export default function NativeBattleStage({
         opponentAnimal,
         opponentReaction,
         opponentOrdinal,
-        sourceAvailable,
+        hasNativeArtwork,
       ),
     [opponentAnimal, opponentReaction, opponentOrdinal],
-  )
-  const playerIdle = useMemo(
-    () =>
-      resolveOpponentPresentation(playerAnimal, undefined, 0, sourceAvailable),
-    [playerAnimal],
-  )
-  const opponentIdle = useMemo(
-    () =>
-      resolveOpponentPresentation(
-        opponentAnimal,
-        undefined,
-        0,
-        sourceAvailable,
-      ),
-    [opponentAnimal],
   )
   const complete = useCallback(
     (
@@ -99,49 +120,73 @@ export default function NativeBattleStage({
       }),
     [binding],
   )
+  const label = copy.interface.reactiveBattleStage.reactiveBattleStage
+  if (typeof fallbackSize !== "number" || typeof recoilLimit !== "number")
+    return (
+      <View
+        accessibilityLabel={label}
+        className="bg-mapachito-blue border-mapachito-deep-gold min-h-26 w-full border-b-8"
+      />
+    )
+
+  const playerGeometry = stageFighterGeometry(
+    battleSpriteGeometry(player),
+    fallbackSize,
+  )
+  const opponentGeometry = stageFighterGeometry(
+    battleSpriteGeometry(opponent),
+    fallbackSize,
+  )
+  const mobile = stageExtent(playerGeometry, opponentGeometry, "mobile")
+  const desktop = stageExtent(playerGeometry, opponentGeometry, "desktop")
+  const { phaseIndex, reactionSequence, pendingParticipants } = snapshot.context
+  const reacting = snapshot.matches("reacting")
+  const fighterProps = {
+    beat,
+    phaseIndex,
+    sequence: reactionSequence,
+    active: active && visible,
+    reducedMotion,
+    recoilLimit,
+    onComplete: complete,
+  }
   return (
-    <View
-      accessibilityLabel={
-        copy.interface.reactiveBattleStage.reactiveBattleStage
-      }
-      className="border-mapachito-deep-gold bg-mapachito-blue h-32 w-full overflow-hidden border-b-8 xl:h-44"
+    <ScopedVariables
+      variables={{
+        "--native-stage-below": mobile.below,
+        "--native-stage-height": mobile.height,
+        "--native-stage-wide-below": desktop.below,
+        "--native-stage-wide-height": desktop.height,
+      }}
     >
-      <Svg width="100%" height="100%" viewBox="0 0 360 120">
-        <NativeBattleFighter
-          participant="player"
-          displayName={copy.animals.names[playerAnimal]}
-          presentation={player}
-          idle={playerIdle}
-          opposing={opponent}
-          beat={beat}
-          phaseIndex={snapshot.context.phaseIndex}
-          sequence={snapshot.context.reactionSequence}
-          report={
-            snapshot.matches("reacting") &&
-            snapshot.context.pendingParticipants.includes("player")
-          }
-          active={active && visible}
-          reducedMotion={reducedMotion}
-          onComplete={complete}
-        />
-        <NativeBattleFighter
-          participant="opponent"
-          displayName={copy.animals.names[opponentAnimal]}
-          presentation={opponent}
-          idle={opponentIdle}
-          opposing={player}
-          beat={beat}
-          phaseIndex={snapshot.context.phaseIndex}
-          sequence={snapshot.context.reactionSequence}
-          report={
-            snapshot.matches("reacting") &&
-            snapshot.context.pendingParticipants.includes("opponent")
-          }
-          active={active && visible}
-          reducedMotion={reducedMotion}
-          onComplete={complete}
-        />
-      </Svg>
-    </View>
+      <View
+        accessibilityLabel={label}
+        className="bg-mapachito-blue relative [height:calc(var(--native-stage-height)+--spacing(4))] min-h-26 w-full overflow-hidden xl:[height:calc(var(--native-stage-wide-height)+--spacing(4))]"
+      >
+        <View className="absolute inset-x-0 top-0 bottom-2">
+          <NativeBattleFighter
+            {...fighterProps}
+            participant="player"
+            displayName={copy.animals.names[playerAnimal]}
+            presentation={player}
+            opposing={opponent}
+            geometry={playerGeometry}
+            opposingGeometry={opponentGeometry}
+            report={reacting && pendingParticipants.includes("player")}
+          />
+          <NativeBattleFighter
+            {...fighterProps}
+            participant="opponent"
+            displayName={copy.animals.names[opponentAnimal]}
+            presentation={opponent}
+            opposing={player}
+            geometry={opponentGeometry}
+            opposingGeometry={playerGeometry}
+            report={reacting && pendingParticipants.includes("opponent")}
+          />
+        </View>
+        <View className="bg-mapachito-deep-gold absolute inset-x-0 bottom-0 h-2" />
+      </View>
+    </ScopedVariables>
   )
 }

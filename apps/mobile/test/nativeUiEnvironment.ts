@@ -1,10 +1,20 @@
 import { jest } from "@jest/globals"
+import type { ReactNode } from "react"
 
-jest.mock("react-native-reanimated", () =>
-  jest.requireActual<typeof import("react-native-reanimated")>(
-    "react-native-reanimated/mock",
-  ),
-)
+jest.mock("react-native-reanimated", () => {
+  const animation = jest.requireActual<
+    typeof import("react-native-reanimated")
+  >("react-native-reanimated/mock")
+  const { useState } = jest.requireActual<typeof import("react")>("react")
+  const createMockValue = animation.useSharedValue
+  return {
+    ...animation,
+    useSharedValue: function useStableSharedValue<Value>(initial: Value) {
+      const [value] = useState(() => createMockValue(initial))
+      return value
+    },
+  }
+})
 jest.mock("react-native-worklets", () =>
   jest.requireActual<typeof import("react-native-worklets")>(
     "react-native-worklets/src/mock",
@@ -27,12 +37,18 @@ jest.mock("uniwind", () => {
       match[2],
     ]),
   )
+  const variable = (name: string) => {
+    if (name === "--spacing-battle-fallback") return 72
+    if (name === "--spacing-battle-recoil-limit") return 10
+    return tokens.get(name)
+  }
   return {
+    ScopedVariables: ({ children }: { children: ReactNode }) => children,
     withUniwind: (component: unknown) => component,
+    useResolveClassNames: (classes: string) =>
+      classes === "w-16" ? { width: 64 } : {},
     useCSSVariable: (name: string | readonly string[]) =>
-      typeof name === "string"
-        ? tokens.get(name)
-        : name.map((token) => tokens.get(token)),
+      typeof name === "string" ? variable(name) : name.map(variable),
   }
 })
 jest.mock("expo-localization", () => ({

@@ -17,6 +17,10 @@
       "types": "./src/acceptedMatchPresentation.ts",
       "default": "./dist/acceptedMatchPresentation.js"
     },
+    "./battle-sprite-playback": {
+      "types": "./src/battleSpritePlayback.ts",
+      "default": "./dist/battleSpritePlayback.js"
+    },
     "./clock-display": {
       "types": "./src/clockDisplay.ts",
       "default": "./dist/clockDisplay.js"

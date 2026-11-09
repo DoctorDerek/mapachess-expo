@@ -1,45 +1,19 @@
 import type { CSSProperties } from "react"
+import {
+  spriteStepPlayback,
+  type BattleSpriteStep,
+} from "@mapachess/match-presentation/battle-sprite-playback"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type {
   ResolvedSpritePresentation,
-  ResolvedSpriteStep,
   SpriteFrameRange,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
-import createSpritePresentationGeometry from "@mapachess/match-presentation/sprite-presentation-geometry"
+import {
+  battleSpriteContactAdvance,
+  battleSpriteGeometry,
+} from "@mapachess/match-presentation/sprite-presentation-geometry"
 
-export type BattleSpriteStep = ResolvedSpriteStep<string, string>
-
-const MOBILE_VISIBLE_HEIGHT_PIXELS = 60
-const DESKTOP_VISIBLE_HEIGHT_PIXELS = 80
-
-const responsiveSpriteGeometry = (
-  presentation: ResolvedSpritePresentation<string, string>,
-) => {
-  if (presentation.kind !== "sprite")
-    return {
-      desktopScale: 1,
-      mobileScale: 1,
-      visibleWidth: "var(--battle-fallback-size)",
-    }
-  const { referenceGeometry, standaloneScale } = presentation.layout
-  return {
-    mobileScale:
-      standaloneScale ??
-      createSpritePresentationGeometry(
-        referenceGeometry,
-        referenceGeometry,
-        MOBILE_VISIBLE_HEIGHT_PIXELS,
-      ).integerScale,
-    desktopScale:
-      standaloneScale ??
-      createSpritePresentationGeometry(
-        referenceGeometry,
-        referenceGeometry,
-        DESKTOP_VISIBLE_HEIGHT_PIXELS,
-      ).integerScale,
-    visibleWidth: `${referenceGeometry.visibleWidth}px`,
-  }
-}
+export type { BattleSpriteStep }
 
 export const battleStageStyle = (
   player: ResolvedSpritePresentation<string, string>,
@@ -58,43 +32,35 @@ export const battleStageStyle = (
       string
     >
   > => {
-  const bounds = [player, opponent].map((presentation) => {
-    const geometry = responsiveSpriteGeometry(presentation)
-    return {
-      geometry,
-      clearance: presentation.layout.clearance,
-      fallback: presentation.kind === "authored-fallback",
-    }
-  })
-  const extent = (
-    axis: "above" | "below",
-    scale: "mobileScale" | "desktopScale",
-  ) =>
+  const playerGeometry = battleSpriteGeometry(player)
+  const opponentGeometry = battleSpriteGeometry(opponent)
+  const bounds = [playerGeometry, opponentGeometry]
+  const extent = (axis: "above" | "below", layout: "mobile" | "desktop") =>
     `max(${bounds
-      .map(({ geometry, clearance, fallback }) =>
-        fallback
+      .map((geometry) =>
+        geometry.kind === "authored-fallback"
           ? axis === "above"
             ? "var(--battle-fallback-size)"
             : "0px"
-          : `${clearance[axis] * geometry[scale]}px`,
+          : `${geometry[layout].clearance[axis]}px`,
       )
       .join(", ")})`
   const radius = (
-    presentation: typeof player,
-    scale: "mobileScale" | "desktopScale",
+    geometry: typeof playerGeometry,
+    layout: "mobile" | "desktop",
   ) =>
-    presentation.kind === "authored-fallback"
+    geometry.kind === "authored-fallback"
       ? "calc(var(--battle-fallback-size) / 2)"
-      : `${presentation.layout.clearance.horizontalRadius * responsiveSpriteGeometry(presentation)[scale]}px`
+      : `${geometry[layout].clearance.horizontalRadius}px`
   return {
-    "--battle-mobile-above": extent("above", "mobileScale"),
-    "--battle-desktop-above": extent("above", "desktopScale"),
-    "--battle-mobile-below": extent("below", "mobileScale"),
-    "--battle-desktop-below": extent("below", "desktopScale"),
-    "--battle-mobile-player-radius": radius(player, "mobileScale"),
-    "--battle-desktop-player-radius": radius(player, "desktopScale"),
-    "--battle-mobile-opponent-radius": radius(opponent, "mobileScale"),
-    "--battle-desktop-opponent-radius": radius(opponent, "desktopScale"),
+    "--battle-mobile-above": extent("above", "mobile"),
+    "--battle-desktop-above": extent("above", "desktop"),
+    "--battle-mobile-below": extent("below", "mobile"),
+    "--battle-desktop-below": extent("below", "desktop"),
+    "--battle-mobile-player-radius": radius(playerGeometry, "mobile"),
+    "--battle-desktop-player-radius": radius(playerGeometry, "desktop"),
+    "--battle-mobile-opponent-radius": radius(opponentGeometry, "mobile"),
+    "--battle-desktop-opponent-radius": radius(opponentGeometry, "desktop"),
   }
 }
 
@@ -111,26 +77,28 @@ export const battleSpriteAnchorStyle = (
     "--opponent-desktop-width": string
     "--battle-contact-extension"?: string
   }> => {
-  const sprite = responsiveSpriteGeometry(presentation)
-  const opponent = responsiveSpriteGeometry(opposingPresentation)
-  const extension =
-    (beat === "reaction" || beat === "recovery") &&
-    presentation.kind === "sprite" &&
-    opposingPresentation.kind === "sprite" &&
-    opposingPresentation.sourceAnimalId
-      ? presentation.contactAdvanceByTarget?.[
-          opposingPresentation.sourceAnimalId
-        ]
-      : undefined
+  const sprite = battleSpriteGeometry(presentation)
+  const opponent = battleSpriteGeometry(opposingPresentation)
+  const extension = battleSpriteContactAdvance(
+    presentation,
+    opposingPresentation,
+    beat,
+  )
+  const visibleWidth = (geometry: typeof sprite) =>
+    geometry.kind === "sprite"
+      ? `${geometry.sourceVisibleWidthPixels}px`
+      : "var(--battle-fallback-size)"
+  const scale = (geometry: typeof sprite, layout: "mobile" | "desktop") =>
+    geometry.kind === "sprite" ? geometry[layout].integerScale : 1
   return {
-    "--sprite-mobile-scale": sprite.mobileScale,
-    "--sprite-desktop-scale": sprite.desktopScale,
-    "--sprite-visible-width": sprite.visibleWidth,
+    "--sprite-mobile-scale": scale(sprite, "mobile"),
+    "--sprite-desktop-scale": scale(sprite, "desktop"),
+    "--sprite-visible-width": visibleWidth(sprite),
     ...(extension === undefined
       ? {}
       : { "--battle-contact-extension": `${extension}px` }),
-    "--opponent-mobile-width": `calc(${opponent.visibleWidth} * ${opponent.mobileScale})`,
-    "--opponent-desktop-width": `calc(${opponent.visibleWidth} * ${opponent.desktopScale})`,
+    "--opponent-mobile-width": `calc(${visibleWidth(opponent)} * ${scale(opponent, "mobile")})`,
+    "--opponent-desktop-width": `calc(${visibleWidth(opponent)} * ${scale(opponent, "desktop")})`,
   }
 }
 
@@ -156,13 +124,12 @@ export const battleSpriteFrameStyle = (
 ): CSSProperties => {
   const { animation } = step
   const { geometry } = animation
-  const [first, end] = step.frames ?? [0, animation.frameCount]
+  const {
+    frames: [first],
+    stillFrame,
+  } = spriteStepPlayback(step)
   const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
-  const frameIndex = reducedMotion
-    ? step.playback === "once-hold-final-frame"
-      ? end - 1
-      : Math.max(first, Math.min(end - 1, animation.reducedMotionFrameIndex))
-    : first
+  const frameIndex = reducedMotion ? stillFrame : first
   return {
     backgroundImage: `url("${animation.sourceId}")`,
     backgroundPosition: battleSpriteFramePosition(

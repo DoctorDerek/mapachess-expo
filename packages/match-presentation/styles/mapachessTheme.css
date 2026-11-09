@@ -23,6 +23,8 @@
   --shadow-mapachess-raised: 0.375rem 0.375rem 0;
   --shadow-mapachess-pressed: 0.0625rem 0.0625rem 0;
   --container-mapachess: 96rem;
+  --spacing-battle-fallback: calc(var(--spacing) * 18);
+  --spacing-battle-recoil-limit: 10px;
   --font-display:
     Impact, Haettenschweiler, "Arial Narrow Bold", "Trebuchet MS", sans-serif;
   --font-body: "Trebuchet MS", Avenir, "Segoe UI", sans-serif;

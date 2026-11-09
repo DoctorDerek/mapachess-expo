@@ -1,14 +1,20 @@
 import "./nativeUiEnvironment"
 import { afterEach, describe, expect, it, jest } from "@jest/globals"
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import Svg from "react-native-svg"
+import { Text } from "react-native"
+import * as Reanimated from "react-native-reanimated"
 import loadCatalog from "@mapachess/localization/catalog"
-import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
+import battleSpritePlayback from "@mapachess/match-presentation/battle-sprite-playback"
+import resolveOpponentPresentation, {
+  resolveOpponentAttention,
+} from "@mapachess/match-presentation/opponent-presentation"
+import { coachPortraitSource } from "@mapachess/match-presentation/presentation-assets"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
@@ -20,9 +26,54 @@ import NativeBattleFighter from "@/components/gameplay/NativeBattleFighter"
 import NativeChessboard from "@/components/gameplay/NativeChessboard"
 import NativeHome from "@/components/gameplay/NativeHome"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
+import NativeAnimal from "@/components/presentation/NativeAnimal"
+import NativeSpritePlayback from "@/components/presentation/NativeSpritePlayback"
+import NativeCoachPortrait from "@/components/profile/NativeCoachPortrait"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
 import InMemoryAsyncStorage from "./nativeStorageFixture"
+
+jest.mock("@/lib/presentation/nativeAssetManifest", () => {
+  const { default: manifest } = jest.requireActual<
+    typeof import("@/lib/presentation/nativeAssetManifest")
+  >("@/lib/presentation/nativeAssetManifest")
+  const { default: resolve, resolveOpponentAttention: attention } =
+    jest.requireActual<
+      typeof import("@mapachess/match-presentation/opponent-presentation")
+    >("@mapachess/match-presentation/opponent-presentation")
+  const { coachPortraitSource: portrait } = jest.requireActual<
+    typeof import("@mapachess/match-presentation/presentation-assets")
+  >("@mapachess/match-presentation/presentation-assets")
+  const recipes = [
+    resolve("tiger-stockfish", { family: "capture", role: "attacker" }),
+    resolve("chicken-stockfish", { family: "defeat" }),
+    resolve("raccoon-stockfish", { family: "defeat" }),
+    resolve("squirrel-stockfish"),
+  ]
+  const sources = new Set([
+    ...Object.keys(manifest.images),
+    ...recipes.flatMap((recipe) =>
+      recipe.kind === "sprite"
+        ? recipe.steps.map(({ animation }) => animation.sourceId)
+        : [],
+    ),
+    attention("squirrel-stockfish")?.animation.sourceId,
+    portrait("neutral", "mapachito"),
+    portrait("neutral", "greyfox"),
+    portrait("happy_high", "greyfox"),
+  ])
+  return {
+    __esModule: true,
+    default: {
+      ...manifest,
+      images: Object.fromEntries(
+        [...sources].flatMap((id, index) =>
+          typeof id === "string" ? [[id, index + 1]] : [],
+        ),
+      ),
+    },
+  }
+})
 
 let profile: ProfileRuntime | undefined
 afterEach(async () => {
@@ -44,6 +95,209 @@ async function readyProfile() {
   return { runtime: profile, data }
 }
 
+function nativeImage(sourceId: string) {
+  return screen.getByTestId(sourceId, { includeHiddenElements: true })
+}
+
+function controlledTiming() {
+  const completions: NonNullable<
+    Parameters<typeof Reanimated.withTiming>[2]
+  >[] = []
+  const timing = jest
+    .spyOn(Reanimated, "withTiming")
+    .mockImplementation((target, _config, onComplete) => {
+      if (onComplete !== undefined) completions.push(onComplete)
+      return target
+    })
+  return { timing, completions }
+}
+
+describe("native animal presentation contract", () => {
+  const placement = { kind: "battle", mobileScale: 3, desktopScale: 3 } as const
+
+  it("loads the whole capture recipe and waits for both frame and travel completion", async () => {
+    const { timing, completions } = controlledTiming()
+    const tiger = resolveOpponentPresentation("tiger-stockfish", {
+      family: "capture",
+      role: "attacker",
+    })
+    const playback = battleSpritePlayback(tiger, "approach", "right", false)
+    const sources = [...new Set(playback.sources)]
+    const lastSource = sources.at(-1)
+    if (lastSource === undefined || sources.length < 2)
+      throw new Error("The capture fixture must require more than one image.")
+    const complete = jest.fn()
+    function CapturePlayback() {
+      const position = Reanimated.useSharedValue(0)
+      return (
+        <NativeSpritePlayback
+          active
+          identity="capture-1"
+          playback={playback}
+          placement={placement}
+          reducedMotion={false}
+          fallback={<Text>Resting pose</Text>}
+          travel={{ position, target: 1 }}
+          onComplete={complete}
+        />
+      )
+    }
+    await render(<CapturePlayback />)
+    for (const source of sources.slice(0, -1))
+      await fireEvent(nativeImage(source), "load")
+    expect(timing).not.toHaveBeenCalled()
+    expect(complete).not.toHaveBeenCalled()
+    expect(screen.getByText("Resting pose")).toBeOnTheScreen()
+
+    await fireEvent(nativeImage(lastSource), "load")
+    expect(screen.queryByText("Resting pose")).toBeNull()
+    expect(completions).toHaveLength(2)
+    expect(complete).not.toHaveBeenCalled()
+    await act(() => completions[1]?.(true))
+    expect(complete).not.toHaveBeenCalled()
+    await act(() => {
+      completions[0]?.(true)
+      completions[0]?.(true)
+    })
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+
+  it("retains the ready pose and ignores an obsolete completion after replacement", async () => {
+    const { completions } = controlledTiming()
+    const chicken = battleSpritePlayback(
+      resolveOpponentPresentation("chicken-stockfish", { family: "defeat" }),
+      "conclusion",
+      "left",
+      false,
+    )
+    const raccoon = battleSpritePlayback(
+      resolveOpponentPresentation("raccoon-stockfish", { family: "defeat" }),
+      "conclusion",
+      "left",
+      false,
+    )
+    const oldSource = chicken.sources[0]
+    const newSource = raccoon.sources[0]
+    if (oldSource === undefined || newSource === undefined)
+      throw new Error("Both endings need prepared artwork.")
+    const obsolete = jest.fn()
+    const current = jest.fn()
+    const frame = (
+      identity: string,
+      playback: typeof chicken,
+      onComplete: () => void,
+    ) => (
+      <NativeSpritePlayback
+        active
+        identity={identity}
+        playback={playback}
+        placement={placement}
+        reducedMotion={false}
+        onComplete={onComplete}
+        fallback={<Text>Loading</Text>}
+      />
+    )
+    const rendered = await render(frame("old-ending", chicken, obsolete))
+    await fireEvent(nativeImage(oldSource), "load")
+    expect(completions).toHaveLength(1)
+    await rendered.rerender(frame("current-ending", raccoon, current))
+    expect(nativeImage(oldSource)).toBeOnTheScreen()
+    expect(screen.queryByText("Loading")).toBeNull()
+    await act(() => {
+      completions[0]?.(true)
+    })
+    expect(obsolete).not.toHaveBeenCalled()
+    expect(current).not.toHaveBeenCalled()
+    await fireEvent(nativeImage(newSource), "load")
+    expect(completions).toHaveLength(2)
+    await act(() => {
+      completions[1]?.(true)
+    })
+    expect(current).toHaveBeenCalledTimes(1)
+    expect(obsolete).not.toHaveBeenCalled()
+  })
+
+  it("settles a decoded Reduced Motion pose once without scheduling motion", async () => {
+    const timing = jest.spyOn(Reanimated, "withTiming")
+    const playback = battleSpritePlayback(
+      resolveOpponentPresentation("chicken-stockfish", { family: "defeat" }),
+      "conclusion",
+      "left",
+      true,
+    )
+    const source = playback.sources[0]
+    if (source === undefined)
+      throw new Error("The defeat fixture needs an image.")
+    const complete = jest.fn()
+    const frame = (active: boolean) => (
+      <NativeSpritePlayback
+        active={active}
+        identity="still-ending"
+        playback={playback}
+        placement={placement}
+        reducedMotion
+        onComplete={complete}
+      />
+    )
+    const rendered = await render(frame(true))
+    expect(complete).not.toHaveBeenCalled()
+    await fireEvent(nativeImage(source), "load")
+    await waitFor(() => expect(complete).toHaveBeenCalledTimes(1))
+    await rendered.rerender(frame(false))
+    await rendered.rerender(frame(true))
+    expect(timing).not.toHaveBeenCalled()
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+
+  it("loads an authored attention clip only for an opted-in active animal", async () => {
+    const animal = "squirrel-stockfish"
+    const attention = resolveOpponentAttention(animal)
+    if (attention === null)
+      throw new Error("Expected an authored attention clip.")
+    const { timing } = controlledTiming()
+    const rendered = await render(<NativeAnimal animal={animal} />)
+    expect(screen.queryByTestId(attention.animation.sourceId)).toBeNull()
+    await rendered.rerender(
+      <NativeAnimal
+        animal={animal}
+        motion={{ active: true, reducedMotion: false, attention: true }}
+      />,
+    )
+    await waitFor(() =>
+      expect(nativeImage(attention.animation.sourceId)).toBeOnTheScreen(),
+    )
+    expect(timing).not.toHaveBeenCalled()
+    await fireEvent(nativeImage(attention.animation.sourceId), "load")
+    expect(timing).toHaveBeenCalled()
+  })
+
+  it("keeps the ready coach expression until a replacement loads or fails", async () => {
+    const { runtime } = await readyProfile()
+    const original = coachPortraitSource("neutral", "mapachito")
+    const alternate = coachPortraitSource("happy_high", "greyfox")
+    if (original === null || alternate === null)
+      throw new Error("Expected both coach sources.")
+    const frame = (collection: "mapachito" | "greyfox") => (
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeCoachPortrait
+          collection={collection}
+          label={collection === "mapachito" ? "neutral" : "happy_high"}
+        />
+      </NativeLocaleProvider>
+    )
+    const originalLabel = `${copy.presentation.coach(copy.profile.coachCollections.mapachito)}: ${copy.shared.coachPortraitNames.neutral}`
+    const alternateLabel = `${copy.presentation.coach(copy.profile.coachCollections.greyfox)}: ${copy.shared.coachPortraitNames.happy_high}`
+    const rendered = await render(frame("mapachito"))
+    await fireEvent(nativeImage(original), "load")
+    await rendered.rerender(frame("greyfox"))
+    expect(screen.getByLabelText(originalLabel)).toBeOnTheScreen()
+    await fireEvent(nativeImage(alternate), "error")
+    expect(screen.getByLabelText(originalLabel)).toBeOnTheScreen()
+    await fireEvent(nativeImage(alternate), "load")
+    expect(screen.getByLabelText(alternateLabel)).toBeOnTheScreen()
+  })
+})
+
 describe("native gameplay surfaces", () => {
   it("settles a missing-artwork presentation once without blocking the accepted battle sequence", async () => {
     const presentation = resolveOpponentPresentation(
@@ -54,12 +308,20 @@ describe("native gameplay surfaces", () => {
     )
     expect(presentation.kind).toBe("authored-fallback")
     const complete = jest.fn()
+    const scale = {
+      integerScale: 1,
+      visibleWidthPixels: 72,
+      clearance: { above: 72, below: 0, horizontalRadius: 36 },
+    }
+    const geometry = { mobile: scale, desktop: scale }
     const props = {
       participant: "opponent" as const,
       displayName: copy.animals.names["chicken-stockfish"],
       presentation,
-      idle: presentation,
       opposing: presentation,
+      geometry,
+      opposingGeometry: geometry,
+      recoilLimit: 10,
       beat: "conclusion" as const,
       phaseIndex: 3,
       sequence: 7,
@@ -68,22 +330,10 @@ describe("native gameplay surfaces", () => {
       reducedMotion: true,
       onComplete: complete,
     }
-    const rendered = await render(
-      <Svg>
-        <NativeBattleFighter {...props} />
-      </Svg>,
-    )
+    const rendered = await render(<NativeBattleFighter {...props} />)
     await waitFor(() => expect(complete).toHaveBeenCalledWith("opponent", 3, 7))
-    await rendered.rerender(
-      <Svg>
-        <NativeBattleFighter {...props} active={false} />
-      </Svg>,
-    )
-    await rendered.rerender(
-      <Svg>
-        <NativeBattleFighter {...props} />
-      </Svg>,
-    )
+    await rendered.rerender(<NativeBattleFighter {...props} active={false} />)
+    await rendered.rerender(<NativeBattleFighter {...props} />)
     expect(complete).toHaveBeenCalledTimes(1)
   })
 
