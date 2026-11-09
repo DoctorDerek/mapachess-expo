@@ -147,6 +147,10 @@ export const ART_CREDITS = Object.freeze({
         url: "https://seethingswarm.itch.io/tigerpack",
       }),
       Object.freeze({
+        label: "Bearpack",
+        url: "https://seethingswarm.itch.io/bearpack",
+      }),
+      Object.freeze({
         label: "Falconpack",
         url: "https://seethingswarm.itch.io/falconpack",
       }),
