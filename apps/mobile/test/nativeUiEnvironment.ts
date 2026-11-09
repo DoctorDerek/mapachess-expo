@@ -36,6 +36,8 @@ jest.mock("uniwind", () => {
   return {
     ScopedVariables: ({ children }: { children: ReactNode }) => children,
     withUniwind: (component: unknown) => component,
+    useResolveClassNames: (classes: string) =>
+      classes === "w-16" ? { width: 64 } : {},
     useCSSVariable: (name: string | readonly string[]) =>
       typeof name === "string" ? variable(name) : name.map(variable),
   }

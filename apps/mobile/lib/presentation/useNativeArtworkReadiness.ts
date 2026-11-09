@@ -9,6 +9,9 @@ export type NativeArtworkLayer = Readonly<{
   status: ArtworkStatus
 }>
 
+export const hasNativeArtwork = (sourceId: string): boolean =>
+  assets.images[sourceId] !== undefined
+
 function requestedArtwork(sourceIds: readonly string[]): ArtworkRequest[] {
   return [...new Set(sourceIds)].flatMap((sourceId) => {
     const source = assets.images[sourceId]

@@ -15,16 +15,13 @@ import {
   type BattleSpriteScale,
 } from "@mapachess/match-presentation/sprite-presentation-geometry"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
-import assets from "@/lib/presentation/nativeAssetManifest"
+import { hasNativeArtwork } from "@/lib/presentation/useNativeArtworkReadiness"
 import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import useActorSnapshot from "@/lib/useActorSnapshot"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
 import NativeBattleFighter, {
   type NativeFighterGeometry,
 } from "./NativeBattleFighter"
-
-const sourceAvailable = (sourceId: string): boolean =>
-  assets.images[sourceId] !== undefined
 
 function stageFighterGeometry(
   geometry: BattleSpriteGeometry,
@@ -95,7 +92,7 @@ export default function NativeBattleStage({
         playerAnimal,
         playerReaction,
         playerOrdinal,
-        sourceAvailable,
+        hasNativeArtwork,
       ),
     [playerAnimal, playerReaction, playerOrdinal],
   )
@@ -105,7 +102,7 @@ export default function NativeBattleStage({
         opponentAnimal,
         opponentReaction,
         opponentOrdinal,
-        sourceAvailable,
+        hasNativeArtwork,
       ),
     [opponentAnimal, opponentReaction, opponentOrdinal],
   )

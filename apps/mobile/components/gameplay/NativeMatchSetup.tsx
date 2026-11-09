@@ -30,9 +30,12 @@ import {
   selectDefaultStoryOpponent,
 } from "@mapachess/profile/story-progress"
 import { generateNativeChess960Position } from "@/lib/gameplay/nativeCryptography"
+import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import NativeAnimal from "../presentation/NativeAnimal"
 import NativeButton from "../presentation/NativeButton"
-import NativeChoicePanel from "../presentation/NativeChoicePanel"
+import NativeChoicePanel, {
+  type NativeChoicePreviewState,
+} from "../presentation/NativeChoicePanel"
 import { NativeScrollActions } from "../presentation/NativePanel"
 import NativeText from "../presentation/NativeText"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
@@ -56,6 +59,7 @@ export default function NativeMatchSetup({
   onStart: (setup: MatchSetup) => void
 }>) {
   const { copy } = useNativeLocale()
+  const motion = useNativePresentationActivity()
   const [draft, setDraft] = useState(initial)
   const [positionNumber, setPositionNumber] = useState(() =>
     String(
@@ -94,6 +98,18 @@ export default function NativeMatchSetup({
   const valid =
     available &&
     (draft.mode === "story" || variant === "standard" || position.ok)
+  const animalPreview =
+    (animal: typeof opponentId, enabled: boolean) =>
+    ({ selected, attended }: NativeChoicePreviewState) => (
+      <NativeAnimal
+        animal={animal}
+        motion={
+          enabled && (selected || attended)
+            ? { ...motion, attention: attended }
+            : undefined
+        }
+      />
+    )
   const choice = (
     label: string,
     value: string,
@@ -103,7 +119,13 @@ export default function NativeMatchSetup({
     <View className="bg-mapachito-surface flex-row items-center gap-3 rounded-xl p-3">
       {animal === undefined ? null : (
         <View className="size-16 shrink-0">
-          <NativeAnimal animal={animal} />
+          <NativeAnimal
+            animal={animal}
+            motion={{
+              ...motion,
+              active: motion.active && overlay === undefined && !disabled,
+            }}
+          />
         </View>
       )}
       <View className="min-w-0 flex-1">
@@ -331,15 +353,18 @@ export default function NativeMatchSetup({
           title={copy.setup.chooseAnimal}
           value={data.appearance.animal}
           onCancel={navigation.back}
-          choices={STOCKFISH_OPPONENTS.map(({ id }) => ({
-            value: id,
-            label: copy.animals.names[id],
-            disabled: !eligibleAnimals.includes(id),
-            description: eligibleAnimals.includes(id)
-              ? undefined
-              : copy.setup.challengeAvailability,
-            preview: <NativeAnimal animal={id} />,
-          }))}
+          choices={STOCKFISH_OPPONENTS.map(({ id }) => {
+            const enabled = eligibleAnimals.includes(id)
+            return {
+              value: id,
+              label: copy.animals.names[id],
+              disabled: !enabled,
+              description: enabled
+                ? undefined
+                : copy.setup.challengeAvailability,
+              preview: animalPreview(id, enabled),
+            }
+          })}
           onAccept={(animal) => {
             navigation.back()
             profileActor.send({
@@ -354,19 +379,22 @@ export default function NativeMatchSetup({
           title={copy.setup.chooseOpponent}
           value={opponentId}
           onCancel={navigation.back}
-          choices={STOCKFISH_OPPONENTS.map(({ id, storyTargetElo }) => ({
-            value: id,
-            label: copy.animals.opponent(id),
-            disabled:
+          choices={STOCKFISH_OPPONENTS.map(({ id, storyTargetElo }) => {
+            const enabled =
               draft.mode === "story"
-                ? !canPlayStoryOpponent(data.storyProgress, variant, id)
-                : !challengeAnimals.some((animal) => animal.id === id),
-            description:
-              draft.mode === "story"
-                ? copy.gameplay.targetElo(storyTargetElo)
-                : undefined,
-            preview: <NativeAnimal animal={id} />,
-          }))}
+                ? canPlayStoryOpponent(data.storyProgress, variant, id)
+                : challengeAnimals.some((animal) => animal.id === id)
+            return {
+              value: id,
+              label: copy.animals.opponent(id),
+              disabled: !enabled,
+              description:
+                draft.mode === "story"
+                  ? copy.gameplay.targetElo(storyTargetElo)
+                  : undefined,
+              preview: animalPreview(id, enabled),
+            }
+          })}
           onAccept={(animal) => {
             setDraft(
               draft.mode === "story"
