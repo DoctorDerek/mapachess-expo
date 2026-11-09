@@ -194,6 +194,7 @@ export type ChickenSpriteSourceId =
   (typeof CHICKEN_SPRITE_SOURCES)[keyof typeof CHICKEN_SPRITE_SOURCES]
 
 export const CHICKEN_SPRITE_MANIFEST = {
+  sourceAnimalId: "chickenpack",
   repeatVictory: true,
   attentionAnimationIds: ["peck"],
   calmFrameDurationMilliseconds: CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
@@ -403,6 +404,7 @@ export type MapachitoSpriteSourceId =
   (typeof MAPACHITO_SPRITE_SOURCES)[keyof typeof MAPACHITO_SPRITE_SOURCES]
 
 export const MAPACHITO_SPRITE_MANIFEST = {
+  sourceAnimalId: "raccoon",
   repeatVictory: true,
   attentionAnimationIds: ["bark", "crouch"],
   calmFrameDurationMilliseconds: CALM_ANIMAL_FRAME_DURATION_MILLISECONDS,
