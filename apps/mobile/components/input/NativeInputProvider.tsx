@@ -18,7 +18,13 @@ import {
   type ReactNode,
   type RefObject,
 } from "react"
-import { Platform, TextInput, View, type ViewProps } from "react-native"
+import {
+  AccessibilityInfo,
+  Platform,
+  TextInput,
+  View,
+  type ViewProps,
+} from "react-native"
 import { withUniwind } from "uniwind"
 import type { PlayerInputDevice } from "@mapachess/match-presentation/input-prompts"
 import directionalInputTarget from "@mapachess/match/directional-input-target"
@@ -134,6 +140,7 @@ export function useNativeInputControl(
   activate: () => void,
   enabled = true,
   handle?: Control["handle"],
+  focusRequested = false,
 ): boolean {
   const scope = useContext(Surface)
   const reveal = useContext(InputReveal)
@@ -155,6 +162,13 @@ export function useNativeInputControl(
       for (const listener of scope.listeners) listener()
     }
   }, [scope, id, ref])
+  useEffect(() => {
+    if (!focusRequested || !enabled || scope === null || !scope.enabled())
+      return
+    selectControl(scope, id)
+    const view = ref.current
+    if (view !== null) AccessibilityInfo.sendAccessibilityEvent(view, "focus")
+  }, [enabled, focusRequested, id, ref, scope])
   const subscribe = useCallback(
     (listener: () => void) => {
       scope?.listeners.add(listener)
