@@ -1,34 +1,53 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import cx from "classix"
+import { useMemo } from "react"
+import { View, type ViewStyle } from "react-native"
 import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedProps,
+  useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
 } from "react-native-reanimated"
-import Svg, { G, Image, Rect, Text } from "react-native-svg"
-import { scheduleOnRN } from "react-native-worklets"
-import { useCSSVariable } from "uniwind"
+import { ScopedVariables, withUniwind } from "uniwind"
+import battleSpritePlayback from "@mapachess/match-presentation/battle-sprite-playback"
 import type { MatchPresentationBeat } from "@mapachess/match-presentation/match-presentation-machine"
 import type { MatchPresentationParticipant } from "@mapachess/match-presentation/match-reaction"
-import type {
-  ResolvedSpritePresentation,
-  ResolvedSpriteStep,
-} from "@mapachess/match-presentation/presentation-asset-manifest"
-import assets from "@/lib/presentation/nativeAssetManifest"
+import type { ResolvedSpritePresentation } from "@mapachess/match-presentation/presentation-asset-manifest"
+import {
+  battleSpriteContactAdvance,
+  type BattleSpriteScale,
+} from "@mapachess/match-presentation/sprite-presentation-geometry"
+import NativeSpritePlayback from "../presentation/NativeSpritePlayback"
+import NativeText from "../presentation/NativeText"
 
-const AnimatedGroup = Animated.createAnimatedComponent(G)
-const AnimatedImage = Animated.createAnimatedComponent(Image)
-const FALLBACK_TRAVEL_MS = 360
+const AnimatedTrack = withUniwind(Animated.View)
+
+export type NativeFighterGeometry = Readonly<{
+  mobile: BattleSpriteScale
+  desktop: BattleSpriteScale
+}>
+
+function trackInsets(
+  sprite: BattleSpriteScale,
+  opponent: BattleSpriteScale,
+  contactAdvancePixels: number,
+  recoilLimit: number,
+) {
+  return {
+    home: sprite.clearance.horizontalRadius + recoilLimit,
+    contact:
+      opponent.clearance.horizontalRadius +
+      recoilLimit +
+      (sprite.visibleWidthPixels + opponent.visibleWidthPixels) / 2 -
+      contactAdvancePixels * sprite.integerScale,
+  }
+}
 
 export default function NativeBattleFighter({
   participant,
   displayName,
   presentation,
-  idle,
   opposing,
+  geometry,
+  opposingGeometry,
+  recoilLimit,
   beat,
   phaseIndex,
   sequence,
@@ -40,8 +59,10 @@ export default function NativeBattleFighter({
   participant: MatchPresentationParticipant
   displayName: string
   presentation: ResolvedSpritePresentation<string, string>
-  idle: ResolvedSpritePresentation<string, string>
   opposing: ResolvedSpritePresentation<string, string>
+  geometry: NativeFighterGeometry
+  opposingGeometry: NativeFighterGeometry
+  recoilLimit: number
   beat: MatchPresentationBeat
   phaseIndex: number
   sequence: number
@@ -54,232 +75,110 @@ export default function NativeBattleFighter({
     sequence: number,
   ) => void
 }>) {
-  const fallbackColors = useCSSVariable([
-    "--color-mapachito-orange",
-    "--color-mapachito-white",
-    "--color-mapachito-charcoal",
-  ])
-  const fallbackColor = fallbackColors[participant === "player" ? 0 : 1]
-  const fallbackInk = fallbackColors[2]
-  const steps = useMemo(
-    () =>
-      presentation.kind === "sprite"
-        ? presentation.steps.filter(
-            (step) =>
-              step.beat ===
-              (beat === "conclusion" && presentation.reactionSlot === "idle"
-                ? "idle"
-                : beat),
-          )
-        : [],
-    [presentation, beat],
+  const isPlayer = participant === "player"
+  const direction = isPlayer ? 1 : -1
+  const facing = isPlayer ? "right" : "left"
+  const playback = useMemo(
+    () => battleSpritePlayback(presentation, beat, facing, reducedMotion),
+    [presentation, beat, facing, reducedMotion],
   )
-  const identity = `${String(sequence)}:${String(phaseIndex)}:${beat}:${reducedMotion ? "still" : "motion"}`
-  const [progress, setProgress] = useState({ identity, stepIndex: 0, cycle: 0 })
-  const stepIndex = progress.identity === identity ? progress.stepIndex : 0
-  const cycle = progress.identity === identity ? progress.cycle : 0
-  const step: ResolvedSpriteStep<string, string> | undefined =
-    steps[stepIndex] ?? (idle.kind === "sprite" ? idle.steps[0] : undefined)
-  const frame = useSharedValue(0)
+  const contact = battleSpriteContactAdvance(presentation, opposing, beat) ?? 0
+  const mobile = trackInsets(
+    geometry.mobile,
+    opposingGeometry.mobile,
+    contact,
+    recoilLimit,
+  )
+  const desktop = trackInsets(
+    geometry.desktop,
+    opposingGeometry.desktop,
+    contact,
+    recoilLimit,
+  )
   const travel = useSharedValue(0)
-  const frameIdentity = useRef("")
-  const completedIdentity = useRef<string | null>(null)
-  const attacker =
-    presentation.reactionSlot.endsWith("attacker") &&
-    !(
-      presentation.kind === "sprite" &&
-      presentation.steps.every((entry) => entry.beat === "strike")
-    )
-  const victim = presentation.reactionSlot.endsWith("victim")
-  const geometry = step?.animation.geometry
-  const scale =
-    presentation.kind === "sprite"
-      ? Math.max(
-          1,
-          Math.floor(60 / presentation.referenceGeometry.visibleHeight),
-        )
-      : 1
-  const opponentScale =
-    opposing.kind === "sprite"
-      ? Math.max(1, Math.floor(60 / opposing.referenceGeometry.visibleHeight))
-      : 1
-  const contact =
-    180 -
-    (presentation.layout.clearance.horizontalRadius * scale +
-      opposing.layout.clearance.horizontalRadius * opponentScale)
-  const target = reducedMotion
-    ? 0
-    : attacker && ["approach", "strike", "reaction"].includes(beat)
-      ? Math.max(0, contact)
-      : victim && beat === "reaction"
-        ? -10
+  const contactStyle = useAnimatedStyle<ViewStyle>(() => ({
+    transform: [
+      { translateX: `${100 * direction * Math.max(0, travel.get())}%` },
+    ],
+  }))
+  const recoilStyle = useAnimatedStyle<ViewStyle>(() => ({
+    transform: [
+      { translateX: `${100 * direction * Math.min(0, travel.get())}%` },
+    ],
+  }))
+  const home = isPlayer ? "left-0" : "right-0"
+  const travelTarget =
+    playback.travelTarget === "contact"
+      ? 1
+      : playback.travelTarget === "recoil"
+        ? -1
         : 0
-  const facing = participant === "player" ? 1 : -1
-  const mirror =
-    presentation.kind === "sprite" &&
-    (presentation.sourceFacing === "right" ? 1 : -1) !==
-      (beat === "recovery" && attacker ? -facing : facing)
-  const source =
-    step === undefined ? undefined : assets.images[step.animation.sourceId]
-  useEffect(() => {
-    if (!active) return
-    let disposed = false
-    const selected = steps[stepIndex]
-    const animation = selected?.animation ?? step?.animation
-    const first = selected?.frames?.[0] ?? 0
-    const end = selected?.frames?.[1] ?? animation?.frameCount ?? 1
-    const duration =
-      selected === undefined
-        ? FALLBACK_TRAVEL_MS
-        : (end - first) * selected.animation.frameDurationMilliseconds
-    const selectedIdentity = `${identity}:${String(stepIndex)}:${String(cycle)}:${step?.animationId ?? "fallback"}`
-    if (frameIdentity.current !== selectedIdentity) {
-      frameIdentity.current = selectedIdentity
-      frame.value = first
-    }
-    const done = (): void => {
-      if (disposed || completedIdentity.current === identity) return
-      if (stepIndex + 1 < steps.length) {
-        setProgress({ identity, stepIndex: stepIndex + 1, cycle })
-        return
-      }
-      if (
-        beat === "conclusion" &&
-        presentation.kind === "sprite" &&
-        presentation.repeatSequence &&
-        !reducedMotion
-      ) {
-        setProgress({ identity, stepIndex: 0, cycle: cycle + 1 })
-        return
-      }
-      completedIdentity.current = identity
-      if (report) onComplete(participant, phaseIndex, sequence)
-    }
-    const dispose = (): void => {
-      disposed = true
-      cancelAnimation(frame)
-      cancelAnimation(travel)
-    }
-    if (reducedMotion || source === undefined) {
-      frame.value = animation?.reducedMotionFrameIndex ?? 0
-      travel.value = 0
-      if (report || (selected !== undefined && selected.playback !== "loop"))
-        queueMicrotask(done)
-      return dispose
-    }
-    if (selected === undefined && report) {
-      travel.value = withTiming(target, { duration, easing: Easing.linear })
-      frame.value = withTiming(
-        end,
-        { duration, easing: Easing.linear },
-        (finished) => {
-          if (finished) scheduleOnRN(done)
-        },
-      )
-    } else {
-      frame.value = Math.max(first, Math.min(frame.value, end - 1))
-      const remaining = Math.max(
-        1,
-        (end - frame.value) * (animation?.frameDurationMilliseconds ?? 1),
-      )
-      travel.value = withTiming(target, {
-        duration: remaining,
-        easing: Easing.linear,
-      })
-      const animationValue = withTiming(
-        end,
-        { duration: remaining, easing: Easing.linear },
-        (finished) => {
-          if (finished && selected?.playback !== "loop") scheduleOnRN(done)
-        },
-      )
-      frame.value =
-        selected?.playback === "loop" || (selected === undefined && !report)
-          ? withSequence(
-              withTiming(end, { duration: remaining, easing: Easing.linear }),
-              withTiming(first, { duration: 0 }),
-              withRepeat(
-                withSequence(
-                  withTiming(end, {
-                    duration:
-                      (end - first) *
-                      (animation?.frameDurationMilliseconds ?? 1),
-                    easing: Easing.linear,
-                  }),
-                  withTiming(first, { duration: 0 }),
-                ),
-                -1,
-                false,
-              ),
-            )
-          : animationValue
-    }
-    return dispose
-  }, [
-    identity,
-    steps,
-    stepIndex,
-    cycle,
-    active,
-    reducedMotion,
-    report,
-    source,
-    target,
-  ])
-  const groupProps = useAnimatedProps(() => ({
-    transform: `translate(${String((participant === "player" ? 90 : 270) + facing * travel.value)},104) scale(${String(scale * (mirror ? -1 : 1))},${String(scale)})`,
-  }))
-  const imageProps = useAnimatedProps(() => ({
-    x:
-      -Math.floor(
-        Math.min(
-          frame.value,
-          (step?.frames?.[1] ?? step?.animation.frameCount ?? 1) - 1,
-        ),
-      ) *
-        (geometry?.frameWidth ?? 1) -
-      (geometry?.bottomCenterX ?? 0),
-  }))
   return (
-    <AnimatedGroup animatedProps={groupProps}>
-      {source === undefined || geometry === undefined ? (
-        <>
-          <Rect
-            x={-24}
-            y={-48}
-            width={48}
-            height={48}
-            fill={typeof fallbackColor === "string" ? fallbackColor : undefined}
-            stroke={typeof fallbackInk === "string" ? fallbackInk : undefined}
-            strokeWidth={2}
-          />
-          <Text
-            x={0}
-            y={-12}
-            textAnchor="middle"
-            fontSize={36}
-            fill={typeof fallbackInk === "string" ? fallbackInk : undefined}
+    <ScopedVariables
+      variables={{
+        "--native-track-home": mobile.home,
+        "--native-track-contact": mobile.contact,
+        "--native-track-wide-home": desktop.home,
+        "--native-track-wide-contact": desktop.contact,
+      }}
+    >
+      <View
+        className={cx(
+          "absolute [bottom:var(--native-stage-below)] h-0 min-w-0 xl:[bottom:var(--native-stage-wide-below)]",
+          isPlayer
+            ? "[right:var(--native-track-contact)] [left:var(--native-track-home)] xl:[right:var(--native-track-wide-contact)] xl:[left:var(--native-track-wide-home)]"
+            : "[right:var(--native-track-home)] [left:var(--native-track-contact)] xl:[right:var(--native-track-wide-home)] xl:[left:var(--native-track-wide-contact)]",
+        )}
+        pointerEvents="none"
+      >
+        <AnimatedTrack className="absolute inset-x-0 h-0" style={contactStyle}>
+          <View
+            className={cx("max-w-battle-recoil-limit absolute h-0 w-1/4", home)}
           >
-            {displayName.slice(0, 1)}
-          </Text>
-        </>
-      ) : (
-        <Svg
-          x={-geometry.bottomCenterX}
-          y={-geometry.bottomY}
-          width={geometry.frameWidth}
-          height={geometry.frameHeight}
-          viewBox={`${String(-geometry.bottomCenterX)} ${String(-geometry.bottomY)} ${String(geometry.frameWidth)} ${String(geometry.frameHeight)}`}
-        >
-          <AnimatedImage
-            animatedProps={imageProps}
-            href={source}
-            y={-geometry.bottomY}
-            width={geometry.frameWidth * (step?.animation.frameCount ?? 1)}
-            height={geometry.frameHeight}
-          />
-        </Svg>
-      )}
-    </AnimatedGroup>
+            <AnimatedTrack
+              className="absolute inset-x-0 h-0"
+              style={recoilStyle}
+            >
+              <View className={cx("absolute size-0", home)}>
+                <NativeSpritePlayback
+                  active={active}
+                  identity={`${String(sequence)}:${String(phaseIndex)}:${beat}`}
+                  playback={playback}
+                  placement={{
+                    kind: "battle",
+                    mobileScale: geometry.mobile.integerScale,
+                    desktopScale: geometry.desktop.integerScale,
+                  }}
+                  mirrored={
+                    presentation.kind === "sprite" &&
+                    playback.facing !== presentation.sourceFacing
+                  }
+                  reducedMotion={reducedMotion}
+                  travel={{ position: travel, target: travelTarget }}
+                  onComplete={
+                    report
+                      ? () => onComplete(participant, phaseIndex, sequence)
+                      : undefined
+                  }
+                  fallback={
+                    <View
+                      accessibilityLabel={displayName}
+                      className={cx(
+                        "border-mapachito-charcoal size-battle-fallback absolute bottom-0 left-0 -translate-x-1/2 items-center justify-center border-4",
+                        isPlayer ? "bg-mapachito-orange" : "bg-mapachito-white",
+                      )}
+                    >
+                      <NativeText className="text-mapachito-charcoal font-native text-3xl">
+                        {displayName.slice(0, 1)}
+                      </NativeText>
+                    </View>
+                  }
+                />
+              </View>
+            </AnimatedTrack>
+          </View>
+        </AnimatedTrack>
+      </View>
+    </ScopedVariables>
   )
 }

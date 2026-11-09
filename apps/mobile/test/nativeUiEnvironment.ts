@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals"
+import type { ReactNode } from "react"
 
 jest.mock("react-native-reanimated", () =>
   jest.requireActual<typeof import("react-native-reanimated")>(
@@ -27,12 +28,16 @@ jest.mock("uniwind", () => {
       match[2],
     ]),
   )
+  const variable = (name: string) => {
+    if (name === "--spacing-battle-fallback") return 72
+    if (name === "--spacing-battle-recoil-limit") return 10
+    return tokens.get(name)
+  }
   return {
+    ScopedVariables: ({ children }: { children: ReactNode }) => children,
     withUniwind: (component: unknown) => component,
     useCSSVariable: (name: string | readonly string[]) =>
-      typeof name === "string"
-        ? tokens.get(name)
-        : name.map((token) => tokens.get(token)),
+      typeof name === "string" ? variable(name) : name.map(variable),
   }
 })
 jest.mock("expo-localization", () => ({

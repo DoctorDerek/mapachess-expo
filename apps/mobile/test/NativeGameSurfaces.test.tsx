@@ -6,7 +6,6 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import Svg from "react-native-svg"
 import loadCatalog from "@mapachess/localization/catalog"
 import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -54,12 +53,20 @@ describe("native gameplay surfaces", () => {
     )
     expect(presentation.kind).toBe("authored-fallback")
     const complete = jest.fn()
+    const scale = {
+      integerScale: 1,
+      visibleWidthPixels: 72,
+      clearance: { above: 72, below: 0, horizontalRadius: 36 },
+    }
+    const geometry = { mobile: scale, desktop: scale }
     const props = {
       participant: "opponent" as const,
       displayName: copy.animals.names["chicken-stockfish"],
       presentation,
-      idle: presentation,
       opposing: presentation,
+      geometry,
+      opposingGeometry: geometry,
+      recoilLimit: 10,
       beat: "conclusion" as const,
       phaseIndex: 3,
       sequence: 7,
@@ -68,22 +75,10 @@ describe("native gameplay surfaces", () => {
       reducedMotion: true,
       onComplete: complete,
     }
-    const rendered = await render(
-      <Svg>
-        <NativeBattleFighter {...props} />
-      </Svg>,
-    )
+    const rendered = await render(<NativeBattleFighter {...props} />)
     await waitFor(() => expect(complete).toHaveBeenCalledWith("opponent", 3, 7))
-    await rendered.rerender(
-      <Svg>
-        <NativeBattleFighter {...props} active={false} />
-      </Svg>,
-    )
-    await rendered.rerender(
-      <Svg>
-        <NativeBattleFighter {...props} />
-      </Svg>,
-    )
+    await rendered.rerender(<NativeBattleFighter {...props} active={false} />)
+    await rendered.rerender(<NativeBattleFighter {...props} />)
     expect(complete).toHaveBeenCalledTimes(1)
   })
 

@@ -8,7 +8,7 @@ import type {
 const MOBILE_VISIBLE_HEIGHT_PIXELS = 60
 const DESKTOP_VISIBLE_HEIGHT_PIXELS = 80
 
-type BattleSpriteScale = Readonly<{
+export type BattleSpriteScale = Readonly<{
   integerScale: number
   visibleWidthPixels: number
   clearance: SpriteClearance
