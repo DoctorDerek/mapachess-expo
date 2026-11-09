@@ -10,6 +10,7 @@ import {
   selectMatchPresentationAnimalReaction,
   selectMatchPresentationVariationOrdinal,
 } from "@mapachess/match-presentation/match-presentation-machine"
+import { opponentManifest } from "@mapachess/match-presentation/opponent-presentation"
 import type {
   DurableMatchRecord,
   MatchMode,
@@ -182,8 +183,14 @@ export default function WebMatch({
         runtime.opponentId,
         opponentReaction,
         opponentVariationOrdinal,
+        opponentManifest(playerAnimal).sourceAnimalId,
       ),
-    [opponentReaction, runtime.opponentId, opponentVariationOrdinal],
+    [
+      opponentReaction,
+      runtime.opponentId,
+      opponentVariationOrdinal,
+      playerAnimal,
+    ],
   )
   const position = selectMatchPosition(snapshot)
   const modeLabel = copy.setup.presentations[position.variant][mode].title

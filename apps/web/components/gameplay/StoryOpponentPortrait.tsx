@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react"
+import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import { usePortraitViewport } from "./PortraitViewport"
@@ -8,8 +9,6 @@ type StoryOpponentPortraitProps = Readonly<{
   locked: boolean
   framed?: boolean
 }>
-
-const PORTRAIT_PIXEL_SCALE = 2
 
 export default function StoryOpponentPortrait({
   opponent,
@@ -21,11 +20,8 @@ export default function StoryOpponentPortrait({
   const animation =
     presentation.kind === "sprite" ? presentation.steps[0].animation : null
 
-  const geometry = animation?.geometry
-  const pixelSize =
-    framed || geometry === undefined
-      ? `${PORTRAIT_PIXEL_SCALE}px`
-      : `min(${PORTRAIT_PIXEL_SCALE}px, calc(100cqw / ${geometry.visibleWidth}), calc(100cqh / ${geometry.visibleHeight}))`
+  const scale = presentation.layout.standaloneScale ?? STANDALONE_ANIMAL_SCALE
+  const pixelSize = `${scale}px`
   const length = (pixels: number) =>
     `calc(${pixels} * var(--portrait-pixel-size))`
 
@@ -33,10 +29,17 @@ export default function StoryOpponentPortrait({
     <span
       ref={ref}
       aria-hidden="true"
+      style={{
+        minWidth: presentation.layout.clearance.horizontalRadius * 2 * scale,
+        minHeight:
+          (presentation.layout.clearance.above +
+            presentation.layout.clearance.below) *
+          scale,
+      }}
       className={
         framed
-          ? "bg-mapachito-white border-mapachito-charcoal/30 grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border-2 font-mono font-bold"
-          : "@container-size grid size-full place-items-end-safe justify-items-center"
+          ? "bg-mapachito-white border-mapachito-charcoal/30 grid shrink-0 place-items-end-safe justify-items-center rounded-lg border-2 p-1 font-mono font-bold"
+          : "grid place-items-end-safe justify-items-center p-1"
       }
     >
       {animation === null ? (

@@ -67,8 +67,8 @@ export default function PlayerAnimalChoices({
         className={cx(
           "mt-2 grid gap-3 p-2",
           presentation === "dialog"
-            ? "grid-cols-[repeat(auto-fit,minmax(min(6.5rem,100%),1fr))]"
-            : "max-h-96 [scrollbar-color:var(--color-mapachito-blue)_var(--color-mapachito-charcoal)] [scrollbar-gutter:stable] grid-cols-[repeat(auto-fit,minmax(min(7.5rem,100%),1fr))] overflow-x-hidden overflow-y-scroll overscroll-contain",
+            ? "grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))]"
+            : "max-h-96 [scrollbar-color:var(--color-mapachito-blue)_var(--color-mapachito-charcoal)] [scrollbar-gutter:stable] grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] overflow-x-hidden overflow-y-scroll overscroll-contain",
         )}
         role="region"
         tabIndex={0}
@@ -81,7 +81,7 @@ export default function PlayerAnimalChoices({
           return (
             <label
               className={cx(
-                "relative grid min-w-0 grid-rows-[6.5rem_auto] gap-2 rounded-[0.75rem_0.25rem_0.75rem_0.25rem] p-2 text-center has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-white",
+                "relative grid min-w-0 grid-rows-[1fr_auto] gap-2 rounded-[0.75rem_0.25rem_0.75rem_0.25rem] p-2 text-center has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-white",
                 locked
                   ? "cursor-not-allowed"
                   : "cursor-pointer has-disabled:cursor-not-allowed has-disabled:opacity-60",

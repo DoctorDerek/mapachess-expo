@@ -90,14 +90,24 @@ export default function ReactiveBattleStage({
     presentationSnapshot,
     "player",
   )
+  const opponentSourceAnimalId =
+    opponentPresentation.kind === "sprite"
+      ? opponentPresentation.sourceAnimalId
+      : undefined
   const playerPresentation = useMemo(
     () =>
       resolveWebOpponentPresentation(
         playerAnimal,
         playerReaction,
         playerVariationOrdinal,
+        opponentSourceAnimalId,
       ),
-    [playerAnimal, playerReaction, playerVariationOrdinal],
+    [
+      playerAnimal,
+      playerReaction,
+      playerVariationOrdinal,
+      opponentSourceAnimalId,
+    ],
   )
   const beat = selectMatchPresentationBeat(presentationSnapshot)
   const isReacting = presentationSnapshot.matches("reacting")

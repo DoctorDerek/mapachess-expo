@@ -1,10 +1,10 @@
 import { useActorRef, useSelector } from "@xstate/react"
-import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
 import { preload } from "react-dom"
 import animalAttentionMachine from "@mapachess/match-presentation/animal-attention-machine"
 import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
+import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
 import {
   battleSpriteFrameKeyframes,
   battleSpriteFrameStyle,
@@ -13,7 +13,7 @@ import {
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
 import resolveWebOpponentPresentation, {
-  resolveWebOpponentAttention,
+  resolveWebOpponentAttentionSequence,
 } from "../../lib/presentation/webOpponentPresentation"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import { usePortraitViewport } from "./PortraitViewport"
@@ -22,14 +22,10 @@ export default function ChallengeAnimalPortrait({
   opponent,
   active,
   attention = false,
-  compact = false,
-  fit = true,
 }: Readonly<{
   opponent: Readonly<{ id: AnimalPresentationId }>
   active: boolean
   attention?: boolean
-  compact?: boolean
-  fit?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
   const { ref: viewportRef, near } = usePortraitViewport()
@@ -62,8 +58,9 @@ export default function ChallengeAnimalPortrait({
   const [initialFrameStyle] = useState(() =>
     step === null ? undefined : battleSpriteFrameStyle(step, false),
   )
-  const attentionStep = useMemo(
-    () => resolveWebOpponentAttention(opponent.id, attentionOrdinal ?? 0),
+  const attentionSteps = useMemo(
+    () =>
+      resolveWebOpponentAttentionSequence(opponent.id, attentionOrdinal ?? 0),
     [opponent.id, attentionOrdinal],
   )
   const spriteRef = useRef<HTMLSpanElement>(null)
@@ -83,6 +80,7 @@ export default function ChallengeAnimalPortrait({
     if (step === null || sprite === null) return
     let cancelled = false
     let readyStep: BattleSpriteStep | null = null
+    let attentionStepIndex = -1
     let playingStep: BattleSpriteStep | null = null
     let frames: Animation | null = null
     const motionPreference = window.matchMedia(
@@ -123,9 +121,10 @@ export default function ChallengeAnimalPortrait({
         if (next.playback !== "loop") {
           frames.onfinish = () => {
             if (cancelled || playingStep !== next) return
-            readyStep = step
+            attentionStepIndex += 1
+            readyStep = attentionSteps[attentionStepIndex] ?? step
             updatePlayback()
-            finishAttention()
+            if (readyStep === step) finishAttention()
           }
         }
       }
@@ -134,13 +133,15 @@ export default function ChallengeAnimalPortrait({
     }
     const sources = [
       step.animation.sourceId,
-      ...(attentionStep === null ? [] : [attentionStep.animation.sourceId]),
+      ...attentionSteps.map(({ animation }) => animation.sourceId),
     ]
     images.retain(sources)
     const attentionReady =
-      attentionStep === null
+      attentionSteps.length === 0
         ? Promise.resolve(false)
-        : images.prepare([attentionStep.animation.sourceId])
+        : images.prepare(
+            attentionSteps.map(({ animation }) => animation.sourceId),
+          )
     void images.prepare([step.animation.sourceId]).then(async (decoded) => {
       if (cancelled) return
       setUnavailable(!decoded && !hasVisiblePose.current)
@@ -150,11 +151,12 @@ export default function ChallengeAnimalPortrait({
       updatePlayback()
       if (
         attentionOrdinal !== null &&
-        attentionStep !== null &&
+        attentionSteps.length > 0 &&
         (await attentionReady) &&
         !cancelled
       ) {
-        readyStep = attentionStep
+        attentionStepIndex = 0
+        readyStep = attentionSteps[0]!
         updatePlayback()
       } else {
         finishAttention()
@@ -172,38 +174,32 @@ export default function ChallengeAnimalPortrait({
       document.removeEventListener("visibilitychange", updatePlayback)
       motionPreference.removeEventListener("change", updatePlayback)
     }
-  }, [isPlaying, attentionOrdinal, attentionActor, attentionStep, images, step])
+  }, [
+    isPlaying,
+    attentionOrdinal,
+    attentionActor,
+    attentionSteps,
+    images,
+    step,
+  ])
 
+  const scale = presentation.layout.standaloneScale ?? STANDALONE_ANIMAL_SCALE
   const portraitStyle: CSSProperties & {
     "--sprite-scale": number
-    "--sprite-pixel-size"?: string
+    "--portrait-width": string
+    "--portrait-height": string
+    "--portrait-baseline": string
   } = {
-    "--sprite-scale": compact ? 2 : (presentation.layout.standaloneScale ?? 2),
-  }
-  if (fit && step !== null) {
-    const geometry = [
-      step.animation.geometry,
-      ...(attentionStep === null ? [] : [attentionStep.animation.geometry]),
-    ]
-    const width =
-      2 *
-      Math.max(
-        ...geometry.flatMap((frame) => [
-          frame.bottomCenterX - frame.visibleX,
-          frame.visibleX + frame.visibleWidth - frame.bottomCenterX,
-        ]),
-      )
-    const height = Math.max(
-      ...geometry.map((frame) => frame.bottomY - frame.visibleY),
-    )
-    portraitStyle["--sprite-pixel-size"] =
-      `min(${portraitStyle["--sprite-scale"]}px, calc(100cqw / ${width}), calc((100cqh - var(--spacing)) / ${height}))`
+    "--sprite-scale": scale,
+    "--portrait-width": `${presentation.layout.clearance.horizontalRadius * 2 * scale}px`,
+    "--portrait-height": `${(presentation.layout.clearance.above + presentation.layout.clearance.below) * scale}px`,
+    "--portrait-baseline": `${presentation.layout.clearance.below * scale}px`,
   }
   return (
     <span
       ref={viewportRef}
       aria-hidden="true"
-      className={cx("relative block h-full w-full", fit && "@container-size")}
+      className="relative mx-auto block min-h-[calc(var(--portrait-height)+--spacing(2))] min-w-(--portrait-width)"
       style={portraitStyle}
     >
       {step === null || unavailable ? (
@@ -211,7 +207,7 @@ export default function ChallengeAnimalPortrait({
           {animalCopy.opponent(opponent.id)}
         </span>
       ) : null}
-      <span className="absolute bottom-1 left-1/2 block size-0">
+      <span className="absolute bottom-[calc(var(--portrait-baseline)+--spacing(1))] left-1/2 block size-0">
         {near && (
           <span
             ref={spriteRef}

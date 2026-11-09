@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it, vi } from "vitest"
 import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match-record"
 import stockfishOpponent from "@mapachess/match/stockfish-opponent"
 import resolveWebOpponentPresentation, {
-  resolveWebOpponentAttention,
+  resolveWebOpponentAttentionSequence,
 } from "../../lib/presentation/webOpponentPresentation"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
 
@@ -30,6 +30,7 @@ describe("Challenge animal portrait asset contract", () => {
     ["mouse-stockfish", ["idle", "idle_blink"]],
     ["squirrel-stockfish", ["idle"]],
     ["tiger-stockfish", ["idle", "idle_blink", "sit"]],
+    ["bear-stockfish", ["idle", "idle_blink"]],
     ["frog-stockfish", ["idle"]],
     ["turtle-stockfish", ["idle", "idle_blink"]],
     ["panda-stockfish", ["idle", "idle_laugh"]],
@@ -59,48 +60,52 @@ describe("Challenge animal portrait asset contract", () => {
       expect(step.playback).toBe("loop")
       expect(step.animation.frameDurationMilliseconds).toBe(160)
       const g = step.animation.geometry
-      expect((g.bottomY - g.visibleY) * 3).toBeLessThanOrEqual(100)
+      expect(g.bottomY - g.visibleY).toBeLessThanOrEqual(
+        result.layout.clearance.above,
+      )
       expect(
         Math.max(
           g.bottomCenterX - g.visibleX,
           g.visibleX + g.visibleWidth - g.bottomCenterX,
-        ) * 6,
-      ).toBeLessThanOrEqual(132)
+        ),
+      ).toBeLessThanOrEqual(result.layout.clearance.horizontalRadius)
       expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
     }
   })
   it.each(IMPLEMENTED_DURABLE_OPPONENT_IDS)(
     "keeps %s attention source-authored, bounded and at action pacing",
     (id) => {
-      const attention = resolveWebOpponentAttention(id)
+      const attention = resolveWebOpponentAttentionSequence(id)
       if (id === "ninja-stockfish" || id === "war-hero-stockfish") {
-        expect(attention).toBeNull()
+        expect(attention).toEqual([])
         return
       }
-      for (let ordinal = 0; ordinal < 3; ordinal += 1) {
-        const attention = resolveWebOpponentAttention(id, ordinal)
-        if (attention === null) throw new Error("Expected attention clip")
-        expect(attention.playback).toBe("once")
-        expect(attention.animation.frameDurationMilliseconds).toBe(100)
-        const g = attention.animation.geometry
-        const width =
-          Math.max(
-            g.bottomCenterX - g.visibleX,
-            g.visibleX + g.visibleWidth - g.bottomCenterX,
-          ) * 2
-        expect(width).toBeGreaterThan(0)
-        expect(g.bottomY - g.visibleY).toBeGreaterThan(0)
-        const markup = renderToStaticMarkup(
-          <ChallengeAnimalPortrait
-            opponent={stockfishOpponent(id)}
-            active
-            attention
-          />,
-        )
-        expect(markup).toContain("100cqw")
-        expect(markup).toContain("100cqh")
-        expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
-        expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
+      for (let ordinal = 0; ordinal < 4; ordinal += 1) {
+        const sequence = resolveWebOpponentAttentionSequence(id, ordinal)
+        expect(sequence.length).toBeGreaterThan(0)
+        for (const attention of sequence) {
+          expect(attention.playback).toBe("once")
+          expect(attention.animation.frameDurationMilliseconds).toBe(100)
+          const g = attention.animation.geometry
+          const width =
+            Math.max(
+              g.bottomCenterX - g.visibleX,
+              g.visibleX + g.visibleWidth - g.bottomCenterX,
+            ) * 2
+          expect(width).toBeGreaterThan(0)
+          expect(g.bottomY - g.visibleY).toBeGreaterThan(0)
+          const markup = renderToStaticMarkup(
+            <ChallengeAnimalPortrait
+              opponent={stockfishOpponent(id)}
+              active
+              attention
+            />,
+          )
+          expect(markup).toContain("--portrait-width:")
+          expect(markup).toContain("--portrait-height:")
+          expect(g.visibleY + g.visibleHeight).toBeLessThanOrEqual(g.bottomY)
+          expect(attention.animationId).not.toMatch(/attack|hurt|die|wall|swim/)
+        }
       }
     },
   )
@@ -117,10 +122,12 @@ describe("Challenge animal portrait asset contract", () => {
       )
       expect(markup.match(/rel="preload"/g)).toHaveLength(1)
       expect(markup).toContain(animation.sourceId)
-      const scale = presentation.layout.standaloneScale ?? 2
+      const scale = presentation.layout.standaloneScale ?? 3
       expect(geometry.visibleWidth).toBeGreaterThan(0)
-      expect(markup).toContain("@container-size")
-      expect(markup).toContain("--sprite-pixel-size:min(")
+      expect(markup).toContain(
+        `--portrait-width:${presentation.layout.clearance.horizontalRadius * 2 * scale}px`,
+      )
+      expect(markup).not.toContain("--sprite-pixel-size:min(")
       expect(markup).toContain(`--sprite-scale:${scale}`)
       expect(markup).not.toContain("Loading")
     },

@@ -69,7 +69,7 @@ describe("versioned web opponent policies", () => {
     },
   )
   it.each(["standard", "chess960"] as const)(
-    "starts 25 distinct rated %s Story opponents at their calibrated target",
+    "starts 26 distinct rated %s Story opponents at their calibrated target",
     async (variant) => {
       const policies = await Promise.all(
         STOCKFISH_OPPONENTS.map(({ id }) =>
@@ -77,7 +77,7 @@ describe("versioned web opponent policies", () => {
         ),
       )
       expect(new Set(policies.map(({ fingerprint }) => fingerprint)).size).toBe(
-        25,
+        26,
       )
       for (const [index, policy] of policies.entries()) {
         expect(policy.targetElo).toBe(
