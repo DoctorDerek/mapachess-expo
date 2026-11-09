@@ -96,6 +96,7 @@ export default function NativeCoachPortrait({
             resizeMode="stretch"
             source={request.source}
             style={shown === null ? undefined : portraitCrop(shown)}
+            testID={request.sourceId}
           />
         )
       })}

@@ -1,11 +1,20 @@
 import { jest } from "@jest/globals"
 import type { ReactNode } from "react"
 
-jest.mock("react-native-reanimated", () =>
-  jest.requireActual<typeof import("react-native-reanimated")>(
-    "react-native-reanimated/mock",
-  ),
-)
+jest.mock("react-native-reanimated", () => {
+  const animation = jest.requireActual<
+    typeof import("react-native-reanimated")
+  >("react-native-reanimated/mock")
+  const { useState } = jest.requireActual<typeof import("react")>("react")
+  const createMockValue = animation.useSharedValue
+  return {
+    ...animation,
+    useSharedValue: function useStableSharedValue<Value>(initial: Value) {
+      const [value] = useState(() => createMockValue(initial))
+      return value
+    },
+  }
+})
 jest.mock("react-native-worklets", () =>
   jest.requireActual<typeof import("react-native-worklets")>(
     "react-native-worklets/src/mock",
