@@ -7,6 +7,7 @@ import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
   battleSpriteFrameStyle,
+  battleStageStyle,
 } from "./battleSpriteFrames"
 import {
   CHICKEN_SPRITE_MANIFEST,
@@ -16,6 +17,29 @@ import {
 } from "./webPresentationAssets"
 
 describe("battle frame and clip contracts", () => {
+  it("preserves the browser Stage projection for scaled animals and fallback art", () => {
+    const dog = STORY_ANIMAL_SPRITES["dog-stockfish"]
+    const standing = resolveSpritePresentation(
+      dog,
+      { family: "idle" },
+      Object.values(dog.animations).map(({ sourceId }) => sourceId),
+    )
+    const fallback = resolveSpritePresentation(dog, { family: "idle" }, [])
+    expect(battleSpriteAnchorStyle(standing, fallback)).toEqual({
+      "--sprite-mobile-scale": 3,
+      "--sprite-desktop-scale": 3,
+      "--sprite-visible-width": "37px",
+      "--opponent-mobile-width": "calc(var(--battle-fallback-size) * 1)",
+      "--opponent-desktop-width": "calc(var(--battle-fallback-size) * 1)",
+    })
+    expect(battleStageStyle(standing, fallback)).toMatchObject({
+      "--battle-mobile-opponent-radius":
+        "calc(var(--battle-fallback-size) / 2)",
+      "--battle-desktop-opponent-radius":
+        "calc(var(--battle-fallback-size) / 2)",
+    })
+  })
+
   it("extends Tiger's strike only at contact and across its return against Squirrel", () => {
     const tiger = STORY_ANIMAL_SPRITES["tiger-stockfish"]
     const squirrel = STORY_ANIMAL_SPRITES["squirrel-stockfish"]
