@@ -1,8 +1,7 @@
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import { levelFromTotalXp } from "@mapachess/profile/global-xp"
-import matchVictoryMedal, {
-  matchMedalEligibility,
-} from "@mapachess/profile/match-medal"
+import matchVictoryMedal from "@mapachess/profile/match-medal"
+import { matchResultRating } from "@mapachess/profile/match-result-presentation"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
@@ -20,6 +19,7 @@ export default function MatchResultFacts({
   const challengeMedal =
     match.mode === "challenge" ? matchVictoryMedal(match) : null
   if (challengeMedal === null && reward === null) return null
+  const rating = matchResultRating(match, reward)
 
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold">
@@ -34,24 +34,16 @@ export default function MatchResultFacts({
               levelFromTotalXp(reward.totalXpBefore + reward.awardedXp),
             )}
           </span>
-          {reward.ratedElo === null ? null : (
+          {rating === null ? null : (
             <span>
-              <MedalSymbol
-                medal={
-                  reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                }
-              />
+              <MedalSymbol medal={rating.assistance} />
               {copy.profile.rating(
                 copy.gameplay.clock.rating(
-                  copy.setup.variants[reward.ratedElo.variant],
-                  copy.gameplay.clock.category[
-                    reward.ratedElo.timeCategory ?? "untimed"
-                  ],
-                  copy.shared.story.medals[
-                    reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                  ],
+                  copy.setup.variants[rating.variant],
+                  copy.gameplay.clock.category[rating.timeCategory],
+                  copy.shared.story.medals[rating.assistance],
                 ),
-                reward.ratedElo.after,
+                rating.after,
               )}
             </span>
           )}

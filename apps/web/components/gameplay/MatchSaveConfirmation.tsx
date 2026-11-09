@@ -2,10 +2,9 @@
 
 import { animate, motion, useReducedMotion } from "motion/react"
 import { useEffect, useState } from "react"
+import { SAVE_CONFIRMATION_DURATION_MS } from "@mapachess/profile/match-result-presentation"
 import pausePresentationWhileHidden from "../../lib/presentation/pausePresentationWhileHidden"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const SAVE_CONFIRMATION_DURATION_MS = 5_000
 
 export default function MatchSaveConfirmation() {
   const messages = useMapachessCopy().interface.matchSaveConfirmation
