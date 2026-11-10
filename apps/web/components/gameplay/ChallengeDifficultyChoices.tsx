@@ -29,6 +29,9 @@ export default function ChallengeDifficultyChoices({
   const record = history.type === "played" ? history.record : null
   const selectElo = (targetElo: number): void =>
     onEdit({ type: "selected", targetElo })
+  const confirmElo = (input: HTMLInputElement): void => {
+    if (!disabled && hasPendingText) selectElo(input.valueAsNumber)
+  }
 
   usePlayerInputScope({
     root: range,
@@ -81,13 +84,15 @@ export default function ChallengeDifficultyChoices({
         max={maximum}
         min={minimum}
         onChange={(event) => selectElo(event.currentTarget.valueAsNumber)}
-        onClick={(event) => {
-          if (hasPendingText) selectElo(event.currentTarget.valueAsNumber)
-        }}
+        onClick={(event) => confirmElo(event.currentTarget)}
         onKeyDown={(event) => {
           if (event.key !== "Home" && event.key !== "End") return
           event.preventDefault()
           selectElo(event.key === "Home" ? minimum : maximum)
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType === "touch" && event.isPrimary)
+            confirmElo(event.currentTarget)
         }}
         ref={range}
         step={step}

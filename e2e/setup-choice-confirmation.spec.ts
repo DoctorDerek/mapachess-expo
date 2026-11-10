@@ -133,35 +133,46 @@ for (const choice of choices) {
   })
 }
 
-test("an intentional same-tick Elo selection clears invalid exact input", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" })
-  await page.goto("/")
-  await importPlayerData(page, createInitialMapachessPlayerData())
-  await page
-    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
-    .click()
+for (const input of ["mouse", "touch"] as const) {
+  test.describe(`same-tick Elo via ${input}`, () => {
+    test.use({ hasTouch: input === "touch" })
 
-  const range = page.getByRole("slider", { name: "Adjust opponent Elo" })
-  const exact = page.getByRole("textbox", { name: "Opponent Elo", exact: true })
-  await expect(range).toHaveValue("100")
-  await exact.fill("1012")
-  await range.focus()
-  await expect(exact).toHaveValue("1012")
-  await expect(exact).toHaveAttribute("aria-invalid", "true")
+    test("clears invalid exact text only after deliberate selection", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 390, height: 844 })
+      await page.emulateMedia({ reducedMotion: "reduce" })
+      await page.goto("/")
+      await importPlayerData(page, createInitialMapachessPlayerData())
+      await page
+        .getByRole("button", { name: "Standard Chess Challenge", exact: true })
+        .click()
 
-  await range.click({
-    position: await range.evaluate((input) => ({
-      x: 1,
-      y: input.clientHeight / 2,
-    })),
+      const range = page.getByRole("slider", { name: "Adjust opponent Elo" })
+      const exact = page.getByRole("textbox", {
+        name: "Opponent Elo",
+        exact: true,
+      })
+      await expect(range).toHaveValue("100")
+      await exact.fill("1012")
+      await range.focus()
+      await expect(exact).toHaveValue("1012")
+      await expect(exact).toHaveAttribute("aria-invalid", "true")
+
+      const position = await range.evaluate((slider) => ({
+        x: 1,
+        y: slider.clientHeight / 2,
+      }))
+      if (input === "touch") await range.tap({ position })
+      else await range.click({ position })
+
+      await expect(range).toHaveValue("100")
+      await expect(exact).toHaveValue("100")
+      await expect(exact).not.toHaveAttribute("aria-invalid", "true")
+      expect((await savedProfile(page)).activeMatch).toBeNull()
+    })
   })
-  await expect(range).toHaveValue("100")
-  await expect(exact).toHaveValue("100")
-  await expect(exact).not.toHaveAttribute("aria-invalid", "true")
-  expect((await savedProfile(page)).activeMatch).toBeNull()
-})
+}
 
 for (const variant of ["standard", "chess960"] as const) {
   test(`keeps the animal and 2325 Elo independent through a rated ${variant} Challenge`, async ({
