@@ -67,8 +67,8 @@ function Position({
     <PlayerInputProvider profileActor={null}>
       <Chess960PositionChoice
         value={value}
-        numberedPosition
         disabled={disabled}
+        orientation="white"
         onChanged={(next) => {
           setValue(next)
           onChanged(next)
@@ -94,9 +94,15 @@ describe("controller-accessible match setup controls", () => {
     pad.press(15)
     expect((number as HTMLInputElement).value).toBe("529")
     expect(changed).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole("img", { name: copy.setup.positionPreview(518) }),
+    ).toBeTruthy()
     pad.press(0)
     expect(changed).toHaveBeenCalledExactlyOnceWith("529")
-    expect(screen.getByText(copy.setup.pinnedPosition)).toBeTruthy()
+    expect(
+      screen.getByRole("img", { name: copy.setup.positionPreview(529) }),
+    ).toBeTruthy()
+    expect(screen.queryByRole("grid")).toBeNull()
   })
 
   it.each([
@@ -138,6 +144,9 @@ describe("controller-accessible match setup controls", () => {
       screen.getByRole("button", { name: new RegExp(copy.setup.randomize) }),
     )
     expect(changed).toHaveBeenLastCalledWith("0")
+    expect(
+      screen.getByRole("img", { name: copy.setup.positionPreview(0) }),
+    ).toBeTruthy()
   })
 
   it("moves the focused Elo range by one supported target per controller step", () => {

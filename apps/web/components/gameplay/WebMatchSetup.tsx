@@ -151,6 +151,10 @@ export default function WebMatchSetup({
   const [timeControl, setTimeControl] = useState(setup.timeControl ?? UNTIMED)
   const category = timeCategory(timeControl)
   const challenge = setup.mode === "challenge" ? setup.challengeSetup : null
+  const chess960Challenge = challenge?.variant === "chess960"
+  const [playerColor, setPlayerColor] = useState(
+    challenge?.playerColor ?? "white",
+  )
   const variant =
     setup.mode === "story" ? setup.variant : setup.challengeSetup.variant
   const [numberedPosition, setNumberedPosition] = useState(
@@ -242,24 +246,18 @@ export default function WebMatchSetup({
       changeDifficulty({ type: "committed" })
       return
     }
-    const formData = new FormData(event.currentTarget)
-    const rawPosition = formData.get("chess960-position")
     const displayedPosition = parseChess960PositionId(
-      typeof rawPosition === "string" && rawPosition.trim() !== ""
-        ? Number(rawPosition)
-        : Number.NaN,
+      positionNumber.trim() === "" ? Number.NaN : Number(positionNumber),
     )
     const parsed = parseChallengeSetup({
       opponentId: selectedOpponentId,
       difficultyTargetElo,
       variant,
-      playerColor: formData.get("player-color"),
+      playerColor,
       chess960PositionId:
-        variant === "standard" || !numberedPosition
-          ? null
-          : typeof rawPosition === "string" && rawPosition.trim() !== ""
-            ? Number(rawPosition)
-            : Number.NaN,
+        chess960Challenge && numberedPosition && displayedPosition.ok
+          ? displayedPosition.positionId
+          : null,
     })
     if (!parsed.ok || (variant === "chess960" && !displayedPosition.ok)) {
       setInvalidSetup(true)
@@ -279,7 +277,10 @@ export default function WebMatchSetup({
   return (
     <section
       aria-labelledby="match-setup-title"
-      className="mx-auto h-full min-h-0 w-full max-w-3xl"
+      className={cx(
+        "mx-auto h-full min-h-0 w-full max-w-3xl",
+        chess960Challenge && "xl:max-w-4xl",
+      )}
     >
       <form onSubmit={startMatch} className="h-full min-h-0 min-w-0 text-base">
         <ScrollActions
@@ -316,128 +317,141 @@ export default function WebMatchSetup({
             {copy.presentations[variant][setup.mode].title}
           </h1>
           <div className="grid min-w-0 gap-3">
-            <div className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid min-w-0 grid-cols-1 gap-5 rounded-xl border-3 p-4 wrap-anywhere">
-              {setup.mode === "story" &&
-              playerAnimal !== null &&
-              onPlayerAnimalChanged !== undefined ? (
+            <div
+              className={cx(
+                "border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal grid min-w-0 grid-cols-1 gap-5 rounded-xl border-3 p-4 wrap-anywhere",
+                chess960Challenge &&
+                  "xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]",
+              )}
+            >
+              <div className="grid min-w-0 content-start gap-5">
+                {setup.mode === "story" &&
+                playerAnimal !== null &&
+                onPlayerAnimalChanged !== undefined ? (
+                  <MatchSetupChoice
+                    label={copy.color}
+                    value={animalCopy.names[playerAnimal.id]}
+                    actionLabel={copy.playAsAction(
+                      animalCopy.names[playerAnimal.id],
+                    )}
+                    disabled={disabled || opening}
+                    onChange={(event) =>
+                      openEditor("player", event.currentTarget)
+                    }
+                    preview={
+                      <ChallengeAnimalPortrait
+                        key={playerAnimal.id}
+                        active={visible && editing === null}
+                        opponent={playerAnimal}
+                      />
+                    }
+                  />
+                ) : null}
                 <MatchSetupChoice
-                  label={copy.color}
-                  value={animalCopy.names[playerAnimal.id]}
-                  actionLabel={copy.playAsAction(
-                    animalCopy.names[playerAnimal.id],
-                  )}
+                  label={copy.opponent}
+                  value={animalCopy.opponent(opponent.id)}
+                  detail={
+                    setup.mode === "story"
+                      ? copy.elo(String(opponent.storyTargetElo))
+                      : undefined
+                  }
+                  actionLabel={
+                    setup.mode === "story"
+                      ? copy.changeStoryOpponent
+                      : copy.changeAnimal
+                  }
                   disabled={disabled || opening}
                   onChange={(event) =>
-                    openEditor("player", event.currentTarget)
+                    openEditor("opponent", event.currentTarget)
                   }
                   preview={
                     <ChallengeAnimalPortrait
-                      key={playerAnimal.id}
+                      key={opponent.id}
                       active={visible && editing === null}
-                      opponent={playerAnimal}
+                      opponent={opponent}
                     />
                   }
                 />
-              ) : null}
-              <MatchSetupChoice
-                label={copy.opponent}
-                value={animalCopy.opponent(opponent.id)}
-                detail={
-                  setup.mode === "story"
-                    ? copy.elo(String(opponent.storyTargetElo))
-                    : undefined
-                }
-                actionLabel={
-                  setup.mode === "story"
-                    ? copy.changeStoryOpponent
-                    : copy.changeAnimal
-                }
-                disabled={disabled || opening}
-                onChange={(event) =>
-                  openEditor("opponent", event.currentTarget)
-                }
-                preview={
-                  <ChallengeAnimalPortrait
-                    key={opponent.id}
-                    active={visible && editing === null}
-                    opponent={opponent}
-                  />
-                }
-              />
 
-              {challenge === null ? null : (
-                <>
-                  {difficulty === null ? null : (
-                    <ChallengeDifficultyChoices
+                {challenge === null ? null : (
+                  <>
+                    {difficulty === null ? null : (
+                      <ChallengeDifficultyChoices
+                        disabled={disabled || opening}
+                        draft={difficulty}
+                        exactInput={difficultyInput}
+                        grid={difficultyGrid}
+                        history={challengeHistory}
+                        onEdit={changeDifficulty}
+                        variant={variant}
+                      />
+                    )}
+                    <MatchColorChoices
                       disabled={disabled || opening}
-                      draft={difficulty}
-                      exactInput={difficultyInput}
-                      grid={difficultyGrid}
-                      history={challengeHistory}
-                      onEdit={changeDifficulty}
-                      variant={variant}
+                      onChange={setPlayerColor}
+                      value={playerColor}
                     />
-                  )}
-                  <MatchColorChoices
-                    disabled={disabled || opening}
-                    initialColor={challenge.playerColor}
-                  />
-                </>
-              )}
-              {challenge?.variant === "chess960" ? (
-                <Chess960PositionChoice
+                  </>
+                )}
+                <MatchSetupChoice
+                  label={copy.betterHints}
+                  value={copy.autoHints[autoHintMode].label}
+                  actionLabel={copy.changeHints}
                   disabled={disabled || opening}
-                  numberedPosition={numberedPosition}
-                  onChanged={(value) => {
-                    setPositionNumber(value)
-                    setNumberedPosition(true)
-                  }}
-                  onRandomize={() => {
-                    setPositionNumber(
-                      String(generateWebChess960Position(globalThis.crypto)),
-                    )
-                    setNumberedPosition(false)
-                  }}
-                  value={positionNumber}
+                  onChange={(event) => openEditor("hints", event.currentTarget)}
                 />
-              ) : null}
-              <MatchSetupChoice
-                label={copy.betterHints}
-                value={copy.autoHints[autoHintMode].label}
-                actionLabel={copy.changeHints}
-                disabled={disabled || opening}
-                onChange={(event) => openEditor("hints", event.currentTarget)}
-              />
-              <MatchSetupChoice
-                label={clockCopy.timeControl}
-                value={timeControlLabel(timeControl, clockCopy)}
-                actionLabel={clockCopy.change}
-                disabled={disabled || opening}
-                onChange={(event) =>
-                  openEditor("time-control", event.currentTarget)
-                }
-              />
-              {ratings === undefined ? null : (
-                <p className="font-bold">
-                  <MedalSymbol medal={startingRatingAssistance(autoHintMode)} />
-                  {catalog.profile.rating(
-                    clockCopy.rating(
-                      copy.variants[variant],
-                      clockCopy.category[category],
-                      catalog.shared.story.medals[
-                        startingRatingAssistance(autoHintMode)
+                <MatchSetupChoice
+                  label={clockCopy.timeControl}
+                  value={timeControlLabel(timeControl, clockCopy)}
+                  actionLabel={clockCopy.change}
+                  disabled={disabled || opening}
+                  onChange={(event) =>
+                    openEditor("time-control", event.currentTarget)
+                  }
+                />
+                {ratings === undefined ? null : (
+                  <p className="font-bold">
+                    <MedalSymbol
+                      medal={startingRatingAssistance(autoHintMode)}
+                    />
+                    {catalog.profile.rating(
+                      clockCopy.rating(
+                        copy.variants[variant],
+                        clockCopy.category[category],
+                        catalog.shared.story.medals[
+                          startingRatingAssistance(autoHintMode)
+                        ],
+                      ),
+                      ratings[
+                        playerRatingId(
+                          variant,
+                          category,
+                          startingRatingAssistance(autoHintMode),
+                        )
                       ],
-                    ),
-                    ratings[
-                      playerRatingId(
-                        variant,
-                        category,
-                        startingRatingAssistance(autoHintMode),
+                    )}
+                  </p>
+                )}
+              </div>
+              {chess960Challenge ? (
+                <div className="border-mapachito-charcoal/25 min-w-0 border-t pt-4 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4">
+                  <Chess960PositionChoice
+                    disabled={disabled || opening}
+                    onChanged={(value) => {
+                      setPositionNumber(value)
+                      setNumberedPosition(true)
+                    }}
+                    onRandomize={() => {
+                      setPositionNumber(
+                        String(generateWebChess960Position(globalThis.crypto)),
                       )
-                    ],
-                  )}
-                </p>
-              )}
+                      setNumberedPosition(false)
+                    }}
+                    orientation={playerColor === "black" ? "black" : "white"}
+                    value={positionNumber}
+                  />
+                </div>
+              ) : null}
             </div>
 
             {!selectionAvailable ? (

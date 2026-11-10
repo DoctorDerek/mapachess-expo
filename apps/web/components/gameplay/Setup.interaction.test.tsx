@@ -114,10 +114,20 @@ describe("mode setup, staged choices, and start recovery", () => {
     })
     fireEvent.change(position, { target: { value: "518" } })
     expect(position).toHaveProperty("value", "518")
+    expect(
+      screen.getByRole("img", { name: copy.setup.positionPreview(518) }),
+    ).toBeTruthy()
     fireEvent.click(
       screen.getByRole("button", { name: new RegExp(copy.setup.randomize) }),
     )
     expect(Number(position.getAttribute("value"))).toBeGreaterThanOrEqual(0)
+    expect(
+      screen.getByRole("img", {
+        name: copy.setup.positionPreview(
+          Number(position.getAttribute("value")),
+        ),
+      }),
+    ).toBeTruthy()
   })
 
   it("blocks a launch with off-step exact text until the player corrects it", async () => {

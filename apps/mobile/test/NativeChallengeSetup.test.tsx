@@ -9,14 +9,15 @@ import {
 import { getRandomValues } from "expo-crypto"
 import loadCatalog from "@mapachess/localization/catalog"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
-import type { MatchSetup } from "@mapachess/match/match-setup"
+import createMatchSetupForMode, {
+  type MatchSetup,
+} from "@mapachess/match/match-setup"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import type { ProfileRuntime } from "@mapachess/profile/profile-runtime"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import cryptography from "./nativeCryptographyFixture"
 import InMemoryAsyncStorage from "./nativeStorageFixture"
 
 const copy = loadCatalog("en")
@@ -27,9 +28,10 @@ afterEach(async () => {
 })
 
 async function renderSetup(variant: MatchVariant = "standard") {
-  jest.mocked(getRandomValues).mockImplementation((words) =>
-    words instanceof Uint32Array ? cryptography.fillRandomWords(words) : words,
-  )
+  jest.mocked(getRandomValues).mockImplementation((words) => {
+    if (words instanceof Uint32Array) words[0] = 1
+    return words
+  })
   const runtime = await openNativeProfileRuntime({
     storage: new InMemoryAsyncStorage(),
   })
@@ -61,10 +63,10 @@ async function renderSetup(variant: MatchVariant = "standard") {
           },
         }}
         disabled={false}
-        initial={{
-          mode: "challenge",
-          challengeSetup: { ...DEFAULT_CHALLENGE_SETUP, variant },
-        }}
+        initial={createMatchSetupForMode(
+          { mode: "challenge", variant },
+          DEFAULT_CHALLENGE_SETUP,
+        )}
         navigation={{ back: jest.fn(), open, close: jest.fn() }}
         onStart={start}
         overlay={undefined}
@@ -82,6 +84,32 @@ const startButton = () =>
   screen.getByRole("button", { name: copy.setup.startMatch })
 
 describe("native inline Challenge Elo", () => {
+  it("shows a passive preview and launches the displayed random Chess960 position", async () => {
+    const { start } = await renderSetup("chess960")
+    const positionInput = () =>
+      screen.getByLabelText(copy.setup.positionNumber(959))
+    await fireEvent.changeText(positionInput(), "518")
+    expect(
+      screen.getByRole("image", { name: copy.setup.positionPreview(518) }),
+    ).toBeOnTheScreen()
+    await fireEvent.press(
+      screen.getByRole("button", { name: copy.setup.randomize }),
+    )
+    const displayed = Number(positionInput().props.value)
+    expect(
+      screen.getByRole("image", {
+        name: copy.setup.positionPreview(displayed),
+      }),
+    ).toBeOnTheScreen()
+    await fireEvent.press(startButton())
+    expect(start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayedChess960PositionId: displayed,
+        challengeSetup: expect.objectContaining({ chess960PositionId: null }),
+      }),
+    )
+  })
+
   it("keeps earned history inline and updates it with native adjustment actions", async () => {
     const { start, open, data, runtime } = await renderSetup()
     expect(screen.getByText(copy.setup.bestDifficultyMedal)).toBeOnTheScreen()

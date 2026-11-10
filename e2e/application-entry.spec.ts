@@ -407,18 +407,27 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await page.getByRole("button", { name: "Done", exact: true }).click()
       await expect(position).toHaveValue("959")
       await expect(
+        page.getByRole("img", { name: "Chess960 position 959 preview" }),
+      ).toBeVisible()
+      await expect(
         page.getByText(
           "This position is remembered until you choose Randomize.",
           { exact: true },
         ),
-      ).toBeVisible()
+      ).toHaveCount(0)
       await page.getByRole("button", { name: "Randomize", exact: true }).click()
+      const displayed = await position.inputValue()
+      await expect(
+        page.getByRole("img", {
+          name: `Chess960 position ${displayed} preview`,
+        }),
+      ).toBeVisible()
       await expect(
         page.getByText(
           "Each new setup gets a random position number. Start match uses the number shown.",
           { exact: true },
         ),
-      ).toBeVisible()
+      ).toHaveCount(0)
       await expect(
         page.getByRole("radio", { name: "Random", exact: true }),
       ).toBeChecked()
@@ -465,6 +474,64 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await expect(
     page.getByText(/Gold if you win without using any hints\.$/),
   ).toBeVisible()
+})
+
+test("keeps the Chess960 preview and pinned actions usable at the supported layout boundary", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto("/")
+  await expectModeMenu(page)
+  await page
+    .getByRole("button", { name: "Chess960 Challenge", exact: true })
+    .click()
+  await page
+    .getByRole("spinbutton", { name: "Position number (0–959)" })
+    .fill("518")
+  const exact = page.getByRole("textbox", { name: "Opponent Elo", exact: true })
+  const preview = page.getByRole("img", {
+    name: "Chess960 position 518 preview",
+  })
+  const start = page.getByRole("button", { name: "Start match", exact: true })
+  const cases = [
+    { name: "phone", width: 390, height: 844, text: "", wide: false },
+    {
+      name: "enlarged-text",
+      width: 390,
+      height: 844,
+      text: "150%",
+      wide: false,
+    },
+    { name: "short-xl", width: 1280, height: 720, text: "", wide: true },
+  ]
+  for (const { name, width, height, text, wide } of cases) {
+    await page.setViewportSize({ width, height })
+    await page.evaluate((fontSize) => {
+      document.documentElement.style.fontSize = fontSize
+    }, text)
+    await exact.focus()
+    await expect(exact).toBeInViewport()
+    await expect(start).toBeInViewport({ ratio: 1 })
+    await expect(
+      page.getByRole("button", { name: "All game modes" }),
+    ).toBeInViewport({ ratio: 1 })
+    const exactBox = await exact.boundingBox()
+    const boardBox = await preview.boundingBox()
+    if (exactBox === null || boardBox === null)
+      throw new Error("Expected rendered setup controls and board preview")
+    expect(boardBox.x).toBeGreaterThanOrEqual(0)
+    expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(width)
+    if (wide) expect(boardBox.x).toBeGreaterThan(exactBox.x + exactBox.width)
+    else expect(boardBox.y).toBeGreaterThan(exactBox.y + exactBox.height)
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true)
+    await page.screenshot({
+      path: testInfo.outputPath(`challenge-setup-${name}.png`),
+    })
+  }
 })
 
 test("does not retain the former private playtest route", async ({ page }) => {

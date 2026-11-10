@@ -1,3 +1,4 @@
+import cx from "classix"
 import { useCallback, useRef, useState } from "react"
 import { TextInput, View } from "react-native"
 import challengeDifficultyGrid, {
@@ -107,6 +108,8 @@ export default function NativeMatchSetup({
   )
   const variant =
     draft.mode === "story" ? draft.variant : draft.challengeSetup.variant
+  const chess960Challenge =
+    draft.mode === "challenge" && draft.challengeSetup.variant === "chess960"
   const difficultyGrid = challengeDifficultyGrid(variant)
   const difficultyTargetElo =
     draft.mode === "challenge"
@@ -243,77 +246,116 @@ export default function NativeMatchSetup({
         <NativeText>
           {copy.setup.presentations[variant][draft.mode].description}
         </NativeText>
-        {draft.mode === "story"
-          ? choice(
-              copy.interface.playerAnimalChoices.playAs,
-              copy.animals.names[data.appearance.animal],
-              () => navigation.open("setup-player"),
-              data.appearance.animal,
-            )
-          : null}
-        {choice(
-          copy.setup.opponent,
-          draft.mode === "story"
-            ? copy.gameplay.opponentAndElo(
-                copy.animals.opponent(opponentId),
-                opponent.storyTargetElo,
-              )
-            : copy.animals.opponent(opponentId),
-          () => navigation.open("setup-opponent"),
-          opponentId,
-        )}
-        {draft.mode === "challenge" ? (
-          <>
-            <NativeChallengeDifficulty
-              disabled={disabled}
-              draft={draft.difficulty}
-              exactInput={difficultyInput}
-              grid={difficultyGrid}
-              history={data.challengeHistory}
-              onEdit={changeDifficulty}
-              variant={variant}
-            />
-            <NativeText>{copy.setup.color}</NativeText>
-            <View className="flex-row flex-wrap gap-2">
-              {(["white", "black", "random"] as const).map((color) => (
-                <NativeButton
-                  key={color}
-                  className="flex-1"
-                  disabled={disabled}
-                  variant={
-                    draft.challengeSetup.playerColor === color
-                      ? "primary"
-                      : "secondary"
-                  }
-                  accessibilityState={{
-                    selected: draft.challengeSetup.playerColor === color,
-                  }}
-                  onPress={() =>
-                    setDraft((current) =>
-                      current.mode === "story"
-                        ? current
-                        : {
-                            ...current,
-                            challengeSetup: {
-                              ...current.challengeSetup,
-                              playerColor: color,
-                            },
-                          },
-                    )
-                  }
-                >
-                  {copy.setup[color]}
-                </NativeButton>
-              ))}
-            </View>
-            {variant === "chess960" ? (
+        <View
+          className={cx(
+            "min-w-0 gap-4",
+            chess960Challenge && "xl:flex-row xl:items-start",
+          )}
+        >
+          <View
+            className={cx("min-w-0 gap-4", chess960Challenge && "xl:flex-1")}
+          >
+            {draft.mode === "story"
+              ? choice(
+                  copy.interface.playerAnimalChoices.playAs,
+                  copy.animals.names[data.appearance.animal],
+                  () => navigation.open("setup-player"),
+                  data.appearance.animal,
+                )
+              : null}
+            {choice(
+              copy.setup.opponent,
+              draft.mode === "story"
+                ? copy.gameplay.opponentAndElo(
+                    copy.animals.opponent(opponentId),
+                    opponent.storyTargetElo,
+                  )
+                : copy.animals.opponent(opponentId),
+              () => navigation.open("setup-opponent"),
+              opponentId,
+            )}
+            {draft.mode === "challenge" ? (
               <>
-                <NativeText>
-                  {copy.setup.positionNumber(CHESS960_POSITION_COUNT - 1)}
-                </NativeText>
+                <NativeChallengeDifficulty
+                  disabled={disabled}
+                  draft={draft.difficulty}
+                  exactInput={difficultyInput}
+                  grid={difficultyGrid}
+                  history={data.challengeHistory}
+                  onEdit={changeDifficulty}
+                  variant={variant}
+                />
+                <NativeText>{copy.setup.color}</NativeText>
+                <View className="flex-row flex-wrap gap-2">
+                  {(["white", "black", "random"] as const).map((color) => (
+                    <NativeButton
+                      key={color}
+                      className="flex-1"
+                      disabled={disabled}
+                      variant={
+                        draft.challengeSetup.playerColor === color
+                          ? "primary"
+                          : "secondary"
+                      }
+                      accessibilityState={{
+                        selected: draft.challengeSetup.playerColor === color,
+                      }}
+                      onPress={() =>
+                        setDraft((current) =>
+                          current.mode === "story"
+                            ? current
+                            : {
+                                ...current,
+                                challengeSetup: {
+                                  ...current.challengeSetup,
+                                  playerColor: color,
+                                },
+                              },
+                        )
+                      }
+                    >
+                      {copy.setup[color]}
+                    </NativeButton>
+                  ))}
+                </View>
+              </>
+            ) : null}
+            {choice(
+              copy.gameplay.clock.timeControl,
+              timeControlLabel(timeControl, copy.gameplay.clock),
+              () => navigation.open("setup-time-control"),
+            )}
+            <NativeText>
+              {timeControl.type === "untimed"
+                ? copy.gameplay.clock.untimedExplanation
+                : copy.gameplay.clock.explanation(
+                    timeControl.baseSeconds / 60,
+                    timeControl.incrementSeconds,
+                  )}
+            </NativeText>
+            {choice(
+              copy.setup.betterHints,
+              copy.setup.autoHints[data.settings.autoHintMode].label,
+              () => navigation.open("setup-hints"),
+            )}
+            <NativeText>{copy.setup.hintMedalExplanation}</NativeText>
+            {!valid ? (
+              <NativeText accessibilityRole="alert">
+                {copy.setup.invalidSetup}
+              </NativeText>
+            ) : null}
+          </View>
+          {chess960Challenge ? (
+            <View className="border-mapachito-white/30 min-w-0 gap-2 border-t pt-3 xl:w-80 xl:shrink-0 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-4">
+              <NativeText className="font-bold">
+                {copy.setup.position}
+              </NativeText>
+              <View className="flex-row flex-wrap items-end gap-2">
                 <TextInput
-                  className="border-mapachito-blue bg-mapachito-surface font-native text-mapachito-white min-h-12 rounded-lg border-2 px-4 text-xl"
-                  accessibilityLabel={copy.setup.position}
+                  className="border-mapachito-blue bg-mapachito-surface font-native text-mapachito-white min-h-12 min-w-0 flex-1 basis-24 rounded-lg border-2 px-4 text-xl"
+                  accessibilityLabel={copy.setup.positionNumber(
+                    CHESS960_POSITION_COUNT - 1,
+                  )}
                   keyboardType="number-pad"
                   value={positionNumber}
                   onChangeText={(value) => {
@@ -357,17 +399,20 @@ export default function NativeMatchSetup({
                 >
                   {copy.setup.randomize}
                 </NativeButton>
-                <NativeText>
-                  {draft.challengeSetup.chess960PositionId === null
-                    ? copy.setup.freshPosition
-                    : copy.setup.pinnedPosition}
-                </NativeText>
-                {position.ok ? (
+              </View>
+              {position.ok ? (
+                <View
+                  className="w-full max-w-80 self-center"
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel={copy.setup.positionPreview(
+                    position.positionId,
+                  )}
+                >
                   <View
-                    className="w-full max-w-80 self-center"
-                    accessible
-                    accessibilityRole="image"
-                    accessibilityLabel={copy.setup.position}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    pointerEvents="none"
                   >
                     <NativeChessboard
                       position={createInitialMatchPosition({
@@ -388,35 +433,11 @@ export default function NativeMatchSetup({
                       onMove={() => undefined}
                     />
                   </View>
-                ) : null}
-              </>
-            ) : null}
-          </>
-        ) : null}
-        {choice(
-          copy.gameplay.clock.timeControl,
-          timeControlLabel(timeControl, copy.gameplay.clock),
-          () => navigation.open("setup-time-control"),
-        )}
-        <NativeText>
-          {timeControl.type === "untimed"
-            ? copy.gameplay.clock.untimedExplanation
-            : copy.gameplay.clock.explanation(
-                timeControl.baseSeconds / 60,
-                timeControl.incrementSeconds,
-              )}
-        </NativeText>
-        {choice(
-          copy.setup.betterHints,
-          copy.setup.autoHints[data.settings.autoHintMode].label,
-          () => navigation.open("setup-hints"),
-        )}
-        <NativeText>{copy.setup.hintMedalExplanation}</NativeText>
-        {!valid ? (
-          <NativeText accessibilityRole="alert">
-            {copy.setup.invalidSetup}
-          </NativeText>
-        ) : null}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
       </NativeScrollActions>
       {overlay === "setup-player" ? (
         <NativeChoicePanel

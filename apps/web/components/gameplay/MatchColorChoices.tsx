@@ -1,11 +1,16 @@
+import type { ChallengePositionSetup } from "@mapachess/match/challenge-setup"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
+
+type SetupColor = ChallengePositionSetup["playerColor"]
 
 export default function MatchColorChoices({
   disabled,
-  initialColor,
+  value,
+  onChange,
 }: Readonly<{
   disabled: boolean
-  initialColor: "white" | "black" | "random"
+  value: SetupColor
+  onChange: (color: SetupColor) => void
 }>) {
   const copy = useMapachessCopy().setup
   return (
@@ -19,8 +24,9 @@ export default function MatchColorChoices({
           >
             <input
               className="accent-mapachito-violet size-4 shrink-0"
-              defaultChecked={initialColor === color}
+              checked={value === color}
               name="player-color"
+              onChange={() => onChange(color)}
               type="radio"
               value={color}
             />
