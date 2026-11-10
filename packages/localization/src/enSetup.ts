@@ -14,10 +14,22 @@ const setup = {
   randomColor: "Your side is chosen at random when the match starts.",
   position: "Chess960 starting position",
   positionNumber: (maximum: number): string => `Position number (0–${maximum})`,
+  positionPreview: (position: number): string =>
+    `Chess960 position ${position} preview`,
   invalidSetup:
     "Choose an available animal, difficulty, side, and valid starting position.",
   difficulty: "Difficulty · estimated Elo",
   difficultyLabel: "Difficulty",
+  opponentElo: "Opponent Elo",
+  adjustOpponentElo: "Adjust opponent Elo",
+  invalidOpponentElo: (
+    minimum: number,
+    maximum: number,
+    step: number,
+  ): string => `Enter ${minimum}–${maximum} Elo in steps of ${step}.`,
+  bestDifficultyMedal: "Best medal",
+  lastDifficultyOpponent: "Last played",
+  noDifficultyHistory: "No matches at this Elo.",
   estimated: "Estimated Elo",
   unavailableSelection:
     "This selection is not available. Choose an earned animal and supported difficulty.",

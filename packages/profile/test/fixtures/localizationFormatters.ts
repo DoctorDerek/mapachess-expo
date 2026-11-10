@@ -46,6 +46,8 @@ const formatterExamples = {
   ],
   "gameplay.conclusion.opponentTimedOut": [["Chicken Stockfish"]],
   "setup.positionNumber": [[959]],
+  "setup.positionPreview": [[518]],
+  "setup.invalidOpponentElo": [[100, 2350, 25]],
   "setup.playAsAction": [["Raccoon"]],
   "setup.elo": [["1201"]],
   "setup.bestMedal": [["Gold"]],

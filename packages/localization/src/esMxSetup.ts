@@ -19,10 +19,23 @@ const setup = {
   position: "Posición inicial de ajedrez 960",
   positionNumber: (maximum: number): string =>
     `Número de posición (0–${maximum})`,
+  positionPreview: (position: number): string =>
+    `Vista previa de la posición ${position} de ajedrez 960`,
   invalidSetup:
     "Elige un animal disponible, una dificultad, un bando y una posición inicial válida.",
   difficulty: "Dificultad · Elo estimado",
   difficultyLabel: "Dificultad",
+  opponentElo: "Elo del oponente",
+  adjustOpponentElo: "Ajustar Elo del oponente",
+  invalidOpponentElo: (
+    minimum: number,
+    maximum: number,
+    step: number,
+  ): string =>
+    `Ingresa un Elo de ${minimum} a ${maximum} en incrementos de ${step}.`,
+  bestDifficultyMedal: "Mejor medalla",
+  lastDifficultyOpponent: "Último oponente",
+  noDifficultyHistory: "No hay partidas con este Elo.",
   estimated: "Elo estimado",
   unavailableSelection:
     "Esta selección no está disponible. Elige un animal desbloqueado y una dificultad compatible.",
