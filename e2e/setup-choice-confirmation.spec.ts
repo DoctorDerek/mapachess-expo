@@ -167,10 +167,16 @@ for (const variant of ["standard", "chess960"] as const) {
       })
       .click()
     await page.getByRole("button", { name: /Change animal/ }).click()
-    await page.getByRole("dialog").getByText("Bunny", { exact: true }).click()
-    await expect(
-      page.getByRole("radio", { name: "Bunny Stockfish", exact: true }),
-    ).toBeChecked()
+    const bunny = page.getByRole("radio", {
+      name: "Bunny Stockfish",
+      exact: true,
+    })
+    await page
+      .getByRole("dialog")
+      .locator("label")
+      .filter({ has: bunny })
+      .click()
+    await expect(bunny).toBeChecked()
     await page.getByRole("button", { name: "Done", exact: true }).click()
     const range = page.getByRole("slider", { name: "Adjust opponent Elo" })
     const exact = page.getByRole("textbox", {

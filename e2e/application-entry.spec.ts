@@ -509,6 +509,9 @@ test("keeps the Chess960 preview and pinned actions usable at the supported layo
     await page.evaluate((fontSize) => {
       document.documentElement.style.fontSize = fontSize
     }, text)
+    await page
+      .getByRole("heading", { name: "Chess960 Challenge", exact: true })
+      .scrollIntoViewIfNeeded()
     await exact.focus()
     await expect(exact).toBeInViewport()
     await expect(start).toBeInViewport({ ratio: 1 })
@@ -523,6 +526,14 @@ test("keeps the Chess960 preview and pinned actions usable at the supported layo
     expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(width)
     if (wide) expect(boardBox.x).toBeGreaterThan(exactBox.x + exactBox.width)
     else expect(boardBox.y).toBeGreaterThan(exactBox.y + exactBox.height)
+    if (name === "phone")
+      expect(
+        await page.getByText("Random", { exact: true }).evaluate((label) => {
+          const text = document.createRange()
+          text.selectNodeContents(label)
+          return text.getClientRects().length
+        }),
+      ).toBe(1)
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
