@@ -6,12 +6,12 @@ import {
   type ChallengeDifficultyControlState,
   type ChallengeDifficultyEdit,
 } from "@mapachess/gameplay/challenge-difficulty"
-import { useNativeInputControl } from "../input/NativeInputProvider"
-import NativeMedal from "../presentation/NativeMedal"
-import NativeText from "../presentation/NativeText"
-import { useNativeLocale } from "../profile/NativeLocaleProvider"
+import { useNativeInputControl } from "@/components/input/NativeInputProvider"
+import NativeMedal from "@/components/presentation/NativeMedal"
+import NativeText from "@/components/presentation/NativeText"
+import { useNativeLocale } from "@/components/profile/NativeLocaleProvider"
 
-const ELO_DRAG_THRESHOLD = 6
+const ELO_SLIDER_DRAG_ACTIVATION_DISTANCE_DP = 6
 
 export default function NativeChallengeDifficulty({
   control,
@@ -54,7 +54,7 @@ export default function NativeChallengeDifficulty({
         onMoveShouldSetPanResponder: (_, gesture) =>
           !disabled &&
           gesture.numberActiveTouches === 1 &&
-          Math.abs(gesture.dx) >= ELO_DRAG_THRESHOLD &&
+          Math.abs(gesture.dx) >= ELO_SLIDER_DRAG_ACTIVATION_DISTANCE_DP &&
           Math.abs(gesture.dx) > Math.abs(gesture.dy),
         onPanResponderGrant: (event) => selectAt(event.nativeEvent.locationX),
         onPanResponderMove: (event, gesture) => {
