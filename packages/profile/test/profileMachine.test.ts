@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { createActor, waitFor } from "xstate"
+import loadCatalog from "@mapachess/localization/catalog"
 import DEFAULT_PLAYER_INPUT_BINDINGS, {
   changePlayerInputBinding,
 } from "@mapachess/match/player-input"
@@ -15,6 +16,8 @@ import createInitialMapachessPlayerData, {
 import {
   createMapachessPortableBackup,
   decodeMapachessPortableBackup,
+  MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS,
+  type MapachessPortableBackup,
 } from "../src/portableBackup.js"
 import profileMachine, {
   selectCanChangeAutoHintMode,
@@ -26,6 +29,10 @@ import profileMachine, {
   selectPersistenceFailure,
   selectUnreadablePlayerData,
 } from "../src/profileMachine.js"
+import {
+  importIssueMessage,
+  persistenceFailureMessage,
+} from "../src/profileMessages.js"
 import { changeAutoHintMode } from "../src/profileMutations.js"
 import { InMemoryDurableStoreAdapter, sha256 } from "./profileTestSupport.js"
 
@@ -83,6 +90,113 @@ class FailFirstWriteAdapter implements DurableStoreAdapter {
 }
 
 describe("XState durable profile orchestration", () => {
+  it("combines queued presentation choices without overwriting another setting during an in-flight save", async ({
+    onTestFinished,
+  }) => {
+    const store = createStore()
+    const before = await seedProfile(store)
+    const actor = createProfileActor(store)
+    onTestFinished(() => {
+      actor.stop()
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const gate = Promise.withResolvers<void>()
+    const commitCurrent = store.commitCurrent.bind(store)
+    const writes = vi
+      .spyOn(store, "commitCurrent")
+      .mockImplementationOnce(async (...args) => {
+        await gate.promise
+        return commitCurrent(...args)
+      })
+    actor.send({
+      type: "PROFILE.COACH_COLLECTION_CHANGED",
+      coachCollection: "greyfox",
+    })
+    actor.send({
+      type: "PROFILE.CHESS_APPEARANCE_CHANGED",
+      change: { pieceSetId: "toffee-wood" },
+    })
+    actor.send({
+      type: "PROFILE.CHESS_APPEARANCE_CHANGED",
+      change: { boardId: "toffee-ice" },
+    })
+    actor.send({
+      type: "PROFILE.MOVE_REACTION_PLACEMENT_CHANGED",
+      placement: "bottom",
+    })
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(before)
+    expect(writes).toHaveBeenCalledTimes(1)
+    gate.resolve()
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(writes).toHaveBeenCalledTimes(2)
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual({
+      ...before,
+      revision: before.revision + 2,
+      settings: {
+        ...before.settings,
+        coachCollection: "greyfox",
+        chessAppearance: { pieceSetId: "toffee-wood", boardId: "toffee-ice" },
+        moveReactionPlacement: "bottom",
+      },
+    })
+  })
+
+  it("rejects damaged, oversized and newer-version imports with distinct recovery messages", async ({
+    onTestFinished,
+  }) => {
+    const store = createStore()
+    const saved = await seedProfile(store)
+    const actor = createProfileActor(store)
+    onTestFinished(() => {
+      actor.stop()
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const raw = await createMapachessPortableBackup({
+      applicationVersion: "test",
+      gddRevision: "test",
+      playerData: saved,
+      sha256,
+    })
+    const decoded = await decodeMapachessPortableBackup(raw, sha256)
+    if (!decoded.ok) throw new Error("Expected a verified fixture backup")
+    const backup: MapachessPortableBackup = decoded.backup
+    const copy = loadCatalog("es-419").profile
+    for (const [rawBackup, type, message] of [
+      [
+        JSON.stringify({
+          ...backup,
+          integrity: { ...backup.integrity, payloadHash: "0".repeat(64) },
+        }),
+        "PROFILE.BACKUP_INTEGRITY_MISMATCH",
+        copy.importIssue.integrity,
+      ],
+      [
+        " ".repeat(MAX_PORTABLE_BACKUP_UTF16_CODE_UNITS + 1),
+        "PROFILE.BACKUP_TOO_LARGE",
+        copy.importIssue.size,
+      ],
+      [
+        JSON.stringify({ ...backup, formatVersion: backup.formatVersion + 1 }),
+        "PROFILE.BACKUP_VERSION_UNSUPPORTED",
+        copy.importIssue.version,
+      ],
+      ["{", "PROFILE.BACKUP_INVALID", copy.importIssue.invalid],
+    ] as const) {
+      actor.send({ type: "PROFILE.IMPORT_PREVIEW_REQUESTED", rawBackup })
+      const ready = await waitFor(
+        actor,
+        (snapshot) =>
+          snapshot.matches("ready") &&
+          selectImportIssue(snapshot)?.type === type,
+      )
+      const issue = selectImportIssue(ready)
+      if (issue === null) throw new Error("Expected a recoverable import issue")
+      expect(importIssueMessage(issue, copy)).toBe(message)
+      expect(selectCurrentPlayerData(ready)).toEqual(saved)
+      expect(selectImportPreview(ready)).toBeNull()
+    }
+  })
+
   it("retains old effective bindings through a failed save, then accepts the same pending remap on retry", async () => {
     const store = createStore()
     const current = await seedProfile(store)
@@ -351,6 +465,11 @@ describe("XState durable profile orchestration", () => {
     expect(selectPersistenceFailure(actor.getSnapshot())).toEqual({
       type: "PROFILE.STORAGE_VERIFICATION_FAILED",
     })
+    const failure = selectPersistenceFailure(actor.getSnapshot())
+    if (failure === null) throw new Error("Expected a verified write failure")
+    expect(persistenceFailureMessage(failure)).toBe(
+      loadCatalog("en").profile.persistenceFailure.verification,
+    )
     expect(selectPendingPlayerData(actor.getSnapshot())).toEqual(
       createInitialMapachessPlayerData(),
     )
@@ -362,6 +481,56 @@ describe("XState durable profile orchestration", () => {
       createInitialMapachessPlayerData(),
     )
     actor.stop()
+  })
+
+  it("accepts an already committed write after a lost acknowledgement without writing twice", async ({
+    onTestFinished,
+  }) => {
+    const store = createStore()
+    const before = await seedProfile(store)
+    const actor = createProfileActor(store)
+    onTestFinished(() => {
+      actor.stop()
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    const commit = store.commitCurrent.bind(store)
+    const writes = vi
+      .spyOn(store, "commitCurrent")
+      .mockImplementationOnce(async (...args) => {
+        const accepted = await commit(...args)
+        if (!accepted.ok)
+          throw new Error("Fixture should commit before losing the response")
+        throw new Error("Write acknowledgement lost")
+      })
+    actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    await waitFor(actor, (snapshot) => snapshot.matches("persistenceFailure"))
+    const failure = selectPersistenceFailure(actor.getSnapshot())
+    if (failure === null)
+      throw new Error("Expected a retryable request failure")
+    expect(persistenceFailureMessage(failure)).toBe(
+      loadCatalog("en").profile.persistenceFailure.request,
+    )
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(before)
+    const accepted = await store.load()
+    expect(accepted.current).toMatchObject({
+      type: "valid",
+      data: {
+        revision: before.revision + 1,
+        settings: { autoHintMode: "no-auto-hints" },
+      },
+    })
+    actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
+    await waitFor(actor, (snapshot) => snapshot.matches("ready"))
+    expect(writes).toHaveBeenCalledTimes(1)
+    if (accepted.current.type !== "valid")
+      throw new Error("Expected the committed profile")
+    expect(selectPendingPlayerData(actor.getSnapshot())).toBeNull()
+    expect(selectCurrentPlayerData(actor.getSnapshot())).toEqual(
+      accepted.current.data,
+    )
   })
 
   it("keeps a pending candidate frozen when retry discovers newer data", async () => {
@@ -396,6 +565,11 @@ describe("XState durable profile orchestration", () => {
       createInitialMapachessPlayerData(),
     )
     expect(adapter.delegate.snapshot.current).not.toBeNull()
+    const failure = selectPersistenceFailure(actor.getSnapshot())
+    if (failure === null) throw new Error("Expected a conflict to be surfaced")
+    expect(persistenceFailureMessage(failure)).toBe(
+      loadCatalog("en").profile.persistenceFailure.conflict,
+    )
     actor.stop()
   })
 

@@ -64,7 +64,9 @@ it("keeps the draft through navigation and storage failure and accepts only the 
   const actor = createActor(profileCardEditorMachine, {
     input: { appearance, ratingContext: originalRating, save },
   }).start()
-  onTestFinished(() => actor.stop())
+  onTestFinished(() => {
+    actor.stop()
+  })
   const draft = { ...appearance, weapon: "weapon1" } as const
   const snapshot = () => actor.getSnapshot()
   actor.send({ type: "CARD.SAVE_REQUESTED" })

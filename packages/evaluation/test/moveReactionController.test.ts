@@ -107,7 +107,9 @@ it("does not stop an externally owned reaction actor or replay a paused move", (
   )
   const move = acceptMove(initial, "d2d4")
   const actor = createActor(moveReactionMachine).start()
-  onTestFinished(() => actor.stop())
+  onTestFinished(() => {
+    actor.stop()
+  })
   const controller = createMoveReactionController(initial, actor)
   controller.update(move.timeline, [move.record], true)
   controller.update(move.timeline, [move.record], false)
