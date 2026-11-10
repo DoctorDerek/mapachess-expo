@@ -8,7 +8,6 @@ import {
   selectCanOfferDraw,
   selectCanResign,
   selectDrawOfferResponse,
-  selectMatchConclusion,
   selectMatchPosition,
   selectMatchTimeline,
 } from "@mapachess/match/match-machine"
@@ -139,18 +138,6 @@ export default function NativeMatchOverlay({
           >
             {copy.interface.webMatch.matchDetailsMoveHistory}
           </NativeButton>
-          {selectMatchConclusion(snapshot) === null ? null : (
-            <NativeButton
-              onPress={() =>
-                appActor.send({
-                  type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
-                  matchId: session.match.matchId,
-                })
-              }
-            >
-              {copy.interface.webMatch.viewRewards}
-            </NativeButton>
-          )}
           <NativeButton
             variant="secondary"
             onPress={() =>

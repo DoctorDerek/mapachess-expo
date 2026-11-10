@@ -54,7 +54,9 @@ import NativeChessboard from "./NativeChessboard"
 import NativeMatchClock from "./NativeMatchClock"
 import NativeMatchControls from "./NativeMatchControls"
 import NativeMatchOverlay from "./NativeMatchOverlay"
-import NativeMatchRewards from "./NativeMatchRewards"
+import NativeMatchRewards, {
+  NativeCompletedMatchResult,
+} from "./NativeMatchRewards"
 import NativeMoveRatings from "./NativeMoveRatings"
 
 const NO_FEEDBACK = Object.freeze([])
@@ -390,6 +392,24 @@ export default function NativeMatch({
           />
         )}
       />
+      {completed === null ? null : (
+        <NativeCompletedMatchResult
+          match={completed}
+          storyProgress={data.storyProgress}
+          reward={reward}
+          hidden={rewardOpen}
+          replaySequence={replaySequence}
+          disabled={!resultActionsEnabled || overlays.length > 0}
+          onSetup={onSetup}
+          onReplay={onReplay}
+          onViewRewards={() =>
+            appActor.send({
+              type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+              matchId: completed.matchId,
+            })
+          }
+        />
+      )}
       {visible ? (
         <NativeMatchOverlay
           session={session}

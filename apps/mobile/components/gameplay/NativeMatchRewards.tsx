@@ -17,6 +17,7 @@ import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import { LEVEL_ACHIEVEMENTS } from "@mapachess/profile/global-xp"
+import type { MatchMedal } from "@mapachess/profile/match-medal"
 import matchResultPresentation, {
   matchResultRating,
   SAVE_CONFIRMATION_DURATION_MS,
@@ -127,6 +128,33 @@ function NativeResultAction({
   )
 }
 
+function NativeResultMedal({
+  medal,
+  copy,
+  centered = false,
+}: Readonly<{
+  medal: MatchMedal
+  copy: MapachessCatalog
+  centered?: boolean
+}>) {
+  return (
+    <View
+      className={cx(
+        "flex-row flex-wrap items-center gap-2",
+        centered && "justify-center",
+      )}
+    >
+      <NativeMedal medal={medal} />
+      <NativeText className="text-mapachito-charcoal shrink">
+        <NativeText className="font-native text-mapachito-charcoal">
+          {copy.shared.story.medals[medal]}
+        </NativeText>{" "}
+        · {copy.shared.medalHintUse[medal]}
+      </NativeText>
+    </View>
+  )
+}
+
 function rewardContents(
   {
     match,
@@ -167,15 +195,7 @@ function rewardContents(
           ) : null}
         </View>
         {medal === null ? null : (
-          <View className="flex-row flex-wrap items-center justify-center gap-2">
-            <NativeMedal medal={medal} />
-            <NativeText className="text-mapachito-charcoal shrink">
-              <NativeText className="font-native text-mapachito-charcoal">
-                {copy.shared.story.medals[medal]}
-              </NativeText>{" "}
-              · {copy.shared.medalHintUse[medal]}
-            </NativeText>
-          </View>
+          <NativeResultMedal medal={medal} copy={copy} centered />
         )}
         <NativeText className="font-native text-mapachito-charcoal text-center text-3xl">
           {copy.gameplay.awardedXp(reward.awardedXp)}
@@ -245,6 +265,109 @@ function rewardContents(
       </View>
     ),
   }
+}
+
+export function NativeCompletedMatchResult({
+  match,
+  storyProgress,
+  reward,
+  hidden,
+  replaySequence,
+  onViewRewards,
+  ...actions
+}: ResultActions &
+  Readonly<{
+    match: DurableMatchRecord
+    storyProgress: StoryProgress
+    reward: AcceptedMatchReward | null
+    hidden: boolean
+    replaySequence: number
+    onViewRewards: () => void
+  }>) {
+  const { copy } = useNativeLocale()
+  const openReplay = useRef(0)
+  const [restoreFocus, setRestoreFocus] = useState(false)
+  const hasReceipt = reward !== null
+  const { disabled } = actions
+  useEffect(() => {
+    const dismissedReplay =
+      replaySequence > 0 && openReplay.current === replaySequence && !hidden
+    openReplay.current = hidden ? replaySequence : 0
+    setRestoreFocus(dismissedReplay && hasReceipt && !disabled)
+  }, [disabled, hasReceipt, hidden, replaySequence])
+
+  const result = matchResultPresentation(match, storyProgress, copy)
+  if (result === null) return null
+  const rating = matchResultRating(match, reward)
+  return (
+    <View
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? "no-hide-descendants" : "auto"}
+      pointerEvents={hidden ? "none" : "auto"}
+      className="bg-mapachito-charcoal max-h-1/3 min-h-0 shrink-0"
+    >
+      <ScrollView
+        className="min-h-0 shrink grow-0"
+        contentContainerClassName="bg-mapachito-white gap-2 px-3 py-2"
+      >
+        <NativeText
+          accessibilityRole="header"
+          className="font-native text-mapachito-charcoal text-lg"
+        >
+          {result.heading}
+        </NativeText>
+        {result.reason === null ? null : (
+          <NativeText className="text-mapachito-charcoal">
+            {result.reason}
+          </NativeText>
+        )}
+        {result.medal === null ? null : (
+          <NativeResultMedal medal={result.medal} copy={copy} />
+        )}
+        {result.storyComplete ? (
+          <NativeText className="font-native text-mapachito-charcoal">
+            {copy.interface.matchCelebration.storyComplete}
+          </NativeText>
+        ) : null}
+        {reward === null ? null : (
+          <NativeText className="text-mapachito-charcoal font-bold">
+            {copy.gameplay.awardedXp(reward.awardedXp)}
+          </NativeText>
+        )}
+        {rating === null ? null : (
+          <NativeText className="text-mapachito-charcoal">
+            {copy.profile.rating(
+              copy.gameplay.clock.rating(
+                copy.setup.variants[rating.variant],
+                copy.gameplay.clock.category[rating.timeCategory],
+                copy.shared.story.medals[rating.assistance],
+              ),
+              rating.after,
+            )}
+          </NativeText>
+        )}
+      </ScrollView>
+      <View className="shrink-0 flex-row flex-wrap gap-2 px-2 pt-2 pb-2">
+        {hasReceipt ? (
+          <NativeButton
+            className="min-w-28 flex-1"
+            variant="secondary"
+            disabled={disabled}
+            focusRequested={restoreFocus}
+            onPress={onViewRewards}
+          >
+            {copy.interface.webMatch.viewRewards}
+          </NativeButton>
+        ) : null}
+        <NativeResultAction
+          {...actions}
+          action={result.action}
+          timeControl={match.timeControl}
+          copy={copy}
+        />
+      </View>
+    </View>
+  )
 }
 
 export default function NativeMatchRewards({
