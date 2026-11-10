@@ -1,8 +1,16 @@
+codecov:
+  notify:
+    after_n_builds: 2
 coverage:
   status:
     project:
       default:
-        informational: true
+        target: 90.01%
+        threshold: 0%
+        informational: false
+        if_not_found: failure
+        if_ci_failed: error
+        removed_code_behavior: "off"
     patch:
       default:
         informational: true
