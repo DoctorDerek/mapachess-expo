@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
@@ -21,6 +27,117 @@ installDomHarness()
 const copy = loadCatalog("en")
 
 describe("visible application recovery with real durable storage", () => {
+  it("persists a Story animal unlocked in an imported Chess960 save only after Done", async () => {
+    const view = await bootApplication()
+    await openSettings()
+    const wins = [
+      { opponentId: "chicken-stockfish", highestMedal: "bronze" },
+    ] as const
+    const backup = await files.createWebPlayerDataBackup(
+      {
+        ...createInitialPlayerData(),
+        introductionCompleted: true,
+        storyProgress: { standard: [], chess960: wins },
+      },
+      crypto.subtle,
+    )
+    const chooser = view.container.querySelector('input[type="file"]')
+    if (!(chooser instanceof HTMLInputElement))
+      throw new Error("Expected a backup picker")
+    const file = new File([backup], "story-backup.json", {
+      type: "application/json",
+    })
+    Object.defineProperty(file, "text", { value: async () => backup })
+    fireEvent.change(chooser, { target: { files: [file] } })
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: copy.interface.profileImportPreviewPanel.replaceLocalPlayerData,
+      }),
+    )
+    await waitFor(async () =>
+      expect(
+        (await savedProfile(view.indexedDb)).storyProgress.chess960,
+      ).toEqual(wins),
+    )
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: new RegExp(copy.setup.presentations.standard.story.title),
+      }),
+    )
+    const playAs = await screen.findByRole("button", {
+      name: copy.setup.playAsAction(copy.animals.names["raccoon-stockfish"]),
+    })
+    fireEvent.click(playAs)
+    const dialog = within(
+      await screen.findByRole("dialog", { name: copy.setup.color }),
+    )
+    fireEvent.click(
+      dialog.getByRole("radio", {
+        name: new RegExp(copy.animals.names["chicken-stockfish"]),
+      }),
+    )
+    expect((await savedProfile(view.indexedDb)).appearance.animal).toBe(
+      "raccoon-stockfish",
+    )
+    fireEvent.click(dialog.getByRole("button", { name: copy.setup.done }))
+    await waitFor(async () =>
+      expect((await savedProfile(view.indexedDb)).appearance.animal).toBe(
+        "chicken-stockfish",
+      ),
+    )
+    const accepted = await savedProfile(view.indexedDb)
+    expect(accepted.storyProgress.chess960).toEqual(wins)
+    expect(accepted.activeMatch).toBeNull()
+  })
+
+  it("downloads a valid accepted backup and always releases the temporary browser URL", async () => {
+    const { indexedDb } = await bootApplication()
+    const before = await savedProfile(indexedDb)
+    const settings = await openSettings()
+    const objectUrl = "blob:mapachess-backup"
+    const createUrl = vi.fn((_contents: Blob) => objectUrl)
+    const revokeUrl = vi.fn()
+    vi.stubGlobal(
+      "URL",
+      class extends URL {
+        static createObjectURL = createUrl
+        static revokeObjectURL = revokeUrl
+      },
+    )
+    let link: HTMLAnchorElement | undefined
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      link = this
+    })
+    fireEvent.click(
+      settings.getByRole("button", {
+        name: copy.interface.profileSettingsPanel.exportPlayerData,
+      }),
+    )
+    await waitFor(() => expect(createUrl).toHaveBeenCalledOnce())
+    const blob = createUrl.mock.calls[0]?.[0]
+    if (blob === undefined || link === undefined)
+      throw new Error("Expected browser download")
+    const text = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () =>
+        typeof reader.result === "string"
+          ? resolve(reader.result)
+          : reject(new Error("Expected backup text"))
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(blob)
+    })
+    expect(link.download).toBe(files.MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME)
+    expect(link.isConnected).toBe(false)
+    expect(revokeUrl).toHaveBeenCalledExactlyOnceWith(objectUrl)
+    expect(
+      await decodeMapachessPortableBackup(text, (value) =>
+        webSha256(value, crypto.subtle),
+      ),
+    ).toMatchObject({ ok: true, backup: { payload: before } })
+  })
+
   it("exports the pending preference after a failed save, then retries without replacing accepted progress", async () => {
     const { indexedDb } = await bootApplication()
     const before = await savedProfile(indexedDb)
