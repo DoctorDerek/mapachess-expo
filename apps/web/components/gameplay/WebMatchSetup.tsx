@@ -7,6 +7,12 @@ import {
   type MouseEventHandler,
   type ReactNode,
 } from "react"
+import challengeDifficultyGrid, {
+  createChallengeDifficultyDraft,
+  editChallengeDifficulty,
+  resolveChallengeDifficulty,
+  type ChallengeDifficultyEdit,
+} from "@mapachess/gameplay/challenge-difficulty"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
 import parseChallengeSetup from "@mapachess/match/challenge-setup"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
@@ -31,7 +37,6 @@ import {
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
 import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
-import { webChallengeDifficultyTargets } from "../../lib/gameplay/webOpponentPolicy"
 import usePreparedMatchImages from "../../lib/presentation/usePreparedMatchImages"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessNotice from "../presentation/MapachessNotice"
@@ -39,6 +44,7 @@ import MedalSymbol from "../presentation/MedalSymbol"
 import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
+import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
 import Chess960PositionChoice from "./Chess960PositionChoice"
 import MatchColorChoices from "./MatchColorChoices"
 import MatchSetupEditor, { type SetupEditor } from "./MatchSetupEditor"
@@ -183,10 +189,27 @@ export default function WebMatchSetup({
       ? (setup.opponentId ?? selectDefaultStoryOpponent(storyProgress, variant))
       : setup.challengeSetup.opponentId,
   )
-  const difficultyTargets = webChallengeDifficultyTargets(variant)
-  const [difficultyTargetElo, setDifficultyTargetElo] = useState(
-    challenge?.difficultyTargetElo,
+  const difficultyGrid = challengeDifficultyGrid(variant)
+  const [difficulty, setDifficulty] = useState(() =>
+    challenge === null
+      ? null
+      : createChallengeDifficultyDraft(
+          difficultyGrid,
+          challenge.difficultyTargetElo,
+        ),
   )
+  const difficultyInput = useRef<HTMLInputElement>(null)
+  const changeDifficulty = (edit: ChallengeDifficultyEdit): void => {
+    setDifficulty((current) =>
+      current === null
+        ? null
+        : editChallengeDifficulty(difficultyGrid, current, edit),
+    )
+  }
+  const difficultyTargetElo =
+    difficulty === null
+      ? null
+      : resolveChallengeDifficulty(difficultyGrid, difficulty)
   const challengeOpponents = selectChallengeUnlockedOpponents(storyProgress)
   const opponent = stockfishOpponent(selectedOpponentId)
   const playerAnimal =
@@ -200,8 +223,7 @@ export default function WebMatchSetup({
   const selectionAvailable =
     setup.mode === "challenge"
       ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&
-        difficultyTargetElo !== undefined &&
-        difficultyTargets.includes(difficultyTargetElo)
+        (difficulty?.selectedElo != null || difficultyTargetElo !== null)
       : canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
@@ -213,6 +235,11 @@ export default function WebMatchSetup({
     if (disabled || opening || editing !== null || !selectionAvailable) return
     if (setup.mode === "story") {
       onStart({ ...setup, timeControl, opponentId: selectedOpponentId })
+      return
+    }
+    if (difficultyTargetElo === null) {
+      difficultyInput.current?.focus()
+      changeDifficulty({ type: "committed" })
       return
     }
     const formData = new FormData(event.currentTarget)
@@ -340,15 +367,17 @@ export default function WebMatchSetup({
 
               {challenge === null ? null : (
                 <>
-                  <MatchSetupChoice
-                    label={copy.difficultyLabel}
-                    value={copy.elo(String(difficultyTargetElo))}
-                    actionLabel={copy.changeDifficulty}
-                    disabled={disabled || opening}
-                    onChange={(event) =>
-                      openEditor("difficulty", event.currentTarget)
-                    }
-                  />
+                  {difficulty === null ? null : (
+                    <ChallengeDifficultyChoices
+                      disabled={disabled || opening}
+                      draft={difficulty}
+                      exactInput={difficultyInput}
+                      grid={difficultyGrid}
+                      history={challengeHistory}
+                      onEdit={changeDifficulty}
+                      variant={variant}
+                    />
+                  )}
                   <MatchColorChoices
                     disabled={disabled || opening}
                     initialColor={challenge.playerColor}
@@ -435,12 +464,9 @@ export default function WebMatchSetup({
             mode={setup.mode}
             variant={variant}
             storyProgress={storyProgress}
-            challengeHistory={challengeHistory}
-            difficultyTargets={difficultyTargets}
             initialValues={{
               player: playerAppearance?.animal,
               opponent: selectedOpponentId,
-              difficulty: difficultyTargetElo,
               hints: autoHintMode,
               "time-control": timeControl,
             }}
@@ -453,9 +479,6 @@ export default function WebMatchSetup({
                   break
                 case "opponent":
                   setSelectedOpponentId(values.opponent)
-                  break
-                case "difficulty":
-                  setDifficultyTargetElo(values.difficulty)
                   break
                 case "hints":
                   onAutoHintModeChanged(values.hints)

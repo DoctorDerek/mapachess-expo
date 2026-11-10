@@ -4,7 +4,6 @@ import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
 import type { TimeControl } from "@mapachess/match/time-control"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import {
   selectChallengeUnlockedOpponents,
   type StoryProgress,
@@ -12,7 +11,6 @@ import {
 import AutoHintModeChoices from "../profile/AutoHintModeChoices"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import PlayerAnimalChoices from "../profile/PlayerAnimalChoices"
-import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
 import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
 import MatchSetupPicker from "./MatchSetupPicker"
 import StoryLadderProgress from "./StoryLadderProgress"
@@ -21,7 +19,6 @@ import TimeControlChoices from "./TimeControlChoices"
 export type SetupEditorValues = Readonly<{
   player: StockfishOpponentId | undefined
   opponent: StockfishOpponentId
-  difficulty: number | undefined
   hints: AutoHintMode
   "time-control": TimeControl
 }>
@@ -38,8 +35,6 @@ export default function MatchSetupEditor({
   mode,
   variant,
   storyProgress,
-  challengeHistory,
-  difficultyTargets,
 }: Readonly<{
   editor: SetupEditor
   initialValues: SetupEditorValues
@@ -50,8 +45,6 @@ export default function MatchSetupEditor({
   mode: MatchSetup["mode"]
   variant: MatchVariant
   storyProgress: StoryProgress
-  challengeHistory: MapachessPlayerData["challengeHistory"]
-  difficultyTargets: readonly number[]
 }>) {
   const catalog = useMapachessCopy()
   const copy = catalog.setup
@@ -60,7 +53,6 @@ export default function MatchSetupEditor({
   const titles = {
     player: copy.color,
     opponent: copy.chooseOpponent,
-    difficulty: copy.chooseDifficulty,
     hints: copy.betterHints,
     "time-control": clockCopy.timeControl,
   } satisfies Readonly<Record<SetupEditor, string>>
@@ -113,17 +105,6 @@ export default function MatchSetupEditor({
         />
       )
       break
-    case "difficulty":
-      choices = (
-        <ChallengeDifficultyChoices
-          disabled={disabled}
-          history={challengeHistory[variant]}
-          onSelected={(difficulty) => setDraft({ ...draft, difficulty })}
-          selectedElo={draft.difficulty}
-          targets={difficultyTargets}
-        />
-      )
-      break
     case "opponent":
       choices =
         mode === "story" ? (
@@ -152,11 +133,7 @@ export default function MatchSetupEditor({
       fitContent={editor === "opponent" && mode === "challenge"}
       onCancel={onCancel}
       onDone={() => onDone(draft)}
-      disabled={
-        disabled ||
-        (editor === "player" && draft.player === undefined) ||
-        (editor === "difficulty" && draft.difficulty === undefined)
-      }
+      disabled={disabled || (editor === "player" && draft.player === undefined)}
       title={titles[editor]}
     >
       {choices}

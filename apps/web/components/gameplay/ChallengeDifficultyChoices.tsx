@@ -1,177 +1,153 @@
-import cx from "classix"
-import { useId, useRef, useState } from "react"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
+import { useId, useRef, type RefObject } from "react"
+import {
+  challengeDifficultyHistory,
+  challengeDifficultyText,
+  type ChallengeDifficultyDraft,
+  type ChallengeDifficultyEdit,
+  type ChallengeDifficultyGrid,
+} from "@mapachess/gameplay/challenge-difficulty"
+import type { MatchVariant } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-import ChallengeAnimalPortrait from "./ChallengeAnimalPortrait"
-
-const ELO_RANGE_WIDTH = 250
-const rangeStart = (target: number): number =>
-  Math.floor(target / ELO_RANGE_WIDTH) * ELO_RANGE_WIDTH
 
 export default function ChallengeDifficultyChoices({
   disabled,
+  draft,
+  exactInput,
+  grid,
   history,
-  onSelected,
-  selectedElo,
-  targets,
+  onEdit,
+  variant,
 }: Readonly<{
   disabled: boolean
-  history: MapachessPlayerData["challengeHistory"]["standard"]
-  onSelected: (target: number) => void
-  selectedElo: number | undefined
-  targets: readonly number[]
+  draft: ChallengeDifficultyDraft
+  exactInput: RefObject<HTMLInputElement | null>
+  grid: ChallengeDifficultyGrid
+  history: MapachessPlayerData["challengeHistory"]
+  onEdit: (edit: ChallengeDifficultyEdit) => void
+  variant: MatchVariant
 }>) {
   const catalog = useMapachessCopy()
-  const medals = catalog.shared.story.medals
-  const animalCopy = catalog.animals
-  const messages = catalog.interface.challengeDifficultyChoices
   const copy = catalog.setup
-  const explanationId = useId()
-  const [hoveredTarget, setHoveredTarget] = useState<number | null>(null)
-  const [focusedTarget, setFocusedTarget] = useState<number | null>(null)
+  const inputId = useId()
+  const errorId = useId()
+  const range = useRef<HTMLInputElement>(null)
+  const { minimum, maximum, step } = grid
+  const record = challengeDifficultyHistory(history, variant, draft.selectedElo)
+  const target = draft.selectedElo ?? minimum
 
-  const [viewedRange, setViewedRange] = useState(() =>
-    rangeStart(selectedElo ?? targets[0] ?? 0),
-  )
-  const groups = new Map<number, number[]>()
-  for (const target of targets) {
-    const start = rangeStart(target)
-    const group = groups.get(start)
-    if (group === undefined) groups.set(start, [target])
-    else group.push(target)
-  }
-  const showRanges = targets.length > 10
-  const visibleTargets = showRanges ? (groups.get(viewedRange) ?? []) : targets
-  const rangeControl = useRef<HTMLSelectElement>(null)
   usePlayerInputScope({
-    root: rangeControl,
+    root: range,
     focused: true,
-    enabled: showRanges && !disabled,
+    enabled: !disabled,
     handle: (action, device) => {
-      const select = rangeControl.current
-      if (device.method !== "controller" || select === null) return false
-      if (action === "left" || action === "right") {
-        const adjacent =
-          select.options[select.selectedIndex + (action === "left" ? -1 : 1)]
-        if (adjacent !== undefined) setViewedRange(Number(adjacent.value))
-        return true
-      }
-      if (action !== "confirm") return false
-      const group = select.closest("fieldset")
-      const tile =
-        group?.querySelector<HTMLInputElement>("input:checked") ??
-        group?.querySelector<HTMLInputElement>("input")
-      tile?.focus()
+      if (
+        device.method !== "controller" ||
+        document.activeElement !== range.current ||
+        (action !== "left" && action !== "right")
+      )
+        return false
+      onEdit({ type: "stepped", direction: action === "left" ? -1 : 1 })
       return true
     },
   })
 
   return (
-    <fieldset className="min-w-0" disabled={disabled}>
-      <legend className={showRanges ? "sr-only" : "text-lg font-black"}>
-        {copy.difficulty}
-      </legend>
-      {showRanges ? (
-        <label className="flex flex-wrap items-center gap-2 font-bold">
-          {messages.range}
-          <select
-            className="border-mapachito-charcoal/60 bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet min-h-12 max-w-full rounded-lg border-2 px-3 font-bold focus-visible:outline-3 focus-visible:outline-offset-2"
-            ref={rangeControl}
-            value={viewedRange}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape" && event.key !== "Tab")
-                event.stopPropagation()
-            }}
-            onChange={(event) =>
-              setViewedRange(Number(event.currentTarget.value))
-            }
-          >
-            {Array.from(groups, ([start, values]) => (
-              <option key={start} value={start}>
-                {values[0]}–{values.at(-1)}
-              </option>
-            ))}
-          </select>
+    <fieldset className="grid min-w-0 gap-1" disabled={disabled}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="font-bold" htmlFor={inputId}>
+          {copy.opponentElo}
         </label>
-      ) : null}
-      <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-3">
-        {visibleTargets.map((target) => {
-          const record = history.difficulties.find(
-            ({ targetElo }) => targetElo === target,
-          )
-          const medal = record?.highestMedal ?? null
-          const animal =
-            record === undefined
-              ? null
-              : stockfishOpponent(record.lastPlayedAnimal)
-          return (
-            <label
-              key={target}
-              onPointerEnter={(event) => {
-                if (event.pointerType !== "touch") setHoveredTarget(target)
-              }}
-              onPointerLeave={() => setHoveredTarget(null)}
-              className={cx(
-                "group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid min-h-14 cursor-pointer gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60",
-                animal === null ? "content-center" : "grid-rows-[auto_1fr]",
-              )}
-            >
-              <input
-                aria-describedby={explanationId}
-                className="sr-only"
-                type="radio"
-                name="challenge-difficulty"
-                value={target}
-                checked={selectedElo === target}
-                onChange={() => onSelected(target)}
-                onFocus={(event) => {
-                  if (event.currentTarget.matches(":focus-visible"))
-                    setFocusedTarget(target)
-                }}
-                onBlur={() => setFocusedTarget(null)}
-              />
-              <span className="flex w-full items-center justify-between gap-1">
-                <span className="font-display text-2xl font-black">
-                  {target}
-                  <span className="sr-only"> {messages.elo}</span>
-                </span>
-                {medal === null ? null : (
-                  <span>
-                    <MedalSymbol medal={medal} />
-                    <span className="sr-only">
-                      {" "}
-                      {copy.bestMedal(medals[medal])}
-                    </span>
-                  </span>
-                )}
-              </span>
-              {animal === null ? null : (
-                <span className="h-full w-full justify-self-center">
-                  <ChallengeAnimalPortrait
-                    key={animal.id}
-                    opponent={animal}
-                    active
-                    attention={
-                      !disabled &&
-                      (hoveredTarget === target || focusedTarget === target)
-                    }
-                  />
-                  <span className="sr-only">
-                    {" "}
-                    {copy.lastPlayed(animalCopy.opponent(animal.id))}
-                  </span>
-                </span>
-              )}
-            </label>
-          )
-        })}
+        <input
+          aria-describedby={draft.showError ? errorId : undefined}
+          aria-invalid={draft.showError || undefined}
+          autoComplete="off"
+          className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet aria-invalid:border-mapachito-raspberry min-h-12 w-24 max-w-full min-w-0 rounded-lg border-2 px-2 text-center text-lg font-bold tabular-nums focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
+          id={inputId}
+          inputMode="numeric"
+          onBlur={() => onEdit({ type: "committed" })}
+          onChange={(event) =>
+            onEdit({ type: "typed", text: event.currentTarget.value })
+          }
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return
+            event.preventDefault()
+            onEdit({ type: "committed" })
+          }}
+          ref={exactInput}
+          spellCheck={false}
+          type="text"
+          value={challengeDifficultyText(draft)}
+        />
       </div>
-      <p id={explanationId} className="mt-3 text-base leading-relaxed">
-        {copy.difficultyMedals}
-      </p>
+      <input
+        aria-label={copy.adjustOpponentElo}
+        aria-valuetext={copy.elo(String(target))}
+        className="accent-mapachito-violet focus-visible:outline-mapachito-violet min-h-12 w-full min-w-0 cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-60"
+        max={maximum}
+        min={minimum}
+        onChange={(event) =>
+          onEdit({
+            type: "selected",
+            targetElo: event.currentTarget.valueAsNumber,
+          })
+        }
+        onKeyDown={(event) => {
+          if (event.key !== "Home" && event.key !== "End") return
+          event.preventDefault()
+          onEdit({
+            type: "selected",
+            targetElo: event.key === "Home" ? minimum : maximum,
+          })
+        }}
+        ref={range}
+        step={step}
+        type="range"
+        value={target}
+      />
+      <div
+        aria-hidden="true"
+        className="flex justify-between gap-2 text-sm font-semibold tabular-nums"
+      >
+        <span>{minimum}</span>
+        <span>{maximum}</span>
+      </div>
+      {draft.showError ? (
+        <p
+          className="text-mapachito-charcoal text-sm font-bold"
+          id={errorId}
+          role="alert"
+        >
+          {copy.invalidOpponentElo(minimum, maximum, step)}
+        </p>
+      ) : null}
+      {record !== null ? (
+        <dl className="flex flex-wrap items-start gap-x-5 gap-y-1 pt-1">
+          {record.highestMedal === null ? null : (
+            <div className="min-w-0">
+              <dt className="text-sm font-semibold">
+                {copy.bestDifficultyMedal}
+              </dt>
+              <dd className="font-bold">
+                <MedalSymbol medal={record.highestMedal} />
+                {catalog.shared.story.medals[record.highestMedal]}
+              </dd>
+            </div>
+          )}
+          <div className="min-w-0">
+            <dt className="text-sm font-semibold">
+              {copy.lastDifficultyOpponent}
+            </dt>
+            <dd className="font-bold">
+              {catalog.animals.opponent(record.lastPlayedAnimal)}
+            </dd>
+          </div>
+        </dl>
+      ) : draft.selectedElo === null ? null : (
+        <p className="pt-1 text-sm">{copy.noDifficultyHistory}</p>
+      )}
     </fieldset>
   )
 }

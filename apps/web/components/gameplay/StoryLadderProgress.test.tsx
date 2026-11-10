@@ -97,7 +97,7 @@ describe("Story ladder presentation structure", () => {
       )
       expect(markup).toMatch(/<button[^>]*disabled=""[^>]*type="submit"/)
       expect(markup).toContain("Change animal")
-      expect(markup).toContain("Change difficulty")
+      expect(markup).toContain('type="range"')
     },
   )
   it.each(["standard", "chess960"] as const)(
@@ -137,7 +137,7 @@ describe("Story ladder presentation structure", () => {
       expect(markup).toContain("Bunny Stockfish")
       expect(markup).not.toContain('value="dog-stockfish"')
       expect(markup).toContain("1000")
-      expect(markup).toContain("Change difficulty")
+      expect(markup).toContain('aria-label="Adjust opponent Elo"')
       expect(markup).toContain("Change animal")
       expect(markup).not.toContain("not certified human ratings")
       expect(markup).not.toContain("does not update your Elo")

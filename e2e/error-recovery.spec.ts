@@ -323,14 +323,12 @@ for (const engine of ["opponent", "evaluation", "better-hints"] as const) {
     await page
       .getByRole("button", { name: "Standard Chess Challenge", exact: true })
       .click()
-    await page.getByRole("button", { name: /Change difficulty/ }).click()
-    await page
-      .getByRole("combobox", { name: "Elo range" })
-      .selectOption({ label: "2250–2350" })
-    await page
-      .getByRole("radio", { name: "2300 Elo", exact: true })
-      .press("Space")
-    await page.getByRole("button", { name: "Done", exact: true }).click()
+    const exact = page.getByRole("textbox", {
+      name: "Opponent Elo",
+      exact: true,
+    })
+    await exact.fill("2300")
+    await exact.press("Enter")
     await page.getByRole("radio", { name: "White", exact: true }).check()
     await page.getByRole("button", { name: "Start match", exact: true }).click()
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({

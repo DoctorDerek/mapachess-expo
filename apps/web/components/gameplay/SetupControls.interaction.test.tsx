@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from "@testing-library/react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { describe, expect, it, vi } from "vitest"
+import challengeDifficultyGrid, {
+  createChallengeDifficultyDraft,
+  editChallengeDifficulty,
+} from "@mapachess/gameplay/challenge-difficulty"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
 import { installDomHarness } from "../../test/domHarness"
@@ -12,6 +16,42 @@ import Chess960PositionChoice from "./Chess960PositionChoice"
 
 installDomHarness()
 const copy = loadCatalog("en")
+
+function Difficulty({ initial = 100 }: Readonly<{ initial?: number }>) {
+  const grid = challengeDifficultyGrid("standard")
+  const [draft, setDraft] = useState(() =>
+    createChallengeDifficultyDraft(grid, initial),
+  )
+  const exactInput = useRef<HTMLInputElement>(null)
+  const history = createInitialPlayerData().challengeHistory
+  return (
+    <PlayerInputProvider profileActor={null}>
+      <ChallengeDifficultyChoices
+        disabled={false}
+        draft={draft}
+        exactInput={exactInput}
+        grid={grid}
+        history={{
+          ...history,
+          standard: {
+            animals: [],
+            difficulties: [
+              {
+                targetElo: 500,
+                lastPlayedAnimal: "bunny-stockfish",
+                highestMedal: "gold",
+              },
+            ],
+          },
+        }}
+        onEdit={(edit) =>
+          setDraft((current) => editChallengeDifficulty(grid, current, edit))
+        }
+        variant="standard"
+      />
+    </PlayerInputProvider>
+  )
+}
 
 function Position({
   initial = "518",
@@ -100,71 +140,38 @@ describe("controller-accessible match setup controls", () => {
     expect(changed).toHaveBeenLastCalledWith("0")
   })
 
-  it("moves between difficulty ranges with the controller and enters the visible choice group", () => {
+  it("moves the focused Elo range by one supported target per controller step", () => {
     const pad = gamepadHarness()
-    const selected = vi.fn()
-    const history = createInitialPlayerData().challengeHistory.standard
-    render(
-      <PlayerInputProvider profileActor={null}>
-        <ChallengeDifficultyChoices
-          disabled={false}
-          history={history}
-          onSelected={selected}
-          selectedElo={100}
-          targets={Array.from({ length: 21 }, (_, index) => 100 + index * 25)}
-        />
-      </PlayerInputProvider>,
-    )
-    const range = screen.getByRole("combobox")
+    render(<Difficulty />)
+    const range = screen.getByRole("slider", {
+      name: copy.setup.adjustOpponentElo,
+    })
+    const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
     act(() => range.focus())
     pad.press(15)
-    expect((range as HTMLSelectElement).value).toBe("250")
-    expect(screen.queryByRole("radio", { name: /^100/ })).toBeNull()
-    pad.press(0)
-    expect(document.activeElement).toBe(
-      screen.getByRole("radio", { name: /^250/ }),
-    )
-    fireEvent.click(screen.getByRole("radio", { name: /^300/ }))
-    expect(selected).toHaveBeenCalledExactlyOnceWith(300)
-    fireEvent.change(range, { target: { value: "500" } })
-    expect(screen.getByRole("radio", { name: /^500/ })).toBeTruthy()
-    act(() => range.focus())
+    expect(range).toHaveProperty("value", "125")
+    expect(exact).toHaveProperty("value", "125")
     pad.press(14)
-    expect((range as HTMLSelectElement).value).toBe("250")
+    expect(range).toHaveProperty("value", "100")
+    pad.press(14)
+    expect(exact).toHaveProperty("value", "100")
+    expect(document.activeElement).toBe(range)
   })
 
-  it("shows earned difficulty medals and the actual last-played animal, not a substitute opponent", () => {
-    const selected = vi.fn()
-    render(
-      <ChallengeDifficultyChoices
-        disabled={false}
-        history={{
-          animals: [],
-          difficulties: [
-            {
-              targetElo: 500,
-              lastPlayedAnimal: "bunny-stockfish",
-              highestMedal: "gold",
-            },
-          ],
-        }}
-        onSelected={selected}
-        selectedElo={500}
-        targets={[500, 525]}
-      />,
-    )
-    const earned = screen.getByRole("radio", {
-      name: /500.*Gold.*Bunny Stockfish/i,
+  it("keeps earned history visible and changes it only when an exact target is accepted", () => {
+    render(<Difficulty initial={500} />)
+    const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
+    const slider = screen.getByRole("slider", {
+      name: copy.setup.adjustOpponentElo,
     })
-    fireEvent.focus(earned)
-    fireEvent.blur(earned)
-    const label = earned.closest("label")
-    if (label === null)
-      throw new Error("Every difficulty choice must have a label.")
-    fireEvent.pointerEnter(label, { pointerType: "mouse" })
-    fireEvent.pointerLeave(label)
-    expect((earned as HTMLInputElement).checked).toBe(true)
-    fireEvent.click(screen.getByRole("radio", { name: /^525/ }))
-    expect(selected).toHaveBeenCalledExactlyOnceWith(525)
+    expect(screen.getByText("Bunny Stockfish")).toBeTruthy()
+    expect(screen.getByText("Gold")).toBeTruthy()
+    fireEvent.change(exact, { target: { value: "525" } })
+    expect(slider).toHaveProperty("value", "500")
+    expect(screen.getByText("Gold")).toBeTruthy()
+    fireEvent.blur(exact)
+    expect(slider).toHaveProperty("value", "525")
+    expect(screen.queryByText("Gold")).toBeNull()
+    expect(screen.getByText(copy.setup.noDifficultyHistory)).toBeTruthy()
   })
 })
