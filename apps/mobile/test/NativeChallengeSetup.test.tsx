@@ -144,6 +144,32 @@ describe("native inline Challenge Elo", () => {
     expect(selectCurrentPlayerData(runtime.actor.getSnapshot())).toBe(data)
   })
 
+  it("maps an actual slider track press to the nearest 25 Elo only after layout", async () => {
+    const { start } = await renderSetup()
+    const track = range().queryAll(
+      (node) =>
+        typeof node.props.onLayout === "function" &&
+        node.props.importantForAccessibility === "no",
+    )[0]
+    if (track === undefined) throw new Error("Expected the adjustable track")
+    await fireEvent.press(track, { nativeEvent: { locationX: 149 } })
+    expect(exactInput()).toHaveDisplayValue("100")
+    await fireEvent(track, "layout", {
+      nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 48 } },
+    })
+    await fireEvent.press(track, { nativeEvent: { locationX: 149 } })
+    expect(exactInput()).toHaveDisplayValue("1225")
+    expect(range().props.accessibilityValue).toMatchObject({ now: 1225 })
+    await fireEvent.press(track, { nativeEvent: { locationX: 900 } })
+    expect(exactInput()).toHaveDisplayValue("2350")
+    await fireEvent.press(startButton())
+    expect(start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        challengeSetup: expect.objectContaining({ difficultyTargetElo: 2350 }),
+      }),
+    )
+  })
+
   it.each(["standard", "chess960"] as const)(
     "rejects an off-step entry and starts %s only at the exact accepted target",
     async (variant) => {
