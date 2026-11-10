@@ -104,20 +104,19 @@ describe("visible application recovery with real durable storage", () => {
         static revokeObjectURL = revokeUrl
       },
     )
-    let link: HTMLAnchorElement | undefined
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
-      this: HTMLAnchorElement,
-    ) {
-      link = this
-    })
+    const download = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined)
     fireEvent.click(
       settings.getByRole("button", {
         name: copy.interface.profileSettingsPanel.exportPlayerData,
       }),
     )
     await waitFor(() => expect(createUrl).toHaveBeenCalledOnce())
+    expect(download).toHaveBeenCalledOnce()
     const blob = createUrl.mock.calls[0]?.[0]
-    if (blob === undefined || link === undefined)
+    const link = download.mock.contexts[0]
+    if (blob === undefined || !(link instanceof HTMLAnchorElement))
       throw new Error("Expected browser download")
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
