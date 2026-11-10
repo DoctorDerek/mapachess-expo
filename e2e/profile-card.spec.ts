@@ -291,6 +291,13 @@ for (const mode of [
       )
       .toBe(record.playerColor === "white" ? "w" : "b")
     await expect
+      .poll(
+        async () =>
+          (await savedProfile(page)).activeMatch?.moveFeedback?.length,
+        { timeout: 30000 },
+      )
+      .toBe(record.cursor + 2)
+    await expect
       .poll(async () => (await savedProfile(page)).activeMatch?.moveHintsUsed, {
         timeout: 30000,
       })
