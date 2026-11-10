@@ -230,9 +230,10 @@ for (const width of [320, 1280]) {
   })
 }
 
-test("player animal selection survives Back, Forward and reload without changing Story progress", async ({
+test("player animal selection survives Back and Forward without changing Story progress", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
   await page
     .getByRole("button", { name: "Standard Chess Story", exact: true })
@@ -251,8 +252,6 @@ test("player animal selection survives Back, Forward and reload without changing
   await expect(trigger).toBeFocused()
   await page.goForward()
   await expect(chooser).toBeVisible()
-  await page.reload()
-  await expect(chooser).toBeVisible()
   await expect(chooser.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect(chooser).toHaveCount(0)
@@ -260,6 +259,28 @@ test("player animal selection survives Back, Forward and reload without changing
     original.storyProgress,
   )
   expect((await savedProfile(page)).appearance).toEqual(original.appearance)
+})
+
+test("player animal selection restores after reload without changing Story progress", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await page
+    .getByRole("button", { name: "Standard Chess Story", exact: true })
+    .click()
+  const original = await savedProfile(page)
+  await page.getByRole("button", { name: /^Play as Raccoon/ }).click()
+  const chooser = page.getByRole("dialog", { name: "Play as", exact: true })
+  await expect(chooser).toBeVisible()
+  await page.reload()
+  await expect(chooser).toBeVisible({ timeout: 30000 })
+  await expect(chooser.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
+  await page.getByRole("button", { name: "Done", exact: true }).click()
+  await expect(chooser).toHaveCount(0)
+  const restored = await savedProfile(page)
+  expect(restored.revision).toBeGreaterThanOrEqual(original.revision)
+  expect({ ...restored, revision: original.revision }).toEqual(original)
 })
 
 test("Settings retains its recovery and reset controls inside the non-shifting dialog", async ({

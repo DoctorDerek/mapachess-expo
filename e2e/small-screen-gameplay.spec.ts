@@ -206,7 +206,13 @@ for (const locale of ["en", "es-419"] as const) {
             name: copy.setup.changeStoryOpponent,
             exact: true,
           })
-          await trigger.scrollIntoViewIfNeeded()
+          await trigger.evaluate((element) =>
+            element.scrollIntoView({
+              block: "center",
+              inline: "nearest",
+              behavior: "instant",
+            }),
+          )
           await expectExposedWithoutScrolling(trigger)
           await trigger.click()
           const done = page.getByRole("button", {

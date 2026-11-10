@@ -87,6 +87,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
 test("a Chess960 Story victory unlocks the shared choice and Story persists it without changing progress", async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
   const initial = createInitialMapachessPlayerData()
   await importPlayerData(page, {
@@ -123,6 +124,27 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   await page
     .getByRole("button", { name: "All game modes", exact: true })
     .click()
+  await page
+    .getByRole("button", { name: "Customize profile card", exact: true })
+    .click()
+  await chooseDressingCategory(page, "Animal")
+  await expect(page.getByRole("radio", { name: /Chicken/ })).toBeChecked()
+})
+
+test("the animal editor remains accessible with an earned Chicken selected", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  const initial = createInitialMapachessPlayerData()
+  await importPlayerData(page, {
+    ...initial,
+    appearance: { ...initial.appearance, animal: "chicken-stockfish" },
+    storyProgress: {
+      standard: [],
+      chess960: [{ opponentId: "chicken-stockfish", highestMedal: "bronze" }],
+    },
+  })
   await page
     .getByRole("button", { name: "Customize profile card", exact: true })
     .click()
