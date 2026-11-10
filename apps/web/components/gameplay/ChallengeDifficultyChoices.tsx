@@ -37,6 +37,8 @@ export default function ChallengeDifficultyChoices({
   const { minimum, maximum, step } = grid
   const record = challengeDifficultyHistory(history, variant, draft.selectedElo)
   const target = draft.selectedElo ?? minimum
+  const selectElo = (targetElo: number): void =>
+    onEdit({ type: "selected", targetElo })
 
   usePlayerInputScope({
     root: range,
@@ -88,19 +90,15 @@ export default function ChallengeDifficultyChoices({
         className="accent-mapachito-violet focus-visible:outline-mapachito-violet min-h-12 w-full min-w-0 cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-60"
         max={maximum}
         min={minimum}
-        onChange={(event) =>
-          onEdit({
-            type: "selected",
-            targetElo: event.currentTarget.valueAsNumber,
-          })
-        }
+        onChange={(event) => selectElo(event.currentTarget.valueAsNumber)}
+        onClick={(event) => {
+          if (draft.exactText !== null)
+            selectElo(event.currentTarget.valueAsNumber)
+        }}
         onKeyDown={(event) => {
           if (event.key !== "Home" && event.key !== "End") return
           event.preventDefault()
-          onEdit({
-            type: "selected",
-            targetElo: event.key === "Home" ? minimum : maximum,
-          })
+          selectElo(event.key === "Home" ? minimum : maximum)
         }}
         ref={range}
         step={step}

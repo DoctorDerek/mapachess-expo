@@ -133,6 +133,36 @@ for (const choice of choices) {
   })
 }
 
+test("an intentional same-tick Elo selection clears invalid exact input", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+  await importPlayerData(page, createInitialMapachessPlayerData())
+  await page
+    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
+    .click()
+
+  const range = page.getByRole("slider", { name: "Adjust opponent Elo" })
+  const exact = page.getByRole("textbox", { name: "Opponent Elo", exact: true })
+  await expect(range).toHaveValue("100")
+  await exact.fill("1012")
+  await range.focus()
+  await expect(exact).toHaveValue("1012")
+  await expect(exact).toHaveAttribute("aria-invalid", "true")
+
+  await range.click({
+    position: await range.evaluate((input) => ({
+      x: 1,
+      y: input.clientHeight / 2,
+    })),
+  })
+  await expect(range).toHaveValue("100")
+  await expect(exact).toHaveValue("100")
+  await expect(exact).not.toHaveAttribute("aria-invalid", "true")
+  expect((await savedProfile(page)).activeMatch).toBeNull()
+})
+
 for (const variant of ["standard", "chess960"] as const) {
   test(`keeps the animal and 2325 Elo independent through a rated ${variant} Challenge`, async ({
     page,

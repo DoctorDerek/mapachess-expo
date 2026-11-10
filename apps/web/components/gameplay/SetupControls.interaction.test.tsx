@@ -167,6 +167,26 @@ describe("controller-accessible match setup controls", () => {
     expect(document.activeElement).toBe(range)
   })
 
+  it("recovers a restored unsupported Elo only after a deliberate range selection", () => {
+    render(<Difficulty initial={2400} />)
+    const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
+    const range = screen.getByRole("slider", {
+      name: copy.setup.adjustOpponentElo,
+    })
+
+    act(() => exact.focus())
+    act(() => range.focus())
+    expect(range).toHaveProperty("value", "100")
+    expect(exact).toHaveProperty("value", "2400")
+    expect(exact.getAttribute("aria-invalid")).toBe("true")
+    expect(screen.queryByText(copy.setup.noDifficultyHistory)).toBeNull()
+
+    fireEvent.click(range)
+    expect(exact).toHaveProperty("value", "100")
+    expect(exact.hasAttribute("aria-invalid")).toBe(false)
+    expect(screen.getByText(copy.setup.noDifficultyHistory)).toBeTruthy()
+  })
+
   it("keeps earned history visible and changes it only when an exact target is accepted", () => {
     render(<Difficulty initial={500} />)
     const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
