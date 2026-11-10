@@ -79,14 +79,8 @@ export default function matchResultPresentation(
   progress: StoryProgress,
   copy: MapachessCatalog,
 ): MatchResultPresentation | null {
-  const {
-    conclusion,
-    mode,
-    opponentId,
-    playerColor,
-    startingPosition,
-    timeControl,
-  } = match
+  const { conclusion, opponentId, playerColor, startingPosition, timeControl } =
+    match
   if (conclusion === null) return null
   const story = storyResultPresentation(match, progress)
   const medal = story === null ? matchVictoryMedal(match) : story.medal
