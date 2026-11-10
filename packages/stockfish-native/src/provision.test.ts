@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { parseSha256Hex } from "@mapachess/stockfish/build-identity"
 import {
   STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST,
@@ -22,6 +22,7 @@ import provisionStockfishNativeInputs, {
 const temporaryDirectories: string[] = []
 
 afterEach(async () => {
+  vi.unstubAllGlobals()
   await Promise.all(
     temporaryDirectories
       .splice(0)
@@ -61,6 +62,47 @@ async function temporaryPackageRoot(): Promise<string> {
 }
 
 describe("native Stockfish input provisioning", () => {
+  it("uses the verified HTTPS fallback after a transient download failure", async () => {
+    const packageRoot = await temporaryPackageRoot()
+    const bytes = Uint8Array.from(Buffer.from("fixture-network"))
+    const base = fixtureManifest(bytes)
+    const urls = [
+      "https://example.invalid/primary",
+      "https://example.invalid/mirror",
+    ] as const
+    const fetchFixture = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(bytes))
+    vi.stubGlobal("fetch", fetchFixture)
+    const installed = await provisionStockfishNativeNetwork({
+      packageRoot,
+      manifest: { ...base, network: { ...base.network, urls } },
+    })
+    expect(fetchFixture.mock.calls.map(([url]) => String(url))).toEqual(urls)
+    expect(Uint8Array.from(await readFile(installed.networkPath))).toEqual(
+      bytes,
+    )
+  })
+
+  it("rejects untrusted manifest transport before creating a downloaded network", async () => {
+    const packageRoot = await temporaryPackageRoot()
+    const base = fixtureManifest(Buffer.from("fixture-network"))
+    const fetchFixture = vi.fn<typeof fetch>()
+    vi.stubGlobal("fetch", fetchFixture)
+    await expect(
+      provisionStockfishNativeNetwork({
+        packageRoot,
+        manifest: {
+          ...base,
+          network: { ...base.network, urls: ["http://example.invalid/unsafe"] },
+        },
+      }),
+    ).rejects.toThrow("only HTTPS URLs")
+    expect(fetchFixture).not.toHaveBeenCalled()
+    await expect(readdir(packageRoot)).resolves.toEqual([])
+  })
+
   it("pins official HTTPS sources for the Lite network", () => {
     const artifact = STOCKFISH_18_LITE_NATIVE_BUILD_MANIFEST.network
     expect(artifact.urls).toHaveLength(2)

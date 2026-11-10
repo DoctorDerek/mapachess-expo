@@ -647,6 +647,33 @@ describe("Native Stockfish session", () => {
     expect(session.state()).toBe("closed")
   })
 
+  it.each(["ready", "best-move"] as const)(
+    "fails closed on an unsolicited %s event outside its owning request",
+    async (event) => {
+      const { module, session } = await bootFixture()
+      await expect(session.boot()).rejects.toMatchObject({
+        code: "invalid-state",
+      })
+      if (event === "ready") module.emitReady()
+      else
+        module.emitBestMove({
+          bestMove: "e2e3",
+          ponderMove: "",
+          requestId: REQUEST.requestId,
+        })
+      expect(session.state()).toBe("failed")
+      await expect(session.search(REQUEST)).rejects.toMatchObject({
+        code: "invalid-state",
+      })
+      expect(module.searchRequests).toEqual([])
+      const closing = session.close()
+      expect(session.close()).toBe(closing)
+      module.emitClosed()
+      await closing
+      expect(module.subscriptionCounts()).toEqual([0, 0, 0, 0, 0])
+    },
+  )
+
   it("rejects an explicit close while boot is pending", async () => {
     const module = new FakeNativeModule()
     const session = new NativeStockfishSession(CONFIGURATION, module)
