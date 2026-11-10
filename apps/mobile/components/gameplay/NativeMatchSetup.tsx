@@ -4,7 +4,7 @@ import { TextInput, View } from "react-native"
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
   editChallengeDifficulty,
-  resolveChallengeDifficulty,
+  projectChallengeDifficulty,
   type ChallengeDifficultyDraft,
   type ChallengeDifficultyEdit,
 } from "@mapachess/gameplay/challenge-difficulty"
@@ -110,11 +110,15 @@ export default function NativeMatchSetup({
     draft.mode === "story" ? draft.variant : draft.challengeSetup.variant
   const chess960Challenge =
     draft.mode === "challenge" && draft.challengeSetup.variant === "chess960"
-  const difficultyGrid = challengeDifficultyGrid(variant)
-  const difficultyTargetElo =
+  const difficultyControl =
     draft.mode === "challenge"
-      ? resolveChallengeDifficulty(difficultyGrid, draft.difficulty)
+      ? projectChallengeDifficulty(
+          variant,
+          draft.difficulty,
+          data.challengeHistory,
+        )
       : null
+  const difficultyStart = difficultyControl?.start
   const difficultyInput = useRef<TextInput>(null)
   const changeDifficulty = useCallback((edit: ChallengeDifficultyEdit) => {
     setDraft((current) =>
@@ -146,7 +150,8 @@ export default function NativeMatchSetup({
     draft.mode === "story"
       ? canPlayStoryOpponent(data.storyProgress, variant, opponentId)
       : challengeAnimals.some(({ id }) => id === opponentId) &&
-        (draft.difficulty.selectedElo !== null || difficultyTargetElo !== null)
+        difficultyStart !== undefined &&
+        difficultyStart.type !== "unavailable"
   const position = parseChess960PositionId(
     positionNumber.trim() === "" ? NaN : Number(positionNumber),
   )
@@ -159,7 +164,7 @@ export default function NativeMatchSetup({
       onStart({ ...draft, opponentId })
       return
     }
-    if (difficultyTargetElo === null) {
+    if (difficultyStart?.type !== "ready") {
       difficultyInput.current?.focus()
       changeDifficulty({ type: "committed" })
       return
@@ -167,7 +172,10 @@ export default function NativeMatchSetup({
     onStart({
       mode: "challenge",
       timeControl,
-      challengeSetup: { ...draft.challengeSetup, difficultyTargetElo },
+      challengeSetup: {
+        ...draft.challengeSetup,
+        difficultyTargetElo: difficultyStart.targetElo,
+      },
       ...(variant === "chess960" && position.ok
         ? { displayedChess960PositionId: position.positionId }
         : {}),
@@ -274,16 +282,13 @@ export default function NativeMatchSetup({
               () => navigation.open("setup-opponent"),
               opponentId,
             )}
-            {draft.mode === "challenge" ? (
+            {draft.mode === "challenge" && difficultyControl !== null ? (
               <>
                 <NativeChallengeDifficulty
+                  control={difficultyControl}
                   disabled={disabled}
-                  draft={draft.difficulty}
                   exactInput={difficultyInput}
-                  grid={difficultyGrid}
-                  history={data.challengeHistory}
                   onEdit={changeDifficulty}
-                  variant={variant}
                 />
                 <NativeText>{copy.setup.color}</NativeText>
                 <View className="flex-row flex-wrap gap-2">

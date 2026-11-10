@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest"
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
   editChallengeDifficulty,
+  projectChallengeDifficulty,
 } from "@mapachess/gameplay/challenge-difficulty"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
@@ -24,30 +25,28 @@ function Difficulty({ initial = 100 }: Readonly<{ initial?: number }>) {
   )
   const exactInput = useRef<HTMLInputElement>(null)
   const history = createInitialPlayerData().challengeHistory
+  const control = projectChallengeDifficulty("standard", draft, {
+    ...history,
+    standard: {
+      animals: [],
+      difficulties: [
+        {
+          targetElo: 500,
+          lastPlayedAnimal: "bunny-stockfish",
+          highestMedal: "gold",
+        },
+      ],
+    },
+  })
   return (
     <PlayerInputProvider profileActor={null}>
       <ChallengeDifficultyChoices
+        control={control}
         disabled={false}
-        draft={draft}
         exactInput={exactInput}
-        grid={grid}
-        history={{
-          ...history,
-          standard: {
-            animals: [],
-            difficulties: [
-              {
-                targetElo: 500,
-                lastPlayedAnimal: "bunny-stockfish",
-                highestMedal: "gold",
-              },
-            ],
-          },
-        }}
         onEdit={(edit) =>
           setDraft((current) => editChallengeDifficulty(grid, current, edit))
         }
-        variant="standard"
       />
     </PlayerInputProvider>
   )

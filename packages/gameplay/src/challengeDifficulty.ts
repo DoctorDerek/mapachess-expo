@@ -58,13 +58,7 @@ export function createChallengeDifficultyDraft(
   }
 }
 
-export function challengeDifficultyText(
-  draft: ChallengeDifficultyDraft,
-): string {
-  return draft.exactText ?? String(draft.selectedElo ?? "")
-}
-
-export function resolveChallengeDifficulty(
+function resolveChallengeDifficulty(
   grid: ChallengeDifficultyGrid,
   draft: ChallengeDifficultyDraft,
 ): number | null {
@@ -122,14 +116,62 @@ export function editChallengeDifficulty(
 type ChallengeHistory = MapachessPlayerData["challengeHistory"]
 type DifficultyRecord = ChallengeHistory[MatchVariant]["difficulties"][number]
 
-export function challengeDifficultyHistory(
-  history: ChallengeHistory,
-  variant: MatchVariant,
+type ChallengeDifficultyHistoryState =
+  | Readonly<{ type: "unselected" | "unplayed" }>
+  | Readonly<{ type: "played"; record: DifficultyRecord }>
+
+type ChallengeDifficultyStart =
+  | Readonly<{ type: "unavailable" | "correct-exact-entry" }>
+  | Readonly<{ type: "ready"; targetElo: number }>
+
+export type ChallengeDifficultyControlState = Readonly<{
+  grid: ChallengeDifficultyGrid
+  rangeValue: number
+  exactText: string
+  hasPendingText: boolean
+  showError: boolean
+  history: ChallengeDifficultyHistoryState
+  start: ChallengeDifficultyStart
+}>
+
+function difficultyHistory(
+  history: ChallengeHistory[MatchVariant],
+  selectedElo: number | null,
+): ChallengeDifficultyHistoryState {
+  if (selectedElo === null) return { type: "unselected" }
+  const record = history.difficulties.find(
+    (entry) => entry.targetElo === selectedElo,
+  )
+  return record === undefined
+    ? { type: "unplayed" }
+    : { type: "played", record }
+}
+
+function difficultyStart(
   targetElo: number | null,
-): DifficultyRecord | null {
-  return targetElo === null
-    ? null
-    : (history[variant].difficulties.find(
-        (record) => record.targetElo === targetElo,
-      ) ?? null)
+  selectedElo: number | null,
+): ChallengeDifficultyStart {
+  if (targetElo !== null) return { type: "ready", targetElo }
+  return { type: selectedElo === null ? "unavailable" : "correct-exact-entry" }
+}
+
+export function projectChallengeDifficulty(
+  variant: MatchVariant,
+  draft: ChallengeDifficultyDraft,
+  history: ChallengeHistory,
+): ChallengeDifficultyControlState {
+  const grid = challengeDifficultyGrid(variant)
+  const { exactText, selectedElo, showError } = draft
+  return {
+    grid,
+    rangeValue: selectedElo ?? grid.minimum,
+    exactText: exactText ?? String(selectedElo ?? ""),
+    hasPendingText: exactText !== null,
+    showError,
+    history: difficultyHistory(history[variant], selectedElo),
+    start: difficultyStart(
+      resolveChallengeDifficulty(grid, draft),
+      selectedElo,
+    ),
+  }
 }

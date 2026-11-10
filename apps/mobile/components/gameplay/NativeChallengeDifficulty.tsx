@@ -2,15 +2,10 @@ import cx from "classix"
 import { useCallback, useMemo, useRef, type RefObject } from "react"
 import { PanResponder, Pressable, TextInput, View } from "react-native"
 import {
-  challengeDifficultyHistory,
-  challengeDifficultyText,
   challengeEloAtFraction,
-  type ChallengeDifficultyDraft,
+  type ChallengeDifficultyControlState,
   type ChallengeDifficultyEdit,
-  type ChallengeDifficultyGrid,
 } from "@mapachess/gameplay/challenge-difficulty"
-import type { MatchVariant } from "@mapachess/match/match-variant"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import { useNativeInputControl } from "../input/NativeInputProvider"
 import NativeMedal from "../presentation/NativeMedal"
 import NativeText from "../presentation/NativeText"
@@ -19,32 +14,26 @@ import { useNativeLocale } from "../profile/NativeLocaleProvider"
 const ELO_DRAG_THRESHOLD = 6
 
 export default function NativeChallengeDifficulty({
+  control,
   disabled,
-  draft,
   exactInput,
-  grid,
-  history,
   onEdit,
-  variant,
 }: Readonly<{
+  control: ChallengeDifficultyControlState
   disabled: boolean
-  draft: ChallengeDifficultyDraft
   exactInput: RefObject<TextInput | null>
-  grid: ChallengeDifficultyGrid
-  history: MapachessPlayerData["challengeHistory"]
   onEdit: (edit: ChallengeDifficultyEdit) => void
-  variant: MatchVariant
 }>) {
   const { copy } = useNativeLocale()
   const setup = copy.setup
+  const { grid, rangeValue, exactText, showError, history } = control
   const { minimum, maximum, step } = grid
   const slider = useRef<View>(null)
   const trackWidth = useRef(0)
-  const target = draft.selectedElo ?? minimum
   const progress =
-    `${((target - minimum) / (maximum - minimum)) * 100}%` as const
-  const record = challengeDifficultyHistory(history, variant, draft.selectedElo)
-  const error = draft.showError
+    `${((rangeValue - minimum) / (maximum - minimum)) * 100}%` as const
+  const record = history.type === "played" ? history.record : null
+  const error = showError
     ? setup.invalidOpponentElo(minimum, maximum, step)
     : undefined
 
@@ -112,7 +101,7 @@ export default function NativeChallengeDifficulty({
           onBlur={() => onEdit({ type: "committed" })}
           onChangeText={(text) => onEdit({ type: "typed", text })}
           onSubmitEditing={() => onEdit({ type: "committed" })}
-          value={challengeDifficultyText(draft)}
+          value={exactText}
         />
       </View>
       <View className="px-3">
@@ -122,7 +111,7 @@ export default function NativeChallengeDifficulty({
           accessibilityLabel={setup.adjustOpponentElo}
           accessibilityRole="adjustable"
           accessibilityState={{ disabled }}
-          accessibilityValue={{ min: minimum, max: maximum, now: target }}
+          accessibilityValue={{ min: minimum, max: maximum, now: rangeValue }}
           className={cx(
             "rounded-lg border-2",
             focused ? "border-mapachito-orange" : "border-transparent",
@@ -205,11 +194,11 @@ export default function NativeChallengeDifficulty({
             </NativeText>
           </View>
         </View>
-      ) : draft.selectedElo === null ? null : (
+      ) : history.type === "unplayed" ? (
         <NativeText className="pt-1 text-sm">
           {setup.noDifficultyHistory}
         </NativeText>
-      )}
+      ) : null}
     </View>
   )
 }

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
+  projectChallengeDifficulty,
 } from "@mapachess/gameplay/challenge-difficulty"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
@@ -34,15 +35,13 @@ function renderDifficulty(
   disabled = false,
 ) {
   const grid = challengeDifficultyGrid(variant)
+  const draft = createChallengeDifficultyDraft(grid, elo)
   return renderToStaticMarkup(
     <ChallengeDifficultyChoices
+      control={projectChallengeDifficulty(variant, draft, history)}
       disabled={disabled}
-      draft={createChallengeDifficultyDraft(grid, elo)}
       exactInput={createRef<HTMLInputElement>()}
-      grid={grid}
-      history={history}
       onEdit={vi.fn()}
-      variant={variant}
     />,
   )
 }

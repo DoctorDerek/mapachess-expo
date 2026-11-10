@@ -2,18 +2,24 @@ import { describe, expect, it } from "vitest"
 import { MATCH_VARIANTS } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import challengeDifficultyGrid, {
-  challengeDifficultyHistory,
-  challengeDifficultyText,
   challengeEloAtFraction,
   createChallengeDifficultyDraft,
   editChallengeDifficulty,
-  resolveChallengeDifficulty,
+  projectChallengeDifficulty,
+  type ChallengeDifficultyDraft,
 } from "../src/challengeDifficulty.js"
 import { challengeDifficultyTargets } from "../src/opponentPolicy.js"
+
+const emptyHistory = {
+  standard: { animals: [], difficulties: [] },
+  chess960: { animals: [], difficulties: [] },
+} as const satisfies MapachessPlayerData["challengeHistory"]
 
 describe.each(MATCH_VARIANTS)("%s Challenge Elo", (variant) => {
   const grid = challengeDifficultyGrid(variant)
   const draft = createChallengeDifficultyDraft(grid, 1000)
+  const controlFor = (current: ChallengeDifficultyDraft) =>
+    projectChallengeDifficulty(variant, current, emptyHistory)
 
   it("derives an unbroken slider grid from the actual supported targets", () => {
     expect(grid.targets).toEqual(challengeDifficultyTargets(variant))
@@ -33,13 +39,19 @@ describe.each(MATCH_VARIANTS)("%s Challenge Elo", (variant) => {
         type: "typed",
         text,
       })
-      expect(challengeDifficultyText(pending)).toBe(text)
-      expect(resolveChallengeDifficulty(grid, pending)).toBeNull()
-      expect(
-        editChallengeDifficulty(grid, pending, { type: "committed" }),
-      ).toEqual({
-        selectedElo: 1000,
+      expect(controlFor(pending)).toMatchObject({
+        rangeValue: 1000,
         exactText: text,
+        hasPendingText: true,
+        showError: false,
+        history: { type: "unplayed" },
+        start: { type: "correct-exact-entry" },
+      })
+      const invalid = editChallengeDifficulty(grid, pending, {
+        type: "committed",
+      })
+      expect(controlFor(invalid)).toEqual({
+        ...controlFor(pending),
         showError: true,
       })
     },
@@ -52,27 +64,60 @@ describe.each(MATCH_VARIANTS)("%s Challenge Elo", (variant) => {
         type: "typed",
         text: ` ${targetElo} `,
       })
-      expect(pending.selectedElo).toBe(1000)
-      expect(resolveChallengeDifficulty(grid, pending)).toBe(targetElo)
+      expect(controlFor(pending)).toMatchObject({
+        rangeValue: 1000,
+        exactText: ` ${targetElo} `,
+        hasPendingText: true,
+        start: { type: "ready", targetElo },
+      })
       const committed = editChallengeDifficulty(grid, pending, {
         type: "committed",
       })
-      expect(committed.selectedElo).toBe(targetElo)
-      expect(challengeDifficultyText(committed)).toBe(String(targetElo))
+      expect(controlFor(committed)).toMatchObject({
+        rangeValue: targetElo,
+        exactText: String(targetElo),
+        hasPendingText: false,
+        start: { type: "ready", targetElo },
+      })
     },
   )
 
   it("cannot silently substitute a supported target for a restored invalid value", () => {
     const restored = createChallengeDifficultyDraft(grid, 2400)
-    expect(challengeDifficultyText(restored)).toBe("2400")
-    expect(restored.selectedElo).toBeNull()
-    expect(resolveChallengeDifficulty(grid, restored)).toBeNull()
-    expect(
-      editChallengeDifficulty(grid, restored, {
-        type: "selected",
-        targetElo: 100,
-      }),
-    ).toEqual(createChallengeDifficultyDraft(grid, 100))
+    expect(controlFor(restored)).toMatchObject({
+      rangeValue: 100,
+      exactText: "2400",
+      hasPendingText: true,
+      history: { type: "unselected" },
+      start: { type: "unavailable" },
+    })
+    const recovered = editChallengeDifficulty(grid, restored, {
+      type: "selected",
+      targetElo: 100,
+    })
+    expect(controlFor(recovered)).toMatchObject({
+      rangeValue: 100,
+      exactText: "100",
+      hasPendingText: false,
+      showError: false,
+      history: { type: "unplayed" },
+      start: { type: "ready", targetElo: 100 },
+    })
+  })
+
+  it("recovers invalid text by selecting the committed Elo again", () => {
+    const pending = editChallengeDifficulty(grid, draft, {
+      type: "typed",
+      text: "1012",
+    })
+    const invalid = editChallengeDifficulty(grid, pending, {
+      type: "committed",
+    })
+    const recovered = editChallengeDifficulty(grid, invalid, {
+      type: "selected",
+      targetElo: 1000,
+    })
+    expect(controlFor(recovered)).toEqual(controlFor(draft))
   })
 
   it("selects only grid targets by slider fraction and clamps steps at each end", () => {
@@ -123,12 +168,27 @@ it("reads only the accepted target record from the current variant", () => {
       ],
     },
   } as const satisfies MapachessPlayerData["challengeHistory"]
-  expect(challengeDifficultyHistory(history, "standard", 1000)).toBe(
-    history.standard.difficulties[0],
-  )
-  expect(challengeDifficultyHistory(history, "chess960", 1000)).toBe(
-    history.chess960.difficulties[0],
-  )
-  expect(challengeDifficultyHistory(history, "standard", 1025)).toBeNull()
-  expect(challengeDifficultyHistory(history, "chess960", null)).toBeNull()
+  for (const variant of MATCH_VARIANTS) {
+    const grid = challengeDifficultyGrid(variant)
+    const draft = createChallengeDifficultyDraft(grid, 1000)
+    const pending = editChallengeDifficulty(grid, draft, {
+      type: "typed",
+      text: "1025",
+    })
+    expect(projectChallengeDifficulty(variant, pending, history)).toMatchObject(
+      {
+        history: { type: "played", record: history[variant].difficulties[0] },
+        rangeValue: 1000,
+        start: { type: "ready", targetElo: 1025 },
+      },
+    )
+    const committed = editChallengeDifficulty(grid, pending, {
+      type: "committed",
+    })
+    expect(
+      projectChallengeDifficulty(variant, committed, history).history,
+    ).toEqual({
+      type: "unplayed",
+    })
+  }
 })

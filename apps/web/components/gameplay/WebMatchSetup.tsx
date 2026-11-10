@@ -10,7 +10,7 @@ import {
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
   editChallengeDifficulty,
-  resolveChallengeDifficulty,
+  projectChallengeDifficulty,
   type ChallengeDifficultyEdit,
 } from "@mapachess/gameplay/challenge-difficulty"
 import type { AutoHintMode } from "@mapachess/match/auto-hint-mode"
@@ -210,10 +210,11 @@ export default function WebMatchSetup({
         : editChallengeDifficulty(difficultyGrid, current, edit),
     )
   }
-  const difficultyTargetElo =
+  const difficultyControl =
     difficulty === null
       ? null
-      : resolveChallengeDifficulty(difficultyGrid, difficulty)
+      : projectChallengeDifficulty(variant, difficulty, challengeHistory)
+  const difficultyStart = difficultyControl?.start
   const challengeOpponents = selectChallengeUnlockedOpponents(storyProgress)
   const opponent = stockfishOpponent(selectedOpponentId)
   const playerAnimal =
@@ -227,7 +228,8 @@ export default function WebMatchSetup({
   const selectionAvailable =
     setup.mode === "challenge"
       ? challengeOpponents.some(({ id }) => id === selectedOpponentId) &&
-        (difficulty?.selectedElo != null || difficultyTargetElo !== null)
+        difficultyStart !== undefined &&
+        difficultyStart.type !== "unavailable"
       : canPlayStoryOpponent(storyProgress, variant, selectedOpponentId)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
@@ -241,7 +243,7 @@ export default function WebMatchSetup({
       onStart({ ...setup, timeControl, opponentId: selectedOpponentId })
       return
     }
-    if (difficultyTargetElo === null) {
+    if (difficultyStart?.type !== "ready") {
       difficultyInput.current?.focus()
       changeDifficulty({ type: "committed" })
       return
@@ -251,7 +253,7 @@ export default function WebMatchSetup({
     )
     const parsed = parseChallengeSetup({
       opponentId: selectedOpponentId,
-      difficultyTargetElo,
+      difficultyTargetElo: difficultyStart.targetElo,
       variant,
       playerColor,
       chess960PositionId:
@@ -375,15 +377,12 @@ export default function WebMatchSetup({
 
                 {challenge === null ? null : (
                   <>
-                    {difficulty === null ? null : (
+                    {difficultyControl === null ? null : (
                       <ChallengeDifficultyChoices
+                        control={difficultyControl}
                         disabled={disabled || opening}
-                        draft={difficulty}
                         exactInput={difficultyInput}
-                        grid={difficultyGrid}
-                        history={challengeHistory}
                         onEdit={changeDifficulty}
-                        variant={variant}
                       />
                     )}
                     <MatchColorChoices

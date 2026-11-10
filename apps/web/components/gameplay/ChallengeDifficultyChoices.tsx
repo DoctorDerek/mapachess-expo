@@ -1,42 +1,32 @@
 import { useId, useRef, type RefObject } from "react"
-import {
-  challengeDifficultyHistory,
-  challengeDifficultyText,
-  type ChallengeDifficultyDraft,
-  type ChallengeDifficultyEdit,
-  type ChallengeDifficultyGrid,
+import type {
+  ChallengeDifficultyControlState,
+  ChallengeDifficultyEdit,
 } from "@mapachess/gameplay/challenge-difficulty"
-import type { MatchVariant } from "@mapachess/match/match-variant"
-import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MedalSymbol from "../presentation/MedalSymbol"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 
 export default function ChallengeDifficultyChoices({
+  control,
   disabled,
-  draft,
   exactInput,
-  grid,
-  history,
   onEdit,
-  variant,
 }: Readonly<{
+  control: ChallengeDifficultyControlState
   disabled: boolean
-  draft: ChallengeDifficultyDraft
   exactInput: RefObject<HTMLInputElement | null>
-  grid: ChallengeDifficultyGrid
-  history: MapachessPlayerData["challengeHistory"]
   onEdit: (edit: ChallengeDifficultyEdit) => void
-  variant: MatchVariant
 }>) {
   const catalog = useMapachessCopy()
   const copy = catalog.setup
   const inputId = useId()
   const errorId = useId()
   const range = useRef<HTMLInputElement>(null)
+  const { grid, rangeValue, exactText, hasPendingText, showError, history } =
+    control
   const { minimum, maximum, step } = grid
-  const record = challengeDifficultyHistory(history, variant, draft.selectedElo)
-  const target = draft.selectedElo ?? minimum
+  const record = history.type === "played" ? history.record : null
   const selectElo = (targetElo: number): void =>
     onEdit({ type: "selected", targetElo })
 
@@ -63,8 +53,8 @@ export default function ChallengeDifficultyChoices({
           {copy.opponentElo}
         </label>
         <input
-          aria-describedby={draft.showError ? errorId : undefined}
-          aria-invalid={draft.showError || undefined}
+          aria-describedby={showError ? errorId : undefined}
+          aria-invalid={showError || undefined}
           autoComplete="off"
           className="border-mapachito-charcoal bg-mapachito-white text-mapachito-charcoal focus-visible:outline-mapachito-violet aria-invalid:border-mapachito-raspberry min-h-12 w-24 max-w-full min-w-0 rounded-lg border-2 px-2 text-center text-lg font-bold tabular-nums focus-visible:outline-3 focus-visible:outline-offset-2 disabled:opacity-60"
           id={inputId}
@@ -81,19 +71,18 @@ export default function ChallengeDifficultyChoices({
           ref={exactInput}
           spellCheck={false}
           type="text"
-          value={challengeDifficultyText(draft)}
+          value={exactText}
         />
       </div>
       <input
         aria-label={copy.adjustOpponentElo}
-        aria-valuetext={copy.elo(String(target))}
+        aria-valuetext={copy.elo(String(rangeValue))}
         className="accent-mapachito-violet focus-visible:outline-mapachito-violet min-h-12 w-full min-w-0 cursor-pointer rounded-lg focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-60"
         max={maximum}
         min={minimum}
         onChange={(event) => selectElo(event.currentTarget.valueAsNumber)}
         onClick={(event) => {
-          if (draft.exactText !== null)
-            selectElo(event.currentTarget.valueAsNumber)
+          if (hasPendingText) selectElo(event.currentTarget.valueAsNumber)
         }}
         onKeyDown={(event) => {
           if (event.key !== "Home" && event.key !== "End") return
@@ -103,7 +92,7 @@ export default function ChallengeDifficultyChoices({
         ref={range}
         step={step}
         type="range"
-        value={target}
+        value={rangeValue}
       />
       <div
         aria-hidden="true"
@@ -112,7 +101,7 @@ export default function ChallengeDifficultyChoices({
         <span>{minimum}</span>
         <span>{maximum}</span>
       </div>
-      {draft.showError ? (
+      {showError ? (
         <p
           className="text-mapachito-charcoal text-sm font-bold"
           id={errorId}
@@ -143,9 +132,9 @@ export default function ChallengeDifficultyChoices({
             </dd>
           </div>
         </dl>
-      ) : draft.selectedElo === null ? null : (
+      ) : history.type === "unplayed" ? (
         <p className="pt-1 text-sm">{copy.noDifficultyHistory}</p>
-      )}
+      ) : null}
     </fieldset>
   )
 }
