@@ -14,7 +14,11 @@ async function openStoryPlayerChoices(page: Page): Promise<void> {
   await expect(
     page.getByRole("region", { name: "Player animals", exact: true }),
   ).toHaveCount(0)
-  await page.getByRole("button", { name: /^Play as / }).click()
+  const choice = page
+    .getByRole("region", { name: "Standard Chess Story", exact: true })
+    .getByRole("button", { name: /^Play as / })
+  await expect(choice).toBeEnabled()
+  await choice.press("Enter")
   await expect(
     page.getByRole("dialog", { name: "Play as", exact: true }),
   ).toBeVisible()
@@ -30,7 +34,9 @@ test("opens the complete locked roster from the selected animal and keeps it key
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio")).toHaveCount(26)
+  await expect(gallery.getByRole("radio")).toHaveCount(
+    STOCKFISH_OPPONENTS.length,
+  )
   const selected = gallery.getByRole("radio", { name: /Raccoon/ })
   const last = gallery.getByRole("radio", { name: /Dragonfly/ })
   const sprite = (radio: Locator) =>
@@ -39,7 +45,9 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect(sprite(last)).toHaveCount(0)
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
-  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(25)
+  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(
+    STOCKFISH_OPPONENTS.length - 1,
+  )
   const done = page.getByRole("button", { name: "Done", exact: true })
   await expect(done).toBeInViewport({ ratio: 1 })
   const doneBounds = await done.boundingBox()
@@ -151,7 +159,9 @@ test("all earned animals remain selectable after reload and editing is still a d
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(26)
+  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(
+    STOCKFISH_OPPONENTS.length,
+  )
   await gallery.getByRole("radio", { name: /Dragonfly/ }).check()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
   await page.getByRole("button", { name: "Save changes", exact: true }).click()
