@@ -18,7 +18,10 @@ import SerializedPlayerDataStore, {
 import createInitialMapachessPlayerData, {
   type MapachessPlayerData,
 } from "@mapachess/profile/player-data"
-import { decodeMapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import {
+  createMapachessPortableBackup,
+  decodeMapachessPortableBackup,
+} from "@mapachess/profile/portable-backup"
 import profileMachine, {
   selectCurrentPlayerData,
 } from "@mapachess/profile/profile-machine"
@@ -34,6 +37,9 @@ import openFreshMatchSession, {
   openCurrentMatchSession,
   returnMatchSessionToMenu,
 } from "../src/matchSession.js"
+import createMatchSessionController, {
+  type ApplicationActivity,
+} from "../src/sessionController.js"
 
 const FIRST_SEED = "00000001000000020000000300000004"
 const SECOND_SEED = "00000005000000060000000700000008"
@@ -42,6 +48,28 @@ const sha256 = async (value: string) =>
 const signal = () => new AbortController().signal
 const monotonicClock = { now: () => 1234 }
 const challengeDifficultyTargets = () => [100, 137]
+
+function activityFixture() {
+  const listeners = new Set<() => void>()
+  let active = true
+  const activity: ApplicationActivity = {
+    isActive: () => active,
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+  }
+  return {
+    activity,
+    listeners,
+    setActive: (next: boolean) => {
+      active = next
+      for (const listener of listeners) listener()
+    },
+  }
+}
 
 async function openProfile(
   test: TestContext,
@@ -655,5 +683,112 @@ describe("accepted platform-neutral match sessions", () => {
     expect(session.match.currentFen).toBe(
       createInitialMatchPosition(session.match.startingPosition).fen,
     )
+  })
+})
+
+describe("shared match view ownership", () => {
+  it("pauses on backgrounding and menu entry, then clears only its match", async (test) => {
+    const bullet = TIME_CONTROL_PRESETS.find(({ id }) => id === "1+0")
+    if (bullet === undefined) throw new Error("Missing Bullet fixture")
+    const profile = await openProfile(test)
+    const fixture = runtimeFixture()
+    const activity = activityFixture()
+    const controller = createMatchSessionController({
+      ...dependencies(profile, fixture),
+      activity: activity.activity,
+    })
+    test.onTestFinished(() => controller.close())
+    const setup = {
+      mode: "story",
+      variant: "standard",
+      timeControl: bullet.control,
+    } as const
+    controller.actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+    controller.actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
+    const active = await waitFor(controller.actor, (state) =>
+      state.matches("active"),
+    )
+    const session = active.context.session
+    if (session === null) throw new Error("Expected the accepted session")
+    expect(session.actor.getSnapshot().context.clock?.startedAt).toBe(1234)
+    expect(requireProfile(profile.actor).activeMatch?.matchId).toBe(
+      session.match.matchId,
+    )
+
+    activity.setActive(false)
+    await waitFor(
+      profile.actor,
+      (state) =>
+        selectCurrentPlayerData(state)?.activeMatch?.clock?.paused === true &&
+        state.matches("ready"),
+    )
+    await waitFor(session.actor, (state) => state.matches("paused"))
+    activity.setActive(true)
+    expect(session.actor.getSnapshot().context.clock?.startedAt).toBeNull()
+    session.actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+    expect(session.actor.getSnapshot().context.clock?.startedAt).toBe(1234)
+    controller.actor.send({
+      type: "MATCH_SESSION.OVERLAY_OPENED",
+      overlay: "match-menu",
+    })
+    expect(session.actor.getSnapshot().context.clock?.startedAt).toBeNull()
+    controller.actor.send({ type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED" })
+    await waitFor(controller.actor, (state) => state.matches("menu"))
+    expect(requireProfile(profile.actor).activeMatch).toBeNull()
+    expect(fixture.close).toHaveBeenCalledOnce()
+    const closed = controller.close()
+    expect(controller.close()).toBe(closed)
+    await closed
+    expect(activity.listeners.size).toBe(0)
+    expect(fixture.close).toHaveBeenCalledOnce()
+  })
+
+  it("releases an owned match only after a replacement backup is accepted", async (test) => {
+    const profile = await openProfile(test)
+    const fixture = runtimeFixture()
+    const controller = createMatchSessionController({
+      ...dependencies(profile, fixture),
+      activity: activityFixture().activity,
+    })
+    test.onTestFinished(() => controller.close())
+    const setup = { mode: "story", variant: "standard" } as const
+    controller.actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+    controller.actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
+    await waitFor(controller.actor, (state) => state.matches("active"))
+    const rawBackup = await createMapachessPortableBackup({
+      applicationVersion: "test",
+      gddRevision: "test",
+      playerData: createInitialMapachessPlayerData(),
+      sha256,
+    })
+    profile.actor.send({ type: "PROFILE.IMPORT_PREVIEW_REQUESTED", rawBackup })
+    await waitFor(profile.actor, (state) => state.matches("importPreview"))
+    expect(controller.actor.getSnapshot().matches("active")).toBe(true)
+    expect(fixture.close).not.toHaveBeenCalled()
+    profile.actor.send({ type: "PROFILE.IMPORT_CONFIRMED" })
+    await waitFor(profile.actor, (state) => state.matches("ready"))
+    await waitFor(controller.actor, (state) => state.matches("menu"))
+    expect(requireProfile(profile.actor).activeMatch).toBeNull()
+    expect(fixture.close).toHaveBeenCalledOnce()
+  })
+
+  it("closes a runtime that finishes after the view is disposed without accepting it", async (test) => {
+    const profile = await openProfile(test)
+    const fixture = runtimeFixture()
+    const pending = Promise.withResolvers<MatchRuntime>()
+    fixture.openRuntime.mockReturnValueOnce(pending.promise)
+    const controller = createMatchSessionController({
+      ...dependencies(profile, fixture),
+      activity: activityFixture().activity,
+    })
+    test.onTestFinished(() => controller.close())
+    const setup = { mode: "story", variant: "standard" } as const
+    controller.actor.send({ type: "MATCH_SESSION.SETUP_REQUESTED", setup })
+    controller.actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
+    await vi.waitFor(() => expect(fixture.openRuntime).toHaveBeenCalledOnce())
+    await controller.close()
+    pending.resolve(fixture.runtime)
+    await vi.waitFor(() => expect(fixture.close).toHaveBeenCalledOnce())
+    expect(requireProfile(profile.actor).activeMatch).toBeNull()
   })
 })
