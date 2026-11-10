@@ -22,12 +22,15 @@ import {
 } from "react-native"
 import loadCatalog from "@mapachess/localization/catalog"
 import type { MatchMode } from "@mapachess/match/durable-match-record"
+import type { MatchOpponent } from "@mapachess/match/match-machine"
+import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import {
   TIME_CONTROL_PRESETS,
   timeControlLabel,
 } from "@mapachess/match/time-control"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import openNativeStockfishSession from "@mapachess/stockfish-native/open-session"
+import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
 import HomeScreen from "@/app/index"
 import openNativeApplicationRuntime, {
   type NativeApplicationRuntime,
@@ -72,18 +75,33 @@ function playerData(runtime: NativeApplicationRuntime) {
   return data
 }
 
-async function openApplication(storage: InMemoryAsyncStorage) {
+async function openApplication(
+  storage: InMemoryAsyncStorage,
+  storyOpponent?: MatchOpponent,
+) {
   const bridge = new NativeEngineFixture()
   const runtime = await actualOpen({
     profile: { storage },
     game: {
-      openRuntime: (input) =>
-        openNativeMatchRuntime({
+      openRuntime: async (input) => {
+        const runtime = await openNativeMatchRuntime({
           ...input,
           cryptography,
+          ...(storyOpponent === undefined
+            ? {}
+            : {
+                matchSeed: parseDeterministicRandomSeed(
+                  "00000000000000000000000000000001",
+                  "Native Story checkmate",
+                ),
+              }),
           openSession: (configuration) =>
             openNativeStockfishSession(configuration, bridge),
-        }),
+        })
+        return storyOpponent === undefined
+          ? runtime
+          : { ...runtime, opponent: storyOpponent }
+      },
       activity: { isActive: () => true, subscribe: () => () => undefined },
     },
   })
@@ -153,6 +171,70 @@ function expectResultAction(mode: MatchMode, elo: number): void {
 }
 
 describe("native accepted rewards", () => {
+  it("awards Gold for an unassisted Story checkmate and opens the newly unlocked opponent", async () => {
+    const replies = ["e7e5", "a7a6", "b7b6"]
+    const runtime = await openApplication(new InMemoryAsyncStorage(), {
+      async selectMove({ legalMoves }) {
+        const reply = replies.shift()
+        const move = legalMoves.find(({ id }) => id === reply)
+        if (move === undefined) throw new Error(`Expected legal reply ${reply}`)
+        return move.id
+      },
+    })
+    runtime.profile.actor.send({
+      type: "PROFILE.AUTO_HINT_MODE_CHANGED",
+      autoHintMode: "no-auto-hints",
+    })
+    await waitFor(() =>
+      expect(playerData(runtime).settings.autoHintMode).toBe("no-auto-hints"),
+    )
+    await render(<HomeScreen />)
+    await startStory()
+    const stage = screen.getByLabelText(stageLabel)
+    const move = async (from: string, to: string, cursor: number) => {
+      const fromSquare = new RegExp(`^${from},`)
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: fromSquare })).toBeEnabled(),
+      )
+      await pressButton(fromSquare)
+      await pressButton(new RegExp(`^${to},`))
+      await waitFor(() =>
+        expect(playerData(runtime).activeMatch?.cursor).toBe(cursor),
+      )
+    }
+    await move("e2", "e4", 2)
+    await move("f1", "c4", 4)
+    await move("d1", "h5", 6)
+    await move("h5", "f7", 7)
+
+    const next = new RegExp(`^${copy.gameplay.resultActions.next}`)
+    expect(await screen.findByRole("button", { name: next })).toBeEnabled()
+    expect(screen.getByLabelText(stageLabel)).toBe(stage)
+    const accepted = playerData(runtime)
+    expect(accepted.activeMatch?.conclusion).toEqual({
+      type: "checkmate",
+      winner: "white",
+    })
+    expect(accepted.lastAcceptedResultReward?.ratedElo?.assistance).toBe("gold")
+    expect(screen.getByText(copy.shared.story.medals.gold)).toBeOnTheScreen()
+    await pressButton(reviewBoard)
+    expect(screen.getByText(copy.shared.story.medals.gold)).toBeOnTheScreen()
+    await pressButton(viewRewards)
+    await pressButton(next)
+    const bunny = STOCKFISH_OPPONENTS.find(({ id }) => id === "bunny-stockfish")
+    if (bunny === undefined)
+      throw new Error("Expected Bunny in the Story roster")
+    expect(
+      await screen.findByText(
+        copy.gameplay.opponentAndElo(
+          copy.animals.opponent(bunny.id),
+          bunny.storyTargetElo,
+        ),
+      ),
+    ).toBeOnTheScreen()
+    expect(playerData(runtime).totalXp).toBe(accepted.totalXp)
+  })
+
   it("withholds reward facts during a pending and failed write, then presents the retry once", async () => {
     const storage = new InMemoryAsyncStorage()
     const runtime = await openApplication(storage)
