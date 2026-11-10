@@ -107,7 +107,8 @@ export default function ProfileDressingCategories({
           aria-pressed={category === name}
           onClick={() => onSelect(name)}
           className={cx(
-            "shadow-mapachess-raised flex min-w-0 grow basis-36 flex-wrap items-center justify-center gap-2 px-2! xl:basis-24",
+            "shadow-mapachess-raised flex grow basis-36 flex-wrap items-center justify-center gap-2 px-2! xl:basis-[6em]",
+            name === "Animal" ? "min-w-min xl:min-w-0" : "min-w-0",
             category === name
               ? "bg-mapachito-blue shadow-mapachito-deep-cyan"
               : "bg-mapachito-violet shadow-mapachito-raspberry",
@@ -116,13 +117,15 @@ export default function ProfileDressingCategories({
           <span
             aria-hidden="true"
             className={cx(
-              "pointer-events-none relative block shrink-0 xl:hidden",
-              name !== "Animal" && "size-12 overflow-hidden",
+              "pointer-events-none relative block shrink-0 overflow-clip xl:hidden",
+              name !== "Animal" && "size-12",
             )}
           >
             <CategoryArtwork category={name} draft={draft} active={active} />
           </span>
-          <span>{copy.profile.dressing.categories[name]}</span>
+          <span className="max-w-full min-w-0 wrap-anywhere">
+            {copy.profile.dressing.categories[name]}
+          </span>
         </ProfileAction>
       ))}
     </div>
