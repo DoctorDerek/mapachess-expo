@@ -1,14 +1,28 @@
 import "./nativeUiEnvironment"
 import { beforeEach, describe, expect, it, jest } from "@jest/globals"
+import { act, renderHook, waitFor } from "@testing-library/react-native"
 import { getDocumentAsync } from "expo-document-picker"
 import { isAvailableAsync, shareAsync } from "expo-sharing"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
-import { MAX_PORTABLE_BACKUP_UTF8_BYTES } from "@mapachess/profile/portable-files"
+import { createMapachessPortableBackup } from "@mapachess/profile/portable-backup"
+import {
+  MAPACHESS_UNREADABLE_DATA_FILE_NAME,
+  MAX_PORTABLE_BACKUP_UTF8_BYTES,
+} from "@mapachess/profile/portable-files"
+import {
+  selectCurrentPlayerData,
+  selectImportPreview,
+} from "@mapachess/profile/profile-machine"
+import { MAPACHESS_ASYNC_STORAGE_NAMESPACE } from "@/lib/profile/AsyncStorageDurableStore"
+import expoSha256 from "@/lib/profile/expoSha256"
 import {
   exportNativePlayerData,
   readNativePlayerDataBackup,
   shareNativeTextFile,
 } from "@/lib/profile/nativePlayerDataFiles"
+import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
+import useNativeFileActions from "@/lib/profile/useNativeFileActions"
+import InMemoryAsyncStorage from "./nativeStorageFixture"
 
 const mockFiles = new Map<string, string>()
 jest.mock("expo-document-picker", () => ({ getDocumentAsync: jest.fn() }))
@@ -132,5 +146,106 @@ describe("native portable file ownership", () => {
       shareNativeTextFile("data", "backup.json", new AbortController().signal),
     ).rejects.toThrow("unavailable")
     expect(mockFiles.size).toBe(0)
+  })
+})
+
+describe("native profile file actions", () => {
+  it("guards concurrent file actions and only previews a valid selected backup", async () => {
+    const profile = await openNativeProfileRuntime({
+      storage: new InMemoryAsyncStorage(),
+    })
+    try {
+      await waitFor(() =>
+        expect(profile.actor.getSnapshot().matches("ready")).toBe(true),
+      )
+      const before = selectCurrentPlayerData(profile.actor.getSnapshot())
+      const contents = await createMapachessPortableBackup({
+        applicationVersion: "0.0.0",
+        gddRevision: "fixture",
+        playerData: { ...createInitialMapachessPlayerData(), totalXp: 300 },
+        sha256: expoSha256,
+      })
+      const uri = "file:///cache/DocumentPicker/import.json"
+      mockFiles.set(uri, contents)
+      const pending =
+        Promise.withResolvers<Awaited<ReturnType<typeof getDocumentAsync>>>()
+      choose.mockReturnValueOnce(pending.promise)
+      const { result } = await renderHook(() =>
+        useNativeFileActions(profile.actor),
+      )
+      let importing: Promise<void> | undefined
+      await act(() => {
+        importing = result.current.importData()
+      })
+      expect(result.current.status).toBe("busy")
+      await act(() => result.current.exportData())
+      expect(share).not.toHaveBeenCalled()
+      await act(async () => {
+        pending.resolve(selection(uri, contents.length))
+        await importing
+      })
+      await waitFor(() =>
+        expect(
+          selectImportPreview(profile.actor.getSnapshot())?.payload.totalXp,
+        ).toBe(300),
+      )
+      expect(result.current.status).toBe("idle")
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        before,
+      )
+      expect(mockFiles.has(uri)).toBe(false)
+      await act(() => profile.actor.send({ type: "PROFILE.IMPORT_CANCELLED" }))
+
+      choose.mockResolvedValueOnce(
+        selection(uri, MAX_PORTABLE_BACKUP_UTF8_BYTES + 1),
+      )
+      await act(() => result.current.importData())
+      expect(result.current.status).toBe("too-large")
+      expect(profile.actor.getSnapshot().matches("ready")).toBe(true)
+      await act(() => result.current.exportData())
+      expect(result.current.status).toBe("idle")
+      expect(share).toHaveBeenCalledTimes(1)
+    } finally {
+      await profile.close()
+    }
+  })
+
+  it("reports a failed share and preserves the exact unreadable save for retry", async () => {
+    const storage = new InMemoryAsyncStorage()
+    const key = MAPACHESS_ASYNC_STORAGE_NAMESPACE + "/current"
+    const unreadable = "unreadable player save"
+    storage.values.set(key, unreadable)
+    const profile = await openNativeProfileRuntime({ storage })
+    try {
+      await waitFor(() =>
+        expect(profile.actor.getSnapshot().matches("recovery")).toBe(true),
+      )
+      const { result } = await renderHook(() =>
+        useNativeFileActions(profile.actor),
+      )
+      await act(() => result.current.exportData())
+      expect(result.current.status).toBe("failed")
+      expect(share).not.toHaveBeenCalled()
+      share.mockRejectedValueOnce(new Error("Share failed"))
+      await act(() => result.current.exportUnreadable())
+      expect(result.current.status).toBe("failed")
+      expect(result.current.failure).not.toBeNull()
+      let exported: string | undefined
+      share.mockImplementationOnce(async (uri) => {
+        exported = mockFiles.get(uri)
+      })
+      await act(() => result.current.exportUnreadable())
+      expect(share).toHaveBeenLastCalledWith(
+        `file:///cache/${MAPACHESS_UNREADABLE_DATA_FILE_NAME}`,
+        { mimeType: "text/plain" },
+      )
+      expect(exported).toBe(unreadable)
+      expect(result.current.status).toBe("idle")
+      expect(result.current.failure).toBeNull()
+      expect(storage.values.get(key)).toBe(unreadable)
+      expect(mockFiles.size).toBe(0)
+    } finally {
+      await profile.close()
+    }
   })
 })
