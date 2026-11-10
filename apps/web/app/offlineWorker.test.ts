@@ -3,7 +3,15 @@ import partitionOfflineAssets from "../lib/offline/partitionOfflineAssets"
 
 type WorkerConfiguration = {
   precacheEntries: unknown[]
-  precacheOptions: { urlManipulation: (input: { url: URL }) => URL[] }
+  precacheOptions: {
+    urlManipulation: (input: { url: URL }) => URL[]
+    plugins: {
+      handlerWillRespond: (input: {
+        request: Pick<Request, "destination">
+        response: Response
+      }) => Promise<Response>
+    }[]
+  }
   runtimeCaching: {
     matcher: (input: { url: URL }) => boolean
     handler: {
@@ -77,6 +85,44 @@ async function setup() {
 }
 
 describe("offline worker application policy at its platform boundary", () => {
+  it("preserves worker bootstrap identity without changing its cached bytes, headers or status", async () => {
+    const { configuration } = await setup()
+    const plugin = configuration.precacheOptions.plugins[0]
+    if (plugin === undefined)
+      throw new Error("Cached workers need their original bootstrap URL.")
+    const response = new Response("self.postMessage(location.hash)", {
+      status: 200,
+      statusText: "OK",
+      headers: { "content-type": "application/javascript", "x-build": "one" },
+    })
+    Object.defineProperty(response, "url", {
+      value: "https://mapachess.test/_next/static/chunks/worker.js",
+    })
+    const served = await plugin.handlerWillRespond({
+      request: { destination: "worker" },
+      response,
+    })
+    expect(served.url).toBe("")
+    expect(served.status).toBe(response.status)
+    expect(served.statusText).toBe(response.statusText)
+    expect([...served.headers]).toEqual([...response.headers])
+    expect(await served.text()).toBe("self.postMessage(location.hash)")
+  })
+
+  it.each(["document", "script", "style", "image", "font"] as const)(
+    "leaves the original cached %s response and URL unchanged",
+    async (destination) => {
+      const { configuration } = await setup()
+      const plugin = configuration.precacheOptions.plugins[0]
+      if (plugin === undefined)
+        throw new Error("The precache response policy must exist.")
+      const response = new Response("unchanged")
+      expect(
+        await plugin.handlerWillRespond({ request: { destination }, response }),
+      ).toBe(response)
+    },
+  )
+
   it("normalizes only same-origin deployment queries and caches only declared art without arbitrary query keys", async () => {
     const { configuration } = await setup()
     expect(worker.listen).toHaveBeenCalledOnce()

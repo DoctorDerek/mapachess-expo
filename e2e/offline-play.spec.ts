@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import { expect, type Page } from "@playwright/test"
 import loadCatalog from "../packages/localization/src/catalog.js"
 import type { MatchVariant } from "../packages/match/src/matchVariant.js"
@@ -6,6 +7,8 @@ import startOrigin from "./offlineOrigin.js"
 import savedProfile from "./savedProfile.js"
 
 const setup = loadCatalog("en").setup
+
+test.use({ serviceWorkers: "allow" })
 
 test.skip(
   !process.env.PLAYWRIGHT_TEST_BASE_URL &&
@@ -78,6 +81,49 @@ test("a refused offline installation keeps Home usable and retries on the next v
     )
     .toBe("activated")
   expect(diagnostics.join("\n")).not.toContain(refusal)
+})
+
+test("exports animated profile cards with an installed offline shell online and offline", async ({
+  page,
+  context,
+  workerOrigin,
+}, testInfo) => {
+  test.setTimeout(90_000)
+  await page.goto(workerOrigin)
+  await page.getByRole("button", { name: "Start", exact: true }).click()
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready
+  })
+  await expect
+    .poll(() =>
+      page.evaluate(() => Boolean(navigator.serviceWorker.controller)),
+    )
+    .toBe(true)
+  const before = await savedProfile(page)
+  try {
+    for (const offline of [false, true]) {
+      await context.setOffline(offline)
+      await page
+        .getByRole("button", { name: "Share profile card", exact: true })
+        .click()
+      const save = page.getByRole("button", { name: "Save GIF", exact: true })
+      await expect(save).toBeEnabled({ timeout: 60_000 })
+      const download = page.waitForEvent("download")
+      await save.click()
+      const path = testInfo.outputPath(offline ? "offline.gif" : "online.gif")
+      await (await download).saveAs(path)
+      const gif = await readFile(path)
+      expect(gif.subarray(0, 6).toString()).toBe("GIF89a")
+      expect(gif.readUInt16LE(6)).toBe(960)
+      expect(gif.readUInt16LE(8)).toBe(540)
+      expect(gif.includes(Buffer.from("NETSCAPE2.0"))).toBe(true)
+      expect(gif.length).toBeLessThan(5_000_000)
+      await page.getByRole("button", { name: "Back", exact: true }).click()
+      expect(await savedProfile(page)).toEqual(before)
+    }
+  } finally {
+    await context.setOffline(false)
+  }
 })
 
 for (const [variant, previous] of [
