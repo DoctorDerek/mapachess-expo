@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { Text } from "react-native"
+import { Pressable, Text } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 import loadCatalog from "@mapachess/localization/catalog"
 import battleSpritePlayback from "@mapachess/match-presentation/battle-sprite-playback"
@@ -27,6 +27,7 @@ import NativeChessboard from "@/components/gameplay/NativeChessboard"
 import NativeHome from "@/components/gameplay/NativeHome"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
 import NativeAnimal from "@/components/presentation/NativeAnimal"
+import NativeRecoveryBoundary from "@/components/presentation/NativeRecoveryBoundary"
 import NativeSpritePlayback from "@/components/presentation/NativeSpritePlayback"
 import NativeCoachPortrait from "@/components/profile/NativeCoachPortrait"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
@@ -82,6 +83,56 @@ afterEach(async () => {
 })
 const copy = loadCatalog("en")
 
+it("keeps native recovery actions reachable after a render error and restores the board on retry", async () => {
+  const pause = jest.fn()
+  const backup = jest.fn()
+  const failure = new Error("Unable to display the board artwork")
+  let artworkFailed = true
+  function Board() {
+    if (artworkFailed) throw failure
+    return <Text>{copy.board.orientation("white")}</Text>
+  }
+  const title =
+    copy.interface.profilePlayExperience.thisScreenCouldNotBeDisplayed
+  const retry = copy.interface.recoverableView.tryAgain
+  const exportLabel = copy.interface.profileSettingsPanel.exportPlayerData
+  const reportUnexpectedError = console.error
+  const reported = jest
+    .spyOn(console, "error")
+    .mockImplementation((...args: unknown[]) => {
+      if (!args.includes(failure)) reportUnexpectedError(...args)
+    })
+  try {
+    await render(
+      <NativeRecoveryBoundary
+        onRecovery={pause}
+        title={title}
+        description={
+          copy.interface.profilePlayExperience.yourPlayerDataIsStillHeldIn
+        }
+        retryLabel={retry}
+        recovery={
+          <Pressable accessibilityRole="button" onPress={backup}>
+            <Text>{exportLabel}</Text>
+          </Pressable>
+        }
+      >
+        <Board />
+      </NativeRecoveryBoundary>,
+    )
+  } finally {
+    reported.mockRestore()
+  }
+  expect(screen.getByRole("alert")).toHaveTextContent(title)
+  expect(pause).toHaveBeenCalledTimes(1)
+  await fireEvent.press(screen.getByRole("button", { name: exportLabel }))
+  expect(backup).toHaveBeenCalledTimes(1)
+  artworkFailed = false
+  await fireEvent.press(screen.getByRole("button", { name: retry }))
+  expect(screen.queryByRole("alert")).toBeNull()
+  expect(screen.getByText(copy.board.orientation("white"))).toBeOnTheScreen()
+})
+
 async function readyProfile() {
   profile = await openNativeProfileRuntime({
     storage: new InMemoryAsyncStorage(),
@@ -114,6 +165,49 @@ function controlledTiming() {
 
 describe("native animal presentation contract", () => {
   const placement = { kind: "battle", mobileScale: 3, desktopScale: 3 } as const
+
+  it.each([false, true])(
+    "plays a complete authored sequence before finishing or repeating: %s",
+    async (repeatSequence) => {
+      const { completions } = controlledTiming()
+      const tiger = resolveOpponentPresentation("tiger-stockfish", {
+        family: "capture",
+        role: "attacker",
+      })
+      const approach = battleSpritePlayback(tiger, "approach", "right", false)
+      const strike = battleSpritePlayback(tiger, "strike", "right", false)
+      const playback = {
+        ...approach,
+        steps: [...approach.steps, ...strike.steps],
+        repeatSequence,
+      }
+      expect(playback.steps.length).toBeGreaterThan(1)
+      const complete = jest.fn()
+      await render(
+        <NativeSpritePlayback
+          active
+          identity="capture-sequence"
+          playback={playback}
+          placement={placement}
+          reducedMotion={false}
+          onComplete={complete}
+        />,
+      )
+      for (const source of new Set(playback.sources))
+        await fireEvent(nativeImage(source), "load")
+      for (const index of playback.steps.keys()) {
+        expect(complete).not.toHaveBeenCalled()
+        const finish = completions[index]
+        if (finish === undefined)
+          throw new Error("Expected the next authored animation")
+        await act(() => finish(true))
+      }
+      expect(complete).toHaveBeenCalledTimes(repeatSequence ? 0 : 1)
+      expect(completions).toHaveLength(
+        playback.steps.length + Number(repeatSequence),
+      )
+    },
+  )
 
   it("loads the whole capture recipe and waits for both frame and travel completion", async () => {
     const { timing, completions } = controlledTiming()

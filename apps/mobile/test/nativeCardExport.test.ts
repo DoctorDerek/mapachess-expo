@@ -1,8 +1,20 @@
 import "./nativeUiEnvironment"
 import { beforeEach, describe, expect, it, jest } from "@jest/globals"
-import { isAvailableAsync, shareAsync } from "expo-sharing"
-import { encode } from "upng-js"
 import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native"
+import { isAvailableAsync, shareAsync } from "expo-sharing"
+import { createElement } from "react"
+import { AccessibilityInfo, Image } from "react-native"
+import { captureRef, releaseCapture } from "react-native-view-shot"
+import { encode } from "upng-js"
+import loadCatalog from "@mapachess/localization/catalog"
+import {
+  CARD_IDLE_FRAME_MILLISECONDS,
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_WIDTH,
 } from "@mapachess/match-presentation/profile-card-format"
@@ -12,6 +24,8 @@ import {
   INITIAL_CARD_CONTENT,
   type CardInput,
 } from "@mapachess/profile/profile-card-model"
+import { DEFAULT_CARD_RATING_CONTEXT } from "@mapachess/profile/rating-context"
+import NativeCardShare from "@/components/profile/NativeCardShare"
 import { nativeCardFrameCount } from "@/lib/presentation/nativeCardAssets"
 import shareNativeCard from "@/lib/presentation/nativeCardExport"
 
@@ -29,6 +43,14 @@ jest.mock("@/lib/presentation/nativeAssetManifest", () => ({
 jest.mock("expo-sharing", () => ({
   isAvailableAsync: jest.fn(),
   shareAsync: jest.fn(),
+}))
+jest.mock("react-native-view-shot", () => ({
+  captureRef: jest.fn(),
+  releaseCapture: jest.fn(),
+}))
+jest.mock("@/lib/gameplay/nativeApplicationActivity", () => ({
+  __esModule: true,
+  default: () => ({ isActive: () => true, subscribe: () => () => undefined }),
 }))
 jest.mock("expo-file-system", () => ({
   Paths: { cache: { uri: "file:///cache/" } },
@@ -180,5 +202,154 @@ describe("native profile-card sharing adapter", () => {
     ).rejects.toThrow("sharing is unavailable")
     expect(capture).not.toHaveBeenCalled()
     expect(mockFiles.size).toBe(0)
+  })
+})
+
+describe("native profile card share controls", () => {
+  const copy = loadCatalog("en")
+  const renderShare = (onBack = jest.fn()) =>
+    render(
+      createElement(NativeCardShare, {
+        data,
+        appearance: data.appearance,
+        ratingContext: DEFAULT_CARD_RATING_CONTEXT,
+        onBack,
+      }),
+    )
+  const png = () =>
+    screen.getByRole("button", { name: copy.profile.shareFormat("PNG") })
+  const choosePng = async () => {
+    await fireEvent.press(
+      screen.getByRole("button", { name: copy.profile.cardFormats.PNG }),
+    )
+  }
+  const loadArtwork = async (view: Awaited<ReturnType<typeof renderShare>>) => {
+    const images = view.container.queryAll(
+      (element) =>
+        element.type === "RNSVGImage" &&
+        typeof element.props.onLoad === "function",
+    )
+    expect(images.length).toBeGreaterThan(0)
+    for (const image of images)
+      await fireEvent(image, "load", { nativeEvent: {} })
+  }
+  beforeEach(() => {
+    jest
+      .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
+      .mockResolvedValue(true)
+    jest.spyOn(Image, "resolveAssetSource").mockReturnValue({
+      uri: "file:///assets/card-sprite.png",
+      width: 100,
+      height: 100,
+      scale: 1,
+    })
+    jest
+      .spyOn(Image, "getSize")
+      .mockImplementation((_uri, complete) => complete(100, 100))
+  })
+
+  it("enables sharing only when artwork is loaded and retries a rejected PNG capture", async () => {
+    const view = await renderShare()
+    await choosePng()
+    expect(png()).toBeDisabled()
+    await fireEvent.press(
+      screen.getByRole("checkbox", { name: copy.profile.animalCompanion }),
+    )
+    expect(
+      screen.getByRole("checkbox", {
+        name: copy.profile.animalCompanion,
+        checked: false,
+      }),
+    ).toBeOnTheScreen()
+    await loadArtwork(view)
+    expect(png()).toBeEnabled()
+    jest
+      .mocked(captureRef)
+      .mockRejectedValueOnce(new Error("Capture unavailable"))
+    await fireEvent.press(png())
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      copy.profile.retryFormat("PNG"),
+    )
+    expect(captureRef).toHaveBeenCalledTimes(1)
+    expect(share).not.toHaveBeenCalled()
+    jest
+      .mocked(captureRef)
+      .mockImplementationOnce(() => capture(0, new AbortController().signal))
+    await fireEvent.press(png())
+    await waitFor(() =>
+      expect(share).toHaveBeenCalledWith("file:///cache/capture-0.png", {
+        mimeType: "image/png",
+        UTI: "public.png",
+      }),
+    )
+    await waitFor(() => expect(png()).toBeEnabled())
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(mockFiles.size).toBe(0)
+  })
+
+  it("leaves promptly and releases a capture that finishes after Back", async () => {
+    const back = jest.fn()
+    const view = await renderShare(back)
+    await choosePng()
+    await loadArtwork(view)
+    const pending = Promise.withResolvers<string>()
+    jest.mocked(captureRef).mockReturnValueOnce(pending.promise)
+    await fireEvent.press(png())
+    await waitFor(() => expect(captureRef).toHaveBeenCalledTimes(1))
+    expect(png()).toBeDisabled()
+    await fireEvent.press(
+      screen.getByRole("button", {
+        name: copy.interface.profileCardJourney.back,
+      }),
+    )
+    expect(back).toHaveBeenCalledTimes(1)
+    await view.unmount()
+    await act(() => pending.resolve("file:///cache/late.png"))
+    expect(releaseCapture).toHaveBeenCalledWith("file:///cache/late.png")
+    expect(share).not.toHaveBeenCalled()
+  })
+
+  it("keeps an undecoded preview disabled until an explicit artwork retry succeeds", async () => {
+    jest
+      .spyOn(Image, "getSize")
+      .mockImplementationOnce((_uri, _complete, failure) => {
+        failure?.(new Error("Artwork decode failed"))
+      })
+    const view = await renderShare()
+    await choosePng()
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      copy.interface.profileCardPreview
+        .imagePreparationFailedYourAppearancePreviewChoices,
+    )
+    expect(png()).toBeDisabled()
+    await fireEvent.press(
+      screen.getByRole("button", { name: copy.profile.retryFormat("PNG") }),
+    )
+    expect(screen.queryByRole("alert")).toBeNull()
+    expect(png()).toBeDisabled()
+    await loadArtwork(view)
+    expect(png()).toBeEnabled()
+    expect(share).not.toHaveBeenCalled()
+  })
+
+  it("advances the normal-motion GIF preview and releases its timer when selecting PNG", async () => {
+    jest
+      .mocked(AccessibilityInfo.isReduceMotionEnabled)
+      .mockResolvedValueOnce(false)
+    const schedule = jest.spyOn(globalThis, "setInterval")
+    const cancel = jest.spyOn(globalThis, "clearInterval")
+    const view = await renderShare()
+    await loadArtwork(view)
+    const timerIndex = schedule.mock.calls.findIndex(
+      ([, delay]) => delay === CARD_IDLE_FRAME_MILLISECONDS,
+    )
+    const advance = schedule.mock.calls[timerIndex]?.[0]
+    const timer = schedule.mock.results[timerIndex]
+    if (typeof advance !== "function" || timer?.type !== "return")
+      throw new Error("Expected an active GIF preview timer")
+    await act(() => advance())
+    await choosePng()
+    expect(cancel).toHaveBeenCalledWith(timer.value)
+    expect(png()).toBeEnabled()
   })
 })
