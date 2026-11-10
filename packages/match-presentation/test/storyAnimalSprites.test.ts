@@ -23,6 +23,9 @@ const REACTIONS = [
 describe("complete Story animal presentation", () => {
   it("keeps Bear upright attention complete and filters strikes by the actual target", () => {
     const bear = STORY_ANIMAL_SPRITES["bear-stockfish"]
+    const loweringAnimation = bear.animations.stand_go_down
+    if (loweringAnimation === undefined)
+      throw new Error("Expected Bear lowering animation")
     const sources = Object.values(bear.animations).map(
       ({ sourceId }) => sourceId,
     )
@@ -39,7 +42,7 @@ describe("complete Story animal presentation", () => {
     expect(
       attention(
         0,
-        sources.filter((id) => id !== bear.animations.stand_go_down.sourceId),
+        sources.filter((id) => id !== loweringAnimation.sourceId),
       ),
     ).toEqual(["roar"])
     for (let ordinal = 0; ordinal < 3; ordinal++) {

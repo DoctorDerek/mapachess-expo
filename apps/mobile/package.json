@@ -5,7 +5,7 @@
   "license": "GPL-3.0-or-later",
   "main": "expo-router/entry",
   "scripts": {
-    "app:prepare": "pnpm --filter @mapachess/gameplay... --filter @mapachess/stockfish-native... build && pnpm run assets:prepare",
+    "app:prepare": "pnpm --filter @mapachess/mobile... --filter !@mapachess/mobile build && pnpm run assets:prepare",
     "assets:prepare": "node --import jiti/register ../../scripts/prepareNativeAssets.ts",
     "preandroid": "pnpm run app:prepare",
     "prebuild": "pnpm run app:prepare",
