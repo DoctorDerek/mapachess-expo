@@ -7,16 +7,27 @@ export type SubscribableActor<Snapshot> = Readonly<{
   }
 }>
 
-export default function useActorSnapshot<Snapshot>(
+function useActorSnapshot<Snapshot>(
   actor: SubscribableActor<Snapshot>,
-): Snapshot {
+): Snapshot
+function useActorSnapshot<Snapshot>(
+  actor: SubscribableActor<Snapshot> | null,
+): Snapshot | null
+function useActorSnapshot<Snapshot>(
+  actor: SubscribableActor<Snapshot> | null,
+): Snapshot | null {
   const subscribe = useCallback(
     (listener: () => void) => {
-      const subscription = actor.subscribe(listener)
-      return () => subscription.unsubscribe()
+      const subscription = actor?.subscribe(listener)
+      return () => subscription?.unsubscribe()
     },
     [actor],
   )
-  const getSnapshot = useCallback(() => actor.getSnapshot(), [actor])
+  const getSnapshot = useCallback(
+    () => (actor === null ? null : actor.getSnapshot()),
+    [actor],
+  )
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
+
+export default useActorSnapshot

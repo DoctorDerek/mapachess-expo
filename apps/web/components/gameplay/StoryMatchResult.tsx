@@ -1,10 +1,8 @@
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
-import {
-  selectStoryLadder,
-  storyVictoryMedal,
-  type StoryMatchResult as SavedStoryMatchResult,
-  type StoryProgress,
+import { storyResultPresentation } from "@mapachess/profile/match-result-presentation"
+import type {
+  StoryMatchResult as SavedStoryMatchResult,
+  StoryProgress,
 } from "@mapachess/profile/story-progress"
 import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
@@ -28,22 +26,17 @@ export default function StoryMatchResult({
   const animalCopy = copy.animals
   const messages = copy.interface.storyMatchResult
 
-  if (match.mode !== "story" || match.conclusion === null) return null
+  const result = storyResultPresentation(match, progress)
+  if (result === null) return null
+  const { best, medal, next, opponentCount, replay, storyComplete } = result
   const variant = match.startingPosition.variant
-  const medal = storyVictoryMedal(match)
-  const ladder = selectStoryLadder(progress, variant)
-  const next = ladder.find((step) => step.status === "unlocked")
-  const best = progress[variant].find(
-    (victory) => victory.opponentId === match.opponentId,
-  )?.highestMedal
-  const opponent = stockfishOpponent(match.opponentId)
   const setup = (opponentId = match.opponentId): void =>
     onSetupRequested({ mode: "story", variant, opponentId })
 
   return (
     <section aria-label={messages.storyResult} className="grid gap-3">
       <div>
-        {medal !== null && next === undefined ? (
+        {storyComplete ? (
           <h3 className="font-display text-xl font-black">
             {messages.storyComplete}
           </h3>
@@ -66,29 +59,29 @@ export default function StoryMatchResult({
       ) : null}
       {medal !== null ? (
         <p className="text-sm">
-          {copy.gameplay.challengeUnlocked(animalCopy.opponent(opponent.id))}
-          {next === undefined
-            ? ` ${copy.gameplay.storyDefeated(ladder.length)}`
+          {copy.gameplay.challengeUnlocked(animalCopy.opponent(replay.id))}
+          {storyComplete
+            ? ` ${copy.gameplay.storyDefeated(opponentCount)}`
             : ""}
         </p>
       ) : null}
-      {medal !== null && next !== undefined ? (
+      {medal !== null && next !== null ? (
         <MapachessButton
           disabled={disabled}
           aria-busy={opening}
           busyLabel={messages.openingSetup}
-          onClick={() => setup(next.opponent.id)}
+          onClick={() => setup(next.id)}
         >
           {messages.nextOpponent}
           <span className="mt-1 block text-base font-normal">
             {copy.gameplay.opponentAndElo(
-              animalCopy.opponent(next.opponent.id),
-              next.opponent.storyTargetElo,
+              animalCopy.opponent(next.id),
+              next.elo,
             )}
           </span>
         </MapachessButton>
       ) : null}
-      {medal !== null && next === undefined ? (
+      {storyComplete ? (
         <MapachessButton
           disabled={disabled}
           aria-busy={opening}
@@ -108,8 +101,8 @@ export default function StoryMatchResult({
         {messages.replayOpponent}
         <span className="mt-1 block text-base font-normal">
           {copy.gameplay.opponentAndElo(
-            animalCopy.opponent(opponent.id),
-            opponent.storyTargetElo,
+            animalCopy.opponent(replay.id),
+            replay.elo,
           )}
         </span>
       </MapachessButton>

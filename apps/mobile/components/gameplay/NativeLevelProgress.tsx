@@ -1,17 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { View } from "react-native"
-import { levelProgress, xpAtLevel } from "@mapachess/profile/global-xp"
 import levelProgressionSpans, {
   easeOutQuad,
+  levelProgressFrame,
+  levelProgressSpanFrame,
 } from "@mapachess/profile/level-progression"
 import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import NativeText from "../presentation/NativeText"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
-
-const frameFor = (xp: number) => {
-  const progress = levelProgress(xp)
-  return { ...progress, fraction: progress.current / progress.required }
-}
 
 export default function NativeLevelProgress({
   beforeXp,
@@ -19,20 +15,24 @@ export default function NativeLevelProgress({
 }: Readonly<{ beforeXp: number; afterXp: number }>) {
   const { copy } = useNativeLocale()
   const { active, reducedMotion } = useNativePresentationActivity()
-  const [display, setDisplay] = useState(() => frameFor(beforeXp))
+  const [display, setDisplay] = useState(() => levelProgressFrame(beforeXp))
+  const final = levelProgressFrame(afterXp)
   const spans = useMemo(
     () => [...levelProgressionSpans(beforeXp, afterXp)],
     [beforeXp, afterXp],
   )
   const elapsed = useRef(0)
+  const finished = useRef(false)
   useEffect(() => {
     elapsed.current = 0
-    setDisplay(frameFor(beforeXp))
+    finished.current = false
+    setDisplay(levelProgressFrame(beforeXp))
   }, [beforeXp, afterXp])
   useEffect(() => {
-    if (!active) return
+    if (!active || finished.current) return
     if (reducedMotion) {
-      setDisplay(frameFor(afterXp))
+      finished.current = true
+      setDisplay(levelProgressFrame(afterXp))
       return
     }
     let frame: number
@@ -48,23 +48,14 @@ export default function NativeLevelProgress({
         return contains
       })
       if (span === undefined) {
-        setDisplay(frameFor(afterXp))
+        finished.current = true
+        setDisplay(levelProgressFrame(afterXp))
         return
       }
       const fraction = easeOutQuad(
         Math.min(1, (lastElapsed - preceding) / span.durationMs),
       )
-      const start = xpAtLevel(span.level)
-      const required = xpAtLevel(span.level + 1) - start
-      setDisplay({
-        level: span.level,
-        current:
-          Math.floor(span.fromXp + (span.toXp - span.fromXp) * fraction) -
-          start,
-        required,
-        fraction:
-          span.fromFraction + (span.toFraction - span.fromFraction) * fraction,
-      })
+      setDisplay(levelProgressSpanFrame(span, fraction))
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
@@ -74,7 +65,16 @@ export default function NativeLevelProgress({
     }
   }, [spans, active, reducedMotion, afterXp])
   return (
-    <View className="bg-mapachito-white gap-2 rounded-lg p-3">
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={copy.gameplay.levelProgress(
+        final.level,
+        final.current,
+        final.required,
+      )}
+      className="bg-mapachito-white gap-2 rounded-lg p-3"
+    >
       <View className="flex-row flex-wrap items-baseline justify-between gap-1">
         <NativeText className="font-native text-mapachito-charcoal text-xl">
           {copy.gameplay.level(display.level)}

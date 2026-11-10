@@ -11,6 +11,7 @@ export type NativeButtonProps = Omit<PressableProps, "onPress"> &
     onPress?: () => void
     action?: PlayerInputAction
     children: ReactNode
+    focusRequested?: boolean
     variant?: "primary" | "secondary" | "hint" | "destructive"
     textClassName?: string
   }>
@@ -18,6 +19,7 @@ export type NativeButtonProps = Omit<PressableProps, "onPress"> &
 export default function NativeButton({
   children,
   className,
+  focusRequested,
   textClassName,
   variant = "primary",
   action,
@@ -28,6 +30,8 @@ export default function NativeButton({
     ref,
     () => props.onPress?.(),
     !props.disabled,
+    undefined,
+    focusRequested,
   )
   const nodes = Children.toArray(children)
   const text = nodes.every(

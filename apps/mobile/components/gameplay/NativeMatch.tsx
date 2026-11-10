@@ -17,6 +17,7 @@ import resolveCoachPortrait, {
 } from "@mapachess/match-presentation/coach-portrait"
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
 import {
+  selectAreMatchMutationsFrozen,
   selectHintStage,
   selectIsPlayerTurn,
   selectMatchConclusion,
@@ -53,7 +54,9 @@ import NativeChessboard from "./NativeChessboard"
 import NativeMatchClock from "./NativeMatchClock"
 import NativeMatchControls from "./NativeMatchControls"
 import NativeMatchOverlay from "./NativeMatchOverlay"
-import NativeMatchRewards from "./NativeMatchRewards"
+import NativeMatchRewards, {
+  NativeCompletedMatchResult,
+} from "./NativeMatchRewards"
 import NativeMoveRatings from "./NativeMoveRatings"
 
 const NO_FEEDBACK = Object.freeze([])
@@ -95,6 +98,7 @@ export default function NativeMatch({
   navigation,
   overlays,
   visible,
+  resultNavigationReady,
   initiallyConcluded,
   celebrationDismissed,
   replaySequence,
@@ -108,6 +112,7 @@ export default function NativeMatch({
   navigation: MatchNavigationCommands
   overlays: readonly MatchNavigationOverlay[]
   visible: boolean
+  resultNavigationReady: boolean
   initiallyConcluded: boolean
   celebrationDismissed: boolean
   replaySequence: number
@@ -128,16 +133,28 @@ export default function NativeMatch({
     data.activeMatch?.matchId === session.match.matchId
       ? data.activeMatch
       : null
-  const reward =
+  const completed =
+    conclusion !== null &&
     saved !== null &&
-    acceptedRewardMatchesEnding(data.lastAcceptedResultReward, saved)
+    saved.conclusion?.type === conclusion.type &&
+    (!("winner" in conclusion) ||
+      ("winner" in saved.conclusion &&
+        saved.conclusion.winner === conclusion.winner)) &&
+    saved.cursor === timeline.cursor &&
+    saved.currentFen === position.fen &&
+    timeline.transitions
+      .slice(0, timeline.cursor)
+      .every(({ move }, index) => move.id === saved.moveIds[index])
+      ? saved
+      : null
+  const reward =
+    completed !== null &&
+    acceptedRewardMatchesEnding(data.lastAcceptedResultReward, completed)
       ? data.lastAcceptedResultReward
       : null
-  const rewardOpen =
-    visible &&
-    saved?.conclusion !== null &&
-    saved !== null &&
-    overlays.at(-1) === "rewards"
+  const rewardOpen = visible && reward !== null && overlays.at(-1) === "rewards"
+  const resultActionsEnabled =
+    visible && resultNavigationReady && !selectAreMatchMutationsFrozen(snapshot)
   const reactions = useNativeMoveReactions(
     timeline,
     saved?.moveFeedback ?? NO_FEEDBACK,
@@ -153,19 +170,17 @@ export default function NativeMatch({
   }, [conclusion, appActor, session])
   useEffect(() => {
     if (
-      visible &&
+      resultActionsEnabled &&
       !initiallyConcluded &&
-      saved?.conclusion !== null &&
-      saved !== null &&
+      reward !== null &&
       !celebrationDismissed &&
-      !overlays.includes("settings") &&
-      !overlays.includes("rewards")
+      overlays.length === 0
     )
       navigation.open("rewards")
   }, [
-    visible,
+    resultActionsEnabled,
     initiallyConcluded,
-    saved,
+    reward,
     celebrationDismissed,
     overlays,
     navigation,
@@ -185,7 +200,7 @@ export default function NativeMatch({
     reactions === null ? null : <NativeMoveRatings controller={reactions} />
   return (
     <NativeInputSurface
-      enabled={visible}
+      enabled={visible && !rewardOpen}
       onAction={onAction}
       className="relative min-h-0 flex-1"
     >
@@ -347,38 +362,54 @@ export default function NativeMatch({
           </NativeButton>
         )}
       </ScrollView>
-      <View
-        accessibilityViewIsModal={rewardOpen}
-        className={cx(
-          "bg-mapachito-charcoal",
-          rewardOpen ? "absolute inset-0 z-50 min-h-0 flex-1" : "shrink-0",
-        )}
-      >
-        {binding === null ? null : (
-          <NativeBattleStage
-            binding={binding}
-            visible={
-              visible && !overlays.some((overlay) => overlay !== "rewards")
-            }
-            playerAnimal={
-              session.match.mode === "story"
-                ? data.appearance.animal
-                : "raccoon-stockfish"
-            }
-            opponentAnimal={session.match.opponentId}
-          />
-        )}
-        {rewardOpen && saved !== null ? (
+      <NativeBattleStage
+        binding={binding}
+        visible={visible && !overlays.some((overlay) => overlay !== "rewards")}
+        playerAnimal={
+          session.match.mode === "story"
+            ? data.appearance.animal
+            : "raccoon-stockfish"
+        }
+        opponentAnimal={session.match.opponentId}
+        renderHost={(stage, stageHeightClassName) => (
           <NativeMatchRewards
-            match={saved}
-            reward={reward}
-            data={data}
-            onDismiss={() => navigation.close("rewards")}
-            onSetup={onSetup}
-            onReplay={onReplay}
+            stage={stage}
+            stageHeightClassName={stageHeightClassName}
+            celebration={
+              rewardOpen && completed !== null && reward !== null
+                ? {
+                    match: completed,
+                    reward,
+                    storyProgress: data.storyProgress,
+                    disabled: !resultActionsEnabled,
+                    showSaveConfirmation: replaySequence === 0,
+                    onDismiss: () => navigation.close("rewards"),
+                    onSetup,
+                    onReplay,
+                  }
+                : null
+            }
           />
-        ) : null}
-      </View>
+        )}
+      />
+      {completed === null ? null : (
+        <NativeCompletedMatchResult
+          match={completed}
+          storyProgress={data.storyProgress}
+          reward={reward}
+          hidden={rewardOpen}
+          replaySequence={replaySequence}
+          disabled={!resultActionsEnabled || overlays.length > 0}
+          onSetup={onSetup}
+          onReplay={onReplay}
+          onViewRewards={() =>
+            appActor.send({
+              type: "MATCH_SESSION.REWARDS_REPLAY_REQUESTED",
+              matchId: completed.matchId,
+            })
+          }
+        />
+      )}
       {visible ? (
         <NativeMatchOverlay
           session={session}

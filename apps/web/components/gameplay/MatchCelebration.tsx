@@ -8,18 +8,12 @@ import {
   type RefObject,
 } from "react"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
-import { timeControlLabel } from "@mapachess/match/time-control"
-import matchVictoryMedal, {
-  matchMedalEligibility,
-} from "@mapachess/profile/match-medal"
+import matchResultPresentation, {
+  matchResultRating,
+} from "@mapachess/profile/match-result-presentation"
 import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
-import {
-  selectStoryLadder,
-  type StoryProgress,
-} from "@mapachess/profile/story-progress"
+import type { StoryProgress } from "@mapachess/profile/story-progress"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
 import MedalSymbol from "../presentation/MedalSymbol"
@@ -58,10 +52,12 @@ export default function MatchCelebration({
   const animalCopy = copy.animals
   const messages = copy.interface.matchCelebration
 
-  const conclusion = match.conclusion
-  if (conclusion === null) {
+  const result = matchResultPresentation(match, storyProgress, copy)
+  if (result === null) {
     throw new Error("A completed match is required for its celebration.")
   }
+  const { action, heading, medal, reason, storyComplete, timeLabel } = result
+  const rating = matchResultRating(match, reward)
   const dialog = useRef<HTMLDialogElement>(null)
   usePlayerInputScope({
     root: dialog,
@@ -73,21 +69,6 @@ export default function MatchCelebration({
   })
   const reviewButton = useRef<HTMLButtonElement>(null)
   const titleId = useId()
-  const opponent = stockfishOpponent(match.opponentId)
-  const medal = matchVictoryMedal(match)
-  const variant = match.startingPosition.variant
-  const playerWon =
-    (conclusion.type === "checkmate" ||
-      conclusion.type === "resignation" ||
-      conclusion.type === "timeout") &&
-    conclusion.winner === match.playerColor
-  const next =
-    match.mode === "story" && medal !== null
-      ? selectStoryLadder(storyProgress, variant).find(
-          (step) => step.status === "unlocked",
-        )
-      : undefined
-
   useEffect(() => {
     const element = dialog.current
     if (element === null) return
@@ -102,34 +83,9 @@ export default function MatchCelebration({
   }, [restoreFocusRef])
 
   const nextAction = (): void => {
-    if (match.mode === "challenge") {
-      onReplayRequested()
-    } else if (medal === null) {
-      onSetupRequested({ mode: "story", variant, opponentId: match.opponentId })
-    } else if (next === undefined) {
-      onSetupRequested({ mode: "story", variant })
-    } else {
-      onSetupRequested({ mode: "story", variant, opponentId: next.opponent.id })
-    }
+    if (action.setup === null) onReplayRequested()
+    else onSetupRequested(action.setup)
   }
-  const action =
-    match.mode === "challenge" || medal === null
-      ? "replay"
-      : next === undefined
-        ? "ladder"
-        : "next"
-  const actionOpponent =
-    action === "next"
-      ? next?.opponent
-      : action === "replay"
-        ? opponent
-        : undefined
-  const actionElo =
-    action === "next"
-      ? next?.opponent.storyTargetElo
-      : match.mode === "story"
-        ? opponent.storyTargetElo
-        : match.opponentTargetElo
 
   return (
     <dialog
@@ -148,29 +104,11 @@ export default function MatchCelebration({
             className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-tight font-black text-balance wrap-anywhere"
             id={titleId}
           >
-            {playerWon
-              ? copy.gameplay.defeatedOpponent(animalCopy.opponent(opponent.id))
-              : matchConclusionText(
-                  conclusion,
-                  match.playerColor,
-                  animalCopy.opponent(opponent.id),
-                  copy.gameplay.conclusion,
-                )}
+            {heading}
           </h2>
-          {playerWon && conclusion.type === "resignation" ? (
-            <p className="text-base">{messages.opponentResigned}</p>
-          ) : null}
-          {playerWon && conclusion.type === "timeout" ? (
-            <p className="text-base">
-              {copy.gameplay.conclusion.opponentTimedOut(
-                animalCopy.opponent(opponent.id),
-              )}
-            </p>
-          ) : null}
+          {reason === null ? null : <p className="text-base">{reason}</p>}
           <div className="bg-mapachito-orange flex flex-wrap items-center justify-center gap-3 rounded-lg px-3 py-2">
-            <span className="font-bold">
-              {timeControlLabel(match.timeControl, copy.gameplay.clock)}
-            </span>
+            <span className="font-bold">{timeLabel}</span>
             {medal === null ? null : <MedalWithHintUse medal={medal} />}
             {reward === null ? null : (
               <p className="font-display text-3xl font-black tabular-nums">
@@ -180,35 +118,27 @@ export default function MatchCelebration({
           </div>
         </div>
         <div className="relative grid min-w-0 shrink-0 gap-3 px-3 pb-6 xl:order-1 xl:mb-4">
-          {reward === null || reward.ratedElo === null ? null : (
+          {rating === null ? null : (
             <p className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 text-base">
               <span className="grid min-w-0 flex-[1_1_min-content] gap-1 wrap-break-word">
                 <span className="font-bold">
-                  {copy.profile.ratingLabel[reward.ratedElo.variant]}
+                  {copy.profile.ratingLabel[rating.variant]}
                 </span>
                 <span>
-                  <MedalSymbol
-                    medal={
-                      reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                    }
-                  />
+                  <MedalSymbol medal={rating.assistance} />
                   {copy.profile.cardRatingContext(
-                    copy.gameplay.clock.category[
-                      reward.ratedElo.timeCategory ?? "untimed"
-                    ],
-                    copy.shared.story.medals[
-                      reward.ratedElo.assistance ?? matchMedalEligibility(match)
-                    ],
+                    copy.gameplay.clock.category[rating.timeCategory],
+                    copy.shared.story.medals[rating.assistance],
                   )}
                 </span>
               </span>
               <strong className="font-display text-right text-xl tabular-nums">
-                {copy.gameplay.integer(reward.ratedElo.before)} →{" "}
-                {copy.gameplay.integer(reward.ratedElo.after)}
+                {copy.gameplay.integer(rating.before)} →{" "}
+                {copy.gameplay.integer(rating.after)}
               </strong>
             </p>
           )}
-          {match.mode === "story" && medal !== null && next === undefined ? (
+          {storyComplete ? (
             <p className="text-sm font-bold">{messages.storyComplete}</p>
           ) : null}
           {showSaveConfirmation ? <MatchSaveConfirmation /> : null}
@@ -230,17 +160,17 @@ export default function MatchCelebration({
             onClick={nextAction}
             type="button"
           >
-            {copy.gameplay.resultActions[action]}
-            {actionOpponent !== undefined ? (
+            {copy.gameplay.resultActions[action.kind]}
+            {action.kind === "ladder" ? null : (
               <span className="mt-1 block text-base leading-snug font-normal">
-                {actionElo === undefined
-                  ? animalCopy.opponent(actionOpponent.id)
+                {action.target.elo === undefined
+                  ? animalCopy.opponent(action.target.id)
                   : copy.gameplay.opponentAndElo(
-                      animalCopy.opponent(actionOpponent.id),
-                      actionElo,
+                      animalCopy.opponent(action.target.id),
+                      action.target.elo,
                     )}
               </span>
-            ) : null}
+            )}
           </MapachessButton>
         </footer>
         {reward === null ? null : (

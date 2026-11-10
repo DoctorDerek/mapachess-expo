@@ -174,6 +174,7 @@ function ReadyNativeGame({
             navigation={navigation}
             overlays={overlays}
             visible={destination?.screen === "match"}
+            resultNavigationReady={!disabled && snapshot.matches("active")}
             initiallyConcluded={
               session.match.conclusion !== null &&
               !snapshot.context.resultReopened
