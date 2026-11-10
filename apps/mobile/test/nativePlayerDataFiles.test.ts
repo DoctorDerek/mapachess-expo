@@ -1,9 +1,20 @@
 import "./nativeUiEnvironment"
 import { beforeEach, describe, expect, it, jest } from "@jest/globals"
-import { act, renderHook, waitFor } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react-native"
 import { getDocumentAsync } from "expo-document-picker"
 import { isAvailableAsync, shareAsync } from "expo-sharing"
-import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
+import { createElement } from "react"
+import loadCatalog from "@mapachess/localization/catalog"
+import createInitialMapachessPlayerData, {
+  type MapachessPlayerData,
+} from "@mapachess/profile/player-data"
 import { createMapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import {
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
@@ -13,6 +24,8 @@ import {
   selectCurrentPlayerData,
   selectImportPreview,
 } from "@mapachess/profile/profile-machine"
+import type { ProfileActor } from "@mapachess/profile/profile-runtime"
+import NativeSettings from "@/components/profile/NativeSettings"
 import { MAPACHESS_ASYNC_STORAGE_NAMESPACE } from "@/lib/profile/AsyncStorageDurableStore"
 import expoSha256 from "@/lib/profile/expoSha256"
 import {
@@ -150,6 +163,71 @@ describe("native portable file ownership", () => {
 })
 
 describe("native profile file actions", () => {
+  it("shows recovery for picker and share errors in the actual Settings surface", async () => {
+    const profile = await openNativeProfileRuntime({
+      storage: new InMemoryAsyncStorage(),
+    })
+    try {
+      await waitFor(() =>
+        expect(profile.actor.getSnapshot().matches("ready")).toBe(true),
+      )
+      const copy = loadCatalog("en")
+      const original = selectCurrentPlayerData(profile.actor.getSnapshot())
+      if (original === null) throw new Error("Expected the accepted profile")
+      function FileSettings({
+        actor,
+        data,
+      }: Readonly<{ actor: ProfileActor; data: MapachessPlayerData }>) {
+        return createElement(NativeSettings, {
+          actor,
+          data,
+          files: useNativeFileActions(actor),
+          disabled: false,
+          navigation: {
+            back: () => undefined,
+            close: () => undefined,
+            open: () => undefined,
+          },
+          overlay: undefined,
+          onAutoHintModeChanged: () => undefined,
+        })
+      }
+      await render(
+        createElement(FileSettings, { actor: profile.actor, data: original }),
+      )
+      const importButton = () =>
+        screen.getByRole("button", {
+          name: copy.interface.profileFoundation.importBackup,
+        })
+      const exportButton = () =>
+        screen.getByRole("button", {
+          name: copy.interface.profileSettingsPanel.exportPlayerData,
+        })
+      const uri = "file:///cache/DocumentPicker/large.json"
+      choose.mockResolvedValueOnce(
+        selection(uri, MAX_PORTABLE_BACKUP_UTF8_BYTES + 1),
+      )
+      await fireEvent.press(importButton())
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        copy.profile.fileTooLarge,
+      )
+      share.mockRejectedValueOnce(new Error("Unable to share"))
+      await fireEvent.press(exportButton())
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        copy.profile.shareFailed,
+      )
+      choose.mockResolvedValueOnce({ canceled: true, assets: null })
+      await fireEvent.press(importButton())
+      await waitFor(() => expect(screen.queryByRole("alert")).toBeNull())
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toEqual(
+        original,
+      )
+      expect(mockFiles.size).toBe(0)
+    } finally {
+      await profile.close()
+    }
+  })
+
   it("guards concurrent file actions and only previews a valid selected backup", async () => {
     const profile = await openNativeProfileRuntime({
       storage: new InMemoryAsyncStorage(),
