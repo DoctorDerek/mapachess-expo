@@ -17,6 +17,7 @@ import resolveCoachPortrait, {
 } from "@mapachess/match-presentation/coach-portrait"
 import { selectMatchPresentationVariationOrdinal } from "@mapachess/match-presentation/match-presentation-machine"
 import {
+  selectAreMatchMutationsFrozen,
   selectHintStage,
   selectIsPlayerTurn,
   selectMatchConclusion,
@@ -95,6 +96,7 @@ export default function NativeMatch({
   navigation,
   overlays,
   visible,
+  resultNavigationReady,
   initiallyConcluded,
   celebrationDismissed,
   replaySequence,
@@ -108,6 +110,7 @@ export default function NativeMatch({
   navigation: MatchNavigationCommands
   overlays: readonly MatchNavigationOverlay[]
   visible: boolean
+  resultNavigationReady: boolean
   initiallyConcluded: boolean
   celebrationDismissed: boolean
   replaySequence: number
@@ -128,16 +131,28 @@ export default function NativeMatch({
     data.activeMatch?.matchId === session.match.matchId
       ? data.activeMatch
       : null
-  const reward =
+  const completed =
+    conclusion !== null &&
     saved !== null &&
-    acceptedRewardMatchesEnding(data.lastAcceptedResultReward, saved)
+    saved.conclusion?.type === conclusion.type &&
+    (!("winner" in conclusion) ||
+      ("winner" in saved.conclusion &&
+        saved.conclusion.winner === conclusion.winner)) &&
+    saved.cursor === timeline.cursor &&
+    saved.currentFen === position.fen &&
+    timeline.transitions
+      .slice(0, timeline.cursor)
+      .every(({ move }, index) => move.id === saved.moveIds[index])
+      ? saved
+      : null
+  const reward =
+    completed !== null &&
+    acceptedRewardMatchesEnding(data.lastAcceptedResultReward, completed)
       ? data.lastAcceptedResultReward
       : null
-  const rewardOpen =
-    visible &&
-    saved?.conclusion !== null &&
-    saved !== null &&
-    overlays.at(-1) === "rewards"
+  const rewardOpen = visible && reward !== null && overlays.at(-1) === "rewards"
+  const resultActionsEnabled =
+    visible && resultNavigationReady && !selectAreMatchMutationsFrozen(snapshot)
   const reactions = useNativeMoveReactions(
     timeline,
     saved?.moveFeedback ?? NO_FEEDBACK,
@@ -153,19 +168,17 @@ export default function NativeMatch({
   }, [conclusion, appActor, session])
   useEffect(() => {
     if (
-      visible &&
+      resultActionsEnabled &&
       !initiallyConcluded &&
-      saved?.conclusion !== null &&
-      saved !== null &&
+      reward !== null &&
       !celebrationDismissed &&
-      !overlays.includes("settings") &&
-      !overlays.includes("rewards")
+      overlays.length === 0
     )
       navigation.open("rewards")
   }, [
-    visible,
+    resultActionsEnabled,
     initiallyConcluded,
-    saved,
+    reward,
     celebrationDismissed,
     overlays,
     navigation,
@@ -361,11 +374,13 @@ export default function NativeMatch({
             stage={stage}
             stageHeightClassName={stageHeightClassName}
             celebration={
-              rewardOpen && saved !== null
+              rewardOpen && completed !== null && reward !== null
                 ? {
-                    match: saved,
+                    match: completed,
                     reward,
-                    data,
+                    storyProgress: data.storyProgress,
+                    disabled: !resultActionsEnabled,
+                    showSaveConfirmation: replaySequence === 0,
                     onDismiss: () => navigation.close("rewards"),
                     onSetup,
                     onReplay,

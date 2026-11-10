@@ -1,21 +1,29 @@
 import cx from "classix"
-import { useLayoutEffect, useRef, type ReactNode } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import { ScrollView, View } from "react-native"
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type { DurableMatchRecord } from "@mapachess/match/durable-match-record"
-import { matchConclusionText } from "@mapachess/match/match-conclusion"
 import type { MatchSetup } from "@mapachess/match/match-setup"
-import stockfishOpponent from "@mapachess/match/stockfish-opponent"
-import { timeCategory } from "@mapachess/match/time-control"
 import { LEVEL_ACHIEVEMENTS } from "@mapachess/profile/global-xp"
-import matchVictoryMedal, {
-  matchMedalEligibility,
-} from "@mapachess/profile/match-medal"
-import type {
-  AcceptedMatchReward,
-  MapachessPlayerData,
-} from "@mapachess/profile/player-data"
-import { selectStoryLadder } from "@mapachess/profile/story-progress"
+import matchResultPresentation, {
+  matchResultRating,
+  SAVE_CONFIRMATION_DURATION_MS,
+} from "@mapachess/profile/match-result-presentation"
+import type { AcceptedMatchReward } from "@mapachess/profile/player-data"
+import type { StoryProgress } from "@mapachess/profile/story-progress"
+import useNativePresentationActivity from "@/lib/presentation/useNativePresentationActivity"
 import { NativeInputSurface } from "../input/NativeInputProvider"
 import NativeButton from "../presentation/NativeButton"
 import NativeMedal from "../presentation/NativeMedal"
@@ -23,113 +31,193 @@ import NativeText from "../presentation/NativeText"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
 import NativeLevelProgress from "./NativeLevelProgress"
 
-type Celebration = Readonly<{
-  match: DurableMatchRecord
-  reward: AcceptedMatchReward | null
-  data: MapachessPlayerData
-  onDismiss: () => void
+type ResultActions = Readonly<{
+  disabled: boolean
   onSetup: (setup: MatchSetup) => void
   onReplay: () => void
 }>
 
+type Celebration = ResultActions &
+  Readonly<{
+    match: DurableMatchRecord
+    reward: AcceptedMatchReward
+    storyProgress: StoryProgress
+    showSaveConfirmation: boolean
+    onDismiss: () => void
+  }>
+
+function NativeSavedConfirmation({ label }: Readonly<{ label: string }>) {
+  const { active, reducedMotion } = useNativePresentationActivity()
+  const remainingMs = useRef(SAVE_CONFIRMATION_DURATION_MS)
+  const [visible, setVisible] = useState(true)
+  const opacity = useSharedValue(1)
+  const fade = useAnimatedStyle(() => ({ opacity: opacity.value }))
+  useEffect(() => {
+    if (!visible) {
+      opacity.set(!active || reducedMotion ? 0 : withTiming(0))
+      return () => cancelAnimation(opacity)
+    }
+    if (!active) return
+    const started = performance.now()
+    const timeout = setTimeout(() => setVisible(false), remainingMs.current)
+    return () => {
+      clearTimeout(timeout)
+      remainingMs.current = Math.max(
+        0,
+        remainingMs.current - (performance.now() - started),
+      )
+    }
+  }, [active, opacity, reducedMotion, visible])
+  return (
+    <Animated.View
+      style={fade}
+      accessibilityElementsHidden={!visible}
+      importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
+    >
+      <NativeText
+        accessibilityLabel={label}
+        accessibilityLiveRegion="polite"
+        className="text-mapachito-green-ink text-sm"
+      >
+        ✓ {label}
+      </NativeText>
+    </Animated.View>
+  )
+}
+
+type ResultAction = NonNullable<
+  ReturnType<typeof matchResultPresentation>
+>["action"]
+
+function NativeResultAction({
+  action,
+  timeControl,
+  copy,
+  disabled,
+  onSetup,
+  onReplay,
+}: ResultActions &
+  Readonly<{
+    action: ResultAction
+    timeControl: DurableMatchRecord["timeControl"]
+    copy: MapachessCatalog
+  }>) {
+  const target = action.kind === "ladder" ? null : action.target
+  const opponent = target === null ? null : copy.animals.opponent(target.id)
+  return (
+    <NativeButton
+      className="min-w-40 flex-1"
+      disabled={disabled}
+      onPress={() => {
+        if (action.setup === null) onReplay()
+        else onSetup({ ...action.setup, timeControl })
+      }}
+    >
+      <NativeText className="font-native text-center">
+        {copy.gameplay.resultActions[action.kind]}
+      </NativeText>
+      {opponent === null ? null : (
+        <NativeText className="text-center text-sm">
+          {target?.elo === undefined
+            ? opponent
+            : copy.gameplay.opponentAndElo(opponent, target.elo)}
+        </NativeText>
+      )}
+    </NativeButton>
+  )
+}
+
 function rewardContents(
-  { match, reward, data, onDismiss, onSetup, onReplay }: Celebration,
+  {
+    match,
+    reward,
+    storyProgress,
+    showSaveConfirmation,
+    onDismiss,
+    ...actions
+  }: Celebration,
   copy: MapachessCatalog,
 ) {
-  if (match.conclusion === null) return null
-  const medal = matchVictoryMedal(match)
-  const assistance = matchMedalEligibility(match)
-  const won =
-    "winner" in match.conclusion &&
-    match.conclusion.winner === match.playerColor
-  const opponent = stockfishOpponent(match.opponentId)
-  const next =
-    match.mode === "story" && medal !== null
-      ? selectStoryLadder(
-          data.storyProgress,
-          match.startingPosition.variant,
-        ).find((entry) => entry.status === "unlocked")
-      : undefined
-  const action =
-    match.mode === "challenge" || medal === null
-      ? "replay"
-      : next === undefined
-        ? "ladder"
-        : "next"
-  const target =
-    action === "next" && next !== undefined ? next.opponent : opponent
+  const result = matchResultPresentation(match, storyProgress, copy)
+  if (result === null) return null
+  const { medal, heading, reason, storyComplete, timeLabel, action } = result
+  const rating = matchResultRating(match, reward)
   return {
     facts: (
-      <View className="gap-3 p-4">
+      <View className="bg-mapachito-white gap-3 p-4">
         <NativeText
           accessibilityRole="header"
-          className="font-native text-center text-3xl"
+          className="font-native text-mapachito-charcoal text-center text-3xl"
         >
-          {won
-            ? copy.gameplay.defeatedOpponent(
-                copy.animals.opponent(match.opponentId),
-              )
-            : matchConclusionText(
-                match.conclusion,
-                match.playerColor,
-                copy.animals.opponent(match.opponentId),
-                copy.gameplay.conclusion,
-              )}
+          {heading}
         </NativeText>
-        {medal === null ? (
-          <NativeText className="text-center">
-            {copy.gameplay.noNewMedal}
+        {reason === null ? null : (
+          <NativeText className="text-mapachito-charcoal text-center">
+            {reason}
           </NativeText>
-        ) : (
+        )}
+        <View className="flex-row flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+          <NativeText className="text-mapachito-charcoal font-bold">
+            {timeLabel}
+          </NativeText>
+          {showSaveConfirmation ? (
+            <NativeSavedConfirmation
+              label={copy.interface.matchSaveConfirmation.savedLocally}
+            />
+          ) : null}
+        </View>
+        {medal === null ? null : (
           <View className="flex-row flex-wrap items-center justify-center gap-2">
             <NativeMedal medal={medal} />
-            <NativeText>
-              {copy.shared.story.medals[medal]} ·{" "}
-              {copy.shared.medalHintUse[medal]}
+            <NativeText className="text-mapachito-charcoal shrink">
+              <NativeText className="font-native text-mapachito-charcoal">
+                {copy.shared.story.medals[medal]}
+              </NativeText>{" "}
+              · {copy.shared.medalHintUse[medal]}
             </NativeText>
           </View>
         )}
-        {reward === null ? null : (
-          <NativeText className="font-native text-center text-3xl">
-            {copy.gameplay.awardedXp(reward.awardedXp)}
-          </NativeText>
-        )}
-        {reward?.ratedElo === null || reward?.ratedElo === undefined ? null : (
+        <NativeText className="font-native text-mapachito-charcoal text-center text-3xl">
+          {copy.gameplay.awardedXp(reward.awardedXp)}
+        </NativeText>
+        {rating === null ? null : (
           <View className="flex-row flex-wrap items-center justify-between gap-3">
             <View className="min-w-36 flex-1 gap-1">
-              <NativeText className="font-native">
-                {copy.profile.ratingLabel[reward.ratedElo.variant]}
+              <NativeText className="font-native text-mapachito-charcoal">
+                {copy.profile.ratingLabel[rating.variant]}
               </NativeText>
               <View className="flex-row flex-wrap items-center gap-1">
-                <NativeMedal medal={reward.ratedElo.assistance ?? assistance} />
-                <NativeText>
+                <NativeMedal medal={rating.assistance} />
+                <NativeText className="text-mapachito-charcoal shrink">
                   {copy.profile.cardRatingContext(
-                    copy.gameplay.clock.category[
-                      reward.ratedElo.timeCategory ??
-                        timeCategory(match.timeControl)
-                    ],
-                    copy.shared.story.medals[
-                      reward.ratedElo.assistance ?? assistance
-                    ],
+                    copy.gameplay.clock.category[rating.timeCategory],
+                    copy.shared.story.medals[rating.assistance],
                   )}
                 </NativeText>
               </View>
             </View>
-            <NativeText className="font-native text-right text-2xl">
-              {copy.gameplay.elo(reward.ratedElo.before)} →{" "}
-              {copy.gameplay.elo(reward.ratedElo.after)}
+            <NativeText className="font-native text-mapachito-charcoal text-right text-2xl">
+              {copy.gameplay.integer(rating.before)} →{" "}
+              {copy.gameplay.integer(rating.after)}
             </NativeText>
           </View>
         )}
-        {LEVEL_ACHIEVEMENTS.filter(({ id }) =>
-          reward?.unlockedAchievementIds.includes(id),
-        ).map(({ id, level }) => (
-          <NativeText key={id}>
-            {copy.gameplay.achievementUnlocked(
-              copy.gameplay.levelAchievement(level),
-            )}
+        {storyComplete ? (
+          <NativeText className="font-native text-mapachito-charcoal">
+            {copy.interface.matchCelebration.storyComplete}
           </NativeText>
-        ))}
+        ) : null}
+        {showSaveConfirmation
+          ? LEVEL_ACHIEVEMENTS.filter(({ id }) =>
+              reward.unlockedAchievementIds.includes(id),
+            ).map(({ id, level }) => (
+              <NativeText key={id} className="text-mapachito-charcoal">
+                {copy.gameplay.achievementUnlocked(
+                  copy.gameplay.levelAchievement(level),
+                )}
+              </NativeText>
+            ))
+          : null}
       </View>
     ),
     actions: (
@@ -143,40 +231,17 @@ function rewardContents(
           >
             {copy.interface.matchCelebration.reviewBoard}
           </NativeButton>
-          <NativeButton
-            className="min-w-40 flex-1"
-            onPress={() => {
-              if (match.mode === "challenge") onReplay()
-              else
-                onSetup({
-                  mode: "story",
-                  variant: match.startingPosition.variant,
-                  ...(action === "ladder" ? {} : { opponentId: target.id }),
-                  timeControl: match.timeControl,
-                })
-            }}
-          >
-            <NativeText className="font-native text-center">
-              {copy.gameplay.resultActions[action]}
-            </NativeText>
-            {action === "ladder" ? null : (
-              <NativeText className="text-center text-sm">
-                {copy.gameplay.opponentAndElo(
-                  copy.animals.opponent(target.id),
-                  action === "next" || match.mode === "story"
-                    ? target.storyTargetElo
-                    : (match.opponentTargetElo ?? target.storyTargetElo),
-                )}
-              </NativeText>
-            )}
-          </NativeButton>
-        </View>
-        {reward === null ? null : (
-          <NativeLevelProgress
-            beforeXp={reward.totalXpBefore}
-            afterXp={reward.totalXpBefore + reward.awardedXp}
+          <NativeResultAction
+            {...actions}
+            action={action}
+            timeControl={match.timeControl}
+            copy={copy}
           />
-        )}
+        </View>
+        <NativeLevelProgress
+          beforeXp={reward.totalXpBefore}
+          afterXp={reward.totalXpBefore + reward.awardedXp}
+        />
       </View>
     ),
   }

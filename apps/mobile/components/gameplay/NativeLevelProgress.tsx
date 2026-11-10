@@ -16,18 +16,22 @@ export default function NativeLevelProgress({
   const { copy } = useNativeLocale()
   const { active, reducedMotion } = useNativePresentationActivity()
   const [display, setDisplay] = useState(() => levelProgressFrame(beforeXp))
+  const final = levelProgressFrame(afterXp)
   const spans = useMemo(
     () => [...levelProgressionSpans(beforeXp, afterXp)],
     [beforeXp, afterXp],
   )
   const elapsed = useRef(0)
+  const finished = useRef(false)
   useEffect(() => {
     elapsed.current = 0
+    finished.current = false
     setDisplay(levelProgressFrame(beforeXp))
   }, [beforeXp, afterXp])
   useEffect(() => {
-    if (!active) return
+    if (!active || finished.current) return
     if (reducedMotion) {
+      finished.current = true
       setDisplay(levelProgressFrame(afterXp))
       return
     }
@@ -44,6 +48,7 @@ export default function NativeLevelProgress({
         return contains
       })
       if (span === undefined) {
+        finished.current = true
         setDisplay(levelProgressFrame(afterXp))
         return
       }
@@ -60,7 +65,16 @@ export default function NativeLevelProgress({
     }
   }, [spans, active, reducedMotion, afterXp])
   return (
-    <View className="bg-mapachito-white gap-2 rounded-lg p-3">
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={copy.gameplay.levelProgress(
+        final.level,
+        final.current,
+        final.required,
+      )}
+      className="bg-mapachito-white gap-2 rounded-lg p-3"
+    >
       <View className="flex-row flex-wrap items-baseline justify-between gap-1">
         <NativeText className="font-native text-mapachito-charcoal text-xl">
           {copy.gameplay.level(display.level)}
