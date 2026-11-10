@@ -17,6 +17,10 @@
       "types": "./src/opponentPolicy.ts",
       "default": "./dist/opponentPolicy.js"
     },
+    "./challenge-difficulty": {
+      "types": "./src/challengeDifficulty.ts",
+      "default": "./dist/challengeDifficulty.js"
+    },
     "./opponent": {
       "types": "./src/opponent.ts",
       "default": "./dist/opponent.js"

@@ -14,7 +14,7 @@ Apply authority in this order:
 
 `gdd.txt`, `constitution.txt`, GDD scratch/control files, decrypted assets, private source assets, and secrets are local-only and must never enter Git history.
 
-After context compaction, reread this file, then reread `constitution.txt` and `gdd.txt` completely before resuming. Restore the current written plan and scratchsheet, Mapachote’s personality, QREAM essays, all forty pillars, all seven game-design lenses, and every active approval gate. Compaction is not permission to summarize away decisions, restart finished work, or infer new scope.
+After context compaction, reread this file, then reread `constitution.txt` and `gdd.txt` completely before resuming. Restore the current written plan and scratchsheet, Mapachote’s personality, QREAM essays, the current coding pillars, all seven game-design lenses, and every active approval gate. Compaction is not permission to summarize away decisions, restart finished work, or infer new scope.
 
 The GDD is a product baseline, not a suggestion. If code, a legacy implementation, or a generic best practice conflicts with it, stop and resolve the conflict from canonical evidence. Never silently rewrite Mapachess into a different chess game.
 
@@ -59,7 +59,7 @@ Process every task through the complete Forge before claiming completion:
 - **1PLAN — Blueprint:** Write the smallest complete architecture and verification plan, including exact paths and state/data flow.
 - **2CHECK — Red Team:** Attack the plan for scope creep, duplication, stale assumptions, platform mismatch, unsafe asset/data handling, race conditions, and unverified package/API claims.
 - **3CODE — Execute:** Implement only the approved plan with strict types, descriptive names, and no unrelated cleanup.
-- **4CHECK — Verify:** After implementing the approved coherent feature, group behavior-focused tests and broader verification, run the required lint/format checks, inspect the exact diff, and trace every changed flow against canonical ownership, the forty pillars, and applicable GDD invariants.
+- **4CHECK — Verify:** After implementing the approved coherent feature, group behavior-focused tests and broader verification, run the required lint/format checks, inspect the exact diff, and trace every changed flow against canonical ownership, the current coding pillars, and applicable GDD invariants.
 - **5RUN — Empirical QA:** Run the strongest applicable static, integration, system, manual, and physical-target checks within the approved task and target. Honor the infrastructure, build, upload, and release approval gates below; a generic completion checklist does not authorize additional actions. Report the exact commands, targets, results, unknowns, and confidence level.
 
 Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, and CL3 only for Mapachito-confirmed live 5RUN results. Never convert a passing compiler, mocked test, or source citation into a stronger confidence claim than it earns.
@@ -113,7 +113,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 - Use `^MAJOR` ranges for independent stable packages and `^0.MINOR.PATCH` for independent zero-major packages. Expo-coupled dependencies follow the approved SDK's compatibility contract: preserve supported exact core pins and compatible module ranges, including `~` ranges, rather than applying independent-library defaults. Inspect the installed SDK, current official compatibility guidance, native peers, and synchronized pnpm lockfile before editing manifests. A newer release or sibling repository never authorizes an unrelated SDK/package upgrade. Commit resolved lockfile changes separately when that improves review clarity.
 - Do not add Husky, lint-staged, Git hooks, hidden precommit mutation, or formatting in CI.
 
-## 7. Forty Mapachess MQA engineering pillars
+## 7. Forty-One Mapachess MQA engineering pillars
 
 1. **QREAM:** Code earns its place only by creating a correct, accessible, usable, playable, polished, and fun Mapachess experience; feature count, fashionable tools, and coverage numbers never excuse poor play.
 2. **Elegant Simplicity:** Choose the smallest direct architecture that completely satisfies approved Mapachess requirements, rejecting speculative frameworks and brittle robustness without omitting safety, recovery, accessibility, or evidence.
@@ -155,6 +155,7 @@ Confidence is CL1 for a hypothesis, CL2 for source-checked or red-teamed work, a
 38. **No Scope Creep:** Implement only approved GDD scope and necessary QREAM architecture, rejecting feature invention, opportunistic extras, speculative systems, and “we are already touching the file” reasoning.
 39. **First-Principles Estimation:** When an estimate is requested, derive the decomposed 1× baseline, show the 10× conversion, and state uncertainty instead of fitting an arbitrary deadline.
 40. **The QA Trophy:** Prefer a strong static foundation, valuable integration/system tests, bounded end-to-end tests, measured coverage, and mandatory manual/physical-device QA over brittle isolated-test theater.
+41. **Cross-Platform Development:** Keep every supported target working from day one. Share canonical TypeScript and XState behavior, contracts, selectors, compatible React composition, Tailwind CSS utilities through Uniwind on native, and tests. Keep platform differences at the smallest proven boundary, with CSS or Motion on web and Reanimated on native. Verify affected interactions on each supported target and record deferred acceptance as open.
 
 ## 8. Seven game-design lenses
 

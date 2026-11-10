@@ -148,6 +148,18 @@ describe("shared localization foundation", () => {
 describe("American English player-facing catalog", () => {
   const copy = loadCatalog("en")
 
+  it("provides localized names and usable correction text for exact opponent Elo", () => {
+    const spanish = loadCatalog("es-419").setup
+    expect(copy.setup.opponentElo).toBe("Opponent Elo")
+    expect(spanish.opponentElo).toBe("Elo del oponente")
+    expect(copy.setup.invalidOpponentElo(100, 2350, 25)).toBe(
+      "Enter 100–2350 Elo in steps of 25.",
+    )
+    expect(spanish.invalidOpponentElo(100, 2350, 25)).toBe(
+      "Ingresa un Elo de 100 a 2350 en incrementos de 25.",
+    )
+  })
+
   it("formats counts and ratings without changing the stored values", () => {
     expect(copy.profile.ratedMatches(0)).toBe("0 rated matches")
     expect(copy.profile.ratedMatches(1)).toBe("1 rated match")
@@ -179,7 +191,9 @@ describe("American English player-facing catalog", () => {
   })
 
   it("names the recovery and setup controls that the player can actually use", () => {
-    expect(copy.setup.freshPosition).toContain(copy.setup.startMatch)
+    expect(copy.setup.positionPreview(518)).toBe(
+      "Chess960 position 518 preview",
+    )
     expect(
       copy.interface.inputBindingSettings.changesApplyOnlyAfterSaveSucceedsTab,
     ).toContain(copy.interface.inputBindingSettings.saveControls)

@@ -2,10 +2,6 @@ const interfaceCopy = {
   betterHintsControl: {
     betterHints: "Better Hints",
   },
-  challengeDifficultyChoices: {
-    elo: "Elo",
-    range: "Elo range",
-  },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults:
       "Selected chess artwork could not load. Defaults are shown; your choices and match are preserved.",

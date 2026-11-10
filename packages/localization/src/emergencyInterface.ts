@@ -5,10 +5,6 @@ const emergencyInterface = {
   betterHintsControl: {
     betterHints: UNAVAILABLE_TEXT,
   },
-  challengeDifficultyChoices: {
-    elo: UNAVAILABLE_TEXT,
-    range: UNAVAILABLE_TEXT,
-  },
   chessArtwork: {
     selectedChessArtworkCouldNotLoadDefaults: UNAVAILABLE_TEXT,
     retryChessArtwork: "Retry artwork",

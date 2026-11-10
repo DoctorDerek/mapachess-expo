@@ -95,19 +95,14 @@ describe("mode setup, staged choices, and start recovery", () => {
   })
   it("accepts a calibrated Challenge difficulty separately from opponent identity", async () => {
     await setup("chess960", "challenge")
-    fireEvent.click(
-      screen.getByRole("button", { name: copy.setup.changeDifficulty }),
-    )
-    const dialog = within(
-      screen.getByRole("dialog", { name: copy.setup.chooseDifficulty }),
-    )
-    fireEvent.change(dialog.getByRole("combobox"), { target: { value: "500" } })
-    fireEvent.click(dialog.getByRole("radio", { name: /^500/ }))
-    fireEvent.click(dialog.getByRole("button", { name: copy.setup.done }))
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
-    expect(
-      screen.getByText(copy.setup.elo("500"), { exact: true }),
-    ).toBeTruthy()
+    const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
+    const slider = screen.getByRole("slider", {
+      name: copy.setup.adjustOpponentElo,
+    })
+    fireEvent.change(exact, { target: { value: "500" } })
+    fireEvent.keyDown(exact, { key: "Enter" })
+    expect(slider).toHaveProperty("value", "500")
+    expect(screen.queryByRole("dialog")).toBeNull()
     expect(
       screen.getByText(copy.animals.opponent("chicken-stockfish"), {
         selector: "p",
@@ -119,10 +114,40 @@ describe("mode setup, staged choices, and start recovery", () => {
     })
     fireEvent.change(position, { target: { value: "518" } })
     expect(position).toHaveProperty("value", "518")
+    expect(
+      screen.getByRole("img", { name: copy.setup.positionPreview(518) }),
+    ).toBeTruthy()
     fireEvent.click(
       screen.getByRole("button", { name: new RegExp(copy.setup.randomize) }),
     )
     expect(Number(position.getAttribute("value"))).toBeGreaterThanOrEqual(0)
+    expect(
+      screen.getByRole("img", {
+        name: copy.setup.positionPreview(
+          Number(position.getAttribute("value")),
+        ),
+      }),
+    ).toBeTruthy()
+  })
+
+  it("blocks a launch with off-step exact text until the player corrects it", async () => {
+    const { indexedDb } = await setup("standard", "challenge")
+    const exact = screen.getByRole("textbox", { name: copy.setup.opponentElo })
+    const slider = screen.getByRole("slider", {
+      name: copy.setup.adjustOpponentElo,
+    })
+    fireEvent.change(exact, { target: { value: "1012" } })
+    fireEvent.click(screen.getByRole("button", { name: copy.setup.startMatch }))
+    expect(screen.getByRole("alert").textContent).toBe(
+      copy.setup.invalidOpponentElo(100, 2350, 25),
+    )
+    expect(exact).toHaveProperty("value", "1012")
+    expect(slider).toHaveProperty("value", "100")
+    expect(document.activeElement).toBe(exact)
+    expect((await savedProfile(indexedDb)).activeMatch).toBeNull()
+    fireEvent.change(slider, { target: { value: "125" } })
+    expect(exact).toHaveProperty("value", "125")
+    expect(screen.queryByRole("alert")).toBeNull()
   })
   it("keeps startup failures recoverable without changing the saved profile", async () => {
     const { indexedDb } = await setup("standard", "story")

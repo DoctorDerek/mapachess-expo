@@ -346,35 +346,32 @@ test("offers four direct modes with Challenge controls and saved hint preference
     ).toBeChecked()
     await page.getByRole("button", { name: "Done", exact: true }).click()
     if (name.endsWith("Challenge")) {
-      await page.getByRole("button", { name: /Change difficulty/ }).click()
-      const initialDifficulty = page.getByRole("radio", {
-        name: "100 Elo",
+      const exact = page.getByRole("textbox", {
+        name: "Opponent Elo",
         exact: true,
       })
-      await initialDifficulty.focus()
-      await initialDifficulty.press("ArrowRight")
+      const range = page.getByRole("slider", { name: "Adjust opponent Elo" })
+      await expect(exact).toHaveValue("100")
+      await range.press("ArrowRight")
+      await expect(exact).toHaveValue("125")
+      await exact.fill("1012")
+      await exact.press("Enter")
       await expect(
-        page.getByRole("radio", { name: "125 Elo", exact: true }),
-      ).toBeChecked()
-      await page.getByRole("button", { name: "Done", exact: true }).click()
-      await expect(initialDifficulty).toBeHidden()
-      await expect(
-        page.getByRole("button", { name: /Change difficulty/ }),
-      ).toBeFocused()
-      await page.getByRole("button", { name: /Change difficulty/ }).click()
-      await expect(
-        page.getByRole("radio", { name: "125 Elo", exact: true }),
-      ).toBeChecked()
-      const range = page.getByRole("combobox", { name: "Elo range" })
-      await range.selectOption({ label: "2250–2350" })
-      await expect(
-        page.getByRole("radio", { name: "2350 Elo", exact: true }),
-      ).not.toBeChecked()
-      await range.selectOption({ label: "100–225" })
-      await expect(
-        page.getByRole("radio", { name: "125 Elo", exact: true }),
-      ).toBeChecked()
-      await page.getByRole("button", { name: "Done", exact: true }).click()
+        page.getByText("Enter 100–2350 Elo in steps of 25.", { exact: true }),
+      ).toBeVisible()
+      await expect(range).toHaveValue("125")
+      await page
+        .getByRole("button", { name: "Start match", exact: true })
+        .click()
+      await expect(exact).toBeFocused()
+      await expect(exact).toHaveValue("1012")
+      await exact.fill("2350")
+      await exact.press("Enter")
+      await expect(range).toHaveValue("2350")
+      await range.press("Home")
+      await range.press("ArrowRight")
+      await expect(exact).toHaveValue("125")
+      await expect(page.getByRole("dialog")).toHaveCount(0)
       await page.getByRole("button", { name: /Change animal/ }).click()
       await expect(
         page.getByRole("radio", { name: "Chicken Stockfish", exact: true }),
@@ -410,18 +407,27 @@ test("offers four direct modes with Challenge controls and saved hint preference
       await page.getByRole("button", { name: "Done", exact: true }).click()
       await expect(position).toHaveValue("959")
       await expect(
+        page.getByRole("img", { name: "Chess960 position 959 preview" }),
+      ).toBeVisible()
+      await expect(
         page.getByText(
           "This position is remembered until you choose Randomize.",
           { exact: true },
         ),
-      ).toBeVisible()
+      ).toHaveCount(0)
       await page.getByRole("button", { name: "Randomize", exact: true }).click()
+      const displayed = await position.inputValue()
+      await expect(
+        page.getByRole("img", {
+          name: `Chess960 position ${displayed} preview`,
+        }),
+      ).toBeVisible()
       await expect(
         page.getByText(
           "Each new setup gets a random position number. Start match uses the number shown.",
           { exact: true },
         ),
-      ).toBeVisible()
+      ).toHaveCount(0)
       await expect(
         page.getByRole("radio", { name: "Random", exact: true }),
       ).toBeChecked()
@@ -470,13 +476,82 @@ test("offers four direct modes with Challenge controls and saved hint preference
   ).toBeVisible()
 })
 
+test("keeps the Chess960 preview and pinned actions usable at the supported layout boundary", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto("/")
+  await expectModeMenu(page)
+  await page
+    .getByRole("button", { name: "Chess960 Challenge", exact: true })
+    .click()
+  await page
+    .getByRole("spinbutton", { name: "Position number (0–959)" })
+    .fill("518")
+  const exact = page.getByRole("textbox", { name: "Opponent Elo", exact: true })
+  const preview = page.getByRole("img", {
+    name: "Chess960 position 518 preview",
+  })
+  const start = page.getByRole("button", { name: "Start match", exact: true })
+  const cases = [
+    { name: "phone", width: 390, height: 844, text: "", wide: false },
+    {
+      name: "enlarged-text",
+      width: 390,
+      height: 844,
+      text: "150%",
+      wide: false,
+    },
+    { name: "short-xl", width: 1280, height: 720, text: "", wide: true },
+  ]
+  for (const { name, width, height, text, wide } of cases) {
+    await page.setViewportSize({ width, height })
+    await page.evaluate((fontSize) => {
+      document.documentElement.style.fontSize = fontSize
+    }, text)
+    await page
+      .getByRole("heading", { name: "Chess960 Challenge", exact: true })
+      .scrollIntoViewIfNeeded()
+    await exact.focus()
+    await expect(exact).toBeInViewport()
+    await expect(start).toBeInViewport({ ratio: 1 })
+    await expect(
+      page.getByRole("button", { name: "All game modes" }),
+    ).toBeInViewport({ ratio: 1 })
+    const exactBox = await exact.boundingBox()
+    const boardBox = await preview.boundingBox()
+    if (exactBox === null || boardBox === null)
+      throw new Error("Expected rendered setup controls and board preview")
+    expect(boardBox.x).toBeGreaterThanOrEqual(0)
+    expect(boardBox.x + boardBox.width).toBeLessThanOrEqual(width)
+    if (wide) expect(boardBox.x).toBeGreaterThan(exactBox.x + exactBox.width)
+    else expect(boardBox.y).toBeGreaterThan(exactBox.y + exactBox.height)
+    if (name === "phone")
+      expect(
+        await page.getByText("Random", { exact: true }).evaluate((label) => {
+          const text = document.createRange()
+          text.selectNodeContents(label)
+          return text.getClientRects().length
+        }),
+      ).toBe(1)
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true)
+    await page.screenshot({
+      path: testInfo.outputPath(`challenge-setup-${name}.png`),
+    })
+  }
+})
+
 test("does not retain the former private playtest route", async ({ page }) => {
   const response = await page.goto("/playtest")
 
   expect(response?.status()).toBe(404)
 })
 
-test("presents imported Challenge medals with stable animal artwork", async ({
+test("shows imported Challenge history inline at the selected Elo", async ({
   page,
 }) => {
   const backup = JSON.stringify(challengeHistoryBackup)
@@ -484,7 +559,7 @@ test("presents imported Challenge medals with stable animal artwork", async ({
   await expectModeMenu(page)
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await page.locator('input[type="file"]').setInputFiles({
-    name: "tile-history.json",
+    name: "challenge-history.json",
     mimeType: "application/json",
     buffer: Buffer.from(backup),
   })
@@ -495,81 +570,32 @@ test("presents imported Challenge medals with stable animal artwork", async ({
   await page
     .getByRole("button", { name: "Standard Chess Challenge", exact: true })
     .click()
-  await page.getByRole("button", { name: /Change difficulty/ }).click()
-  const choice = page.getByRole("radio", {
-    name: "100 Elo · Best medal: Gold · Last played: Chicken Stockfish",
-    exact: true,
-  })
-  await expect(choice).toBeChecked()
-  const tile = page.locator("label").filter({ has: choice })
-  const sprite = tile.locator('span[style*="background-image"]')
-  const fallback = tile.getByText("Chicken Stockfish", { exact: true })
-  await tile.scrollIntoViewIfNeeded()
-  await expect(sprite.or(fallback).first()).toBeVisible()
-  if (await sprite.isVisible()) {
-    const spriteElement = await sprite.elementHandle()
-    if (spriteElement === null)
-      throw new Error("Expected mounted animal sprite")
-    await expect
-      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
-      .toBe(1)
-    const tileBounds = await tile.boundingBox()
-    await tile.hover()
-    await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
-    const attentionAnimation = await sprite.evaluateHandle((element) => {
-      const animation = element.getAnimations()[0]
-      animation.pause()
-      animation.currentTime = 200
-      return animation
-    })
-    expect(
-      await attentionAnimation.evaluate(
-        (animation) => animation.effect?.getTiming().duration,
-      ),
-    ).toBe(900)
-    await expect(sprite).not.toHaveCSS("background-position", "0% 0px")
-    expect(await tile.boundingBox()).toEqual(tileBounds)
-    await choice.focus()
-    expect(
-      await sprite.evaluate(
-        (element, animation) => element.getAnimations()[0] === animation,
-        attentionAnimation,
-      ),
-    ).toBe(true)
-    await attentionAnimation.evaluate((animation) => animation.finish())
-    await expect(sprite).toHaveCSS("background-image", /chicken_idle/)
-    await attentionAnimation.dispose()
-    await page.mouse.move(0, 0)
-    await page.getByRole("dialog").getByRole("heading").first().focus()
-    await page.keyboard.press("Tab")
-    await expect(
-      page.getByRole("combobox", { name: "Elo range" }),
-    ).toBeFocused()
-    await page.keyboard.press("Tab")
-    await expect(choice).toBeFocused()
-    await expect(sprite).toHaveCSS("background-image", /chicken_peck_strip9/)
-    await page.emulateMedia({ reducedMotion: "reduce" })
-    await expect
-      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
-      .toBe(0)
-    await expect(sprite).toHaveCSS("background-position", "0% 0px")
-    await page.emulateMedia({ reducedMotion: "no-preference" })
-    await expect
-      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
-      .toBe(1)
-    await page.getByRole("button", { name: "Done", exact: true }).click()
-    await expect
-      .poll(() =>
-        spriteElement.evaluate((element) => element.getAnimations().length),
-      )
-      .toBe(0)
-    await page.getByRole("button", { name: /Change difficulty/ }).click()
-    await expect
-      .poll(() => sprite.evaluate((element) => element.getAnimations().length))
-      .toBe(1)
-  } else {
-    await expect(fallback).toBeVisible()
-  }
+
+  const exact = page.getByRole("textbox", { name: "Opponent Elo", exact: true })
+  const slider = page.getByRole("slider", { name: "Adjust opponent Elo" })
+  const lastPlayed = page.getByText("Last played", { exact: true })
+  const bestMedal = page.getByText("Best medal", { exact: true })
+  await expect(exact).toHaveValue("100")
+  await expect(bestMedal).toBeVisible()
+  await expect(page.getByText("Gold", { exact: true })).toBeVisible()
+  await expect(lastPlayed).toBeVisible()
+  await expect(
+    page.getByText("Chicken Stockfish", { exact: true }).last(),
+  ).toBeVisible()
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await slider.press("ArrowRight")
+  await expect(exact).toHaveValue("125")
+  await expect(
+    page.getByText("No matches at this Elo.", { exact: true }),
+  ).toBeVisible()
+  await expect(bestMedal).toHaveCount(0)
+  await expect(lastPlayed).toHaveCount(0)
+  await expect(
+    page.getByText("Chicken Stockfish", { exact: true }),
+  ).toBeVisible()
+  await slider.press("ArrowLeft")
+  await expect(bestMedal).toBeVisible()
+  await expect(lastPlayed).toBeVisible()
 })
 
 test("loads the app icon without browser console errors", async ({

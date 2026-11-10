@@ -11,18 +11,25 @@ const setup = {
   black: "Negras",
   random: "Al azar",
   randomize: "Elegir al azar",
-  pinnedPosition:
-    "Esta posición se conserva hasta que selecciones Elegir al azar.",
-  freshPosition:
-    "Cada nueva configuración recibe un número de posición al azar. Iniciar partida usa el número que se muestra.",
   randomColor: "Tu bando se elige al azar cuando comienza la partida.",
   position: "Posición inicial de ajedrez 960",
   positionNumber: (maximum: number): string =>
     `Número de posición (0–${maximum})`,
+  positionPreview: (position: number): string =>
+    `Vista previa de la posición ${position} de ajedrez 960`,
   invalidSetup:
     "Elige un animal disponible, una dificultad, un bando y una posición inicial válida.",
-  difficulty: "Dificultad · Elo estimado",
-  difficultyLabel: "Dificultad",
+  opponentElo: "Elo del oponente",
+  adjustOpponentElo: "Ajustar Elo del oponente",
+  invalidOpponentElo: (
+    minimum: number,
+    maximum: number,
+    step: number,
+  ): string =>
+    `Ingresa un Elo de ${minimum} a ${maximum} en incrementos de ${step}.`,
+  bestDifficultyMedal: "Mejor medalla",
+  lastDifficultyOpponent: "Último oponente",
+  noDifficultyHistory: "No hay partidas con este Elo.",
   estimated: "Elo estimado",
   unavailableSelection:
     "Esta selección no está disponible. Elige un animal desbloqueado y una dificultad compatible.",
@@ -45,18 +52,12 @@ const setup = {
   shareProfile: "Compartir tarjeta de perfil",
   chooseAnimal: "Elegir animal",
   chooseOpponent: "Elegir oponente",
-  chooseDifficulty: "Elegir dificultad",
   changeAnimal: "Cambiar animal",
   changeStoryOpponent: "Cambiar oponente de Historia",
-  changeDifficulty: "Cambiar dificultad",
   changeHints: "Cambiar pistas",
   playAsAction: (animal: string): string =>
     `Juega como ${animal} · Cambiar animal`,
   elo: (value: string): string => `${value} Elo`,
-  bestMedal: (medal: string): string => ` · Mejor medalla: ${medal}`,
-  lastPlayed: (opponent: string): string => ` · Último oponente: ${opponent}`,
-  difficultyMedals:
-    "Mejor medalla en esta dificultad: Oro (sin pistas), Plata (solo Pistas de piezas), Bronce (se permiten Pistas de movimientos). El animal es tu último oponente, no tu próxima selección.",
   variants: { standard: "Ajedrez estándar", chess960: "Ajedrez 960" },
   modes: { story: "Historia", challenge: "Desafío" },
   presentations: {

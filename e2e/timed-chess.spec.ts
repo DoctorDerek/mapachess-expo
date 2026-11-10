@@ -52,25 +52,17 @@ async function startTimedMatch(
       .getByRole("spinbutton", { name: "Número de posición (0–959)" })
       .fill("42")
   if (benchmarkDifficulty) {
-    await page
-      .getByRole("button", {
-        name: spanish ? "Cambiar dificultad" : "Change difficulty",
-        exact: true,
-      })
-      .click()
-    await page
-      .getByRole("combobox", { name: spanish ? "Rango de Elo" : "Elo range" })
-      .selectOption({ label: "2250–2350" })
-    const difficulty = page.getByRole("radio", {
-      name: "2300 Elo",
+    const difficulty = page.getByRole("textbox", {
+      name: spanish ? "Elo del oponente" : "Opponent Elo",
       exact: true,
     })
-    await difficulty.focus()
-    await difficulty.press("Space")
-    await expect(difficulty).toBeChecked()
-    await page
-      .getByRole("button", { name: spanish ? "Listo" : "Done", exact: true })
-      .click()
+    await difficulty.fill("2300")
+    await difficulty.press("Enter")
+    await expect(
+      page.getByRole("slider", {
+        name: spanish ? "Ajustar Elo del oponente" : "Adjust opponent Elo",
+      }),
+    ).toHaveValue("2300")
   }
   await page
     .getByRole("button", {

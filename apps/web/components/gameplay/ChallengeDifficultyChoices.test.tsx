@@ -1,125 +1,90 @@
+import { createRef } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
-import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
-import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
+import challengeDifficultyGrid, {
+  createChallengeDifficultyDraft,
+  projectChallengeDifficulty,
+} from "@mapachess/gameplay/challenge-difficulty"
+import type { MatchVariant } from "@mapachess/match/match-variant"
+import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import medalArtworkSource from "../../lib/presentation/medalArtwork"
 import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
-import WebMatchSetup from "./WebMatchSetup"
 
-describe("Challenge difficulty history presentation", () => {
-  const history = {
+const history = {
+  standard: {
+    animals: [],
     difficulties: [
       {
         targetElo: 900,
-        highestMedal: "gold" as const,
-        lastPlayedAnimal: "dog-stockfish" as const,
+        highestMedal: "gold",
+        lastPlayedAnimal: "dog-stockfish",
       },
       {
         targetElo: 1000,
         highestMedal: null,
-        lastPlayedAnimal: "raccoon-stockfish" as const,
+        lastPlayedAnimal: "raccoon-stockfish",
       },
     ],
-    animals: [],
-  }
+  },
+  chess960: { animals: [], difficulties: [] },
+} as const satisfies MapachessPlayerData["challengeHistory"]
 
-  it("labels the exact choice with its independent best medal and last animal", () => {
-    const markup = renderToStaticMarkup(
-      <ChallengeDifficultyChoices
-        disabled={false}
-        history={history}
-        targets={[900, 1000, 1100]}
-        selectedElo={1000}
-        onSelected={vi.fn()}
-      />,
-    )
-    const tiles = markup.match(/<label\b[^>]*>[\s\S]*?<\/label>/g) ?? []
-    expect(tiles).toHaveLength(3)
-    expect(tiles[0]).toContain("Best medal: Gold")
-    expect(tiles[0]).toContain("Last played: Dog Stockfish")
-    expect(tiles[0]).toContain(
+function renderDifficulty(
+  variant: MatchVariant,
+  elo: number,
+  disabled = false,
+) {
+  const grid = challengeDifficultyGrid(variant)
+  const draft = createChallengeDifficultyDraft(grid, elo)
+  return renderToStaticMarkup(
+    <ChallengeDifficultyChoices
+      control={projectChallengeDifficulty(variant, draft, history)}
+      disabled={disabled}
+      exactInput={createRef<HTMLInputElement>()}
+      onEdit={vi.fn()}
+    />,
+  )
+}
+
+describe("inline Challenge difficulty history", () => {
+  it("shows the selected record as facts alongside the two labeled controls", () => {
+    const markup = renderDifficulty("standard", 900)
+    expect(markup).toContain("Opponent Elo")
+    expect(markup).toContain('aria-label="Adjust opponent Elo"')
+    expect(markup).toContain('aria-valuetext="900 Elo"')
+    expect(markup).toContain('max="2350"')
+    expect(markup).toContain('min="100"')
+    expect(markup).toContain('step="25"')
+    expect(markup).toContain("Best medal")
+    expect(markup).toContain("Gold")
+    expect(markup).toContain("Last played")
+    expect(markup).toContain("Dog Stockfish")
+    expect(markup).toContain(
       `src="${medalArtworkSource("gold")}" alt="" aria-hidden="true"`,
     )
-    expect(tiles[1]).toContain('checked="" value="1000"')
-    expect(tiles[1]).toContain("Last played: Raccoon Stockfish")
-    expect(tiles[1]).not.toContain("Best medal")
-    expect(tiles[2]).not.toContain("Best medal")
-    expect(tiles[2]).not.toContain("Last played")
-    expect(markup).toContain("Gold (no hints)")
-    expect(markup).not.toContain("<summary")
-    expect(markup).not.toContain("<select")
-    expect(markup).not.toContain('type="checkbox"')
+    expect(markup).not.toMatch(
+      /<(details|summary|select|button)\b|type="radio"/,
+    )
+    expect(markup).not.toContain("Raccoon Stockfish")
   })
 
-  it.each(["standard", "chess960"] as const)(
-    "keeps %s setup focused on current choices without displaying the historical catalog",
-    (variant) => {
-      const data = createInitialMapachessPlayerData()
-      const markup = renderToStaticMarkup(
-        <WebMatchSetup
-          visible
-          editing={null}
-          onEditorOpened={vi.fn()}
-          onEditorClosed={vi.fn()}
-          autoHintMode="no-auto-hints"
-          challengeHistory={{
-            standard: history,
-            chess960: data.challengeHistory.chess960,
-          }}
-          disabled={false}
-          onAutoHintModeChanged={vi.fn()}
-          onBack={vi.fn()}
-          onStart={vi.fn()}
-          setup={{
-            mode: "challenge",
-            challengeSetup: {
-              ...DEFAULT_CHALLENGE_SETUP,
-              variant,
-              chess960PositionId: null,
-              difficultyTargetElo: 900,
-            },
-          }}
-          storyProgress={data.storyProgress}
-        />,
-      )
-      expect(markup).toContain("Chicken Stockfish")
-      expect(markup).toContain("900")
-      expect(markup).toContain("Change difficulty")
-      expect(markup).toContain("Change animal")
-      expect(markup).not.toContain("Last played: Dog Stockfish")
-      expect(markup).not.toContain("Best medal: Gold")
-      expect(markup).not.toContain('name="challenge-difficulty"')
-    },
-  )
-
-  it("opens the range containing the chosen strength and keeps earned tile details visible", () => {
-    const markup = renderToStaticMarkup(
-      <ChallengeDifficultyChoices
-        disabled={false}
-        targets={Array.from({ length: 91 }, (_, i) => 100 + i * 25)}
-        selectedElo={1000}
-        history={history}
-        onSelected={vi.fn()}
-      />,
-    )
-    expect(markup).toContain("Elo range")
-    expect(markup).toContain("1000–1225")
-    expect(markup).toContain('checked="" value="1000"')
-    expect(markup).toContain("Last played: Raccoon Stockfish")
-    expect(markup.match(/type="radio"/g)).toHaveLength(10)
-    expect(markup).not.toContain('value="2325"')
+  it("shows a played opponent with no invented medal", () => {
+    const markup = renderDifficulty("standard", 1000)
+    expect(markup).toContain("Raccoon Stockfish")
+    expect(markup).not.toContain("Best medal")
+    expect(markup).not.toContain("No matches at this Elo.")
   })
 
-  it("disables the entire radio group while setup is unavailable", () => {
-    const markup = renderToStaticMarkup(
-      <ChallengeDifficultyChoices
-        disabled
-        history={history}
-        targets={[900]}
-        selectedElo={900}
-        onSelected={vi.fn()}
-      />,
+  it("does not borrow a record from another variant or invent a history", () => {
+    const markup = renderDifficulty("chess960", 900)
+    expect(markup).toContain("No matches at this Elo.")
+    expect(markup).not.toContain("Best medal")
+    expect(markup).not.toContain("Dog Stockfish")
+  })
+
+  it("disables both Elo inputs while setup is unavailable", () => {
+    expect(renderDifficulty("standard", 900, true)).toMatch(
+      /<fieldset[^>]*disabled=""/,
     )
-    expect(markup).toMatch(/<fieldset[^>]*disabled=""/)
   })
 })

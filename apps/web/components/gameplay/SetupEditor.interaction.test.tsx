@@ -21,7 +21,6 @@ const progress = applyStoryMatchResult(
 const values: SetupEditorValues = {
   player: "raccoon-stockfish",
   opponent: "chicken-stockfish",
-  difficulty: 100,
   hints: "no-auto-hints",
   "time-control": { type: "untimed" },
 }
@@ -44,8 +43,6 @@ function edit(
       disabled={false}
       active={false}
       storyProgress={progress}
-      challengeHistory={player.challengeHistory}
-      difficultyTargets={[100, 125]}
     />,
   )
   return { ...view, done, cancel, dialog: within(screen.getByRole("dialog")) }
@@ -71,7 +68,7 @@ describe("private player and opponent setup drafts", () => {
   })
 
   it.each(["story", "challenge"] as const)(
-    "selects an unlocked %s opponent independently from the player animal and difficulty",
+    "selects an unlocked %s opponent independently from the player animal",
     (mode) => {
       const view = edit("opponent", mode)
       const bunny = view.dialog.getByRole("radio", { name: /Bunny Stockfish/ })
@@ -94,7 +91,7 @@ describe("private player and opponent setup drafts", () => {
     },
   )
 
-  it("keeps incomplete player and difficulty drafts uncommittable while Cancel remains available", () => {
+  it("keeps an incomplete player draft uncommittable while Cancel remains available", () => {
     const missingPlayer = edit("player", "story", {
       ...values,
       player: undefined,
@@ -107,21 +104,5 @@ describe("private player and opponent setup drafts", () => {
     )
     expect(missingPlayer.cancel).toHaveBeenCalledOnce()
     expect(missingPlayer.done).not.toHaveBeenCalled()
-    missingPlayer.unmount()
-    const difficulty = edit("difficulty", "challenge", {
-      ...values,
-      difficulty: undefined,
-    })
-    expect(
-      difficulty.dialog.getByRole("button", { name: copy.setup.done }),
-    ).toHaveProperty("disabled", true)
-    fireEvent.click(difficulty.dialog.getByRole("radio", { name: /^125/ }))
-    fireEvent.click(
-      difficulty.dialog.getByRole("button", { name: copy.setup.done }),
-    )
-    expect(difficulty.done).toHaveBeenCalledExactlyOnceWith({
-      ...values,
-      difficulty: 125,
-    })
   })
 })

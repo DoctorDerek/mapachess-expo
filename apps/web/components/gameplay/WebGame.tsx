@@ -395,15 +395,13 @@ export default function WebGame({
           editing={
             snapshot.context.overlays.includes("setup-opponent")
               ? "opponent"
-              : snapshot.context.overlays.includes("setup-difficulty")
-                ? "difficulty"
-                : snapshot.context.overlays.includes("setup-hints")
-                  ? "hints"
-                  : snapshot.context.overlays.includes("setup-time-control")
-                    ? "time-control"
-                    : snapshot.context.overlays.includes("setup-player")
-                      ? "player"
-                      : null
+              : snapshot.context.overlays.includes("setup-hints")
+                ? "hints"
+                : snapshot.context.overlays.includes("setup-time-control")
+                  ? "time-control"
+                  : snapshot.context.overlays.includes("setup-player")
+                    ? "player"
+                    : null
           }
           onEditorOpened={(editor) => navigation.open(`setup-${editor}`)}
           onEditorClosed={navigation.back}
