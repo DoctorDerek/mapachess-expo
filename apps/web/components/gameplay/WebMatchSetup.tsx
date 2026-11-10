@@ -84,9 +84,7 @@ function MatchSetupChoice({
   return (
     <div className="@container flex min-w-0 flex-wrap items-center gap-2">
       {preview === undefined ? null : (
-        <span className="pointer-events-none block size-16 shrink-0">
-          {preview}
-        </span>
+        <span className="pointer-events-none block shrink-0">{preview}</span>
       )}
       <div
         className={cx(
@@ -307,7 +305,6 @@ export default function WebMatchSetup({
                   }
                   preview={
                     <ChallengeAnimalPortrait
-                      compact
                       key={playerAnimal.id}
                       active={visible && editing === null}
                       opponent={playerAnimal}
@@ -334,7 +331,6 @@ export default function WebMatchSetup({
                 }
                 preview={
                   <ChallengeAnimalPortrait
-                    compact
                     key={opponent.id}
                     active={visible && editing === null}
                     opponent={opponent}

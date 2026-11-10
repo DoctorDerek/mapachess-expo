@@ -314,7 +314,8 @@ describe("Reactive Battle Stage web presentation", () => {
               (reaction.family === "victory" &&
                 animationId === "idle" &&
                 (opponentId === "squirrel-stockfish" ||
-                  opponentId === "tiger-stockfish"))
+                  opponentId === "tiger-stockfish" ||
+                  opponentId === "bear-stockfish"))
               ? 160
               : 100,
           )
@@ -343,7 +344,8 @@ describe("Reactive Battle Stage web presentation", () => {
             "approach",
             "strike",
             ...(opponentId === "squirrel-stockfish" ||
-            opponentId === "tiger-stockfish"
+            opponentId === "tiger-stockfish" ||
+            opponentId === "bear-stockfish"
               ? ["reaction"]
               : []),
             "recovery",
@@ -386,7 +388,7 @@ describe("Reactive Battle Stage web presentation", () => {
         clipCount += 1
       }
     }
-    expect(clipCount).toBe(379)
+    expect(clipCount).toBe(399)
     expect(archiveManifest).not.toContain("battle/raccoon/")
     const raccoon = resolveWebOpponentPresentation("raccoon-stockfish")
     if (raccoon.kind !== "sprite") throw new Error("Raccoon sprite expected")

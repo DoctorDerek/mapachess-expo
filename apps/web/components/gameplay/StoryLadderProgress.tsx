@@ -124,7 +124,7 @@ export default function StoryLadderProgress({
                     />
                   ) : null}
                   {selection !== undefined && status !== "locked" ? (
-                    <span className="block h-26 w-24 shrink-0">
+                    <span className="block shrink-0">
                       <ChallengeAnimalPortrait active opponent={opponent} />
                     </span>
                   ) : (

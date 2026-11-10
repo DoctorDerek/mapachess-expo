@@ -63,15 +63,15 @@ describe("frozen 100–2300 initial web calibration baseline", () => {
 
 describe("November 1 calibrated web Challenge presets", () => {
   it.each(["standard", "chess960"] as const)(
-    "resolves all 25 current %s Story targets on the calibrated grid",
+    "resolves all 26 current %s Story targets on the calibrated grid",
     (variant) => {
-      expect(STOCKFISH_OPPONENTS).toHaveLength(25)
+      expect(STOCKFISH_OPPONENTS).toHaveLength(26)
       const targets = STOCKFISH_OPPONENTS.map(
         (opponent) => opponent.storyTargetElo,
       )
       expect(targets[0]).toBe(100)
       expect(targets.at(-1)).toBe(2000)
-      expect(new Set(targets).size).toBe(25)
+      expect(new Set(targets).size).toBe(26)
       const grid = new Set(
         WEB_CHALLENGE_PRESETS[variant].map((preset) => preset.targetElo),
       )

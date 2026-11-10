@@ -30,8 +30,6 @@ function CategoryArtwork({
         key={draft.animal}
         opponent={stockfishOpponent(draft.animal)}
         active={active}
-        compact
-        fit
       />
     )
   const head = category === "Hair" || category === "Face"
@@ -98,7 +96,7 @@ export default function ProfileDressingCategories({
     <div
       role="group"
       aria-label={copy.interface.profileDressingRoom.appearanceCategories}
-      className="grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-3 p-1 pb-2 xl:grid-cols-[repeat(auto-fit,minmax(min(6rem,100%),1fr))]"
+      className="flex flex-wrap gap-3 p-1 pb-2"
     >
       {DRESSING_CATEGORIES.map((name) => (
         <ProfileAction
@@ -109,7 +107,7 @@ export default function ProfileDressingCategories({
           aria-pressed={category === name}
           onClick={() => onSelect(name)}
           className={cx(
-            "shadow-mapachess-raised flex min-w-0 items-center justify-center gap-2 px-2!",
+            "shadow-mapachess-raised flex min-w-0 grow basis-36 flex-wrap items-center justify-center gap-2 px-2! xl:basis-24",
             category === name
               ? "bg-mapachito-blue shadow-mapachito-deep-cyan"
               : "bg-mapachito-violet shadow-mapachito-raspberry",
@@ -117,7 +115,10 @@ export default function ProfileDressingCategories({
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none relative block size-12 shrink-0 overflow-hidden xl:hidden"
+            className={cx(
+              "pointer-events-none relative block shrink-0 xl:hidden",
+              name !== "Animal" && "size-12 overflow-hidden",
+            )}
           >
             <CategoryArtwork category={name} draft={draft} active={active} />
           </span>

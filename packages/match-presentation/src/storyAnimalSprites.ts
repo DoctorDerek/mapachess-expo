@@ -1,3 +1,4 @@
+import BEAR_SPRITE from "./bearSprite.js"
 import createCelebrationRecipe from "./createCelebrationRecipe.js"
 import defineStoryAnimalSprite from "./defineStoryAnimalSprite.js"
 import GROUND_ANIMAL_REACTION_ALTERNATIVES from "./groundAnimalReactionAlternatives.js"
@@ -5,6 +6,7 @@ import REMAINING_STORY_ANIMAL_SPRITES from "./remainingStoryAnimalSprites.js"
 import STORY_ANIMAL_SPRITE_DATA from "./storyAnimalSpriteData.js"
 
 const STORY_ANIMAL_SPRITES = Object.freeze({
+  "bear-stockfish": BEAR_SPRITE,
   ...REMAINING_STORY_ANIMAL_SPRITES,
   "bunny-stockfish": defineStoryAnimalSprite(
     STORY_ANIMAL_SPRITE_DATA.bunny,

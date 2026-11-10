@@ -62,6 +62,9 @@ export type SpriteReactionStep<AnimationId extends string> = Readonly<{
   frames?: SpriteFrameRange
   pacing?: "calm"
   playback: SpritePlaybackMode
+  excludedTargetSourceIds?: readonly string[]
+  windupAdvanceByTarget?: Readonly<Record<string, number>>
+  contactAdvanceByTarget?: Readonly<Record<string, number>>
 }>
 
 export type SpriteReactionPlan<AnimationId extends string> = readonly [
@@ -78,6 +81,7 @@ export type SpriteAssetManifest<
   animations: Readonly<Record<AnimationId, SpriteAnimationDefinition<SourceId>>>
   calmFrameDurationMilliseconds?: number
   attentionAnimationIds?: readonly [AnimationId, ...AnimationId[]]
+  attentionPlans?: readonly SpriteReactionPlan<AnimationId>[]
   repeatVictory?: true
   referenceGeometry: SpriteFrameGeometry
   standaloneScale?: number
@@ -115,6 +119,7 @@ export type ResolvedSpritePresentation<
         kind: "sprite"
         sourceAnimalId?: string
         contactAdvanceByTarget?: Readonly<Record<string, number>>
+        windupAdvanceByTarget?: Readonly<Record<string, number>>
         repeatSequence?: true
         reactionSlot: MatchSpriteReactionSlot
         referenceGeometry: SpriteFrameGeometry
@@ -211,6 +216,41 @@ export const resolveSpriteAttention = <
   return null
 }
 
+export const resolveSpriteAttentionSequence = <
+  AnimationId extends string,
+  SourceId extends string,
+>(
+  manifest: SpriteAssetManifest<AnimationId, SourceId>,
+  availableSourceIds: readonly SourceId[],
+  variationOrdinal = 0,
+): readonly ResolvedSpriteStep<AnimationId, SourceId>[] => {
+  if (manifest.attentionPlans === undefined) {
+    const step = resolveSpriteAttention(
+      manifest,
+      availableSourceIds,
+      variationOrdinal,
+    )
+    return step === null ? [] : [step]
+  }
+  const plans = manifest.attentionPlans
+  const selectedIndex = variationOrdinal % plans.length
+  for (const plan of [
+    ...plans.slice(selectedIndex),
+    ...plans.slice(0, selectedIndex),
+  ]) {
+    const steps = plan.map((step) =>
+      resolveStep(
+        manifest,
+        step,
+        availableSourceIds,
+        PIXEL_SPRITE_FRAME_DURATION_MILLISECONDS,
+      ),
+    )
+    if (steps.every((step) => step !== null)) return steps
+  }
+  return []
+}
+
 export default function resolveSpritePresentation<
   AnimationId extends string,
   SourceId extends string,
@@ -219,11 +259,16 @@ export default function resolveSpritePresentation<
   reaction: MatchParticipantReaction,
   availableSourceIds: readonly SourceId[],
   variationOrdinal = 0,
+  targetSourceAnimalId?: string,
 ): ResolvedSpritePresentation<AnimationId, SourceId> {
   const reactionSlot = matchSpriteReactionSlot(reaction)
   const eligibleGeometry = [
     ...Object.values(manifest.reactionPlans),
     ...Object.values(manifest.reactionAlternatives ?? {}).flat(),
+    ...(manifest.attentionPlans ?? []),
+    ...(manifest.attentionAnimationIds ?? []).map((id) => [
+      { animationIds: [id] },
+    ]),
   ].flatMap((steps) =>
     steps.flatMap(({ animationIds }) =>
       animationIds.map((id) => manifest.animations[id].geometry),
@@ -275,7 +320,13 @@ export default function resolveSpritePresentation<
   const candidates = [
     manifest.reactionPlans[reactionSlot],
     ...(manifest.reactionAlternatives?.[reactionSlot] ?? []),
-  ]
+  ].filter((candidate) =>
+    candidate.every(
+      (step) =>
+        targetSourceAnimalId === undefined ||
+        !step.excludedTargetSourceIds?.includes(targetSourceAnimalId),
+    ),
+  )
   const selectedIndex = variationOrdinal % candidates.length
   const selectedPlan =
     [
@@ -287,7 +338,7 @@ export default function resolveSpritePresentation<
           availableSourceIds.includes(manifest.animations[id].sourceId),
         ),
       ),
-    ) ?? manifest.reactionPlans[reactionSlot]
+    ) ?? []
   const plan = selectedPlan.map((step) => ({
     step,
     resolved: resolveStep(
@@ -299,9 +350,8 @@ export default function resolveSpritePresentation<
         : undefined,
     ),
   }))
-  const completeSequenceAvailable = plan.every(
-    ({ resolved }) => resolved !== null,
-  )
+  const completeSequenceAvailable =
+    plan.length > 0 && plan.every(({ resolved }) => resolved !== null)
   const resolvedSteps = !completeSequenceAvailable
     ? idleFallback === null
       ? []
@@ -320,6 +370,12 @@ export default function resolveSpritePresentation<
         ]
     : plan.flatMap(({ resolved }) => (resolved === null ? [] : [resolved]))
   const [firstStep, ...remainingSteps] = resolvedSteps
+  const contactAdvanceByTarget =
+    selectedPlan.find((step) => step.contactAdvanceByTarget !== undefined)
+      ?.contactAdvanceByTarget ?? manifest.contactAdvanceByTarget
+  const windupAdvanceByTarget = selectedPlan.find(
+    (step) => step.windupAdvanceByTarget !== undefined,
+  )?.windupAdvanceByTarget
 
   return firstStep === undefined
     ? Object.freeze({ kind: "authored-fallback", reactionSlot, layout })
@@ -330,8 +386,8 @@ export default function resolveSpritePresentation<
           : { sourceAnimalId: manifest.sourceAnimalId }),
         ...(completeSequenceAvailable &&
         reactionSlot === "capture-attacker" &&
-        manifest.contactAdvanceByTarget
-          ? { contactAdvanceByTarget: manifest.contactAdvanceByTarget }
+        contactAdvanceByTarget
+          ? { contactAdvanceByTarget }
           : {}),
         ...(completeSequenceAvailable &&
         reactionSlot === "victory" &&
@@ -339,6 +395,9 @@ export default function resolveSpritePresentation<
           ? { repeatSequence: true as const }
           : {}),
         layout,
+        ...(completeSequenceAvailable && windupAdvanceByTarget
+          ? { windupAdvanceByTarget }
+          : {}),
         reactionSlot,
         referenceGeometry: manifest.referenceGeometry,
         sourceFacing: manifest.sourceFacing,

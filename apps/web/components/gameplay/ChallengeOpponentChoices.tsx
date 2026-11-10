@@ -30,14 +30,14 @@ export default function ChallengeOpponentChoices({
       {unlockedIds.size < STOCKFISH_OPPONENTS.length ? (
         <p className="mb-3 text-base">{copy.setup.challengeAvailability}</p>
       ) : null}
-      <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(5.25rem,100%),1fr))] gap-2 xl:grid-cols-6">
+      <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-2">
         {STOCKFISH_OPPONENTS.map((opponent) => {
           const unlocked = unlockedIds.has(opponent.id)
           const Tile = unlocked ? "label" : "div"
           return (
             <li key={opponent.id}>
               <Tile
-                className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid h-full grid-rows-[3.25rem_auto] gap-1 rounded-lg border-2 px-1.5 py-2 text-center has-focus-visible:outline-3 has-[input]:cursor-pointer"
+                className="border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid h-full grid-rows-[1fr_auto] gap-1 rounded-lg border-2 px-1.5 py-2 text-center has-focus-visible:outline-3 has-[input]:cursor-pointer"
                 onPointerEnter={
                   unlocked
                     ? (event) => {

@@ -4811,6 +4811,86 @@
     {
       "path": "coach/greyfox/wow_great.png",
       "sha256": "140c5956b2598d2f014ecc3f3cbe0a93454dfe5462fbf3595a613cf1f8b3c5ef"
+    },
+    {
+      "path": "battle/bear/bear_bite_strip8.png",
+      "sha256": "d184b3e41853c54228df9af240c464f7dbd7ad90e2169e7be1b4403120b9d2f8"
+    },
+    {
+      "path": "battle/bear/bear_die_strip12.png",
+      "sha256": "2fa8ce6758c0a3f11af194409572713a8fbc88a9bdf4044893d67e83eae3c0c6"
+    },
+    {
+      "path": "battle/bear/bear_fall_strip1.png",
+      "sha256": "abbde63caf8fb11af2f6d4a54d99b2183ead9b6c6f64d2316406b0148dac0110"
+    },
+    {
+      "path": "battle/bear/bear_fright_strip10.png",
+      "sha256": "30d34eca78ea45ae8fecab6a811f44d605aef77748fc7ed9f6f15a1bd62a4ab9"
+    },
+    {
+      "path": "battle/bear/bear_hurt_strip7.png",
+      "sha256": "52e7001ab704c84696e3f1de934774439f2e16b62efbceacc8a32aae08d58547"
+    },
+    {
+      "path": "battle/bear/bear_idle_blink_strip6.png",
+      "sha256": "efb20c697a3b4c4ee41878b177c41435e8ce4a0f8298287f8d25fd79c846dead"
+    },
+    {
+      "path": "battle/bear/bear_idle_strip6.png",
+      "sha256": "857305102d43e2e7994b7e69d5e83a1a2babcd3f8dcd957ffcd3ca9884362d39"
+    },
+    {
+      "path": "battle/bear/bear_jump_strip12.png",
+      "sha256": "a538656d19be465d168cc3dbc9cb7532bf4dacdae43a8e282c4a707aabe21fda"
+    },
+    {
+      "path": "battle/bear/bear_land_strip3.png",
+      "sha256": "39edba3825f56728630264b9fe27dd6d181dcff22d13d113f67f8298e179f937"
+    },
+    {
+      "path": "battle/bear/bear_roar_strip14.png",
+      "sha256": "43d140800e061fa2b3b4f2fcd3676a4a794f1b82b92c55a372e628a827d5a2a0"
+    },
+    {
+      "path": "battle/bear/bear_run_strip8.png",
+      "sha256": "15c6b101a97915eadbee76344cc407ca43de87b4ef24edf83a1c80c2ebd8ea49"
+    },
+    {
+      "path": "battle/bear/bear_sleep_strip6.png",
+      "sha256": "40d0643ac40d815b1cea6a245103b71fd3816c5f2e0adf5c0abdc265d1729569"
+    },
+    {
+      "path": "battle/bear/bear_stand_attack01_strip7.png",
+      "sha256": "6e37437c2d715cd35893f056068f858f4e323d9d8c2634e825f9c2dbeabd513f"
+    },
+    {
+      "path": "battle/bear/bear_stand_attack02_strip7.png",
+      "sha256": "fee78b63691cfc8d83393333acba4f236391caaaa6242c2459aac94c146903a6"
+    },
+    {
+      "path": "battle/bear/bear_stand_go_down_strip5.png",
+      "sha256": "2903f267d21aa9adb87e25b1aa47561e3c29d5ffcd885ace0fc3d82803e6210a"
+    },
+    {
+      "path": "battle/bear/bear_stand_go_up_strip5.png",
+      "sha256": "693130d38997765c08add26a65c155edde8e71305ac842703707504c29eae8f2"
+    },
+    {
+      "path": "battle/bear/bear_stand_idle_blink_strip6.png",
+      "sha256": "b59906b16524a797488fc1af51ce7a299140d455d419d3be74819f6ef7fa4acf"
+    },
+    {
+      "path": "battle/bear/bear_stand_idle_strip6.png",
+      "sha256": "1cd6df3ef6a7212bdde2386a591a033b49ca819ed98914be45031e9ef3c96c10"
+    },
+    {
+      "path": "battle/bear/bear_stand_roar_strip14.png",
+      "sha256": "41d029caeb46bbd1abfc519f952ad8bc718e41f5fa679ea2b91ed8f8eebdffcf"
+    },
+    {
+      "path": "battle/bear/bear_wakeup_strip14.png",
+      "sha256": "8a264076585854d52d3c2f91f5e52bc239cc3d95fb2860480eb3bbeb9db40a3d"
     }
   ]
 }

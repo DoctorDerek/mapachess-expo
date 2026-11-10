@@ -89,11 +89,14 @@ export function battleSpriteContactAdvance(
   beat: MatchPresentationBeat,
 ): number | undefined {
   if (
-    (beat !== "reaction" && beat !== "recovery") ||
     presentation.kind !== "sprite" ||
     opposing.kind !== "sprite" ||
     !opposing.sourceAnimalId
   )
     return undefined
-  return presentation.contactAdvanceByTarget?.[opposing.sourceAnimalId]
+  if (beat === "approach" || beat === "strike")
+    return presentation.windupAdvanceByTarget?.[opposing.sourceAnimalId]
+  return beat === "reaction" || beat === "recovery"
+    ? presentation.contactAdvanceByTarget?.[opposing.sourceAnimalId]
+    : undefined
 }

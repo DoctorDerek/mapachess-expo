@@ -97,7 +97,7 @@ export default function ChallengeDifficultyChoices({
           </select>
         </label>
       ) : null}
-      <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(7rem,100%),1fr))] gap-3">
+      <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(min(14rem,100%),1fr))] gap-3">
         {visibleTargets.map((target) => {
           const record = history.difficulties.find(
             ({ targetElo }) => targetElo === target,
@@ -116,7 +116,7 @@ export default function ChallengeDifficultyChoices({
               onPointerLeave={() => setHoveredTarget(null)}
               className={cx(
                 "group border-mapachito-charcoal/30 has-checked:border-mapachito-violet has-checked:bg-mapachito-violet/10 has-focus-visible:outline-mapachito-violet relative grid min-h-14 cursor-pointer gap-2 rounded-lg border-2 p-3 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-disabled:cursor-default has-disabled:opacity-60",
-                animal === null ? "content-center" : "grid-rows-[auto_6.5rem]",
+                animal === null ? "content-center" : "grid-rows-[auto_1fr]",
               )}
             >
               <input

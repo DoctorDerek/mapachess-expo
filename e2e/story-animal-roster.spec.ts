@@ -11,6 +11,7 @@ for (const variant of ["standard", "chess960"] as const) {
   for (const [id, name, target] of [
     ["squirrel-stockfish", "Squirrel", 500],
     ["tiger-stockfish", "Tiger", 1450],
+    ["bear-stockfish", "Bear", 1500],
   ] as const) {
     test(`plays and resumes ${name} at ${target} in ${variant} Story`, async ({
       page,
@@ -49,7 +50,7 @@ for (const variant of ["standard", "chess960"] as const) {
         .getByRole("button", { name: "Change animal", exact: true })
         .click()
       const challenge = page.getByRole("dialog")
-      await expect(challenge.getByRole("listitem")).toHaveCount(25)
+      await expect(challenge.getByRole("listitem")).toHaveCount(26)
       const locked = challenge
         .getByRole("listitem")
         .filter({ hasText: new RegExp(name + " · Locked") })
@@ -151,7 +152,7 @@ for (const variant of ["standard", "chess960"] as const) {
     })
   }
 }
-test("keeps all 25 Challenge names and loads a distant silhouette when it enters scroll reach", async ({
+test("keeps all 26 Challenge names and loads a distant silhouette when it enters scroll reach", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 })
@@ -161,7 +162,7 @@ test("keeps all 25 Challenge names and loads a distant silhouette when it enters
   await page.getByRole("button", { name: /Standard Chess Challenge/ }).click()
   await page.getByRole("button", { name: "Change animal", exact: true }).click()
   const rows = page.getByRole("dialog").getByRole("listitem")
-  await expect(rows).toHaveCount(25)
+  await expect(rows).toHaveCount(26)
   const last = rows.last()
   await expect(last).toContainText(/Locked/)
   await expect(last.getByRole("radio")).toHaveCount(0)

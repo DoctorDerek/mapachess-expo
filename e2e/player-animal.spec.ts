@@ -30,7 +30,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio")).toHaveCount(25)
+  await expect(gallery.getByRole("radio")).toHaveCount(26)
   const selected = gallery.getByRole("radio", { name: /Raccoon/ })
   const last = gallery.getByRole("radio", { name: /Dragonfly/ })
   const sprite = (radio: Locator) =>
@@ -39,7 +39,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
   await expect(sprite(last)).toHaveCount(0)
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
-  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(24)
+  await expect(gallery.getByRole("radio", { disabled: true })).toHaveCount(25)
   const done = page.getByRole("button", { name: "Done", exact: true })
   await expect(done).toBeInViewport({ ratio: 1 })
   const doneBounds = await done.boundingBox()
@@ -60,8 +60,8 @@ test("opens the complete locked roster from the selected animal and keeps it key
         return { x, y }
       }),
     )
-  expect(raccoonBounds?.y).toBe(chickenBounds?.y)
-  expect(chickenBounds?.x).toBeGreaterThan(raccoonBounds?.x ?? 0)
+  expect(chickenBounds?.y).toBeGreaterThan(raccoonBounds?.y ?? 0)
+  expect(chickenBounds?.x).toBe(raccoonBounds?.x)
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -151,7 +151,7 @@ test("all earned animals remain selectable after reload and editing is still a d
     name: "Player animals",
     exact: true,
   })
-  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(25)
+  await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(26)
   await gallery.getByRole("radio", { name: /Dragonfly/ }).check()
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
   await page.getByRole("button", { name: "Save changes", exact: true }).click()

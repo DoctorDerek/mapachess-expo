@@ -35,6 +35,7 @@ describe("canonical Stockfish opponent identities", () => {
       ["fox-stockfish", "Fox Stockfish", 1300],
       ["wolf-stockfish", "Wolf Stockfish", 1375],
       ["tiger-stockfish", "Tiger Stockfish", 1450],
+      ["bear-stockfish", "Bear Stockfish", 1500],
       ["falcon-stockfish", "Falcon Stockfish", 1525],
       ["crane-stockfish", "Crane Stockfish", 1600],
       ["crow-stockfish", "Crow Stockfish", 1675],

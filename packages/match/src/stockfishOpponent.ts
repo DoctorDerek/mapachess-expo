@@ -20,6 +20,7 @@ const STORY_ROSTER = [
   ["fox-stockfish", 1300, 1500],
   ["wolf-stockfish", 1375, 1600],
   ["tiger-stockfish", 1450, null],
+  ["bear-stockfish", 1500, null],
   ["falcon-stockfish", 1525, 1700],
   ["crane-stockfish", 1600, 1800],
   ["crow-stockfish", 1675, 1900],
