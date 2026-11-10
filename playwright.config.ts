@@ -12,6 +12,7 @@ export default defineConfig({
   ...(process.env.CI ? { workers: 2 } : {}),
   reporter: "html",
   use: {
+    serviceWorkers: "block",
     ...(isProtectedPreview
       ? { extraHTTPHeaders: { "x-vercel-skip-toolbar": "1" } }
       : {}),
