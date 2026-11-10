@@ -8,9 +8,6 @@ const setup = {
   black: "Black",
   random: "Random",
   randomize: "Randomize",
-  pinnedPosition: "This position is remembered until you choose Randomize.",
-  freshPosition:
-    "Each new setup gets a random position number. Start match uses the number shown.",
   randomColor: "Your side is chosen at random when the match starts.",
   position: "Chess960 starting position",
   positionNumber: (maximum: number): string => `Position number (0–${maximum})`,
@@ -18,8 +15,6 @@ const setup = {
     `Chess960 position ${position} preview`,
   invalidSetup:
     "Choose an available animal, difficulty, side, and valid starting position.",
-  difficulty: "Difficulty · estimated Elo",
-  difficultyLabel: "Difficulty",
   opponentElo: "Opponent Elo",
   adjustOpponentElo: "Adjust opponent Elo",
   invalidOpponentElo: (
@@ -52,17 +47,11 @@ const setup = {
   shareProfile: "Share profile card",
   chooseAnimal: "Choose animal",
   chooseOpponent: "Choose opponent",
-  chooseDifficulty: "Choose difficulty",
   changeAnimal: "Change animal",
   changeStoryOpponent: "Change Story opponent",
-  changeDifficulty: "Change difficulty",
   changeHints: "Change hints",
   playAsAction: (animal: string): string => `Play as ${animal} · Change animal`,
   elo: (value: string): string => `${value} Elo`,
-  bestMedal: (medal: string): string => ` · Best medal: ${medal}`,
-  lastPlayed: (opponent: string): string => ` · Last played: ${opponent}`,
-  difficultyMedals:
-    "Best medal at this difficulty: Gold (no hints), Silver (Piece Hints only), Bronze (Move Hints allowed). The animal is your last played opponent, not your next selection.",
   variants: { standard: "Standard Chess", chess960: "Chess960" },
   modes: { story: "Story", challenge: "Challenge" },
   presentations: {

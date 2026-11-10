@@ -191,7 +191,9 @@ describe("American English player-facing catalog", () => {
   })
 
   it("names the recovery and setup controls that the player can actually use", () => {
-    expect(copy.setup.freshPosition).toContain(copy.setup.startMatch)
+    expect(copy.setup.positionPreview(518)).toBe(
+      "Chess960 position 518 preview",
+    )
     expect(
       copy.interface.inputBindingSettings.changesApplyOnlyAfterSaveSucceedsTab,
     ).toContain(copy.interface.inputBindingSettings.saveControls)

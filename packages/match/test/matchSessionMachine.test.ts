@@ -213,6 +213,34 @@ describe("portable match session navigation", () => {
       actor.stop()
     },
   )
+  it.each(["challenge:standard", "challenge:chess960"] as const)(
+    "restores %s without reopening the retired difficulty overlay",
+    (setupKey) => {
+      const destination = { screen: "setup", matchId: null, setupKey }
+      expect(
+        parseMatchNavigationDestination({
+          ...destination,
+          overlays: ["setup-difficulty", "setup-opponent"],
+        }),
+      ).toEqual({ ...destination, overlays: ["setup-opponent"] })
+      expect(
+        parseMatchNavigationDestination({
+          ...destination,
+          overlays: ["setup-difficulty"],
+        }),
+      ).toEqual({ ...destination, overlays: [] })
+      for (const overrides of [
+        { screen: "menu", overlays: ["setup-difficulty"] },
+        { setupKey: "story:standard", overlays: ["setup-difficulty"] },
+        { overlays: ["setup-difficulty", "setup-difficulty"] },
+        { overlays: ["setup-difficulty", "not-an-overlay"] },
+      ])
+        expect(
+          parseMatchNavigationDestination({ ...destination, ...overrides }),
+        ).toBeNull()
+    },
+  )
+
   it("owns each binding choice below Controls and restores it without replacing the match", async () => {
     const ops = operations()
     const actor = createActor(machine, {

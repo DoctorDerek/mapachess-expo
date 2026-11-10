@@ -23,7 +23,6 @@ export type MatchNavigationOverlay =
   | `reset-${MatchVariant}-${TimeCategory}-${HintAssistanceTier}`
   | "setup-opponent"
   | "setup-player"
-  | "setup-difficulty"
   | "setup-hints"
   | "setup-time-control"
   | "rewards"
@@ -71,7 +70,6 @@ const overlayNames: readonly MatchNavigationOverlay[] = [
   ),
   "setup-opponent",
   "setup-player",
-  "setup-difficulty",
   "setup-hints",
   "setup-time-control",
   "rewards",
@@ -103,7 +101,18 @@ export function parseMatchNavigationDestination(
   )
     return null
   const overlays: MatchNavigationOverlay[] = []
+  let removedLegacyDifficulty = false
   for (const candidate of value.overlays) {
+    if (
+      candidate === "setup-difficulty" &&
+      value.screen === "setup" &&
+      (value.setupKey === "challenge:standard" ||
+        value.setupKey === "challenge:chess960")
+    ) {
+      if (removedLegacyDifficulty) return null
+      removedLegacyDifficulty = true
+      continue
+    }
     const overlay = overlayNames.find((name) => name === candidate)
     if (overlay === undefined || overlays.includes(overlay)) return null
     overlays.push(overlay)
