@@ -1,4 +1,5 @@
 const path = require("node:path")
+const expoPreset = require("jest-expo/jest-preset")
 
 const mobilePackageRoot = path.dirname(require.resolve("./package.json"))
 const chessopsCommonJsEntry = require.resolve("chessops/chess", {
@@ -7,6 +8,8 @@ const chessopsCommonJsEntry = require.resolve("chessops/chess", {
 const badrapResultCommonJsEntry = require.resolve("@badrap/result", {
   paths: [path.dirname(chessopsCommonJsEntry)],
 })
+const sourcePattern = "\\.[jt]sx?$"
+const [sourceTransformer, sourceOptions] = expoPreset.transform[sourcePattern]
 
 module.exports = {
   preset: "jest-expo",
@@ -14,6 +17,19 @@ module.exports = {
   restoreMocks: true,
   testMatch: ["<rootDir>/test/**/*.test.ts", "<rootDir>/test/**/*.test.tsx"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  transform: {
+    ...expoPreset.transform,
+    [sourcePattern]: [
+      sourceTransformer,
+      {
+        ...sourceOptions,
+        plugins: [
+          ...(sourceOptions.plugins ?? []),
+          require.resolve("babel-plugin-dynamic-import-node"),
+        ],
+      },
+    ],
+  },
   transformIgnorePatterns: [
     "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg))",
   ],
