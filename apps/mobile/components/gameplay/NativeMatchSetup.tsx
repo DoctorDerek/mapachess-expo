@@ -1,7 +1,14 @@
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { TextInput, View } from "react-native"
-import { challengeDifficultyTargets } from "@mapachess/gameplay/opponent-policy"
+import challengeDifficultyGrid, {
+  createChallengeDifficultyDraft,
+  editChallengeDifficulty,
+  resolveChallengeDifficulty,
+  type ChallengeDifficultyDraft,
+  type ChallengeDifficultyEdit,
+} from "@mapachess/gameplay/challenge-difficulty"
 import { AUTO_HINT_MODES } from "@mapachess/match/auto-hint-mode"
+import type { ChallengePositionSetup } from "@mapachess/match/challenge-setup"
 import {
   CHESS960_POSITION_COUNT,
   parseChess960PositionId,
@@ -14,12 +21,14 @@ import { createInitialMatchPosition } from "@mapachess/match/match-position"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import stockfishOpponent, {
   STOCKFISH_OPPONENTS,
+  type StockfishOpponentId,
 } from "@mapachess/match/stockfish-opponent"
 import {
   TIME_CONTROL_PRESETS,
   timeControlLabel,
   timeControlsEqual,
   UNTIMED,
+  type TimeControl,
 } from "@mapachess/match/time-control"
 import { eligiblePlayerAnimals } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
@@ -39,7 +48,32 @@ import NativeChoicePanel, {
 import { NativeScrollActions } from "../presentation/NativePanel"
 import NativeText from "../presentation/NativeText"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
+import NativeChallengeDifficulty from "./NativeChallengeDifficulty"
 import NativeChessboard from "./NativeChessboard"
+
+type SetupDraft =
+  | Extract<MatchSetup, { mode: "story" }>
+  | Readonly<{
+      mode: "challenge"
+      challengeSetup: ChallengePositionSetup &
+        Readonly<{ opponentId: StockfishOpponentId }>
+      timeControl: TimeControl
+      difficulty: ChallengeDifficultyDraft
+    }>
+
+function createSetupDraft(initial: MatchSetup): SetupDraft {
+  if (initial.mode === "story") return initial
+  const { difficultyTargetElo, ...challengeSetup } = initial.challengeSetup
+  return {
+    mode: "challenge",
+    challengeSetup,
+    timeControl: initial.timeControl ?? UNTIMED,
+    difficulty: createChallengeDifficultyDraft(
+      challengeDifficultyGrid(challengeSetup.variant),
+      difficultyTargetElo,
+    ),
+  }
+}
 
 export default function NativeMatchSetup({
   initial,
@@ -60,7 +94,7 @@ export default function NativeMatchSetup({
 }>) {
   const { copy } = useNativeLocale()
   const motion = useNativePresentationActivity()
-  const [draft, setDraft] = useState(initial)
+  const [draft, setDraft] = useState(() => createSetupDraft(initial))
   const [positionNumber, setPositionNumber] = useState(() =>
     String(
       initial.mode === "challenge" &&
@@ -73,6 +107,26 @@ export default function NativeMatchSetup({
   )
   const variant =
     draft.mode === "story" ? draft.variant : draft.challengeSetup.variant
+  const difficultyGrid = challengeDifficultyGrid(variant)
+  const difficultyTargetElo =
+    draft.mode === "challenge"
+      ? resolveChallengeDifficulty(difficultyGrid, draft.difficulty)
+      : null
+  const difficultyInput = useRef<TextInput>(null)
+  const changeDifficulty = useCallback((edit: ChallengeDifficultyEdit) => {
+    setDraft((current) =>
+      current.mode === "story"
+        ? current
+        : {
+            ...current,
+            difficulty: editChallengeDifficulty(
+              challengeDifficultyGrid(current.challengeSetup.variant),
+              current.difficulty,
+              edit,
+            ),
+          },
+    )
+  }, [])
   const opponentId =
     draft.mode === "story"
       ? (draft.opponentId ??
@@ -89,15 +143,33 @@ export default function NativeMatchSetup({
     draft.mode === "story"
       ? canPlayStoryOpponent(data.storyProgress, variant, opponentId)
       : challengeAnimals.some(({ id }) => id === opponentId) &&
-        challengeDifficultyTargets(variant).includes(
-          draft.challengeSetup.difficultyTargetElo,
-        )
+        (draft.difficulty.selectedElo !== null || difficultyTargetElo !== null)
   const position = parseChess960PositionId(
     positionNumber.trim() === "" ? NaN : Number(positionNumber),
   )
   const valid =
     available &&
     (draft.mode === "story" || variant === "standard" || position.ok)
+  const startMatch = (): void => {
+    if (disabled || !valid) return
+    if (draft.mode === "story") {
+      onStart({ ...draft, opponentId })
+      return
+    }
+    if (difficultyTargetElo === null) {
+      difficultyInput.current?.focus()
+      changeDifficulty({ type: "committed" })
+      return
+    }
+    onStart({
+      mode: "challenge",
+      timeControl,
+      challengeSetup: { ...draft.challengeSetup, difficultyTargetElo },
+      ...(variant === "chess960" && position.ok
+        ? { displayedChess960PositionId: position.positionId }
+        : {}),
+    })
+  }
   const animalPreview =
     (animal: typeof opponentId, enabled: boolean) =>
     ({ selected, attended }: NativeChoicePreviewState) => (
@@ -158,21 +230,7 @@ export default function NativeMatchSetup({
             <NativeButton
               className="flex-1"
               disabled={disabled || !valid}
-              onPress={() => {
-                if (
-                  draft.mode === "challenge" &&
-                  variant === "chess960" &&
-                  position.ok
-                )
-                  onStart({
-                    ...draft,
-                    displayedChess960PositionId: position.positionId,
-                  })
-                else
-                  onStart(
-                    draft.mode === "story" ? { ...draft, opponentId } : draft,
-                  )
-              }}
+              onPress={startMatch}
             >
               {copy.setup.startMatch}
             </NativeButton>
@@ -195,24 +253,26 @@ export default function NativeMatchSetup({
           : null}
         {choice(
           copy.setup.opponent,
-          copy.gameplay.opponentAndElo(
-            copy.animals.opponent(opponentId),
-            draft.mode === "story"
-              ? opponent.storyTargetElo
-              : draft.challengeSetup.difficultyTargetElo,
-          ),
+          draft.mode === "story"
+            ? copy.gameplay.opponentAndElo(
+                copy.animals.opponent(opponentId),
+                opponent.storyTargetElo,
+              )
+            : copy.animals.opponent(opponentId),
           () => navigation.open("setup-opponent"),
           opponentId,
         )}
         {draft.mode === "challenge" ? (
           <>
-            {choice(
-              copy.setup.difficultyLabel,
-              copy.setup.elo(
-                copy.gameplay.elo(draft.challengeSetup.difficultyTargetElo),
-              ),
-              () => navigation.open("setup-difficulty"),
-            )}
+            <NativeChallengeDifficulty
+              disabled={disabled}
+              draft={draft.difficulty}
+              exactInput={difficultyInput}
+              grid={difficultyGrid}
+              history={data.challengeHistory}
+              onEdit={changeDifficulty}
+              variant={variant}
+            />
             <NativeText>{copy.setup.color}</NativeText>
             <View className="flex-row flex-wrap gap-2">
               {(["white", "black", "random"] as const).map((color) => (
@@ -229,13 +289,17 @@ export default function NativeMatchSetup({
                     selected: draft.challengeSetup.playerColor === color,
                   }}
                   onPress={() =>
-                    setDraft({
-                      ...draft,
-                      challengeSetup: {
-                        ...draft.challengeSetup,
-                        playerColor: color,
-                      },
-                    })
+                    setDraft((current) =>
+                      current.mode === "story"
+                        ? current
+                        : {
+                            ...current,
+                            challengeSetup: {
+                              ...current.challengeSetup,
+                              playerColor: color,
+                            },
+                          },
+                    )
                   }
                 >
                   {copy.setup[color]}
@@ -257,17 +321,19 @@ export default function NativeMatchSetup({
                     const parsed = parseChess960PositionId(
                       value.trim() === "" ? NaN : Number(value),
                     )
-                    if (
-                      parsed.ok &&
-                      draft.challengeSetup.variant === "chess960"
-                    )
-                      setDraft({
-                        ...draft,
-                        challengeSetup: {
-                          ...draft.challengeSetup,
-                          chess960PositionId: parsed.positionId,
-                        },
-                      })
+                    if (parsed.ok)
+                      setDraft((current) =>
+                        current.mode === "challenge" &&
+                        current.challengeSetup.variant === "chess960"
+                          ? {
+                              ...current,
+                              challengeSetup: {
+                                ...current.challengeSetup,
+                                chess960PositionId: parsed.positionId,
+                              },
+                            }
+                          : current,
+                      )
                   }}
                 />
                 <NativeButton
@@ -275,14 +341,18 @@ export default function NativeMatchSetup({
                   disabled={disabled}
                   onPress={() => {
                     setPositionNumber(String(generateNativeChess960Position()))
-                    if (draft.challengeSetup.variant === "chess960")
-                      setDraft({
-                        ...draft,
-                        challengeSetup: {
-                          ...draft.challengeSetup,
-                          chess960PositionId: null,
-                        },
-                      })
+                    setDraft((current) =>
+                      current.mode === "challenge" &&
+                      current.challengeSetup.variant === "chess960"
+                        ? {
+                            ...current,
+                            challengeSetup: {
+                              ...current.challengeSetup,
+                              chess960PositionId: null,
+                            },
+                          }
+                        : current,
+                    )
                   }}
                 >
                   {copy.setup.randomize}
@@ -396,35 +466,17 @@ export default function NativeMatchSetup({
             }
           })}
           onAccept={(animal) => {
-            setDraft(
-              draft.mode === "story"
-                ? { ...draft, opponentId: animal }
+            setDraft((current) =>
+              current.mode === "story"
+                ? { ...current, opponentId: animal }
                 : {
-                    ...draft,
+                    ...current,
                     challengeSetup: {
-                      ...draft.challengeSetup,
+                      ...current.challengeSetup,
                       opponentId: animal,
                     },
                   },
             )
-            navigation.back()
-          }}
-        />
-      ) : null}
-      {overlay === "setup-difficulty" && draft.mode === "challenge" ? (
-        <NativeChoicePanel
-          title={copy.setup.chooseDifficulty}
-          value={draft.challengeSetup.difficultyTargetElo}
-          onCancel={navigation.back}
-          choices={challengeDifficultyTargets(variant).map((target) => ({
-            value: target,
-            label: copy.setup.elo(copy.gameplay.elo(target)),
-          }))}
-          onAccept={(difficultyTargetElo) => {
-            setDraft({
-              ...draft,
-              challengeSetup: { ...draft.challengeSetup, difficultyTargetElo },
-            })
             navigation.back()
           }}
         />
@@ -469,7 +521,10 @@ export default function NativeMatchSetup({
               (preset) => preset.id === id,
             )
             if (selected !== undefined)
-              setDraft({ ...draft, timeControl: selected.control })
+              setDraft((current) => ({
+                ...current,
+                timeControl: selected.control,
+              }))
             navigation.back()
           }}
         />
