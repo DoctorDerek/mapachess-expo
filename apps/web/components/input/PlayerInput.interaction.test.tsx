@@ -215,9 +215,9 @@ describe("gamepad adapter and scoped web input", () => {
       )?.[1]
       if (typeof listener !== "function")
         throw new Error(`Expected a ${event.type} listener`)
+      const dispatch: EventListener = listener
       act(() =>
-        listener.call(
-          window,
+        dispatch(
           new Proxy(event, {
             get(original, property) {
               if (property === "isTrusted") return trusted
