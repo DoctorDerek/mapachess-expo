@@ -61,6 +61,10 @@
       "types": "./src/levelProgression.ts",
       "default": "./dist/levelProgression.js"
     },
+    "./level-achievement-notice-machine": {
+      "types": "./src/levelAchievementNoticeMachine.ts",
+      "default": "./dist/levelAchievementNoticeMachine.js"
+    },
     "./match-medal": {
       "types": "./src/matchMedal.ts",
       "default": "./dist/matchMedal.js"

@@ -28,6 +28,8 @@ import {
   TIME_CONTROL_PRESETS,
   timeControlLabel,
 } from "@mapachess/match/time-control"
+import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
+import createInitialPlayerData from "@mapachess/profile/player-data"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import openNativeStockfishSession from "@mapachess/stockfish-native/open-session"
 import { parseDeterministicRandomSeed } from "@mapachess/stockfish/opponent-move-selection"
@@ -36,6 +38,7 @@ import openNativeApplicationRuntime, {
   type NativeApplicationRuntime,
 } from "@/lib/gameplay/openNativeApplicationRuntime"
 import openNativeMatchRuntime from "@/lib/gameplay/openNativeMatchRuntime"
+import AsyncStorageDurableStore from "@/lib/profile/AsyncStorageDurableStore"
 import cryptography from "./nativeCryptographyFixture"
 import NativeEngineFixture from "./nativeEngineFixture"
 import InMemoryAsyncStorage from "./nativeStorageFixture"
@@ -170,7 +173,76 @@ function expectResultAction(mode: MatchMode, elo: number): void {
   }
 }
 
+async function storageNearLevelAchievement() {
+  const storage = new InMemoryAsyncStorage()
+  const store = new SerializedPlayerDataStore(
+    new AsyncStorageDurableStore(storage),
+    cryptography.sha256,
+  )
+  const seeded = await store.commitCurrent(await store.load(), {
+    ...createInitialPlayerData(),
+    totalXp: 4,
+    introductionCompleted: true,
+  })
+  if (!seeded.ok) throw new Error("Expected a valid accepted Level fixture")
+  return storage
+}
+
 describe("native accepted rewards", () => {
+  it("announces an accepted Level unlock after dismissal without repeating it on replay, Undo/Redo, or resume", async () => {
+    const storage = await storageNearLevelAchievement()
+    const runtime = await openApplication(storage)
+    const view = await render(<HomeScreen />)
+    await startStory()
+    await resign()
+    await screen.findByRole("button", { name: reviewBoard })
+    const notice = copy.gameplay.achievementUnlocked(
+      copy.gameplay.levelAchievement(5),
+    )
+    expect(
+      playerData(runtime).lastAcceptedResultReward?.unlockedAchievementIds,
+    ).toEqual(["reach-level-5"])
+    expect(screen.getAllByText(notice)).toHaveLength(1)
+    const accepted = playerData(runtime)
+    const writes = jest.spyOn(storage, "multiSet")
+    jest.useFakeTimers()
+    await pressButton(reviewBoard)
+    expect(screen.getByText(notice)).toBeOnTheScreen()
+    await act(async () => jest.advanceTimersByTimeAsync(4_000))
+    await pressButton(viewRewards)
+    expect(screen.queryByText(notice)).toBeNull()
+    await act(async () => jest.advanceTimersByTimeAsync(10_000))
+    await pressButton(reviewBoard)
+    expect(screen.getByText(notice)).toBeOnTheScreen()
+    await act(async () => jest.advanceTimersByTimeAsync(5_000))
+    expect(screen.queryByText(notice)).toBeNull()
+    await pressButton(viewRewards)
+    await pressButton(reviewBoard)
+    expect(screen.queryByText(notice)).toBeNull()
+    expect(playerData(runtime)).toEqual(accepted)
+    expect(writes).not.toHaveBeenCalled()
+    jest.useRealTimers()
+    await pressButton(copy.interface.matchCommands.undo)
+    await waitFor(() =>
+      expect(playerData(runtime).activeMatch?.conclusion).toBeNull(),
+    )
+    await pressButton(copy.interface.matchCommands.redo)
+    await pressButton(reviewBoard)
+    expect(playerData(runtime).unlockedAchievementIds).toContain(
+      "reach-level-5",
+    )
+    expect(
+      playerData(runtime).lastAcceptedResultReward?.unlockedAchievementIds,
+    ).toEqual([])
+    expect(screen.queryByText(notice)).toBeNull()
+    await view.unmount()
+    await runtime.close()
+    await openApplication(storage)
+    await render(<HomeScreen />)
+    await screen.findByRole("button", { name: viewRewards })
+    expect(screen.queryByText(notice)).toBeNull()
+  })
+
   it("awards Gold for an unassisted Story checkmate and opens the newly unlocked opponent", async () => {
     const replies = ["e7e5", "a7a6", "b7b6"]
     const runtime = await openApplication(new InMemoryAsyncStorage(), {
@@ -236,7 +308,10 @@ describe("native accepted rewards", () => {
   })
 
   it("withholds reward facts during a pending and failed write, then presents the retry once", async () => {
-    const storage = new InMemoryAsyncStorage()
+    const storage = await storageNearLevelAchievement()
+    const notice = copy.gameplay.achievementUnlocked(
+      copy.gameplay.levelAchievement(5),
+    )
     const runtime = await openApplication(storage)
     await render(<HomeScreen />)
     await startStory()
@@ -252,6 +327,7 @@ describe("native accepted rewards", () => {
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1))
       expect(playerData(runtime).lastAcceptedResultReward).toBeNull()
       expectNoCelebration()
+      expect(screen.queryByText(notice)).toBeNull()
     } finally {
       await act(() => writeGate.resolve())
     }
@@ -262,6 +338,7 @@ describe("native accepted rewards", () => {
       }),
     ).toBeOnTheScreen()
     expectNoCelebration()
+    expect(screen.queryByText(notice)).toBeNull()
     await pressButton(copy.interface.webMapachessApplication.tryAgain)
     expect(
       await screen.findByRole("button", { name: reviewBoard }),
@@ -270,15 +347,16 @@ describe("native accepted rewards", () => {
     expect(receipt?.awardedXp).toBe(4)
     expect(writes).toHaveBeenCalledTimes(2)
     expect(screen.getByLabelText(savedLocally)).toBeOnTheScreen()
-    expect(await screen.findByText(copy.gameplay.level(3))).toBeOnTheScreen()
+    expect(await screen.findByText(copy.gameplay.level(5))).toBeOnTheScreen()
     expect(
       screen.getByRole("progressbar", {
-        name: copy.gameplay.levelProgress(3, 0, 2),
+        name: copy.gameplay.levelProgress(5, 0, 2),
       }),
     ).toBeOnTheScreen()
     expectResultAction("story", 100)
     await pressButton(reviewBoard)
     expectNoCelebration()
+    expect(screen.getByText(notice)).toBeOnTheScreen()
     expect(playerData(runtime).lastAcceptedResultReward).toEqual(receipt)
     expect(writes).toHaveBeenCalledTimes(2)
   })

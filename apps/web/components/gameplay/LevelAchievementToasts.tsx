@@ -1,13 +1,12 @@
 "use client"
 
+import { useActorRef, useSelector } from "@xstate/react"
 import { useEffect, useState } from "react"
-import {
-  LEVEL_ACHIEVEMENTS,
-  type LevelAchievementId,
-} from "@mapachess/profile/global-xp"
+import type { LevelAchievementId } from "@mapachess/profile/global-xp"
+import levelAchievementNoticeMachine, {
+  selectLevelAchievementNotice,
+} from "@mapachess/profile/level-achievement-notice-machine"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-
-const ACHIEVEMENT_TOAST_DURATION_MS = 5_000
 
 export default function LevelAchievementToasts({
   ids,
@@ -15,10 +14,12 @@ export default function LevelAchievementToasts({
 }: Readonly<{ ids: readonly LevelAchievementId[]; paused: boolean }>) {
   const copy = useMapachessCopy()
 
-  const [index, setIndex] = useState(0)
   const [hidden, setHidden] = useState(false)
-  const currentId = ids[index]
   const waiting = paused || hidden
+  const actor = useActorRef(levelAchievementNoticeMachine, {
+    input: { ids, paused: waiting },
+  })
+  const achievement = useSelector(actor, selectLevelAchievementNotice)
 
   useEffect(() => {
     const syncVisibility = (): void => setHidden(document.hidden)
@@ -29,19 +30,13 @@ export default function LevelAchievementToasts({
   }, [])
 
   useEffect(() => {
-    if (currentId === undefined || waiting) return
-    const timeout = window.setTimeout(
-      () => setIndex((previous) => previous + 1),
-      ACHIEVEMENT_TOAST_DURATION_MS,
-    )
-    return () => window.clearTimeout(timeout)
-  }, [currentId, waiting])
+    actor.send({ type: "LEVEL_NOTICE.SOURCE_CHANGED", ids })
+  }, [actor, ids])
+  useEffect(() => {
+    actor.send({ type: "LEVEL_NOTICE.ACTIVITY_CHANGED", paused: waiting })
+  }, [actor, waiting])
 
-  if (currentId === undefined || waiting) return null
-  const achievement = LEVEL_ACHIEVEMENTS.find(({ id }) => id === currentId)
-  if (achievement === undefined) {
-    throw new Error("An unknown Level achievement cannot be presented.")
-  }
+  if (achievement === null || waiting) return null
 
   return (
     <p
