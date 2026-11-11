@@ -19,6 +19,18 @@ const worker = new Serwist({
   precacheEntries: core,
   precacheOptions: {
     cleanupOutdatedCaches: true,
+    plugins: [
+      {
+        handlerWillRespond: async ({ request, response }) =>
+          request.destination === "worker"
+            ? new Response(response.body, {
+                headers: response.headers,
+                status: response.status,
+                statusText: response.statusText,
+              })
+            : response,
+      },
+    ],
     navigateFallback: "/",
     navigateFallbackAllowlist: [/^\/(?:\?.*)?$/],
     urlManipulation: ({ url }) => {

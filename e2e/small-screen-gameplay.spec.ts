@@ -7,6 +7,7 @@ import {
   createMatchTimeline,
   currentMatchPosition,
 } from "../packages/match/src/matchTimeline.js"
+import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import {
   GLOBAL_XP_QUANTUM,
   xpAtLevel,
@@ -205,7 +206,13 @@ for (const locale of ["en", "es-419"] as const) {
             name: copy.setup.changeStoryOpponent,
             exact: true,
           })
-          await trigger.scrollIntoViewIfNeeded()
+          await trigger.evaluate((element) =>
+            element.scrollIntoView({
+              block: "center",
+              inline: "nearest",
+              behavior: "instant",
+            }),
+          )
           await expectExposedWithoutScrolling(trigger)
           await trigger.click()
           const done = page.getByRole("button", {
@@ -220,7 +227,7 @@ for (const locale of ["en", "es-419"] as const) {
               exact: true,
             })
             .getByRole("listitem")
-          await expect(opponents).toHaveCount(25)
+          await expect(opponents).toHaveCount(STOCKFISH_OPPONENTS.length)
           await opponents.last().scrollIntoViewIfNeeded()
           await expect(opponents.last()).toBeInViewport({ ratio: 1 })
           await expect.poll(() => done.boundingBox()).toEqual(doneBounds)

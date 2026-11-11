@@ -238,7 +238,11 @@ test("closing a binding dialog preserves focus moved to Save before the next fra
   await page.getByRole("button", { name: "Controls", exact: true }).click()
   await page.getByRole("button", { name: "Keyboard", exact: true }).click()
   const binding = page.locator('button[aria-labelledby~="binding-hints"]')
-  await binding.click()
+  await binding.focus()
+  await binding.press("Enter")
+  await expect(
+    page.getByRole("button", { name: "Press a key", exact: true }),
+  ).toBeFocused()
   await binding.evaluate((trigger) => {
     const save = Array.from(
       trigger.closest("dialog")?.querySelectorAll("button") ?? [],

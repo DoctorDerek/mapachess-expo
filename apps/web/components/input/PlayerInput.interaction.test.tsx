@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import { useRef } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { PlayerInputAction } from "@mapachess/match/player-input"
@@ -131,6 +131,162 @@ describe("gamepad adapter and scoped web input", () => {
     gamepad.sample([1], { mapping: "" })
     gamepad.frame()
     expect(handle).not.toHaveBeenCalled()
+  })
+
+  it("returns to keyboard mode when browser controller access fails, then re-arms on focus", () => {
+    const gamepad = gamepadHarness()
+    const handle = vi.fn(() => true)
+    render(
+      <PlayerInputProvider profileActor={null}>
+        <Scope handle={handle} />
+      </PlayerInputProvider>,
+    )
+    gamepad.press(2)
+    expect(screen.getByLabelText("Device").textContent).toBe("controller")
+    const denied = vi
+      .spyOn(navigator, "getGamepads")
+      .mockImplementationOnce(() => {
+        throw new DOMException("Controller permission denied", "SecurityError")
+      })
+    gamepad.frame()
+    expect(screen.getByLabelText("Device").textContent).toBe("keyboard")
+    gamepad.press(2)
+    expect(denied).toHaveBeenCalledTimes(1)
+    expect(handle).toHaveBeenCalledTimes(1)
+    window.dispatchEvent(new Event("focus"))
+    gamepad.frame()
+    expect(handle).toHaveBeenCalledTimes(1)
+    gamepad.press(2)
+    expect(handle).toHaveBeenCalledTimes(2)
+  })
+
+  it("does not carry a held command through a foreground dialog or document visibility change", () => {
+    const gamepad = gamepadHarness()
+    const handle = vi.fn(() => true)
+    const modal = vi.fn(() => true)
+    const view = render(
+      <PlayerInputProvider profileActor={null}>
+        <Scope handle={handle} />
+      </PlayerInputProvider>,
+    )
+    gamepad.press(13)
+    expect(handle).toHaveBeenCalledTimes(1)
+    view.rerender(
+      <PlayerInputProvider profileActor={null}>
+        <Scope handle={handle} />
+        <dialog aria-label="Menu" open>
+          <Scope handle={modal} />
+        </dialog>
+      </PlayerInputProvider>,
+    )
+    gamepad.frame(600)
+    expect(modal).not.toHaveBeenCalled()
+    gamepad.press(13)
+    expect(modal).toHaveBeenCalledExactlyOnceWith(
+      "down",
+      expect.objectContaining({ method: "controller" }),
+    )
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true)
+    document.dispatchEvent(new Event("visibilitychange"))
+    gamepad.frame(600)
+    hidden.mockReturnValue(false)
+    document.dispatchEvent(new Event("visibilitychange"))
+    gamepad.frame(600)
+    expect(modal).toHaveBeenCalledTimes(1)
+    gamepad.press(13)
+    expect(modal).toHaveBeenCalledTimes(2)
+    expect(handle).toHaveBeenCalledTimes(1)
+  })
+
+  it("handles hardware keys without stealing browser shortcuts, radio arrows or text editing", () => {
+    const gamepad = gamepadHarness()
+    const listen = vi.spyOn(window, "addEventListener")
+    const handle = vi.fn((_action: PlayerInputAction) => true)
+    render(
+      <PlayerInputProvider profileActor={null}>
+        <Scope handle={handle} />
+        <input aria-label="Exact Elo" />
+        <input type="radio" aria-label="Standard Chess" />
+      </PlayerInputProvider>,
+    )
+    const deliver = (event: Event, trusted: boolean, target?: HTMLElement) => {
+      const listener = listen.mock.calls.find(
+        ([type]) => type === event.type,
+      )?.[1]
+      if (typeof listener !== "function")
+        throw new Error(`Expected a ${event.type} listener`)
+      const dispatch: EventListener = listener
+      act(() =>
+        dispatch(
+          new Proxy(event, {
+            get(original, property) {
+              if (property === "isTrusted") return trusted
+              if (property === "target" && target !== undefined) return target
+              const value: unknown = Reflect.get(original, property, original)
+              return typeof value === "function" ? value.bind(original) : value
+            },
+          }),
+        ),
+      )
+    }
+    const key = (
+      code: string,
+      options: KeyboardEventInit = {},
+      target?: HTMLElement,
+      trusted = true,
+    ) => {
+      const event = new KeyboardEvent("keydown", {
+        code,
+        cancelable: true,
+        ...options,
+      })
+      deliver(event, trusted, target)
+      return event.defaultPrevented
+    }
+    expect(key("KeyH", {}, undefined, false)).toBe(false)
+    for (const modifier of [
+      { ctrlKey: true },
+      { metaKey: true },
+      { altKey: true },
+      { isComposing: true },
+    ])
+      expect(key("KeyH", modifier)).toBe(false)
+    expect(
+      key("KeyH", {}, screen.getByRole("textbox", { name: "Exact Elo" })),
+    ).toBe(false)
+    expect(
+      key(
+        "ArrowRight",
+        {},
+        screen.getByRole("radio", { name: "Standard Chess" }),
+      ),
+    ).toBe(false)
+    expect(key("KeyQ")).toBe(false)
+    expect(key("KeyH", { repeat: true })).toBe(true)
+    expect(handle).not.toHaveBeenCalled()
+    expect(key("KeyH")).toBe(true)
+    expect(key("ArrowRight", { repeat: true })).toBe(true)
+    expect(
+      key("Escape", {}, screen.getByRole("textbox", { name: "Exact Elo" })),
+    ).toBe(true)
+    expect(handle.mock.calls.map(([action]) => action)).toEqual([
+      "hints",
+      "right",
+      "cancel",
+    ])
+    gamepad.press(2)
+    const device = screen.getByLabelText("Device")
+    expect(device.textContent).toBe("controller")
+    const disconnect = new Event("gamepaddisconnected")
+    Object.defineProperty(disconnect, "gamepad", { value: { index: 0 } })
+    deliver(disconnect, true)
+    expect(device.textContent).toBe("keyboard")
+    deliver(new PointerEvent("pointerdown", { pointerType: "touch" }), false)
+    expect(device.textContent).toBe("keyboard")
+    deliver(new PointerEvent("pointerdown", { pointerType: "touch" }), true)
+    expect(device.textContent).toBe("touch")
+    deliver(new PointerEvent("pointerdown", { pointerType: "mouse" }), true)
+    expect(device.textContent).toBe("pointer")
   })
   it("cancels polling on unmount and removes input listeners", () => {
     const gamepad = gamepadHarness()

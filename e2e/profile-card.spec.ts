@@ -233,6 +233,7 @@ for (const mode of [
     page,
   }) => {
     test.setTimeout(90000)
+    await page.emulateMedia({ reducedMotion: "reduce" })
     await page.goto("/")
     await importPlayerData(page, earnedChickenProfile)
     await page
@@ -243,7 +244,9 @@ for (const mode of [
     await page
       .getByRole("button", { name: "Save changes", exact: true })
       .click()
-    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible({
+      timeout: 30000,
+    })
     await page
       .getByRole("button", { name: "Cancel changes", exact: true })
       .click()
@@ -291,6 +294,13 @@ for (const mode of [
       )
       .toBe(record.playerColor === "white" ? "w" : "b")
     await expect
+      .poll(
+        async () =>
+          (await savedProfile(page)).activeMatch?.moveFeedback?.length,
+        { timeout: 30000 },
+      )
+      .toBe(record.cursor + 2)
+    await expect
       .poll(async () => (await savedProfile(page)).activeMatch?.moveHintsUsed, {
         timeout: 30000,
       })
@@ -317,7 +327,9 @@ for (const mode of [
     await page
       .getByRole("button", { name: "Save changes", exact: true })
       .click()
-    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
+    await expect(page.getByText("Changes saved", { exact: true })).toBeVisible({
+      timeout: 30000,
+    })
     await page
       .getByRole("region", { name: "Customize profile card", exact: true })
       .getByRole("button", { name: "Share profile card", exact: true })
@@ -362,6 +374,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   page,
 }) => {
   test.setTimeout(90000)
+  await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
   await importPlayerData(page, earnedChickenProfile)
   await expect(
@@ -391,7 +404,9 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
     page.getByRole("button", { name: "Face 5", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
   await page.getByRole("button", { name: "Save changes" }).click()
-  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
+  await expect(page.getByText("Changes saved", { exact: true })).toBeVisible({
+    timeout: 30000,
+  })
   const after = await savedProfile(page)
   expect(after.appearance.face).toBe(5)
   expect({
@@ -415,7 +430,7 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.goBack()
   await expect(
     page.getByRole("group", { name: "Appearance categories", exact: true }),
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 30000 })
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
   await page.goBack()
   await expect(

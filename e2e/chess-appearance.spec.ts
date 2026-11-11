@@ -367,6 +367,11 @@ test("resolves the approved hint and history colors across all board families", 
   await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
     timeout: 30000,
   })
+  await expect
+    .poll(
+      async () => (await savedProfile(page)).activeMatch?.moveFeedback?.length,
+    )
+    .toBe(2)
   const before = (await savedProfile(page)).activeMatch
   const geometry = await hintGeometry(page)
 

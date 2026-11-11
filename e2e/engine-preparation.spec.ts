@@ -1,6 +1,8 @@
 import { expect } from "@playwright/test"
 import { firstArrivalTest as test } from "./fixtures.js"
 
+test.use({ serviceWorkers: "allow" })
+
 test("keeps the chess engine off a fresh customization-only journey", async ({
   page,
   context,

@@ -35,7 +35,7 @@ class Encoder extends EventTarget {
   postMessage = vi.fn()
 }
 
-const setup = () => {
+const setup = (png: Blob | null = null) => {
   const worker = new Encoder()
   vi.stubGlobal(
     "Worker",
@@ -52,6 +52,7 @@ const setup = () => {
       getContext: () => ({
         getImageData: () => ({ data: new Uint8ClampedArray(4) }),
       }),
+      toBlob: (encode: BlobCallback) => encode(png),
     }),
   })
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
@@ -66,6 +67,39 @@ describe("profile image export failure ownership", () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it("exports the still capture and reports unavailable canvas encoding without a worker", async () => {
+    const png = new Blob([new Uint8Array([137, 80, 78, 71])], {
+      type: "image/png",
+    })
+    const worker = setup(png)
+    const still = { ...input, format: "PNG" } as const
+    const signal = new AbortController().signal
+    const file = await createProfileCardFile(still, signal)
+    expect(file.name).toBe("Mapachess-profile.png")
+    expect(file.type).toBe("image/png")
+    expect(await file.arrayBuffer()).toEqual(await png.arrayBuffer())
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    const failed = setup()
+    await expect(createProfileCardFile(still, signal)).rejects.toThrow(
+      "PNG encoding failed",
+    )
+    expect(failed.postMessage).not.toHaveBeenCalled()
+  })
+
+  it("discards a worker result above the GIF share budget and releases the encoder", async () => {
+    const worker = setup()
+    const exporting = createProfileCardFile(input, new AbortController().signal)
+    const rejected = expect(exporting).rejects.toThrow("5 MB sharing budget")
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledOnce())
+    worker.onmessage?.(
+      new MessageEvent("message", {
+        data: { ok: true, buffer: new ArrayBuffer(5_000_001) },
+      }),
+    )
+    await rejected
+    expect(worker.terminate).toHaveBeenCalledOnce()
   })
 
   it("retains a bounded encoder message as the cause without changing recovery copy", async () => {
