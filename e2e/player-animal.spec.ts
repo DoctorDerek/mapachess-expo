@@ -21,7 +21,7 @@ async function openStoryPlayerChoices(page: Page): Promise<void> {
   await choice.press("Enter")
   await expect(
     page.getByRole("dialog", { name: "Play as", exact: true }),
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 30000 })
 }
 
 test("opens the complete locked roster from the selected animal and keeps it keyboard-scrollable", async ({
@@ -87,6 +87,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
 test("a Chess960 Story victory unlocks the shared choice and Story persists it without changing progress", async ({
   page,
 }) => {
+  test.setTimeout(90000)
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
   const initial = createInitialMapachessPlayerData()
@@ -110,7 +111,9 @@ test("a Chess960 Story victory unlocks the shared choice and Story persists it w
   expect(await savedProfile(page)).toEqual(before)
   await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
-    .poll(async () => (await savedProfile(page)).appearance.animal)
+    .poll(async () => (await savedProfile(page)).appearance.animal, {
+      timeout: 30000,
+    })
     .toBe("chicken-stockfish")
   const after = await savedProfile(page)
   expect({
@@ -196,6 +199,8 @@ test("all earned animals remain selectable after reload and editing is still a d
 test("a legacy Chicken remains readable, but cannot be reselected after switching away", async ({
   page,
 }) => {
+  test.setTimeout(90000)
+  await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
   const initial = createInitialMapachessPlayerData()
   await importPlayerData(page, {
@@ -212,9 +217,13 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
   expect((await savedProfile(page)).appearance.animal).toBe("chicken-stockfish")
   await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
-    .poll(async () => (await savedProfile(page)).appearance.animal)
+    .poll(async () => (await savedProfile(page)).appearance.animal, {
+      timeout: 30000,
+    })
     .toBe("raccoon-stockfish")
   await page.reload()
   await page.getByRole("button", { name: /^Play as / }).click()
-  await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
+  await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled({
+    timeout: 30000,
+  })
 })

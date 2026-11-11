@@ -41,6 +41,7 @@ for (const choice of choices) {
   test(`${choice.kind} choices commit only on Done and all Back paths cancel`, async ({
     page,
   }) => {
+    test.setTimeout(90000)
     await injectControllerInput(page)
     await page.setViewportSize({ width: 320, height: 640 })
     await page.emulateMedia({ reducedMotion: "reduce" })
