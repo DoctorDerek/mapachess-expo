@@ -1,5 +1,5 @@
 import cx from "classix"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Pressable, View } from "react-native"
 import {
   boardDestinationMoves,
@@ -45,6 +45,7 @@ export default function NativeChessboard({
   showMoveHints,
   lastMove,
   onMove,
+  renderBoardHost,
 }: Readonly<{
   position: MatchPosition
   orientation: MatchColor
@@ -55,6 +56,7 @@ export default function NativeChessboard({
   showMoveHints: boolean
   lastMove: AppliedMatchMove | null
   onMove: (move: MatchMoveId) => void
+  renderBoardHost?: (board: ReactNode, promotion: ReactNode) => ReactNode
 }>) {
   const { copy } = useNativeLocale()
   const rows = useMemo(() => createBoardSquareRows(orientation), [orientation])
@@ -137,205 +139,214 @@ export default function NativeChessboard({
       return false
     },
   )
-  return (
-    <View ref={boardRef} focusable className="w-full">
-      <View
-        accessibilityLabel={copy.board.orientation(orientation)}
-        className="bg-mapachito-white relative aspect-square w-full overflow-hidden rounded-lg"
-      >
-        {source !== null && failedBoard !== source ? (
-          <View
-            className={cx(
-              "absolute inset-0",
-              orientation === "black" && "rotate-180",
-            )}
-            pointerEvents="none"
-          >
-            <NativeImage
-              sourceId={source}
-              className="h-full w-full"
-              onError={() => setFailedBoard(source)}
-            />
-          </View>
-        ) : null}
-        <View className="h-full w-full">
-          {rows.map((row, rowIndex) => (
-            <View className="flex-1 flex-row" key={row[0]}>
-              {row.map((square, columnIndex) => {
-                const piece = position.pieces.find(
-                  (entry) => entry.square === square,
-                )
-                const history = lastMoveHighlight(lastMove, square)
-                const isSelected = selected === square
-                const legal =
-                  boardDestinationMoves(selectedMoves, square).length > 0
-                const checked =
-                  position.inCheck &&
-                  piece?.color === position.turn &&
-                  piece.role === "king"
-                return (
-                  <Pressable
-                    key={square}
-                    disabled={disabled}
-                    accessibilityRole="button"
-                    accessibilityLabel={copy.board.square(
-                      square,
-                      piece,
-                      isSelected,
-                      legal,
-                      disabled,
-                      hintDescriptionsForSquare(
-                        hints,
-                        showMoveHints,
-                        square,
-                        copy.board,
-                      ),
-                    )}
-                    accessibilityState={{ disabled, selected: isSelected }}
-                    onPress={() => choose(square)}
-                    className={cx(
-                      "relative aspect-square flex-1 items-center justify-center",
-                      (source === null || failedBoard === source) &&
-                        ((rowIndex + columnIndex) % 2 === 0
-                          ? "bg-mapachito-white"
-                          : "bg-mapachito-blue"),
-                    )}
-                  >
-                    {history !== null ? (
-                      <View
-                        pointerEvents="none"
-                        className={cx(
-                          "absolute inset-0 opacity-65",
-                          history === "origin"
-                            ? palette === "dark"
-                              ? "bg-board-history-origin-on-dark"
-                              : "bg-board-history-origin"
-                            : palette === "dark"
-                              ? "bg-board-history-destination-on-dark"
-                              : "bg-board-history-destination",
-                        )}
-                      />
-                    ) : null}
-                    {checked ? (
-                      <View
-                        pointerEvents="none"
-                        className="border-board-check absolute inset-0 border-4"
-                      />
-                    ) : null}
-                    {isSelected ? (
-                      <View
-                        pointerEvents="none"
-                        className="border-board-neutral-edge bg-board-neutral/30 absolute inset-1 rounded-md border-3"
-                      />
-                    ) : null}
-                    {focused && focusedSquare === square ? (
-                      <View
-                        pointerEvents="none"
-                        className="border-mapachito-orange absolute inset-0 z-10 border-4"
-                      />
-                    ) : null}
-                    {piece === undefined ? null : (
-                      <View pointerEvents="none" className="absolute inset-0.5">
-                        <NativeChessPiece
-                          color={piece.color}
-                          role={piece.role}
-                          pieceSetId={appearance.pieceSetId}
-                        />
-                      </View>
-                    )}
-                    {legal ? (
-                      <View
-                        pointerEvents="none"
-                        className="border-board-neutral-edge bg-board-neutral absolute size-3 rounded-full border-2"
-                      />
-                    ) : null}
-                    {columnIndex === 0 ? (
-                      <NativeText
-                        accessible={false}
-                        className="text-mapachito-charcoal absolute top-0 left-0.5 text-xs"
-                      >
-                        {square.slice(1)}
-                      </NativeText>
-                    ) : null}
-                    {rowIndex === rows.length - 1 ? (
-                      <NativeText
-                        accessible={false}
-                        className="text-mapachito-charcoal absolute right-0.5 bottom-0 text-xs"
-                      >
-                        {square[0]}
-                      </NativeText>
-                    ) : null}
-                  </Pressable>
-                )
-              })}
-            </View>
-          ))}
-        </View>
-        {hints === null ? null : (
-          <View pointerEvents="none" className="absolute inset-0">
-            <NativeBetterHints
-              hints={hints}
-              orientation={orientation}
-              showMoves={showMoveHints}
-              palette={palette}
-            />
-          </View>
-        )}
-      </View>
-      {pending.length === 0 ? null : (
-        <NativePanel
-          title={copy.board.chooseMove(pending[0]?.to ?? "a1")}
-          onBack={() => setPending([])}
-          actions={
-            <NativeButton variant="secondary" onPress={() => setPending([])}>
-              {copy.board.cancelMove}
-            </NativeButton>
-          }
+  const boardSurface = (
+    <View
+      ref={boardRef}
+      focusable
+      accessibilityLabel={copy.board.orientation(orientation)}
+      className="bg-mapachito-white relative aspect-square w-full overflow-hidden rounded-lg"
+    >
+      {source !== null && failedBoard !== source ? (
+        <View
+          className={cx(
+            "absolute inset-0",
+            orientation === "black" && "rotate-180",
+          )}
+          pointerEvents="none"
         >
-          <View className="flex-row flex-wrap gap-3">
-            {[...pending]
-              .sort((left, right) =>
-                left.kind === "normal" &&
-                right.kind === "normal" &&
-                left.promotion !== null &&
-                right.promotion !== null
-                  ? MATCH_PROMOTION_ROLES.indexOf(left.promotion) -
-                    MATCH_PROMOTION_ROLES.indexOf(right.promotion)
-                  : 0,
+          <NativeImage
+            sourceId={source}
+            className="h-full w-full"
+            onError={() => setFailedBoard(source)}
+          />
+        </View>
+      ) : null}
+      <View className="h-full w-full">
+        {rows.map((row, rowIndex) => (
+          <View className="flex-1 flex-row" key={row[0]}>
+            {row.map((square, columnIndex) => {
+              const piece = position.pieces.find(
+                (entry) => entry.square === square,
               )
-              .map((move) => (
-                <NativeButton
-                  key={move.id}
-                  className="min-h-24 min-w-28 flex-1 basis-28"
-                  accessibilityLabel={
-                    move.kind === "castle"
-                      ? copy.board.castle(move.san, move.to, move.rookTo)
-                      : move.promotion === null
-                        ? copy.board.moveKing(move.to)
-                        : copy.board.promote(move.promotion)
-                  }
-                  onPress={() => {
-                    setPending([])
-                    setSelected(null)
-                    onMove(move.id)
-                  }}
+              const history = lastMoveHighlight(lastMove, square)
+              const isSelected = selected === square
+              const legal =
+                boardDestinationMoves(selectedMoves, square).length > 0
+              const checked =
+                position.inCheck &&
+                piece?.color === position.turn &&
+                piece.role === "king"
+              return (
+                <Pressable
+                  key={square}
+                  disabled={disabled}
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.board.square(
+                    square,
+                    piece,
+                    isSelected,
+                    legal,
+                    disabled,
+                    hintDescriptionsForSquare(
+                      hints,
+                      showMoveHints,
+                      square,
+                      copy.board,
+                    ),
+                  )}
+                  accessibilityState={{ disabled, selected: isSelected }}
+                  onPress={() => choose(square)}
+                  className={cx(
+                    "relative aspect-square flex-1 items-center justify-center",
+                    (source === null || failedBoard === source) &&
+                      ((rowIndex + columnIndex) % 2 === 0
+                        ? "bg-mapachito-white"
+                        : "bg-mapachito-blue"),
+                  )}
                 >
-                  {move.kind === "normal" && move.promotion !== null ? (
-                    <View className="size-20">
+                  {history !== null ? (
+                    <View
+                      pointerEvents="none"
+                      className={cx(
+                        "absolute inset-0 opacity-65",
+                        history === "origin"
+                          ? palette === "dark"
+                            ? "bg-board-history-origin-on-dark"
+                            : "bg-board-history-origin"
+                          : palette === "dark"
+                            ? "bg-board-history-destination-on-dark"
+                            : "bg-board-history-destination",
+                      )}
+                    />
+                  ) : null}
+                  {checked ? (
+                    <View
+                      pointerEvents="none"
+                      className="border-board-check absolute inset-0 border-4"
+                    />
+                  ) : null}
+                  {isSelected ? (
+                    <View
+                      pointerEvents="none"
+                      className="border-board-neutral-edge bg-board-neutral/30 absolute inset-1 rounded-md border-3"
+                    />
+                  ) : null}
+                  {focused && focusedSquare === square ? (
+                    <View
+                      pointerEvents="none"
+                      className="border-mapachito-orange absolute inset-0 z-10 border-4"
+                    />
+                  ) : null}
+                  {piece === undefined ? null : (
+                    <View pointerEvents="none" className="absolute inset-0.5">
                       <NativeChessPiece
-                        color={orientation}
-                        role={move.promotion}
+                        color={piece.color}
+                        role={piece.role}
                         pieceSetId={appearance.pieceSetId}
                       />
                     </View>
-                  ) : (
-                    <NativeText>{move.san}</NativeText>
                   )}
-                </NativeButton>
-              ))}
+                  {legal ? (
+                    <View
+                      pointerEvents="none"
+                      className="border-board-neutral-edge bg-board-neutral absolute size-3 rounded-full border-2"
+                    />
+                  ) : null}
+                  {columnIndex === 0 ? (
+                    <NativeText
+                      accessible={false}
+                      className="text-mapachito-charcoal absolute top-0 left-0.5 text-xs"
+                    >
+                      {square.slice(1)}
+                    </NativeText>
+                  ) : null}
+                  {rowIndex === rows.length - 1 ? (
+                    <NativeText
+                      accessible={false}
+                      className="text-mapachito-charcoal absolute right-0.5 bottom-0 text-xs"
+                    >
+                      {square[0]}
+                    </NativeText>
+                  ) : null}
+                </Pressable>
+              )
+            })}
           </View>
-        </NativePanel>
+        ))}
+      </View>
+      {hints === null ? null : (
+        <View pointerEvents="none" className="absolute inset-0">
+          <NativeBetterHints
+            hints={hints}
+            orientation={orientation}
+            showMoves={showMoveHints}
+            palette={palette}
+          />
+        </View>
       )}
     </View>
+  )
+  const promotion =
+    pending.length === 0 ? null : (
+      <NativePanel
+        title={copy.board.chooseMove(pending[0]?.to ?? "a1")}
+        onBack={() => setPending([])}
+        actions={
+          <NativeButton variant="secondary" onPress={() => setPending([])}>
+            {copy.board.cancelMove}
+          </NativeButton>
+        }
+      >
+        <View className="flex-row flex-wrap gap-3">
+          {[...pending]
+            .sort((left, right) =>
+              left.kind === "normal" &&
+              right.kind === "normal" &&
+              left.promotion !== null &&
+              right.promotion !== null
+                ? MATCH_PROMOTION_ROLES.indexOf(left.promotion) -
+                  MATCH_PROMOTION_ROLES.indexOf(right.promotion)
+                : 0,
+            )
+            .map((move) => (
+              <NativeButton
+                key={move.id}
+                className="min-h-24 min-w-28 flex-1 basis-28"
+                accessibilityLabel={
+                  move.kind === "castle"
+                    ? copy.board.castle(move.san, move.to, move.rookTo)
+                    : move.promotion === null
+                      ? copy.board.moveKing(move.to)
+                      : copy.board.promote(move.promotion)
+                }
+                onPress={() => {
+                  setPending([])
+                  setSelected(null)
+                  onMove(move.id)
+                }}
+              >
+                {move.kind === "normal" && move.promotion !== null ? (
+                  <View className="size-20">
+                    <NativeChessPiece
+                      color={orientation}
+                      role={move.promotion}
+                      pieceSetId={appearance.pieceSetId}
+                    />
+                  </View>
+                ) : (
+                  <NativeText>{move.san}</NativeText>
+                )}
+              </NativeButton>
+            ))}
+        </View>
+      </NativePanel>
+    )
+  return renderBoardHost === undefined ? (
+    <View className="w-full">
+      {boardSurface}
+      {promotion}
+    </View>
+  ) : (
+    renderBoardHost(boardSurface, promotion)
   )
 }

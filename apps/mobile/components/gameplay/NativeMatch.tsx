@@ -208,6 +208,62 @@ export default function NativeMatch({
         reducedMotion={activity.reducedMotion}
       />
     )
+  const identityAndEvaluation = (
+    <>
+      <View className="flex-row flex-wrap items-center justify-between gap-2">
+        <NativeText className="font-native text-lg">{matchName}</NativeText>
+        <NativeText className="text-sm">
+          {timeControlLabel(session.match.timeControl, copy.gameplay.clock)}
+        </NativeText>
+      </View>
+      <NativeText className="text-sm">
+        {copy.gameplay.opponentAndElo(
+          copy.animals.opponent(session.match.opponentId),
+          session.runtime.opponentTargetElo,
+        )}
+      </NativeText>
+      {snapshot.context.clock === null ? null : (
+        <NativeMatchClock
+          clock={snapshot.context.clock}
+          monotonicClock={snapshot.context.monotonicClock}
+          canResume={snapshot.matches("paused")}
+          onResume={() =>
+            session.actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
+          }
+        />
+      )}
+      <View
+        className="bg-mapachito-charcoal relative h-8 items-center justify-center overflow-hidden rounded"
+        accessibilityRole="progressbar"
+        accessibilityLabel={
+          copy.interface.positionEvaluationGutter.stockfishEvaluation
+        }
+        accessibilityValue={{
+          min: 0,
+          max: 100,
+          now: whiteEvaluationSharePercent(evaluation),
+          text:
+            evaluation === null
+              ? evaluationStage === "failure"
+                ? copy.evaluation.unavailable
+                : copy.evaluation.waiting
+              : positionEvaluationLabel(evaluation, copy.evaluation),
+        }}
+      >
+        <View
+          className="bg-mapachito-white absolute inset-y-0 left-0"
+          style={{
+            width: `${whiteEvaluationSharePercent(evaluation)}%`,
+          }}
+        />
+        <NativeText className="bg-mapachito-charcoal rounded px-2 text-center">
+          {evaluation === null
+            ? "…"
+            : positionEvaluationLabel(evaluation, copy.evaluation)}
+        </NativeText>
+      </View>
+    </>
+  )
   return (
     <NativeInputSurface
       enabled={visible && !rewardOpen}
@@ -221,95 +277,51 @@ export default function NativeMatch({
         importantForAccessibility={rewardOpen ? "no-hide-descendants" : "auto"}
         pointerEvents={rewardOpen ? "none" : "auto"}
       >
-        <View className="flex-row flex-wrap items-center justify-between gap-2">
-          <NativeText className="font-native text-lg">{matchName}</NativeText>
-          <NativeText className="text-sm">
-            {timeControlLabel(session.match.timeControl, copy.gameplay.clock)}
-          </NativeText>
-        </View>
-        <NativeText className="text-sm">
-          {copy.gameplay.opponentAndElo(
-            copy.animals.opponent(session.match.opponentId),
-            session.runtime.opponentTargetElo,
-          )}
-        </NativeText>
-        {snapshot.context.clock === null ? null : (
-          <NativeMatchClock
-            clock={snapshot.context.clock}
-            monotonicClock={snapshot.context.monotonicClock}
-            canResume={snapshot.matches("paused")}
-            onResume={() =>
-              session.actor.send({ type: "MATCH.CLOCK_RESUME_REQUESTED" })
-            }
-          />
-        )}
-        <View
-          className="bg-mapachito-charcoal relative h-8 items-center justify-center overflow-hidden rounded"
-          accessibilityRole="progressbar"
-          accessibilityLabel={
-            copy.interface.positionEvaluationGutter.stockfishEvaluation
+        <NativeChessboard
+          position={position}
+          orientation={session.match.playerColor}
+          legalMoves={conclusion === null ? listLegalMatchMoves(position) : []}
+          disabled={
+            !visible ||
+            !selectIsPlayerTurn(snapshot) ||
+            overlays.length > 0 ||
+            conclusion !== null
           }
-          accessibilityValue={{
-            min: 0,
-            max: 100,
-            now: whiteEvaluationSharePercent(evaluation),
-            text:
-              evaluation === null
-                ? evaluationStage === "failure"
-                  ? copy.evaluation.unavailable
-                  : copy.evaluation.waiting
-                : positionEvaluationLabel(evaluation, copy.evaluation),
-          }}
-        >
-          <View
-            className="bg-mapachito-white absolute inset-y-0 left-0"
-            style={{
-              width: `${whiteEvaluationSharePercent(evaluation)}%`,
-            }}
-          />
-          <NativeText className="bg-mapachito-charcoal rounded px-2 text-center">
-            {evaluation === null
-              ? "…"
-              : positionEvaluationLabel(evaluation, copy.evaluation)}
-          </NativeText>
-        </View>
-        <View className="relative flex-col gap-2 xl:flex-row">
-          <View className="relative min-w-0 flex-1">
-            <NativeChessboard
-              position={position}
-              orientation={session.match.playerColor}
-              legalMoves={
-                conclusion === null ? listLegalMatchMoves(position) : []
-              }
-              disabled={
-                !visible ||
-                !selectIsPlayerTurn(snapshot) ||
-                overlays.length > 0 ||
-                conclusion !== null
-              }
-              appearance={data.settings.chessAppearance}
-              hints={hints}
-              showMoveHints={stage === "move-hints"}
-              lastMove={timeline.transitions[timeline.cursor - 1]?.move ?? null}
-              onMove={(moveId) =>
-                session.actor.send({ type: "MATCH.MOVE_REQUESTED", moveId })
-              }
-            />
-          </View>
-          <View
-            pointerEvents="box-none"
-            className={cx(
-              "absolute inset-0 xl:relative xl:inset-auto xl:w-64 xl:self-stretch",
-              data.settings.moveReactionPlacement === "top"
-                ? "justify-start"
-                : data.settings.moveReactionPlacement === "middle"
-                  ? "justify-center"
-                  : "justify-end",
-            )}
-          >
-            {ratings}
-          </View>
-        </View>
+          appearance={data.settings.chessAppearance}
+          hints={hints}
+          showMoveHints={stage === "move-hints"}
+          lastMove={timeline.transitions[timeline.cursor - 1]?.move ?? null}
+          onMove={(moveId) =>
+            session.actor.send({ type: "MATCH.MOVE_REQUESTED", moveId })
+          }
+          renderBoardHost={(board, promotion) => (
+            <View className="flex-row gap-2">
+              <View className="min-w-0 flex-1">
+                <View className="relative gap-2">
+                  {identityAndEvaluation}
+                  {board}
+                  <View
+                    pointerEvents="box-none"
+                    className={cx(
+                      "absolute inset-x-0 bottom-0 z-30 xl:inset-y-0 xl:right-auto xl:left-full xl:ml-2 xl:aspect-auto xl:w-64",
+                      data.settings.moveReactionPlacement === "top"
+                        ? "top-0"
+                        : "aspect-square",
+                    )}
+                  >
+                    {ratings}
+                  </View>
+                </View>
+                {promotion}
+              </View>
+              <View
+                accessible={false}
+                pointerEvents="none"
+                className="hidden w-64 xl:flex"
+              />
+            </View>
+          )}
+        />
         <NativeMatchControls
           session={session}
           snapshot={snapshot}
