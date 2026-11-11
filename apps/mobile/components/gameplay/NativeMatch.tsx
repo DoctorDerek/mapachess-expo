@@ -155,10 +155,12 @@ export default function NativeMatch({
   const rewardOpen = visible && reward !== null && overlays.at(-1) === "rewards"
   const resultActionsEnabled =
     visible && resultNavigationReady && !selectAreMatchMutationsFrozen(snapshot)
+  const reactionsPaused =
+    !visible || !activity.active || overlays.length > 0 || conclusion !== null
   const reactions = useNativeMoveReactions(
     timeline,
     saved?.moveFeedback ?? NO_FEEDBACK,
-    !visible || !activity.active || overlays.length > 0 || conclusion !== null,
+    reactionsPaused,
   )
   useEffect(() => {
     if (previousConclusion.current !== null && conclusion === null)
@@ -197,7 +199,15 @@ export default function NativeMatch({
   const matchName =
     copy.setup.presentations[position.variant][session.match.mode].title
   const ratings =
-    reactions === null ? null : <NativeMoveRatings controller={reactions} />
+    reactions === null ? null : (
+      <NativeMoveRatings
+        controller={reactions}
+        playerColor={session.match.playerColor}
+        placement={data.settings.moveReactionPlacement}
+        active={!reactionsPaused}
+        reducedMotion={activity.reducedMotion}
+      />
+    )
   return (
     <NativeInputSurface
       enabled={visible && !rewardOpen}
