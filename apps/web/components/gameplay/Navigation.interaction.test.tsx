@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { useSelector } from "@xstate/react"
 import { describe, expect, it, vi } from "vitest"

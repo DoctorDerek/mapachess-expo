@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { IDBObjectStore } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"

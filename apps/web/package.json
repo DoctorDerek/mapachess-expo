@@ -39,15 +39,16 @@
     "xstate": "^5"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "^1",
+    "@happy-dom/node-canvas-adapter": "^21",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10",
     "@testing-library/react": "^16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "canvas": "^3",
     "esbuild": "^0.28.2",
     "fake-indexeddb": "^6",
-    "jsdom": "^31",
+    "happy-dom": "^21",
     "postcss": "^8",
     "tailwindcss": "^4",
     "vite": "^8"

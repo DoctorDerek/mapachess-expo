@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"

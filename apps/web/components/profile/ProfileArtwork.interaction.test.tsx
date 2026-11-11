@@ -1,6 +1,8 @@
-// @vitest-environment jsdom
-// @vitest-environment-options {"resources":"usable"}
+// @vitest-environment happy-dom
+// @vitest-environment-options {"settings":{"enableImageFileLoading":true}}
+import { CanvasAdapter } from "@happy-dom/node-canvas-adapter"
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { DetachedWindowAPI } from "happy-dom"
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
 import { DEFAULT_PLAYER_APPEARANCE } from "@mapachess/profile/player-appearance"
@@ -40,6 +42,12 @@ const palette = {
 }
 
 beforeEach(() => {
+  if (
+    !("happyDOM" in window) ||
+    !(window.happyDOM instanceof DetachedWindowAPI)
+  )
+    throw new Error("The artwork fixture requires the Happy DOM environment.")
+  window.happyDOM.settings.canvasAdapter = new CanvasAdapter()
   vi.mocked(HTMLCanvasElement.prototype.getContext).mockRestore()
   for (const [name, color] of Object.entries(palette))
     document.documentElement.style.setProperty(

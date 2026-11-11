@@ -4,6 +4,7 @@ packages:
 
 allowBuilds:
   "@swc/core": true
+  canvas: true
   esbuild: true
 
 overrides:
@@ -32,3 +33,6 @@ minimumReleaseAgeExclude:
   - expo-constants@57.0.16
   - expo-font@57.0.2
   - expo@57.0.18
+
+patchedDependencies:
+  happy-dom@21.0.4: patches/happy-dom@21.0.4.patch
