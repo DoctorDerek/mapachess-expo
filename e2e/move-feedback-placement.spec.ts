@@ -77,6 +77,18 @@ async function openGame(
     }),
   ).toHaveAttribute("aria-disabled", "false", { timeout: 30000 })
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
+  const viewport = page.viewportSize()
+  if (viewport === null) throw new Error("Expected an explicit board viewport")
+  if (viewport.width < 1280) {
+    await expect
+      .poll(() =>
+        page.getByRole("grid", { name: /Chessboard/ }).evaluate((element) => {
+          const { left, width } = element.getBoundingClientRect()
+          return [left, width - document.documentElement.clientWidth]
+        }),
+      )
+      .toEqual([0, 0])
+  }
   await page.clock.pauseAt(new Date(Date.now() + 1000))
   if (color === "Black")
     await expect(
