@@ -146,7 +146,9 @@ describe("reward progress and transient feedback lifecycle", () => {
       expect(screen.getByRole("status").textContent).toContain(
         copy.gameplay.levelAchievement(first.level),
       )
-      act(() => vi.advanceTimersByTime(5000))
+      act(() => vi.advanceTimersByTime(4_000))
+      view.rerender(<LevelAchievementToasts ids={[...ids]} paused={false} />)
+      act(() => vi.advanceTimersByTime(1_000))
       expect(screen.getByRole("status").textContent).toContain(
         copy.gameplay.levelAchievement(second.level),
       )
@@ -159,7 +161,14 @@ describe("reward progress and transient feedback lifecycle", () => {
       expect(screen.getByRole("status").textContent).toContain(
         copy.gameplay.levelAchievement(second.level),
       )
-      act(() => vi.advanceTimersByTime(5000))
+      act(() => vi.advanceTimersByTime(4_999))
+      expect(screen.getByRole("status").textContent).toContain(
+        copy.gameplay.levelAchievement(second.level),
+      )
+      act(() => vi.advanceTimersByTime(1))
+      expect(screen.queryByRole("status")).toBeNull()
+      view.rerender(<LevelAchievementToasts ids={[...ids]} paused />)
+      view.rerender(<LevelAchievementToasts ids={[...ids]} paused={false} />)
       expect(screen.queryByRole("status")).toBeNull()
       view.unmount()
       expect(vi.getTimerCount()).toBe(0)
