@@ -55,7 +55,7 @@ export default function MoveReactionCard({
       <span
         ref={countdown}
         aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-0.5 origin-left rounded-full bg-linear-[to_right,var(--color-mapachito-raspberry),var(--color-mapachito-orange),var(--color-mapachito-green),var(--color-mapachito-blue),var(--color-mapachito-violet)] motion-reduce:invisible"
+        className="bg-move-reaction-countdown absolute inset-x-0 bottom-0 h-0.5 origin-left rounded-full motion-reduce:invisible"
       />
     </button>
   )
