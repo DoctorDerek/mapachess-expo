@@ -51,6 +51,7 @@ import NativeCoachPortrait from "../profile/NativeCoachPortrait"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
 import NativeBattleStage from "./NativeBattleStage"
 import NativeChessboard from "./NativeChessboard"
+import NativeLevelAchievementToasts from "./NativeLevelAchievementToasts"
 import NativeMatchClock from "./NativeMatchClock"
 import NativeMatchControls from "./NativeMatchControls"
 import NativeMatchOverlay from "./NativeMatchOverlay"
@@ -439,6 +440,18 @@ export default function NativeMatch({
           data={data}
           navigation={navigation}
           overlays={overlays}
+        />
+      ) : null}
+      {!initiallyConcluded && reward !== null ? (
+        <NativeLevelAchievementToasts
+          ids={reward.unlockedAchievementIds}
+          paused={
+            !visible ||
+            !activity.active ||
+            !resultNavigationReady ||
+            !celebrationDismissed ||
+            overlays.length > 0
+          }
         />
       ) : null}
     </NativeInputSurface>
