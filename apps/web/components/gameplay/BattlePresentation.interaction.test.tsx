@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import {
   act,
   render,
@@ -213,6 +213,7 @@ describe("battle animation ownership and recovery", () => {
 
 describe("selectable animal and coach portrait lifecycles", () => {
   it("runs an animal attention clip, returns to calm, pauses when hidden, and releases on deselection", async () => {
+    vi.stubGlobal("IntersectionObserver", undefined)
     const images = controlledImages()
     const animations = controlledAnimations()
     vi.stubGlobal("matchMedia", (media: string) => ({

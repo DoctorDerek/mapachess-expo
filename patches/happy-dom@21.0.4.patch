@@ -1,0 +1,31 @@
+diff --git a/lib/history/HistoryItemList.js b/lib/history/HistoryItemList.js
+index f51730aa6e932759e2861c13cb41a0fdfdd305b0..05546f3db47e7d8ca77ccb3f6fb3c8871fb6a0d7 100644
+--- a/lib/history/HistoryItemList.js
++++ b/lib/history/HistoryItemList.js
+@@ -33,10 +33,6 @@ export default class HistoryItemList {
+      */
+     replace(historyItem) {
+         const index = this.items.indexOf(this.currentItem);
+-        // If the current item is not the last one, remove all items after it.
+-        if (index !== this.items.length - 1) {
+-            this.items.length = index + 1;
+-        }
+         if (index === -1) {
+             throw new Error('Current history item not found');
+         }
+diff --git a/src/history/HistoryItemList.ts b/src/history/HistoryItemList.ts
+index a755d0221c8feb57d1b121233b52f2dbf577550e..5445c3e14e0b2f10c25e8d06c71284e271762fff 100644
+--- a/src/history/HistoryItemList.ts
++++ b/src/history/HistoryItemList.ts
+@@ -40,11 +40,6 @@ export default class HistoryItemList {
+ 	public replace(historyItem: IHistoryItem): void {
+ 		const index = this.items.indexOf(this.currentItem);
+ 
+-		// If the current item is not the last one, remove all items after it.
+-		if (index !== this.items.length - 1) {
+-			this.items.length = index + 1;
+-		}
+-
+ 		if (index === -1) {
+ 			throw new Error('Current history item not found');
+ 		}

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
@@ -188,14 +188,11 @@ describe("reward progress and transient feedback lifecycle", () => {
     expect(animations.running).toHaveLength(1)
     const sprite = view.container.querySelector("span")
     if (sprite === null) throw new Error("The raccoon sprite must exist.")
-    fireEvent(sprite, new Event("webkitAnimationEnd", { bubbles: true }))
+    fireEvent.animationEnd(sprite)
     expect(view.container.children).toHaveLength(1)
     if (sprite.parentElement === null)
       throw new Error("The crossing container must exist.")
-    fireEvent(
-      sprite.parentElement,
-      new Event("webkitAnimationEnd", { bubbles: true }),
-    )
+    fireEvent.animationEnd(sprite.parentElement)
     expect(view.container.children).toHaveLength(0)
     expect(animations.running[0]?.cancel).toHaveBeenCalledOnce()
     view.unmount()

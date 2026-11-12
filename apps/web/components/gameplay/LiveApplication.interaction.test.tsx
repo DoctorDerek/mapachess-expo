@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import {
   act,
   fireEvent,
@@ -95,12 +95,14 @@ const copy = loadCatalog("en")
 
 async function start(mode: "story" | "challenge" = "challenge", timed = false) {
   const view = await bootApplication()
+  const modeButton = screen.getByRole("button", {
+    name: new RegExp(copy.setup.presentations.standard[mode].title),
+  })
+  await waitFor(() => expect(modeButton).toHaveProperty("disabled", false))
+  fireEvent.click(modeButton)
   fireEvent.click(
-    screen.getByRole("button", {
-      name: new RegExp(copy.setup.presentations.standard[mode].title),
-    }),
+    await screen.findByRole("button", { name: copy.setup.changeHints }),
   )
-  fireEvent.click(screen.getByRole("button", { name: copy.setup.changeHints }))
   let dialog = within(
     screen.getByRole("dialog", { name: copy.setup.betterHints }),
   )

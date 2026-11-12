@@ -4,6 +4,7 @@ packages:
 
 allowBuilds:
   "@swc/core": true
+  canvas: true
   esbuild: true
 
 overrides:
@@ -42,4 +43,5 @@ packageExtensions:
 
 patchedDependencies:
   decode-uri-component@0.5.1: patches/decode-uri-component@0.5.1.patch
+  happy-dom@21.0.4: patches/happy-dom@21.0.4.patch
   jest-config@29.7.0: patches/jest-config@29.7.0.patch

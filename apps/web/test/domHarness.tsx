@@ -25,6 +25,10 @@ export function installDomHarness(): void {
   }))
   beforeEach(() => {
     vi.stubGlobal("crypto", webcrypto)
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("The DOM fixture is offline.")),
+    )
     vi.stubGlobal("matchMedia", (query: string): MediaQueryList => ({
       matches: query.includes("reduced-motion"),
       media: query,
