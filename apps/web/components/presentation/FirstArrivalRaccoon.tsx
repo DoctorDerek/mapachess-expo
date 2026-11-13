@@ -65,7 +65,7 @@ export default function FirstArrivalRaccoon() {
     >
       <div
         data-ready={ready}
-        className="relative -left-(--arrival-sprite-width) h-full w-[calc(100%+var(--arrival-sprite-width))] animate-[first-arrival-crossing_3200ms_linear_900ms_both] [animation-play-state:paused] data-[ready=true]:[animation-play-state:running] xl:[animation-duration:4000ms]"
+        className="relative -left-(--arrival-sprite-width) h-full w-[calc(100%+var(--arrival-sprite-width))] animate-[first-arrival-crossing_linear_both] [animation-delay:var(--arrival-crossing-delay)] [animation-duration:var(--arrival-crossing-duration)] [animation-play-state:paused] data-[ready=true]:[animation-play-state:running] xl:[animation-duration:var(--arrival-crossing-wide-duration)]"
         onAnimationEnd={(event) => {
           if (event.target === event.currentTarget) setFinished(true)
         }}

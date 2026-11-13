@@ -40,3 +40,9 @@
     ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   --breakpoint-xl: 1280px;
 }
+
+@theme static {
+  --arrival-crossing-duration: 3200ms;
+  --arrival-crossing-wide-duration: 4000ms;
+  --arrival-crossing-delay: 900ms;
+}
