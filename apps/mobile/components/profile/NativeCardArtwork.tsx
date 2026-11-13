@@ -92,13 +92,15 @@ const NativeCardArtwork = forwardRef<
         x={factsWidth}
         width={PROFILE_CARD_WIDTH - factsWidth}
         height={height}
-        viewBox="0 0 360 450"
+        viewBox={`0 0 ${PROFILE_CARD_WIDTH - factsWidth} ${height}`}
       >
         <NativePlayerArtwork
           appearance={input.appearance}
           animal={content.animal}
           frame={frame}
           onAssetLoaded={onAssetLoaded}
+          width={PROFILE_CARD_WIDTH - factsWidth}
+          height={height}
         />
       </Svg>
       <Rect width={factsWidth} height={height} fill={yellow} />
