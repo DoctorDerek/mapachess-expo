@@ -6,10 +6,10 @@ import {
 } from "@mapachess/match/match-setup"
 import { timeControlLabel } from "@mapachess/match/time-control"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import NativeButton from "../presentation/NativeButton"
-import NativeText from "../presentation/NativeText"
-import { useNativeLocale } from "../profile/NativeLocaleProvider"
-import NativeProfileCard from "../profile/NativeProfileCard"
+import NativeButton from "@/components/presentation/NativeButton"
+import NativeText from "@/components/presentation/NativeText"
+import { useNativeLocale } from "@/components/profile/NativeLocaleProvider"
+import NativeProfileCard from "@/components/profile/NativeProfileCard"
 
 export default function NativeHome({
   data,
@@ -30,7 +30,10 @@ export default function NativeHome({
 }>) {
   const { copy } = useNativeLocale()
   return (
-    <ScrollView className="flex-1" contentContainerClassName="gap-5 p-4 pb-8">
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="mx-auto w-full max-w-mapachess gap-5 p-4 pb-8 xl:p-6"
+    >
       <View className="flex-row flex-wrap items-center justify-between gap-3">
         <NativeText accessibilityRole="header" className="font-native text-4xl">
           {copy.introduction.title}
@@ -39,7 +42,7 @@ export default function NativeHome({
           {copy.interface.webGame.settings}
         </NativeButton>
       </View>
-      <View className="flex-col gap-6 xl:flex-row xl:items-center">
+      <View className="flex-col gap-6 xl:flex-row xl:items-start">
         <View className="min-w-0 flex-1 gap-3">
           <NativeProfileCard data={data} />
           <View className="flex-row flex-wrap gap-2">

@@ -1,10 +1,20 @@
 // @vitest-environment happy-dom
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest"
+import {
+  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest"
 import useFirstArrivalMotion from "../../lib/presentation/useFirstArrivalMotion"
 import { installDomHarness } from "../../test/domHarness"
+import FirstArrivalRaccoon from "./FirstArrivalRaccoon"
 
 const runtime = vi.hoisted(() => {
+  vi.stubEnv("MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS", "true")
   const instances: {
     onAdvance: () => void
     onStop: () => void
@@ -35,6 +45,7 @@ vi.mock("@rive-app/canvas-lite", () => ({
   },
 }))
 installDomHarness()
+afterAll(() => vi.unstubAllEnvs())
 beforeEach(() => {
   runtime.instances.length = 0
   runtime.gate = Promise.withResolvers<void>()
@@ -102,6 +113,61 @@ function idle() {
 }
 
 describe("deferred first-arrival animation lifecycle", () => {
+  it("starts the header strip only after its image loads and cancels its owned playback", () => {
+    const image = document.createElement("img")
+    vi.stubGlobal(
+      "Image",
+      class {
+        constructor() {
+          return image
+        }
+      },
+    )
+    const cancel = vi.fn()
+    const animate = vi.fn(() => ({ cancel }))
+    const original = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "animate",
+    )
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: animate,
+    })
+    onTestFinished(() => {
+      if (original === undefined)
+        Reflect.deleteProperty(HTMLElement.prototype, "animate")
+      else Object.defineProperty(HTMLElement.prototype, "animate", original)
+    })
+    const view = render(<FirstArrivalRaccoon />)
+    expect(animate).not.toHaveBeenCalled()
+    fireEvent.load(image)
+    expect(animate).toHaveBeenCalledOnce()
+    const crossing = view.container.querySelector("[data-ready]")
+    expect(crossing?.getAttribute("data-ready")).toBe("true")
+    if (crossing === null) throw new Error("Expected the loaded crossing host.")
+    fireEvent(crossing, new Event("animationend", { bubbles: true }))
+    expect(view.container.firstChild).toBeNull()
+    expect(cancel).toHaveBeenCalledOnce()
+    view.unmount()
+  })
+
+  it("removes an unavailable header sprite without changing introduction ownership", () => {
+    const image = document.createElement("img")
+    vi.stubGlobal(
+      "Image",
+      class {
+        constructor() {
+          return image
+        }
+      },
+    )
+    const view = render(<FirstArrivalRaccoon />)
+    fireEvent.error(image)
+    expect(view.container.firstChild).toBeNull()
+    view.unmount()
+    expect(image.onload).toBeNull()
+    expect(image.onerror).toBeNull()
+  })
   it("waits for browser idle and the self-hosted runtime, then advances and cleans up on completion", async () => {
     const schedule = idle()
     const view = render(<Arrival />)
