@@ -180,6 +180,23 @@ describe("native production application journeys", () => {
     const runtime = await readyApplication({ introductionCompleted: false })
     await render(<HomeScreen />)
     await fireEvent.press(
+      await screen.findByRole("button", { name: LOCALE_LABELS["es-419"] }),
+    )
+    await waitFor(() =>
+      expect(
+        selectCurrentPlayerData(runtime.profile.actor.getSnapshot())?.settings
+          .locale,
+      ).toBe("es-419"),
+    )
+    expect(
+      screen.getByRole("button", {
+        name: loadCatalog("es-419").introduction.start,
+      }),
+    ).toBeOnTheScreen()
+    await fireEvent.press(
+      screen.getByRole("button", { name: LOCALE_LABELS.en }),
+    )
+    await fireEvent.press(
       await screen.findByRole("button", { name: copy.introduction.start }),
     )
     expect(
@@ -189,6 +206,19 @@ describe("native production application journeys", () => {
     ).toBeOnTheScreen()
     expect(runtime.profile.actor.getSnapshot().matches("ready")).toBe(true)
     expect(runtime.game().actor.getSnapshot().context.session).toBeNull()
+    for (const variant of ["standard", "chess960"] as const)
+      for (const mode of ["story", "challenge"] as const)
+        expect(
+          screen.getByRole("button", {
+            name: copy.setup.presentations[variant][mode].title,
+          }),
+        ).toBeOnTheScreen()
+    expect(
+      screen.getByRole("button", { name: copy.setup.customizeProfile }),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByRole("button", { name: copy.setup.shareProfile }),
+    ).toBeOnTheScreen()
   })
 
   it("opens real setup and an accepted native match, and Close dismisses expanded History once", async () => {
