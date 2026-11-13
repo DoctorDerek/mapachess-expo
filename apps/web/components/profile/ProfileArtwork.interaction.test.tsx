@@ -9,6 +9,7 @@ import { DEFAULT_PLAYER_APPEARANCE } from "@mapachess/profile/player-appearance"
 import createInitialPlayerData from "@mapachess/profile/player-data"
 import {
   cardFacts,
+  drawCardCharacters,
   drawProfileCard,
   INITIAL_CARD_CONTENT,
   loadCardArtwork,
@@ -97,6 +98,37 @@ beforeEach(() => {
 })
 
 describe("profile artwork decoding, drawing, and lifecycle", () => {
+  it("preserves the live Canvas placement and exact source-frame crop", async () => {
+    const artwork = await loadCardArtwork({
+      ...input,
+      content: { ...input.content, animal: false },
+    })
+    const canvas = document.createElement("canvas")
+    canvas.width = 360
+    canvas.height = 450
+    const context = canvas.getContext("2d")
+    if (context === null) throw new Error("The drawing context must exist.")
+    const draw = vi.spyOn(context, "drawImage")
+    drawCardCharacters(context, artwork, 8, canvas.width, canvas.height)
+    expect(draw.mock.calls).toHaveLength(artwork.hero.length)
+    for (const [index, call] of draw.mock.calls.entries())
+      expect(call).toEqual([
+        artwork.hero[index],
+        99,
+        0,
+        25,
+        31,
+        43,
+        55,
+        275,
+        341,
+      ])
+    expect(context.imageSmoothingEnabled).toBe(false)
+    expect([...context.getImageData(100, 100, 1, 1).data]).toEqual([
+      191, 35, 85, 255,
+    ])
+    expect([...context.getImageData(0, 0, 1, 1).data]).toEqual([0, 0, 0, 0])
+  })
   it("loads layered artwork, a companion and medal, then reuses decoded source images", async () => {
     const first = await loadCardArtwork(input)
     const second = await loadCardArtwork(input)

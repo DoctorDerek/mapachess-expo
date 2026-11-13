@@ -1,5 +1,6 @@
 import loadCatalog from "@mapachess/localization/catalog"
 import type { SpriteAnimationDefinition } from "@mapachess/match-presentation/presentation-asset-manifest"
+import { profileCardCharacterLayout } from "@mapachess/match-presentation/profile-card-format"
 import {
   HERO_IDLE_GEOMETRY,
   heroWeaponDefinition,
@@ -117,28 +118,26 @@ export function drawCardCharacters(
 ): void {
   context.imageSmoothingEnabled = false
   const bounds = artwork.heroBounds
-  const heroScale = Math.max(
-    1,
-    Math.floor(
-      Math.min(
-        (height * 0.76) / bounds.height,
-        (width * (artwork.animal === null ? 0.9 : 0.7)) / bounds.width,
-      ),
-    ),
-  )
-  const heroWidth = bounds.width * heroScale
-  const heroHeight = bounds.height * heroScale
-  const hasAnimal = artwork.animal !== null
-  const heroX = Math.round(width * (hasAnimal ? 0.4 : 0.5) - heroWidth / 2)
-  const floor = Math.round(height * 0.88)
+  const layout = profileCardCharacterLayout({
+    width,
+    height,
+    heroBounds: bounds,
+    animalBounds:
+      artwork.animal === null
+        ? null
+        : {
+            width: artwork.animal.animation.geometry.visibleWidth,
+            height: artwork.animal.animation.geometry.visibleHeight,
+          },
+  })
   context.fillStyle = artwork.palette.blue
   context.globalAlpha = 0.28
   context.beginPath()
   context.ellipse(
-    width * 0.5,
-    floor,
-    width * 0.32,
-    height * 0.021,
+    layout.ground.x,
+    layout.ground.y,
+    layout.ground.radiusX,
+    layout.ground.radiusY,
     0,
     0,
     Math.PI * 2,
@@ -153,34 +152,24 @@ export function drawCardCharacters(
       bounds.y,
       bounds.width,
       bounds.height,
-      heroX,
-      floor - heroHeight,
-      heroWidth,
-      heroHeight,
+      layout.hero.x,
+      layout.hero.y,
+      layout.hero.width,
+      layout.hero.height,
     )
-  if (artwork.animal !== null) {
+  if (artwork.animal !== null && layout.animal !== null) {
     const { image, animation } = artwork.animal
     const g = animation.geometry
-    const scale = Math.max(
-      1,
-      Math.floor(
-        Math.min(
-          (height * 0.28) / g.visibleHeight,
-          (width * 0.32) / g.visibleWidth,
-        ),
-      ),
-    )
-    const x = Math.round(width * 0.73 - (g.visibleWidth * scale) / 2)
     context.drawImage(
       image,
       (frame % animation.frameCount) * g.frameWidth + g.visibleX,
       g.visibleY,
       g.visibleWidth,
       g.visibleHeight,
-      x,
-      floor - g.visibleHeight * scale,
-      g.visibleWidth * scale,
-      g.visibleHeight * scale,
+      layout.animal.x,
+      layout.animal.y,
+      layout.animal.width,
+      layout.animal.height,
     )
   }
 }
