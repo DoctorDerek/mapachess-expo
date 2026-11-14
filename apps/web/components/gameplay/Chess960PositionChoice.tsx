@@ -9,22 +9,21 @@ import {
   type MatchColor,
 } from "@mapachess/match/match-position"
 import { isInputDirection } from "@mapachess/match/player-input"
-import InputPrompt from "../input/InputPrompt"
-import { usePlayerInputScope } from "../input/PlayerInputProvider"
-import MapachessButton from "../presentation/MapachessButton"
-import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-import { ChessBoardArtwork, ChessPiece } from "./ChessArtwork"
+import {
+  ChessBoardArtwork,
+  ChessPiece,
+} from "@/components/gameplay/ChessArtwork"
+import InputPrompt from "@/components/input/InputPrompt"
+import { usePlayerInputScope } from "@/components/input/PlayerInputProvider"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
 
-export default function Chess960PositionChoice({
+export function PositionNumberInput({
   disabled,
   onChanged,
-  onRandomize,
-  orientation,
   value,
 }: Readonly<{
   disabled: boolean
   onChanged: (value: string) => void
-  onRandomize: () => void
   orientation: MatchColor
   value: string
 }>) {
@@ -34,21 +33,6 @@ export default function Chess960PositionChoice({
   const [editing, setEditing] = useState<Readonly<{
     value: string
   }> | null>(null)
-  const preview = useMemo(() => {
-    const parsed = parseChess960PositionId(
-      value.trim() === "" ? NaN : Number(value),
-    )
-    if (!parsed.ok) return null
-    const position = createInitialMatchPosition({
-      variant: "chess960",
-      chess960PositionId: parsed.positionId,
-    })
-    return {
-      id: parsed.positionId,
-      squares: createBoardSquareRows(orientation).flat(),
-      pieces: new Map(position.pieces.map((piece) => [piece.square, piece])),
-    }
-  }, [orientation, value])
   usePlayerInputScope({
     root,
     focused: true,
@@ -94,7 +78,6 @@ export default function Chess960PositionChoice({
       disabled={disabled}
       data-player-input-layer={editing === null ? undefined : "position-edit"}
     >
-      <legend className="font-bold">{copy.position}</legend>
       <div className="mt-2 flex flex-wrap items-end gap-2">
         <label className="min-w-0 flex-1 basis-32" htmlFor="chess960-position">
           <span className="sr-only">
@@ -119,16 +102,6 @@ export default function Chess960PositionChoice({
             value={editing?.value ?? value}
           />
         </label>
-        <MapachessButton
-          className="max-w-full min-w-0 px-2! wrap-break-word"
-          disabled={disabled}
-          onClick={onRandomize}
-          type="button"
-          variant="secondary"
-        >
-          <span aria-hidden="true">⤨ </span>
-          {copy.randomize}
-        </MapachessButton>
       </div>
       {editing === null ? null : (
         <p className="mt-2">
@@ -138,33 +111,53 @@ export default function Chess960PositionChoice({
           {copy.accept} · <InputPrompt action="cancel" /> {copy.cancel}
         </p>
       )}
-      {preview === null ? null : (
-        <div
-          aria-label={copy.positionPreview(preview.id)}
-          className="border-mapachito-charcoal relative mx-auto mt-3 grid aspect-square w-full max-w-64 grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border-2 xl:mx-0"
-          role="img"
-        >
-          <ChessBoardArtwork orientation={orientation} />
-          {preview.squares.map((square) => {
-            const piece = preview.pieces.get(square)
-            return (
-              <span
-                aria-hidden="true"
-                className="relative min-h-0 min-w-0"
-                key={square}
-              >
-                {piece === undefined ? null : (
-                  <ChessPiece
-                    color={piece.color}
-                    role={piece.role}
-                    fitToSquare
-                  />
-                )}
-              </span>
-            )
-          })}
-        </div>
-      )}
     </fieldset>
   )
 }
+
+export function PositionPreview({
+  value,
+  orientation,
+}: Readonly<{ value: string; orientation: MatchColor }>) {
+  const copy = useMapachessCopy().setup
+  const preview = useMemo(() => {
+    const parsed = parseChess960PositionId(
+      value.trim() === "" ? NaN : Number(value),
+    )
+    if (!parsed.ok) return null
+    const position = createInitialMatchPosition({
+      variant: "chess960",
+      chess960PositionId: parsed.positionId,
+    })
+    return {
+      id: parsed.positionId,
+      squares: createBoardSquareRows(orientation).flat(),
+      pieces: new Map(position.pieces.map((piece) => [piece.square, piece])),
+    }
+  }, [value, orientation])
+  return preview === null ? null : (
+    <div
+      aria-label={copy.positionPreview(preview.id)}
+      className="border-mapachito-charcoal relative mx-auto mt-3 grid aspect-square w-full max-w-64 grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border-2 xl:mx-0"
+      role="img"
+    >
+      <ChessBoardArtwork orientation={orientation} />
+      {preview.squares.map((square) => {
+        const piece = preview.pieces.get(square)
+        return (
+          <span
+            aria-hidden="true"
+            className="relative min-h-0 min-w-0"
+            key={square}
+          >
+            {piece === undefined ? null : (
+              <ChessPiece color={piece.color} role={piece.role} fitToSquare />
+            )}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+export default PositionNumberInput

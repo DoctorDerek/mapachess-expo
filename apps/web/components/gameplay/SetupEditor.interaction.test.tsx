@@ -1,15 +1,17 @@
 // @vitest-environment happy-dom
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
+import MatchSetupEditor from "@mapachess/application-ui/match-setup-editor"
+import type {
+  SetupEditor,
+  SetupEditorValues,
+} from "@mapachess/gameplay/match-setup"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
 import applyStoryMatchResult from "@mapachess/profile/story-progress"
+import webSetupElements from "@/components/gameplay/WebSetupElements"
+import { installDomHarness } from "@/test/domHarness"
 import completedStoryMatch from "../../../../packages/profile/test/storyProgressTestSupport"
-import { installDomHarness } from "../../test/domHarness"
-import MatchSetupEditor, {
-  type SetupEditor,
-  type SetupEditorValues,
-} from "./MatchSetupEditor"
 
 installDomHarness()
 const copy = loadCatalog("en")
@@ -34,6 +36,8 @@ function edit(
   const cancel = vi.fn()
   const view = render(
     <MatchSetupEditor
+      copy={copy}
+      elements={webSetupElements}
       editor={editor}
       mode={mode}
       variant="standard"
@@ -49,6 +53,50 @@ function edit(
 }
 
 describe("private player and opponent setup drafts", () => {
+  it("preserves a staged candidate through occlusion, then discards it on Cancel", () => {
+    const done = vi.fn()
+    const cancel = vi.fn()
+    const renderEditor = (visible: boolean) => (
+      <MatchSetupEditor
+        copy={copy}
+        elements={webSetupElements}
+        editor="hints"
+        mode="story"
+        variant="standard"
+        initialValues={values}
+        onDone={done}
+        onCancel={cancel}
+        disabled={false}
+        active={false}
+        visible={visible}
+        storyProgress={progress}
+      />
+    )
+    const view = render(renderEditor(true))
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: copy.setup.autoHints["auto-move-hints"].label,
+      }),
+    )
+    view.rerender(renderEditor(false))
+    expect(screen.queryByRole("dialog")).toBeNull()
+    view.rerender(renderEditor(true))
+    expect(
+      screen.getByRole("radio", {
+        name: copy.setup.autoHints["auto-move-hints"].label,
+      }),
+    ).toHaveProperty("checked", true)
+    fireEvent.click(screen.getByRole("button", { name: copy.setup.cancel }))
+    expect(cancel).toHaveBeenCalledOnce()
+    expect(done).not.toHaveBeenCalled()
+    view.unmount()
+    render(renderEditor(true))
+    expect(
+      screen.getByRole("radio", {
+        name: copy.setup.autoHints[values.hints].label,
+      }),
+    ).toHaveProperty("checked", true)
+  })
   it("previews an unlocked player animal without accepting it until Done, and never enables locked animals", () => {
     const view = edit("player")
     const chicken = view.dialog.getByRole("radio", { name: /Chicken/ })
