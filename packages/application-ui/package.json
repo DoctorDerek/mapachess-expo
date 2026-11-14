@@ -17,6 +17,10 @@
       "types": "./src/SetupAnimalChoices.tsx",
       "default": "./dist/SetupAnimalChoices.js"
     },
+    "./challenge-difficulty": {
+      "types": "./src/ChallengeDifficulty.tsx",
+      "default": "./dist/ChallengeDifficulty.js"
+    },
     "./profile-recovery": {
       "types": "./src/ProfileRecovery.tsx",
       "default": "./dist/ProfileRecovery.js"
