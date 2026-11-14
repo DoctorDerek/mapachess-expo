@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react-native"
 import { AccessibilityInfo } from "react-native"
 import * as motion from "react-native-reanimated"
+import Home from "@mapachess/application-ui/home"
 import loadCatalog from "@mapachess/localization/catalog"
 import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
 import { MATCH_MODE_CHOICES } from "@mapachess/match/match-setup"
@@ -23,7 +24,7 @@ import {
   INITIAL_CARD_CONTENT,
 } from "@mapachess/profile/profile-card-model"
 import { playerRatingId } from "@mapachess/profile/rating-context"
-import NativeHome from "@/components/gameplay/NativeHome"
+import nativeHomeElements from "@/components/gameplay/NativeHomeElements"
 import NativeAnimatedPlayerArtwork from "@/components/profile/NativeAnimatedPlayerArtwork"
 import NativeCardArtwork from "@/components/profile/NativeCardArtwork"
 
@@ -230,14 +231,25 @@ it("uses the canonical contextual facts while keeping all four play modes direct
   const customize = jest.fn()
   const share = jest.fn()
   await render(
-    <NativeHome
-      data={data}
-      disabled={false}
-      onSelect={select}
-      onResume={jest.fn()}
-      onSettings={jest.fn()}
-      onCustomize={customize}
-      onShare={share}
+    <Home
+      state={{
+        playerData: data,
+        disabled: false,
+        settingsDisabled: false,
+        settingsOpen: false,
+        resumeMatch: null,
+      }}
+      commands={{
+        selectMode: select,
+        resume: jest.fn(),
+        settings: jest.fn(),
+        customize,
+        share,
+      }}
+      copy={copy}
+      locale="en"
+      elements={nativeHomeElements}
+      settingsFocusTarget={null}
     />,
   )
   expect(

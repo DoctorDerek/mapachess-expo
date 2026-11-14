@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react-native"
 import { Pressable, Text } from "react-native"
 import * as Reanimated from "react-native-reanimated"
+import Home from "@mapachess/application-ui/home"
 import loadCatalog from "@mapachess/localization/catalog"
 import battleSpritePlayback from "@mapachess/match-presentation/battle-sprite-playback"
 import resolveOpponentPresentation, {
@@ -24,7 +25,7 @@ import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import type { ProfileRuntime } from "@mapachess/profile/profile-runtime"
 import NativeBattleFighter from "@/components/gameplay/NativeBattleFighter"
 import NativeChessboard from "@/components/gameplay/NativeChessboard"
-import NativeHome from "@/components/gameplay/NativeHome"
+import nativeHomeElements from "@/components/gameplay/NativeHomeElements"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
 import NativeAnimal from "@/components/presentation/NativeAnimal"
 import NativeRecoveryBoundary from "@/components/presentation/NativeRecoveryBoundary"
@@ -436,14 +437,25 @@ describe("native gameplay surfaces", () => {
     const select = jest.fn()
     await render(
       <NativeLocaleProvider actor={runtime.actor}>
-        <NativeHome
-          data={data}
-          disabled={false}
-          onSelect={select}
-          onResume={jest.fn()}
-          onCustomize={jest.fn()}
-          onShare={jest.fn()}
-          onSettings={jest.fn()}
+        <Home
+          state={{
+            playerData: data,
+            disabled: false,
+            settingsDisabled: false,
+            settingsOpen: false,
+            resumeMatch: null,
+          }}
+          commands={{
+            selectMode: select,
+            resume: jest.fn(),
+            customize: jest.fn(),
+            share: jest.fn(),
+            settings: jest.fn(),
+          }}
+          copy={copy}
+          locale="en"
+          elements={nativeHomeElements}
+          settingsFocusTarget={null}
         />
       </NativeLocaleProvider>,
     )

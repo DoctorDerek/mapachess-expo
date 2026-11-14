@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { ActivityIndicator, BackHandler, View } from "react-native"
+import Home from "@mapachess/application-ui/home"
 import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
+import createHomeCommands, { selectHome } from "@mapachess/gameplay/home"
 import type { MatchSessionController } from "@mapachess/gameplay/session-controller"
 import { selectHintStage } from "@mapachess/match/match-machine"
 import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
@@ -10,15 +12,11 @@ import {
   selectCanHandleMatchSessionBack,
   selectMatchNavigationDestination,
 } from "@mapachess/match/match-session-machine"
-import createMatchSetupForMode, {
-  type MatchSetup,
-} from "@mapachess/match/match-setup"
+import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { PlayerInputAction } from "@mapachess/match/player-input"
-import {
-  selectCurrentPlayerData,
-  selectPendingPlayerData,
-} from "@mapachess/profile/profile-machine"
-import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
+import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
+import nativeHomeElements from "@/components/gameplay/NativeHomeElements"
+import { generateNativeChess960Position } from "@/lib/gameplay/nativeCryptography"
 import type { NativeApplicationRuntime } from "@/lib/gameplay/openNativeApplicationRuntime"
 import type { NativeMatchRuntime } from "@/lib/gameplay/openNativeMatchRuntime"
 import type useNativeFileActions from "@/lib/profile/useNativeFileActions"
@@ -29,7 +27,6 @@ import NativeText from "../presentation/NativeText"
 import NativeCardJourney from "../profile/NativeCardJourney"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
 import NativeSettings from "../profile/NativeSettings"
-import NativeHome from "./NativeHome"
 import NativeMatch from "./NativeMatch"
 import NativeMatchSetup from "./NativeMatchSetup"
 
@@ -45,9 +42,10 @@ function ReadyNativeGame({
   const actor = controller.actor
   const snapshot = useActorSnapshot(actor)
   const profile = useActorSnapshot(runtime.profile.actor)
-  const { copy } = useNativeLocale()
+  const { copy, locale } = useNativeLocale()
   const data = selectCurrentPlayerData(profile)
-  const displayed = selectPendingPlayerData(profile) ?? data
+  const home = selectHome(profile, snapshot)
+  const displayed = home.playerData
   const destination = selectMatchNavigationDestination(snapshot)
   const navigation = useMemo<MatchNavigationCommands>(
     () => ({
@@ -71,6 +69,12 @@ function ReadyNativeGame({
     return () => subscription.remove()
   }, [actor, navigation])
   if (data === null || displayed === null) return null
+  const homeCommands = createHomeCommands({
+    profileActor: runtime.profile.actor,
+    sessionActor: actor,
+    navigation,
+    generateChess960Position: generateNativeChess960Position,
+  })
   const disabled = !profile.matches("ready")
   const overlays = snapshot.context.overlays
   const session = snapshot.context.session
@@ -118,24 +122,13 @@ function ReadyNativeGame({
   return (
     <NativeInputSurface onAction={handleAction}>
       {destination?.screen === "menu" ? (
-        <NativeHome
-          data={displayed}
-          disabled={disabled}
-          onSelect={({ mode, variant }) =>
-            requestSetup(
-              createMatchSetupForMode(
-                { mode, variant },
-                displayed.settings.challengeSetup,
-                selectDefaultStoryOpponent(displayed.storyProgress, variant),
-              ),
-            )
-          }
-          onResume={() =>
-            actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" })
-          }
-          onSettings={() => navigation.open("settings")}
-          onCustomize={() => navigation.open("dressing-room")}
-          onShare={() => navigation.open("profile-card")}
+        <Home
+          state={{ ...home, playerData: displayed }}
+          commands={homeCommands}
+          copy={copy}
+          locale={locale}
+          elements={nativeHomeElements}
+          settingsFocusTarget={null}
         />
       ) : null}
       {destination?.screen === "setup" ? (
