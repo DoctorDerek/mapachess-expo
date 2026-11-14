@@ -16,21 +16,23 @@ import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import selectProfileRecovery, {
   createRecoveryCommands,
 } from "@mapachess/profile/profile-recovery"
+import NativeGame from "@/components/gameplay/NativeGame"
+import NativeInputProvider, {
+  NativeInputSurface,
+} from "@/components/input/NativeInputProvider"
+import NativeButton from "@/components/presentation/NativeButton"
+import NativeRecoveryBoundary from "@/components/presentation/NativeRecoveryBoundary"
+import NativeText from "@/components/presentation/NativeText"
+import NativeIntroduction from "@/components/profile/NativeIntroduction"
+import NativeLocaleProvider, {
+  useNativeLocale,
+} from "@/components/profile/NativeLocaleProvider"
 import nativeRecoveryElements from "@/components/profile/NativeRecoveryElements"
 import openNativeApplicationRuntime, {
   type NativeApplicationRuntime,
 } from "@/lib/gameplay/openNativeApplicationRuntime"
 import useNativeFileActions from "@/lib/profile/useNativeFileActions"
 import useActorSnapshot from "@/lib/useActorSnapshot"
-import NativeGame from "../gameplay/NativeGame"
-import NativeInputProvider, {
-  NativeInputSurface,
-} from "../input/NativeInputProvider"
-import NativeButton from "../presentation/NativeButton"
-import NativeRecoveryBoundary from "../presentation/NativeRecoveryBoundary"
-import NativeText from "../presentation/NativeText"
-import NativeIntroduction from "./NativeIntroduction"
-import NativeLocaleProvider, { useNativeLocale } from "./NativeLocaleProvider"
 
 const SafeArea = withUniwind(SafeAreaView)
 

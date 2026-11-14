@@ -15,29 +15,31 @@ import selectProfileRecovery, {
   createRecoveryCommands,
   selectExportablePlayerData,
 } from "@mapachess/profile/profile-recovery"
+import PlayerInputProvider, {
+  usePlayerInputScope,
+} from "@/components/input/PlayerInputProvider"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import MapachessNotice from "@/components/presentation/MapachessNotice"
+import MapachessShell from "@/components/presentation/MapachessShell"
+import Introduction, {
+  RestoringIntroduction,
+} from "@/components/profile/Introduction"
+import MapachessLocaleProvider, {
+  useMapachessCopy,
+  useMapachessLocale,
+} from "@/components/profile/MapachessLocaleProvider"
+import FullPageProfilePanel from "@/components/profile/ProfileFoundation"
+import type { ProfilePlayExperienceProps } from "@/components/profile/ProfilePlayExperience"
 import webRecoveryElements from "@/components/profile/WebRecoveryElements"
 import openWebProfileRuntime, {
   type WebProfileRuntime,
-} from "../../lib/profile/openWebProfileRuntime"
+} from "@/lib/profile/openWebProfileRuntime"
 import {
   createWebPlayerDataBackup,
   downloadTextFile,
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
-} from "../../lib/profile/webPlayerDataFiles"
-import PlayerInputProvider, {
-  usePlayerInputScope,
-} from "../input/PlayerInputProvider"
-import MapachessButton from "../presentation/MapachessButton"
-import MapachessNotice from "../presentation/MapachessNotice"
-import MapachessShell from "../presentation/MapachessShell"
-import Introduction, { RestoringIntroduction } from "./Introduction"
-import MapachessLocaleProvider, {
-  useMapachessCopy,
-  useMapachessLocale,
-} from "./MapachessLocaleProvider"
-import FullPageProfilePanel from "./ProfileFoundation"
-import type { ProfilePlayExperienceProps } from "./ProfilePlayExperience"
+} from "@/lib/profile/webPlayerDataFiles"
 
 type ProfileRuntimeState =
   | Readonly<{ status: "opening" }>
@@ -45,9 +47,12 @@ type ProfileRuntimeState =
   | Readonly<{ status: "unsupported" }>
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
-const ProfilePlayExperience = dynamic(() => import("./ProfilePlayExperience"), {
-  loading: RestoringIntroduction,
-})
+const ProfilePlayExperience = dynamic(
+  () => import("@/components/profile/ProfilePlayExperience"),
+  {
+    loading: RestoringIntroduction,
+  },
+)
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const copy = useMapachessCopy()

@@ -13,7 +13,7 @@ import {
   exportNativePlayerData,
   readNativePlayerDataBackup,
   shareNativeTextFile,
-} from "./nativePlayerDataFiles"
+} from "@/lib/profile/nativePlayerDataFiles"
 
 export default function useNativeFileActions(actor: ProfileActor) {
   const [status, setStatus] = useState<

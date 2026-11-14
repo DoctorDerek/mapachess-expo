@@ -10,12 +10,12 @@ import createInitialMapachessPlayerData, {
 } from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
+import RecoverableView from "@/components/presentation/RecoverableView"
+import ArtCredits from "@/components/profile/ArtCredits"
+import ProfileSettingsPanel from "@/components/profile/ProfileSettingsPanel"
+import WebMapachessApplication from "@/components/profile/WebMapachessApplication"
 import webRecoveryElements from "@/components/profile/WebRecoveryElements"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
-import RecoverableView from "../presentation/RecoverableView"
-import ArtCredits from "./ArtCredits"
-import ProfileSettingsPanel from "./ProfileSettingsPanel"
-import WebMapachessApplication from "./WebMapachessApplication"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const playerData = createInitialMapachessPlayerData()
 const recoveryProps = {

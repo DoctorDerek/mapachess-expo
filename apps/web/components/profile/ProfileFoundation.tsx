@@ -9,12 +9,12 @@ import {
   type ReactNode,
 } from "react"
 import { MAX_PORTABLE_BACKUP_UTF8_BYTES } from "@mapachess/profile/portable-files"
-import MapachessButton from "../presentation/MapachessButton"
-import MapachessNotice from "../presentation/MapachessNotice"
-import MapachessShell from "../presentation/MapachessShell"
-import MapachessWordmark from "../presentation/MapachessWordmark"
-import ScrollActions from "../presentation/ScrollActions"
-import { useMapachessCopy } from "./MapachessLocaleProvider"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import MapachessNotice from "@/components/presentation/MapachessNotice"
+import MapachessShell from "@/components/presentation/MapachessShell"
+import MapachessWordmark from "@/components/presentation/MapachessWordmark"
+import ScrollActions from "@/components/presentation/ScrollActions"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode

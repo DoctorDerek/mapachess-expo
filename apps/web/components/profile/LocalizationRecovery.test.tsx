@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import ProfileRecovery from "@mapachess/application-ui/profile-recovery"
 import loadCatalog from "@mapachess/localization/catalog"
 import createCatalogReader from "@mapachess/localization/catalog-reader"
+import RecoverableView from "@/components/presentation/RecoverableView"
+import Introduction from "@/components/profile/Introduction"
 import webRecoveryElements from "@/components/profile/WebRecoveryElements"
 import english from "../../../../packages/localization/src/en.js"
-import RecoverableView from "../presentation/RecoverableView"
-import Introduction from "./Introduction"
 
 vi.mock("@mapachess/localization/catalog", async (importOriginal) => {
   const actual =

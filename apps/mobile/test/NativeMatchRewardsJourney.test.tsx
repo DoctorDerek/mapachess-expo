@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import {
   afterEach,
   beforeEach,
@@ -39,9 +39,9 @@ import openNativeApplicationRuntime, {
 } from "@/lib/gameplay/openNativeApplicationRuntime"
 import openNativeMatchRuntime from "@/lib/gameplay/openNativeMatchRuntime"
 import AsyncStorageDurableStore from "@/lib/profile/AsyncStorageDurableStore"
-import cryptography from "./nativeCryptographyFixture"
-import NativeEngineFixture from "./nativeEngineFixture"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import cryptography from "@/test/nativeCryptographyFixture"
+import NativeEngineFixture from "@/test/nativeEngineFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 jest.mock("expo-font", () => ({ useFonts: () => [true, null] }))
 jest.mock("@/lib/gameplay/openNativeApplicationRuntime", () => ({
