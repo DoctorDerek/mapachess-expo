@@ -12,7 +12,7 @@ import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import webSetupElements, {
   WebSetupInput,
 } from "@/components/gameplay/WebSetupElements"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const history = {
   standard: {

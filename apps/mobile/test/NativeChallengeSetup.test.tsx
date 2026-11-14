@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import { afterEach, describe, expect, it, jest } from "@jest/globals"
 import {
   fireEvent,
@@ -18,7 +18,7 @@ import type { ProfileRuntime } from "@mapachess/profile/profile-runtime"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 const copy = loadCatalog("en")
 let profile: ProfileRuntime | undefined

@@ -9,10 +9,10 @@ import {
   selectChallengeUnlockedOpponents,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
+import StoryLadderProgress from "@/components/gameplay/StoryLadderProgress"
+import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
 import webSetupElements from "@/components/gameplay/WebSetupElements"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
-import StoryLadderProgress from "./StoryLadderProgress"
-import WebMatchSetup from "./WebMatchSetup"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const progress: StoryProgress = {
   standard: [{ opponentId: "chicken-stockfish", highestMedal: "gold" }],

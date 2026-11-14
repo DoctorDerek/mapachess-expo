@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import { afterEach, describe, expect, it, jest } from "@jest/globals"
 import {
   act,
@@ -33,7 +33,7 @@ import NativeSpritePlayback from "@/components/presentation/NativeSpritePlayback
 import NativeCoachPortrait from "@/components/profile/NativeCoachPortrait"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 jest.mock("@/lib/presentation/nativeAssetManifest", () => {
   const { default: manifest } = jest.requireActual<
