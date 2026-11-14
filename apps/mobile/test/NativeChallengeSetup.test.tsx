@@ -131,6 +131,15 @@ describe("native inline Challenge Elo", () => {
 
   it("keeps earned history inline and updates it with native adjustment actions", async () => {
     const { start, open, data, runtime } = await renderSetup()
+    const gestureMove = () => {
+      const owner = range().queryAll(
+        (node) => typeof node.props.onResponderMove === "function",
+      )[0]
+      if (owner === undefined)
+        throw new Error("Expected the slider's gesture scope.")
+      return owner.props.onResponderMove
+    }
+    const originalMove = gestureMove()
     expect(screen.getByText(copy.setup.bestDifficultyMedal)).toBeOnTheScreen()
     expect(
       screen.getByText(copy.animals.opponent("bunny-stockfish")),
@@ -147,6 +156,7 @@ describe("native inline Challenge Elo", () => {
       nativeEvent: { actionName: "increment" },
     })
     expect(exactInput()).toHaveDisplayValue("125")
+    expect(gestureMove()).toBe(originalMove)
     expect(range().props.accessibilityValue).toEqual({
       min: 100,
       max: 2350,

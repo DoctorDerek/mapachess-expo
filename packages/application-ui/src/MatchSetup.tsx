@@ -1,6 +1,7 @@
 import { useActorRef, useSelector } from "@xstate/react"
 import cx from "classix"
-import type { ReactNode } from "react"
+import { useCallback, type ReactNode } from "react"
+import type { ChallengeDifficultyEdit } from "@mapachess/gameplay/challenge-difficulty"
 import {
   prepareMatchSetupSubmission,
   selectMatchSetup,
@@ -62,6 +63,12 @@ export default function MatchSetup(props: MatchSetupProps) {
     },
   })
   const draft = useSelector(actor, (snapshot) => snapshot.context)
+  const changeDifficulty = useCallback(
+    (edit: ChallengeDifficultyEdit): void => {
+      actor.send({ type: "MATCH_SETUP.DIFFICULTY_EDITED", edit })
+    },
+    [actor],
+  )
   const view = selectMatchSetup(draft, props)
   const { Surface, Group, Text, Action, Animal, Medal } = elements
   const blocked = disabled || opening
@@ -201,12 +208,7 @@ export default function MatchSetup(props: MatchSetupProps) {
                   <ChallengeDifficulty
                     control={view.difficulty}
                     disabled={blocked}
-                    onEdit={(edit) =>
-                      actor.send({
-                        type: "MATCH_SETUP.DIFFICULTY_EDITED",
-                        edit,
-                      })
-                    }
+                    onEdit={changeDifficulty}
                     copy={copy}
                     elements={elements}
                   />
