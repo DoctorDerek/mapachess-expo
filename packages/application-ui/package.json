@@ -35,7 +35,9 @@
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/profile": "workspace:*",
-    "classix": "^2"
+    "@xstate/react": "^6",
+    "classix": "^2",
+    "xstate": "^5"
   },
   "peerDependencies": {
     "react": "^19"
