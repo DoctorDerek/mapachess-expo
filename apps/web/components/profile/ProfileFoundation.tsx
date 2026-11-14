@@ -117,11 +117,15 @@ export default function FullPageProfilePanel({
 export type ImportBackupButtonProps = Readonly<{
   disabled: boolean
   onBackupRead: (rawBackup: string) => void
+  children?: ReactNode
+  className?: string
 }>
 
 export function ImportBackupButton({
   disabled,
   onBackupRead,
+  children,
+  className,
 }: ImportBackupButtonProps) {
   const copy = useMapachessCopy()
   const messages = copy.interface.profileFoundation
@@ -170,7 +174,7 @@ export function ImportBackupButton({
   }
 
   return (
-    <div>
+    <div className={className}>
       <MapachessButton
         aria-busy={reading}
         busyLabel={messages.readingBackup}
@@ -182,7 +186,7 @@ export function ImportBackupButton({
         }}
         type="button"
       >
-        {messages.importBackup}
+        {children ?? messages.importBackup}
       </MapachessButton>
       <input
         accept=".json,application/json"

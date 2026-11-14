@@ -1,11 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import ProfileRecovery from "@mapachess/application-ui/profile-recovery"
 import loadCatalog from "@mapachess/localization/catalog"
-import createCatalogReader from "../../../../packages/localization/src/catalogReader.js"
+import createCatalogReader from "@mapachess/localization/catalog-reader"
+import webRecoveryElements from "@/components/profile/WebRecoveryElements"
 import english from "../../../../packages/localization/src/en.js"
 import RecoverableView from "../presentation/RecoverableView"
 import Introduction from "./Introduction"
-import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
 
 vi.mock("@mapachess/localization/catalog", async (importOriginal) => {
   const actual =
@@ -59,15 +60,23 @@ describe("web recovery surfaces with a corrupt catalog", () => {
     )
     const onReset = vi.fn()
     const markup = renderToStaticMarkup(
-      <ProfileRecoveryPanel
-        downloadFailed={false}
-        hasLastKnownGood={true}
-        importIssue={null}
-        onBackupRead={vi.fn()}
-        onExportUnreadable={vi.fn()}
-        onResetConfirmed={onReset}
-        onRestoreLastKnownGood={vi.fn()}
-        onTryAgain={vi.fn()}
+      <ProfileRecovery
+        state={{ kind: "recovery", hasLastKnownGood: true, importIssue: null }}
+        files={{ status: "idle", operation: null }}
+        commands={{
+          readBackup: vi.fn(),
+          cancelImport: vi.fn(),
+          confirmImport: vi.fn(),
+          retryLoad: vi.fn(),
+          retrySave: vi.fn(),
+          restoreLastKnownGood: vi.fn(),
+          reset: onReset,
+          exportData: vi.fn(),
+          exportUnreadable: vi.fn(),
+        }}
+        copy={reader.load("en")}
+        elements={webRecoveryElements}
+        delivery="download"
       />,
     )
     expect(markup).toContain("Export unreadable data")
