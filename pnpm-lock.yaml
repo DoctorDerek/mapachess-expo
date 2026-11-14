@@ -386,9 +386,15 @@ importers:
       '@mapachess/profile':
         specifier: workspace:*
         version: link:../profile
+      '@xstate/react':
+        specifier: ^6
+        version: 6.1.0(@types/react@19.2.18)(react@19.2.3)(xstate@5.32.6)
       classix:
         specifier: ^2
         version: 2.2.19
+      xstate:
+        specifier: ^5
+        version: 5.32.6
       react:
         specifier: ^19
         version: 19.2.3
@@ -396,7 +402,6 @@ importers:
       '@types/react':
         specifier: ^19
         version: 19.2.18
-
   packages/calibration:
     dependencies:
       '@mapachess/match':
@@ -9274,6 +9279,16 @@ snapshots:
 
   '@xmldom/xmldom@0.9.12': {}
 
+  '@xstate/react@6.1.0(@types/react@19.2.18)(react@19.2.3)(xstate@5.32.6)':
+    dependencies:
+      react: 19.2.3
+      use-isomorphic-layout-effect: 1.2.1(@types/react@19.2.18)(react@19.2.3)
+      use-sync-external-store: 1.6.0(react@19.2.3)
+    optionalDependencies:
+      xstate: 5.32.6
+    transitivePeerDependencies:
+      - '@types/react'
+
   '@xstate/react@6.1.0(@types/react@19.2.18)(react@19.2.8)(xstate@5.32.6)':
     dependencies:
       react: 19.2.8
@@ -12981,6 +12996,12 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
+  use-isomorphic-layout-effect@1.2.1(@types/react@19.2.18)(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+    optionalDependencies:
+      '@types/react': 19.2.18
+
   use-isomorphic-layout-effect@1.2.1(@types/react@19.2.18)(react@19.2.8):
     dependencies:
       react: 19.2.8
@@ -12998,6 +13019,10 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.2.18
+
+  use-sync-external-store@1.6.0(react@19.2.3):
+    dependencies:
+      react: 19.2.3
 
   use-sync-external-store@1.6.0(react@19.2.8):
     dependencies:

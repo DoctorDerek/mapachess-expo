@@ -5,6 +5,30 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./match-setup": {
+      "types": "./src/MatchSetup.tsx",
+      "default": "./dist/MatchSetup.js"
+    },
+    "./match-setup-editor": {
+      "types": "./src/MatchSetupEditor.tsx",
+      "default": "./dist/MatchSetupEditor.js"
+    },
+    "./setup-elements": {
+      "types": "./src/setupElements.ts",
+      "default": "./dist/setupElements.js"
+    },
+    "./setup-choices": {
+      "types": "./src/SetupChoices.tsx",
+      "default": "./dist/SetupChoices.js"
+    },
+    "./setup-animal-choices": {
+      "types": "./src/SetupAnimalChoices.tsx",
+      "default": "./dist/SetupAnimalChoices.js"
+    },
+    "./challenge-difficulty": {
+      "types": "./src/ChallengeDifficulty.tsx",
+      "default": "./dist/ChallengeDifficulty.js"
+    },
     "./profile-recovery": {
       "types": "./src/ProfileRecovery.tsx",
       "default": "./dist/ProfileRecovery.js"
@@ -35,7 +59,9 @@
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
     "@mapachess/profile": "workspace:*",
-    "classix": "^2"
+    "@xstate/react": "^6",
+    "classix": "^2",
+    "xstate": "^5"
   },
   "peerDependencies": {
     "react": "^19"

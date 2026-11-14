@@ -5,6 +5,7 @@ import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
 import createHomeCommands, { selectHome } from "@mapachess/gameplay/home"
+import { createMatchSetupCommands } from "@mapachess/gameplay/match-setup"
 import type { MatchSessionController } from "@mapachess/gameplay/session-controller"
 import { selectHintStage } from "@mapachess/match/match-machine"
 import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
@@ -16,19 +17,19 @@ import type { MatchSetup } from "@mapachess/match/match-setup"
 import type { PlayerInputAction } from "@mapachess/match/player-input"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
 import nativeHomeElements from "@/components/gameplay/NativeHomeElements"
+import NativeMatch from "@/components/gameplay/NativeMatch"
+import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
+import { NativeInputSurface } from "@/components/input/NativeInputProvider"
+import NativeButton from "@/components/presentation/NativeButton"
+import NativeText from "@/components/presentation/NativeText"
+import NativeCardJourney from "@/components/profile/NativeCardJourney"
+import { useNativeLocale } from "@/components/profile/NativeLocaleProvider"
+import NativeSettings from "@/components/profile/NativeSettings"
 import { generateNativeChess960Position } from "@/lib/gameplay/nativeCryptography"
 import type { NativeApplicationRuntime } from "@/lib/gameplay/openNativeApplicationRuntime"
 import type { NativeMatchRuntime } from "@/lib/gameplay/openNativeMatchRuntime"
 import type useNativeFileActions from "@/lib/profile/useNativeFileActions"
 import useActorSnapshot from "@/lib/useActorSnapshot"
-import { NativeInputSurface } from "../input/NativeInputProvider"
-import NativeButton from "../presentation/NativeButton"
-import NativeText from "../presentation/NativeText"
-import NativeCardJourney from "../profile/NativeCardJourney"
-import { useNativeLocale } from "../profile/NativeLocaleProvider"
-import NativeSettings from "../profile/NativeSettings"
-import NativeMatch from "./NativeMatch"
-import NativeMatchSetup from "./NativeMatchSetup"
 
 function ReadyNativeGame({
   runtime,
@@ -74,6 +75,11 @@ function ReadyNativeGame({
     sessionActor: actor,
     navigation,
     generateChess960Position: generateNativeChess960Position,
+  })
+  const setupCommands = createMatchSetupCommands({
+    profileActor: runtime.profile.actor,
+    sessionActor: actor,
+    navigation,
   })
   const disabled = !profile.matches("ready")
   const overlays = snapshot.context.overlays
@@ -136,16 +142,13 @@ function ReadyNativeGame({
           key={`${setup.mode}:${setupVariant}:${setup.mode === "story" ? (setup.opponentId ?? "default") : setup.challengeSetup.opponentId}`}
           initial={setup}
           data={displayed}
-          profileActor={runtime.profile.actor}
           disabled={disabled}
           navigation={navigation}
           overlay={overlays.at(-1)}
-          onStart={(selection) =>
-            actor.send({
-              type: "MATCH_SESSION.MATCH_REQUESTED",
-              setup: selection,
-            })
-          }
+          overlays={overlays}
+          onAutoHintModeChanged={setupCommands.changeHints}
+          onPlayerAnimalChanged={setupCommands.changePlayer}
+          onStart={setupCommands.start}
         />
       ) : null}
       {session === null ? null : (

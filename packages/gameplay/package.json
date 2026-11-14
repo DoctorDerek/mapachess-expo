@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./match-setup": {
+      "types": "./src/matchSetup.ts",
+      "default": "./dist/matchSetup.js"
+    },
+    "./match-setup-machine": {
+      "types": "./src/matchSetupMachine.ts",
+      "default": "./dist/matchSetupMachine.js"
+    },
     "./home": {
       "types": "./src/home.ts",
       "default": "./dist/home.js"

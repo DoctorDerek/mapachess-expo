@@ -128,7 +128,7 @@ describe("licensed presentation asset preparation", () => {
     await mkdir(workingDirectory, { recursive: true })
     if (operation === "prepare") {
       await symlink(
-        fileURLToPath(new URL("../../../node_modules", import.meta.url)),
+        fileURLToPath(new URL("../../node_modules", import.meta.url)),
         join(workingDirectory, "node_modules"),
         "junction",
       )

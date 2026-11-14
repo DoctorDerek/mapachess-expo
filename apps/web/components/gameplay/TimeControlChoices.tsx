@@ -1,39 +1,27 @@
-import cx from "classix"
 import { useId } from "react"
 import {
   TIME_CATEGORIES,
-  TIME_CONTROL_PRESETS,
-  timeControlLabel,
-  timeControlsEqual,
   type TimeCategory,
-  type TimeControl,
 } from "@mapachess/match/time-control"
-import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
 
 function ClockChoices<Value extends string>({
   choices,
   selected,
   disabled,
   onChange,
-  presetGrid = false,
 }: Readonly<{
   choices: readonly Readonly<{ value: Value; label: string }>[]
   selected: Value
   disabled: boolean
   onChange: (value: Value) => void
-  presetGrid?: boolean
 }>) {
   const copy = useMapachessCopy().gameplay.clock
   const name = useId()
   return (
     <fieldset disabled={disabled}>
       <legend className="sr-only">{copy.timeControl}</legend>
-      <div
-        className={cx(
-          "mt-2 grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-2",
-          presetGrid && "xl:grid-cols-3",
-        )}
-      >
+      <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(min(9rem,100%),1fr))] gap-2">
         {choices.map(({ value, label }) => (
           <label
             key={value}
@@ -52,38 +40,6 @@ function ClockChoices<Value extends string>({
         ))}
       </div>
     </fieldset>
-  )
-}
-
-export default function TimeControlChoices({
-  control,
-  disabled,
-  onChange,
-}: Readonly<{
-  control: TimeControl
-  disabled: boolean
-  onChange: (control: TimeControl) => void
-}>) {
-  const copy = useMapachessCopy().gameplay.clock
-  const selected = TIME_CONTROL_PRESETS.find((preset) =>
-    timeControlsEqual(preset.control, control),
-  )
-  if (selected === undefined)
-    throw new Error("A selected clock must be a supported preset.")
-  return (
-    <ClockChoices
-      presetGrid
-      choices={TIME_CONTROL_PRESETS.map(({ id, control: preset }) => ({
-        value: id,
-        label: timeControlLabel(preset, copy),
-      }))}
-      selected={selected.id}
-      disabled={disabled}
-      onChange={(id) => {
-        const preset = TIME_CONTROL_PRESETS.find((choice) => choice.id === id)
-        if (preset !== undefined) onChange(preset.control)
-      }}
-    />
   )
 }
 
@@ -109,3 +65,4 @@ export function TimeCategoryChoices({
     />
   )
 }
+export default TimeCategoryChoices

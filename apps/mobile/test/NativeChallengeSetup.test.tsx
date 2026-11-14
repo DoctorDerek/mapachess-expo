@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import { afterEach, describe, expect, it, jest } from "@jest/globals"
 import {
   fireEvent,
@@ -18,7 +18,7 @@ import type { ProfileRuntime } from "@mapachess/profile/profile-runtime"
 import NativeMatchSetup from "@/components/gameplay/NativeMatchSetup"
 import NativeLocaleProvider from "@/components/profile/NativeLocaleProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 const copy = loadCatalog("en")
 let profile: ProfileRuntime | undefined
@@ -70,7 +70,8 @@ async function renderSetup(variant: MatchVariant = "standard") {
         navigation={{ back: jest.fn(), open, close: jest.fn() }}
         onStart={start}
         overlay={undefined}
-        profileActor={runtime.actor}
+        onAutoHintModeChanged={jest.fn()}
+        onPlayerAnimalChanged={jest.fn()}
       />
     </NativeLocaleProvider>,
   )
@@ -84,6 +85,24 @@ const startButton = () =>
   screen.getByRole("button", { name: copy.setup.startMatch })
 
 describe("native inline Challenge Elo", () => {
+  it("blocks invalid displayed positions and recovers without accepting stale position data", async () => {
+    const { start } = await renderSetup("chess960")
+    const positionInput = screen.getByLabelText(copy.setup.positionNumber(959))
+    await fireEvent.changeText(positionInput, "960")
+    await fireEvent.press(startButton())
+    expect(start).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent(copy.setup.invalidSetup)
+    await fireEvent.changeText(positionInput, "518")
+    expect(screen.queryByRole("alert")).toBeNull()
+    await fireEvent.press(startButton())
+    expect(start).toHaveBeenCalledTimes(1)
+    expect(start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayedChess960PositionId: 518,
+        challengeSetup: expect.objectContaining({ chess960PositionId: 518 }),
+      }),
+    )
+  })
   it("shows a passive preview and launches the displayed random Chess960 position", async () => {
     const { start } = await renderSetup("chess960")
     const positionInput = () =>
@@ -112,6 +131,15 @@ describe("native inline Challenge Elo", () => {
 
   it("keeps earned history inline and updates it with native adjustment actions", async () => {
     const { start, open, data, runtime } = await renderSetup()
+    const gestureMove = () => {
+      const owner = range().queryAll(
+        (node) => typeof node.props.onResponderMove === "function",
+      )[0]
+      if (owner === undefined)
+        throw new Error("Expected the slider's gesture scope.")
+      return owner.props.onResponderMove
+    }
+    const originalMove = gestureMove()
     expect(screen.getByText(copy.setup.bestDifficultyMedal)).toBeOnTheScreen()
     expect(
       screen.getByText(copy.animals.opponent("bunny-stockfish")),
@@ -128,6 +156,7 @@ describe("native inline Challenge Elo", () => {
       nativeEvent: { actionName: "increment" },
     })
     expect(exactInput()).toHaveDisplayValue("125")
+    expect(gestureMove()).toBe(originalMove)
     expect(range().props.accessibilityValue).toEqual({
       min: 100,
       max: 2350,

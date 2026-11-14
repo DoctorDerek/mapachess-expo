@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import { SetupOpponentChoices } from "@mapachess/application-ui/setup-animal-choices"
+import loadCatalog from "@mapachess/localization/catalog"
 import { DEFAULT_CHALLENGE_SETUP } from "@mapachess/match/challenge-setup"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import {
@@ -7,10 +9,10 @@ import {
   selectChallengeUnlockedOpponents,
   type StoryProgress,
 } from "@mapachess/profile/story-progress"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
-import ChallengeOpponentChoices from "./ChallengeOpponentChoices"
-import StoryLadderProgress from "./StoryLadderProgress"
-import WebMatchSetup from "./WebMatchSetup"
+import StoryLadderProgress from "@/components/gameplay/StoryLadderProgress"
+import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
+import webSetupElements from "@/components/gameplay/WebSetupElements"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const progress: StoryProgress = {
   standard: [{ opponentId: "chicken-stockfish", highestMedal: "gold" }],
@@ -20,7 +22,9 @@ const progress: StoryProgress = {
 describe("Story ladder presentation structure", () => {
   it("shows named locks across the roster and offers only globally earned Challenge opponents", () => {
     const markup = renderToStaticMarkup(
-      <ChallengeOpponentChoices
+      <SetupOpponentChoices
+        copy={loadCatalog("en")}
+        elements={webSetupElements}
         disabled={false}
         onSelected={vi.fn()}
         unlockedOpponents={selectChallengeUnlockedOpponents({
@@ -36,7 +40,7 @@ describe("Story ladder presentation structure", () => {
     expect(markup).toContain('value="chicken-stockfish"')
     expect(markup).toMatch(/checked=""[^>]*value="bunny-stockfish"/)
     expect(markup).not.toContain('value="dog-stockfish"')
-    expect(markup.match(/<li>/g)).toHaveLength(26)
+    expect(markup.match(/<li(?:\s|>)/g)).toHaveLength(26)
     expect(markup.match(/type="radio"/g)).toHaveLength(2)
     expect(markup).toContain("Squirrel")
     expect(markup).toContain("Tiger")

@@ -9,6 +9,10 @@ import createHomeCommands, {
   profileAllowsMatchOpening,
   selectHome,
 } from "@mapachess/gameplay/home"
+import {
+  createMatchSetupCommands,
+  selectSetupEditor,
+} from "@mapachess/gameplay/match-setup"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import {
   selectIsPersistingMutation,
@@ -25,26 +29,26 @@ import profileMachine, {
 } from "@mapachess/profile/profile-machine"
 import { matchPlayerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
+import MatchResultFacts from "@/components/gameplay/MatchResultFacts"
+import StoryMatchResult from "@/components/gameplay/StoryMatchResult"
+import webHomeElements from "@/components/gameplay/WebHomeElements"
+import WebMatch from "@/components/gameplay/WebMatch"
+import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import MapachessShell from "@/components/presentation/MapachessShell"
+import MapachessWordmark from "@/components/presentation/MapachessWordmark"
+import {
+  useMapachessCopy,
+  useMapachessLocale,
+} from "@/components/profile/MapachessLocaleProvider"
 import {
   selectWebMatchSession,
   selectWebMatchSessionFailure,
   type WebMatchSessionActor,
   type WebMatchSessionFailureOperation,
-} from "../../lib/gameplay/webMatchSessionMachine"
-import { generateWebChess960Position } from "../../lib/gameplay/webOpponent"
-import { loadWebStockfishBytes } from "../../lib/stockfish/prepareWebStockfishProgram"
-import MapachessButton from "../presentation/MapachessButton"
-import MapachessShell from "../presentation/MapachessShell"
-import MapachessWordmark from "../presentation/MapachessWordmark"
-import {
-  useMapachessCopy,
-  useMapachessLocale,
-} from "../profile/MapachessLocaleProvider"
-import MatchResultFacts from "./MatchResultFacts"
-import StoryMatchResult from "./StoryMatchResult"
-import webHomeElements from "./WebHomeElements"
-import WebMatch from "./WebMatch"
-import WebMatchSetup from "./WebMatchSetup"
+} from "@/lib/gameplay/webMatchSessionMachine"
+import { generateWebChess960Position } from "@/lib/gameplay/webOpponent"
+import { loadWebStockfishBytes } from "@/lib/stockfish/prepareWebStockfishProgram"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
@@ -171,6 +175,13 @@ export default function WebGame({
   const snapshot = useSelector(actor, (current) => current)
   const profileSnapshot = useSelector(profileActor, (current) => current)
   const home = selectHome(profileSnapshot, snapshot, settingsOpen)
+  const setupCommands = createMatchSetupCommands({
+    profileActor,
+    sessionActor: actor,
+    navigation,
+    blocked: () => settingsOpen,
+  })
+  const setupEditor = selectSetupEditor(snapshot.context.overlays)
   const homeCommands = createHomeCommands({
     profileActor,
     sessionActor: actor,
@@ -312,53 +323,20 @@ export default function WebGame({
           }
           ratings={playerData.ratings}
           playerAppearance={playerData.appearance}
-          onPlayerAnimalChanged={(animal) => {
-            if (profileActor.getSnapshot().matches("ready"))
-              profileActor.send({
-                type: "PROFILE.APPEARANCE_SAVE_REQUESTED",
-                appearance: { ...playerData.appearance, animal },
-              })
-          }}
+          onPlayerAnimalChanged={setupCommands.changePlayer}
           visible={snapshot.matches({ menu: "setup" }) || openingFreshMatch}
-          editing={
-            snapshot.context.overlays.includes("setup-opponent")
-              ? "opponent"
-              : snapshot.context.overlays.includes("setup-hints")
-                ? "hints"
-                : snapshot.context.overlays.includes("setup-time-control")
-                  ? "time-control"
-                  : snapshot.context.overlays.includes("setup-player")
-                    ? "player"
-                    : null
-          }
-          onEditorOpened={(editor) => navigation.open(`setup-${editor}`)}
-          onEditorClosed={navigation.back}
+          editing={setupEditor.editor}
+          editorVisible={setupEditor.active}
+          onEditorOpened={setupCommands.openEditor}
+          onEditorClosed={setupCommands.closeEditor}
           opening={openingFreshMatch}
           challengeHistory={playerData.challengeHistory}
           autoHintMode={playerData.settings.autoHintMode}
           disabled={!profileReady && !openingFreshMatch}
           key={`${requestedSetup.mode}:${variant}:${requestedSetup.mode === "story" ? (requestedSetup.opponentId ?? "default") : "challenge"}:${timeControlNotation(requestedSetup.timeControl ?? UNTIMED)}`}
-          onAutoHintModeChanged={(autoHintMode) => {
-            if (session !== null)
-              session.actor.send({
-                type: "MATCH.AUTO_HINT_MODE_CHANGED",
-                autoHintMode,
-              })
-            else
-              profileActor.send({
-                type: "PROFILE.AUTO_HINT_MODE_CHANGED",
-                autoHintMode,
-              })
-          }}
-          onBack={navigation.back}
-          onStart={(setup) => {
-            if (
-              !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
-              settingsOpen
-            )
-              return
-            actor.send({ type: "MATCH_SESSION.MATCH_REQUESTED", setup })
-          }}
+          onAutoHintModeChanged={setupCommands.changeHints}
+          onBack={setupCommands.back}
+          onStart={setupCommands.start}
           setup={initialSetup}
           storyProgress={playerData.storyProgress}
         />

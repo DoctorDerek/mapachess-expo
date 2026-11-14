@@ -622,16 +622,16 @@ describe("native production application journeys", () => {
     )
     await fireEvent.press(
       screen.getByRole("button", {
-        name: new RegExp(`^${copy.interface.playerAnimalChoices.playAs}:`),
+        name: copy.setup.playAsAction(copy.animals.names["raccoon-stockfish"]),
       }),
     )
     expect(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.animals.names["bunny-stockfish"],
       }),
     ).toBeDisabled()
     await fireEvent.press(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.animals.names["chicken-stockfish"],
       }),
     )
@@ -643,22 +643,22 @@ describe("native production application journeys", () => {
     )
     await fireEvent.press(
       screen.getByRole("button", {
-        name: new RegExp(`^${copy.setup.opponent}:`),
+        name: copy.setup.changeStoryOpponent,
       }),
     )
     await fireEvent.press(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.animals.opponent("chicken-stockfish"),
       }),
     )
     await fireEvent.press(screen.getByRole("button", { name: copy.setup.done }))
     await fireEvent.press(
       screen.getByRole("button", {
-        name: new RegExp(`^${copy.setup.betterHints}:`),
+        name: copy.setup.changeHints,
       }),
     )
     await fireEvent.press(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.setup.autoHints["no-auto-hints"].label,
       }),
     )
@@ -1401,11 +1401,11 @@ describe("native production application journeys", () => {
     )
     await fireEvent.press(
       screen.getByRole("button", {
-        name: new RegExp(copy.gameplay.clock.timeControl),
+        name: copy.gameplay.clock.change,
       }),
     )
     await fireEvent.press(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: timeControlLabel(
           TIME_CONTROL_PRESETS[1].control,
           copy.gameplay.clock,

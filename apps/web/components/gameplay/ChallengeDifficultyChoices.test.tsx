@@ -1,14 +1,18 @@
 import { createRef } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import ChallengeDifficulty from "@mapachess/application-ui/challenge-difficulty"
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
   projectChallengeDifficulty,
 } from "@mapachess/gameplay/challenge-difficulty"
+import loadCatalog from "@mapachess/localization/catalog"
 import type { MatchVariant } from "@mapachess/match/match-variant"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
-import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
+import webSetupElements, {
+  WebSetupInput,
+} from "@/components/gameplay/WebSetupElements"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const history = {
   standard: {
@@ -37,12 +41,15 @@ function renderDifficulty(
   const grid = challengeDifficultyGrid(variant)
   const draft = createChallengeDifficultyDraft(grid, elo)
   return renderToStaticMarkup(
-    <ChallengeDifficultyChoices
-      control={projectChallengeDifficulty(variant, draft, history)}
-      disabled={disabled}
-      exactInput={createRef<HTMLInputElement>()}
-      onEdit={vi.fn()}
-    />,
+    <WebSetupInput exactInput={createRef<HTMLInputElement>()}>
+      <ChallengeDifficulty
+        copy={loadCatalog("en")}
+        elements={webSetupElements}
+        control={projectChallengeDifficulty(variant, draft, history)}
+        disabled={disabled}
+        onEdit={vi.fn()}
+      />
+    </WebSetupInput>,
   )
 }
 

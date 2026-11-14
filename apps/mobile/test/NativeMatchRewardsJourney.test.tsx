@@ -297,12 +297,10 @@ describe("native accepted rewards", () => {
     if (bunny === undefined)
       throw new Error("Expected Bunny in the Story roster")
     expect(
-      await screen.findByText(
-        copy.gameplay.opponentAndElo(
-          copy.animals.opponent(bunny.id),
-          bunny.storyTargetElo,
-        ),
-      ),
+      await screen.findByText(copy.animals.opponent(bunny.id)),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByText(copy.setup.elo(String(bunny.storyTargetElo))),
     ).toBeOnTheScreen()
     expect(playerData(runtime).totalXp).toBe(accepted.totalXp)
   })

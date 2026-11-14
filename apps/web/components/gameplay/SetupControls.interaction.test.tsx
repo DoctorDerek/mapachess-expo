@@ -2,6 +2,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { useRef, useState } from "react"
 import { describe, expect, it, vi } from "vitest"
+import ChallengeDifficulty from "@mapachess/application-ui/challenge-difficulty"
+import { SetupPositionChoice } from "@mapachess/application-ui/setup-choices"
 import challengeDifficultyGrid, {
   createChallengeDifficultyDraft,
   editChallengeDifficulty,
@@ -9,11 +11,12 @@ import challengeDifficultyGrid, {
 } from "@mapachess/gameplay/challenge-difficulty"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
-import { installDomHarness } from "../../test/domHarness"
-import gamepadHarness from "../../test/gamepadHarness"
-import PlayerInputProvider from "../input/PlayerInputProvider"
-import ChallengeDifficultyChoices from "./ChallengeDifficultyChoices"
-import Chess960PositionChoice from "./Chess960PositionChoice"
+import webSetupElements, {
+  WebSetupInput,
+} from "@/components/gameplay/WebSetupElements"
+import PlayerInputProvider from "@/components/input/PlayerInputProvider"
+import { installDomHarness } from "@/test/domHarness"
+import gamepadHarness from "@/test/gamepadHarness"
 
 installDomHarness()
 const copy = loadCatalog("en")
@@ -40,14 +43,17 @@ function Difficulty({ initial = 100 }: Readonly<{ initial?: number }>) {
   })
   return (
     <PlayerInputProvider profileActor={null}>
-      <ChallengeDifficultyChoices
-        control={control}
-        disabled={false}
-        exactInput={exactInput}
-        onEdit={(edit) =>
-          setDraft((current) => editChallengeDifficulty(grid, current, edit))
-        }
-      />
+      <WebSetupInput exactInput={exactInput}>
+        <ChallengeDifficulty
+          copy={copy}
+          elements={webSetupElements}
+          control={control}
+          disabled={false}
+          onEdit={(edit) =>
+            setDraft((current) => editChallengeDifficulty(grid, current, edit))
+          }
+        />
+      </WebSetupInput>
     </PlayerInputProvider>
   )
 }
@@ -64,7 +70,9 @@ function Position({
   const [value, setValue] = useState(initial)
   return (
     <PlayerInputProvider profileActor={null}>
-      <Chess960PositionChoice
+      <SetupPositionChoice
+        copy={copy}
+        elements={webSetupElements}
         value={value}
         disabled={disabled}
         orientation="white"
