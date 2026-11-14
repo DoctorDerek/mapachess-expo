@@ -2,6 +2,8 @@
 @import "@mapachess/match-presentation/mapachess-theme.css";
 @import "@mapachess/match-presentation/chess-board-theme.css";
 
+@source "../../../packages/application-ui/src";
+
 @theme inline {
   --font-home: var(--font-nunito-sans);
 }

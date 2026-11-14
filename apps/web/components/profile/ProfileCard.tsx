@@ -1,15 +1,19 @@
 "use client"
 
 import cx from "classix"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import type {
+  ProfileCardElements,
+  ProfileCardGroupProps,
+  ProfileCardTextProps,
+} from "@mapachess/application-ui/home-elements"
+import SharedProfileCard from "@mapachess/application-ui/profile-card"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { CardRatingContext } from "@mapachess/profile/rating-context"
 import {
-  cardFacts,
   drawCardCharacters,
   drawProfileCard,
-  INITIAL_CARD_CONTENT,
   loadCardArtwork,
   type CardInput,
 } from "../../lib/presentation/profileCardArtwork"
@@ -157,74 +161,66 @@ export default function ProfileCard({
 }>) {
   const copy = useMapachessCopy()
   const locale = useMapachessLocale()
-  const facts = useMemo(
-    () => cardFacts(data, ratingContext),
-    [data, ratingContext],
-  )
-  const contextLabel = copy.profile.cardRatingContext(
-    copy.gameplay.clock.category[ratingContext.category],
-    copy.shared.story.medals[ratingContext.assistance],
-  )
-  const input = useMemo<CardInput>(
-    () => ({
-      appearance,
-      facts,
-      content: INITIAL_CARD_CONTENT,
-      format: "GIF",
-      locale,
-    }),
-    [appearance, facts, locale],
-  )
   return (
-    <section
-      aria-label={copy.profile.cardDescription(
-        facts.level,
-        facts.standard,
-        facts.chess960,
-        contextLabel,
-      )}
-      className="font-home shadow-mapachess-raised shadow-profile-card-blue [container-type:inline-size]"
-    >
-      <div className="text-profile-card-ink flex min-h-[max(15rem,56cqw)] flex-wrap-reverse">
-        <dl className="bg-profile-card-yellow flex min-w-0 flex-[2_1_8rem] flex-col justify-evenly gap-3 p-[max(0.75rem,3cqw)]">
-          {[
-            ["level", copy.profile.level, facts.level],
-            ["standard", copy.profile.ratingLabel.standard, facts.standard],
-            ["chess960", copy.profile.ratingLabel.chess960, facts.chess960],
-          ].map(([kind, label, value]) => (
-            <div
-              key={kind}
-              className={cx(
-                "flex min-w-0",
-                kind === "level"
-                  ? "flex-wrap items-baseline gap-x-1"
-                  : "flex-wrap-reverse items-center justify-between gap-x-2",
-              )}
-            >
-              <dt
-                className={cx(
-                  "text-[max(1rem,3.6cqw)] leading-tight font-bold",
-                  kind !== "level" && "grow basis-[11ch]",
-                )}
-              >
-                {label}
-                {kind === "level" ? null : (
-                  <span className="block text-sm">
-                    <MedalSymbol medal={ratingContext.assistance} />
-                    {contextLabel}
-                  </span>
-                )}
-              </dt>
-              <dd className="mt-1 text-[max(1rem,9cqw)] leading-none font-black break-all tabular-nums">
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <div className="bg-profile-card-cyan from-profile-card-mint relative min-h-58 min-w-0 flex-[3_1_9rem] bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66%">
-          <ProfileArtwork input={input} fitStage />
-        </div>
-      </div>
-    </section>
+    <SharedProfileCard
+      data={data}
+      appearance={appearance}
+      ratingContext={ratingContext}
+      copy={copy}
+      locale={locale}
+      elements={webProfileCardElements}
+    />
   )
+}
+
+function CardGroup({
+  region,
+  description,
+  className,
+  children,
+  rating,
+}: ProfileCardGroupProps) {
+  const classes = cx(
+    className,
+    region === "card" && "[container-type:inline-size]",
+    region === "body" && "min-h-[max(15rem,56cqw)]",
+    region === "facts" && "p-[max(0.75rem,3cqw)]",
+    region === "label" && rating && "basis-[11ch]",
+    region === "artwork" &&
+      "from-profile-card-mint bg-radial-[ellipse_at_50%_70%] from-66% to-transparent to-66%",
+  )
+  if (region === "card")
+    return (
+      <section aria-label={description} className={classes}>
+        {children}
+      </section>
+    )
+  if (region === "facts") return <dl className={classes}>{children}</dl>
+  if (region === "label") return <dt className={classes}>{children}</dt>
+  if (region === "context") return <span className={classes}>{children}</span>
+  return <div className={classes}>{children}</div>
+}
+
+function CardText({ children, className, kind }: ProfileCardTextProps) {
+  const classes = cx(
+    className,
+    kind === "label" && "text-[max(1rem,3.6cqw)]",
+    kind === "value" && "text-[max(1rem,9cqw)]",
+  )
+  return kind === "value" ? (
+    <dd className={classes}>{children}</dd>
+  ) : (
+    <span className={classes}>{children}</span>
+  )
+}
+
+function CardArtwork({ input }: Readonly<{ input: CardInput }>) {
+  return <ProfileArtwork input={input} fitStage />
+}
+
+export const webProfileCardElements: ProfileCardElements = {
+  Group: CardGroup,
+  Text: CardText,
+  Artwork: CardArtwork,
+  Medal: MedalSymbol,
 }

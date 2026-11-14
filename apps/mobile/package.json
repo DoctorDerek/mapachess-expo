@@ -24,6 +24,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/application-ui": "workspace:*",
     "@expo-google-fonts/nunito-sans": "^0.4.2",
     "@mapachess/evaluation": "workspace:*",
     "@mapachess/gameplay": "workspace:*",

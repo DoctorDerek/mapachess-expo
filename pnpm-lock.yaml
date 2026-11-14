@@ -102,6 +102,9 @@ importers:
       '@expo-google-fonts/nunito-sans':
         specifier: ^0.4.2
         version: 0.4.2
+      '@mapachess/application-ui':
+        specifier: workspace:*
+        version: link:../../packages/application-ui
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../../packages/diagnostics
@@ -262,6 +265,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mapachess/application-ui':
+        specifier: workspace:*
+        version: link:../../packages/application-ui
       '@mapachess/diagnostics':
         specifier: workspace:*
         version: link:../../packages/diagnostics
@@ -365,6 +371,31 @@ importers:
       vite:
         specifier: ^8
         version: 8.2.6(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.0)(yaml@2.9.0)
+
+  packages/application-ui:
+    dependencies:
+      '@mapachess/gameplay':
+        specifier: workspace:*
+        version: link:../gameplay
+      '@mapachess/localization':
+        specifier: workspace:*
+        version: link:../localization
+      '@mapachess/match':
+        specifier: workspace:*
+        version: link:../match
+      '@mapachess/profile':
+        specifier: workspace:*
+        version: link:../profile
+      classix:
+        specifier: ^2
+        version: 2.2.19
+      react:
+        specifier: ^19
+        version: 19.2.3
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.18
 
   packages/calibration:
     dependencies:

@@ -3,7 +3,10 @@
 @import "@mapachess/match-presentation/mapachess-theme.css";
 @import "@mapachess/match-presentation/chess-board-theme.css";
 
+@source "../../packages/application-ui/src";
+
 @theme {
+  --font-home: "NunitoSans_800ExtraBold";
   --font-native: "NunitoSans_800ExtraBold";
   --font-native-body: "NunitoSans_600SemiBold";
 }

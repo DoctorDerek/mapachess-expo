@@ -1,12 +1,55 @@
+import cx from "classix"
 import { View } from "react-native"
+import type {
+  ProfileCardElements,
+  ProfileCardGroupProps,
+  ProfileCardTextProps,
+} from "@mapachess/application-ui/home-elements"
+import SharedProfileCard from "@mapachess/application-ui/profile-card"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
-import { cardFacts } from "@mapachess/profile/profile-card-model"
+import type { CardInput } from "@mapachess/profile/profile-card-model"
 import type { CardRatingContext } from "@mapachess/profile/rating-context"
 import NativeMedal from "@/components/presentation/NativeMedal"
 import NativeText from "@/components/presentation/NativeText"
-import NativeAnimatedPlayerArtwork from "./NativeAnimatedPlayerArtwork"
-import { useNativeLocale } from "./NativeLocaleProvider"
+import NativeAnimatedPlayerArtwork from "@/components/profile/NativeAnimatedPlayerArtwork"
+import { useNativeLocale } from "@/components/profile/NativeLocaleProvider"
+
+function CardGroup({
+  region,
+  description,
+  className,
+  children,
+}: ProfileCardGroupProps) {
+  return (
+    <View
+      accessible={region === "facts"}
+      accessibilityLabel={region === "facts" ? description : undefined}
+      className={cx(
+        className,
+        region === "body" && "min-h-60",
+        region === "facts" && "p-3",
+      )}
+    >
+      {children}
+    </View>
+  )
+}
+
+function CardText({ children, className }: ProfileCardTextProps) {
+  return <NativeText className={className}>{children}</NativeText>
+}
+
+function CardArtwork({ input }: Readonly<{ input: CardInput }>) {
+  return <NativeAnimatedPlayerArtwork appearance={input.appearance} />
+}
+
+export const nativeProfileCardElements: ProfileCardElements = {
+  Group: CardGroup,
+  Text: CardText,
+  Artwork: CardArtwork,
+  Medal: NativeMedal,
+}
 
 export default function NativeProfileCard({
   data,
@@ -17,57 +60,15 @@ export default function NativeProfileCard({
   appearance?: PlayerAppearance
   ratingContext?: CardRatingContext
 }>) {
-  const { copy } = useNativeLocale()
-  const facts = cardFacts(data, ratingContext)
-  const contextLabel = copy.profile.cardRatingContext(
-    copy.gameplay.clock.category[ratingContext.category],
-    copy.shared.story.medals[ratingContext.assistance],
-  )
+  const { copy, locale } = useNativeLocale()
   return (
-    <View className="shadow-mapachess-raised shadow-profile-card-blue min-h-60 flex-row flex-wrap-reverse overflow-hidden">
-      <View
-        accessible
-        accessibilityLabel={copy.profile.cardDescription(
-          facts.level,
-          facts.standard,
-          facts.chess960,
-          contextLabel,
-        )}
-        className="bg-profile-card-yellow min-w-0 flex-[2_1_8rem] justify-evenly gap-3 p-3"
-      >
-        <View className="flex-row flex-wrap items-baseline gap-2">
-          <NativeText className="font-native text-profile-card-ink text-lg">
-            {copy.profile.level}
-          </NativeText>
-          <NativeText className="font-native text-profile-card-ink text-3xl">
-            {facts.level}
-          </NativeText>
-        </View>
-        {(["standard", "chess960"] as const).map((variant) => (
-          <View
-            key={variant}
-            className="min-w-0 flex-row flex-wrap-reverse items-center justify-between gap-x-2 gap-y-1"
-          >
-            <View className="min-w-0 grow basis-28 gap-1">
-              <NativeText className="font-native text-profile-card-ink leading-tight">
-                {copy.profile.ratingLabel[variant]}
-              </NativeText>
-              <View className="flex-row flex-wrap items-center gap-1">
-                <NativeMedal medal={ratingContext.assistance} />
-                <NativeText className="text-profile-card-ink text-sm">
-                  {contextLabel}
-                </NativeText>
-              </View>
-            </View>
-            <NativeText className="font-native text-profile-card-ink text-3xl leading-none tabular-nums">
-              {facts[variant]}
-            </NativeText>
-          </View>
-        ))}
-      </View>
-      <View className="bg-profile-card-cyan min-h-60 min-w-0 flex-[3_1_9rem]">
-        <NativeAnimatedPlayerArtwork appearance={appearance} />
-      </View>
-    </View>
+    <SharedProfileCard
+      data={data}
+      appearance={appearance}
+      ratingContext={ratingContext}
+      copy={copy}
+      locale={locale}
+      elements={nativeProfileCardElements}
+    />
   )
 }
