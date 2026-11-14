@@ -70,7 +70,8 @@ async function renderSetup(variant: MatchVariant = "standard") {
         navigation={{ back: jest.fn(), open, close: jest.fn() }}
         onStart={start}
         overlay={undefined}
-        profileActor={runtime.actor}
+        onAutoHintModeChanged={jest.fn()}
+        onPlayerAnimalChanged={jest.fn()}
       />
     </NativeLocaleProvider>,
   )
@@ -84,6 +85,24 @@ const startButton = () =>
   screen.getByRole("button", { name: copy.setup.startMatch })
 
 describe("native inline Challenge Elo", () => {
+  it("blocks invalid displayed positions and recovers without accepting stale position data", async () => {
+    const { start } = await renderSetup("chess960")
+    const positionInput = screen.getByLabelText(copy.setup.positionNumber(959))
+    await fireEvent.changeText(positionInput, "960")
+    await fireEvent.press(startButton())
+    expect(start).not.toHaveBeenCalled()
+    expect(screen.getByRole("alert")).toHaveTextContent(copy.setup.invalidSetup)
+    await fireEvent.changeText(positionInput, "518")
+    expect(screen.queryByRole("alert")).toBeNull()
+    await fireEvent.press(startButton())
+    expect(start).toHaveBeenCalledTimes(1)
+    expect(start).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayedChess960PositionId: 518,
+        challengeSetup: expect.objectContaining({ chess960PositionId: 518 }),
+      }),
+    )
+  })
   it("shows a passive preview and launches the displayed random Chess960 position", async () => {
     const { start } = await renderSetup("chess960")
     const positionInput = () =>

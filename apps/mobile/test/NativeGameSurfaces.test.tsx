@@ -485,7 +485,8 @@ describe("native gameplay surfaces", () => {
         <NativeMatchSetup
           initial={initial}
           data={data}
-          profileActor={runtime.actor}
+          onAutoHintModeChanged={jest.fn()}
+          onPlayerAnimalChanged={jest.fn()}
           disabled={false}
           navigation={{ back, open: jest.fn(), close: jest.fn() }}
           overlay="setup-player"
@@ -494,12 +495,12 @@ describe("native gameplay surfaces", () => {
       </NativeLocaleProvider>,
     )
     expect(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.animals.names["chicken-stockfish"],
       }),
     ).toBeDisabled()
     expect(
-      screen.getByRole("button", {
+      screen.getByRole("radio", {
         name: copy.animals.names["raccoon-stockfish"],
       }),
     ).toBeEnabled()

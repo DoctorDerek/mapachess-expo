@@ -6,6 +6,7 @@
 @source "../../packages/application-ui/src";
 
 @theme {
+  --font-display: "NunitoSans_800ExtraBold";
   --font-home: "NunitoSans_800ExtraBold";
   --font-native: "NunitoSans_800ExtraBold";
   --font-native-body: "NunitoSans_600SemiBold";
