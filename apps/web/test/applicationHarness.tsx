@@ -25,8 +25,11 @@ export async function bootApplication() {
     name: copy.introduction.start,
   })
   await waitFor(() => expect(start.hasAttribute("disabled")).toBe(false))
+  fireEvent.click(start)
+  await waitFor(async () =>
+    expect((await savedProfile(indexedDb)).introductionCompleted).toBe(true),
+  )
   await act(async () => {
-    fireEvent.click(start)
     await vi.dynamicImportSettled()
   })
   await screen.findByRole(

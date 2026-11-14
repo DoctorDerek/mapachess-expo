@@ -49,6 +49,7 @@ describe("repository ESLint coverage", () => {
     "apps/web/lib/gameplay/openWebMatchRuntime.ts",
     "apps/web/lib/gameplay/webMatchSession.ts",
     "packages/gameplay/src/matchSession.ts",
+    "packages/application-ui/src/Home.tsx",
     "apps/web/lib/stockfish/webWorkerUciTransport.test.ts",
   ])(
     "detects TypeScript findings in %s without ignoring the file",

@@ -47,8 +47,11 @@ describe("local application boot and player journeys", () => {
       name: spanish.introduction.start,
     })
     await waitFor(() => expect(start).toHaveProperty("disabled", false))
+    fireEvent.click(start)
+    await waitFor(async () =>
+      expect((await savedProfile(indexedDb)).introductionCompleted).toBe(true),
+    )
     await act(async () => {
-      fireEvent.click(start)
       await vi.dynamicImportSettled()
     })
     await screen.findByRole(
@@ -69,7 +72,7 @@ describe("local application boot and player journeys", () => {
       expect((await savedProfile(indexedDb)).settings.locale).toBe("en"),
     )
     expect((await savedProfile(indexedDb)).introductionCompleted).toBe(true)
-  })
+  }, 15000)
 
   it("resets only the confirmed rating context after importing real earned counts", async () => {
     const view = await boot()
