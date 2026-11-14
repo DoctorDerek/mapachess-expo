@@ -16,6 +16,7 @@
     "typecheck": "next typegen && tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/application-ui": "workspace:*",
     "@mapachess/diagnostics": "workspace:*",
     "@mapachess/evaluation": "workspace:*",
     "@mapachess/gameplay": "workspace:*",

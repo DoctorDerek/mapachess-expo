@@ -2,8 +2,13 @@
 
 import { useSelector } from "@xstate/react"
 import cx from "classix"
-import { useEffect, useRef, type ReactNode, type Ref } from "react"
+import { useEffect, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
+import Home from "@mapachess/application-ui/home"
+import createHomeCommands, {
+  profileAllowsMatchOpening,
+  selectHome,
+} from "@mapachess/gameplay/home"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import {
   selectIsPersistingMutation,
@@ -14,12 +19,9 @@ import type { MatchNavigationCommands } from "@mapachess/match/match-navigation"
 import createMatchSetupForMode from "@mapachess/match/match-setup"
 import type { MatchSetup } from "@mapachess/match/match-setup"
 import { timeControlNotation, UNTIMED } from "@mapachess/match/time-control"
-import { samePlayerAppearance } from "@mapachess/profile/player-appearance"
 import { acceptedRewardMatchesEnding } from "@mapachess/profile/player-data"
 import profileMachine, {
-  selectCanChangeAutoHintMode,
   selectCurrentPlayerData,
-  selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
 import { matchPlayerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
@@ -34,10 +36,13 @@ import { loadWebStockfishBytes } from "../../lib/stockfish/prepareWebStockfishPr
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessShell from "../presentation/MapachessShell"
 import MapachessWordmark from "../presentation/MapachessWordmark"
-import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
-import MatchModeMenu from "./MatchModeMenu"
+import {
+  useMapachessCopy,
+  useMapachessLocale,
+} from "../profile/MapachessLocaleProvider"
 import MatchResultFacts from "./MatchResultFacts"
 import StoryMatchResult from "./StoryMatchResult"
+import webHomeElements from "./WebHomeElements"
 import WebMatch from "./WebMatch"
 import WebMatchSetup from "./WebMatchSetup"
 
@@ -50,44 +55,25 @@ export type WebGameProps = Readonly<{
   settingsOpen: boolean
 }>
 
-const profileAllowsMatchOpening = (
-  snapshot: ReturnType<ActorRefFrom<typeof profileMachine>["getSnapshot"]>,
-): boolean => {
-  const current = selectCurrentPlayerData(snapshot)
-  const pending = selectPendingPlayerData(snapshot)
-  return (
-    (snapshot.matches("ready") || selectCanChangeAutoHintMode(snapshot)) &&
-    current !== null &&
-    (pending === null ||
-      samePlayerAppearance(current.appearance, pending.appearance))
-  )
-}
-
 type GameHeaderProps = Pick<
   WebGameProps,
   "onSettingsRequested" | "settingsButtonRef" | "settingsOpen"
-> &
-  Readonly<{ home?: boolean }>
+>
 
-type GameFrameProps = GameHeaderProps &
-  Readonly<{
-    children: ReactNode
-    activityMessage?: string | null
-    matchSessionActive: boolean
-  }>
+type GameFrameProps = Readonly<{
+  children: ReactNode
+  activityMessage?: string | null
+  matchSessionActive: boolean
+  home: boolean
+}>
 
 function GameHeader({
-  home = false,
   onSettingsRequested,
   settingsButtonRef,
   settingsOpen,
 }: GameHeaderProps) {
   const messages = useMapachessCopy().interface.webGame
 
-  const homeTitle = useRef<HTMLHeadingElement>(null)
-  useEffect(() => {
-    if (home) homeTitle.current?.focus({ preventScroll: true })
-  }, [home])
   const settingsButton = (
     <MapachessButton
       variant="secondary"
@@ -96,25 +82,14 @@ function GameHeader({
       onClick={onSettingsRequested}
       ref={settingsButtonRef}
       type="button"
-      className={cx("max-w-full min-w-0 wrap-break-word", !home && "px-2!")}
+      className="max-w-full min-w-0 px-2! wrap-break-word"
     >
       {messages.settings}
     </MapachessButton>
   )
   return (
     <header className="max-w-mapachess mx-auto mb-4 flex w-full flex-wrap items-center justify-between gap-3">
-      {home ? (
-        <h1
-          id="game-modes-title"
-          ref={homeTitle}
-          tabIndex={-1}
-          className="min-w-0 outline-none"
-        >
-          <MapachessWordmark />
-        </h1>
-      ) : (
-        <MapachessWordmark />
-      )}
+      <MapachessWordmark />
       {settingsButton}
     </header>
   )
@@ -124,10 +99,7 @@ function GameFrame({
   children,
   activityMessage = null,
   matchSessionActive,
-  home = false,
-  onSettingsRequested,
-  settingsButtonRef,
-  settingsOpen,
+  home,
 }: GameFrameProps) {
   return (
     <MapachessShell
@@ -137,17 +109,6 @@ function GameFrame({
         !home && !matchSessionActive && "h-dvh",
       )}
     >
-      {home && !matchSessionActive ? (
-        <div inert={activityMessage !== null}>
-          <GameHeader
-            home
-            onSettingsRequested={onSettingsRequested}
-            settingsButtonRef={settingsButtonRef}
-            settingsOpen={settingsOpen}
-          />
-        </div>
-      ) : null}
-
       <p className="sr-only" role="status">
         {activityMessage}
       </p>
@@ -202,17 +163,26 @@ export default function WebGame({
   profileActor,
 }: WebGameProps) {
   const copy = useMapachessCopy()
+  const locale = useMapachessLocale()
   const animalCopy = copy.animals
 
   const messages = copy.interface.webGame
 
   const snapshot = useSelector(actor, (current) => current)
   const profileSnapshot = useSelector(profileActor, (current) => current)
+  const home = selectHome(profileSnapshot, snapshot, settingsOpen)
+  const homeCommands = createHomeCommands({
+    profileActor,
+    sessionActor: actor,
+    navigation,
+    generateChess960Position: () =>
+      generateWebChess960Position(globalThis.crypto),
+    settingsOpen: () => settingsOpen,
+    openSettings: onSettingsRequested,
+  })
   const savedPlayerData = selectCurrentPlayerData(profileSnapshot)
   const savedMatch = savedPlayerData?.activeMatch ?? null
-  const playerData =
-    selectPendingPlayerData(profileSnapshot) ??
-    selectCurrentPlayerData(profileSnapshot)
+  const playerData = home.playerData
   if (playerData === null)
     throw new Error("Match setup requires a valid player profile.")
   const profileReady =
@@ -295,9 +265,6 @@ export default function WebGame({
   const isRestoringMatch = snapshot.matches("openingCurrentMatch")
   const showModeMenu =
     snapshot.matches({ menu: "choosingMode" }) || isRestoringMatch
-  const resumableMatch =
-    session?.match ?? (isRestoringMatch ? savedMatch : null)
-
   const openingFreshMatch = snapshot.matches("openingFreshMatch")
   const chessIntent =
     savedMatch !== null ||
@@ -317,54 +284,15 @@ export default function WebGame({
       activityMessage={openingTitle(actor, copy)}
       matchSessionActive={retainingMatch}
       home={showModeMenu}
-      onSettingsRequested={onSettingsRequested}
-      settingsButtonRef={settingsButtonRef}
-      settingsOpen={settingsOpen}
     >
       {showModeMenu ? (
-        <MatchModeMenu
-          playerData={playerData}
-          resumeMatch={
-            resumableMatch === null
-              ? null
-              : {
-                  timeControl: resumableMatch.timeControl,
-                  disabled: settingsOpen || isRestoringMatch,
-                  onResume: () =>
-                    actor.send({ type: "MATCH_SESSION.RESUME_REQUESTED" }),
-                }
-          }
-          onCustomize={() => navigation.open("dressing-room")}
-          onShare={() => navigation.open("profile-card")}
-          disabled={!profileReady || isRestoringMatch}
-          onModeSelected={(selection) => {
-            if (
-              !profileAllowsMatchOpening(profileActor.getSnapshot()) ||
-              settingsOpen
-            )
-              return
-            const setup = createMatchSetupForMode(
-              selection,
-              playerData.settings.challengeSetup,
-              selectDefaultStoryOpponent(
-                playerData.storyProgress,
-                selection.variant,
-              ),
-            )
-            actor.send({
-              type: "MATCH_SESSION.SETUP_REQUESTED",
-              setup:
-                setup.mode === "challenge" &&
-                setup.challengeSetup.variant === "chess960"
-                  ? {
-                      ...setup,
-                      displayedChess960PositionId:
-                        setup.challengeSetup.chess960PositionId ??
-                        generateWebChess960Position(globalThis.crypto),
-                    }
-                  : setup,
-            })
-          }}
+        <Home
+          state={{ ...home, playerData }}
+          commands={homeCommands}
+          copy={copy}
+          locale={locale}
+          elements={webHomeElements}
+          settingsFocusTarget={settingsButtonRef}
         />
       ) : null}
       <div

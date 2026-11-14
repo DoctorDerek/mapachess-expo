@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./home": {
+      "types": "./src/home.ts",
+      "default": "./dist/home.js"
+    },
     "./session-controller": {
       "types": "./src/sessionController.ts",
       "default": "./dist/sessionController.js"

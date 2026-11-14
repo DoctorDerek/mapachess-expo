@@ -22,6 +22,7 @@ import {
   selectMatchTimeline,
 } from "@mapachess/match/match-machine"
 import { formatMatchMoveNotation } from "@mapachess/match/match-move"
+import { MATCH_MODE_CHOICES } from "@mapachess/match/match-setup"
 import { keyboardBindingLabel } from "@mapachess/match/player-input"
 import {
   TIME_CONTROL_PRESETS,
@@ -1081,6 +1082,29 @@ describe("native production application journeys", () => {
     expect(
       screen.queryByRole("button", { name: copy.interface.matchCommands.menu }),
     ).toBeNull()
+    for (const { mode, variant } of MATCH_MODE_CHOICES)
+      expect(
+        screen.getByRole("button", {
+          name: copy.setup.presentations[variant][mode].title,
+        }),
+      ).toBeEnabled()
+    const retained = selectCurrentPlayerData(
+      runtime.profile.actor.getSnapshot(),
+    )
+    await fireEvent.press(
+      screen.getByRole("button", { name: copy.setup.customizeProfile }),
+    )
+    expect(
+      await screen.findByRole("button", {
+        name: copy.profile.dressing.categories.Weapons,
+      }),
+    ).toBeOnTheScreen()
+    await fireEvent.press(
+      screen.getByRole("button", { name: copy.setup.cancel }),
+    )
+    expect(selectCurrentPlayerData(runtime.profile.actor.getSnapshot())).toBe(
+      retained,
+    )
     await fireEvent.press(
       screen.getByRole("button", {
         name: new RegExp(copy.interface.webGame.resumeMatch),

@@ -2,6 +2,10 @@ import { resolve } from "node:path"
 import { defineConfig } from "vitest/config"
 
 export default defineConfig({
+  resolve: {
+    alias: { "@": resolve(import.meta.dirname) },
+    dedupe: ["react", "react-dom"],
+  },
   oxc: {
     jsx: { runtime: "automatic" },
   },
@@ -27,7 +31,7 @@ export default defineConfig({
         "lib/**/*.ts",
         "components/**/*.tsx",
         "app/**/*.{ts,tsx}",
-        "**/packages/{diagnostics,evaluation,gameplay,hints,match,match-presentation,profile,stockfish}/dist/**/*.js",
+        "**/packages/{application-ui,diagnostics,evaluation,gameplay,hints,match,match-presentation,profile,stockfish}/dist/**/*.js",
       ],
       exclude: ["**/*.test.{ts,tsx}"],
     },

@@ -1,6 +1,8 @@
+import { HOME_WORDMARK_CLASS_NAME } from "@mapachess/application-ui/home-elements"
+
 export default function MapachessWordmark() {
   return (
-    <span className="font-home text-mapachito-white text-3xl leading-tight font-black tracking-tight wrap-anywhere">
+    <span className={HOME_WORDMARK_CLASS_NAME}>
       Mapa
       <wbr />
       chess
