@@ -2,8 +2,8 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
-import { bootApplication, savedProfile } from "../../test/applicationHarness"
-import { installDomHarness } from "../../test/domHarness"
+import { bootApplication, savedProfile } from "@/test/applicationHarness"
+import { installDomHarness } from "@/test/domHarness"
 
 installDomHarness()
 const copy = loadCatalog("en")
@@ -103,11 +103,16 @@ describe("mode setup, staged choices, and start recovery", () => {
     fireEvent.keyDown(exact, { key: "Enter" })
     expect(slider).toHaveProperty("value", "500")
     expect(screen.queryByRole("dialog")).toBeNull()
+    const opponentSummary = screen.getByRole("button", {
+      name: copy.setup.changeAnimal,
+    }).parentElement
+    if (opponentSummary === null)
+      throw new Error("Expected the opponent summary and its Change control.")
     expect(
-      screen.getByText(copy.animals.opponent("chicken-stockfish"), {
-        selector: "p",
-        exact: true,
-      }),
+      within(opponentSummary).getByText(
+        copy.animals.opponent("chicken-stockfish"),
+        { exact: true },
+      ),
     ).toBeTruthy()
     const position = screen.getByRole("spinbutton", {
       name: copy.setup.positionNumber(959),

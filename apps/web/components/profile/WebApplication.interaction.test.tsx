@@ -468,8 +468,22 @@ describe("local application boot and player journeys", () => {
         }),
       ).toBeNull(),
     )
+    await waitFor(async () =>
+      expect((await savedProfile(view.indexedDb)).totalXp).toBe(data.totalXp),
+    )
     expect(
-      screen.getByRole("dialog", { name: copy.profile.settingsTitle }),
+      screen.queryByRole("dialog", { name: copy.profile.settingsTitle }),
+    ).toBeNull()
+    expect(
+      screen.getByRole("button", {
+        name: copy.setup.presentations.standard.story.title,
+      }),
+    ).toBeTruthy()
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.interface.webGame.settings }),
+    )
+    expect(
+      await screen.findByRole("dialog", { name: copy.profile.settingsTitle }),
     ).toBeTruthy()
   })
   it("rejects malformed imports without stranding the current profile", async () => {

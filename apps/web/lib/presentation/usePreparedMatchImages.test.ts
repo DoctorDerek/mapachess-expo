@@ -5,9 +5,9 @@ import { IMPLEMENTED_DURABLE_OPPONENT_IDS } from "@mapachess/match/durable-match
 import { MATCH_SETUP_COPY } from "@mapachess/match/match-setup"
 import createInitialMapachessPlayerData from "@mapachess/profile/player-data"
 import { createInitialStoryProgress } from "@mapachess/profile/story-progress"
-import WebMatchSetup from "../../components/gameplay/WebMatchSetup"
-import { initialMatchPresentationSources } from "./usePreparedMatchImages"
-import resolveWebOpponentPresentation from "./webOpponentPresentation"
+import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
+import { initialMatchPresentationSources } from "@/lib/presentation/usePreparedMatchImages"
+import resolveWebOpponentPresentation from "@/lib/presentation/webOpponentPresentation"
 
 const previousAvailability = vi.hoisted(() => {
   const previous = process.env.MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS
@@ -88,7 +88,7 @@ describe("selected match image preparation", () => {
     vi.resetModules()
     try {
       const { initialMatchPresentationSources: withoutAssets } =
-        await import("./usePreparedMatchImages")
+        await import("@/lib/presentation/usePreparedMatchImages")
       expect(withoutAssets("chicken-stockfish")).toEqual([])
     } finally {
       vi.unstubAllEnvs()
