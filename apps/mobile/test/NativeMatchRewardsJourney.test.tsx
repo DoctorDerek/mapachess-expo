@@ -339,7 +339,7 @@ describe("native accepted rewards", () => {
     ).toBeOnTheScreen()
     expectNoCelebration()
     expect(screen.queryByText(notice)).toBeNull()
-    await pressButton(copy.interface.webMapachessApplication.tryAgain)
+    await pressButton(copy.interface.profilePersistenceFailurePanel.retrySave)
     expect(
       await screen.findByRole("button", { name: reviewBoard }),
     ).toBeOnTheScreen()

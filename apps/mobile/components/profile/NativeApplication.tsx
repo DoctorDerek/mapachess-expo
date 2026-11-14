@@ -7,11 +7,16 @@ import { useEffect, useState } from "react"
 import { ActivityIndicator, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { withUniwind } from "uniwind"
+import ProfileRecovery from "@mapachess/application-ui/profile-recovery"
 import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
 import loadCatalog from "@mapachess/localization/catalog"
 import { selectCurrentPlayerData } from "@mapachess/profile/profile-machine"
+import selectProfileRecovery, {
+  createRecoveryCommands,
+} from "@mapachess/profile/profile-recovery"
+import nativeRecoveryElements from "@/components/profile/NativeRecoveryElements"
 import openNativeApplicationRuntime, {
   type NativeApplicationRuntime,
 } from "@/lib/gameplay/openNativeApplicationRuntime"
@@ -26,7 +31,6 @@ import NativeRecoveryBoundary from "../presentation/NativeRecoveryBoundary"
 import NativeText from "../presentation/NativeText"
 import NativeIntroduction from "./NativeIntroduction"
 import NativeLocaleProvider, { useNativeLocale } from "./NativeLocaleProvider"
-import NativeProfileRecovery from "./NativeProfileRecovery"
 
 const SafeArea = withUniwind(SafeAreaView)
 
@@ -37,6 +41,12 @@ function NativeProfileExperience({
   const data = selectCurrentPlayerData(snapshot)
   const files = useNativeFileActions(runtime.profile.actor)
   const { copy } = useNativeLocale()
+  const recovery = selectProfileRecovery(snapshot)
+  const commands = createRecoveryCommands(runtime.profile.actor, {
+    exportData: () => void files.exportData(),
+    exportUnreadable: () => void files.exportUnreadable(),
+    importData: () => void files.importData(),
+  })
   return (
     <SafeArea
       className="bg-mapachito-charcoal min-h-0 flex-1"
@@ -66,9 +76,11 @@ function NativeProfileExperience({
             }
           >
             {data === null ? (
-              <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" />
-              </View>
+              recovery.kind === "none" ? (
+                <View className="flex-1 items-center justify-center">
+                  <ActivityIndicator size="large" />
+                </View>
+              ) : null
             ) : !data.introductionCompleted ? (
               <NativeIntroduction
                 actor={runtime.profile.actor}
@@ -78,7 +90,14 @@ function NativeProfileExperience({
               <NativeGame runtime={runtime} files={files} />
             )}
           </NativeRecoveryBoundary>
-          <NativeProfileRecovery actor={runtime.profile.actor} files={files} />
+          <ProfileRecovery
+            state={recovery}
+            commands={commands}
+            files={files}
+            copy={copy}
+            elements={nativeRecoveryElements}
+            delivery="share"
+          />
         </NativeInputSurface>
       </NativeInputProvider>
     </SafeArea>
