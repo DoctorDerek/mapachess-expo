@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./match-setup": {
+      "types": "./src/MatchSetup.tsx",
+      "default": "./dist/MatchSetup.js"
+    },
+    "./match-setup-editor": {
+      "types": "./src/MatchSetupEditor.tsx",
+      "default": "./dist/MatchSetupEditor.js"
+    },
     "./setup-elements": {
       "types": "./src/setupElements.ts",
       "default": "./dist/setupElements.js"
