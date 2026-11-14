@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config"
 export default defineConfig({
   resolve: {
     alias: { "@": resolve(import.meta.dirname) },
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "@xstate/react"],
   },
   oxc: {
     jsx: { runtime: "automatic" },
