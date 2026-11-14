@@ -5,6 +5,18 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./setup-elements": {
+      "types": "./src/setupElements.ts",
+      "default": "./dist/setupElements.js"
+    },
+    "./setup-choices": {
+      "types": "./src/SetupChoices.tsx",
+      "default": "./dist/SetupChoices.js"
+    },
+    "./setup-animal-choices": {
+      "types": "./src/SetupAnimalChoices.tsx",
+      "default": "./dist/SetupAnimalChoices.js"
+    },
     "./profile-recovery": {
       "types": "./src/ProfileRecovery.tsx",
       "default": "./dist/ProfileRecovery.js"
