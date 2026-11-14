@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./home": {
+      "types": "./src/Home.tsx",
+      "default": "./dist/Home.js"
+    },
     "./profile-card": {
       "types": "./src/ProfileCard.tsx",
       "default": "./dist/ProfileCard.js"
