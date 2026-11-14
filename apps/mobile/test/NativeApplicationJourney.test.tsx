@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import {
   afterEach,
   beforeEach,
@@ -14,7 +14,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { AccessibilityInfo } from "react-native"
+import { digestStringAsync } from "expo-crypto"
+import * as expoCrypto from "expo-crypto"
+import { AccessibilityInfo, BackHandler } from "react-native"
 import loadCatalog from "@mapachess/localization/catalog"
 import { LOCALE_LABELS } from "@mapachess/localization/locale"
 import {
@@ -40,10 +42,11 @@ import openNativeApplicationRuntime, {
 } from "@/lib/gameplay/openNativeApplicationRuntime"
 import openNativeMatchRuntime from "@/lib/gameplay/openNativeMatchRuntime"
 import { MAPACHESS_ASYNC_STORAGE_NAMESPACE } from "@/lib/profile/AsyncStorageDurableStore"
+import * as nativeFiles from "@/lib/profile/nativePlayerDataFiles"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import cryptography from "./nativeCryptographyFixture"
-import NativeEngineFixture from "./nativeEngineFixture"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import cryptography from "@/test/nativeCryptographyFixture"
+import NativeEngineFixture from "@/test/nativeEngineFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 jest.mock("expo-font", () => ({ useFonts: () => [true, null] }))
 jest.mock("@/lib/gameplay/openNativeApplicationRuntime", () => ({
@@ -328,6 +331,15 @@ describe("native production application journeys", () => {
     )
     expect(storage.values.get(key)).toBe(invalid)
     await review()
+    await fireEvent(
+      screen.getByRole("header", { name: recovery.resetAllLocalPlayerData }),
+      "requestClose",
+    )
+    expect(storage.values.get(key)).toBe(invalid)
+    expect(
+      screen.queryByText(recovery.thisReplacesAllLocalPlayerDataIncluding),
+    ).toBeNull()
+    await review()
     await fireEvent.press(
       screen.getByRole("button", { name: recovery.resetAllLocalPlayerData2 }),
     )
@@ -382,6 +394,188 @@ describe("native production application journeys", () => {
       ratings: accepted?.ratings,
       storyProgress: accepted?.storyProgress,
     })
+  })
+
+  it("imports from corrupt-save recovery through the actual button, cancels verification with Back, and reviews all backup facts without replacing data", async () => {
+    const storage = new InMemoryAsyncStorage()
+    const key = MAPACHESS_ASYNC_STORAGE_NAMESPACE + "/current"
+    const raw = "preserved corrupt native save"
+    storage.values.set(key, raw)
+    application = await actualOpen({ profile: { storage } })
+    openApplication.mockResolvedValue(application)
+    const picker = jest.spyOn(nativeFiles, "readNativePlayerDataBackup")
+    const back = jest.spyOn(BackHandler, "addEventListener")
+    await render(<HomeScreen />)
+    const importButton = () =>
+      screen.getByRole("button", {
+        name: copy.interface.profileFoundation.importBackup,
+      })
+    await screen.findByRole("button", {
+      name: copy.interface.profileFoundation.importBackup,
+    })
+    picker.mockRejectedValueOnce(new Error("Private file read failure"))
+    await fireEvent.press(importButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      copy.profile.fileUnreadable,
+    )
+    picker.mockResolvedValueOnce({ status: "too-large" })
+    await fireEvent.press(importButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      copy.profile.fileTooLarge,
+    )
+    picker.mockResolvedValueOnce({ status: "cancelled" })
+    await fireEvent.press(importButton())
+    expect(screen.queryByRole("alert")).toBeNull()
+    const contents = await createMapachessPortableBackup({
+      applicationVersion: "native-recovery",
+      gddRevision: "test",
+      playerData: createInitialPlayerData(),
+      sha256: cryptography.sha256,
+    })
+    const gate = Promise.withResolvers<void>()
+    const originalDigest = digestStringAsync
+    jest
+      .spyOn(expoCrypto, "digestStringAsync")
+      .mockImplementationOnce(async (algorithm, value, options) => {
+        await gate.promise
+        return originalDigest(algorithm, value, options)
+      })
+    picker.mockResolvedValue({ status: "ready", contents })
+    try {
+      await fireEvent.press(importButton())
+      expect(
+        await screen.findByRole("header", {
+          name: copy.interface.webMapachessApplication.inspectingBackup,
+        }),
+      ).toBeOnTheScreen()
+      expect(
+        screen.getByRole("button", {
+          name: copy.interface.webMapachessApplication.cancelImport,
+        }),
+      ).toBeOnTheScreen()
+      const handler = back.mock.calls.find(
+        ([event]) => event === "hardwareBackPress",
+      )?.[1]
+      if (handler === undefined)
+        throw new Error(
+          "Verification must own a canceling Android Back handler",
+        )
+      await act(() => {
+        expect(handler({ type: "hardwareBackPress", timeStamp: 0 })).toBe(true)
+      })
+      gate.resolve()
+      expect(
+        await screen.findByRole("header", {
+          name: copy.interface.profileRecoveryPanel.yourSaveNeedsAttention,
+        }),
+      ).toBeOnTheScreen()
+      expect(storage.values.get(key)).toBe(raw)
+      await fireEvent.press(importButton())
+      const preview = copy.interface.profileImportPreviewPanel
+      await screen.findByRole("header", {
+        name: preview.reviewBeforeReplacingLocalData,
+      })
+      await screen.findByRole("button", { name: preview.cancelImport })
+      for (const label of [
+        preview.automaticHints,
+        preview.earlierFourRatings,
+        copy.shared.story.overall,
+        preview.backupApplication,
+        preview.activeMatch,
+      ])
+        expect(screen.getByText(label)).toBeOnTheScreen()
+      expect(screen.getByText("native-recovery")).toBeOnTheScreen()
+      const receive = mockHardwareInput
+      if (receive === undefined)
+        throw new Error(
+          "Preview must retain the native hardware input subscription",
+        )
+      await act(() =>
+        receive({
+          kind: "keyboard",
+          code: "Escape",
+          pressed: true,
+          repeat: false,
+        }),
+      )
+      expect(storage.values.get(key)).toBe(raw)
+      expect(
+        screen.queryByRole("button", { name: preview.replaceLocalPlayerData }),
+      ).toBeNull()
+    } finally {
+      gate.resolve()
+    }
+  })
+
+  it("retains an imported candidate after a native recovery write fails, exports it, and retries acceptance", async () => {
+    const storage = new InMemoryAsyncStorage()
+    const key = MAPACHESS_ASYNC_STORAGE_NAMESPACE + "/current"
+    const raw = "original damaged bytes"
+    storage.values.set(key, raw)
+    application = await actualOpen({ profile: { storage } })
+    openApplication.mockResolvedValue(application)
+    const data = { ...createInitialPlayerData(), totalXp: 12 }
+    const contents = await createMapachessPortableBackup({
+      applicationVersion: "native-recovery",
+      gddRevision: "test",
+      playerData: data,
+      sha256: cryptography.sha256,
+    })
+    jest
+      .spyOn(nativeFiles, "readNativePlayerDataBackup")
+      .mockResolvedValueOnce({ status: "ready", contents })
+    const exportData = jest
+      .spyOn(nativeFiles, "exportNativePlayerData")
+      .mockResolvedValue(undefined)
+    await render(<HomeScreen />)
+    await fireEvent.press(
+      await screen.findByRole("button", {
+        name: copy.interface.profileFoundation.importBackup,
+      }),
+    )
+    jest
+      .spyOn(storage, "multiSet")
+      .mockRejectedValueOnce(new Error("Storage unavailable"))
+    await fireEvent.press(
+      await screen.findByRole("button", {
+        name: copy.interface.profileImportPreviewPanel.replaceLocalPlayerData,
+      }),
+    )
+    const failed = copy.interface.profilePersistenceFailurePanel
+    const exportButton = await screen.findByRole("button", {
+      name: failed.exportPendingPlayerData,
+    })
+    await fireEvent(
+      screen.getByRole("header", {
+        name: copy.interface.localSaveError.localSaveError,
+      }),
+      "requestClose",
+    )
+    expect(
+      application.profile.actor.getSnapshot().matches("persistenceFailure"),
+    ).toBe(true)
+    expect(storage.values.get(key)).toBe(raw)
+    expect(
+      selectCurrentPlayerData(application.profile.actor.getSnapshot()),
+    ).toBeNull()
+    expect(
+      screen.getByRole("button", { name: failed.exportUnreadableData }),
+    ).toBeOnTheScreen()
+    await fireEvent.press(exportButton)
+    expect(exportData).toHaveBeenCalledWith(
+      expect.objectContaining({ totalXp: 12 }),
+      expect.any(AbortSignal),
+    )
+    await fireEvent.press(
+      screen.getByRole("button", { name: failed.retrySave }),
+    )
+    expect(
+      await screen.findByRole("button", { name: copy.introduction.start }),
+    ).toBeOnTheScreen()
+    expect(
+      selectCurrentPlayerData(application.profile.actor.getSnapshot())?.totalXp,
+    ).toBe(12)
+    expect(storage.values.get(key)).not.toBe(raw)
   })
 
   it("accepts an earned Story backup and uses its unlocked animal without changing the recorded win", async () => {

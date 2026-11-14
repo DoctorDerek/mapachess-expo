@@ -1,4 +1,4 @@
-import "./nativeUiEnvironment"
+import "@/test/nativeUiEnvironment"
 import { beforeEach, describe, expect, it, jest } from "@jest/globals"
 import {
   act,
@@ -35,7 +35,7 @@ import {
 } from "@/lib/profile/nativePlayerDataFiles"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
 import useNativeFileActions from "@/lib/profile/useNativeFileActions"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 const mockFiles = new Map<string, string>()
 jest.mock("expo-document-picker", () => ({ getDocumentAsync: jest.fn() }))
@@ -256,6 +256,7 @@ describe("native profile file actions", () => {
         importing = result.current.importData()
       })
       expect(result.current.status).toBe("busy")
+      expect(result.current.operation).toBe("import")
       await act(() => result.current.exportData())
       expect(share).not.toHaveBeenCalled()
       await act(async () => {
@@ -279,10 +280,12 @@ describe("native profile file actions", () => {
       )
       await act(() => result.current.importData())
       expect(result.current.status).toBe("too-large")
+      expect(result.current.operation).toBe("import")
       expect(profile.actor.getSnapshot().matches("ready")).toBe(true)
       await act(() => result.current.exportData())
       expect(result.current.status).toBe("idle")
       expect(share).toHaveBeenCalledTimes(1)
+      expect(result.current.operation).toBe("export")
     } finally {
       await profile.close()
     }
@@ -308,6 +311,7 @@ describe("native profile file actions", () => {
       await act(() => result.current.exportUnreadable())
       expect(result.current.status).toBe("failed")
       expect(result.current.failure).not.toBeNull()
+      expect(result.current.operation).toBe("unreadable")
       let exported: string | undefined
       share.mockImplementationOnce(async (uri) => {
         exported = mockFiles.get(uri)
@@ -321,6 +325,38 @@ describe("native profile file actions", () => {
       expect(result.current.status).toBe("idle")
       expect(result.current.failure).toBeNull()
       expect(storage.values.get(key)).toBe(unreadable)
+      expect(mockFiles.size).toBe(0)
+    } finally {
+      await profile.close()
+    }
+  })
+  it("exports the pending candidate when the very first native save fails and no accepted profile exists", async () => {
+    const storage = new InMemoryAsyncStorage()
+    jest
+      .spyOn(storage, "multiSet")
+      .mockRejectedValueOnce(new Error("First save unavailable"))
+    const profile = await openNativeProfileRuntime({ storage })
+    try {
+      await waitFor(() =>
+        expect(profile.actor.getSnapshot().matches("persistenceFailure")).toBe(
+          true,
+        ),
+      )
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toBeNull()
+      let exported = ""
+      share.mockImplementationOnce(async (uri) => {
+        exported = mockFiles.get(uri) ?? ""
+      })
+      const { result } = await renderHook(() =>
+        useNativeFileActions(profile.actor),
+      )
+      await act(() => result.current.exportData())
+      expect(result.current.status).toBe("idle")
+      expect(JSON.parse(exported)).toMatchObject({
+        format: "mapachess-portable-backup",
+        payload: { totalXp: 0 },
+      })
+      expect(selectCurrentPlayerData(profile.actor.getSnapshot())).toBeNull()
       expect(mockFiles.size).toBe(0)
     } finally {
       await profile.close()

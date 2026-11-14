@@ -76,7 +76,7 @@ function Surface({
       visible
       animationType="none"
       presentationStyle="fullScreen"
-      onRequestClose={onCancel}
+      onRequestClose={() => onCancel?.()}
     >
       <SafeArea
         accessibilityViewIsModal
