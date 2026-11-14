@@ -11,8 +11,8 @@ import {
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAX_PORTABLE_BACKUP_UTF8_BYTES,
 } from "@mapachess/profile/portable-files"
-import mobilePackage from "../../package.json"
-import expoSha256 from "./expoSha256"
+import expoSha256 from "@/lib/profile/expoSha256"
+import mobilePackage from "@/package.json"
 
 export type NativeBackupReadResult =
   | Readonly<{ status: "cancelled" }>

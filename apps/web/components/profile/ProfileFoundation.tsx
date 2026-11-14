@@ -9,12 +9,12 @@ import {
   type ReactNode,
 } from "react"
 import { MAX_PORTABLE_BACKUP_UTF8_BYTES } from "@mapachess/profile/portable-files"
-import MapachessButton from "../presentation/MapachessButton"
-import MapachessNotice from "../presentation/MapachessNotice"
-import MapachessShell from "../presentation/MapachessShell"
-import MapachessWordmark from "../presentation/MapachessWordmark"
-import ScrollActions from "../presentation/ScrollActions"
-import { useMapachessCopy } from "./MapachessLocaleProvider"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import MapachessNotice from "@/components/presentation/MapachessNotice"
+import MapachessShell from "@/components/presentation/MapachessShell"
+import MapachessWordmark from "@/components/presentation/MapachessWordmark"
+import ScrollActions from "@/components/presentation/ScrollActions"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
 
 export type FullPageProfilePanelProps = Readonly<{
   children?: ReactNode
@@ -117,11 +117,15 @@ export default function FullPageProfilePanel({
 export type ImportBackupButtonProps = Readonly<{
   disabled: boolean
   onBackupRead: (rawBackup: string) => void
+  children?: ReactNode
+  className?: string
 }>
 
 export function ImportBackupButton({
   disabled,
   onBackupRead,
+  children,
+  className,
 }: ImportBackupButtonProps) {
   const copy = useMapachessCopy()
   const messages = copy.interface.profileFoundation
@@ -170,7 +174,7 @@ export function ImportBackupButton({
   }
 
   return (
-    <div>
+    <div className={className}>
       <MapachessButton
         aria-busy={reading}
         busyLabel={messages.readingBackup}
@@ -182,7 +186,7 @@ export function ImportBackupButton({
         }}
         type="button"
       >
-        {messages.importBackup}
+        {children ?? messages.importBackup}
       </MapachessButton>
       <input
         accept=".json,application/json"

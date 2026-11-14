@@ -8,14 +8,14 @@ import type {
   ProfileImportIssue,
   ProfilePersistenceFailure,
 } from "@mapachess/profile/profile-machine"
-import ApplicationError from "../../app/error"
-import { installDomHarness } from "../../test/domHarness"
-import MapachessDialog from "../presentation/MapachessDialog"
+import ApplicationError from "@/app/error"
+import MapachessDialog from "@/components/presentation/MapachessDialog"
 import {
   ImportBackupButton,
   importIssueMessage,
   persistenceFailureMessage,
-} from "./ProfileFoundation"
+} from "@/components/profile/ProfileFoundation"
+import { installDomHarness } from "@/test/domHarness"
 
 installDomHarness()
 const copy = loadCatalog("en")
@@ -32,6 +32,30 @@ function importing() {
 }
 
 describe("recovery controls and modal focus ownership", () => {
+  it("uses the shared import label while retaining the browser's owned file-reading control", async () => {
+    const onBackupRead = vi.fn()
+    const view = render(
+      <ImportBackupButton disabled={false} onBackupRead={onBackupRead}>
+        Choose recovery backup
+      </ImportBackupButton>,
+    )
+    expect(
+      screen.getByRole("button", { name: "Choose recovery backup" }),
+    ).toBeTruthy()
+    const input = view.container.querySelector('input[type="file"]')
+    if (!(input instanceof HTMLInputElement))
+      throw new Error("Recovery must own its browser file input")
+    const file = new File([], "backup.json")
+    Object.defineProperty(file, "text", {
+      value: async () => "selected recovery backup",
+    })
+    fireEvent.change(input, { target: { files: [file] } })
+    await waitFor(() =>
+      expect(onBackupRead).toHaveBeenCalledExactlyOnceWith(
+        "selected recovery backup",
+      ),
+    )
+  })
   it.each(SHIPPED_LOCALES)(
     "gives actionable %s messages for each backup and persistence failure without leaking diagnostics",
     (locale) => {

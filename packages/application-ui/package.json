@@ -5,6 +5,14 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./profile-recovery": {
+      "types": "./src/ProfileRecovery.tsx",
+      "default": "./dist/ProfileRecovery.js"
+    },
+    "./recovery-elements": {
+      "types": "./src/recoveryElements.ts",
+      "default": "./dist/recoveryElements.js"
+    },
     "./home": {
       "types": "./src/Home.tsx",
       "default": "./dist/Home.js"

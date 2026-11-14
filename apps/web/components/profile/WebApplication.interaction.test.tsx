@@ -11,15 +11,15 @@ import { IDBFactory } from "fake-indexeddb"
 import { describe, expect, it, vi } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
-import IndexedDbDurableStore from "../../lib/profile/IndexedDbDurableStore"
-import * as backupFiles from "../../lib/profile/webPlayerDataFiles"
+import WebMapachessApplication from "@/components/profile/WebMapachessApplication"
+import IndexedDbDurableStore from "@/lib/profile/IndexedDbDurableStore"
+import * as backupFiles from "@/lib/profile/webPlayerDataFiles"
 import {
   bootApplication as boot,
   savedProfile,
   openSettings as settings,
-} from "../../test/applicationHarness"
-import { installDomHarness } from "../../test/domHarness"
-import WebMapachessApplication from "./WebMapachessApplication"
+} from "@/test/applicationHarness"
+import { installDomHarness } from "@/test/domHarness"
 
 installDomHarness()
 const copy = loadCatalog("en")
@@ -405,6 +405,10 @@ describe("local application boot and player journeys", () => {
   })
   it("previews, cancels, then accepts a real integrity-checked backup without silent replacement", async () => {
     const view = await boot()
+    const homePlay = screen.getByRole("button", {
+      name: new RegExp(copy.setup.presentations.standard.story.title),
+    })
+    const before = await savedProfile(view.indexedDb)
     const data = {
       ...createInitialPlayerData(),
       introductionCompleted: true,
@@ -414,7 +418,11 @@ describe("local application boot and player journeys", () => {
       data,
       crypto.subtle,
     )
-    await settings()
+    const panel = await settings()
+    const importTrigger = panel.getByRole("button", {
+      name: copy.interface.profileFoundation.importBackup,
+    })
+    importTrigger.focus()
     await importFile(view.container, backup)
     expect(
       await screen.findByRole("heading", {
@@ -422,6 +430,7 @@ describe("local application boot and player journeys", () => {
           .reviewBeforeReplacingLocalData,
       }),
     ).toBeTruthy()
+    expect(homePlay.isConnected).toBe(true)
     fireEvent.click(
       screen.getByRole("button", {
         name: copy.interface.profileImportPreviewPanel.cancelImport,
@@ -435,6 +444,17 @@ describe("local application boot and player journeys", () => {
         }),
       ).toBeNull(),
     )
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", {
+        name: copy.interface.profileSettingsPanel.closeSettings,
+      }),
+    )
+    expect(
+      screen.getByRole("button", {
+        name: new RegExp(copy.setup.presentations.standard.story.title),
+      }),
+    ).toBe(homePlay)
+    expect(await savedProfile(view.indexedDb)).toEqual(before)
     await importFile(view.container, backup)
     fireEvent.click(
       await screen.findByRole("button", {
@@ -464,6 +484,50 @@ describe("local application boot and player journeys", () => {
         name: copy.interface.profileImportPreviewPanel.replaceLocalPlayerData,
       }),
     ).toBeNull()
+  })
+  it("reviews a backup from corrupt-save recovery, cancels safely, then replaces only on explicit confirmation", async ({
+    onTestFinished,
+  }) => {
+    const indexedDb = new IDBFactory()
+    const storage = new IndexedDbDurableStore(indexedDb)
+    onTestFinished(() => storage.close())
+    const empty = await storage.read()
+    const original = {
+      ...empty,
+      current: "corrupt save kept until confirmation",
+    }
+    await storage.compareAndSwapVerified({ expected: empty, next: original })
+    vi.stubGlobal("indexedDB", indexedDb)
+    const view = render(<WebMapachessApplication />)
+    await screen.findByRole("button", {
+      name: copy.interface.profileFoundation.importBackup,
+    })
+    const backup = await backupFiles.createWebPlayerDataBackup(
+      { ...createInitialPlayerData(), totalXp: 12 },
+      crypto.subtle,
+    )
+    await importFile(view.container, backup)
+    await screen.findByRole("heading", {
+      name: copy.interface.profileImportPreviewPanel
+        .reviewBeforeReplacingLocalData,
+    })
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: copy.interface.profileImportPreviewPanel.cancelImport,
+      }),
+    )
+    expect(await storage.read()).toEqual(original)
+    await screen.findByRole("button", {
+      name: copy.interface.profileFoundation.importBackup,
+    })
+    await importFile(view.container, backup)
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: copy.interface.profileImportPreviewPanel.replaceLocalPlayerData,
+      }),
+    )
+    await screen.findByRole("button", { name: copy.introduction.start })
+    expect((await savedProfile(indexedDb)).totalXp).toBe(12)
   })
   it("preserves unreadable bytes and makes a full reset explicitly cancelable", async () => {
     const indexedDb = new IDBFactory()

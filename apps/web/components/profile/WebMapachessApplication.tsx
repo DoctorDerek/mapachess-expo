@@ -4,41 +4,42 @@ import { useSelector } from "@xstate/react"
 import dynamic from "next/dynamic"
 import { useEffect, useRef, useState } from "react"
 import type { ActorRefFrom } from "xstate"
+import ProfileRecovery from "@mapachess/application-ui/profile-recovery"
 import type { PlayerEloRatingId } from "@mapachess/profile/player-data"
 import profileMachine, {
   selectCurrentPlayerData,
-  selectHasLastKnownGoodSave,
   selectImportIssue,
-  selectImportPreview,
-  selectPendingPlayerData,
-  selectPersistenceFailure,
   selectUnreadablePlayerData,
 } from "@mapachess/profile/profile-machine"
+import selectProfileRecovery, {
+  createRecoveryCommands,
+  selectExportablePlayerData,
+} from "@mapachess/profile/profile-recovery"
+import PlayerInputProvider, {
+  usePlayerInputScope,
+} from "@/components/input/PlayerInputProvider"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import MapachessNotice from "@/components/presentation/MapachessNotice"
+import MapachessShell from "@/components/presentation/MapachessShell"
+import Introduction, {
+  RestoringIntroduction,
+} from "@/components/profile/Introduction"
+import MapachessLocaleProvider, {
+  useMapachessCopy,
+  useMapachessLocale,
+} from "@/components/profile/MapachessLocaleProvider"
+import FullPageProfilePanel from "@/components/profile/ProfileFoundation"
+import type { ProfilePlayExperienceProps } from "@/components/profile/ProfilePlayExperience"
+import webRecoveryElements from "@/components/profile/WebRecoveryElements"
 import openWebProfileRuntime, {
   type WebProfileRuntime,
-} from "../../lib/profile/openWebProfileRuntime"
+} from "@/lib/profile/openWebProfileRuntime"
 import {
   createWebPlayerDataBackup,
   downloadTextFile,
   MAPACHESS_PLAYER_DATA_BACKUP_FILE_NAME,
   MAPACHESS_UNREADABLE_DATA_FILE_NAME,
-} from "../../lib/profile/webPlayerDataFiles"
-import PlayerInputProvider, {
-  usePlayerInputScope,
-} from "../input/PlayerInputProvider"
-import MapachessButton from "../presentation/MapachessButton"
-import MapachessNotice from "../presentation/MapachessNotice"
-import MapachessShell from "../presentation/MapachessShell"
-import Introduction, { RestoringIntroduction } from "./Introduction"
-import MapachessLocaleProvider, {
-  useMapachessCopy,
-  useMapachessLocale,
-} from "./MapachessLocaleProvider"
-import FullPageProfilePanel from "./ProfileFoundation"
-import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
-import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
-import type { ProfilePlayExperienceProps } from "./ProfilePlayExperience"
-import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
+} from "@/lib/profile/webPlayerDataFiles"
 
 type ProfileRuntimeState =
   | Readonly<{ status: "opening" }>
@@ -46,9 +47,12 @@ type ProfileRuntimeState =
   | Readonly<{ status: "unsupported" }>
 
 type ProfileActor = ActorRefFrom<typeof profileMachine>
-const ProfilePlayExperience = dynamic(() => import("./ProfilePlayExperience"), {
-  loading: RestoringIntroduction,
-})
+const ProfilePlayExperience = dynamic(
+  () => import("@/components/profile/ProfilePlayExperience"),
+  {
+    loading: RestoringIntroduction,
+  },
+)
 
 function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
   const copy = useMapachessCopy()
@@ -76,13 +80,10 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     [],
   )
   const currentPlayerData = selectCurrentPlayerData(snapshot)
-  const pendingPlayerData = selectPendingPlayerData(snapshot)
-  const exportablePlayerData = pendingPlayerData ?? currentPlayerData
+  const recovery = selectProfileRecovery(snapshot)
   const locale = useMapachessLocale()
   const unreadablePlayerData = selectUnreadablePlayerData(snapshot)
   const importIssue = selectImportIssue(snapshot)
-  const importPreview = selectImportPreview(snapshot)
-  const persistenceFailure = selectPersistenceFailure(snapshot)
   const playableProfile = currentPlayerData !== null
   const profileActivityMessage = snapshot.matches("importDecoding")
     ? copy.profile.inspectingBackup
@@ -90,11 +91,8 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
       ? copy.profile.savingData
       : null
 
-  const requestImportPreview = (rawBackup: string): void => {
-    actor.send({ rawBackup, type: "PROFILE.IMPORT_PREVIEW_REQUESTED" })
-  }
-
   const exportPlayerData = async (): Promise<void> => {
+    const exportablePlayerData = selectExportablePlayerData(actor.getSnapshot())
     if (exportablePlayerData === null || exportOperation.current !== null)
       return
     const operation = new AbortController()
@@ -132,90 +130,49 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     }
   }
 
-  const exportFailure = exportFailed ? (
-    <MapachessNotice
-      tone="warning"
-      className="relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
-      role="alert"
-    >
-      {messages.theDownloadCouldNotBeCreatedYour}
-    </MapachessNotice>
-  ) : null
-
-  if (snapshot.matches("loadFailure")) {
-    return (
-      <FullPageProfilePanel
-        description={messages.browserStorageDidNotFinishOpeningNothing}
-        eyebrow={messages.localProfile}
-        live="assertive"
-        title={messages.mapachessCouldNotReadLocalData}
+  const commands = createRecoveryCommands(actor, {
+    exportData: () => void exportPlayerData(),
+    exportUnreadable: exportUnreadableData,
+  })
+  const sharedRecovery = (
+    <ProfileRecovery
+      state={recovery}
+      commands={commands}
+      files={{
+        status: exporting ? "busy" : exportFailed ? "failed" : "idle",
+        operation: "export",
+      }}
+      copy={copy}
+      elements={webRecoveryElements}
+      delivery="download"
+    />
+  )
+  const exportFailure =
+    exportFailed && recovery.kind === "none" ? (
+      <MapachessNotice
+        tone="warning"
+        className="relative z-40 mx-auto mt-4 w-[calc(100%-2rem)] max-w-3xl text-sm"
+        role="alert"
       >
-        <MapachessButton
-          autoFocus
-          className="mt-7"
-          onClick={() => actor.send({ type: "PROFILE.BOOT_RETRY_REQUESTED" })}
-          type="button"
-        >
-          {messages.tryAgain}
-        </MapachessButton>
-      </FullPageProfilePanel>
-    )
-  }
-
-  if (snapshot.matches("recovery")) {
-    return (
-      <ProfileRecoveryPanel
-        downloadFailed={exportFailed}
-        hasLastKnownGood={selectHasLastKnownGoodSave(snapshot)}
-        importIssue={importIssue}
-        onBackupRead={requestImportPreview}
-        onExportUnreadable={exportUnreadableData}
-        onResetConfirmed={() =>
-          actor.send({ type: "PROFILE.RECOVERY_RESET_CONFIRMED" })
-        }
-        onRestoreLastKnownGood={() =>
-          actor.send({
-            type: "PROFILE.RECOVERY_LAST_KNOWN_GOOD_REQUESTED",
-          })
-        }
-        onTryAgain={() => actor.send({ type: "PROFILE.BOOT_RETRY_REQUESTED" })}
-      />
-    )
-  }
-
-  const importPreviewPanel =
-    snapshot.matches("importPreview") && importPreview !== null ? (
-      <ProfileImportPreviewPanel
-        backup={importPreview}
-        onCancel={() => actor.send({ type: "PROFILE.IMPORT_CANCELLED" })}
-        onConfirm={() => actor.send({ type: "PROFILE.IMPORT_CONFIRMED" })}
-      />
+        {messages.theDownloadCouldNotBeCreatedYour}
+      </MapachessNotice>
     ) : null
 
-  const persistenceFailurePanel =
-    (snapshot.matches("persistenceFailure") ||
-      snapshot.matches("retryingPersistence")) &&
-    persistenceFailure !== null ? (
-      <ProfilePersistenceFailurePanel
-        retrying={snapshot.matches("retryingPersistence")}
-        exporting={exporting}
-        exportablePlayerData={exportablePlayerData}
-        failure={persistenceFailure}
-        onExportPlayerData={() => void exportPlayerData()}
-        onExportUnreadable={
-          unreadablePlayerData === null ? null : exportUnreadableData
-        }
-        onRetry={() =>
-          actor.send({ type: "PROFILE.PERSISTENCE_RETRY_REQUESTED" })
-        }
-      />
-    ) : null
+  if (
+    recovery.kind === "load-failure" ||
+    recovery.kind === "recovery" ||
+    recovery.kind === "import-decoding"
+  )
+    return sharedRecovery
+  const blocked =
+    recovery.kind === "import-preview" ||
+    recovery.kind === "persistence-failure"
   if (playableProfile) {
     const settingsProps = {
       exporting,
       activityMessage: profileActivityMessage,
       importIssue,
-      onBackupRead: requestImportPreview,
+      onBackupRead: commands.readBackup,
       onExportPlayerData: () => void exportPlayerData(),
       onEloResetConfirmed: (variant: PlayerEloRatingId): void => {
         actor.send({ type: "PROFILE.ELO_RESET_CONFIRMED", variant })
@@ -225,15 +182,12 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
     return (
       <main ref={recoverySurface}>
         {exportFailure}
-        {importPreviewPanel}
-        {persistenceFailurePanel}
+        {sharedRecovery}
         {!currentPlayerData.introductionCompleted ? (
           <Introduction
             locale={locale}
             pending={profileActivityMessage !== null}
-            blocked={
-              importPreviewPanel !== null || persistenceFailurePanel !== null
-            }
+            blocked={blocked}
             onLocaleChanged={(locale) =>
               actor.send({ type: "PROFILE.LOCALE_CHANGED", locale })
             }
@@ -248,51 +202,28 @@ function ProfileExperience({ actor }: Readonly<{ actor: ProfileActor }>) {
           <ProfilePlayExperience
             profileActor={actor}
             settings={settingsProps}
-            blocked={
-              importPreviewPanel !== null || persistenceFailurePanel !== null
-            }
+            blocked={blocked}
           />
         )}
       </main>
     )
   }
 
-  if (importPreviewPanel !== null || persistenceFailurePanel !== null) {
+  if (blocked) {
     return (
       <MapachessShell as="main" className="grid place-items-start">
         <section ref={recoverySurface} className="w-full">
           {exportFailure}
-          {importPreviewPanel}
-          {persistenceFailurePanel}
+          {sharedRecovery}
         </section>
       </MapachessShell>
     )
   }
 
-  if (!snapshot.matches("importDecoding"))
-    return (
-      <main>
-        <RestoringIntroduction />
-      </main>
-    )
-
   return (
-    <FullPageProfilePanel
-      description={messages.inspectingTheSelectedBackupNothingHasBeen}
-      eyebrow={messages.playerData}
-      live="polite"
-      title={messages.inspectingBackup}
-    >
-      {snapshot.matches("importDecoding") ? (
-        <MapachessButton
-          className="mt-7"
-          onClick={() => actor.send({ type: "PROFILE.IMPORT_CANCELLED" })}
-          type="button"
-        >
-          {messages.cancelImport}
-        </MapachessButton>
-      ) : null}
-    </FullPageProfilePanel>
+    <main>
+      <RestoringIntroduction />
+    </main>
   )
 }
 

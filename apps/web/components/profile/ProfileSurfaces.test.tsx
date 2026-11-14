@@ -1,21 +1,40 @@
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import ProfileRecovery, {
+  type ProfileRecoveryProps,
+} from "@mapachess/application-ui/profile-recovery"
+import loadCatalog from "@mapachess/localization/catalog"
 import createInitialMapachessPlayerData, {
   MAPACHESS_PLAYER_DATA_SCHEMA_VERSION,
 } from "@mapachess/profile/player-data"
 import type { MapachessPortableBackup } from "@mapachess/profile/portable-backup"
 import { STOCKFISH_18_WEB_WASM_ARTIFACT } from "@mapachess/stockfish/web-runtime-identity"
-import medalArtworkSource from "../../lib/presentation/medalArtwork"
-import RecoverableView from "../presentation/RecoverableView"
-import ArtCredits from "./ArtCredits"
-import ProfileImportPreviewPanel from "./ProfileImportPreviewPanel"
-import ProfilePersistenceFailurePanel from "./ProfilePersistenceFailurePanel"
-import ProfileRecoveryPanel from "./ProfileRecoveryPanel"
-import ProfileSettingsPanel from "./ProfileSettingsPanel"
-import WebMapachessApplication from "./WebMapachessApplication"
+import RecoverableView from "@/components/presentation/RecoverableView"
+import ArtCredits from "@/components/profile/ArtCredits"
+import ProfileSettingsPanel from "@/components/profile/ProfileSettingsPanel"
+import WebMapachessApplication from "@/components/profile/WebMapachessApplication"
+import webRecoveryElements from "@/components/profile/WebRecoveryElements"
+import medalArtworkSource from "@/lib/presentation/medalArtwork"
 
 const playerData = createInitialMapachessPlayerData()
+const recoveryProps = {
+  copy: loadCatalog("en"),
+  delivery: "download",
+  elements: webRecoveryElements,
+  files: { status: "idle", operation: null },
+  commands: {
+    readBackup: vi.fn(),
+    cancelImport: vi.fn(),
+    confirmImport: vi.fn(),
+    retryLoad: vi.fn(),
+    retrySave: vi.fn(),
+    restoreLastKnownGood: vi.fn(),
+    reset: vi.fn(),
+    exportData: vi.fn(),
+    exportUnreadable: vi.fn(),
+  },
+} satisfies Omit<ProfileRecoveryProps, "state">
 
 const backup = Object.freeze({
   applicationVersion: "0.0.0",
@@ -112,15 +131,9 @@ describe("web player-data controls", () => {
 
   it("names every applicable corrupt-data recovery action", () => {
     const markup = renderToStaticMarkup(
-      createElement(ProfileRecoveryPanel, {
-        downloadFailed: false,
-        hasLastKnownGood: true,
-        importIssue: null,
-        onBackupRead: vi.fn(),
-        onExportUnreadable: vi.fn(),
-        onResetConfirmed: vi.fn(),
-        onRestoreLastKnownGood: vi.fn(),
-        onTryAgain: vi.fn(),
+      createElement(ProfileRecovery, {
+        ...recoveryProps,
+        state: { kind: "recovery", hasLastKnownGood: true, importIssue: null },
       }),
     )
 
@@ -160,15 +173,9 @@ describe("web player-data controls", () => {
 
   it("omits last-known-good recovery when no valid copy exists", () => {
     const markup = renderToStaticMarkup(
-      createElement(ProfileRecoveryPanel, {
-        downloadFailed: false,
-        hasLastKnownGood: false,
-        importIssue: null,
-        onBackupRead: vi.fn(),
-        onExportUnreadable: vi.fn(),
-        onResetConfirmed: vi.fn(),
-        onRestoreLastKnownGood: vi.fn(),
-        onTryAgain: vi.fn(),
+      createElement(ProfileRecovery, {
+        ...recoveryProps,
+        state: { kind: "recovery", hasLastKnownGood: false, importIssue: null },
       }),
     )
 
@@ -242,10 +249,9 @@ describe("web player-data controls", () => {
 
   it("previews replacement data and defaults focus to cancellation", () => {
     const markup = renderToStaticMarkup(
-      createElement(ProfileImportPreviewPanel, {
-        backup,
-        onCancel: vi.fn(),
-        onConfirm: vi.fn(),
+      createElement(ProfileRecovery, {
+        ...recoveryProps,
+        state: { kind: "import-preview", backup },
       }),
     )
 
@@ -261,12 +267,15 @@ describe("web player-data controls", () => {
 
   it("keeps retry and export visible after a failed verified write", () => {
     const markup = renderToStaticMarkup(
-      createElement(ProfilePersistenceFailurePanel, {
-        exportablePlayerData: playerData,
-        failure: { type: "PROFILE.STORAGE_VERIFICATION_FAILED" },
-        onExportPlayerData: vi.fn(),
-        onExportUnreadable: vi.fn(),
-        onRetry: vi.fn(),
+      createElement(ProfileRecovery, {
+        ...recoveryProps,
+        state: {
+          kind: "persistence-failure",
+          failure: { type: "PROFILE.STORAGE_VERIFICATION_FAILED" },
+          canExportData: true,
+          canExportUnreadable: true,
+          retrying: false,
+        },
       }),
     )
 

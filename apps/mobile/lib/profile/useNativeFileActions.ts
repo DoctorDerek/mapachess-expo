@@ -3,32 +3,36 @@ import captureError, {
   type ErrorDiagnostic,
 } from "@mapachess/diagnostics/error-diagnostic"
 import { MAPACHESS_UNREADABLE_DATA_FILE_NAME } from "@mapachess/profile/portable-files"
+import { selectUnreadablePlayerData } from "@mapachess/profile/profile-machine"
 import {
-  selectCurrentPlayerData,
-  selectPendingPlayerData,
-  selectUnreadablePlayerData,
-} from "@mapachess/profile/profile-machine"
+  selectExportablePlayerData,
+  type RecoveryFileState,
+} from "@mapachess/profile/profile-recovery"
 import type { ProfileActor } from "@mapachess/profile/profile-runtime"
 import {
   exportNativePlayerData,
   readNativePlayerDataBackup,
   shareNativeTextFile,
-} from "./nativePlayerDataFiles"
+} from "@/lib/profile/nativePlayerDataFiles"
 
 export default function useNativeFileActions(actor: ProfileActor) {
   const [status, setStatus] = useState<
     "idle" | "busy" | "failed" | "too-large"
   >("idle")
   const [failure, setFailure] = useState<ErrorDiagnostic | null>(null)
+  const [fileOperation, setFileOperation] =
+    useState<RecoveryFileState["operation"]>(null)
   const operation = useRef<AbortController | null>(null)
   useEffect(() => () => operation.current?.abort(), [])
   const run = async (
+    kind: NonNullable<RecoveryFileState["operation"]>,
     action: (signal: AbortSignal) => Promise<"idle" | "too-large">,
   ): Promise<void> => {
     if (operation.current !== null) return
     const controller = new AbortController()
     operation.current = controller
     setStatus("busy")
+    setFileOperation(kind)
     setFailure(null)
     try {
       const outcome = await action(controller.signal)
@@ -45,18 +49,18 @@ export default function useNativeFileActions(actor: ProfileActor) {
   return {
     status,
     failure,
+    operation: fileOperation,
     exportData: () =>
-      run(async (signal) => {
+      run("export", async (signal) => {
         const snapshot = actor.getSnapshot()
-        const data =
-          selectPendingPlayerData(snapshot) ?? selectCurrentPlayerData(snapshot)
+        const data = selectExportablePlayerData(snapshot)
         if (data === null)
           throw new Error("There is no accepted or pending profile to export.")
         await exportNativePlayerData(data, signal)
         return "idle"
       }),
     exportUnreadable: () =>
-      run(async (signal) => {
+      run("unreadable", async (signal) => {
         const contents = selectUnreadablePlayerData(actor.getSnapshot())
         if (contents === null)
           throw new Error("There is no unreadable save to export.")
@@ -68,7 +72,7 @@ export default function useNativeFileActions(actor: ProfileActor) {
         return "idle"
       }),
     importData: () =>
-      run(async (signal) => {
+      run("import", async (signal) => {
         const result = await readNativePlayerDataBackup(signal)
         if (result.status === "ready" && !signal.aborted)
           actor.send({

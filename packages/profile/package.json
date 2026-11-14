@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./profile-recovery": {
+      "types": "./src/profileRecovery.ts",
+      "default": "./dist/profileRecovery.js"
+    },
     "./profile-messages": {
       "types": "./src/profileMessages.ts",
       "default": "./dist/profileMessages.js"
