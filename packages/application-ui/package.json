@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./board-elements": {
+      "types": "./src/boardElements.ts",
+      "default": "./dist/boardElements.js"
+    },
     "./match-setup": {
       "types": "./src/MatchSetup.tsx",
       "default": "./dist/MatchSetup.js"
@@ -55,6 +59,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/match-presentation": "workspace:*",
     "@mapachess/gameplay": "workspace:*",
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",
