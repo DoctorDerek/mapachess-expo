@@ -23,9 +23,9 @@ import {
   DEFAULT_CHESS_APPEARANCE,
   type ChessAppearanceSettings,
 } from "@mapachess/profile/chess-appearance-settings"
-import { loadPresentationImage } from "../../lib/presentation/presentationImages"
-import MapachessButton from "../presentation/MapachessButton"
-import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
+import MapachessButton from "@/components/presentation/MapachessButton"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
+import { loadPresentationImage } from "@/lib/presentation/presentationImages"
 
 export const chessArtworkSource = (
   delivery: "public" | "protected-chess",
@@ -283,7 +283,12 @@ export function ChessPiece({
 export function ChessBoardArtwork({
   boardId,
   orientation = "white",
-}: Readonly<{ boardId?: ChessBoardId; orientation?: MatchColor }>) {
+  fallback,
+}: Readonly<{
+  boardId?: ChessBoardId
+  orientation?: MatchColor
+  fallback?: ReactNode
+}>) {
   const { appearance, attempt, onBoardError } = useContext(ArtworkContext)
   const board = chessBoard(boardId ?? appearance.boardId)
   const source =
@@ -296,22 +301,24 @@ export function ChessBoardArtwork({
     attempt,
   )
   return (
-    <span
+    <div
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      <span className="grid size-full grid-cols-8 grid-rows-8">
-        {Array.from({ length: 64 }, (_, index) => (
-          <span
-            key={index}
-            className={
-              (Math.floor(index / 8) + (index % 8)) % 2 === 0
-                ? "bg-[var(--mapachess-board-light-square)]"
-                : "bg-[var(--mapachess-board-dark-square)]"
-            }
-          />
-        ))}
-      </span>
+      {fallback ?? (
+        <span className="grid size-full grid-cols-8 grid-rows-8">
+          {Array.from({ length: 64 }, (_, index) => (
+            <span
+              key={index}
+              className={
+                (Math.floor(index / 8) + (index % 8)) % 2 === 0
+                  ? "bg-[var(--mapachess-board-light-square)]"
+                  : "bg-[var(--mapachess-board-dark-square)]"
+              }
+            />
+          ))}
+        </span>
+      )}
       {source !== null && board.kind === "artwork" ? (
         <img
           key={`${source}:${attempt}`}
@@ -332,6 +339,6 @@ export function ChessBoardArtwork({
           )}
         />
       ) : null}
-    </span>
+    </div>
   )
 }

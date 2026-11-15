@@ -8,10 +8,10 @@ import {
   createInitialMatchPosition,
   reconstructMatchPosition,
 } from "@mapachess/match/match-position"
-import { installDomHarness } from "../../test/domHarness"
-import gamepadHarness from "../../test/gamepadHarness"
-import PlayerInputProvider from "../input/PlayerInputProvider"
-import CanonicalChessboard from "./CanonicalChessboard"
+import CanonicalChessboard from "@/components/gameplay/CanonicalChessboard"
+import PlayerInputProvider from "@/components/input/PlayerInputProvider"
+import { installDomHarness } from "@/test/domHarness"
+import gamepadHarness from "@/test/gamepadHarness"
 
 installDomHarness()
 
@@ -106,6 +106,31 @@ describe("interactive chessboard", () => {
     fireEvent.click(choice)
     fireEvent.click(view.square("e1"))
     expect(view.onMove).not.toHaveBeenCalled()
+    view.rerender(<CanonicalChessboard {...view.props} />)
+    fireEvent.click(screen.getByRole("button", { name: "Promote to knight" }))
+    expect(view.onMove).toHaveBeenCalledExactlyOnceWith("a7a8n")
+  })
+
+  it("removes a pending choice when the canonical position changes", () => {
+    const view = board(position("7k/P7/8/8/8/8/8/4K3 w - - 0 1"))
+    fireEvent.click(view.square("a7"))
+    fireEvent.click(view.square("a8"))
+    const fresh = createInitialMatchPosition({
+      variant: "standard",
+      chess960PositionId: null,
+    })
+    view.rerender(
+      <CanonicalChessboard
+        {...view.props}
+        position={fresh}
+        legalMoves={listLegalMatchMoves(fresh)}
+      />,
+    )
+    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(view.onMove).not.toHaveBeenCalled()
+    fireEvent.click(view.square("e2"))
+    fireEvent.click(view.square("e4"))
+    expect(view.onMove).toHaveBeenCalledExactlyOnceWith("e2e4")
   })
 
   it.each(["normal", "castle"] as const)(
@@ -215,6 +240,37 @@ describe("interactive chessboard", () => {
     pad.press(12)
     pad.press(0)
     expect(view.onMove).toHaveBeenCalledExactlyOnceWith("e2e4")
+  })
+  it("preserves controller board navigation while move submission is disabled", () => {
+    const pad = gamepadHarness()
+    const view = board()
+    view.rerender(
+      <PlayerInputProvider profileActor={null}>
+        <CanonicalChessboard {...view.props} disabled />
+      </PlayerInputProvider>,
+    )
+    act(() => view.square("e2").focus())
+    pad.press(12)
+    expect(document.activeElement).toBe(view.square("e3"))
+    pad.press(0)
+    expect(view.onMove).not.toHaveBeenCalled()
+    expect(view.square("e3").getAttribute("aria-selected")).toBe("false")
+  })
+  it("renders one focus overlay and follows the focused square without retaining 64 hidden SVG trees", () => {
+    const view = board()
+    expect(document.querySelectorAll('[data-board-focus="true"]')).toHaveLength(
+      1,
+    )
+    act(() => view.square("e2").focus())
+    expect(document.querySelectorAll('[data-board-focus="true"]')).toHaveLength(
+      1,
+    )
+    expect(
+      view.square("e2").querySelector('[data-board-focus="true"]'),
+    ).not.toBeNull()
+    expect(
+      view.square("e1").querySelector('[data-board-focus="true"]'),
+    ).toBeNull()
   })
   it.each(["e2", "d2", "g1", "b1"])(
     "selects a legal own piece at %s without committing a move",
