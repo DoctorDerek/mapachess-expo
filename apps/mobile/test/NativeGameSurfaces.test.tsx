@@ -12,10 +12,12 @@ import * as Reanimated from "react-native-reanimated"
 import Home from "@mapachess/application-ui/home"
 import loadCatalog from "@mapachess/localization/catalog"
 import battleSpritePlayback from "@mapachess/match-presentation/battle-sprite-playback"
+import { BETTER_HINT_FRAME } from "@mapachess/match-presentation/better-hint-geometry"
 import resolveOpponentPresentation, {
   resolveOpponentAttention,
 } from "@mapachess/match-presentation/opponent-presentation"
 import { coachPortraitSource } from "@mapachess/match-presentation/presentation-assets"
+import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
 import {
   createInitialMatchPosition,
@@ -555,28 +557,163 @@ describe("native gameplay surfaces", () => {
     expect(move).toHaveBeenCalledTimes(1)
   })
 
-  it("requires an explicit promotion choice and supports canceling it", async () => {
+  it.each(["queen", "rook", "bishop", "knight"] as const)(
+    "requires an explicit %s promotion and supports canceling it",
+    async (role) => {
+      const { runtime, data } = await readyProfile()
+      const parsed = reconstructMatchPosition(
+        { variant: "standard", chess960PositionId: null },
+        "7k/P7/8/8/8/8/8/7K w - - 0 1",
+      )
+      if (!parsed.ok)
+        throw new Error("Promotion fixture must be a legal chess position.")
+      const move = jest.fn()
+      await render(
+        <NativeLocaleProvider actor={runtime.actor}>
+          <NativeChessboard
+            position={parsed.position}
+            orientation="white"
+            legalMoves={listLegalMatchMoves(parsed.position)}
+            disabled={false}
+            appearance={data.settings.chessAppearance}
+            hints={null}
+            showMoveHints={false}
+            lastMove={null}
+            onMove={move}
+          />
+        </NativeLocaleProvider>,
+      )
+      await fireEvent.press(
+        screen.getByRole("button", { name: /^a7, White pawn/ }),
+      )
+      await fireEvent.press(
+        screen.getByRole("button", { name: /^a8, empty, legal destination/ }),
+      )
+      expect(move).not.toHaveBeenCalled()
+      await fireEvent.press(
+        screen.getByRole("button", { name: copy.board.cancelPromotion }),
+      )
+      expect(move).not.toHaveBeenCalled()
+      await fireEvent.press(
+        screen.getByRole("button", { name: /^a7, White pawn/ }),
+      )
+      await fireEvent.press(
+        screen.getByRole("button", { name: /^a8, empty, legal destination/ }),
+      )
+      await fireEvent.press(
+        screen.getByRole("button", { name: copy.board.promote(role) }),
+      )
+      const selected = listLegalMatchMoves(parsed.position).find(
+        (entry) => entry.kind === "normal" && entry.promotion === role,
+      )
+      expect(move).toHaveBeenCalledWith(selected?.id)
+    },
+  )
+
+  it("renders all six accepted native hints through real SVG leaves and preserves piece hints on selection", async () => {
+    const { runtime, data } = await readyProfile()
+    const position = createInitialMatchPosition({
+      variant: "standard",
+      chess960PositionId: null,
+    })
+    const hints = {
+      positionFen: position.fen,
+      requestId: "native-board-hints",
+      player: [
+        { color: "white", from: "e2", to: "e4", uci: "e2e4" },
+        { color: "white", from: "d2", to: "d4", uci: "d2d4" },
+        { color: "white", from: "g1", to: "f3", uci: "g1f3" },
+      ],
+      opponent: [
+        { color: "black", from: "e7", to: "e5", uci: "e7e5" },
+        { color: "black", from: "d7", to: "d5", uci: "d7d5" },
+        { color: "black", from: "g8", to: "f6", uci: "g8f6" },
+      ],
+    } satisfies BetterHintsResult
+    const props = {
+      position,
+      orientation: "white" as const,
+      legalMoves: listLegalMatchMoves(position),
+      appearance: data.settings.chessAppearance,
+      disabled: false,
+      hints,
+      showMoveHints: true,
+      lastMove: null,
+      onMove: jest.fn(),
+    }
+    const view = await render(
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeChessboard {...props} />
+      </NativeLocaleProvider>,
+    )
+    const paths = () =>
+      screen.container.queryAll(
+        (node) => node.type === "RNSVGPath" && node.props.strokeLinejoin === 1,
+      )
+    expect(paths()).toHaveLength(6)
+    const colors: unknown[] = paths().map((node) => node.props.fill)
+    expect(colors[0]).toEqual({ type: 0, payload: expect.any(Number) })
+    expect(colors[3]).toEqual({ type: 0, payload: expect.any(Number) })
+    expect(colors.slice(0, 3)).toEqual([colors[0], colors[0], colors[0]])
+    expect(colors.slice(3)).toEqual([colors[3], colors[3], colors[3]])
+    expect(colors[0]).not.toEqual(colors[3])
+    const lines = screen.container.queryAll((node) => node.type === "RNSVGLine")
+    expect(lines).toHaveLength(6)
+    for (const line of lines) {
+      expect(line.props.strokeDasharray).toBeTruthy()
+      expect(line.props.strokeLinecap).toBe(0)
+    }
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^e2, White pawn/ }),
+    )
+    expect(paths()).toHaveLength(6)
+    expect(
+      screen.getByRole("button", { name: /^e4, empty, legal destination/ })
+        .props.accessibilityLabel,
+    ).toContain(copy.board.moveHint("player", "e2"))
+    await view.rerender(
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeChessboard {...props} showMoveHints={false} />
+      </NativeLocaleProvider>,
+    )
+    expect(paths()).toHaveLength(0)
+    const frames = screen.container
+      .queryAll((node) => node.type === "RNSVGRect")
+      .filter(
+        (node) =>
+          node.props.strokeWidth === BETTER_HINT_FRAME.width ||
+          node.props.strokeWidth === BETTER_HINT_FRAME.outlineWidth,
+      )
+    expect(frames).toHaveLength(12)
+    expect(
+      screen.getByRole("button", { name: /^e2, White pawn/ }).props
+        .accessibilityLabel,
+    ).toContain(copy.board.pieceHint("player"))
+    expect(props.onMove).not.toHaveBeenCalled()
+  })
+
+  it("keeps a native promotion pending across a blocked write and discards it on a new position", async () => {
     const { runtime, data } = await readyProfile()
     const parsed = reconstructMatchPosition(
       { variant: "standard", chess960PositionId: null },
       "7k/P7/8/8/8/8/8/7K w - - 0 1",
     )
-    if (!parsed.ok)
-      throw new Error("Promotion fixture must be a legal chess position.")
+    if (!parsed.ok) throw new Error("Expected a legal promotion fixture")
     const move = jest.fn()
-    await render(
+    const props = {
+      position: parsed.position,
+      orientation: "white" as const,
+      legalMoves: listLegalMatchMoves(parsed.position),
+      appearance: data.settings.chessAppearance,
+      disabled: false,
+      hints: null,
+      showMoveHints: false,
+      lastMove: null,
+      onMove: move,
+    }
+    const view = await render(
       <NativeLocaleProvider actor={runtime.actor}>
-        <NativeChessboard
-          position={parsed.position}
-          orientation="white"
-          legalMoves={listLegalMatchMoves(parsed.position)}
-          disabled={false}
-          appearance={data.settings.chessAppearance}
-          hints={null}
-          showMoveHints={false}
-          lastMove={null}
-          onMove={move}
-        />
+        <NativeChessboard {...props} />
       </NativeLocaleProvider>,
     )
     await fireEvent.press(
@@ -585,17 +722,48 @@ describe("native gameplay surfaces", () => {
     await fireEvent.press(
       screen.getByRole("button", { name: /^a8, empty, legal destination/ }),
     )
-    expect(move).not.toHaveBeenCalled()
-    await fireEvent.press(
-      screen.getByRole("button", { name: copy.board.cancelMove }),
+    await view.rerender(
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeChessboard {...props} disabled />
+      </NativeLocaleProvider>,
     )
+    const choice = screen.getByRole("button", {
+      name: copy.board.promote("queen"),
+    })
+    expect(choice).toBeDisabled()
+    await fireEvent.press(choice)
     expect(move).not.toHaveBeenCalled()
-    await fireEvent.press(
-      screen.getByRole("button", { name: /^a8, empty, legal destination/ }),
+    await view.rerender(
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeChessboard {...props} />
+      </NativeLocaleProvider>,
     )
-    await fireEvent.press(
+    expect(
       screen.getByRole("button", { name: copy.board.promote("queen") }),
+    ).toBeEnabled()
+    const fresh = createInitialMatchPosition({
+      variant: "standard",
+      chess960PositionId: null,
+    })
+    await view.rerender(
+      <NativeLocaleProvider actor={runtime.actor}>
+        <NativeChessboard
+          {...props}
+          position={fresh}
+          legalMoves={listLegalMatchMoves(fresh)}
+        />
+      </NativeLocaleProvider>,
     )
-    expect(move).toHaveBeenCalledWith("a7a8q")
+    expect(
+      screen.queryByRole("button", { name: copy.board.promote("queen") }),
+    ).toBeNull()
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^e2, White pawn/ }),
+    )
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^e4, empty, legal destination/ }),
+    )
+    expect(move).toHaveBeenCalledTimes(1)
+    expect(move).toHaveBeenCalledWith("e2e4")
   })
 })

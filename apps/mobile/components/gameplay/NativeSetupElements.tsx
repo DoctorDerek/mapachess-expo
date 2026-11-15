@@ -13,6 +13,7 @@ import { Modal, Pressable, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Svg, { Defs, Image, Mask, Rect } from "react-native-svg"
 import { withUniwind } from "uniwind"
+import { Chess960BoardPreview } from "@mapachess/application-ui/board-grid"
 import type {
   SetupChoiceProps,
   SetupElements,
@@ -20,17 +21,15 @@ import type {
   SetupTextProps,
 } from "@mapachess/application-ui/setup-elements"
 import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
-import {
-  CHESS960_POSITION_COUNT,
-  parseChess960PositionId,
-} from "@mapachess/match/chess960-position"
-import { createInitialMatchPosition } from "@mapachess/match/match-position"
+import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
 import type { ChessAppearanceSettings } from "@mapachess/profile/chess-appearance-settings"
+import nativeBoardElements, {
+  NativeBoardAppearance,
+} from "@/components/gameplay/NativeBoardElements"
 import {
   NativeEloInput,
   NativeEloSlider,
 } from "@/components/gameplay/NativeChallengeDifficulty"
-import NativeChessboard from "@/components/gameplay/NativeChessboard"
 import {
   NativeInputSurface,
   useNativeInputControl,
@@ -246,39 +245,18 @@ function PositionPreview({
 }: ComponentProps<SetupElements["PositionPreview"]>) {
   const { copy } = useNativeLocale()
   const appearance = useContext(Appearance)
-  const parsed = parseChess960PositionId(
-    value.trim() === "" ? NaN : Number(value),
-  )
-  if (!parsed.ok) return null
-  if (appearance === null) return null
-  return (
-    <View
-      className="mx-auto mt-3 aspect-square w-full max-w-64"
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={copy.setup.positionPreview(parsed.positionId)}
-    >
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        pointerEvents="none"
-      >
-        <NativeChessboard
-          position={createInitialMatchPosition({
-            variant: "chess960",
-            chess960PositionId: parsed.positionId,
-          })}
+  return appearance === null ? null : (
+    <NativeBoardAppearance appearance={appearance}>
+      {(palette) => (
+        <Chess960BoardPreview
+          value={value}
           orientation={orientation}
-          legalMoves={[]}
-          disabled
-          appearance={appearance}
-          hints={null}
-          showMoveHints={false}
-          lastMove={null}
-          onMove={() => undefined}
+          copy={copy}
+          palette={palette}
+          elements={nativeBoardElements}
         />
-      </View>
-    </View>
+      )}
+    </NativeBoardAppearance>
   )
 }
 const nativeSetupElements: SetupElements = {

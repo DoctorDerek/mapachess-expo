@@ -133,10 +133,13 @@ describe("native move-rating presentation", () => {
         screen.getByRole("button", { name: copy.board.promote(role) }),
       ).toBeOnTheScreen()
     await fireEvent.press(
-      screen.getByRole("button", { name: copy.board.cancelMove }),
+      screen.getByRole("button", { name: copy.board.cancelPromotion }),
     )
     expect(screen.getByLabelText(copy.board.orientation("white"))).toBe(board)
     expect(move).not.toHaveBeenCalled()
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^a7, White pawn/ }),
+    )
     await chooseDestination()
     await fireEvent.press(
       screen.getByRole("button", { name: copy.board.promote("queen") }),
