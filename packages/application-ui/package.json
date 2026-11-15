@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./better-hints": {
+      "types": "./src/BetterHints.tsx",
+      "default": "./dist/BetterHints.js"
+    },
     "./board-elements": {
       "types": "./src/boardElements.ts",
       "default": "./dist/boardElements.js"
