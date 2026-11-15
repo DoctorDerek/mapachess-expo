@@ -1,18 +1,11 @@
-import { useMemo, useRef, useState } from "react"
-import { createBoardSquareRows } from "@mapachess/match-presentation/board-presentation"
-import {
-  CHESS960_POSITION_COUNT,
-  parseChess960PositionId,
-} from "@mapachess/match/chess960-position"
-import {
-  createInitialMatchPosition,
-  type MatchColor,
-} from "@mapachess/match/match-position"
+import { useRef, useState } from "react"
+import { Chess960BoardPreview } from "@mapachess/application-ui/board-grid"
+import CHESS_BOARD_PALETTES from "@mapachess/match-presentation/chess-board-palettes"
+import { CHESS960_POSITION_COUNT } from "@mapachess/match/chess960-position"
+import { type MatchColor } from "@mapachess/match/match-position"
 import { isInputDirection } from "@mapachess/match/player-input"
-import {
-  ChessBoardArtwork,
-  ChessPiece,
-} from "@/components/gameplay/ChessArtwork"
+import { useDisplayedChessAppearance } from "@/components/gameplay/ChessArtwork"
+import webBoardElements from "@/components/gameplay/WebBoardElements"
 import InputPrompt from "@/components/input/InputPrompt"
 import { usePlayerInputScope } from "@/components/input/PlayerInputProvider"
 import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
@@ -119,44 +112,15 @@ export function PositionPreview({
   value,
   orientation,
 }: Readonly<{ value: string; orientation: MatchColor }>) {
-  const copy = useMapachessCopy().setup
-  const preview = useMemo(() => {
-    const parsed = parseChess960PositionId(
-      value.trim() === "" ? NaN : Number(value),
-    )
-    if (!parsed.ok) return null
-    const position = createInitialMatchPosition({
-      variant: "chess960",
-      chess960PositionId: parsed.positionId,
-    })
-    return {
-      id: parsed.positionId,
-      squares: createBoardSquareRows(orientation).flat(),
-      pieces: new Map(position.pieces.map((piece) => [piece.square, piece])),
-    }
-  }, [value, orientation])
-  return preview === null ? null : (
-    <div
-      aria-label={copy.positionPreview(preview.id)}
-      className="border-mapachito-charcoal relative mx-auto mt-3 grid aspect-square w-full max-w-64 grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border-2 xl:mx-0"
-      role="img"
-    >
-      <ChessBoardArtwork orientation={orientation} />
-      {preview.squares.map((square) => {
-        const piece = preview.pieces.get(square)
-        return (
-          <span
-            aria-hidden="true"
-            className="relative min-h-0 min-w-0"
-            key={square}
-          >
-            {piece === undefined ? null : (
-              <ChessPiece color={piece.color} role={piece.role} fitToSquare />
-            )}
-          </span>
-        )
-      })}
-    </div>
+  const appearance = useDisplayedChessAppearance()
+  return (
+    <Chess960BoardPreview
+      value={value}
+      orientation={orientation}
+      copy={useMapachessCopy()}
+      palette={CHESS_BOARD_PALETTES[appearance.boardId]}
+      elements={webBoardElements}
+    />
   )
 }
 
