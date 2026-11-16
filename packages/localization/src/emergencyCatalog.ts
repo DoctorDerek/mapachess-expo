@@ -19,23 +19,23 @@ const emergencyCatalog: MapachessCatalog = {
     paragraphs: [
       {
         lead: "",
-        body: UNAVAILABLE_TEXT,
+        body: unavailableText,
       },
       {
         lead: "",
-        body: UNAVAILABLE_TEXT,
+        body: unavailableText,
       },
       {
         lead: "",
-        body: UNAVAILABLE_TEXT,
+        body: unavailableText,
       },
       {
         lead: "",
-        body: UNAVAILABLE_TEXT,
+        body: unavailableText,
       },
       {
         lead: "",
-        body: UNAVAILABLE_TEXT,
+        body: unavailableText,
       },
     ],
     language: "Language",

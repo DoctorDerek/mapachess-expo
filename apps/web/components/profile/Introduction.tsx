@@ -2,6 +2,7 @@
 
 import loadCatalog from "@mapachess/localization/catalog"
 import type { ShippedLocale } from "@mapachess/localization/locale"
+import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import useFirstArrivalMotion from "../../lib/presentation/useFirstArrivalMotion"
 import FirstArrivalRaccoon from "../presentation/FirstArrivalRaccoon"
 import MapachessButton from "../presentation/MapachessButton"
@@ -83,7 +84,7 @@ export default function Introduction({
             {copy.paragraphs.map(({ lead, body }, index) => (
               <p key={index}>
                 {lead ? <strong>{lead} </strong> : null}
-                {body}
+                {body(STOCKFISH_OPPONENTS.length)}
               </p>
             ))}
           </div>

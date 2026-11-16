@@ -20,23 +20,28 @@ const introduction = Object.freeze({
   paragraphs: Object.freeze([
     {
       lead: "",
-      body: "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 25 oponentes de Historia o elige tu propio Desafío.",
+      body: (opponentCount: number) =>
+        `Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los ${opponentCount} oponentes de Historia o elige tu propio Desafío.`,
     },
     {
       lead: "Descubre las posibilidades.",
-      body: "Las Pistas de piezas resaltan tres piezas de cada bando. Después, las Pistas de movimientos muestran tres movimientos para esas piezas de cada bando. Tú decides cuándo quieres ayuda.",
+      body: () =>
+        "Las Pistas de piezas resaltan tres piezas de cada bando. Después, las Pistas de movimientos muestran tres movimientos para esas piezas de cada bando. Tú decides cuándo quieres ayuda.",
     },
     {
       lead: "Prueba otra idea.",
-      body: "Deshaz una jugada, explora otra variante y sigue aprendiendo. Tu entrenador y las batallas de animales reaccionan conforme avanza la partida.",
+      body: () =>
+        "Deshaz una jugada, explora otra variante y sigue aprendiendo. Tu entrenador y las batallas de animales reaccionan conforme avanza la partida.",
     },
     {
       lead: "Dale tu estilo.",
-      body: "Elige el animal con el que juegas, tu entrenador, las piezas y el tablero. Después puedes cambiar estas opciones en Personaliza tu juego.",
+      body: () =>
+        "Elige el animal con el que juegas, tu entrenador, las piezas y el tablero. Después puedes cambiar estas opciones en Personaliza tu juego.",
     },
     {
       lead: "",
-      body: "Gratis. Sin cuenta. Tu progreso se queda en este dispositivo. Exporta un respaldo desde Configuración cuando quieras una copia que puedas llevar contigo.",
+      body: () =>
+        "Gratis. Sin cuenta. Tu progreso se queda en este dispositivo. Exporta un respaldo desde Configuración cuando quieras una copia que puedas llevar contigo.",
     },
   ]),
   language: "Idioma",
