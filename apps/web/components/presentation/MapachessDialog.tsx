@@ -1,5 +1,5 @@
 import cx from "classix"
-import { useLayoutEffect, useRef, type ReactNode } from "react"
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 
 function openModalAncestorsFirst(dialog: HTMLDialogElement | null): void {
@@ -22,18 +22,25 @@ export default function MapachessDialog({
   onClose,
   fixedContent = false,
   placement = "center",
+  closeOnMenu = false,
+  initialFocus,
+  returnFocus,
 }: Readonly<{
   children: ReactNode
   label: string
   onClose: () => void
   fixedContent?: boolean | "fit"
   placement?: "center" | "bottom"
+  closeOnMenu?: boolean
+  initialFocus?: RefObject<HTMLElement | null>
+  returnFocus?: RefObject<HTMLElement | null> | undefined
 }>) {
   const dialog = useRef<HTMLDialogElement>(null)
   usePlayerInputScope({
     root: dialog,
     handle: (action) => {
-      if (action !== "cancel") return false
+      if (action !== "cancel" && !(closeOnMenu && action === "menu"))
+        return false
       onClose()
       return true
     },
@@ -41,8 +48,9 @@ export default function MapachessDialog({
 
   useLayoutEffect(() => {
     const element = dialog.current
-    const trigger = document.activeElement
+    const trigger = returnFocus?.current ?? document.activeElement
     openModalAncestorsFirst(element)
+    initialFocus?.current?.focus({ preventScroll: true })
     return () => {
       element?.close()
       if (
@@ -52,7 +60,7 @@ export default function MapachessDialog({
       )
         trigger.focus({ preventScroll: true })
     }
-  }, [])
+  }, [initialFocus, returnFocus])
 
   return (
     <dialog

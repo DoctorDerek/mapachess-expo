@@ -141,7 +141,7 @@ describe("match composition", () => {
       }
     },
   )
-  it("keeps one board, meter and client battle allocation with all core actions", () => {
+  it("keeps one board, meter and client battle allocation with persistent core actions", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintMode: "no-auto-hints",
@@ -199,15 +199,15 @@ describe("match composition", () => {
         "Mapachito coach",
         "Show Piece Hints",
         "vs.",
-        "Offer Draw",
-        "Resign",
+        "Match menu",
         "Undo",
         "Redo",
-        "Move History",
         "Untimed",
       ]) {
         expect(markup).toContain(label)
       }
+      expect(markup).not.toContain("Offer Draw")
+      expect(markup).not.toContain("Resign")
     } finally {
       actor.stop()
       evaluationActor.stop()
@@ -290,7 +290,7 @@ describe("match composition", () => {
       const markup = renderToStaticMarkup(
         <WebMatch
           navigation={{ open: vi.fn(), back: vi.fn(), close: vi.fn() }}
-          overlays={[]}
+          overlays={["match-menu"]}
           celebrationDismissed={false}
           rewardsReplaySequence={0}
           onRewardsReplayRequested={vi.fn()}

@@ -5,6 +5,10 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./match-menu-actions": {
+      "types": "./src/MatchMenuActions.tsx",
+      "default": "./dist/MatchMenuActions.js"
+    },
     "./chessboard": {
       "types": "./src/Chessboard.tsx",
       "default": "./dist/Chessboard.js"

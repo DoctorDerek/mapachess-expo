@@ -4,6 +4,7 @@ import { useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
+import type { MatchMenuSessionActions } from "@mapachess/application-ui/match-menu-actions"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import {
@@ -81,7 +82,7 @@ export type WebMatchProps = Readonly<{
   playerElo: number
   moveReactionPlacement: MoveReactionPlacement
   runtime: WebMatchRuntime
-  menuActions?: ReactNode
+  menuActions?: MatchMenuSessionActions
   result?: (disabled: boolean) => ReactNode
   navigation: MatchNavigationCommands
   overlays: readonly MatchNavigationOverlay[]
@@ -121,7 +122,7 @@ export default function WebMatch({
   const messages = copy.interface.webMatch
 
   const heading = useRef<HTMLHeadingElement>(null)
-  const menuSummary = useRef<HTMLElement>(null)
+  const menuSummary = useRef<HTMLButtonElement>(null)
   const rewardsButton = useRef<HTMLButtonElement>(null)
   const [celebrationStageSlot, setCelebrationStageSlot] =
     useState<HTMLDivElement | null>(null)
@@ -359,7 +360,6 @@ export default function WebMatch({
                   navigation.open("match-menu")
                 }}
                 onMenuClosed={() => {
-                  menuSummary.current?.focus({ preventScroll: true })
                   navigation.close("match-menu")
                 }}
                 onBack={navigation.back}
@@ -388,53 +388,51 @@ export default function WebMatch({
                     overlays={overlays}
                   />
                 }
-                menuActions={
-                  <>
-                    {menuActions}{" "}
-                    <details
-                      open={overlays.includes("match-details")}
-                      className="text-mapachito-white min-w-0"
+                menuActions={menuActions}
+                details={
+                  <details
+                    open={overlays.includes("match-details")}
+                    className="text-mapachito-charcoal min-w-0"
+                  >
+                    <summary
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (overlays.includes("match-details"))
+                          navigation.back()
+                        else navigation.open("match-details")
+                      }}
+                      className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
                     >
-                      <summary
-                        onClick={(event) => {
-                          event.preventDefault()
-                          if (overlays.includes("match-details"))
-                            navigation.back()
-                          else navigation.open("match-details")
-                        }}
-                        className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+                      {messages.matchDetailsMoveHistory}
+                    </summary>
+                    <div className="text-mapachito-charcoal grid gap-3">
+                      <dl
+                        aria-label={messages.currentMatchData}
+                        className="bg-mapachito-white grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
                       >
-                        {messages.matchDetailsMoveHistory}
-                      </summary>
-                      <div className="text-mapachito-charcoal grid gap-3">
-                        <dl
-                          aria-label={messages.currentMatchData}
-                          className="bg-mapachito-white grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
-                        >
-                          <dt>{messages.mode}</dt>
-                          <dd>{modeLabel}</dd>
-                          <dt>{messages.clock}</dt>
-                          <dd>
-                            {timeControlLabel(
-                              snapshot.context.timeControl,
-                              copy.gameplay.clock,
-                            )}
-                          </dd>
-                          <dt>{messages.privacy}</dt>
-                          <dd>{messages.localAccountless}</dd>
-                          <dt>{messages.engine}</dt>
-                          <dd className="truncate">
-                            {runtime.engineIdentity.name}
-                          </dd>
-                        </dl>
+                        <dt>{messages.mode}</dt>
+                        <dd>{modeLabel}</dd>
+                        <dt>{messages.clock}</dt>
+                        <dd>
+                          {timeControlLabel(
+                            snapshot.context.timeControl,
+                            copy.gameplay.clock,
+                          )}
+                        </dd>
+                        <dt>{messages.privacy}</dt>
+                        <dd>{messages.localAccountless}</dd>
+                        <dt>{messages.engine}</dt>
+                        <dd className="truncate">
+                          {runtime.engineIdentity.name}
+                        </dd>
+                      </dl>
 
-                        <ClassifiedMoveHistory
-                          transitions={activeTransitions}
-                          records={moveFeedback}
-                        />
-                      </div>
-                    </details>
-                  </>
+                      <ClassifiedMoveHistory
+                        transitions={activeTransitions}
+                        records={moveFeedback}
+                      />
+                    </div>
+                  </details>
                 }
                 menuSummaryRef={menuSummary}
                 actor={actor}

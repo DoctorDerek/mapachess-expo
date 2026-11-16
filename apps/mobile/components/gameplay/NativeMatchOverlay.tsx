@@ -1,13 +1,11 @@
 import { View } from "react-native"
+import MatchMenuActions from "@mapachess/application-ui/match-menu-actions"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import type { MatchSession } from "@mapachess/gameplay/match-session"
 import type { MatchSessionController } from "@mapachess/gameplay/session-controller"
 import { AUTO_HINT_MODES } from "@mapachess/match/auto-hint-mode"
 import {
   selectAutoHintMode,
-  selectCanOfferDraw,
-  selectCanResign,
-  selectDrawOfferResponse,
   selectMatchPosition,
   selectMatchTimeline,
 } from "@mapachess/match/match-machine"
@@ -25,6 +23,8 @@ import NativePanel from "../presentation/NativePanel"
 import NativeText from "../presentation/NativeText"
 import NativeAutoHintsHelp from "../profile/NativeAutoHintsHelp"
 import { useNativeLocale } from "../profile/NativeLocaleProvider"
+import nativeRecoveryElements from "../profile/NativeRecoveryElements"
+import nativeSetupElements from "./NativeSetupElements"
 
 export default function NativeMatchOverlay({
   session,
@@ -40,6 +40,7 @@ export default function NativeMatchOverlay({
   overlays: readonly MatchNavigationOverlay[]
 }>) {
   const snapshot = useActorSnapshot(session.actor)
+  const appSnapshot = useActorSnapshot(appActor)
   const evaluation = useActorSnapshot(session.evaluationActor)
   const { copy } = useNativeLocale()
   const overlay = overlays.at(-1)
@@ -131,68 +132,52 @@ export default function NativeMatchOverlay({
           )}
         </>
       ) : (
-        <>
-          <NativeButton
-            variant="secondary"
-            onPress={() => navigation.open("match-details")}
-          >
-            {copy.interface.webMatch.matchDetailsMoveHistory}
-          </NativeButton>
-          <NativeButton
-            variant="secondary"
-            onPress={() =>
-              appActor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
-            }
-          >
-            {copy.interface.webGame.restartMatch}
-          </NativeButton>
-          <NativeButton
-            variant="secondary"
-            onPress={() =>
-              appActor.send({ type: "MATCH_SESSION.MAIN_MENU_REQUESTED" })
-            }
-          >
-            {copy.interface.webGame.returnToMenu}
-          </NativeButton>
-          <NativeButton
-            variant="secondary"
-            onPress={() => navigation.open("settings")}
-          >
-            {copy.interface.webGame.settings}
-          </NativeButton>
-          <NativeButton
-            variant="secondary"
-            disabled={!selectCanOfferDraw(snapshot) || decision === null}
-            onPress={() => {
-              if (decision !== null) {
-                navigation.close("match-menu")
-                session.actor.send({
-                  type: "MATCH.DRAW_OFFER_REQUESTED",
-                  decision,
-                })
-              }
-            }}
-          >
-            {copy.interface.matchCommands.offerDraw}
-          </NativeButton>
-          {selectDrawOfferResponse(snapshot) === "rejected" ? (
-            <NativeText>
-              {copy.gameplay.drawDeclined(
-                copy.animals.opponent(session.match.opponentId),
-              )}
-            </NativeText>
-          ) : null}
-          <NativeButton
-            variant="destructive"
-            disabled={!selectCanResign(snapshot)}
-            onPress={() => {
+        <MatchMenuActions
+          actor={session.actor}
+          snapshot={snapshot}
+          copy={copy}
+          elements={{
+            Action: nativeRecoveryElements.Action,
+            Group: nativeSetupElements.Group,
+            Text: nativeSetupElements.Text,
+          }}
+          sessionActions={{
+            restarting: appSnapshot.matches("restartingMatch"),
+            returning: appSnapshot.matches("returningToMenu"),
+            onRestartRequested: () =>
+              appActor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" }),
+            onMainMenuRequested: () =>
+              appActor.send({ type: "MATCH_SESSION.MAIN_MENU_REQUESTED" }),
+            settings: (
+              <NativeButton
+                variant="secondary"
+                onPress={() => navigation.open("settings")}
+              >
+                {copy.interface.webGame.settings}
+              </NativeButton>
+            ),
+          }}
+          details={
+            <NativeButton
+              variant="secondary"
+              onPress={() => navigation.open("match-details")}
+            >
+              {copy.interface.webMatch.matchDetailsMoveHistory}
+            </NativeButton>
+          }
+          drawAvailable={decision !== null}
+          opponentName={copy.animals.opponent(session.match.opponentId)}
+          onOfferDraw={() => {
+            if (decision !== null) {
               navigation.close("match-menu")
-              session.actor.send({ type: "MATCH.RESIGN_REQUESTED" })
-            }}
-          >
-            {copy.interface.matchCommands.resign}
-          </NativeButton>
-        </>
+              session.actor.send({
+                type: "MATCH.DRAW_OFFER_REQUESTED",
+                decision,
+              })
+            }
+          }}
+          onMenuClosed={() => navigation.close("match-menu")}
+        />
       )}
     </NativePanel>
   )

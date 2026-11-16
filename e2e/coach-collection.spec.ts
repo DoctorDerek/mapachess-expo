@@ -12,7 +12,7 @@ const coachChoices = (page: Page) =>
   page.getByRole("group", { name: "Coach", exact: true })
 const openSettings = async (page: Page): Promise<void> => {
   const settings = page.getByRole("button", { name: "Settings", exact: true })
-  const menu = page.locator("summary").filter({ hasText: "Menu" })
+  const menu = page.getByRole("button", { name: "Match menu", exact: true })
   await expect(settings.or(menu)).toBeVisible({ timeout: 30000 })
   if (!(await settings.isVisible())) await menu.click()
   await settings.click()
@@ -195,6 +195,10 @@ test("retains the last decoded coach during a failed switch and explicitly retri
     .poll(async () => (await savedProfile(page)).settings.coachCollection)
     .toBe("greyfox")
   await page.unroute("**/coach/greyfox/**")
+  await page
+    .getByRole("dialog", { name: "Match menu", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
   await coach.getByRole("button", { name: "Retry artwork" }).click()
   await expect(coach.locator("img")).toHaveAttribute(
     "src",

@@ -362,30 +362,14 @@ export default function WebGame({
                 matchId: session.match.matchId,
               })
             }
-            menuActions={
-              <>
-                <MapachessButton
-                  aria-busy={snapshot.matches("restartingMatch")}
-                  busyLabel={copy.setup.restartingMatch}
-                  variant="secondary"
-                  onClick={() =>
-                    actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" })
-                  }
-                >
-                  {messages.restartMatch}
-                </MapachessButton>
-                <MapachessButton
-                  aria-busy={snapshot.matches("returningToMenu")}
-                  busyLabel={copy.setup.returningToMenu}
-                  variant="secondary"
-                  onClick={() =>
-                    actor.send({
-                      type: "MATCH_SESSION.MAIN_MENU_REQUESTED",
-                    })
-                  }
-                >
-                  {messages.returnToMenu}
-                </MapachessButton>
+            menuActions={{
+              restarting: snapshot.matches("restartingMatch"),
+              returning: snapshot.matches("returningToMenu"),
+              onRestartRequested: () =>
+                actor.send({ type: "MATCH_SESSION.RESTART_REQUESTED" }),
+              onMainMenuRequested: () =>
+                actor.send({ type: "MATCH_SESSION.MAIN_MENU_REQUESTED" }),
+              settings: (
                 <MapachessButton
                   variant="secondary"
                   aria-controls="profile-settings-panel"
@@ -395,8 +379,8 @@ export default function WebGame({
                 >
                   {messages.settings}
                 </MapachessButton>
-              </>
-            }
+              ),
+            }}
             actor={session.actor}
             evaluationActor={session.evaluationActor}
             initiallyConcluded={

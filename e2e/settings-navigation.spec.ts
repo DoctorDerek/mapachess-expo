@@ -436,7 +436,7 @@ test("reading Settings help and Credits preserves a paused timed match and requi
       exact: true,
     }),
   ).toBeVisible()
-  await page.locator("summary").filter({ hasText: "Menu" }).click()
+  await page.getByRole("button", { name: "Match menu", exact: true }).click()
   await page.getByRole("button", { name: "Settings", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.clock?.paused)

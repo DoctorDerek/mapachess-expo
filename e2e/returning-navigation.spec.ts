@@ -34,7 +34,8 @@ const bounds = (locator: Locator) =>
 function matchMenuControls(page: Page, locale: ShippedLocale) {
   const copy = loadCatalog(locale)
   return {
-    menu: page.getByLabel(copy.interface.matchCommands.matchMenu, {
+    menu: page.getByRole("button", {
+      name: copy.interface.matchCommands.matchMenu,
       exact: true,
     }),
     history: page.getByText(copy.interface.webMatch.matchDetailsMoveHistory, {
@@ -52,6 +53,42 @@ function matchMenuControls(page: Page, locale: ShippedLocale) {
 
 for (const locale of ["en", "es-419"] as const) {
   const copy = loadCatalog(locale)
+  test(`Return to Menu survives reload and resumes the same saved match in ${locale}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await playTimedTurn(page, locale)
+    const { menu } = matchMenuControls(page, locale)
+    await menu.tap()
+    await expect
+      .poll(async () => (await savedProfile(page)).activeMatch?.clock?.paused)
+      .toBe(true)
+    const accepted = await savedProfile(page)
+    await page
+      .getByRole("button", {
+        name: copy.interface.webGame.returnToMenu,
+        exact: true,
+      })
+      .tap()
+    const resume = page.getByRole("button", {
+      name: new RegExp(copy.interface.webGame.resumeMatch),
+    })
+    await expect(resume).toBeVisible()
+    expect(await savedProfile(page)).toEqual(accepted)
+    await page.reload()
+    await expect(resume).toBeVisible()
+    expect(await savedProfile(page)).toEqual(accepted)
+    await resume.tap()
+    await expect(page.getByRole("grid")).toBeVisible()
+    await expect(
+      page.getByRole("button", {
+        name: copy.gameplay.clock.resume,
+        exact: true,
+      }),
+    ).toBeVisible()
+    expect(await savedProfile(page)).toEqual(accepted)
+  })
+
   test(`returning Home puts the one retained match beside all four play choices in ${locale}`, async ({
     page,
   }) => {
@@ -206,6 +243,10 @@ test("controller Cancel stays stepwise and explicit Close works after reloading 
   await injectControllerInput(page)
   await playTimedTurn(page, "en")
   const { menu, history, details, close } = matchMenuControls(page, "en")
+  await activate(page, menu)
+  await press(page, 9)
+  await expect(close).toBeHidden()
+  await expect(menu).toBeFocused()
   await activate(page, menu)
   await activate(page, history)
   await expect(details).toBeVisible()

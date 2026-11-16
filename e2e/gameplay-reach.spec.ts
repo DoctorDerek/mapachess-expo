@@ -6,6 +6,79 @@ import startHintMatch from "./startHintMatch.js"
 
 test.use({ hasTouch: true })
 
+for (const locale of ["en", "es-419"] as const) {
+  test(`match menu stays modal with a reachable fixed Close in ${locale}`, async ({
+    page,
+  }) => {
+    const copy = loadCatalog(locale)
+    await startHintMatch(page, { locale, hints: "no-auto-hints" })
+    const menu = page.getByRole("button", {
+      name: copy.interface.matchCommands.matchMenu,
+      exact: true,
+    })
+    const dialog = page.getByRole("dialog", {
+      name: copy.interface.matchCommands.matchMenu,
+      exact: true,
+    })
+    const close = dialog.getByRole("button", {
+      name: copy.shared.settingsControls.close,
+      exact: true,
+    })
+    for (const { width, height, scale } of [
+      { width: 390, height: 844, scale: 100 },
+      { width: 320, height: 640, scale: 200 },
+      { width: 844, height: 390, scale: 100 },
+      { width: 1279, height: 800, scale: 100 },
+      { width: 1280, height: 800, scale: 100 },
+      { width: 1440, height: 900, scale: 100 },
+    ]) {
+      await page.setViewportSize({ width, height })
+      await page.evaluate((size) => {
+        document.documentElement.style.fontSize = size + "%"
+      }, scale)
+      await menu.scrollIntoViewIfNeeded()
+      await menu.tap()
+      await expect(dialog).toBeVisible()
+      expect(
+        await dialog.evaluate((element: HTMLDialogElement) =>
+          element.matches(":modal"),
+        ),
+      ).toBe(true)
+      await expect(close).toBeFocused()
+      await expect(close).toBeInViewport({ ratio: 1 })
+      const footer = await close.boundingBox()
+      if (footer === null)
+        throw new Error("The open menu needs a visible Close action.")
+      expect(footer.height).toBeGreaterThanOrEqual(48)
+      expect(footer.y + footer.height).toBeLessThanOrEqual(height)
+      expect(height - footer.y - footer.height).toBeLessThanOrEqual(
+        (100 * scale) / 100,
+      )
+      expect(
+        await dialog.evaluate(
+          (element) => element.scrollWidth - element.clientWidth,
+        ),
+      ).toBeLessThanOrEqual(1)
+      const history = dialog.getByText(
+        copy.interface.webMatch.matchDetailsMoveHistory,
+        { exact: true },
+      )
+      await history.scrollIntoViewIfNeeded()
+      await history.tap()
+      await expect(close).toBeInViewport({ ratio: 1 })
+      await page.keyboard.press("Tab")
+      expect(
+        await dialog.evaluate((element) =>
+          element.contains(document.activeElement),
+        ),
+      ).toBe(true)
+      await tapInPlace(page, close)
+      await expect(dialog).toBeHidden()
+      await expect(menu).toBeFocused()
+    }
+  })
+}
+
 async function tapInPlace(page: Page, control: Locator): Promise<void> {
   await expect(control).toBeEnabled()
   await expect(control).toBeInViewport({ ratio: 1 })
