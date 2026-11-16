@@ -380,7 +380,7 @@ export default function WebGame({
                   variant="secondary"
                   onClick={() =>
                     actor.send({
-                      type: "MATCH_SESSION.RETURN_TO_MENU_REQUESTED",
+                      type: "MATCH_SESSION.MAIN_MENU_REQUESTED",
                     })
                   }
                 >

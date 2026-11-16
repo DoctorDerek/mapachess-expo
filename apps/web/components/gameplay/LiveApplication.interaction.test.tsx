@@ -272,7 +272,7 @@ describe("full application with real sessions, hints, rules, and persistence", (
     expect((await savedProfile(indexedDb)).ratings).toEqual(before.ratings)
   }, 15000)
 
-  it("returns to setup by clearing only the requested active match and closing its owned runtimes, then opens all modes", async () => {
+  it("returns Home without clearing the saved match, then replaces it only when a new match starts", async () => {
     const { indexedDb } = await start()
     const before = await savedProfile(indexedDb)
     fireEvent.click(
@@ -281,18 +281,37 @@ describe("full application with real sessions, hints, rules, and persistence", (
     fireEvent.click(
       screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
     )
-    await screen.findByRole("heading", {
-      name: copy.setup.presentations.standard.challenge.title,
+    const resume = await screen.findByRole("button", { name: /Resume match/i })
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    expect(scenario.closes).toBe(0)
+    fireEvent.click(resume)
+    await screen.findByRole("grid")
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    fireEvent.click(
+      screen.getByText(copy.interface.matchCommands.menu, { exact: true }),
+    )
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
+    )
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: new RegExp(copy.setup.presentations.standard.challenge.title),
+      }),
+    )
+    const startMatch = await screen.findByRole("button", {
+      name: new RegExp(copy.setup.startMatch),
     })
-    expect((await savedProfile(indexedDb)).activeMatch).toBeNull()
-    expect((await savedProfile(indexedDb)).ratings).toEqual(before.ratings)
-    expect((await savedProfile(indexedDb)).totalXp).toBe(before.totalXp)
+    await waitFor(() => expect(startMatch).toHaveProperty("disabled", false))
+    fireEvent.click(startMatch)
+    await screen.findByRole("grid")
+    const replacement = await savedProfile(indexedDb)
+    expect(replacement.activeMatch).not.toBeNull()
+    expect(replacement.activeMatch?.matchId).not.toBe(
+      before.activeMatch?.matchId,
+    )
+    expect(replacement.ratings).toEqual(before.ratings)
+    expect(replacement.totalXp).toBe(before.totalXp)
     expect(scenario.closes).toBe(3)
-    fireEvent.click(screen.getByRole("button", { name: copy.setup.allModes }))
-    await screen.findByRole("button", {
-      name: new RegExp(copy.setup.presentations.standard.story.title),
-    })
-    expect(screen.queryByRole("button", { name: /Resume match/i })).toBeNull()
   }, 15000)
   it("starts a timed match, reveals both hint stages, configures Auto-Hints, returns Home, and resumes the saved board", async () => {
     const { indexedDb, unmount } = await start("challenge", true)
