@@ -383,6 +383,9 @@ importers:
       '@mapachess/match':
         specifier: workspace:*
         version: link:../match
+      '@mapachess/match-presentation':
+        specifier: workspace:*
+        version: link:../match-presentation
       '@mapachess/profile':
         specifier: workspace:*
         version: link:../profile
@@ -392,16 +395,17 @@ importers:
       classix:
         specifier: ^2
         version: 2.2.19
-      xstate:
-        specifier: ^5
-        version: 5.32.6
       react:
         specifier: ^19
         version: 19.2.3
+      xstate:
+        specifier: ^5
+        version: 5.32.6
     devDependencies:
       '@types/react':
         specifier: ^19
         version: 19.2.18
+
   packages/calibration:
     dependencies:
       '@mapachess/match':

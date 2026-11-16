@@ -5,6 +5,26 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "exports": {
+    "./chessboard": {
+      "types": "./src/Chessboard.tsx",
+      "default": "./dist/Chessboard.js"
+    },
+    "./board-grid": {
+      "types": "./src/BoardGrid.tsx",
+      "default": "./dist/BoardGrid.js"
+    },
+    "./board-move-choice": {
+      "types": "./src/BoardMoveChoice.tsx",
+      "default": "./dist/BoardMoveChoice.js"
+    },
+    "./better-hints": {
+      "types": "./src/BetterHints.tsx",
+      "default": "./dist/BetterHints.js"
+    },
+    "./board-elements": {
+      "types": "./src/boardElements.ts",
+      "default": "./dist/boardElements.js"
+    },
     "./match-setup": {
       "types": "./src/MatchSetup.tsx",
       "default": "./dist/MatchSetup.js"
@@ -55,6 +75,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@mapachess/match-presentation": "workspace:*",
     "@mapachess/gameplay": "workspace:*",
     "@mapachess/localization": "workspace:*",
     "@mapachess/match": "workspace:*",

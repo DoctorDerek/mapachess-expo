@@ -37,7 +37,7 @@ import NativeInputProvider, {
   useNativeInputControl,
 } from "@/components/input/NativeInputProvider"
 import openNativeProfileRuntime from "@/lib/profile/openNativeProfileRuntime"
-import InMemoryAsyncStorage from "./nativeStorageFixture"
+import InMemoryAsyncStorage from "@/test/nativeStorageFixture"
 
 jest.mock("react-native", () => {
   const native =
@@ -304,6 +304,7 @@ describe("native input ownership", () => {
       const send = (code: string) =>
         act(() => port.current().receive(key(code)))
       await send("Enter")
+      await send("ArrowUp")
       await send("Enter")
       expect(
         screen.getByRole("button", { name: /^e2, White pawn/, selected: true }),
@@ -314,16 +315,21 @@ describe("native input ownership", () => {
       expect(screen.queryByRole("button", { selected: true })).toBeNull()
       expect(move).not.toHaveBeenCalled()
       await send("BracketLeft")
+      await send("Enter")
+      expect(
+        screen.getByRole("button", { name: /^d2, White pawn/, selected: true }),
+      ).toBeOnTheScreen()
+      await send("Escape")
       await send("BracketRight")
       await send("Enter")
       expect(
-        screen.getByRole("button", { name: /^a2, White pawn/, selected: true }),
+        screen.getByRole("button", { name: /^e2, White pawn/, selected: true }),
       ).toBeOnTheScreen()
       await send("ArrowUp")
       await send("ArrowUp")
       await send("Enter")
       expect(move).toHaveBeenCalledTimes(1)
-      expect(move).toHaveBeenCalledWith("a2a4")
+      expect(move).toHaveBeenCalledWith("e2e4")
     })
   })
 

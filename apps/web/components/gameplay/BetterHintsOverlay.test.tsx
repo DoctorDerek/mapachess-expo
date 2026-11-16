@@ -1,7 +1,13 @@
-import { createElement } from "react"
+import { createElement, Fragment } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
+import BetterHints from "@mapachess/application-ui/better-hints"
+import {
+  BoardHistory,
+  BoardSquareAnnotations,
+} from "@mapachess/application-ui/board-grid"
 import createBetterHintGeometry from "@mapachess/match-presentation/better-hint-geometry"
+import { boardDestinationMoves } from "@mapachess/match-presentation/board-presentation"
 import type { BetterHintsResult } from "@mapachess/match/better-hints"
 import { parseChess960PositionId } from "@mapachess/match/chess960-position"
 import { listLegalMatchMoves } from "@mapachess/match/match-move"
@@ -9,12 +15,9 @@ import {
   createInitialMatchPosition,
   reconstructMatchPosition,
 } from "@mapachess/match/match-position"
-import BetterHintsControl from "./BetterHintsControl"
-import BetterHintsOverlay from "./BetterHintsOverlay"
-import CanonicalChessboard, {
-  boardDestinationMoves,
-} from "./CanonicalChessboard"
-import ChessSquareAnnotations from "./ChessSquareAnnotations"
+import BetterHintsControl from "@/components/gameplay/BetterHintsControl"
+import CanonicalChessboard from "@/components/gameplay/CanonicalChessboard"
+import webBoardElements from "@/components/gameplay/WebBoardElements"
 
 const HINTS = Object.freeze({
   opponent: Object.freeze([
@@ -37,13 +40,23 @@ const countOccurrences = (value: string, pattern: string): number =>
 describe("Better Hints board presentation", () => {
   it("keeps check, selection and focus separate from history and legal-target marks", () => {
     const markup = renderToStaticMarkup(
-      createElement(ChessSquareAnnotations, {
-        checked: true,
-        controller: true,
-        history: "destination",
-        legal: true,
-        selected: true,
-      }),
+      createElement(
+        Fragment,
+        null,
+        createElement(BoardHistory, {
+          history: "destination",
+          palette: "blue",
+          elements: webBoardElements,
+        }),
+        createElement(BoardSquareAnnotations, {
+          checked: true,
+          controller: true,
+          focused: true,
+          elements: webBoardElements,
+          legal: true,
+          selected: true,
+        }),
+      ),
     )
     for (const annotation of [
       'data-last-move="destination"',
@@ -58,10 +71,11 @@ describe("Better Hints board presentation", () => {
 
   it("leaves unmarked squares without history, check, selection or legal-target paint", () => {
     const markup = renderToStaticMarkup(
-      createElement(ChessSquareAnnotations, {
+      createElement(BoardSquareAnnotations, {
         checked: false,
         controller: false,
-        history: null,
+        focused: false,
+        elements: webBoardElements,
         legal: false,
         selected: false,
       }),
@@ -77,7 +91,9 @@ describe("Better Hints board presentation", () => {
     (orientation) => {
       for (const showMoves of [false, true]) {
         const markup = renderToStaticMarkup(
-          createElement(BetterHintsOverlay, {
+          createElement(BetterHints, {
+            elements: webBoardElements,
+            palette: "blue",
             hints: HINTS,
             orientation,
             showMoves,
@@ -116,7 +132,9 @@ describe("Better Hints board presentation", () => {
         ],
       } as const satisfies BetterHintsResult
       const markup = renderToStaticMarkup(
-        createElement(BetterHintsOverlay, {
+        createElement(BetterHints, {
+          elements: webBoardElements,
+          palette: "blue",
           hints,
           orientation,
           showMoves: true,
@@ -169,7 +187,9 @@ describe("Better Hints board presentation", () => {
     } as const
     const hints = { ...HINTS, opponent: [opponent] }
     const markup = renderToStaticMarkup(
-      createElement(BetterHintsOverlay, {
+      createElement(BetterHints, {
+        elements: webBoardElements,
+        palette: "blue",
         hints,
         orientation: "white",
         showMoves: true,
@@ -245,7 +265,9 @@ describe("Better Hints board presentation", () => {
         ],
       }
       const markup = renderToStaticMarkup(
-        createElement(BetterHintsOverlay, {
+        createElement(BetterHints, {
+          elements: webBoardElements,
+          palette: "blue",
           hints,
           orientation,
           showMoves: true,
@@ -368,7 +390,9 @@ describe("Better Hints board presentation", () => {
 
   it("shows six patterned source borders before revealing moves", () => {
     const markup = renderToStaticMarkup(
-      createElement(BetterHintsOverlay, {
+      createElement(BetterHints, {
+        elements: webBoardElements,
+        palette: "blue",
         hints: HINTS,
         orientation: "white",
         showMoves: false,
@@ -387,14 +411,18 @@ describe("Better Hints board presentation", () => {
 
   it("reveals six orientation-safe arrows with owner-specific patterns", () => {
     const whiteMarkup = renderToStaticMarkup(
-      createElement(BetterHintsOverlay, {
+      createElement(BetterHints, {
+        elements: webBoardElements,
+        palette: "blue",
         hints: HINTS,
         orientation: "white",
         showMoves: true,
       }),
     )
     const blackMarkup = renderToStaticMarkup(
-      createElement(BetterHintsOverlay, {
+      createElement(BetterHints, {
+        elements: webBoardElements,
+        palette: "blue",
         hints: HINTS,
         orientation: "black",
         showMoves: true,
@@ -422,7 +450,7 @@ describe("Better Hints board presentation", () => {
     expect(countOccurrences(whiteMarkup, 'data-hint-stroke="owner"')).toBe(9)
     expect(countOccurrences(whiteMarkup, 'stroke-dasharray="')).toBe(12)
     expect(whiteMarkup).toContain("pointer-events-none")
-    expect(whiteMarkup).toContain("z-[5]")
+    expect(whiteMarkup).toContain("z-5")
     expect(whiteMarkup).not.toContain("data-hint-shape")
     expect(whiteMarkup).toContain(
       'data-destination-x="4.5" data-destination-y="4.5" data-hint-kind="move" data-hint-owner="player" data-hint-pattern="solid" data-source-x="4.5" data-source-y="6.5"',
