@@ -46,7 +46,7 @@ export type BoardInput = Readonly<{
 export type BoardGroupProps = Readonly<{
   children: ReactNode
   className: string
-  kind?: "frame" | "row" | "layer" | "piece" | "choice-row"
+  kind?: "frame" | "row" | "rowgroup" | "layer" | "piece" | "choice-row"
   decorative?: boolean
 }>
 export type BoardSurfaceProps = Readonly<{
