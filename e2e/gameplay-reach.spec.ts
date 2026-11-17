@@ -7,7 +7,7 @@ import startHintMatch from "./startHintMatch.js"
 test.use({ hasTouch: true })
 
 for (const locale of ["en", "es-419"] as const) {
-  test(`match menu stays modal with a reachable fixed Close in ${locale}`, async ({
+  test(`match menu uses paired actions without nested scrolling in ${locale}`, async ({
     page,
   }) => {
     const copy = loadCatalog(locale)
@@ -46,38 +46,130 @@ for (const locale of ["en", "es-419"] as const) {
       ).toBe(true)
       await expect(close).toBeFocused()
       await expect(close).toBeInViewport({ ratio: 1 })
-      const footer = await close.boundingBox()
-      if (footer === null)
+      const closeBounds = await close.boundingBox()
+      if (closeBounds === null)
         throw new Error("The open menu needs a visible Close action.")
-      expect(footer.height).toBeGreaterThanOrEqual(48)
-      expect(footer.y + footer.height).toBeLessThanOrEqual(height)
-      expect(height - footer.y - footer.height).toBeLessThanOrEqual(
-        (100 * scale) / 100,
+      expect(closeBounds.height).toBeGreaterThanOrEqual(48)
+      expect(closeBounds.y + closeBounds.height).toBeLessThanOrEqual(height)
+      const title = dialog.getByRole("heading", {
+        name: copy.interface.matchCommands.matchMenu,
+        exact: true,
+      })
+      const titleBounds = await title.boundingBox()
+      if (titleBounds === null)
+        throw new Error(
+          "The menu title must remain in the normal content flow.",
+        )
+      expect(titleBounds.y).toBeGreaterThanOrEqual(
+        closeBounds.y + closeBounds.height,
       )
+      const nestedScrollports = () =>
+        dialog.evaluate(
+          (element) =>
+            Array.from(element.querySelectorAll("*")).filter((child) =>
+              ["auto", "scroll"].includes(getComputedStyle(child).overflowY),
+            ).length,
+        )
+      expect(await nestedScrollports()).toBe(0)
+      if ((width === 390 || width === 1440) && scale === 100) {
+        for (const action of await dialog.getByRole("button").all())
+          await expect(action).toBeInViewport({ ratio: 1 })
+        const settings = dialog.getByRole("button", {
+          name: copy.interface.webGame.settings,
+          exact: true,
+        })
+        const settingsBounds = await settings.boundingBox()
+        if (settingsBounds === null)
+          throw new Error("Settings must share the Close row.")
+        expect(settingsBounds.y).toBeCloseTo(closeBounds.y, 0)
+        await expect(title).toBeInViewport({ ratio: 1 })
+        expect(
+          await dialog.evaluate(
+            (element) => element.scrollHeight - element.clientHeight,
+          ),
+        ).toBeLessThanOrEqual(1)
+      }
       expect(
         await dialog.evaluate(
           (element) => element.scrollWidth - element.clientWidth,
         ),
       ).toBeLessThanOrEqual(1)
+      if (width < 1280) {
+        await page.mouse.click(1, 1)
+        await expect(dialog).toBeVisible()
+      }
       const history = dialog.getByText(
         copy.interface.webMatch.matchDetailsMoveHistory,
         { exact: true },
       )
       await history.scrollIntoViewIfNeeded()
       await history.tap()
+      expect(await nestedScrollports()).toBe(0)
+      await close.scrollIntoViewIfNeeded()
       await expect(close).toBeInViewport({ ratio: 1 })
+      await close.focus()
       await page.keyboard.press("Tab")
-      expect(
-        await dialog.evaluate((element) =>
-          element.contains(document.activeElement),
-        ),
-      ).toBe(true)
+      await expect(history).toBeFocused()
+      await page
+        .locator('[data-square="e2"]')
+        .evaluate((square: HTMLElement) => square.focus())
+      await expect(history).toBeFocused()
+      await close.scrollIntoViewIfNeeded()
       await tapInPlace(page, close)
       await expect(dialog).toBeHidden()
       await expect(menu).toBeFocused()
     }
   })
 }
+
+test("centers the xl menu and dismisses only an outside click", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await startHintMatch(page)
+  const menu = page.getByRole("button", { name: "Match menu", exact: true })
+  const dialog = page.getByRole("dialog", { name: "Match menu", exact: true })
+  const close = dialog.getByRole("button", { name: "Close", exact: true })
+  const board = page.getByRole("grid", { name: /Chessboard/ })
+  const before = await savedProfile(page)
+
+  const square = await board.locator('[data-square="e2"]').boundingBox()
+  await menu.click()
+  await expect(close).toBeFocused()
+  const panel = await dialog.boundingBox()
+  if (panel === null || square === null)
+    throw new Error("The modal and its background board must be rendered.")
+  expect(panel.x + panel.width / 2).toBeCloseTo(720, 0)
+  expect(panel.y + panel.height / 2).toBeCloseTo(450, 0)
+  const padding = { x: panel.x + 8, y: panel.y + panel.height / 2 }
+  const outside = {
+    x: square.x + square.width / 2,
+    y: square.y + square.height / 2,
+  }
+  expect(outside.x < panel.x || outside.y >= panel.y + panel.height).toBe(true)
+
+  await page.mouse.click(padding.x, padding.y)
+  await expect(dialog).toBeVisible()
+  await page.mouse.move(padding.x, padding.y)
+  await page.mouse.down()
+  await page.mouse.move(outside.x, outside.y)
+  await page.mouse.up()
+  await expect(dialog).toBeVisible()
+  await page.mouse.click(outside.x, outside.y)
+  await expect(dialog).toHaveCount(0)
+  await expect(menu).toBeFocused()
+  await expect(board.locator('[data-square="e2"]')).toHaveAttribute(
+    "aria-selected",
+    "false",
+  )
+  expect(await savedProfile(page)).toEqual(before)
+
+  await menu.press("Enter")
+  await expect(close).toBeFocused()
+  await page.keyboard.press("Escape")
+  await expect(dialog).toHaveCount(0)
+  await expect(menu).toBeFocused()
+})
 
 async function tapInPlace(page: Page, control: Locator): Promise<void> {
   await expect(control).toBeEnabled()

@@ -14,7 +14,6 @@ import matchMachine, {
 import InputPrompt from "../input/InputPrompt"
 import MapachessButton from "../presentation/MapachessButton"
 import MapachessDialog from "../presentation/MapachessDialog"
-import ScrollActions from "../presentation/ScrollActions"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
 import webRecoveryElements from "../profile/WebRecoveryElements"
 import webSetupElements from "./WebSetupElements"
@@ -107,44 +106,41 @@ export default function MatchCommands({
         <MapachessDialog
           label={messages.matchMenu}
           onClose={onBack}
-          placement="bottom"
-          fixedContent
+          placement="bottom-to-center"
+          fixedContent="fit"
           closeOnMenu
           initialFocus={closeButton}
           returnFocus={menuSummaryRef}
         >
-          <ScrollActions
-            actions={
+          <MatchMenuActions
+            actor={actor}
+            snapshot={snapshot}
+            copy={copy}
+            elements={{
+              Action: webRecoveryElements.Action,
+              Group: webSetupElements.Group,
+              Text: webSetupElements.Text,
+            }}
+            sessionActions={menuActions}
+            closeAction={
               <MapachessButton
                 ref={closeButton}
-                className="w-full min-w-0 wrap-anywhere"
+                className="w-full min-w-0 scroll-my-2 px-2! text-base wrap-anywhere"
                 onClick={onMenuClosed}
                 variant="secondary"
               >
                 {copy.shared.settingsControls.close}
               </MapachessButton>
             }
-          >
-            <h2 className="font-display mb-4 text-2xl font-black wrap-anywhere">
-              {messages.matchMenu}
-            </h2>
-            <MatchMenuActions
-              actor={actor}
-              snapshot={snapshot}
-              copy={copy}
-              elements={{
-                Action: webRecoveryElements.Action,
-                Group: webSetupElements.Group,
-                Text: webSetupElements.Text,
-              }}
-              sessionActions={menuActions}
-              details={details}
-              drawAvailable={drawAvailable}
-              opponentName={opponentName}
-              onOfferDraw={onOfferDraw}
-              onMenuClosed={onMenuClosed}
-            />
-          </ScrollActions>
+            details={details}
+            drawAvailable={drawAvailable}
+            opponentName={opponentName}
+            onOfferDraw={onOfferDraw}
+            onMenuClosed={onMenuClosed}
+          />
+          <h2 className="font-display mt-3 text-center text-2xl font-black wrap-anywhere">
+            {messages.matchMenu}
+          </h2>
         </MapachessDialog>
       ) : null}
     </div>

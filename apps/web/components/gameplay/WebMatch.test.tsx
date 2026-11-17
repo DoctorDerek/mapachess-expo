@@ -311,8 +311,10 @@ describe("match composition", () => {
       )
       const drawAction = markup.indexOf("Offer Draw")
       const declined = markup.indexOf("declines the draw.")
+      expect(drawAction).toBeGreaterThan(-1)
       expect(declined).toBeGreaterThan(drawAction)
-      expect(declined).toBeLessThan(markup.indexOf("Resign"))
+      expect(declined).toBeGreaterThan(markup.indexOf("Resign"))
+      expect(declined).toBeLessThan(markup.indexOf("</dialog>", drawAction))
       expect(markup).not.toContain('aria-label="Match result"')
     } finally {
       actor.stop()
