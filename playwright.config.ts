@@ -37,7 +37,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: `pnpm --filter @mapachess/web dev --hostname 127.0.0.1 --port ${localPlaywrightPort}`,
+          command: `pnpm --filter @mapachess/web... build && pnpm --filter @mapachess/web start --hostname 127.0.0.1 --port ${localPlaywrightPort}`,
           url: localPlaywrightBaseUrl,
           reuseExistingServer: false,
         },

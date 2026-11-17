@@ -10,12 +10,6 @@ const setup = loadCatalog("en").setup
 
 test.use({ serviceWorkers: "allow" })
 
-test.skip(
-  !process.env.PLAYWRIGHT_TEST_BASE_URL &&
-    process.env.PLAYWRIGHT_VERCEL_TRUSTED_OIDC !== "true",
-  "The service worker is shipped in production builds.",
-)
-
 async function startWhiteChallenge(page: Page, variant: MatchVariant) {
   await page.getByRole("radio", { name: setup.white, exact: true }).check()
   if (variant === "chess960") await page.getByRole("spinbutton").fill("0")
