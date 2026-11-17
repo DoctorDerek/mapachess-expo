@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { waitFor as waitForActor } from "xstate"
 import { selectStoryPlayerColor } from "@mapachess/gameplay/match-identity"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
@@ -85,6 +86,7 @@ vi.mock("../../lib/gameplay/openWebMatchRuntime", async (original) => {
 })
 installDomHarness()
 beforeEach(() => {
+  sessionOwner.current = null
   scenario.failedWorker = null
   scenario.replies = []
   scenario.bootFailure = false
@@ -144,13 +146,11 @@ async function move(
   indexedDb: Parameters<typeof savedProfile>[0],
   cursor: number,
 ) {
+  const origin = screen.getByRole("gridcell", { name: new RegExp(`^${from},`) })
   await waitFor(() =>
     expect(
       screen.queryByRole("button", { name: copy.gameplay.clock.resume }) !==
-        null ||
-        screen
-          .getByRole("gridcell", { name: new RegExp(`^${from},`) })
-          .getAttribute("aria-disabled") !== "true",
+        null || origin.getAttribute("aria-disabled") === "false",
     ).toBe(true),
   )
   const resumeClock = screen.queryByRole("button", {
@@ -162,19 +162,32 @@ async function move(
       ?.getSnapshot()
       .context.session?.actor.getSnapshot()
     expect(
-      screen
-        .getByRole("gridcell", { name: new RegExp(`^${from},`) })
-        .getAttribute("aria-disabled"),
+      origin.getAttribute("aria-disabled"),
       JSON.stringify({ state: match?.value, clock: match?.context.clock }),
-    ).not.toBe("true")
+    ).toBe("false")
   })
-  fireEvent.click(
-    screen.getByRole("gridcell", { name: new RegExp(`^${from},`) }),
-  )
-  fireEvent.click(screen.getByRole("gridcell", { name: new RegExp(`^${to},`) }))
-  await waitFor(async () =>
-    expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(cursor),
-  )
+  fireEvent.click(origin)
+  await waitFor(() => expect(origin.getAttribute("aria-selected")).toBe("true"))
+  const destination = await screen.findByRole("gridcell", {
+    name: new RegExp(`^${to},.*legal destination`, "i"),
+  })
+  fireEvent.click(destination)
+  await expectSavedCursor(indexedDb, cursor)
+}
+
+async function expectSavedCursor(
+  indexedDb: Parameters<typeof savedProfile>[0],
+  cursor: number,
+) {
+  const actor = sessionOwner.current?.getSnapshot().context.session?.actor
+  if (actor === undefined) throw new Error("Expected an active match actor.")
+  await act(async () => {
+    await waitForActor(
+      actor,
+      ({ context }) => context.timeline.cursor === cursor,
+    )
+  })
+  expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(cursor)
 }
 
 describe("full application with real sessions, hints, rules, and persistence", () => {
@@ -475,10 +488,7 @@ describe("full application with real sessions, hints, rules, and persistence", (
         name: /Retry.*hint|Retry.*evaluation|Try.*again|Retry.*turn/i,
       })
       fireEvent.click(retry)
-      if (worker === "opponent")
-        await waitFor(async () =>
-          expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(2),
-        )
+      if (worker === "opponent") await expectSavedCursor(indexedDb, 2)
       if (worker === "better-hints")
         await screen.findByRole("button", {
           name: new RegExp(copy.gameplay.hints.controls["piece-hints"]),

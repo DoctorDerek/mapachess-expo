@@ -291,7 +291,12 @@ test("retains setup and button geometry while match opening is pending", async (
         width: expect.closeTo(before.width, 2),
         height: expect.closeTo(before.height, 2),
       })
-    await expect(page.locator("#match-setup-title")).toBeVisible()
+    await expect(
+      page.getByRole("heading", {
+        name: "Standard Chess Challenge",
+        exact: true,
+      }),
+    ).toBeVisible()
   } finally {
     release.resolve()
   }
@@ -334,9 +339,7 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await expectModeMenu(page)
   for (const name of modeNames) {
     await page.getByRole("button", { name, exact: true }).click()
-    await expect(
-      page.getByRole("heading", { level: 1, name, exact: true }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name, exact: true })).toBeVisible()
     await expect(
       page.getByRole("button", { name: "Start match", exact: true }),
     ).toBeEnabled()
@@ -455,7 +458,6 @@ test("offers four direct modes with Challenge controls and saved hint preference
   await page.reload()
   await expect(
     page.getByRole("heading", {
-      level: 1,
       name: "Standard Chess Story",
       exact: true,
     }),

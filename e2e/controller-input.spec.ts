@@ -85,15 +85,10 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
   ).toBeFocused()
   await press(page, 12)
   await expect(e2).toBeFocused()
-  await expect(e2.locator("[data-board-focus]")).toBeVisible()
-  await expect(e2.locator("[data-board-focus]")).toHaveCSS(
-    "border-top-style",
-    "dashed",
-  )
-  await expect(e2.locator("[data-board-focus]")).toHaveCSS(
-    "border-top-color",
-    "rgb(238, 240, 244)",
-  )
+  const focusRing = e2.locator("[data-board-focus] rect[stroke-dasharray]")
+  await expect(focusRing).toBeVisible()
+  await expect(focusRing).toHaveAttribute("stroke-dasharray", "8 5")
+  await expect(focusRing).toHaveCSS("stroke", "rgb(238, 240, 244)")
   await expect(e2).toHaveCSS("outline-style", "none")
   await press(page, 3)
   await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
@@ -229,15 +224,30 @@ test("executes a move, Undo, Redo and result review through canonical controller
   const moved = (await savedProfile(page)).activeMatch
   const lastMove = moved?.moveIds.at(-1)
   if (lastMove === undefined) throw new Error("Expected latest accepted move")
-  const origin = page.locator(
-    `[data-square="${lastMove.slice(0, 2)}"] [data-last-move="origin"]`,
-  )
-  const destination = page.locator(
-    `[data-square="${lastMove.slice(2, 4)}"] [data-last-move="destination"]`,
-  )
-  await expect(origin).toBeVisible()
-  await expect(destination).toBeVisible()
-  await expect(page.locator("[data-last-move]")).toHaveCount(2)
+  const board = page.getByRole("grid", { name: /Chessboard/ })
+  const highlights = board.locator("[data-last-move]")
+  const assertHighlightSquares = async () => {
+    await expect(highlights).toHaveCount(2)
+    for (const [marker, square] of [
+      ["origin", lastMove.slice(0, 2)],
+      ["destination", lastMove.slice(2, 4)],
+    ]) {
+      const highlight = board.locator(`[data-last-move="${marker}"]`)
+      await expect(highlight).toBeVisible()
+      const squareBounds = await board
+        .locator(`[data-square="${square}"]`)
+        .boundingBox()
+      if (squareBounds === null)
+        throw new Error(`Expected visible square ${square}`)
+      expect(await highlight.boundingBox()).toEqual({
+        x: expect.closeTo(squareBounds.x, 0),
+        y: expect.closeTo(squareBounds.y, 0),
+        width: expect.closeTo(squareBounds.width, 0),
+        height: expect.closeTo(squareBounds.height, 0),
+      })
+    }
+  }
+  await assertHighlightSquares()
   await press(page, 3)
   await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
   await press(page, 15)
@@ -246,19 +256,16 @@ test("executes a move, Undo, Redo and result review through canonical controller
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.cursor)
     .toBe(0)
-  await expect(page.locator("[data-last-move]")).toHaveCount(0)
+  await expect(highlights).toHaveCount(0)
   await press(page, 15)
   await expect(page.getByRole("button", { name: /Redo/ })).toBeFocused()
   await press(page, 0)
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.currentFen)
     .toBe(moved?.currentFen)
-  await expect(origin).toBeVisible()
-  await expect(destination).toBeVisible()
+  await assertHighlightSquares()
   await page.reload()
-  await expect(origin).toBeVisible()
-  await expect(destination).toBeVisible()
-  await expect(page.locator("[data-last-move]")).toHaveCount(2)
+  await assertHighlightSquares()
   await press(page, 9)
   await activate(page, page.getByRole("button", { name: /Resign/ }))
   const review = page.getByRole("button", { name: "Review board", exact: true })

@@ -455,7 +455,18 @@ test("reading Settings help and Credits preserves a paused timed match and requi
   await page
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
-  await page.keyboard.press("Escape")
+  const matchMenu = page.getByRole("dialog", {
+    name: "Match menu",
+    exact: true,
+  })
+  await expect(
+    page.getByRole("dialog", { name: "Your game customization", exact: true }),
+  ).toHaveCount(0)
+  await expect(matchMenu).toBeVisible()
+  await matchMenu
+    .getByRole("button", { name: "Close", exact: true })
+    .press("Escape")
+  await expect(matchMenu).toHaveCount(0)
   const resume = page.getByRole("button", {
     name: "Resume clocks",
     exact: true,
