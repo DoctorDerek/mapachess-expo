@@ -80,7 +80,10 @@ export default function ProfileCard({
               <Group
                 region="label"
                 rating={kind !== "level"}
-                className={cx("min-w-0", kind !== "level" && "grow basis-28")}
+                className={cx(
+                  "min-w-0 wrap-anywhere",
+                  kind !== "level" && "grow basis-28",
+                )}
               >
                 <Text
                   kind="label"
