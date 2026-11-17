@@ -68,7 +68,8 @@ async function openGame(
     .click()
   await page.getByRole("radio", { name: color, exact: true }).check()
   await page.getByRole("button", { name: "Start match", exact: true }).click()
-  await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({
+  const board = page.getByRole("grid", { name: /Chessboard/ })
+  await expect(board).toBeVisible({
     timeout: 30000,
   })
   await expect(
@@ -76,13 +77,16 @@ async function openGame(
       name: color === "White" ? /^e2, White pawn/ : /^e7, Black pawn/,
     }),
   ).toHaveAttribute("aria-disabled", "false", { timeout: 30000 })
+  await expect(
+    page.getByRole("main").locator(".min-h-dvh").filter({ has: board }),
+  ).toHaveCSS("padding-top", "12px")
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
   const viewport = page.viewportSize()
   if (viewport === null) throw new Error("Expected an explicit board viewport")
   if (viewport.width < 1280) {
     await expect
       .poll(() =>
-        page.getByRole("grid", { name: /Chessboard/ }).evaluate((element) => {
+        board.evaluate((element) => {
           const { left, width } = element.getBoundingClientRect()
           return [left, width - document.documentElement.clientWidth]
         }),
