@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto"
 import { expect, type Locator, type Page } from "@playwright/test"
-import { webMatchId } from "../apps/web/lib/gameplay/webOpponent"
 import {
   MAPACHESS_INDEXED_DB_CURRENT_KEY,
   MAPACHESS_INDEXED_DB_NAME,
   MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
 } from "../apps/web/lib/profile/IndexedDbDurableStore"
 import { test } from "../e2e/fixtures.js"
+import { createMatchId } from "../packages/gameplay/dist/matchIdentity.js"
 import { parseChess960PositionId } from "../packages/match/dist/chess960Position.js"
 import {
   listLegalMatchMoves,
@@ -33,10 +33,19 @@ const databaseConfig = {
   key: MAPACHESS_INDEXED_DB_CURRENT_KEY,
 }
 
-const startMatch = async (page: Page) => {
+const startMatch = async (
+  page: Page,
+  variant: "standard" | "chess960" = "standard",
+) => {
   await page.goto("/")
   await page
-    .getByRole("button", { name: "Standard Chess Challenge", exact: true })
+    .getByRole("button", {
+      name:
+        variant === "chess960"
+          ? "Chess960 Challenge"
+          : "Standard Chess Challenge",
+      exact: true,
+    })
     .click()
   await page.getByRole("radio", { name: "White", exact: true }).check()
   await page.getByRole("button", { name: /Start match/ }).click()
@@ -53,7 +62,7 @@ const resumeLegalGame = async (
   mode: "story" | "challenge",
   variant: "standard" | "chess960",
 ) => {
-  await startMatch(page)
+  await startMatch(page, variant)
   await page.route("**/layout-fixture", (route) =>
     route.fulfill({
       contentType: "text/html",
@@ -117,10 +126,10 @@ const resumeLegalGame = async (
       activeMatch: {
         ...match,
         matchSeed,
-        matchId: webMatchId(
+        matchId: createMatchId(
           matchSeed,
           startingPosition,
-          { mode, playerColor },
+          mode === "story" ? { mode } : { mode, playerColor },
           match.opponentId,
         ),
         mode,
