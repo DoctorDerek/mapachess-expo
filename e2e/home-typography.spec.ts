@@ -83,7 +83,26 @@ for (const width of [320, 390, 430, 1279, 1280]) {
           })
           expect(lines).toBe(1)
         }
-        await expect(home.getByRole("button")).toHaveCount(6)
+        const homeActions = [
+          copy.interface.webGame.settings,
+          copy.setup.customizeProfile,
+          copy.setup.shareProfile,
+        ]
+        await expect(home.getByRole("button")).toHaveCount(
+          homeActions.length + MATCH_MODE_CHOICES.length,
+        )
+        for (const name of homeActions)
+          await expect(
+            home.getByRole("button", { name, exact: true }),
+          ).toBeEnabled()
+        const story = home.getByRole("button", {
+          name: copy.setup.presentations.standard.story.title,
+          exact: true,
+        })
+        const challenge = home.getByRole("button", {
+          name: copy.setup.presentations.standard.challenge.title,
+          exact: true,
+        })
         for (const { variant, mode } of MATCH_MODE_CHOICES) {
           await expect(
             home.getByRole("button", {
@@ -127,32 +146,34 @@ for (const width of [320, 390, 430, 1279, 1280]) {
           const buttons = [...element.querySelectorAll("button")].map(
             (button) => button.getBoundingClientRect(),
           )
-          const card = element.querySelector("section")!.getBoundingClientRect()
-          const mode = element
-            .querySelectorAll("button")[2]!
-            .getBoundingClientRect()
-          const secondMode = element
-            .querySelectorAll("button")[3]!
-            .getBoundingClientRect()
           return {
             overflowing,
             minHeight: Math.min(...buttons.map((button) => button.height)),
-            cardBottom: card.bottom,
-            cardLeft: card.left,
-            modeTop: mode.top,
-            modeLeft: mode.left,
-            secondModeTop: secondMode.top,
           }
         })
+        const [cardBounds, storyBounds, challengeBounds] = await Promise.all([
+          home.getByRole("region").boundingBox(),
+          story.boundingBox(),
+          challenge.boundingBox(),
+        ])
+        if (
+          cardBounds === null ||
+          storyBounds === null ||
+          challengeBounds === null
+        )
+          throw new Error(
+            "The profile card and both Standard modes must render.",
+          )
         await page.screenshot({
           path: testInfo.outputPath(`home-${percent}.png`),
           fullPage: true,
         })
         expect(bounds.overflowing).toEqual([])
         expect(bounds.minHeight).toBeGreaterThanOrEqual(48)
-        if (width < 1280) expect(bounds.cardBottom).toBeLessThan(bounds.modeTop)
-        else expect(bounds.cardLeft).toBeLessThan(bounds.modeLeft)
-        if (percent === 100) expect(bounds.secondModeTop).toBe(bounds.modeTop)
+        if (width < 1280)
+          expect(cardBounds.y + cardBounds.height).toBeLessThan(storyBounds.y)
+        else expect(cardBounds.x + cardBounds.width).toBeLessThan(storyBounds.x)
+        if (percent === 100) expect(challengeBounds.y).toBe(storyBounds.y)
         await scale.evaluate((element) => element.remove())
       }
       expect(await savedProfile(page)).toEqual(before)

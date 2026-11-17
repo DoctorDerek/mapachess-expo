@@ -4,7 +4,9 @@ import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
-import chooseDressingCategory from "./profileDressingRoom.js"
+import chooseDressingCategory, {
+  selectPlayerAnimal,
+} from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 async function openStoryPlayerChoices(page: Page): Promise<void> {
@@ -14,9 +16,7 @@ async function openStoryPlayerChoices(page: Page): Promise<void> {
   await expect(
     page.getByRole("region", { name: "Player animals", exact: true }),
   ).toHaveCount(0)
-  const choice = page
-    .getByRole("region", { name: "Standard Chess Story", exact: true })
-    .getByRole("button", { name: /^Play as / })
+  const choice = page.getByRole("button", { name: /^Play as / })
   await expect(choice).toBeEnabled()
   await choice.press("Enter")
   await expect(
@@ -51,8 +51,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
   const done = page.getByRole("button", { name: "Done", exact: true })
   await expect(done).toBeInViewport({ ratio: 1 })
   const doneBounds = await done.boundingBox()
-  await gallery.focus()
-  await page.keyboard.press("End")
+  await selected.press("End")
   await expect(gallery.getByText("Dragonfly", { exact: false })).toBeInViewport(
     { ratio: 1 },
   )
@@ -61,7 +60,8 @@ test("opens the complete locked roster from the selected animal and keeps it key
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })
   const [raccoonBounds, chickenBounds] = await raccoon
-    .or(chicken)
+    .locator("..")
+    .or(chicken.locator(".."))
     .evaluateAll((elements) =>
       elements.map((element) => {
         const { x, y } = element.getBoundingClientRect()
@@ -187,7 +187,9 @@ test("all earned animals remain selectable after reload and editing is still a d
   await expect(gallery.getByRole("radio", { disabled: false })).toHaveCount(
     STOCKFISH_OPPONENTS.length,
   )
-  await gallery.getByRole("radio", { name: /Dragonfly/ }).check()
+  await selectPlayerAnimal(
+    gallery.getByRole("radio", { name: "Dragonfly", exact: true }),
+  )
   expect((await savedProfile(page)).appearance.animal).toBe("raccoon-stockfish")
   await page.getByRole("button", { name: "Save changes", exact: true }).click()
   await expect(page.getByText("Changes saved", { exact: true })).toBeVisible()
@@ -213,7 +215,9 @@ test("a legacy Chicken remains readable, but cannot be reselected after switchin
     exact: true,
   })
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeChecked()
-  await gallery.getByRole("radio", { name: /Raccoon/ }).check()
+  await selectPlayerAnimal(
+    gallery.getByRole("radio", { name: "Raccoon", exact: true }),
+  )
   expect((await savedProfile(page)).appearance.animal).toBe("chicken-stockfish")
   await page.getByRole("button", { name: "Done", exact: true }).click()
   await expect
