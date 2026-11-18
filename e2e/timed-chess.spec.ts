@@ -276,12 +276,17 @@ test("Bullet uses real Auto Move Hints and pauses on navigation without changing
     )
     .toEqual(played.activeMatch?.clock?.history[2])
   await page.getByRole("button", { name: "Resume clocks", exact: true }).click()
-  await page.getByLabel("Match menu", { exact: true }).click()
+  await page.getByRole("button", { name: "Match menu", exact: true }).click()
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.clock?.paused)
     .toBe(true)
   const paused = await savedProfile(page)
-  await page.getByLabel("Match menu", { exact: true }).click()
+  const matchMenu = page.getByRole("dialog", {
+    name: "Match menu",
+    exact: true,
+  })
+  await matchMenu.getByRole("button", { name: "Close", exact: true }).click()
+  await expect(matchMenu).toHaveCount(0)
   await expect(
     page.getByRole("button", { name: "Resume clocks", exact: true }),
   ).toBeVisible()
@@ -363,8 +368,15 @@ test("Mexican Spanish Blitz keeps its increment, contextual rating and clocks re
   expect(clock?.history[1]?.white).toBeLessThanOrEqual(182000)
   expect(clock?.history[1]?.white).toBeGreaterThan(150000)
   expect(clock?.history[2]?.black).toBeGreaterThan(180000)
-  await page.getByLabel("Menú de partida", { exact: true }).click()
-  await page.getByLabel("Menú de partida", { exact: true }).click()
+  await page
+    .getByRole("button", { name: "Menú de partida", exact: true })
+    .click()
+  const matchMenu = page.getByRole("dialog", {
+    name: "Menú de partida",
+    exact: true,
+  })
+  await matchMenu.getByRole("button", { name: "Cerrar", exact: true }).click()
+  await expect(matchMenu).toHaveCount(0)
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 800 })
     await expect(page.getByRole("timer")).toHaveCount(2)

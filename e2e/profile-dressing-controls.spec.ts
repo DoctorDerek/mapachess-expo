@@ -5,7 +5,9 @@ import createInitialMapachessPlayerData from "../packages/profile/src/playerData
 import { injectControllerInput, press } from "./controllerInput.js"
 import { firstArrivalTest, test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
-import chooseDressingCategory from "./profileDressingRoom.js"
+import chooseDressingCategory, {
+  selectPlayerAnimal,
+} from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 for (const size of [
@@ -51,71 +53,81 @@ for (const size of [
         (element) => getComputedStyle(element).backgroundImage,
       )
       await animal.click()
-      await page.getByRole("radio", { name: copy.animals.names[id] }).check()
+      await selectPlayerAnimal(
+        page.getByRole("radio", { name: copy.animals.names[id], exact: true }),
+      )
       await page
         .getByRole("button", { name: "Back to categories", exact: true })
         .click()
       await animal.scrollIntoViewIfNeeded()
       await page.mouse.move(0, 0)
-      await expect(sprite).not.toHaveCSS("background-image", previousSource)
-      const clearance = await sprite.evaluate(async (element) => {
-        const style = getComputedStyle(element)
-        const image = new Image()
-        image.src = style.backgroundImage.slice(5, -2)
-        await image.decode()
-        const frameCount = parseFloat(style.backgroundSize) / 100
-        const frameWidth = image.naturalWidth / frameCount
-        const canvas = document.createElement("canvas")
-        canvas.width = image.naturalWidth
-        canvas.height = image.naturalHeight
-        const context = canvas.getContext("2d")
-        if (context === null) throw new Error("Expected sprite pixel access")
-        context.drawImage(image, 0, 0)
-        const pixels = context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        ).data
-        let left = frameWidth
-        let right = 0
-        let top = canvas.height
-        let bottom = 0
-        for (let y = 0; y < canvas.height; y += 1)
-          for (let x = 0; x < canvas.width; x += 1) {
-            if (pixels[(y * canvas.width + x) * 4 + 3] === 0) continue
-            const column = x % frameWidth
-            left = Math.min(left, column)
-            right = Math.max(right, column + 1)
-            top = Math.min(top, y)
-            bottom = Math.max(bottom, y + 1)
-          }
-        const artwork = element
-          .closest("button")
-          ?.querySelector(':scope > span[aria-hidden="true"]')
-        if (artwork === null || artwork === undefined)
-          throw new Error("Expected the category artwork slot")
-        const frame = element.getBoundingClientRect()
-        const slot = artwork.getBoundingClientRect()
-        const scaleX = frame.width / frameWidth
-        const scaleY = frame.height / image.naturalHeight
-        return {
-          width: (right - left) * scaleX,
-          height: (bottom - top) * scaleY,
-          scaleDifference: Math.abs(scaleX - scaleY),
-          edges: [
-            frame.left + left * scaleX - slot.left,
-            slot.right - (frame.left + right * scaleX),
-            frame.top + top * scaleY - slot.top,
-            slot.bottom - (frame.top + bottom * scaleY),
-          ],
-        }
-      })
-      expect(clearance.width, id).toBeGreaterThan(0)
-      expect(clearance.height, id).toBeGreaterThan(0)
-      expect(clearance.scaleDifference, id).toBeLessThan(0.01)
-      for (const edge of clearance.edges)
-        expect(edge, id).toBeGreaterThanOrEqual(-0.05)
+      await expect(async () => {
+        const clearance = await sprite.evaluate(
+          async (element, previousSource) => {
+            const style = getComputedStyle(element)
+            const source = style.backgroundImage
+            if (source === previousSource || !source.startsWith('url("'))
+              throw new Error("Expected the newly selected animal artwork")
+            const image = new Image()
+            image.src = source.slice(5, -2)
+            await image.decode()
+            const frameCount = parseFloat(style.backgroundSize) / 100
+            const frameWidth = image.naturalWidth / frameCount
+            const canvas = document.createElement("canvas")
+            canvas.width = image.naturalWidth
+            canvas.height = image.naturalHeight
+            const context = canvas.getContext("2d")
+            if (context === null)
+              throw new Error("Expected sprite pixel access")
+            context.drawImage(image, 0, 0)
+            const pixels = context.getImageData(
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+            ).data
+            let left = frameWidth
+            let right = 0
+            let top = canvas.height
+            let bottom = 0
+            for (let y = 0; y < canvas.height; y += 1)
+              for (let x = 0; x < canvas.width; x += 1) {
+                if (pixels[(y * canvas.width + x) * 4 + 3] === 0) continue
+                const column = x % frameWidth
+                left = Math.min(left, column)
+                right = Math.max(right, column + 1)
+                top = Math.min(top, y)
+                bottom = Math.max(bottom, y + 1)
+              }
+            const artwork = element
+              .closest("button")
+              ?.querySelector(':scope > span[aria-hidden="true"]')
+            if (artwork === null || artwork === undefined)
+              throw new Error("Expected the category artwork slot")
+            const frame = element.getBoundingClientRect()
+            const slot = artwork.getBoundingClientRect()
+            const scaleX = frame.width / frameWidth
+            const scaleY = frame.height / image.naturalHeight
+            return {
+              width: (right - left) * scaleX,
+              height: (bottom - top) * scaleY,
+              scaleDifference: Math.abs(scaleX - scaleY),
+              edges: [
+                frame.left + left * scaleX - slot.left,
+                slot.right - (frame.left + right * scaleX),
+                frame.top + top * scaleY - slot.top,
+                slot.bottom - (frame.top + bottom * scaleY),
+              ],
+            }
+          },
+          previousSource,
+        )
+        expect(clearance.width, id).toBeGreaterThan(0)
+        expect(clearance.height, id).toBeGreaterThan(0)
+        expect(clearance.scaleDifference, id).toBeLessThan(0.01)
+        for (const edge of clearance.edges)
+          expect(edge, id).toBeGreaterThanOrEqual(-0.05)
+      }).toPass({ timeout: 5000 })
       await expectReachable(animal)
     }
     await page.emulateMedia({ reducedMotion: "no-preference" })

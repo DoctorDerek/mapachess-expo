@@ -9,6 +9,7 @@ import {
 } from "../../match-presentation/src/chessAppearanceCatalog.js"
 import { COACH_PORTRAITS } from "../../match-presentation/src/coachPortrait.js"
 import { matchConclusionText } from "../../match/src/matchConclusion.js"
+import { STOCKFISH_OPPONENTS } from "../../match/src/stockfishOpponent.js"
 
 const copy = loadCatalog("es-419")
 
@@ -18,8 +19,10 @@ describe("Mexican Spanish player-facing catalog", () => {
       standard: "Ajedrez estándar",
       chess960: "Ajedrez 960",
     })
-    expect(copy.introduction.paragraphs[0]?.body).toBe(
-      "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 25 oponentes de Historia o elige tu propio Desafío.",
+    expect(
+      copy.introduction.paragraphs[0]?.body(STOCKFISH_OPPONENTS.length),
+    ).toBe(
+      "Juega ajedrez estándar o ajedrez 960 contra los animales de Stockfish. Avanza por los 26 oponentes de Historia o elige tu propio Desafío.",
     )
     expect(copy.setup.position).toBe("Posición inicial de ajedrez 960")
     expect(copy.setup.presentations.chess960.story.title).toBe(

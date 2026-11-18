@@ -20,6 +20,7 @@ import {
 } from "../../match-presentation/src/chessAppearanceCatalog.js"
 import { COACH_PORTRAITS } from "../../match-presentation/src/coachPortrait.js"
 import { matchConclusionText } from "../../match/src/matchConclusion.js"
+import { STOCKFISH_OPPONENTS } from "../../match/src/stockfishOpponent.js"
 
 describe("shared localization foundation", () => {
   it.each(SHIPPED_LOCALES)(
@@ -54,8 +55,20 @@ describe("shared localization foundation", () => {
     for (const locale of SHIPPED_LOCALES) {
       expect(CANDIDATE_LOCALES).toContain(locale)
       expect(validateCatalog(CATALOG_LOADERS[locale])).toEqual([])
-      expect(loadCatalog(locale).introduction).toEqual(
-        CATALOG_LOADERS[locale]().introduction,
+      const { paragraphs, ...labels } = loadCatalog(locale).introduction
+      const { paragraphs: original, ...originalLabels } =
+        CATALOG_LOADERS[locale]().introduction
+      expect(labels).toEqual(originalLabels)
+      expect(
+        paragraphs.map(({ lead, body }) => ({
+          lead,
+          body: body(STOCKFISH_OPPONENTS.length),
+        })),
+      ).toEqual(
+        original.map(({ lead, body }) => ({
+          lead,
+          body: body(STOCKFISH_OPPONENTS.length),
+        })),
       )
     }
   })
@@ -137,7 +150,7 @@ describe("shared localization foundation", () => {
         expect(value.trim()).not.toBe("")
       expect(paragraphs).toHaveLength(5)
       for (const { body, lead } of paragraphs) {
-        expect(body.trim()).not.toBe("")
+        expect(body(STOCKFISH_OPPONENTS.length).trim()).not.toBe("")
         if (lead !== "") expect(lead.trim()).not.toBe("")
       }
       expect(paragraphs.filter(({ lead }) => lead === "")).toHaveLength(2)

@@ -12,6 +12,7 @@ import {
   UNAVAILABLE_TEXT,
 } from "../../localization/src/messageRecovery.js"
 import validateCatalog from "../../localization/src/validateCatalog.js"
+import { STOCKFISH_OPPONENTS } from "../../match/src/stockfishOpponent.js"
 import formatterExamples from "./fixtures/localizationFormatters.js"
 
 const thresholds = {
@@ -124,6 +125,20 @@ describe("catalog quality gates before recovery", () => {
 })
 
 describe("shared message recovery", () => {
+  it.each(SHIPPED_LOCALES)(
+    "keeps introduction paragraphs readable with the canonical roster count in %s",
+    (locale) => {
+      const reader = createCatalogReader(CATALOG_LOADERS)
+      const paragraphs = reader.load(locale).introduction.paragraphs
+      const count = STOCKFISH_OPPONENTS.length
+      expect(paragraphs[0]?.body(count)).toContain(String(count))
+      expect(paragraphs[0]?.body(count + 1)).toContain(String(count + 1))
+      for (const { body } of paragraphs)
+        expect(isMessageText(body(count))).toBe(true)
+      expect(reader.health()).toEqual({ issues: [], limitReached: false })
+    },
+  )
+
   it.each([undefined, null, 42, false, {}, [], "", "  "])(
     "recovers a damaged label: %j",
     (start) => {
@@ -181,8 +196,16 @@ describe("shared message recovery", () => {
     })
     const copy = reader.load("es-419")
     expect(copy.introduction.title).toBe("Selected title")
-    expect(copy.introduction.paragraphs).toEqual(
-      english.introduction.paragraphs,
+    expect(
+      copy.introduction.paragraphs.map(({ lead, body }) => ({
+        lead,
+        body: body(STOCKFISH_OPPONENTS.length),
+      })),
+    ).toEqual(
+      english.introduction.paragraphs.map(({ lead, body }) => ({
+        lead,
+        body: body(STOCKFISH_OPPONENTS.length),
+      })),
     )
     expect(
       copy.board.square(

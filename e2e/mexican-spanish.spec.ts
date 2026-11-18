@@ -25,10 +25,7 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
     .getByRole("button", { name: "Desafío de ajedrez 960", exact: true })
     .click()
   await expect(
-    page.getByRole("group", {
-      name: "Posición inicial de ajedrez 960",
-      exact: true,
-    }),
+    page.getByText("Posición inicial de ajedrez 960", { exact: true }),
   ).toBeVisible()
   await page
     .getByRole("spinbutton", {
@@ -117,7 +114,9 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
     variant: "chess960",
     chess960PositionId: 959,
   })
-  await page.locator("summary").filter({ hasText: "Menú" }).click()
+  await page
+    .getByRole("button", { name: "Menú de partida", exact: true })
+    .click()
   await page.getByRole("button", { name: "Configuración", exact: true }).click()
   await page.getByRole("combobox", { name: "Idioma" }).selectOption("en")
   await expect(page.locator("html")).toHaveAttribute("lang", "en")

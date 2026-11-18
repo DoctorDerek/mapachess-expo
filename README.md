@@ -4,8 +4,7 @@
 
 [![Mobile Web Lighthouse Performance](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.performance&label=performance&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Accessibility](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.accessibility&label=accessibility&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse Best Practices](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.bestPractices&label=best%20practices&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/) [![Mobile Web Lighthouse SEO](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdoctorderek.github.io%2Fmapachess-expo%2Flighthouse-results.json&query=%24.seo&label=SEO&suffix=%2F100&logo=lighthouse&logoColor=white&color=informational)](https://doctorderek.github.io/mapachess-expo/)
 
-Mapachess is a permanently free, accountless, offline-first chess game in
-pre-production. Its defining design combines:
+Mapachess is a free, accountless chess game, live on the web. It includes:
 
 - Three Piece Hints for each side, followed by three Move Hints for those pieces
   for each side.
@@ -17,8 +16,8 @@ pre-production. Its defining design combines:
 - Standard and Chess960 across Story and Challenge, with 24 separately tracked
   player Elo ratings.
 
-The current web development build offers 25 Story opponents, Chicken through
-Dragonfly, in both Standard and Chess960. Win to unlock the next animal, or replay
+The live web game offers 26 Story opponents, Chicken through Dragonfly, in both
+Standard and Chess960. Win to unlock the next animal, or replay
 earlier opponents to improve your medal. Each variant retains its own victories
 and best medals, and active matches save locally for reload and restart.
 Challenge offers 100 through 2350 Elo in steps of 25 in both variants.

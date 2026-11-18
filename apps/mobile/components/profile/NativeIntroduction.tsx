@@ -1,5 +1,6 @@
 import { Suspense, useState } from "react"
 import { View } from "react-native"
+import { STOCKFISH_OPPONENTS } from "@mapachess/match/stockfish-opponent"
 import type { ProfileActor } from "@mapachess/profile/profile-runtime"
 import useNativeFirstArrival, {
   DeferredNativeArrivalAnimation,
@@ -87,7 +88,7 @@ export default function NativeIntroduction({
               <NativeText className="font-native text-mapachito-charcoal text-lg">
                 {lead}{" "}
               </NativeText>
-              {body}
+              {body(STOCKFISH_OPPONENTS.length)}
             </NativeText>
           ))}
           <View className="bg-mapachito-deep-cyan h-1" />

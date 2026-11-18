@@ -8,6 +8,7 @@ import {
   within,
 } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { waitFor as waitForActor } from "xstate"
 import { selectStoryPlayerColor } from "@mapachess/gameplay/match-identity"
 import loadCatalog from "@mapachess/localization/catalog"
 import createInitialPlayerData from "@mapachess/profile/player-data"
@@ -85,6 +86,7 @@ vi.mock("../../lib/gameplay/openWebMatchRuntime", async (original) => {
 })
 installDomHarness()
 beforeEach(() => {
+  sessionOwner.current = null
   scenario.failedWorker = null
   scenario.replies = []
   scenario.bootFailure = false
@@ -144,13 +146,11 @@ async function move(
   indexedDb: Parameters<typeof savedProfile>[0],
   cursor: number,
 ) {
+  const origin = screen.getByRole("gridcell", { name: new RegExp(`^${from},`) })
   await waitFor(() =>
     expect(
       screen.queryByRole("button", { name: copy.gameplay.clock.resume }) !==
-        null ||
-        screen
-          .getByRole("gridcell", { name: new RegExp(`^${from},`) })
-          .getAttribute("aria-disabled") !== "true",
+        null || origin.getAttribute("aria-disabled") === "false",
     ).toBe(true),
   )
   const resumeClock = screen.queryByRole("button", {
@@ -162,19 +162,32 @@ async function move(
       ?.getSnapshot()
       .context.session?.actor.getSnapshot()
     expect(
-      screen
-        .getByRole("gridcell", { name: new RegExp(`^${from},`) })
-        .getAttribute("aria-disabled"),
+      origin.getAttribute("aria-disabled"),
       JSON.stringify({ state: match?.value, clock: match?.context.clock }),
-    ).not.toBe("true")
+    ).toBe("false")
   })
-  fireEvent.click(
-    screen.getByRole("gridcell", { name: new RegExp(`^${from},`) }),
-  )
-  fireEvent.click(screen.getByRole("gridcell", { name: new RegExp(`^${to},`) }))
-  await waitFor(async () =>
-    expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(cursor),
-  )
+  fireEvent.click(origin)
+  await waitFor(() => expect(origin.getAttribute("aria-selected")).toBe("true"))
+  const destination = await screen.findByRole("gridcell", {
+    name: new RegExp(`^${to},.*legal destination`, "i"),
+  })
+  fireEvent.click(destination)
+  await expectSavedCursor(indexedDb, cursor)
+}
+
+async function expectSavedCursor(
+  indexedDb: Parameters<typeof savedProfile>[0],
+  cursor: number,
+) {
+  const actor = sessionOwner.current?.getSnapshot().context.session?.actor
+  if (actor === undefined) throw new Error("Expected an active match actor.")
+  await act(async () => {
+    await waitForActor(
+      actor,
+      ({ context }) => context.timeline.cursor === cursor,
+    )
+  })
+  expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(cursor)
 }
 
 describe("full application with real sessions, hints, rules, and persistence", () => {
@@ -272,7 +285,7 @@ describe("full application with real sessions, hints, rules, and persistence", (
     expect((await savedProfile(indexedDb)).ratings).toEqual(before.ratings)
   }, 15000)
 
-  it("returns to setup by clearing only the requested active match and closing its owned runtimes, then opens all modes", async () => {
+  it("returns Home without clearing the saved match, then replaces it only when a new match starts", async () => {
     const { indexedDb } = await start()
     const before = await savedProfile(indexedDb)
     fireEvent.click(
@@ -281,18 +294,37 @@ describe("full application with real sessions, hints, rules, and persistence", (
     fireEvent.click(
       screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
     )
-    await screen.findByRole("heading", {
-      name: copy.setup.presentations.standard.challenge.title,
+    const resume = await screen.findByRole("button", { name: /Resume match/i })
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    expect(scenario.closes).toBe(0)
+    fireEvent.click(resume)
+    await screen.findByRole("grid")
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    fireEvent.click(
+      screen.getByText(copy.interface.matchCommands.menu, { exact: true }),
+    )
+    fireEvent.click(
+      screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
+    )
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: new RegExp(copy.setup.presentations.standard.challenge.title),
+      }),
+    )
+    const startMatch = await screen.findByRole("button", {
+      name: new RegExp(copy.setup.startMatch),
     })
-    expect((await savedProfile(indexedDb)).activeMatch).toBeNull()
-    expect((await savedProfile(indexedDb)).ratings).toEqual(before.ratings)
-    expect((await savedProfile(indexedDb)).totalXp).toBe(before.totalXp)
+    await waitFor(() => expect(startMatch).toHaveProperty("disabled", false))
+    fireEvent.click(startMatch)
+    await screen.findByRole("grid")
+    const replacement = await savedProfile(indexedDb)
+    expect(replacement.activeMatch).not.toBeNull()
+    expect(replacement.activeMatch?.matchId).not.toBe(
+      before.activeMatch?.matchId,
+    )
+    expect(replacement.ratings).toEqual(before.ratings)
+    expect(replacement.totalXp).toBe(before.totalXp)
     expect(scenario.closes).toBe(3)
-    fireEvent.click(screen.getByRole("button", { name: copy.setup.allModes }))
-    await screen.findByRole("button", {
-      name: new RegExp(copy.setup.presentations.standard.story.title),
-    })
-    expect(screen.queryByRole("button", { name: /Resume match/i })).toBeNull()
   }, 15000)
   it("starts a timed match, reveals both hint stages, configures Auto-Hints, returns Home, and resumes the saved board", async () => {
     const { indexedDb, unmount } = await start("challenge", true)
@@ -456,10 +488,7 @@ describe("full application with real sessions, hints, rules, and persistence", (
         name: /Retry.*hint|Retry.*evaluation|Try.*again|Retry.*turn/i,
       })
       fireEvent.click(retry)
-      if (worker === "opponent")
-        await waitFor(async () =>
-          expect((await savedProfile(indexedDb)).activeMatch?.cursor).toBe(2),
-        )
+      if (worker === "opponent") await expectSavedCursor(indexedDb, 2)
       if (worker === "better-hints")
         await screen.findByRole("button", {
           name: new RegExp(copy.gameplay.hints.controls["piece-hints"]),

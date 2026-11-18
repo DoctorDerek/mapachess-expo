@@ -7,7 +7,9 @@ import {
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
-import chooseDressingCategory from "./profileDressingRoom.js"
+import chooseDressingCategory, {
+  selectPlayerAnimal,
+} from "./profileDressingRoom.js"
 import savedProfile from "./savedProfile.js"
 
 const earnedChickenProfile = {
@@ -240,7 +242,9 @@ for (const mode of [
       .getByRole("button", { name: "Customize profile card", exact: true })
       .click()
     await chooseDressingCategory(page, "Animal")
-    await page.getByRole("radio", { name: "Chicken", exact: true }).check()
+    await selectPlayerAnimal(
+      page.getByRole("radio", { name: "Chicken", exact: true }),
+    )
     await page
       .getByRole("button", { name: "Save changes", exact: true })
       .click()
@@ -307,7 +311,7 @@ for (const mode of [
       .toBe(true)
     await page.goBack()
     await expect(
-      page.getByRole("heading", { level: 1, name: mode, exact: true }),
+      page.getByRole("heading", { name: mode, exact: true }),
     ).toBeVisible()
     await page
       .getByRole("button", { name: "All game modes", exact: true })
@@ -424,9 +428,11 @@ test("saves appearance explicitly, keeps preview drafts and returns through Back
   await page.getByRole("button", { name: "Customize profile card" }).click()
   await chooseDressingCategory(page, "Animal")
   await expect(
-    page.getByRole("radio", { name: "Raccoon Selected", exact: true }),
+    page.getByRole("radio", { name: "Raccoon", exact: true }),
   ).toBeChecked()
-  await page.getByRole("radio", { name: "Chicken", exact: true }).check()
+  await selectPlayerAnimal(
+    page.getByRole("radio", { name: "Chicken", exact: true }),
+  )
   await page.goBack()
   await expect(
     page.getByRole("group", { name: "Appearance categories", exact: true }),

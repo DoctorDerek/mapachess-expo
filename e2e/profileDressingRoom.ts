@@ -1,8 +1,14 @@
-import type { Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 import loadCatalog, {
   type MapachessCatalog,
 } from "../packages/localization/src/catalog.js"
 import type { ShippedLocale } from "../packages/localization/src/locale.js"
+
+export async function selectPlayerAnimal(radio: Locator): Promise<void> {
+  await expect(radio).toBeEnabled()
+  await radio.locator("..").click()
+  await expect(radio).toBeChecked()
+}
 
 export default async function chooseDressingCategory(
   page: Page,

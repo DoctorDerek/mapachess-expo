@@ -13,6 +13,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react-native"
 import {
   AccessibilityInfo,
@@ -263,13 +264,16 @@ describe("native accepted rewards", () => {
     await render(<HomeScreen />)
     await startStory()
     const stage = screen.getByLabelText(stageLabel)
+    const board = within(screen.getByLabelText(copy.board.orientation("white")))
     const move = async (from: string, to: string, cursor: number) => {
       const fromSquare = new RegExp(`^${from},`)
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: fromSquare })).toBeEnabled(),
+        expect(board.getByRole("button", { name: fromSquare })).toBeEnabled(),
       )
-      await pressButton(fromSquare)
-      await pressButton(new RegExp(`^${to},`))
+      await fireEvent.press(board.getByRole("button", { name: fromSquare }))
+      await fireEvent.press(
+        board.getByRole("button", { name: new RegExp(`^${to},`) }),
+      )
       await waitFor(() =>
         expect(playerData(runtime).activeMatch?.cursor).toBe(cursor),
       )

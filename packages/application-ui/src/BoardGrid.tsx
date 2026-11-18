@@ -302,7 +302,7 @@ export default function BoardGrid({
             />
           )}
           <Group
-            kind="layer"
+            kind="rowgroup"
             decorative={input === null}
             className="absolute inset-0 z-10 flex flex-col"
           >

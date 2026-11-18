@@ -67,6 +67,7 @@ test("independent five-second cards retain their full grade without replay after
   await page.clock.runFor(700)
   await expect(page.getByRole("button", { name: /^Dismiss / })).toHaveCount(0)
   const before = (await savedProfile(page)).activeMatch
+  await page.clock.resume()
   await page.reload()
   await expect(page.getByRole("grid")).toBeVisible()
   await expect(page.getByRole("button", { name: /^Dismiss / })).toHaveCount(0)

@@ -31,7 +31,7 @@ export default function ClassifiedMoveHistory({
           {messages.noMovesYet}
         </p>
       ) : (
-        <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 max-h-64 space-y-1 overflow-y-auto rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 text-base inset-shadow-[0.5rem_0_0]">
+        <ol className="border-mapachito-charcoal bg-mapachito-white inset-shadow-mapachito-deep-cyan mt-3 space-y-1 rounded-[1rem_0.25rem_1rem_0.25rem] border-3 p-3 text-base inset-shadow-[0.5rem_0_0]">
           {transitions.map((transition, index) => {
             const record = records.find(
               (entry) =>

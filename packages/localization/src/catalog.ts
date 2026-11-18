@@ -7,7 +7,10 @@ export type IntroductionCopy = Readonly<{
   title: string
   region: string
   heading: string
-  paragraphs: readonly Readonly<{ lead: string; body: string }>[]
+  paragraphs: readonly Readonly<{
+    lead: string
+    body: (opponentCount: number) => string
+  }>[]
   language: string
   start: string
   starting: string

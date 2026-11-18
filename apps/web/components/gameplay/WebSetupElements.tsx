@@ -386,7 +386,15 @@ const webSetupElements: SetupElements = {
       {...(busyLabel === undefined ? {} : { busyLabel })}
       type={submit ? "submit" : "button"}
       variant={secondary ? "secondary" : "primary"}
-      onClick={submit ? undefined : onActivate}
+      onClick={
+        submit
+          ? undefined
+          : (event) => {
+              if (opensEditor)
+                event.currentTarget.focus({ preventScroll: true })
+              onActivate()
+            }
+      }
     >
       {children}
     </MapachessButton>

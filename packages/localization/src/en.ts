@@ -20,23 +20,28 @@ const introduction = Object.freeze({
   paragraphs: Object.freeze([
     {
       lead: "",
-      body: "Play Standard Chess or Chess960 against animal Stockfish opponents. Climb the 25-opponent Story ladder, or choose your own Challenge.",
+      body: (opponentCount: number) =>
+        `Play Standard Chess or Chess960 against animal Stockfish opponents. Climb the ${opponentCount}-opponent Story ladder, or choose your own Challenge.`,
     },
     {
       lead: "See the possibilities.",
-      body: "Piece Hints highlight three pieces for each side. Then Move Hints show three moves for those pieces on each side. You decide when you want help.",
+      body: () =>
+        "Piece Hints highlight three pieces for each side. Then Move Hints show three moves for those pieces on each side. You decide when you want help.",
     },
     {
       lead: "Try another idea.",
-      body: "Undo a move, explore a different line, and keep learning. Your coach and animal battles react as the match unfolds.",
+      body: () =>
+        "Undo a move, explore a different line, and keep learning. Your coach and animal battles react as the match unfolds.",
     },
     {
       lead: "Make it your game.",
-      body: "Choose your player animal, coach, chess pieces, and board. Find these choices later in Your game customization.",
+      body: () =>
+        "Choose your player animal, coach, chess pieces, and board. Find these choices later in Your game customization.",
     },
     {
       lead: "",
-      body: "Free to play. No account. Your progress stays on this device. Export a backup from Settings whenever you want a portable copy.",
+      body: () =>
+        "Free to play. No account. Your progress stays on this device. Export a backup from Settings whenever you want a portable copy.",
     },
   ]),
   language: "Language",

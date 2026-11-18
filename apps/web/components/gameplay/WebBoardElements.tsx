@@ -72,7 +72,11 @@ function Group({ children, className, kind, decorative }: BoardGroupProps) {
         className,
         kind === "frame" && "[container-type:inline-size]",
       )}
-      role={kind === "row" && !decorative ? "row" : undefined}
+      role={
+        !decorative && (kind === "row" || kind === "rowgroup")
+          ? kind
+          : undefined
+      }
       aria-hidden={decorative}
     >
       {children}

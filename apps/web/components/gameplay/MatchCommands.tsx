@@ -1,22 +1,22 @@
-import { useRef, type ReactNode, type Ref } from "react"
+import { useRef, type ReactNode, type RefObject } from "react"
 import type { ActorRefFrom } from "xstate"
+import MatchMenuActions, {
+  type MatchMenuSessionActions,
+} from "@mapachess/application-ui/match-menu-actions"
 import matchMachine, {
-  selectCanOfferDraw,
   selectCanRedo,
-  selectCanResign,
   selectCanUndo,
-  selectDrawOfferResponse,
   selectHasRedoHistory,
   selectHasUndoHistory,
   selectIsPersistingMutation,
-  selectMatchConclusion,
-  selectMatchPosition,
   type MatchMachineSnapshot,
 } from "@mapachess/match/match-machine"
 import InputPrompt from "../input/InputPrompt"
-import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
+import MapachessDialog from "../presentation/MapachessDialog"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
+import webRecoveryElements from "../profile/WebRecoveryElements"
+import webSetupElements from "./WebSetupElements"
 
 const historyActionClassName =
   "flex min-w-0 scroll-mb-1 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] xl:leading-tight wrap-break-word"
@@ -26,6 +26,7 @@ export default function MatchCommands({
   hints,
   coach,
   menuActions,
+  details,
   menuSummaryRef,
   drawAvailable,
   onOfferDraw,
@@ -38,8 +39,9 @@ export default function MatchCommands({
 }: Readonly<{
   hints: ReactNode
   coach: ReactNode
-  menuActions?: ReactNode
-  menuSummaryRef?: Ref<HTMLElement>
+  menuActions?: MatchMenuSessionActions | undefined
+  details: ReactNode
+  menuSummaryRef?: RefObject<HTMLButtonElement | null>
   actor: ActorRefFrom<typeof matchMachine>
   drawAvailable: boolean
   onOfferDraw: () => void
@@ -52,93 +54,29 @@ export default function MatchCommands({
 }>) {
   const copy = useMapachessCopy()
   const messages = copy.interface.matchCommands
+  const closeButton = useRef<HTMLButtonElement>(null)
 
   const persisting = selectIsPersistingMutation(snapshot)
-  const menu = useRef<HTMLDetailsElement>(null)
-  usePlayerInputScope({
-    root: menu,
-    enabled: menuOpen,
-    handle: (action) => {
-      if (action !== "cancel" && action !== "menu") return false
-      onBack()
-      return true
-    },
-  })
   return (
-    <div className="grid gap-1 xl:gap-1.5">
+    <div className="grid gap-1 xl:gap-1.5 [&>dialog]:[--radius-mapachess-action:var(--radius-xl)_0_var(--radius-xl)_0]">
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-x-1.5 gap-y-1 xl:flex xl:flex-wrap xl:items-center xl:gap-1.5">
         {coach}
         {hints}
       </div>
       <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_repeat(2,minmax(0,1.15fr))] items-stretch gap-1.5 xl:grid-cols-3">
-        <details
-          className="relative z-40 min-w-0 flex-[1_1_max-content]"
-          open={menuOpen}
-          ref={menu}
-          data-player-input-layer={menuOpen ? "match-menu" : undefined}
+        <MapachessButton
+          aria-label={messages.matchMenu}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          data-player-action="menu"
+          className={historyActionClassName}
+          ref={menuSummaryRef}
+          onClick={onMenuOpened}
+          variant="secondary"
         >
-          <summary
-            aria-label={messages.matchMenu}
-            data-player-action="menu"
-            className="border-mapachito-charcoal bg-mapachito-violet text-mapachito-white rounded-mapachess-action shadow-mapachess-button shadow-mapachito-charcoal hover:shadow-mapachess-raised active:shadow-mapachess-pressed flex h-full min-h-12 cursor-pointer flex-wrap items-center justify-center gap-1 border-3 px-1 py-1 text-sm leading-[1.1] font-black transition-[translate,box-shadow] duration-120 ease-[ease] hover:-translate-0.25 active:translate-0.75 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:active:translate-none xl:leading-tight forced-colors:border-[CanvasText] forced-colors:shadow-none"
-            ref={menuSummaryRef}
-            onClick={(event) => {
-              event.preventDefault()
-              if (menuOpen) onBack()
-              else onMenuOpened()
-            }}
-          >
-            <InputPrompt action="menu" />
-            <span className="min-w-0 wrap-anywhere">{messages.menu}</span>
-          </summary>
-          <div className="border-mapachito-white/30 bg-mapachito-charcoal fixed inset-x-3 bottom-[max(--spacing(3),env(safe-area-inset-bottom))] flex max-h-[calc(100dvh-max(--spacing(3),env(safe-area-inset-top))-max(--spacing(3),env(safe-area-inset-bottom)))] flex-col gap-3 rounded-lg border p-3 shadow-xl xl:inset-x-auto xl:bottom-3 xl:max-h-[65dvh] xl:w-96 xl:max-w-[calc(100vw---spacing(6))]">
-            <div className="grid min-h-0 auto-rows-max grid-cols-1 gap-3 overflow-y-auto overscroll-contain px-1 pb-2">
-              {menuActions}
-              <MapachessButton
-                aria-busy={persisting && drawAvailable}
-                className="px-1! text-base"
-                disabled={!selectCanOfferDraw(snapshot) || !drawAvailable}
-                onClick={onOfferDraw}
-                type="button"
-                variant="secondary"
-              >
-                <span aria-hidden="true" className="block text-xl">
-                  ½
-                </span>
-                {messages.offerDraw}
-              </MapachessButton>
-              {selectDrawOfferResponse(snapshot) === "rejected" ? (
-                <p role="status" className="text-mapachito-white">
-                  {copy.gameplay.drawDeclined(opponentName)}
-                </p>
-              ) : null}
-              <MapachessButton
-                aria-busy={
-                  persisting &&
-                  selectMatchConclusion(snapshot) === null &&
-                  selectMatchPosition(snapshot).status.type === "playing"
-                }
-                className="px-1! text-base"
-                disabled={!selectCanResign(snapshot)}
-                onClick={() => actor.send({ type: "MATCH.RESIGN_REQUESTED" })}
-                type="button"
-                variant="destructive"
-              >
-                <span aria-hidden="true" className="block text-xl">
-                  ⚑
-                </span>
-                {messages.resign}
-              </MapachessButton>
-            </div>
-            <MapachessButton
-              className="shrink-0 px-1!"
-              onClick={onMenuClosed}
-              variant="secondary"
-            >
-              {copy.shared.settingsControls.close}
-            </MapachessButton>
-          </div>
-        </details>
+          <InputPrompt action="menu" />
+          <span className="min-w-0 wrap-anywhere">{messages.menu}</span>
+        </MapachessButton>
         <div className="contents">
           <MapachessButton
             aria-busy={persisting && selectHasUndoHistory(snapshot)}
@@ -164,6 +102,47 @@ export default function MatchCommands({
           </MapachessButton>
         </div>
       </div>
+      {menuOpen ? (
+        <MapachessDialog
+          label={messages.matchMenu}
+          onClose={onBack}
+          placement="bottom-to-center"
+          fixedContent="fit"
+          closeOnMenu
+          initialFocus={closeButton}
+          returnFocus={menuSummaryRef}
+        >
+          <MatchMenuActions
+            actor={actor}
+            snapshot={snapshot}
+            copy={copy}
+            elements={{
+              Action: webRecoveryElements.Action,
+              Group: webSetupElements.Group,
+              Text: webSetupElements.Text,
+            }}
+            sessionActions={menuActions}
+            closeAction={
+              <MapachessButton
+                ref={closeButton}
+                className="w-full min-w-0 scroll-my-2 px-2! text-base wrap-anywhere"
+                onClick={onMenuClosed}
+                variant="secondary"
+              >
+                {copy.shared.settingsControls.close}
+              </MapachessButton>
+            }
+            details={details}
+            drawAvailable={drawAvailable}
+            opponentName={opponentName}
+            onOfferDraw={onOfferDraw}
+            onMenuClosed={onMenuClosed}
+          />
+          <h2 className="font-display mt-3 text-center text-2xl font-black wrap-anywhere">
+            {messages.matchMenu}
+          </h2>
+        </MapachessDialog>
+      ) : null}
     </div>
   )
 }

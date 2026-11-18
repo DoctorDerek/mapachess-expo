@@ -109,7 +109,7 @@ const closeGallery = async (page: Page): Promise<void> => {
 }
 const openSettings = async (page: Page): Promise<void> => {
   const settings = page.getByRole("button", { name: "Settings", exact: true })
-  const menu = page.locator("summary").filter({ hasText: "Menu" })
+  const menu = page.getByRole("button", { name: "Match menu", exact: true })
   await expect(settings.or(menu)).toBeVisible({ timeout: 30000 })
   if (!(await settings.isVisible())) await menu.click()
   await settings.click()
@@ -314,7 +314,7 @@ for (const { mode, color, pieceSetId, boardId } of [
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
     await page
-      .locator("details[open]")
+      .getByRole("dialog", { name: "Match menu", exact: true })
       .getByRole("button", { name: "Close", exact: true })
       .click()
     await expect(
@@ -322,8 +322,8 @@ for (const { mode, color, pieceSetId, boardId } of [
     ).not.toBeVisible()
     expect(await element.evaluate((node) => node.isConnected)).toBe(true)
     await expect(pawn).toHaveAttribute("aria-selected", "true")
-    await expect(pawn.locator("[data-board-selection]")).toHaveCSS(
-      "border-top-color",
+    await expect(pawn.locator("[data-board-selection] rect").last()).toHaveCSS(
+      "stroke",
       "rgb(238, 240, 244)",
     )
     await expect(pawn).toHaveCSS("z-index", "auto")
@@ -393,7 +393,7 @@ test("resolves the approved hint and history colors across all board families", 
       .getByRole("button", { name: "Close Settings", exact: true })
       .click()
     await page
-      .locator("details[open]")
+      .getByRole("dialog", { name: "Match menu", exact: true })
       .getByRole("button", { name: "Close", exact: true })
       .click()
     if (choice.kind === "artwork")
@@ -470,7 +470,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   await page
-    .locator("details[open]")
+    .getByRole("dialog", { name: "Match menu", exact: true })
     .getByRole("button", { name: "Close", exact: true })
     .click()
   await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
@@ -619,7 +619,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
     if (!moved.ok) throw new Error("Expected legal fixture move")
     timeline = moved.timeline
   }
-  await page.locator("summary").filter({ hasText: "Menu" }).click()
+  await page.getByRole("button", { name: "Match menu", exact: true }).click()
   await page
     .getByRole("button", { name: "Return to Menu", exact: true })
     .click()
@@ -658,6 +658,10 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
     .getByRole("button", { name: "Close Settings", exact: true })
     .click()
   const promotion = page.getByRole("dialog", { name: "Promote on a8" })
+  await page
+    .getByRole("dialog", { name: "Match menu", exact: true })
+    .getByRole("button", { name: "Close", exact: true })
+    .click()
   await page.locator('[data-square="b7"]').click()
   await page.locator('[data-square="a8"]').click()
   await expect(promotion).toBeVisible()

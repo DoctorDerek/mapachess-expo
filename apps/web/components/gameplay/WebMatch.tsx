@@ -4,6 +4,7 @@ import { useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { ActorRefFrom } from "xstate"
+import type { MatchMenuSessionActions } from "@mapachess/application-ui/match-menu-actions"
 import decideChickenDrawOffer from "@mapachess/evaluation/chicken-draw-decision"
 import positionEvaluationMachine from "@mapachess/evaluation/position-evaluation-machine"
 import {
@@ -81,7 +82,7 @@ export type WebMatchProps = Readonly<{
   playerElo: number
   moveReactionPlacement: MoveReactionPlacement
   runtime: WebMatchRuntime
-  menuActions?: ReactNode
+  menuActions?: MatchMenuSessionActions
   result?: (disabled: boolean) => ReactNode
   navigation: MatchNavigationCommands
   overlays: readonly MatchNavigationOverlay[]
@@ -121,7 +122,7 @@ export default function WebMatch({
   const messages = copy.interface.webMatch
 
   const heading = useRef<HTMLHeadingElement>(null)
-  const menuSummary = useRef<HTMLElement>(null)
+  const menuSummary = useRef<HTMLButtonElement>(null)
   const rewardsButton = useRef<HTMLButtonElement>(null)
   const [celebrationStageSlot, setCelebrationStageSlot] =
     useState<HTMLDivElement | null>(null)
@@ -284,7 +285,12 @@ export default function WebMatch({
           modeLabel,
           animalCopy.opponent(opponent.id),
         )}
-        className="relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_.']"
+        className={cx(
+          "relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))]",
+          matchComplete
+            ? "xl:[grid-template-rows:repeat(3,auto)_max-content_auto] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_command']"
+            : "xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_.']",
+        )}
       >
         <MatchIdentity
           timeControl={snapshot.context.timeControl}
@@ -359,7 +365,6 @@ export default function WebMatch({
                   navigation.open("match-menu")
                 }}
                 onMenuClosed={() => {
-                  menuSummary.current?.focus({ preventScroll: true })
                   navigation.close("match-menu")
                 }}
                 onBack={navigation.back}
@@ -388,53 +393,49 @@ export default function WebMatch({
                     overlays={overlays}
                   />
                 }
-                menuActions={
-                  <>
-                    {menuActions}{" "}
-                    <details
-                      open={overlays.includes("match-details")}
-                      className="text-mapachito-white min-w-0"
+                menuActions={menuActions}
+                details={
+                  <details
+                    open={overlays.includes("match-details")}
+                    className="group rounded-mapachess-action border-mapachito-deep-cyan text-mapachito-charcoal @container min-w-0 border-2"
+                  >
+                    <summary
+                      onClick={(event) => {
+                        event.preventDefault()
+                        if (overlays.includes("match-details"))
+                          navigation.back()
+                        else navigation.open("match-details")
+                      }}
+                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
                     >
-                      <summary
-                        onClick={(event) => {
-                          event.preventDefault()
-                          if (overlays.includes("match-details"))
-                            navigation.back()
-                          else navigation.open("match-details")
-                        }}
-                        className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+                      {messages.matchDetailsMoveHistory}
+                    </summary>
+                    <div className="text-mapachito-charcoal grid gap-3 px-3 pb-3">
+                      <dl
+                        aria-label={messages.currentMatchData}
+                        className="bg-mapachito-white grid min-w-0 gap-x-3 gap-y-1.5 rounded-lg p-3 text-sm wrap-anywhere @min-[18rem]:grid-cols-[auto_minmax(0,1fr)] @min-[18rem]:gap-y-2 [&_dd]:min-w-0 [&_dd]:font-bold @min-[18rem]:[&_dd]:text-end @max-[18rem]:[&_dd+dt]:mt-2 [&_dt]:font-bold"
                       >
-                        {messages.matchDetailsMoveHistory}
-                      </summary>
-                      <div className="text-mapachito-charcoal grid gap-3">
-                        <dl
-                          aria-label={messages.currentMatchData}
-                          className="bg-mapachito-white grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
-                        >
-                          <dt>{messages.mode}</dt>
-                          <dd>{modeLabel}</dd>
-                          <dt>{messages.clock}</dt>
-                          <dd>
-                            {timeControlLabel(
-                              snapshot.context.timeControl,
-                              copy.gameplay.clock,
-                            )}
-                          </dd>
-                          <dt>{messages.privacy}</dt>
-                          <dd>{messages.localAccountless}</dd>
-                          <dt>{messages.engine}</dt>
-                          <dd className="truncate">
-                            {runtime.engineIdentity.name}
-                          </dd>
-                        </dl>
+                        <dt>{messages.mode}</dt>
+                        <dd>{modeLabel}</dd>
+                        <dt>{messages.clock}</dt>
+                        <dd>
+                          {timeControlLabel(
+                            snapshot.context.timeControl,
+                            copy.gameplay.clock,
+                          )}
+                        </dd>
+                        <dt>{messages.privacy}</dt>
+                        <dd>{messages.localAccountless}</dd>
+                        <dt>{messages.engine}</dt>
+                        <dd>{runtime.engineIdentity.name}</dd>
+                      </dl>
 
-                        <ClassifiedMoveHistory
-                          transitions={activeTransitions}
-                          records={moveFeedback}
-                        />
-                      </div>
-                    </details>
-                  </>
+                      <ClassifiedMoveHistory
+                        transitions={activeTransitions}
+                        records={moveFeedback}
+                      />
+                    </div>
+                  </details>
                 }
                 menuSummaryRef={menuSummary}
                 actor={actor}

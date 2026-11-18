@@ -178,7 +178,7 @@ for (const width of [320, 1280]) {
     await page.screenshot({ path: testInfo.outputPath("fine-point-hints.png") })
     const bounds = await board.boundingBox()
     const original = await savedProfile(page)
-    const menu = page.locator("summary").filter({ hasText: "Menu" })
+    const menu = page.getByRole("button", { name: "Match menu", exact: true })
     await menu.click()
     expect(await board.boundingBox()).toEqual(bounds)
     const settingsButton = page.getByRole("button", {
@@ -225,12 +225,15 @@ for (const width of [320, 1280]) {
     expect((await savedProfile(page)).activeMatch).toEqual(original.activeMatch)
     await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6)
     await page.keyboard.press("Escape")
-    await expect(menu.locator("..")).not.toHaveAttribute("open")
+    await expect(
+      page.getByRole("dialog", { name: "Match menu", exact: true }),
+    ).toHaveCount(0)
+    await expect(menu).toHaveAttribute("aria-expanded", "false")
     await expect(menu).toBeFocused()
   })
 }
 
-test("player animal selection survives Back and Forward without changing Story progress", async ({
+test("keyboard player animal selection survives Back and Forward without changing Story progress", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" })
@@ -241,7 +244,8 @@ test("player animal selection survives Back and Forward without changing Story p
   const original = await savedProfile(page)
   const trigger = page.getByRole("button", { name: /^Play as Raccoon/ })
   const chooser = page.getByRole("dialog", { name: "Play as", exact: true })
-  await trigger.click()
+  await trigger.focus()
+  await page.keyboard.press("Enter")
   await expect(chooser).toBeVisible()
   await expect(chooser.getByRole("radio")).toHaveCount(
     STOCKFISH_OPPONENTS.length,

@@ -18,7 +18,7 @@ async function startChallenge(page: Page, color: "White" | "Black") {
   await page.getByRole("radio", { name: color, exact: true }).check()
   await page.getByRole("button", { name: "Start match", exact: true }).click()
   await expect(
-    page.getByRole("button", { name: "Show Move Hints", exact: true }),
+    page.getByRole("button", { name: /Show Move Hints$/ }),
   ).toBeVisible()
 }
 
@@ -41,9 +41,7 @@ async function expectBothSidesHints(page: Page) {
       )
       .sort(),
   )
-  await page
-    .getByRole("button", { name: "Show Move Hints", exact: true })
-    .click()
+  await page.getByRole("button", { name: /Show Move Hints$/ }).click()
   const moves = page.locator('[data-hint-kind="move"]')
   await expect(moves).toHaveCount(6)
   expect(
@@ -135,7 +133,7 @@ for (const color of ["White", "Black"] as const) {
   })
 }
 
-test("restart creates a fresh match, Back preserves it, and explicit exit clears the slot", async ({
+test("restart creates a fresh match that Back and Return to Menu preserve", async ({
   page,
 }) => {
   await startChallenge(page, "White")
@@ -169,9 +167,9 @@ test("restart creates a fresh match, Back preserves it, and explicit exit clears
     .getByRole("button", { name: "Return to Menu", exact: true })
     .click()
   await expect(
-    page.getByRole("button", { name: "Start match", exact: true }),
+    page.getByRole("button", { name: "Resume match Untimed", exact: true }),
   ).toBeEnabled()
-  expect((await savedProfile(page)).activeMatch).toBeNull()
+  expect((await savedProfile(page)).activeMatch).toEqual(restarted)
 })
 
 test("Story replay opens setup without starting another match or changing earned progress", async ({
