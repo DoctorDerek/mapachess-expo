@@ -7,7 +7,7 @@ import startHintMatch from "./startHintMatch.js"
 test.use({ hasTouch: true })
 
 for (const locale of ["en", "es-419"] as const) {
-  test(`match menu uses paired actions without nested scrolling in ${locale}`, async ({
+  test(`match menu keeps its actions readable without nested scrolling in ${locale}`, async ({
     page,
   }) => {
     const copy = loadCatalog(locale)
@@ -71,17 +71,32 @@ for (const locale of ["en", "es-419"] as const) {
             ).length,
         )
       expect(await nestedScrollports()).toBe(0)
+      const settings = dialog.getByRole("button", {
+        name: copy.interface.webGame.settings,
+        exact: true,
+      })
+      const settingsBounds = await settings.boundingBox()
+      if (settingsBounds === null)
+        throw new Error("The match menu needs a visible Settings action.")
+      expect(
+        await settings.evaluate((element) => {
+          const button = element.getBoundingClientRect()
+          const label = document.createRange()
+          label.selectNodeContents(element)
+          return Array.from(label.getClientRects()).every(
+            (rect) =>
+              rect.left >= button.left - 1 && rect.right <= button.right + 1,
+          )
+        }),
+      ).toBe(true)
+      if (width === 320 && scale === 200)
+        expect(closeBounds.y).toBeGreaterThanOrEqual(
+          settingsBounds.y + settingsBounds.height,
+        )
+      else expect(settingsBounds.y).toBeCloseTo(closeBounds.y, 0)
       if ((width === 390 || width === 1440) && scale === 100) {
         for (const action of await dialog.getByRole("button").all())
           await expect(action).toBeInViewport({ ratio: 1 })
-        const settings = dialog.getByRole("button", {
-          name: copy.interface.webGame.settings,
-          exact: true,
-        })
-        const settingsBounds = await settings.boundingBox()
-        if (settingsBounds === null)
-          throw new Error("Settings must share the Close row.")
-        expect(settingsBounds.y).toBeCloseTo(closeBounds.y, 0)
         await expect(title).toBeInViewport({ ratio: 1 })
         expect(
           await dialog.evaluate(
