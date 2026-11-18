@@ -397,7 +397,7 @@ export default function WebMatch({
                 details={
                   <details
                     open={overlays.includes("match-details")}
-                    className="text-mapachito-charcoal min-w-0"
+                    className="group rounded-mapachess-action border-mapachito-deep-cyan text-mapachito-charcoal @container min-w-0 border-2"
                   >
                     <summary
                       onClick={(event) => {
@@ -406,14 +406,14 @@ export default function WebMatch({
                           navigation.back()
                         else navigation.open("match-details")
                       }}
-                      className="min-h-12 cursor-pointer content-center rounded-lg font-bold focus-visible:outline-2"
+                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
                     >
                       {messages.matchDetailsMoveHistory}
                     </summary>
-                    <div className="text-mapachito-charcoal grid gap-3">
+                    <div className="text-mapachito-charcoal grid gap-3 px-3 pb-3">
                       <dl
                         aria-label={messages.currentMatchData}
-                        className="bg-mapachito-white grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg p-3 text-sm [&_dd]:text-right [&_dd]:font-bold [&_dt]:font-bold"
+                        className="bg-mapachito-white grid min-w-0 gap-x-3 gap-y-1.5 rounded-lg p-3 text-sm wrap-anywhere @min-[18rem]:grid-cols-[auto_minmax(0,1fr)] @min-[18rem]:gap-y-2 [&_dd]:min-w-0 [&_dd]:font-bold @min-[18rem]:[&_dd]:text-end @max-[18rem]:[&_dd+dt]:mt-2 [&_dt]:font-bold"
                       >
                         <dt>{messages.mode}</dt>
                         <dd>{modeLabel}</dd>
@@ -427,9 +427,7 @@ export default function WebMatch({
                         <dt>{messages.privacy}</dt>
                         <dd>{messages.localAccountless}</dd>
                         <dt>{messages.engine}</dt>
-                        <dd className="truncate">
-                          {runtime.engineIdentity.name}
-                        </dd>
+                        <dd>{runtime.engineIdentity.name}</dd>
                       </dl>
 
                       <ClassifiedMoveHistory

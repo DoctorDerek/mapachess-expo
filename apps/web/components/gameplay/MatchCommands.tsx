@@ -58,7 +58,7 @@ export default function MatchCommands({
 
   const persisting = selectIsPersistingMutation(snapshot)
   return (
-    <div className="grid gap-1 xl:gap-1.5">
+    <div className="grid gap-1 xl:gap-1.5 [&>dialog]:[--radius-mapachess-action:var(--radius-xl)_0_var(--radius-xl)_0]">
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-x-1.5 gap-y-1 xl:flex xl:flex-wrap xl:items-center xl:gap-1.5">
         {coach}
         {hints}
