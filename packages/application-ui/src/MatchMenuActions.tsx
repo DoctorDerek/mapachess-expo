@@ -21,9 +21,9 @@ export type MatchMenuSessionActions = Readonly<{
   settings: ReactNode
 }>
 
-const pairedActionsClassName = "flex min-w-0 flex-row items-stretch gap-2"
-const pairedActionCellClassName =
-  "flex min-w-0 flex-1 basis-0 flex-col items-stretch"
+const pairedActionsClassName =
+  "grid min-w-0 grid-cols-1 items-stretch gap-2 @min-[17rem]:grid-cols-2"
+const pairedActionCellClassName = "flex min-w-0 flex-col items-stretch"
 
 export default function MatchMenuActions({
   actor,
@@ -56,12 +56,12 @@ export default function MatchMenuActions({
   const persisting = selectIsPersistingMutation(snapshot)
   const usesPairedRows = closeAction !== undefined
   const sessionActionSizing = usesPairedRows
-    ? { className: "min-w-0 flex-1 basis-0 px-2! text-base wrap-anywhere" }
+    ? { className: "min-w-0 px-2! text-base wrap-anywhere" }
     : {}
   const outcomeActionSizing = usesPairedRows
     ? {
         className:
-          "flex min-w-0 flex-1 basis-0 flex-row items-center justify-center gap-2 px-2! text-base wrap-anywhere",
+          "flex min-w-0 flex-row items-center justify-center gap-2 px-2! text-base wrap-anywhere",
       }
     : {}
   const restart = sessionActions && (
@@ -150,7 +150,7 @@ export default function MatchMenuActions({
     )
 
   return (
-    <Group className="flex min-w-0 flex-col gap-2">
+    <Group className="@container flex min-w-0 flex-col gap-2">
       {sessionActions === undefined ? null : (
         <Group className={pairedActionsClassName}>
           {restart}
