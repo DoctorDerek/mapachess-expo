@@ -155,6 +155,39 @@ for (const locale of ["en", "es-419"] as const) {
           name: copy.setup.allModes,
           exact: true,
         })
+        if (mode === "story") {
+          const trigger = page.getByRole("button", {
+            name: copy.setup.changeStoryOpponent,
+            exact: true,
+          })
+          await trigger.evaluate((element) =>
+            element.scrollIntoView({
+              block: "center",
+              inline: "nearest",
+              behavior: "instant",
+            }),
+          )
+          await expectExposedWithoutScrolling(trigger)
+          await trigger.click()
+          const done = page.getByRole("button", {
+            name: copy.setup.done,
+            exact: true,
+          })
+          await expect(done).toBeInViewport({ ratio: 1 })
+          const doneBounds = await done.boundingBox()
+          const opponents = page
+            .getByRole("list", {
+              name: copy.shared.story.opponents,
+              exact: true,
+            })
+            .getByRole("listitem")
+          await expect(opponents).toHaveCount(STOCKFISH_OPPONENTS.length)
+          await opponents.last().scrollIntoViewIfNeeded()
+          await expect(opponents.last()).toBeInViewport({ ratio: 1 })
+          await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
+          await done.click()
+          await expect(trigger).toBeFocused()
+        }
         for (const percent of [100, 200]) {
           const scale = await page.addStyleTag({
             content: `:root { font-size: ${percent}%; }`,
@@ -200,39 +233,6 @@ for (const locale of ["en", "es-419"] as const) {
           await scale.evaluate((element) =>
             element.parentNode?.removeChild(element),
           )
-        }
-        if (mode === "story") {
-          const trigger = page.getByRole("button", {
-            name: copy.setup.changeStoryOpponent,
-            exact: true,
-          })
-          await trigger.evaluate((element) =>
-            element.scrollIntoView({
-              block: "center",
-              inline: "nearest",
-              behavior: "instant",
-            }),
-          )
-          await expectExposedWithoutScrolling(trigger)
-          await trigger.click()
-          const done = page.getByRole("button", {
-            name: copy.setup.done,
-            exact: true,
-          })
-          await expect(done).toBeInViewport({ ratio: 1 })
-          const doneBounds = await done.boundingBox()
-          const opponents = page
-            .getByRole("list", {
-              name: copy.shared.story.opponents,
-              exact: true,
-            })
-            .getByRole("listitem")
-          await expect(opponents).toHaveCount(STOCKFISH_OPPONENTS.length)
-          await opponents.last().scrollIntoViewIfNeeded()
-          await expect(opponents.last()).toBeInViewport({ ratio: 1 })
-          await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
-          await done.click()
-          await expect(trigger).toBeFocused()
         }
         await modes.click()
       }
