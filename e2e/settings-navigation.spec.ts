@@ -121,10 +121,11 @@ for (const locale of ["en", "es-419"] as const) {
             const bounds = range.getBoundingClientRect()
             const buttonBounds = button.getBoundingClientRect()
             return (
-              bounds.height >
-                Number.parseFloat(getComputedStyle(button).lineHeight) + 1 ||
+              range.getClientRects().length !== 1 ||
               bounds.left < buttonBounds.left ||
-              bounds.right > buttonBounds.right
+              bounds.right > buttonBounds.right ||
+              bounds.top < buttonBounds.top ||
+              bounds.bottom > buttonBounds.bottom
             )
           })
           .map((word) => word[0])
