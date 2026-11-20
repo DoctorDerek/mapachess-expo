@@ -21,9 +21,9 @@ export type MatchMenuSessionActions = Readonly<{
   settings: ReactNode
 }>
 
-const pairedActionsClassName =
-  "grid min-w-0 grid-cols-1 items-stretch gap-2 @min-[17rem]:grid-cols-2"
-const pairedActionCellClassName = "flex min-w-0 flex-col items-stretch"
+export type MatchMenuDecision = "restart" | "resign" | "draw"
+
+const pairedActionsClassName = "grid min-w-0 grid-cols-2 items-stretch gap-1.5"
 
 export default function MatchMenuActions({
   actor,
@@ -37,6 +37,7 @@ export default function MatchMenuActions({
   opponentName,
   onOfferDraw,
   onMenuClosed,
+  onDecisionRequested,
 }: Readonly<{
   actor: ActorRefFrom<typeof matchMachine>
   snapshot: MatchMachineSnapshot
@@ -50,18 +51,19 @@ export default function MatchMenuActions({
   opponentName: string
   onOfferDraw: () => void
   onMenuClosed: () => void
+  onDecisionRequested?: (action: MatchMenuDecision) => void
 }>) {
   const { Action, Group, Text } = elements
   const messages = copy.interface.matchCommands
   const persisting = selectIsPersistingMutation(snapshot)
   const usesPairedRows = closeAction !== undefined
   const sessionActionSizing = usesPairedRows
-    ? { className: "min-w-0 px-2! text-base wrap-anywhere" }
+    ? { className: "min-w-0 text-base" }
     : {}
   const outcomeActionSizing = usesPairedRows
     ? {
         className:
-          "flex min-w-0 flex-row items-center justify-center gap-2 px-2! text-base wrap-anywhere",
+          "flex min-w-0 flex-row items-center justify-center gap-2 text-base",
       }
     : {}
   const restart = sessionActions && (
@@ -70,7 +72,11 @@ export default function MatchMenuActions({
       variant="secondary"
       busy={sessionActions.restarting}
       busyLabel={copy.setup.restartingMatch}
-      onActivate={sessionActions.onRestartRequested}
+      onActivate={() => {
+        if (onDecisionRequested && selectMatchConclusion(snapshot) === null)
+          onDecisionRequested("restart")
+        else sessionActions.onRestartRequested()
+      }}
     >
       {copy.interface.webGame.restartMatch}
     </Action>
@@ -83,7 +89,9 @@ export default function MatchMenuActions({
       busyLabel={copy.setup.returningToMenu}
       onActivate={sessionActions.onMainMenuRequested}
     >
-      {copy.interface.webGame.returnToMenu}
+      {usesPairedRows
+        ? messages.saveAndExit
+        : copy.interface.webGame.returnToMenu}
     </Action>
   )
   const offerDraw = (
@@ -91,7 +99,9 @@ export default function MatchMenuActions({
       {...outcomeActionSizing}
       busy={persisting && drawAvailable}
       disabled={!selectCanOfferDraw(snapshot) || !drawAvailable}
-      onActivate={onOfferDraw}
+      onActivate={
+        onDecisionRequested ? () => onDecisionRequested("draw") : onOfferDraw
+      }
       variant="secondary"
     >
       {usesPairedRows && (
@@ -122,6 +132,10 @@ export default function MatchMenuActions({
       }
       disabled={!selectCanResign(snapshot)}
       onActivate={() => {
+        if (onDecisionRequested) {
+          onDecisionRequested("resign")
+          return
+        }
         onMenuClosed()
         actor.send({ type: "MATCH.RESIGN_REQUESTED" })
       }}
@@ -150,7 +164,7 @@ export default function MatchMenuActions({
     )
 
   return (
-    <Group className="@container flex min-w-0 flex-col gap-2">
+    <Group className="mapachess-menu-actions flex min-w-0 flex-col gap-1.5">
       {sessionActions === undefined ? null : (
         <Group className={pairedActionsClassName}>
           {restart}
@@ -162,15 +176,9 @@ export default function MatchMenuActions({
         {resign}
       </Group>
       {drawResponse}
-      <Group className={pairedActionsClassName}>
-        {sessionActions === undefined ? null : (
-          <Group className={pairedActionCellClassName}>
-            {sessionActions.settings}
-          </Group>
-        )}
-        <Group className={pairedActionCellClassName}>{closeAction}</Group>
-      </Group>
+      {sessionActions?.settings}
       {details}
+      {closeAction}
     </Group>
   )
 }

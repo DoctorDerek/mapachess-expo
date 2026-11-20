@@ -82,6 +82,7 @@ export type WebMatchProps = Readonly<{
   playerElo: number
   moveReactionPlacement: MoveReactionPlacement
   runtime: WebMatchRuntime
+  consumeOverlay?: (overlay: MatchNavigationOverlay) => void
   menuActions?: MatchMenuSessionActions
   result?: (disabled: boolean) => ReactNode
   navigation: MatchNavigationCommands
@@ -109,6 +110,7 @@ export default function WebMatch({
   runtime,
   result,
   menuActions,
+  consumeOverlay,
   navigation,
   overlays,
   celebrationDismissed,
@@ -238,6 +240,7 @@ export default function WebMatch({
     if (drawOfferDecision === null) {
       throw new Error("Offer Draw requires the accepted current evaluation.")
     }
+    if (drawOfferDecision.outcome === "accepted") consumeOverlay?.("match-menu")
     actor.send({
       decision: drawOfferDecision,
       type: "MATCH.DRAW_OFFER_REQUESTED",
@@ -360,6 +363,11 @@ export default function WebMatch({
               <MatchCommands
                 opponentName={animalCopy.opponent(opponent.id)}
                 menuOpen={overlays.includes("match-menu")}
+                topOverlay={overlays.at(-1)}
+                onDecisionRequested={(action) =>
+                  navigation.open(`confirm-${action}`)
+                }
+                onConsumeOverlay={consumeOverlay ?? navigation.close}
                 onMenuOpened={() => {
                   reactions.clear()
                   navigation.open("match-menu")
@@ -397,6 +405,19 @@ export default function WebMatch({
                 details={
                   <details
                     open={overlays.includes("match-details")}
+                    onToggle={(event) => {
+                      const history = event.currentTarget
+                      const dialog = history.closest("dialog")
+                      if (
+                        history.open &&
+                        dialog &&
+                        dialog.scrollHeight > dialog.clientHeight
+                      )
+                        history.querySelector("summary")?.scrollIntoView({
+                          block: "nearest",
+                          behavior: "instant",
+                        })
+                    }}
                     className="group rounded-mapachess-action border-mapachito-deep-cyan text-mapachito-charcoal @container min-w-0 border-2"
                   >
                     <summary
