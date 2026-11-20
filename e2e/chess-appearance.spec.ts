@@ -18,6 +18,7 @@ import {
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
+import settledMatchMenu from "./settledMatchMenu.js"
 
 const appearanceSection = (page: Page) =>
   page.getByRole("dialog", { name: /^(Pieces|Board)$/ })
@@ -112,8 +113,12 @@ const openSettings = async (
   page: Page,
   from: "home" | "match",
 ): Promise<void> => {
-  if (from === "match")
+  if (from === "match") {
     await page.getByRole("button", { name: "Match menu", exact: true }).click()
+    const menu = await settledMatchMenu(page)
+    await menu.getByRole("button", { name: "Settings", exact: true }).click()
+    return
+  }
   await page.getByRole("button", { name: "Settings", exact: true }).click()
 }
 

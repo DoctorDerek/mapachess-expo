@@ -10,6 +10,7 @@ import prepareControllerInput, { activate, press } from "./controllerInput.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
+import settledMatchMenu from "./settledMatchMenu.js"
 
 test.beforeEach(prepareControllerInput)
 
@@ -267,7 +268,11 @@ test("executes a move, Undo, Redo and result review through canonical controller
   await page.reload()
   await assertHighlightSquares()
   await press(page, 9)
-  await activate(page, page.getByRole("button", { name: /Resign/ }))
+  const matchMenu = await settledMatchMenu(page)
+  await activate(
+    page,
+    matchMenu.getByRole("button", { name: "Resign", exact: true }),
+  )
   await activate(
     page,
     page
