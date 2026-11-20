@@ -261,6 +261,37 @@ describe("selectable animal and coach portrait lifecycles", () => {
     view.unmount()
   })
 
+  it("stops an active portrait when the player enables Reduced Motion and restarts when allowed", async () => {
+    const images = controlledImages()
+    const animations = controlledAnimations()
+    const preference = Object.assign(new EventTarget(), { matches: false })
+    vi.stubGlobal("matchMedia", () => preference)
+    render(
+      <ChallengeAnimalPortrait opponent={{ id: "chicken-stockfish" }} active />,
+    )
+    await images.complete()
+    await waitFor(() => expect(animations.running.length).toBeGreaterThan(0))
+    const active = animations.running.at(-1)!
+    act(() => {
+      preference.matches = true
+      preference.dispatchEvent(new Event("change"))
+    })
+    expect(active.cancel).toHaveBeenCalled()
+    expect(
+      screen
+        .getByTestId("animal-artwork")
+        .style.getPropertyValue("--sprite-frame"),
+    ).not.toBe("")
+    const pausedCount = animations.running.length
+    act(() => {
+      preference.matches = false
+      preference.dispatchEvent(new Event("change"))
+    })
+    await waitFor(() =>
+      expect(animations.running.length).toBeGreaterThan(pausedCount),
+    )
+  })
+
   it("retains a neutral readable animal label if its initial image fails", async () => {
     const images = controlledImages()
     controlledAnimations()

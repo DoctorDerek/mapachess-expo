@@ -263,7 +263,7 @@ for (const mode of [
     await expect(
       page
         .getByRole("img", { name: /^Mapachito:/ })
-        .locator('span[style*="background-image"]')
+        .getByTestId("animal-artwork")
         .last(),
     ).toHaveCSS(
       "background-image",

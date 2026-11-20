@@ -275,6 +275,7 @@ export default function BattleFighter({
           >
             <span
               ref={spriteRef}
+              data-testid="animal-artwork"
               className={cx(
                 SPRITE_FRAME_CLASSES,
                 "top-(--sprite-top) left-(--sprite-left)",

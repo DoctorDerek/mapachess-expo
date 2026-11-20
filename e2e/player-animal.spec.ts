@@ -40,7 +40,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
   const selected = gallery.getByRole("radio", { name: /Raccoon/ })
   const last = gallery.getByRole("radio", { name: /Dragonfly/ })
   const sprite = (radio: Locator) =>
-    radio.locator("..").locator('span[style*="background-image"]')
+    radio.locator("..").getByTestId("animal-artwork")
   await expect(sprite(selected)).toHaveCount(1)
   await expect(sprite(selected)).toHaveCSS("filter", "none")
   await expect(sprite(last)).toHaveCount(0)
