@@ -267,6 +267,13 @@ for (const { locale, preset } of [
     )
     expect(restingScroll).toBeLessThan(boardWidth)
     await expect(board).toBeInViewport({ ratio: 1 })
+    const help = controls.getByRole("button", {
+      name: copy.shared.settingsControls.explainAutoHints,
+      exact: true,
+    })
+    const helpBounds = await help.boundingBox()
+    expect(helpBounds!.width).toBeGreaterThanOrEqual(64)
+    expect(helpBounds!.height).toBeGreaterThanOrEqual(64)
     for (const control of await controls.getByRole("button").all()) {
       await expect(control).toBeInViewport({ ratio: 1 })
       expect(
