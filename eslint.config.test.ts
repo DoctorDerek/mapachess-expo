@@ -249,3 +249,44 @@ describe("repository ESLint coverage", () => {
     await expect(eslint.isPathIgnored(filePath)).resolves.toBe(true)
   })
 })
+
+describe("Tailwind component styling", () => {
+  const filePath = "apps/web/components/gameplay/BattleFighter.tsx"
+
+  it("reports a component styling library, a CSS Module and inline layout", async () => {
+    const [result] = await eslint.lintText(
+      `import "@mui/material/Button"
+import "./panel.module.css"
+export const panel = <div style={{ padding: 4 }} />`,
+      { filePath },
+    )
+
+    expect(result.messages.map(({ ruleId }) => ruleId)).toEqual([
+      "no-restricted-imports",
+      "no-restricted-imports",
+      "no-restricted-syntax",
+    ])
+  })
+
+  it("accepts the Tailwind entry point and a runtime custom property", async () => {
+    const [result] = await eslint.lintText(
+      `import "./globals.css"
+import type { CSSProperties } from "react"
+export const Meter = ({ width }: { width: string }) => <div className="w-(--meter-width)" style={{ "--meter-width": width } as CSSProperties} />`,
+      { filePath },
+    )
+
+    expect(result.messages).toEqual([])
+  })
+
+  it("accepts animation metadata passed to a sprite style resolver", async () => {
+    const [result] = await eslint.lintText(
+      `import type { CSSProperties } from "react"
+declare function frame(input: { beat: string }): CSSProperties
+export const sprite = <span style={frame({ beat: "idle" })} />`,
+      { filePath },
+    )
+
+    expect(result.messages).toEqual([])
+  })
+})
