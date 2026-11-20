@@ -1,9 +1,11 @@
 "use client"
 
+import cx from "classix"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
+import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import {
-  battleSpriteFrameKeyframes,
   battleSpriteFrameStyle,
+  SPRITE_FRAME_CLASSES,
 } from "../../lib/presentation/battleSpriteFrames"
 import {
   LICENSED_PRESENTATION_ASSETS_ENABLED,
@@ -36,12 +38,11 @@ export default function FirstArrivalRaccoon() {
   }, [])
   useEffect(() => {
     if (!ready || finished || sprite.current === null) return
-    const animation = sprite.current.animate(
-      battleSpriteFrameKeyframes(run.frameCount),
-      {
-        duration: run.frameCount * run.frameDurationMilliseconds,
-        iterations: Infinity,
-      },
+    const animation = animateBattleSprite(
+      sprite.current,
+      run.frameCount,
+      run.frameCount * run.frameDurationMilliseconds,
+      true,
     )
     return () => animation.cancel()
   }, [ready, finished])
@@ -72,9 +73,9 @@ export default function FirstArrivalRaccoon() {
       >
         <span
           ref={sprite}
-          className="absolute bg-no-repeat [image-rendering:pixelated]"
-          style={{
-            ...battleSpriteFrameStyle(
+          className={cx(SPRITE_FRAME_CLASSES, "top-0 left-0")}
+          style={
+            battleSpriteFrameStyle(
               {
                 animation: run,
                 animationId: "run",
@@ -82,10 +83,8 @@ export default function FirstArrivalRaccoon() {
                 playback: "loop",
               },
               false,
-            ),
-            left: 0,
-            top: 0,
-          }}
+            ) as CSSProperties
+          }
         />
       </div>
     </div>

@@ -6,6 +6,7 @@ import STORY_ANIMAL_SPRITES from "@mapachess/match-presentation/story-animal-spr
 import {
   battleSpriteAnchorStyle,
   battleSpriteFrameKeyframes,
+  battleSpriteFramePosition,
   battleSpriteFrameStyle,
   battleStageStyle,
 } from "./battleSpriteFrames"
@@ -80,12 +81,12 @@ describe("battle frame and clip contracts", () => {
   })
   it("starts the reaction on the authored cell of the full attack strip", () => {
     const frames = battleSpriteFrameKeyframes(7, [3, 7])
-    expect(frames.map((frame) => frame.offset)).toEqual([0, 0.25, 0.5, 0.75, 1])
-    expect(frames[0]?.backgroundPosition).toBe("50% 0")
-    expect(frames.at(-1)?.backgroundPosition).toBe("100% 0")
-    expect(
-      battleSpriteFrameKeyframes(7, [0, 3]).at(-1)?.backgroundPosition,
-    ).toBe(`${(2 / 6) * 100}% 0`)
+    expect(frames.times).toEqual([0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1])
+    expect(frames.positions[0]).toBe("50% 0")
+    expect(frames.positions.at(-1)).toBe("100% 0")
+    expect(battleSpriteFrameKeyframes(7, [0, 3]).positions.at(-1)).toBe(
+      `${(2 / 6) * 100}% 0`,
+    )
   })
   it.each([
     {
@@ -132,7 +133,7 @@ describe("battle frame and clip contracts", () => {
         const settled = result.steps.at(-1)
         if (settled === undefined) throw new Error("Expected settled rest")
         expect(settled.animationId).toBe("idle")
-        expect(battleSpriteFrameStyle(settled, true).backgroundPosition).toBe(
+        expect(battleSpriteFrameStyle(settled, true)["--sprite-frame"]).toBe(
           "0% 0",
         )
       }
@@ -221,8 +222,9 @@ describe("battle frame and clip contracts", () => {
             throw new Error("Expected licensed sprite or calm fallback")
           for (const presentation of [loaded, missing])
             expect(
-              battleSpriteFrameStyle(presentation.steps[0], true)
-                .backgroundPosition,
+              battleSpriteFrameStyle(presentation.steps[0], true)[
+                "--sprite-frame"
+              ],
             ).toBe("100% 0")
         }
         expect(
@@ -405,12 +407,12 @@ describe("battle frame and clip contracts", () => {
     const step = presentation.steps[0]
     const initial = battleSpriteFrameStyle(step, false)
     expect(initial).toMatchObject({
-      backgroundImage: `url("${step.animation.sourceId}")`,
-      backgroundPosition: "0% 0",
-      backgroundSize: `${step.animation.frameCount * 100}% 100%`,
-      height: `calc(${step.animation.geometry.frameHeight} * var(--sprite-pixel-size, calc(1px * var(--sprite-scale))))`,
+      "--sprite-background-image": `url("${step.animation.sourceId}")`,
+      "--sprite-frame": "0% 0",
+      "--sprite-background-size": `${step.animation.frameCount * 100}% 100%`,
+      "--sprite-height": `calc(${step.animation.geometry.frameHeight} * var(--sprite-pixel-size, calc(1px * var(--sprite-scale))))`,
     })
-    expect(battleSpriteFrameStyle(step, true).backgroundPosition).toBe(
+    expect(battleSpriteFrameStyle(step, true)["--sprite-frame"]).toBe(
       `${(step.animation.reducedMotionFrameIndex / (step.animation.frameCount - 1)) * 100}% 0`,
     )
   })
@@ -426,7 +428,7 @@ describe("battle frame and clip contracts", () => {
     const step = presentation.steps.at(-1)
     if (step === undefined) throw new Error("Expected defeat frame")
     expect(step.playback).toBe("once-hold-final-frame")
-    expect(battleSpriteFrameStyle(step, true).backgroundPosition).toBe("100% 0")
+    expect(battleSpriteFrameStyle(step, true)["--sprite-frame"]).toBe("100% 0")
   })
 
   it("provides each fighter's authored width and the opposing responsive widths", () => {
@@ -499,18 +501,18 @@ describe("battle frame and clip contracts", () => {
     "gives all %s frames an equal interval without addressing a frame beyond the strip",
     (count) => {
       const frames = battleSpriteFrameKeyframes(count)
-      expect(frames).toHaveLength(count + 1)
-      expect(frames[0]).toMatchObject({ backgroundPosition: "0% 0", offset: 0 })
-      expect(frames.at(-1)).toMatchObject({
-        backgroundPosition: count === 1 ? "0% 0" : "100% 0",
-        offset: 1,
-      })
-      for (const [index, frame] of frames.entries()) {
-        expect(frame.offset).toBe(index / count)
+      expect(frames.positions).toHaveLength(count * 2)
+      for (let frame = 0; frame < count; frame += 1) {
+        const position = battleSpriteFramePosition(frame, count)
+        expect(frames.positions.slice(frame * 2, frame * 2 + 2)).toEqual([
+          position,
+          position,
+        ])
+        expect(frames.times.slice(frame * 2, frame * 2 + 2)).toEqual([
+          frame / count,
+          (frame + 1) / count,
+        ])
       }
-      expect(frames.at(-1)?.backgroundPosition).toBe(
-        frames.at(-2)?.backgroundPosition,
-      )
     },
   )
 
