@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, type Locator, type Page } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
@@ -107,12 +108,13 @@ const closeGallery = async (page: Page): Promise<void> => {
     await expect(gallery).toHaveCount(0)
   }
 }
-const openSettings = async (page: Page): Promise<void> => {
-  const settings = page.getByRole("button", { name: "Settings", exact: true })
-  const menu = page.getByRole("button", { name: "Match menu", exact: true })
-  await expect(settings.or(menu)).toBeVisible({ timeout: 30000 })
-  if (!(await settings.isVisible())) await menu.click()
-  await settings.click()
+const openSettings = async (
+  page: Page,
+  from: "home" | "match",
+): Promise<void> => {
+  if (from === "match")
+    await page.getByRole("button", { name: "Match menu", exact: true }).click()
+  await page.getByRole("button", { name: "Settings", exact: true }).click()
 }
 
 test("selects every piece set and board independently, retaining exact profile state through reload", async ({
@@ -122,7 +124,7 @@ test("selects every piece set and board independently, retaining exact profile s
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
-  await openSettings(page)
+  await openSettings(page, "home")
   const original = await savedProfile(page)
   expect(original.settings.chessAppearance).toEqual({
     pieceSetId: "current",
@@ -200,7 +202,7 @@ test("uses two thumbnail columns and keyboard radio selection at 320px", async (
 }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 915 })
   await page.goto("/")
-  await openSettings(page)
+  await openSettings(page, "home")
   await openGallery(page, "Pieces")
   const choices = appearanceSection(page).getByRole("radio")
   await choices.first().focus()
@@ -297,7 +299,7 @@ for (const { mode, color, pieceSetId, boardId } of [
     const pieces = CHESS_PIECE_SETS.find(({ id }) => id === pieceSetId)
     const boardArt = CHESS_BOARDS.find(({ id }) => id === boardId)
     if (!pieces || !boardArt) throw new Error("Expected catalog fixture")
-    await openSettings(page)
+    await openSettings(page, "match")
     await openGallery(page, "Pieces")
     await appearanceSection(page)
       .getByRole("radio", { name: pieces.label, exact: true })
@@ -315,7 +317,7 @@ for (const { mode, color, pieceSetId, boardId } of [
       .click()
     await page
       .getByRole("dialog", { name: "Match menu", exact: true })
-      .getByRole("button", { name: "Close", exact: true })
+      .getByRole("button", { name: "Back to Board", exact: true })
       .click()
     await expect(
       page.getByRole("button", { name: "Settings", exact: true }),
@@ -383,7 +385,7 @@ test("resolves the approved hint and history colors across all board families", 
   ] as const) {
     const choice = CHESS_BOARDS.find(({ id }) => id === boardId)
     if (!choice) throw new Error("Expected board-family fixture")
-    await openSettings(page)
+    await openSettings(page, "match")
     await openGallery(page, "Board")
     await appearanceSection(page)
       .getByRole("radio", { name: choice.label, exact: true })
@@ -394,7 +396,7 @@ test("resolves the approved hint and history colors across all board families", 
       .click()
     await page
       .getByRole("dialog", { name: "Match menu", exact: true })
-      .getByRole("button", { name: "Close", exact: true })
+      .getByRole("button", { name: "Back to Board", exact: true })
       .click()
     if (choice.kind === "artwork")
       await expect(board.locator(`img[src$="${choice.image.path}"]`)).toHaveCSS(
@@ -460,7 +462,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   const before = await savedProfile(page)
   const geometry = await hintGeometry(page)
 
-  await openSettings(page)
+  await openSettings(page, "match")
   await openGallery(page, "Board")
   await appearanceSection(page)
     .getByRole("radio", { name: "Cosunosuke · slate", exact: true })
@@ -471,7 +473,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     .click()
   await page
     .getByRole("dialog", { name: "Match menu", exact: true })
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Back to Board", exact: true })
     .click()
   await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
     "opacity",
@@ -537,7 +539,7 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
       await route.abort()
     })
     await page.goto("/")
-    await openSettings(page)
+    await openSettings(page, "home")
     await openGallery(page, "Pieces")
     const preview = appearanceSection(page).getByRole("img", {
       name: /board preview/,
@@ -582,7 +584,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
 }) => {
   test.setTimeout(90000)
   await page.goto("/")
-  await openSettings(page)
+  await openSettings(page, "home")
   await page.getByRole("radio", { name: "No Auto Hints", exact: true }).check()
   await closeGallery(page)
   await page
@@ -621,7 +623,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
   }
   await page.getByRole("button", { name: "Match menu", exact: true }).click()
   await page
-    .getByRole("button", { name: "Return to Menu", exact: true })
+    .getByRole("button", { name: "Save & Exit Match", exact: true })
     .click()
   await importPlayerData(page, {
     ...profile,
@@ -634,7 +636,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
     },
   })
   const resume = page.getByRole("button", {
-    name: "Resume match Untimed",
+    name: `Resume match ${loadCatalog("en").animals.names[match.opponentId]} · Untimed`,
     exact: true,
   })
   if (await resume.isVisible()) await resume.click()
@@ -648,7 +650,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
     .getByRole("button", { name: "Cancel promotion", exact: true })
     .click()
   expect((await savedProfile(page)).activeMatch).toEqual(beforePromotion)
-  await openSettings(page)
+  await openSettings(page, "match")
   await openGallery(page, "Pieces")
   await appearanceSection(page)
     .getByRole("radio", { name: "Cosunosuke · gold / blue", exact: true })
@@ -660,7 +662,7 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
   const promotion = page.getByRole("dialog", { name: "Promote on a8" })
   await page
     .getByRole("dialog", { name: "Match menu", exact: true })
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Back to Board", exact: true })
     .click()
   await page.locator('[data-square="b7"]').click()
   await page.locator('[data-square="a8"]').click()
@@ -695,7 +697,7 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
     },
   })
   await page.reload()
-  await openSettings(page)
+  await openSettings(page, "home")
   await openGallery(page, "Pieces")
   await expect(
     appearanceSection(page).getByRole("radio", {

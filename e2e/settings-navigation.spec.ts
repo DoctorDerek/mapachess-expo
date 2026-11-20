@@ -465,7 +465,7 @@ test("reading Settings help and Credits preserves a paused timed match and requi
   ).toHaveCount(0)
   await expect(matchMenu).toBeVisible()
   await matchMenu
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Back to Board", exact: true })
     .press("Escape")
   await expect(matchMenu).toHaveCount(0)
   const resume = page.getByRole("button", {

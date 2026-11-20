@@ -100,7 +100,9 @@ export default async function prepareControllerInput({
   page,
 }: Readonly<{ page: Page }>): Promise<void> {
   await injectControllerInput(page)
-  const start = page.getByRole("button", { name: "Start", exact: true })
+  const start = page
+    .getByRole("button", { name: "Start", exact: true })
+    .and(page.locator("button:not(dialog button)"))
   await page.removeLocatorHandler(start)
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto("/")

@@ -45,7 +45,7 @@ function matchMenuControls(page: Page, locale: ShippedLocale) {
       exact: true,
     }),
     close: page.getByRole("button", {
-      name: copy.shared.settingsControls.close,
+      name: copy.interface.matchCommands.backToBoard,
       exact: true,
     }),
   }
@@ -66,7 +66,7 @@ for (const locale of ["en", "es-419"] as const) {
     const accepted = await savedProfile(page)
     await page
       .getByRole("button", {
-        name: copy.interface.webGame.returnToMenu,
+        name: copy.interface.matchCommands.saveAndExit,
         exact: true,
       })
       .tap()
@@ -99,7 +99,7 @@ for (const locale of ["en", "es-419"] as const) {
       .getByRole("button", { name: copy.setup.allModes, exact: true })
       .tap()
     const home = page.getByRole("region", { name: "Mapachess", exact: true })
-    const label = `${copy.interface.webGame.resumeMatch} ${copy.gameplay.clock.preset(copy.gameplay.clock.category.bullet, "1+0")}`
+    const label = `${copy.interface.webGame.resumeMatch} ${copy.animals.names[original.opponentId]} · ${copy.gameplay.clock.preset(copy.gameplay.clock.category.bullet, "1+0")}`
     const resume = home.getByRole("button", { name: label, exact: true })
     await expect(
       page.getByRole("button", { name: label, exact: true }),
@@ -154,7 +154,9 @@ for (const locale of ["en", "es-419"] as const) {
               ) < 1,
             cardFirst:
               width < 1280
-                ? card.bottom <= action.top
+                ? scale === 200
+                  ? action.bottom <= card.top
+                  : card.bottom <= action.top
                 : card.right <= action.left,
           }
         })
@@ -162,7 +164,7 @@ for (const locale of ["en", "es-419"] as const) {
       expect(
         await resume.evaluate((el) => el.scrollWidth - el.clientWidth),
       ).toBeLessThanOrEqual(1)
-      if (width === 390) await expect(resume).toBeInViewport({ ratio: 1 })
+      if (width < 1280) await expect(resume).toBeInViewport({ ratio: 1 })
     }
     await share.focus()
     await page.keyboard.press("Tab")

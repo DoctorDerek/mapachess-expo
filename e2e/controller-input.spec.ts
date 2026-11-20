@@ -150,7 +150,7 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
   ).toBeHidden()
   await expect(page.getByRole("grid")).toBeVisible()
   await page.locator('[data-player-action="menu"]').click()
-  const close = page.getByRole("button", { name: "Close", exact: true })
+  const close = page.getByRole("button", { name: "Back to Board", exact: true })
   await expect(close).toBeInViewport()
   await activate(page, close)
   await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
@@ -268,8 +268,17 @@ test("executes a move, Undo, Redo and result review through canonical controller
   await assertHighlightSquares()
   await press(page, 9)
   await activate(page, page.getByRole("button", { name: /Resign/ }))
+  await activate(
+    page,
+    page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Resign", exact: true }),
+  )
   const review = page.getByRole("button", { name: "Review board", exact: true })
   await expect(review).toBeVisible()
+  expect(
+    await page.getByRole("dialog", { name: "Match menu", exact: true }).count(),
+  ).toBe(0)
   const completed = await savedProfile(page)
   await press(page, 1)
   await expect(review).toHaveCount(0)
@@ -367,7 +376,7 @@ test("keeps promotion modal input isolated and accepts the chosen piece", async 
   await press(page, 9)
   await activate(
     page,
-    page.getByRole("button", { name: "Return to Menu", exact: true }),
+    page.getByRole("button", { name: "Save & Exit Match", exact: true }),
   )
   await importPlayerData(page, {
     ...profile,
@@ -451,7 +460,7 @@ test("castles a Chess960 king through the ordinary controller move path", async 
   await press(page, 9)
   await activate(
     page,
-    page.getByRole("button", { name: "Return to Menu", exact: true }),
+    page.getByRole("button", { name: "Save & Exit Match", exact: true }),
   )
   await importPlayerData(page, {
     ...profile,
