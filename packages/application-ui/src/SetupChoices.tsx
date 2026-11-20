@@ -181,7 +181,7 @@ export function SetupColorChoices({
       <Text kind="legend" className="font-bold">
         {copy.setup.color}
       </Text>
-      <Group className="mt-2 flex flex-row flex-wrap gap-2">
+      <Group className="setup-color-options mt-2 flex flex-row flex-wrap gap-2">
         {(["white", "black", "random"] as const).map((color) => (
           <Choice
             key={color}
