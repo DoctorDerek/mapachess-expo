@@ -85,15 +85,16 @@ for (const variant of ["standard", "chess960"] as const) {
         .getByRole("button", { name: "Change Story opponent", exact: true })
         .click()
       const picker = page.getByRole("dialog")
-      const selected = picker.getByRole("radio", {
-        name: new RegExp(name + " Stockfish"),
+      const selectedRow = picker.getByRole("listitem").filter({
+        has: page.getByRole("radio", {
+          name: name + " Stockfish",
+          exact: true,
+        }),
       })
+      const selected = selectedRow.getByRole("radio")
       await expect(selected).toBeChecked()
       await expect(selected).toBeFocused()
-      const art = picker
-        .getByRole("listitem")
-        .filter({ has: selected })
-        .getByTestId("animal-artwork")
+      const art = selectedRow.getByTestId("animal-artwork")
       await expect(art).toBeVisible()
       await expect(art).toHaveCSS(
         "background-image",
