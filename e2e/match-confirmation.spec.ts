@@ -199,19 +199,17 @@ test("a pointer press begun while the match sheet slides cannot activate a match
   const before = await savedProfile(page)
   const sample = await menu.evaluate(
     (button) =>
-      new Promise<{ x: number; y: number }>((resolve, reject) => {
-        const onSlide = (event: TransitionEvent) => {
-          const dialog = event.target
+      new Promise<{ x: number; y: number }>((resolve) => {
+        const watch = new MutationObserver(sampleSlide)
+        function sampleSlide() {
+          const dialog =
+            document.querySelector<HTMLDialogElement>("dialog[open]")
           if (
-            !(dialog instanceof HTMLDialogElement) ||
-            !dialog.open ||
+            !dialog ||
             dialog.getAttribute("aria-label") !==
-              button.getAttribute("aria-label") ||
-            event.propertyName !== "transform" ||
-            event.pseudoElement
+              button.getAttribute("aria-label")
           )
             return
-          document.removeEventListener("transitionrun", onSlide, true)
           const slide = dialog
             .getAnimations()
             .find(
@@ -220,10 +218,9 @@ test("a pointer press begun while the match sheet slides cannot activate a match
                 animation.transitionProperty === "transform",
             )
           const action = dialog.querySelector("button")
-          if (!slide || !action) {
-            reject(Error("Expected the menu slide and its Restart action"))
-            return
-          }
+          if (!slide || !action) return
+          watch.disconnect()
+          document.removeEventListener("transitionrun", sampleSlide, true)
           slide.playbackRate = 0.001
           slide.currentTime =
             Number(slide.effect?.getComputedTiming().duration) * 0.9
@@ -233,8 +230,15 @@ test("a pointer press begun while the match sheet slides cannot activate a match
             y: rect.top + rect.height / 2,
           })
         }
-        document.addEventListener("transitionrun", onSlide, true)
+        watch.observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ["open"],
+        })
+        document.addEventListener("transitionrun", sampleSlide, true)
         button.click()
+        sampleSlide()
       }),
   )
   const restart = sheet.getByRole("button", {
