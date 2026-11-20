@@ -236,7 +236,7 @@ test("follows accepted move grades and returns to neutral after Undo without rep
     "false",
     { timeout: 30000 },
   )
-  await page.clock.pauseAt(new Date(Date.now() + 1000))
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
   await board.locator('[data-square="e2"]').click()
   await board.locator('[data-square="e4"]').click()
   await expect(page.getByRole("button", { name: /^Dismiss / })).toHaveCount(2, {
