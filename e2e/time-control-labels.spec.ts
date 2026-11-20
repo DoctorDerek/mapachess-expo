@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 
@@ -143,8 +144,13 @@ for (const spanish of [false, true]) {
         exact: true,
       })
       .click()
+    const retained = (await savedProfile(page)).activeMatch
+    if (!retained) throw new Error("Expected saved timed game")
+    const animal = loadCatalog(spanish ? "es-419" : "en").animals.names[
+      retained.opponentId
+    ]
     const resume = page.getByRole("button", {
-      name: `${spanish ? "Reanudar partida" : "Resume match"} ${acceptedLabel}`,
+      name: `${spanish ? "Reanudar partida" : "Resume match"} ${animal} · ${acceptedLabel}`,
       exact: true,
     })
     await expect(resume).toBeVisible()
@@ -172,6 +178,13 @@ for (const spanish of [false, true]) {
       page.getByRole("definition").filter({ hasText: acceptedLabel }),
     ).toBeVisible()
     await page
+      .getByRole("button", {
+        name: spanish ? "Rendirse" : "Resign",
+        exact: true,
+      })
+      .click()
+    await page
+      .getByRole("alertdialog")
       .getByRole("button", {
         name: spanish ? "Rendirse" : "Resign",
         exact: true,

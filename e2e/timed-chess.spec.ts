@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import { listLegalMatchMoves } from "../packages/match/src/matchMove.js"
 import { reconstructMatchPosition } from "../packages/match/src/matchPosition.js"
 import { activate, injectControllerInput, press } from "./controllerInput.js"
@@ -285,7 +286,9 @@ test("Bullet uses real Auto Move Hints and pauses on navigation without changing
     name: "Match menu",
     exact: true,
   })
-  await matchMenu.getByRole("button", { name: "Close", exact: true }).click()
+  await matchMenu
+    .getByRole("button", { name: "Back to Board", exact: true })
+    .click()
   await expect(matchMenu).toHaveCount(0)
   await expect(
     page.getByRole("button", { name: "Resume clocks", exact: true }),
@@ -331,7 +334,7 @@ test("Bullet uses real Auto Move Hints and pauses on navigation without changing
   await page.goBack()
   await expect(
     page.getByRole("button", {
-      name: "Resume match Bullet · 1+0",
+      name: `Resume match ${loadCatalog("en").animals.names[paused.activeMatch!.opponentId]} · Bullet · 1+0`,
       exact: true,
     }),
   ).toBeVisible()
@@ -375,7 +378,9 @@ test("Mexican Spanish Blitz keeps its increment, contextual rating and clocks re
     name: "Menú de partida",
     exact: true,
   })
-  await matchMenu.getByRole("button", { name: "Cerrar", exact: true }).click()
+  await matchMenu
+    .getByRole("button", { name: "Volver al tablero", exact: true })
+    .click()
   await expect(matchMenu).toHaveCount(0)
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 800 })

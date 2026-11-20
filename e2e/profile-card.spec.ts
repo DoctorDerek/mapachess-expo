@@ -4,6 +4,7 @@ import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
 } from "../apps/web/lib/presentation/profileCardFormat.js"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
@@ -320,7 +321,10 @@ for (const mode of [
       page.getByRole("heading", { level: 1, name: "Mapachess", exact: true }),
     ).toBeVisible()
     await expect(
-      page.getByRole("button", { name: "Resume match Untimed", exact: true }),
+      page.getByRole("button", {
+        name: `Resume match ${loadCatalog("en").animals.names[record.opponentId]} · Untimed`,
+        exact: true,
+      }),
     ).toBeEnabled()
     const before = await savedProfile(page)
     await page
@@ -362,7 +366,10 @@ for (const mode of [
       revision: before.revision,
     }).toEqual(before)
     await page
-      .getByRole("button", { name: "Resume match Untimed", exact: true })
+      .getByRole("button", {
+        name: `Resume match ${loadCatalog("en").animals.names[record.opponentId]} · Untimed`,
+        exact: true,
+      })
       .click()
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible()
     expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)

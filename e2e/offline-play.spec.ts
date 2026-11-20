@@ -22,8 +22,10 @@ async function startWhiteChallenge(page: Page, variant: MatchVariant) {
 async function reopenSavedBoard(page: Page) {
   await page.goto("/", { waitUntil: "domcontentloaded" })
   const board = page.getByRole("grid", { name: /Chessboard/ })
+  const match = (await savedProfile(page)).activeMatch
+  if (!match) throw new Error("Expected a saved offline match")
   const resume = page.getByRole("button", {
-    name: "Resume match Untimed",
+    name: `Resume match ${loadCatalog("en").animals.names[match.opponentId]} · Untimed`,
     exact: true,
     disabled: false,
   })

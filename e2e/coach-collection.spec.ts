@@ -197,7 +197,7 @@ test("retains the last decoded coach during a failed switch and explicitly retri
   await page.unroute("**/coach/greyfox/**")
   await page
     .getByRole("dialog", { name: "Match menu", exact: true })
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Back to Board", exact: true })
     .click()
   await coach.getByRole("button", { name: "Retry artwork" }).click()
   await expect(coach.locator("img")).toHaveAttribute(

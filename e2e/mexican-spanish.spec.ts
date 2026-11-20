@@ -142,6 +142,10 @@ test("Mexican Spanish preserves Chess960 through language changes, hints and rew
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
   expect((await savedProfile(page)).settings.locale).toBe("es-419")
   await page.getByRole("button", { name: "Rendirse", exact: true }).click()
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Rendirse", exact: true })
+    .click()
   await expect(
     page.getByRole("dialog", {
       name: "Te rendiste. Pollo Stockfish ganó.",
