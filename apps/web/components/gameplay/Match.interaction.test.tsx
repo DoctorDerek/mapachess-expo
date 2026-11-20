@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, fireEvent, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
 import { selectMatchPosition } from "@mapachess/match/match-machine"
@@ -48,6 +48,18 @@ describe("playable match composition and durable player actions", () => {
     })
     await waitFor(() => expect(draw).toHaveProperty("disabled", false))
     fireEvent.click(draw)
+    const prompt = screen.getByRole("alertdialog", {
+      name: copy.interface.matchCommands.confirmation.draw.question,
+    })
+    expect(
+      selectCurrentPlayerData(profile.actor.getSnapshot())?.activeMatch
+        ?.conclusion,
+    ).toBeNull()
+    fireEvent.click(
+      within(prompt).getByRole("button", {
+        name: copy.interface.matchCommands.offerDraw,
+      }),
+    )
     await screen.findByRole("button", {
       name: copy.interface.matchCelebration.reviewBoard,
     })
@@ -108,7 +120,9 @@ describe("playable match composition and durable player actions", () => {
       "match-details",
     ])
     fireEvent.click(
-      screen.getByRole("button", { name: copy.shared.settingsControls.close }),
+      screen.getByRole("button", {
+        name: copy.interface.matchCommands.backToBoard,
+      }),
     )
     await waitFor(() =>
       expect(actor.getSnapshot().context.overlays).toEqual([]),
@@ -125,6 +139,11 @@ describe("playable match composition and durable player actions", () => {
     fireEvent.click(
       screen.getByRole("button", {
         name: new RegExp(copy.interface.matchCommands.resign),
+      }),
+    )
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: copy.interface.matchCommands.resign,
       }),
     )
     const review = await screen.findByRole("button", {

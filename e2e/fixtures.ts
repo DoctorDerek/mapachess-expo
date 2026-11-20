@@ -29,7 +29,9 @@ export const firstArrivalTest = createPreviewTest(base, {
 
 export const test = firstArrivalTest.extend({
   page: async ({ page }, use) => {
-    const start = page.getByRole("button", { name: "Start", exact: true })
+    const start = page
+      .getByRole("button", { name: "Start", exact: true })
+      .and(page.locator("button:not(dialog button)"))
     await page.addLocatorHandler(start, () => start.click())
     await use(page)
   },
