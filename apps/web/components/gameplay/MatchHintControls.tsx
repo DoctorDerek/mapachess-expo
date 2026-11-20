@@ -87,7 +87,7 @@ export default function MatchHintControls({
         <span className="max-w-full min-w-0 wrap-anywhere">
           {hints.autoLabel}
         </span>
-        <span className="max-w-full min-w-0 wrap-anywhere">
+        <span className="max-w-full min-w-0 wrap-anywhere max-[22rem]:w-full">
           {hints.autoMode[autoHintMode]}{" "}
           <span aria-hidden="true" className="text-[0.5em] leading-none">
             ▾
@@ -102,7 +102,7 @@ export default function MatchHintControls({
           navigation.open("auto-hints-help")
         }}
         variant="secondary"
-        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] xl:col-start-2 xl:row-start-1 xl:leading-tight"
+        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] max-[22rem]:w-12 xl:col-start-2 xl:row-start-1 xl:leading-tight"
       >
         <span aria-hidden="true">?</span>
       </MapachessButton>
