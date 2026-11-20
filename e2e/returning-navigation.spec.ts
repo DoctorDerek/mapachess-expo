@@ -124,6 +124,7 @@ for (const locale of ["en", "es-419"] as const) {
         exact: true,
       }),
     )
+    await resume.focus()
     for (const { width, height, scale } of [
       { width: 390, height: 844, scale: 100 },
       { width: 320, height: 640, scale: 200 },
@@ -161,6 +162,7 @@ for (const locale of ["en", "es-419"] as const) {
           }
         })
         .toEqual({ aboveModes: true, fillsPlayWidth: true, cardFirst: true })
+      await expect(resume).toBeFocused()
       expect(
         await resume.evaluate((el) => el.scrollWidth - el.clientWidth),
       ).toBeLessThanOrEqual(1)

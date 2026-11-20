@@ -24,28 +24,24 @@ export default function WebHome({ match, ...props }: Props) {
   useLayoutEffect(() => {
     const root = surface.current
     if (!matchId || !root) return
-    const columns = root.querySelector<HTMLElement>(
-      '[data-home-region="columns"]',
-    )
+    const play = root.querySelector<HTMLElement>('[data-home-region="play"]')
     const profile = root.querySelector<HTMLElement>(
       '[data-home-region="profile"]',
     )
     const resume = root.querySelector<HTMLElement>("[data-saved-match]")
-    if (!columns || !profile || !resume) return
+    if (!play || !profile || !resume) return
     if (restoreFocus.current) {
       resume.focus({ preventScroll: true })
       restoreFocus.current = false
     }
     const measure = () => {
-      const style = getComputedStyle(columns)
-      const naturalBottom =
-        columns.getBoundingClientRect().top +
-        window.scrollY +
-        profile.offsetHeight +
-        (parseFloat(style.rowGap) || 0) +
-        resume.offsetHeight
-      const next =
-        style.flexDirection === "column" && naturalBottom > window.innerHeight
+      const profileBounds = profile.getBoundingClientRect()
+      const stacked = profileBounds.bottom <= play.getBoundingClientRect().top
+      // Moving Resume first swaps the two blocks. Their lower edge still tells us if both fit.
+      const lowerEdge = first
+        ? profileBounds.bottom
+        : resume.getBoundingClientRect().bottom
+      const next = stacked && lowerEdge + window.scrollY > window.innerHeight
       if (first !== next) {
         restoreFocus.current = document.activeElement === resume
         setFirst(next)
