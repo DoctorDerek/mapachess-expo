@@ -87,7 +87,7 @@ export default function MatchHintControls({
         <span className="max-w-full min-w-0 wrap-anywhere">
           {hints.autoLabel}
         </span>
-        <span className="max-w-full min-w-0 wrap-anywhere">
+        <span className="max-w-full min-w-0 wrap-anywhere max-[22rem]:w-full">
           {hints.autoMode[autoHintMode]}{" "}
           <span aria-hidden="true" className="text-[0.5em] leading-none">
             ▾

@@ -28,7 +28,9 @@ function Group({ children, className, region }: HomeGroupProps) {
   return region === "mode-label" ? (
     <span className={className}>{children}</span>
   ) : (
-    <div className={className}>{children}</div>
+    <div data-home-region={region} className={className}>
+      {children}
+    </div>
   )
 }
 
@@ -76,6 +78,7 @@ function Action({
   if (kind === "resume")
     return (
       <MapachessButton
+        data-saved-match
         className={className}
         disabled={disabled}
         onClick={onActivate}

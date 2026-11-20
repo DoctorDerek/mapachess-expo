@@ -82,6 +82,7 @@ export type WebMatchProps = Readonly<{
   playerElo: number
   moveReactionPlacement: MoveReactionPlacement
   runtime: WebMatchRuntime
+  consumeOverlay?: (overlay: MatchNavigationOverlay) => void
   menuActions?: MatchMenuSessionActions
   result?: (disabled: boolean) => ReactNode
   navigation: MatchNavigationCommands
@@ -109,6 +110,7 @@ export default function WebMatch({
   runtime,
   result,
   menuActions,
+  consumeOverlay,
   navigation,
   overlays,
   celebrationDismissed,
@@ -238,6 +240,7 @@ export default function WebMatch({
     if (drawOfferDecision === null) {
       throw new Error("Offer Draw requires the accepted current evaluation.")
     }
+    if (drawOfferDecision.outcome === "accepted") consumeOverlay?.("match-menu")
     actor.send({
       decision: drawOfferDecision,
       type: "MATCH.DRAW_OFFER_REQUESTED",
@@ -355,11 +358,16 @@ export default function WebMatch({
           <div className="contents xl:grid xl:gap-2">
             <section
               aria-label={messages.coreMatchActions}
-              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
+              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] max-[22rem]:px-1 xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
               <MatchCommands
                 opponentName={animalCopy.opponent(opponent.id)}
                 menuOpen={overlays.includes("match-menu")}
+                topOverlay={overlays.at(-1)}
+                onDecisionRequested={(action) =>
+                  navigation.open(`confirm-${action}`)
+                }
+                onConsumeOverlay={consumeOverlay ?? navigation.close}
                 onMenuOpened={() => {
                   reactions.clear()
                   navigation.open("match-menu")
@@ -397,6 +405,19 @@ export default function WebMatch({
                 details={
                   <details
                     open={overlays.includes("match-details")}
+                    onToggle={(event) => {
+                      const history = event.currentTarget
+                      const dialog = history.closest("dialog")
+                      if (
+                        history.open &&
+                        dialog &&
+                        dialog.scrollHeight > dialog.clientHeight
+                      )
+                        history.querySelector("summary")?.scrollIntoView({
+                          block: "nearest",
+                          behavior: "instant",
+                        })
+                    }}
                     className="group rounded-mapachess-action border-mapachito-deep-cyan text-mapachito-charcoal @container min-w-0 border-2"
                   >
                     <summary
@@ -406,7 +427,7 @@ export default function WebMatch({
                           navigation.back()
                         else navigation.open("match-details")
                       }}
-                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
+                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal match-tight:px-1.5 match-tight:py-1 match-tight:text-sm match-tight:leading-[1.1] flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-[0.6rem] py-[0.4rem] leading-[1.15] font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
                     >
                       {messages.matchDetailsMoveHistory}
                     </summary>

@@ -72,7 +72,10 @@ export function PositionNumberInput({
       data-player-input-layer={editing === null ? undefined : "position-edit"}
     >
       <div className="mt-2 flex flex-wrap items-end gap-2">
-        <label className="min-w-0 flex-1 basis-32" htmlFor="chess960-position">
+        <label
+          className="relative min-w-0 flex-1 basis-32"
+          htmlFor="chess960-position"
+        >
           <span className="sr-only">
             {copy.positionNumber(CHESS960_POSITION_COUNT - 1)}
           </span>

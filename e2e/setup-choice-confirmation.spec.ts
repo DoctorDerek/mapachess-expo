@@ -264,6 +264,10 @@ for (const variant of ["standard", "chess960"] as const) {
     })
     await page.getByLabel("Match menu", { exact: true }).click()
     await page.getByRole("button", { name: "Resign", exact: true }).click()
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Resign", exact: true })
+      .click()
     await expect(
       page.getByRole("button", { name: "Review board", exact: true }),
     ).toBeVisible()

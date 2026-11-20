@@ -23,6 +23,29 @@ const emergencyInterface = {
     reviewBoard: "Review board",
   },
   matchCommands: {
+    backToBoard: "Back to Board",
+    saveAndExit: "Save & Exit Match",
+    startReplacement: "Start",
+    confirmation: {
+      restart: {
+        question: "Restart this match?",
+        consequence:
+          "You’ll lose this move history and play the same opponent again.",
+      },
+      draw: {
+        question: "Offer a draw?",
+        consequence: "If your opponent accepts, this match ends in a draw.",
+      },
+      resign: {
+        question: "Resign this match?",
+        consequence: "This records a loss.",
+      },
+      replace: {
+        question: "Replace your saved match?",
+        consequence:
+          "The new game replaces your unfinished match and its move history.",
+      },
+    },
     undo: "Undo",
     redo: "Redo",
     matchMenu: "Match menu",

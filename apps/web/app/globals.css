@@ -4,6 +4,8 @@
 
 @source "../../../packages/application-ui/src";
 
+@custom-variant match-tight (@container match-layout (max-width: 18.5rem));
+
 @theme inline {
   --font-home: var(--font-nunito-sans);
 }

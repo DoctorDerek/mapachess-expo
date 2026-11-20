@@ -2,6 +2,11 @@ import AxeBuilder from "@axe-core/playwright"
 import { expect, type Page } from "@playwright/test"
 import { test } from "../e2e/fixtures.js"
 import savedProfile from "../e2e/savedProfile.js"
+import settledMatchMenu from "../e2e/settledMatchMenu.js"
+import loadCatalog from "../packages/localization/src/catalog.js"
+import { timeControlLabel } from "../packages/match/src/timeControl.js"
+
+const copy = loadCatalog("en")
 
 async function startChallenge(page: Page, color: "White" | "Black") {
   await page.goto("/")
@@ -133,13 +138,21 @@ for (const color of ["White", "Black"] as const) {
   })
 }
 
-test("restart creates a fresh match that Back and Return to Menu preserve", async ({
+test("confirmed restart creates a fresh match that Back and Save & Exit preserve", async ({
   page,
 }) => {
   await startChallenge(page, "White")
   const before = (await savedProfile(page)).activeMatch
   await page.getByLabel("Match menu", { exact: true }).click()
-  await page.getByRole("button", { name: "Restart Match", exact: true }).click()
+  const restart = { name: copy.interface.webGame.restartMatch, exact: true }
+  const sheet = await settledMatchMenu(page)
+  await sheet.getByRole("button", restart).click()
+  await page
+    .getByRole("alertdialog", {
+      name: copy.interface.matchCommands.confirmation.restart.question,
+    })
+    .getByRole("button", restart)
+    .click()
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.matchId)
     .not.toBe(before?.matchId)
@@ -151,24 +164,27 @@ test("restart creates a fresh match that Back and Return to Menu preserve", asyn
     .poll(async () => (await savedProfile(page)).activeMatch?.pieceHintsUsed)
     .toBe(true)
   const restarted = (await savedProfile(page)).activeMatch
-  expect(restarted?.moveIds).toEqual([])
+  if (!restarted) throw Error("Expected a restarted match")
+  expect(restarted.moveIds).toEqual([])
+  const resume = page.getByRole("button", {
+    name: `${copy.interface.webGame.resumeMatch} ${copy.animals.names[restarted.opponentId]} · ${timeControlLabel(restarted.timeControl, copy.gameplay.clock)}`,
+    exact: true,
+  })
   await page.goBack()
-  await expect(
-    page.getByRole("button", { name: "Resume match Untimed", exact: true }),
-  ).toBeVisible()
+  await expect(resume).toBeVisible()
   expect((await savedProfile(page)).activeMatch).toEqual(restarted)
-  await page
-    .getByRole("button", { name: "Resume match Untimed", exact: true })
-    .click()
+  await resume.click()
   await expect(page.getByRole("grid")).toBeVisible()
   expect((await savedProfile(page)).activeMatch).toEqual(restarted)
   await page.getByLabel("Match menu", { exact: true }).click()
-  await page
-    .getByRole("button", { name: "Return to Menu", exact: true })
+  const reopened = await settledMatchMenu(page)
+  await reopened
+    .getByRole("button", {
+      name: copy.interface.matchCommands.saveAndExit,
+      exact: true,
+    })
     .click()
-  await expect(
-    page.getByRole("button", { name: "Resume match Untimed", exact: true }),
-  ).toBeEnabled()
+  await expect(resume).toBeEnabled()
   expect((await savedProfile(page)).activeMatch).toEqual(restarted)
 })
 
@@ -182,7 +198,15 @@ test("Story replay opens setup without starting another match or changing earned
   await page.getByRole("button", { name: "Start match", exact: true }).click()
   await expect(page.getByRole("grid")).toBeVisible()
   await page.getByLabel("Match menu", { exact: true }).click()
-  await page.getByRole("button", { name: "Resign", exact: true }).click()
+  const resign = { name: copy.interface.matchCommands.resign, exact: true }
+  const sheet = await settledMatchMenu(page)
+  await sheet.getByRole("button", resign).click()
+  await page
+    .getByRole("alertdialog", {
+      name: copy.interface.matchCommands.confirmation.resign.question,
+    })
+    .getByRole("button", resign)
+    .click()
   const rewards = page.getByRole("dialog")
   await expect(rewards).toBeVisible()
   const completed = await savedProfile(page)
@@ -211,9 +235,19 @@ test("an accepted Chicken draw remains durable after rewards dismissal and reloa
     /White|Black|Even/,
   )
   await page.getByLabel("Match menu", { exact: true }).click()
-  const offer = page.getByRole("button", { name: "Offer Draw", exact: true })
+  const sheet = await settledMatchMenu(page)
+  const offer = sheet.getByRole("button", { name: "Offer Draw", exact: true })
   await expect(offer).toBeEnabled()
   await offer.click()
+  await page
+    .getByRole("alertdialog", {
+      name: copy.interface.matchCommands.confirmation.draw.question,
+    })
+    .getByRole("button", {
+      name: copy.interface.matchCommands.offerDraw,
+      exact: true,
+    })
+    .click()
   await expect(
     page.getByRole("dialog", { name: "Draw by agreement.", exact: true }),
   ).toBeVisible()

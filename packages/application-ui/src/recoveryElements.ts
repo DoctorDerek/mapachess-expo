@@ -22,6 +22,7 @@ export type RecoveryActionProps = Readonly<{
   variant?: "primary" | "secondary" | "destructive"
   disabled?: boolean
   busy?: boolean
+  density?: "compact"
   busyLabel?: string
   focusRequested?: boolean
   onActivate: () => void

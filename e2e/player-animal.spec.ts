@@ -40,8 +40,9 @@ test("opens the complete locked roster from the selected animal and keeps it key
   const selected = gallery.getByRole("radio", { name: /Raccoon/ })
   const last = gallery.getByRole("radio", { name: /Dragonfly/ })
   const sprite = (radio: Locator) =>
-    radio.locator("..").locator('span[style*="background-image"]')
+    radio.locator("..").getByTestId("animal-artwork")
   await expect(sprite(selected)).toHaveCount(1)
+  await expect(sprite(selected)).toHaveCSS("filter", "none")
   await expect(sprite(last)).toHaveCount(0)
   await expect(gallery.getByRole("radio", { name: /Raccoon/ })).toBeChecked()
   await expect(gallery.getByRole("radio", { name: /Chicken/ })).toBeDisabled()
@@ -56,6 +57,7 @@ test("opens the complete locked roster from the selected animal and keeps it key
     { ratio: 1 },
   )
   await expect(sprite(last)).toHaveCount(1)
+  await expect(sprite(last)).toHaveCSS("filter", "grayscale(1)")
   await expect.poll(() => done.boundingBox()).toEqual(doneBounds)
   const raccoon = gallery.getByRole("radio", { name: /Raccoon/ })
   const chicken = gallery.getByRole("radio", { name: /Chicken/ })

@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react"
+import { inputControls } from "../../lib/input/webFocusNavigation"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 
 function openModalAncestorsFirst(dialog: HTMLDialogElement | null): void {
@@ -39,15 +40,29 @@ export default function MapachessDialog({
   children,
   label,
   onClose,
+  onBackdrop,
   fixedContent = false,
   placement = "center",
   closeOnMenu = false,
   initialFocus,
   returnFocus,
+  descriptionId,
+  alert = false,
+  suspended = false,
+  animateSheet = false,
+  leaving = false,
+  onExitComplete,
 }: Readonly<{
   children: ReactNode
+  descriptionId?: string
+  alert?: boolean
+  suspended?: boolean
+  animateSheet?: boolean
+  leaving?: boolean
+  onExitComplete?: () => void
   label: string
   onClose: () => void
+  onBackdrop?: () => void
   fixedContent?: boolean | "fit"
   placement?: "center" | "bottom" | "bottom-to-center"
   closeOnMenu?: boolean
@@ -56,11 +71,36 @@ export default function MapachessDialog({
 }>) {
   const dialog = useRef<HTMLDialogElement>(null)
   const startedOnBackdrop = useRef(false)
+  const movingPress = useRef(false)
+  const slide = () =>
+    dialog.current
+      ?.getAnimations?.()
+      .find(
+        (animation) =>
+          "transitionProperty" in animation &&
+          animation.transitionProperty === "transform",
+      )
+  useLayoutEffect(() => {
+    if (!leaving) return
+    let current = true
+    const transition = slide()
+    if (!transition) onExitComplete?.()
+    else {
+      const finish = () => {
+        if (current) onExitComplete?.()
+      }
+      void transition.finished.then(finish, finish)
+    }
+    return () => {
+      current = false
+    }
+  }, [leaving, onExitComplete])
   const centersAtXl = placement === "bottom-to-center"
   const fittingBottom = placement !== "center" && fixedContent === "fit"
   usePlayerInputScope({
     root: dialog,
     handle: (action) => {
+      if (leaving || suspended) return true
       if (action !== "cancel" && !(closeOnMenu && action === "menu"))
         return false
       onClose()
@@ -89,8 +129,24 @@ export default function MapachessDialog({
   return (
     <dialog
       aria-label={label}
+      aria-describedby={descriptionId}
+      role={alert ? "alertdialog" : undefined}
+      data-leaving={leaving || undefined}
+      data-suspended={suspended || undefined}
       className={cx(
         "bg-mapachito-white text-mapachito-charcoal fixed inset-0 w-full overscroll-contain p-4 px-[min(--spacing(4),5vw)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60",
+        centersAtXl &&
+          "@container/match-layout [--radius-mapachess-action:var(--radius-xl)_0_var(--radius-xl)_0] max-xl:pb-[max(min(--spacing(4),4vw),env(safe-area-inset-bottom))]",
+        suspended &&
+          "pointer-events-none opacity-0 transition-none backdrop:bg-transparent",
+        animateSheet &&
+          !suspended &&
+          cx(
+            "motion-safe:transform-[translateY(0)] motion-safe:transition-[transform,opacity] motion-safe:duration-220 motion-safe:ease-[cubic-bezier(0.2,0.8,0.25,1),ease-out]",
+            "motion-safe:[--sheet-travel:100%] motion-safe:xl:[--sheet-travel:--spacing(5)] motion-safe:starting:open:transform-[translateY(var(--sheet-travel))] motion-safe:xl:starting:open:opacity-0",
+            "motion-safe:backdrop:transition-opacity motion-safe:backdrop:duration-220 motion-safe:backdrop:ease-out motion-safe:starting:open:backdrop:opacity-0",
+            "motion-safe:data-leaving:transform-[translateY(var(--sheet-travel))] motion-safe:data-leaving:duration-160 motion-safe:data-leaving:ease-in motion-safe:data-leaving:backdrop:opacity-0 motion-safe:data-leaving:backdrop:duration-160 motion-safe:xl:data-leaving:opacity-0",
+          ),
         placement !== "center"
           ? cx(
               "mx-auto mt-auto mb-0 max-h-[calc(100dvh-1rem)] max-w-md rounded-t-xl",
@@ -98,7 +154,7 @@ export default function MapachessDialog({
                 ? cx(
                     "h-fit",
                     centersAtXl &&
-                      "xl:m-auto xl:max-h-[90dvh] xl:max-w-lg xl:rounded-xl xl:p-6 xl:[--dialog-dismiss-on-backdrop:1]",
+                      "xl:m-auto xl:max-h-[90dvh] xl:max-w-lg xl:rounded-xl xl:p-6",
                   )
                 : "h-112",
             )
@@ -110,11 +166,59 @@ export default function MapachessDialog({
           (fixedContent ? "xl:h-[90dvh]" : "xl:h-auto"),
         fixedContent && !fittingBottom ? "overflow-hidden" : "overflow-y-auto",
       )}
+      onKeyDown={(event) => {
+        if (!centersAtXl || event.key !== "Tab") return
+        const stops = inputControls(event.currentTarget)
+        const edge = event.shiftKey ? stops[0] : stops.at(-1)
+        if (edge && document.activeElement === edge) {
+          event.preventDefault()
+          const destination = event.shiftKey ? stops.at(-1) : stops[0]
+          destination?.focus()
+        }
+      }}
       onCancel={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        onClose()
+        if (!leaving && !suspended) onClose()
       }}
+      onPointerCancelCapture={() => {
+        movingPress.current = false
+        startedOnBackdrop.current = false
+      }}
+      onPointerDownCapture={
+        animateSheet
+          ? (event) => {
+              const button =
+                event.target instanceof Element
+                  ? event.target.closest("button")
+                  : null
+              movingPress.current =
+                button !== null &&
+                !button.hasAttribute("data-back-to-board") &&
+                slide()?.playState === "running"
+            }
+          : undefined
+      }
+      onClickCapture={
+        animateSheet
+          ? (event) => {
+              if (
+                leaving ||
+                (event.detail > 0 &&
+                  (movingPress.current ||
+                    (event.target instanceof Element &&
+                      event.target.closest(
+                        "button:not([data-back-to-board])",
+                      ) &&
+                      slide()?.playState === "running")))
+              ) {
+                event.stopPropagation()
+                event.preventDefault()
+              }
+              movingPress.current = false
+            }
+          : undefined
+      }
       onPointerDown={
         centersAtXl
           ? (event) => {
@@ -129,13 +233,7 @@ export default function MapachessDialog({
               const dismiss =
                 startedOnBackdrop.current && isOutsideDialog(event)
               startedOnBackdrop.current = false
-              if (
-                dismiss &&
-                getComputedStyle(event.currentTarget)
-                  .getPropertyValue("--dialog-dismiss-on-backdrop")
-                  .trim() === "1"
-              )
-                onClose()
+              if (dismiss && !leaving && !suspended) (onBackdrop ?? onClose)()
             }
           : undefined
       }

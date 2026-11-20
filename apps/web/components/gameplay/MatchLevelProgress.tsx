@@ -1,7 +1,7 @@
 "use client"
 
 import { animate, useReducedMotion } from "motion/react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type CSSProperties } from "react"
 import levelProgressionSpans, {
   easeOutQuad,
   levelProgressFrame,
@@ -85,10 +85,8 @@ export default function MatchLevelProgress({
         className="border-mapachito-charcoal bg-mapachito-charcoal/15 h-3 overflow-hidden rounded-full border-2"
       >
         <span
-          className="bg-mapachito-green block h-full w-full origin-left"
-          style={{
-            transform: `scaleX(${String(displayed.fraction)})`,
-          }}
+          className="bg-mapachito-green block h-full w-full origin-left scale-x-(--level-progress)"
+          style={{ "--level-progress": displayed.fraction } as CSSProperties}
         />
       </div>
     </section>

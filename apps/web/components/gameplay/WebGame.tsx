@@ -2,9 +2,8 @@
 
 import { useSelector } from "@xstate/react"
 import cx from "classix"
-import { useEffect, type ReactNode, type Ref } from "react"
+import { useEffect, useRef, useState, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
-import Home from "@mapachess/application-ui/home"
 import createHomeCommands, {
   profileAllowsMatchOpening,
   selectHome,
@@ -31,7 +30,6 @@ import { matchPlayerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import MatchResultFacts from "@/components/gameplay/MatchResultFacts"
 import StoryMatchResult from "@/components/gameplay/StoryMatchResult"
-import webHomeElements from "@/components/gameplay/WebHomeElements"
 import WebMatch from "@/components/gameplay/WebMatch"
 import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
 import MapachessButton from "@/components/presentation/MapachessButton"
@@ -49,6 +47,8 @@ import {
 } from "@/lib/gameplay/webMatchSessionMachine"
 import { generateWebChess960Position } from "@/lib/gameplay/webOpponent"
 import { loadWebStockfishBytes } from "@/lib/stockfish/prepareWebStockfishProgram"
+import MatchConfirmation from "./MatchConfirmation"
+import WebHome from "./WebHome"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
@@ -218,6 +218,28 @@ export default function WebGame({
             : { timeControl: requestedSetup.timeControl }),
         }
   const session = selectWebMatchSession(snapshot)
+  const resumable = savedMatch ?? session?.match ?? null
+  const [replacement, setReplacement] = useState<{
+    matchId: string
+    setup: MatchSetup
+  } | null>(null)
+  const startButton = useRef<HTMLElement>(null)
+  const setupSurface = useRef<HTMLDivElement>(null)
+  const confirmReplace = snapshot.context.overlays.at(-1) === "confirm-replace"
+  const canReplace =
+    replacement !== null &&
+    replacement.matchId === resumable?.matchId &&
+    resumable.conclusion === null
+  const consumeOverlay = (overlay: Parameters<typeof navigation.close>[0]) =>
+    actor.send({ type: "MATCH_SESSION.OVERLAY_CLOSED", overlay })
+  useEffect(() => {
+    if (!confirmReplace) setReplacement(null)
+    else if (!canReplace)
+      actor.send({
+        type: "MATCH_SESSION.OVERLAY_CLOSED",
+        overlay: "confirm-replace",
+      })
+  }, [confirmReplace, canReplace, actor])
   useEffect(() => {
     if (
       session !== null &&
@@ -297,16 +319,17 @@ export default function WebGame({
       home={showModeMenu}
     >
       {showModeMenu ? (
-        <Home
+        <WebHome
           state={{ ...home, playerData }}
           commands={homeCommands}
           copy={copy}
           locale={locale}
-          elements={webHomeElements}
+          match={resumable}
           settingsFocusTarget={settingsButtonRef}
         />
       ) : null}
       <div
+        ref={setupSurface}
         className="h-full min-h-0"
         hidden={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
         inert={!snapshot.matches({ menu: "setup" }) && !openingFreshMatch}
@@ -336,11 +359,42 @@ export default function WebGame({
           key={`${requestedSetup.mode}:${variant}:${requestedSetup.mode === "story" ? (requestedSetup.opponentId ?? "default") : "challenge"}:${timeControlNotation(requestedSetup.timeControl ?? UNTIMED)}`}
           onAutoHintModeChanged={setupCommands.changeHints}
           onBack={setupCommands.back}
-          onStart={setupCommands.start}
+          onStart={(setup) => {
+            if (!resumable || resumable.conclusion !== null) {
+              setupCommands.start(setup)
+              return
+            }
+            startButton.current =
+              setupSurface.current?.querySelector<HTMLElement>(
+                'button[type="submit"]',
+              ) ?? null
+            setReplacement({ setup, matchId: resumable.matchId })
+            navigation.open("confirm-replace")
+          }}
           setup={initialSetup}
           storyProgress={playerData.storyProgress}
         />
       </div>
+      {confirmReplace && canReplace && replacement && (
+        <MatchConfirmation
+          action="replace"
+          returnFocus={startButton}
+          onCancel={navigation.back}
+          disabled={!profileReady}
+          onConfirm={() => {
+            const current = selectCurrentPlayerData(
+              profileActor.getSnapshot(),
+            )?.activeMatch
+            if (
+              current?.matchId !== replacement.matchId ||
+              current.conclusion !== null
+            )
+              return
+            consumeOverlay("confirm-replace")
+            setupCommands.start(replacement.setup)
+          }}
+        />
+      )}
       {session !== null ? (
         <div hidden={!retainingMatch} inert={!retainingMatch}>
           <WebMatch
@@ -362,6 +416,7 @@ export default function WebGame({
                 matchId: session.match.matchId,
               })
             }
+            consumeOverlay={consumeOverlay}
             menuActions={{
               restarting: snapshot.matches("restartingMatch"),
               returning: snapshot.matches("returningToMenu"),
@@ -374,6 +429,8 @@ export default function WebGame({
                   variant="secondary"
                   aria-controls="profile-settings-panel"
                   aria-expanded={settingsOpen}
+                  density="compact"
+                  className="w-full text-base"
                   onClick={onSettingsRequested}
                   ref={settingsButtonRef}
                 >

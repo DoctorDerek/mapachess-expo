@@ -9,6 +9,10 @@ import { TIME_CATEGORIES, type TimeCategory } from "./timeControl.js"
 export type MatchNavigationOverlay =
   | "match-menu"
   | "match-details"
+  | "confirm-restart"
+  | "confirm-resign"
+  | "confirm-draw"
+  | "confirm-replace"
   | "match-hints"
   | "settings"
   | "settings-coach"
@@ -47,6 +51,10 @@ export type MatchNavigationDestination = Readonly<{
 const overlayNames: readonly MatchNavigationOverlay[] = [
   "match-menu",
   "match-details",
+  "confirm-restart",
+  "confirm-resign",
+  "confirm-draw",
+  "confirm-replace",
   "match-hints",
   "settings",
   "settings-coach",
@@ -149,7 +157,16 @@ export function eligibleMatchNavigationOverlays(
       (overlay.startsWith("setup-") && destination.screen === "setup") ||
       (overlay === "match-menu" && destination.screen === "match") ||
       (overlay === "match-hints" && destination.screen === "match") ||
+      (overlay === "confirm-replace" &&
+        destination.screen === "setup" &&
+        result.length === 0) ||
       (overlay === "match-details" && result.includes("match-menu")) ||
+      ((overlay === "confirm-restart" ||
+        overlay === "confirm-resign" ||
+        overlay === "confirm-draw") &&
+        result.includes("match-menu") &&
+        (result.at(-1) === "match-menu" ||
+          result.at(-1) === "match-details")) ||
       (overlay === "rewards" &&
         destination.screen === "match" &&
         rewardAvailable)

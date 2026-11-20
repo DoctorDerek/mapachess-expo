@@ -121,10 +121,11 @@ for (const locale of ["en", "es-419"] as const) {
             const bounds = range.getBoundingClientRect()
             const buttonBounds = button.getBoundingClientRect()
             return (
-              bounds.height >
-                Number.parseFloat(getComputedStyle(button).lineHeight) + 1 ||
+              range.getClientRects().length !== 1 ||
               bounds.left < buttonBounds.left ||
-              bounds.right > buttonBounds.right
+              bounds.right > buttonBounds.right ||
+              bounds.top < buttonBounds.top ||
+              bounds.bottom > buttonBounds.bottom
             )
           })
           .map((word) => word[0])
@@ -464,7 +465,7 @@ test("reading Settings help and Credits preserves a paused timed match and requi
   ).toHaveCount(0)
   await expect(matchMenu).toBeVisible()
   await matchMenu
-    .getByRole("button", { name: "Close", exact: true })
+    .getByRole("button", { name: "Back to Board", exact: true })
     .press("Escape")
   await expect(matchMenu).toHaveCount(0)
   const resume = page.getByRole("button", {

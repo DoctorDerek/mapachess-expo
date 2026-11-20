@@ -57,7 +57,7 @@ for (const variant of ["standard", "chess960"] as const) {
       await expect(locked).toBeVisible()
       await expect(locked.getByRole("radio")).toHaveCount(0)
       await locked.scrollIntoViewIfNeeded()
-      const silhouette = locked.locator('span[style*="background-image"]')
+      const silhouette = locked.getByTestId("animal-artwork")
       await expect(silhouette).toHaveCSS("filter", "brightness(0)")
       await expect(silhouette).toHaveCSS(
         "background-image",
@@ -85,14 +85,21 @@ for (const variant of ["standard", "chess960"] as const) {
         .getByRole("button", { name: "Change Story opponent", exact: true })
         .click()
       const picker = page.getByRole("dialog")
-      const selected = picker.getByRole("radio", {
-        name: new RegExp(name + " Stockfish"),
+      const selectedRow = picker.getByRole("listitem").filter({
+        has: page.getByRole("radio", {
+          name: name + " Stockfish",
+          exact: true,
+        }),
       })
+      const selected = selectedRow.getByRole("radio")
       await expect(selected).toBeChecked()
       await expect(selected).toBeFocused()
-      await expect(
-        picker.locator(`span[style*="/battle/${name.toLowerCase()}/"]`).first(),
-      ).toBeVisible()
+      const art = selectedRow.getByTestId("animal-artwork")
+      await expect(art).toBeVisible()
+      await expect(art).toHaveCSS(
+        "background-image",
+        new RegExp("/battle/" + name.toLowerCase() + "/"),
+      )
       await picker.getByRole("button", { name: "Done", exact: true }).click()
       await page
         .getByRole("button", { name: "Start match", exact: true })
@@ -166,11 +173,15 @@ test("keeps all 26 Challenge names and loads a distant silhouette when it enters
   const last = rows.last()
   await expect(last).toContainText(/Locked/)
   await expect(last.getByRole("radio")).toHaveCount(0)
-  await expect(last.locator('span[style*="background-image"]')).toHaveCount(0)
+  await expect(last.getByTestId("animal-artwork")).toHaveCSS(
+    "background-image",
+    "none",
+  )
   const before = new Set(requests)
   await last.scrollIntoViewIfNeeded()
-  const silhouette = last.locator('span[style*="background-image"]')
+  const silhouette = last.getByTestId("animal-artwork")
   await expect(silhouette).toHaveCSS("filter", "brightness(0)")
+  await expect(silhouette).toHaveCSS("background-image", /url\(/)
   const artwork = await silhouette.evaluate((element) => {
     const css = getComputedStyle(element).backgroundImage
     return new URL(css.slice(5, -2)).pathname

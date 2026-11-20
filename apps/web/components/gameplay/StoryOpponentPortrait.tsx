@@ -1,3 +1,4 @@
+import cx from "classix"
 import type { CSSProperties } from "react"
 import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
@@ -29,18 +30,23 @@ export default function StoryOpponentPortrait({
     <span
       ref={ref}
       aria-hidden="true"
-      style={{
-        minWidth: presentation.layout.clearance.horizontalRadius * 2 * scale,
-        minHeight:
-          (presentation.layout.clearance.above +
-            presentation.layout.clearance.below) *
-          scale,
-      }}
-      className={
-        framed
-          ? "bg-mapachito-white border-mapachito-charcoal/30 grid shrink-0 place-items-end-safe justify-items-center rounded-lg border-2 p-1 font-mono font-bold"
-          : "grid place-items-end-safe justify-items-center p-1"
+      style={
+        {
+          "--portrait-pixel-size": pixelSize,
+          "--portrait-min-width": length(
+            presentation.layout.clearance.horizontalRadius * 2,
+          ),
+          "--portrait-min-height": length(
+            presentation.layout.clearance.above +
+              presentation.layout.clearance.below,
+          ),
+        } as CSSProperties
       }
+      className={cx(
+        "grid min-h-(--portrait-min-height) min-w-(--portrait-min-width) place-items-end-safe justify-items-center p-1",
+        framed &&
+          "bg-mapachito-white border-mapachito-charcoal/30 shrink-0 rounded-lg border-2 font-mono font-bold",
+      )}
     >
       {animation === null ? (
         framed ? (
@@ -48,23 +54,21 @@ export default function StoryOpponentPortrait({
         ) : null
       ) : (
         <span
-          className={
-            locked
-              ? "block brightness-0 [image-rendering:pixelated]"
-              : "block [image-rendering:pixelated]"
-          }
+          data-testid="animal-artwork"
+          className={cx(
+            "block h-(--portrait-height) w-(--portrait-width) bg-(image:--portrait-image) bg-size-(--portrait-size) bg-position-(--portrait-position) bg-no-repeat [image-rendering:pixelated]",
+            locked && "brightness-0",
+          )}
           style={
             {
-              "--portrait-pixel-size": pixelSize,
-              backgroundImage: near
+              "--portrait-image": near
                 ? `url("${animation.sourceId}")`
                 : undefined,
-              backgroundPosition: `${length(-animation.geometry.visibleX)} ${length(-animation.geometry.visibleY)}`,
-              backgroundRepeat: "no-repeat",
-              backgroundSize: `${length(animation.geometry.frameWidth * animation.frameCount)} ${length(animation.geometry.frameHeight)}`,
-              width: length(animation.geometry.visibleWidth),
-              height: length(animation.geometry.visibleHeight),
-            } as CSSProperties & { "--portrait-pixel-size": string }
+              "--portrait-position": `${length(-animation.geometry.visibleX)} ${length(-animation.geometry.visibleY)}`,
+              "--portrait-size": `${length(animation.geometry.frameWidth * animation.frameCount)} ${length(animation.geometry.frameHeight)}`,
+              "--portrait-width": length(animation.geometry.visibleWidth),
+              "--portrait-height": length(animation.geometry.visibleHeight),
+            } as CSSProperties
           }
         />
       )}

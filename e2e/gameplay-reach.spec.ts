@@ -7,7 +7,7 @@ import startHintMatch from "./startHintMatch.js"
 test.use({ hasTouch: true })
 
 for (const locale of ["en", "es-419"] as const) {
-  test(`match menu uses paired actions without nested scrolling in ${locale}`, async ({
+  test(`match menu keeps its actions readable without nested scrolling in ${locale}`, async ({
     page,
   }) => {
     const copy = loadCatalog(locale)
@@ -21,7 +21,7 @@ for (const locale of ["en", "es-419"] as const) {
       exact: true,
     })
     const close = dialog.getByRole("button", {
-      name: copy.shared.settingsControls.close,
+      name: copy.interface.matchCommands.backToBoard,
       exact: true,
     })
     for (const { width, height, scale } of [
@@ -71,17 +71,31 @@ for (const locale of ["en", "es-419"] as const) {
             ).length,
         )
       expect(await nestedScrollports()).toBe(0)
-      if ((width === 390 || width === 1440) && scale === 100) {
+      const settings = dialog.getByRole("button", {
+        name: copy.interface.webGame.settings,
+        exact: true,
+      })
+      const settingsBounds = await settings.boundingBox()
+      if (settingsBounds === null)
+        throw new Error("The match menu needs a visible Settings action.")
+      expect(
+        await settings.evaluate((element) => {
+          const button = element.getBoundingClientRect()
+          const label = document.createRange()
+          label.selectNodeContents(element)
+          return Array.from(label.getClientRects()).every(
+            (rect) =>
+              rect.left >= button.left - 1 && rect.right <= button.right + 1,
+          )
+        }),
+      ).toBe(true)
+      expect(closeBounds.y).toBeGreaterThanOrEqual(
+        settingsBounds.y + settingsBounds.height,
+      )
+      expect(settingsBounds.width).toBeCloseTo(closeBounds.width, 0)
+      if (width === 390 || width === 1440 || (width === 320 && scale === 200)) {
         for (const action of await dialog.getByRole("button").all())
           await expect(action).toBeInViewport({ ratio: 1 })
-        const settings = dialog.getByRole("button", {
-          name: copy.interface.webGame.settings,
-          exact: true,
-        })
-        const settingsBounds = await settings.boundingBox()
-        if (settingsBounds === null)
-          throw new Error("Settings must share the Close row.")
-        expect(settingsBounds.y).toBeCloseTo(closeBounds.y, 0)
         await expect(title).toBeInViewport({ ratio: 1 })
         expect(
           await dialog.evaluate(
@@ -96,7 +110,10 @@ for (const locale of ["en", "es-419"] as const) {
       ).toBeLessThanOrEqual(1)
       if (width < 1280) {
         await page.mouse.click(1, 1)
-        await expect(dialog).toBeVisible()
+        await expect(dialog).toBeHidden()
+        await expect(menu).toBeFocused()
+        await menu.tap()
+        await expect(close).toBeFocused()
       }
       const history = dialog.getByText(
         copy.interface.webMatch.matchDetailsMoveHistory,
@@ -108,7 +125,7 @@ for (const locale of ["en", "es-419"] as const) {
       await close.scrollIntoViewIfNeeded()
       await expect(close).toBeInViewport({ ratio: 1 })
       await close.focus()
-      await page.keyboard.press("Tab")
+      await page.keyboard.press("Shift+Tab")
       await expect(history).toBeFocused()
       await page
         .locator('[data-square="e2"]')
@@ -129,7 +146,10 @@ test("centers the xl menu and dismisses only an outside click", async ({
   await startHintMatch(page)
   const menu = page.getByRole("button", { name: "Match menu", exact: true })
   const dialog = page.getByRole("dialog", { name: "Match menu", exact: true })
-  const close = dialog.getByRole("button", { name: "Close", exact: true })
+  const close = dialog.getByRole("button", {
+    name: "Back to Board",
+    exact: true,
+  })
   const board = page.getByRole("grid", { name: /Chessboard/ })
   const before = await savedProfile(page)
 
@@ -142,11 +162,8 @@ test("centers the xl menu and dismisses only an outside click", async ({
   expect(panel.x + panel.width / 2).toBeCloseTo(720, 0)
   expect(panel.y + panel.height / 2).toBeCloseTo(450, 0)
   const padding = { x: panel.x + 8, y: panel.y + panel.height / 2 }
-  const outside = {
-    x: square.x + square.width / 2,
-    y: square.y + square.height / 2,
-  }
-  expect(outside.x < panel.x || outside.y >= panel.y + panel.height).toBe(true)
+  const outside = { x: panel.x - 2, y: panel.y + panel.height / 2 }
+  expect(outside.x).toBeGreaterThanOrEqual(0)
 
   await page.mouse.click(padding.x, padding.y)
   await expect(dialog).toBeVisible()
@@ -250,6 +267,13 @@ for (const { locale, preset } of [
     )
     expect(restingScroll).toBeLessThan(boardWidth)
     await expect(board).toBeInViewport({ ratio: 1 })
+    const help = controls.getByRole("button", {
+      name: copy.shared.settingsControls.explainAutoHints,
+      exact: true,
+    })
+    const helpBounds = await help.boundingBox()
+    expect(helpBounds!.width).toBeGreaterThanOrEqual(64)
+    expect(helpBounds!.height).toBeGreaterThanOrEqual(64)
     for (const control of await controls.getByRole("button").all()) {
       await expect(control).toBeInViewport({ ratio: 1 })
       expect(

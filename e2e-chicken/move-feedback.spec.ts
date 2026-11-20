@@ -13,7 +13,7 @@ async function playPair(page: Page) {
   await page.getByRole("button", { name: "Start match", exact: true }).click()
   const origin = page.getByRole("gridcell", { name: /^e2,/ })
   await expect(origin).toHaveAttribute("aria-disabled", "false")
-  await page.clock.pauseAt(new Date(Date.now() + 1000))
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
   await origin.focus()
   await expect(origin).toHaveAttribute("tabindex", "0")
   await origin.press("Enter")

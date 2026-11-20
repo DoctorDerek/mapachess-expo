@@ -1,14 +1,16 @@
 import { useActorRef, useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
 import { preload } from "react-dom"
 import animalAttentionMachine from "@mapachess/match-presentation/animal-attention-machine"
 import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
+import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import {
-  battleSpriteFrameKeyframes,
   battleSpriteFrameStyle,
   showBattleSpriteFrame,
+  SPRITE_FRAME_CLASSES,
   type BattleSpriteStep,
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
@@ -22,10 +24,12 @@ export default function ChallengeAnimalPortrait({
   opponent,
   active,
   attention = false,
+  grayscale = false,
 }: Readonly<{
   opponent: Readonly<{ id: AnimalPresentationId }>
   active: boolean
   attention?: boolean
+  grayscale?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
   const { ref: viewportRef, near } = usePortraitViewport()
@@ -82,7 +86,7 @@ export default function ChallengeAnimalPortrait({
     let readyStep: BattleSpriteStep | null = null
     let attentionStepIndex = -1
     let playingStep: BattleSpriteStep | null = null
-    let frames: Animation | null = null
+    let frames: ReturnType<typeof animateBattleSprite> | null = null
     const motionPreference = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     )
@@ -108,24 +112,21 @@ export default function ChallengeAnimalPortrait({
         const next = readyStep
         playingStep = next
         showBattleSpriteFrame(sprite, next, false)
-        frames = sprite.animate(
-          battleSpriteFrameKeyframes(next.animation.frameCount),
-          {
-            duration:
-              next.animation.frameCount *
-              next.animation.frameDurationMilliseconds,
-            iterations: next.playback === "loop" ? Infinity : 1,
-            fill: "forwards",
-          },
+        frames = animateBattleSprite(
+          sprite,
+          next.animation.frameCount,
+          next.animation.frameCount * next.animation.frameDurationMilliseconds,
+          next.playback === "loop",
         )
         if (next.playback !== "loop") {
-          frames.onfinish = () => {
-            if (cancelled || playingStep !== next) return
+          const playing = frames
+          void playing.finished.then(() => {
+            if (cancelled || playing !== frames || playingStep !== next) return
             attentionStepIndex += 1
             readyStep = attentionSteps[attentionStepIndex] ?? step
             updatePlayback()
             if (readyStep === step) finishAttention()
-          }
+          })
         }
       }
       if (document.visibilityState === "hidden") frames?.pause()
@@ -167,8 +168,10 @@ export default function ChallengeAnimalPortrait({
     return () => {
       cancelled = true
       if (frames !== null) {
-        sprite.style.backgroundPosition =
-          getComputedStyle(sprite).backgroundPosition
+        sprite.style.setProperty(
+          "--sprite-frame",
+          getComputedStyle(sprite).backgroundPosition,
+        )
         frames.cancel()
       }
       document.removeEventListener("visibilitychange", updatePlayback)
@@ -203,7 +206,12 @@ export default function ChallengeAnimalPortrait({
       style={portraitStyle}
     >
       {step === null || unavailable ? (
-        <span className="absolute inset-0 grid place-items-center text-center text-xs font-bold">
+        <span
+          className={cx(
+            "absolute inset-0 grid place-items-center text-center text-xs font-bold",
+            grayscale && "grayscale",
+          )}
+        >
           {animalCopy.opponent(opponent.id)}
         </span>
       ) : null}
@@ -211,8 +219,13 @@ export default function ChallengeAnimalPortrait({
         {near && (
           <span
             ref={spriteRef}
-            className="absolute block bg-no-repeat [image-rendering:pixelated]"
-            style={initialFrameStyle}
+            data-testid="animal-artwork"
+            className={cx(
+              SPRITE_FRAME_CLASSES,
+              "top-(--sprite-top) left-(--sprite-left)",
+              grayscale && "grayscale",
+            )}
+            style={initialFrameStyle as CSSProperties}
           />
         )}
       </span>

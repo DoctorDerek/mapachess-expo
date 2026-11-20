@@ -108,20 +108,25 @@ export const battleSpriteFramePosition = (frame: number, frameCount: number) =>
 export const battleSpriteFrameKeyframes = (
   frameCount: number,
   [first, end]: SpriteFrameRange = [0, frameCount],
-): Keyframe[] =>
-  Array.from({ length: end - first + 1 }, (_, index) => ({
-    backgroundPosition: battleSpriteFramePosition(
-      Math.min(first + index, end - 1),
-      frameCount,
-    ),
-    easing: "step-end",
-    offset: index / (end - first),
-  }))
+) => {
+  const positions: string[] = []
+  const times: number[] = []
+  const count = end - first
+  for (let index = 0; index < count; index += 1) {
+    const position = battleSpriteFramePosition(first + index, frameCount)
+    positions.push(position, position)
+    times.push(index / count, (index + 1) / count)
+  }
+  return { positions, times }
+}
+
+export const SPRITE_FRAME_CLASSES =
+  "absolute block h-(--sprite-height) w-(--sprite-width) bg-(image:--sprite-background-image) bg-position-(--sprite-frame) bg-size-(--sprite-background-size) bg-no-repeat [image-rendering:pixelated]"
 
 export const battleSpriteFrameStyle = (
   step: BattleSpriteStep,
   reducedMotion: boolean,
-): CSSProperties => {
+) => {
   const { animation } = step
   const { geometry } = animation
   const {
@@ -131,16 +136,16 @@ export const battleSpriteFrameStyle = (
   const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
   const frameIndex = reducedMotion ? stillFrame : first
   return {
-    backgroundImage: `url("${animation.sourceId}")`,
-    backgroundPosition: battleSpriteFramePosition(
+    "--sprite-background-image": `url("${animation.sourceId}")`,
+    "--sprite-frame": battleSpriteFramePosition(
       frameIndex,
       animation.frameCount,
     ),
-    backgroundSize: `${animation.frameCount * 100}% 100%`,
-    height: `calc(${geometry.frameHeight} * ${pixelSize})`,
-    left: `calc(${-geometry.bottomCenterX} * ${pixelSize})`,
-    top: `calc(${-geometry.bottomY} * ${pixelSize})`,
-    width: `calc(${geometry.frameWidth} * ${pixelSize})`,
+    "--sprite-background-size": `${animation.frameCount * 100}% 100%`,
+    "--sprite-height": `calc(${geometry.frameHeight} * ${pixelSize})`,
+    "--sprite-left": `calc(${-geometry.bottomCenterX} * ${pixelSize})`,
+    "--sprite-top": `calc(${-geometry.bottomY} * ${pixelSize})`,
+    "--sprite-width": `calc(${geometry.frameWidth} * ${pixelSize})`,
   }
 }
 
@@ -149,5 +154,9 @@ export const showBattleSpriteFrame = (
   step: BattleSpriteStep,
   reducedMotion: boolean,
 ): void => {
-  Object.assign(element.style, battleSpriteFrameStyle(step, reducedMotion))
+  for (const [name, value] of Object.entries(
+    battleSpriteFrameStyle(step, reducedMotion),
+  )) {
+    element.style.setProperty(name, value)
+  }
 }

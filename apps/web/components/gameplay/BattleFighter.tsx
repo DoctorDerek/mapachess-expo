@@ -3,6 +3,7 @@
 import cx from "classix"
 import { animate } from "motion"
 import { useReducedMotion } from "motion/react"
+import type { CSSProperties } from "react"
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import battleSpritePlayback, {
   BATTLE_FALLBACK_TRAVEL_MILLISECONDS,
@@ -14,13 +15,14 @@ import type {
   ResolvedSpritePresentation,
   SpriteFacing,
 } from "@mapachess/match-presentation/presentation-asset-manifest"
+import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import createBattleRecipePreparation from "../../lib/presentation/battleRecipePreparation"
 import {
   battleSpriteAnchorStyle,
-  battleSpriteFrameKeyframes,
   battleSpriteFramePosition,
   battleSpriteFrameStyle,
   showBattleSpriteFrame,
+  SPRITE_FRAME_CLASSES,
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
 import { useMapachessCopy } from "../profile/MapachessLocaleProvider"
@@ -100,13 +102,15 @@ export default function BattleFighter({
     const traveler = travelerRef.current
     if (sprite === null || traveler === null) return
     let cancelled = false
-    let frames: Animation | null = null
+    let frames: ReturnType<typeof animateBattleSprite> | null = null
     let movement: ReturnType<typeof animate> | null = null
     const isTransient = beat !== "idle" && beat !== "conclusion"
     const holdFrame = (): void => {
       if (frames === null) return
-      sprite.style.backgroundPosition =
-        getComputedStyle(sprite).backgroundPosition
+      sprite.style.setProperty(
+        "--sprite-frame",
+        getComputedStyle(sprite).backgroundPosition,
+      )
       frames.cancel()
       frames = null
     }
@@ -176,13 +180,12 @@ export default function BattleFighter({
               await travel
               continue
             }
-            frames = sprite.animate(
-              battleSpriteFrameKeyframes(animation.frameCount, frameRange),
-              {
-                duration,
-                fill: "forwards",
-                iterations: stepPlayback === "loop" ? Infinity : 1,
-              },
+            frames = animateBattleSprite(
+              sprite,
+              animation.frameCount,
+              duration,
+              stepPlayback === "loop",
+              frameRange,
             )
             if (document.visibilityState === "hidden") {
               frames.pause()
@@ -190,9 +193,9 @@ export default function BattleFighter({
             }
             await Promise.all([frames.finished, travel])
             if (cancelled) return
-            sprite.style.backgroundPosition = battleSpriteFramePosition(
-              end - 1,
-              animation.frameCount,
+            sprite.style.setProperty(
+              "--sprite-frame",
+              battleSpriteFramePosition(end - 1, animation.frameCount),
             )
             frames.cancel()
             frames = null
@@ -272,8 +275,12 @@ export default function BattleFighter({
           >
             <span
               ref={spriteRef}
-              className="absolute block bg-no-repeat [image-rendering:pixelated]"
-              style={initialFrameStyle}
+              data-testid="animal-artwork"
+              className={cx(
+                SPRITE_FRAME_CLASSES,
+                "top-(--sprite-top) left-(--sprite-left)",
+              )}
+              style={initialFrameStyle as CSSProperties}
             />
           </span>
           {presentation.kind === "authored-fallback" || imageUnavailable ? (

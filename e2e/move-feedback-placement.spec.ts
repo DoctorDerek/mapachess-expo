@@ -93,7 +93,7 @@ async function openGame(
       )
       .toEqual([0, 0])
   }
-  await page.clock.pauseAt(new Date(Date.now() + 1000))
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
   if (color === "Black")
     await expect(
       page.getByRole("button", { name: /^Dismiss White 1\. / }),

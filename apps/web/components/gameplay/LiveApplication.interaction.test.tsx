@@ -267,6 +267,11 @@ describe("full application with real sessions, hints, rules, and persistence", (
     fireEvent.click(
       screen.getByRole("button", { name: copy.interface.webGame.restartMatch }),
     )
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: copy.interface.webGame.restartMatch,
+      }),
+    )
     await screen.findByRole("heading", {
       name: copy.presentation.sessionFailure["restart-match"],
     })
@@ -292,7 +297,9 @@ describe("full application with real sessions, hints, rules, and persistence", (
       screen.getByText(copy.interface.matchCommands.menu, { exact: true }),
     )
     fireEvent.click(
-      screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
+      screen.getByRole("button", {
+        name: copy.interface.matchCommands.saveAndExit,
+      }),
     )
     const resume = await screen.findByRole("button", { name: /Resume match/i })
     expect(await savedProfile(indexedDb)).toEqual(before)
@@ -304,7 +311,9 @@ describe("full application with real sessions, hints, rules, and persistence", (
       screen.getByText(copy.interface.matchCommands.menu, { exact: true }),
     )
     fireEvent.click(
-      screen.getByRole("button", { name: copy.interface.webGame.returnToMenu }),
+      screen.getByRole("button", {
+        name: copy.interface.matchCommands.saveAndExit,
+      }),
     )
     fireEvent.click(
       await screen.findByRole("button", {
@@ -316,6 +325,23 @@ describe("full application with real sessions, hints, rules, and persistence", (
     })
     await waitFor(() => expect(startMatch).toHaveProperty("disabled", false))
     fireEvent.click(startMatch)
+    const question = copy.interface.matchCommands.confirmation.replace.question
+    const confirm = () =>
+      within(screen.getByRole("alertdialog", { name: question }))
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    fireEvent.click(
+      confirm().getByRole("button", {
+        name: copy.interface.profileSettingsPanel.cancel,
+      }),
+    )
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
+    expect(await savedProfile(indexedDb)).toEqual(before)
+    fireEvent.click(startMatch)
+    fireEvent.click(
+      confirm().getByRole("button", {
+        name: copy.interface.matchCommands.startReplacement,
+      }),
+    )
     await screen.findByRole("grid")
     const replacement = await savedProfile(indexedDb)
     expect(replacement.activeMatch).not.toBeNull()
@@ -454,6 +480,11 @@ describe("full application with real sessions, hints, rules, and persistence", (
     fireEvent.click(
       screen.getByRole("button", {
         name: new RegExp(copy.interface.matchCommands.resign),
+      }),
+    )
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: copy.interface.matchCommands.resign,
       }),
     )
     const replay = await screen.findByRole("button", {
