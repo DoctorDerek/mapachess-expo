@@ -15,15 +15,40 @@ export default function Home<FocusTarget>({
   locale,
   elements,
   settingsFocusTarget,
+  resumePresentation,
 }: Readonly<{
   state: HomeState & Readonly<{ playerData: MapachessPlayerData }>
   commands: HomeCommands
   copy: MapachessCatalog
   locale: ShippedLocale
   elements: HomeElements<FocusTarget>
+  resumePresentation?:
+    Readonly<{ label: string; opponent: string; first: boolean }> | undefined
   settingsFocusTarget: FocusTarget
 }>) {
   const { Surface, Group, Title, Text, Action, Settings } = elements
+  const resumeAction =
+    state.resumeMatch === null ? null : (
+      <Action
+        kind="resume"
+        disabled={state.resumeMatch.disabled}
+        onActivate={commands.resume}
+        className={cx(
+          "flex min-w-0 flex-row flex-wrap items-baseline justify-center gap-x-2 gap-y-1 wrap-break-word",
+          resumePresentation?.first
+            ? "me-1.5 shrink-0 self-stretch"
+            : "basis-full",
+        )}
+      >
+        <Text className="font-home text-mapachito-white">
+          {resumePresentation?.label ?? copy.interface.webGame.resumeMatch}
+        </Text>
+        <Text className="font-home text-mapachito-white text-base font-semibold">
+          {resumePresentation && resumePresentation.opponent + " · "}
+          {timeControlLabel(state.resumeMatch.timeControl, copy.gameplay.clock)}
+        </Text>
+      </Action>
+    )
   return (
     <Surface className="font-home max-w-mapachess mx-auto w-full">
       <Group
@@ -44,6 +69,7 @@ export default function Home<FocusTarget>({
         region="columns"
         className="flex flex-col gap-6 xl:flex-row xl:items-center"
       >
+        {resumePresentation?.first ? resumeAction : null}
         <Group
           region="profile"
           className="min-w-0 xl:shrink xl:grow-[1.7] xl:basis-0"
@@ -80,24 +106,7 @@ export default function Home<FocusTarget>({
           region="play"
           className="flex min-w-0 flex-row flex-wrap gap-3 pr-1.5 pb-1.5 xl:flex-1"
         >
-          {state.resumeMatch === null ? null : (
-            <Action
-              kind="resume"
-              disabled={state.resumeMatch.disabled}
-              onActivate={commands.resume}
-              className="flex min-w-0 basis-full flex-row flex-wrap items-baseline justify-center gap-x-2 gap-y-1 wrap-break-word"
-            >
-              <Text className="font-home text-mapachito-white">
-                {copy.interface.webGame.resumeMatch}
-              </Text>
-              <Text className="font-home text-mapachito-white text-base font-semibold">
-                {timeControlLabel(
-                  state.resumeMatch.timeControl,
-                  copy.gameplay.clock,
-                )}
-              </Text>
-            </Action>
-          )}
+          {resumePresentation?.first ? null : resumeAction}
           {MATCH_MODE_CHOICES.map(({ mode, variant }) => (
             <Action
               key={`${variant}:${mode}`}

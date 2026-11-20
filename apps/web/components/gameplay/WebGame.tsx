@@ -4,7 +4,6 @@ import { useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, type ReactNode, type Ref } from "react"
 import { type ActorRefFrom } from "xstate"
-import Home from "@mapachess/application-ui/home"
 import createHomeCommands, {
   profileAllowsMatchOpening,
   selectHome,
@@ -31,7 +30,6 @@ import { matchPlayerRatingId } from "@mapachess/profile/rating-context"
 import { selectDefaultStoryOpponent } from "@mapachess/profile/story-progress"
 import MatchResultFacts from "@/components/gameplay/MatchResultFacts"
 import StoryMatchResult from "@/components/gameplay/StoryMatchResult"
-import webHomeElements from "@/components/gameplay/WebHomeElements"
 import WebMatch from "@/components/gameplay/WebMatch"
 import WebMatchSetup from "@/components/gameplay/WebMatchSetup"
 import MapachessButton from "@/components/presentation/MapachessButton"
@@ -49,6 +47,7 @@ import {
 } from "@/lib/gameplay/webMatchSessionMachine"
 import { generateWebChess960Position } from "@/lib/gameplay/webOpponent"
 import { loadWebStockfishBytes } from "@/lib/stockfish/prepareWebStockfishProgram"
+import WebHome from "./WebHome"
 
 export type WebGameProps = Readonly<{
   actor: WebMatchSessionActor
@@ -218,6 +217,7 @@ export default function WebGame({
             : { timeControl: requestedSetup.timeControl }),
         }
   const session = selectWebMatchSession(snapshot)
+  const resumable = savedMatch ?? session?.match ?? null
   useEffect(() => {
     if (
       session !== null &&
@@ -297,12 +297,12 @@ export default function WebGame({
       home={showModeMenu}
     >
       {showModeMenu ? (
-        <Home
+        <WebHome
           state={{ ...home, playerData }}
           commands={homeCommands}
           copy={copy}
           locale={locale}
-          elements={webHomeElements}
+          match={resumable}
           settingsFocusTarget={settingsButtonRef}
         />
       ) : null}
