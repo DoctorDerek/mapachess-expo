@@ -358,7 +358,7 @@ export default function WebMatch({
           <div className="contents xl:grid xl:gap-2">
             <section
               aria-label={messages.coreMatchActions}
-              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] xl:mt-0 xl:px-0 xl:[grid-area:auto]"
+              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] max-[22rem]:px-1 xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
               <MatchCommands
                 opponentName={animalCopy.opponent(opponent.id)}

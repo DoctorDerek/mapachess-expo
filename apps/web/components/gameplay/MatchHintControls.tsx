@@ -102,7 +102,7 @@ export default function MatchHintControls({
           navigation.open("auto-hints-help")
         }}
         variant="secondary"
-        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] max-[22rem]:w-12 xl:col-start-2 xl:row-start-1 xl:leading-tight"
+        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] xl:col-start-2 xl:row-start-1 xl:leading-tight"
       >
         <span aria-hidden="true">?</span>
       </MapachessButton>
