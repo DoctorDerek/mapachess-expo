@@ -200,38 +200,51 @@ test("a pointer press begun while the match sheet slides cannot activate a match
   const sample = await menu.evaluate(
     (button) =>
       new Promise<{ x: number; y: number }>((resolve, reject) => {
-        button.click()
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            const dialog = document.querySelector<HTMLDialogElement>(
-              "dialog.mapachess-menu-sheet[open]",
+        const onSlide = (event: TransitionEvent) => {
+          const dialog = event.target
+          if (
+            !(dialog instanceof HTMLDialogElement) ||
+            !dialog.matches(".mapachess-menu-sheet[open]") ||
+            event.propertyName !== "transform" ||
+            event.pseudoElement
+          )
+            return
+          document.removeEventListener("transitionrun", onSlide, true)
+          const slide = dialog
+            .getAnimations()
+            .find(
+              (animation) =>
+                "transitionProperty" in animation &&
+                animation.transitionProperty === "transform",
             )
-            const slide = dialog
-              ?.getAnimations()
-              .find(
-                (a) =>
-                  "transitionProperty" in a &&
-                  a.transitionProperty === "transform",
-              )
-            const action = dialog?.querySelector("button")
-            if (!slide || !action) {
-              reject(
-                Error("Expected a running entry slide and its Restart action"),
-              )
-              return
-            }
-            slide.playbackRate = 0.001
-            slide.currentTime =
-              Number(slide.effect?.getComputedTiming().duration) * 0.9
-            const rect = action.getBoundingClientRect()
-            resolve({
-              x: rect.left + rect.width / 2,
-              y: rect.top + rect.height / 2,
-            })
-          }),
-        )
+          const action = dialog.querySelector("button")
+          if (!slide || !action) {
+            reject(Error("Expected the menu slide and its Restart action"))
+            return
+          }
+          slide.playbackRate = 0.001
+          slide.currentTime =
+            Number(slide.effect?.getComputedTiming().duration) * 0.9
+          const rect = action.getBoundingClientRect()
+          resolve({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          })
+        }
+        document.addEventListener("transitionrun", onSlide, true)
+        button.click()
       }),
   )
+  const restart = sheet.getByRole("button", {
+    name: copy.interface.webGame.restartMatch,
+    exact: true,
+  })
+  expect(
+    await restart.evaluate(
+      (action, { x, y }) => action.contains(document.elementFromPoint(x, y)),
+      sample,
+    ),
+  ).toBe(true)
   await page.mouse.move(sample.x, sample.y)
   await page.mouse.down()
   await sheet.evaluate((d) => d.getAnimations().forEach((a) => a.finish()))
