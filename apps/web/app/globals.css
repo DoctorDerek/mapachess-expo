@@ -17,11 +17,6 @@
   }
 }
 
-.setup-color-options > label {
-  min-inline-size: max-content;
-  max-inline-size: 100%;
-}
-
 @layer base {
   :root {
     color-scheme: dark;
