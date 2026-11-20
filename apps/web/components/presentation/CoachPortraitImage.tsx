@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react"
 import { coachPortraitFrame } from "@mapachess/match-presentation/coach-portrait"
 import type useDecodedCoachPortrait from "../../lib/presentation/useDecodedCoachPortrait"
 
@@ -19,17 +20,18 @@ export default function CoachPortraitImage({
       ) : (
         <img
           alt=""
-          className="absolute block max-w-none [image-rendering:pixelated]"
+          className="absolute top-(--portrait-top) left-(--portrait-left) block size-(--portrait-sheet-size) max-w-none [image-rendering:pixelated]"
           height={frame.sourceSize}
           width={frame.sourceSize}
           src={portrait.source}
           onError={portrait.onImageError}
-          style={{
-            width: `${(100 * frame.sourceSize) / frame.size}%`,
-            height: `${(100 * frame.sourceSize) / frame.size}%`,
-            left: `${(-100 * frame.x) / frame.size}%`,
-            top: `${(-100 * frame.y) / frame.size}%`,
-          }}
+          style={
+            {
+              "--portrait-sheet-size": `${(100 * frame.sourceSize) / frame.size}%`,
+              "--portrait-left": `${(-100 * frame.x) / frame.size}%`,
+              "--portrait-top": `${(-100 * frame.y) / frame.size}%`,
+            } as CSSProperties
+          }
         />
       )}
     </span>
