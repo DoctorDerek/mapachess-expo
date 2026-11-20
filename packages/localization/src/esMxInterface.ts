@@ -21,6 +21,28 @@ const interfaceCopy = {
     reviewBoard: "Revisar tablero",
   },
   matchCommands: {
+    backToBoard: "Volver al tablero",
+    saveAndExit: "Guardar y salir",
+    startReplacement: "Iniciar",
+    confirmation: {
+      restart: {
+        question: "¿Reiniciar esta partida?",
+        consequence:
+          "Perderás este historial de jugadas y volverás a jugar contra el mismo rival.",
+      },
+      draw: {
+        question: "¿Ofrecer tablas?",
+        consequence: "Si tu rival acepta, la partida terminará en tablas.",
+      },
+      resign: {
+        question: "¿Rendirse en esta partida?",
+        consequence: "Se registrará una derrota.",
+      },
+      replace: {
+        question: "¿Reemplazar tu partida guardada?",
+        consequence: "Perderás el historial de la partida en curso.",
+      },
+    },
     undo: "Deshacer",
     redo: "Rehacer",
     matchMenu: "Menú de partida",
