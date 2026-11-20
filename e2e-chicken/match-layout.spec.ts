@@ -6,7 +6,9 @@ import {
   MAPACHESS_INDEXED_DB_PLAYER_DATA_STORE,
 } from "../apps/web/lib/profile/IndexedDbDurableStore"
 import { test } from "../e2e/fixtures.js"
+import settledMatchMenu from "../e2e/settledMatchMenu.js"
 import { createMatchId } from "../packages/gameplay/dist/matchIdentity.js"
+import loadCatalog from "../packages/localization/src/catalog.js"
 import { parseChess960PositionId } from "../packages/match/dist/chess960Position.js"
 import {
   listLegalMatchMoves,
@@ -330,8 +332,12 @@ for (const config of [
 }
 
 for (const ending of [
-  { action: "Resign", result: "You resigned. Chicken Stockfish won." },
-  { action: "Offer Draw", result: "Draw by agreement." },
+  {
+    key: "resign",
+    action: "Resign",
+    result: "You resigned. Chicken Stockfish won.",
+  },
+  { key: "draw", action: "Offer Draw", result: "Draw by agreement." },
 ] as const) {
   test(`${ending.action} remains below stable controls and battle`, async ({
     page,
@@ -340,7 +346,16 @@ for (const ending of [
     await startMatch(page)
     const before = await stableGeometry(page)
     await page.getByLabel("Match menu", { exact: true }).click()
-    await page.getByRole("button", { name: ending.action, exact: true }).click()
+    const command = { name: ending.action, exact: true }
+    const sheet = await settledMatchMenu(page)
+    await sheet.getByRole("button", command).click()
+    await page
+      .getByRole("alertdialog", {
+        name: loadCatalog("en").interface.matchCommands.confirmation[ending.key]
+          .question,
+      })
+      .getByRole("button", command)
+      .click()
     await expect(page.getByRole("dialog")).toBeVisible()
     await page
       .getByRole("button", { name: "Review board", exact: true })
