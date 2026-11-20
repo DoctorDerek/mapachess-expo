@@ -1,4 +1,5 @@
 import { useActorRef, useSelector } from "@xstate/react"
+import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
 import { preload } from "react-dom"
@@ -22,10 +23,12 @@ export default function ChallengeAnimalPortrait({
   opponent,
   active,
   attention = false,
+  grayscale = false,
 }: Readonly<{
   opponent: Readonly<{ id: AnimalPresentationId }>
   active: boolean
   attention?: boolean
+  grayscale?: boolean
 }>) {
   const animalCopy = useMapachessCopy().animals
   const { ref: viewportRef, near } = usePortraitViewport()
@@ -203,7 +206,12 @@ export default function ChallengeAnimalPortrait({
       style={portraitStyle}
     >
       {step === null || unavailable ? (
-        <span className="absolute inset-0 grid place-items-center text-center text-xs font-bold">
+        <span
+          className={cx(
+            "absolute inset-0 grid place-items-center text-center text-xs font-bold",
+            grayscale && "grayscale",
+          )}
+        >
           {animalCopy.opponent(opponent.id)}
         </span>
       ) : null}
@@ -211,7 +219,10 @@ export default function ChallengeAnimalPortrait({
         {near && (
           <span
             ref={spriteRef}
-            className="absolute block bg-no-repeat [image-rendering:pixelated]"
+            className={cx(
+              "absolute block bg-no-repeat [image-rendering:pixelated]",
+              grayscale && "grayscale",
+            )}
             style={initialFrameStyle}
           />
         )}

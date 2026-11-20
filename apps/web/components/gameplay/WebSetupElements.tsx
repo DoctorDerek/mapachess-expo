@@ -324,7 +324,7 @@ function Animal({
   opponent,
   active,
   attention = false,
-  locked,
+  locked = false,
   silhouette,
   framed = true,
   prepare = false,
@@ -336,19 +336,15 @@ function Animal({
   return silhouette ? (
     <StoryOpponentPortrait
       opponent={opponent}
-      locked={Boolean(locked)}
+      locked={locked}
       framed={framed}
     />
   ) : (
-    <span
-      className={cx(
-        "pointer-events-none block shrink-0",
-        locked && "grayscale",
-      )}
-    >
+    <span className="pointer-events-none block shrink-0">
       <ChallengeAnimalPortrait
         active={active}
         attention={attention}
+        grayscale={locked}
         opponent={opponent}
       />
     </span>
