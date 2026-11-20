@@ -1,9 +1,39 @@
-import { expect } from "@playwright/test"
+import { expect, type Page } from "@playwright/test"
 import loadCatalog from "../packages/localization/src/catalog.js"
 import { timeControlLabel } from "../packages/match/src/timeControl.js"
 import { firstArrivalTest as test } from "./fixtures.js"
 import savedProfile from "./savedProfile.js"
 import startHintMatch from "./startHintMatch.js"
+
+async function openPlayedMatchMenu(
+  page: Page,
+  locale: "en" | "es-419",
+  width: number,
+) {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 900 })
+  const copy = loadCatalog(locale),
+    commands = copy.interface.matchCommands
+  await startHintMatch(page, { locale })
+  const board = page.getByRole("grid")
+  await board.locator('[data-square="e2"]').click()
+  await board.locator('[data-square="e4"]').click()
+  // The opponent's reply and its move grade are separate durable writes.
+  await expect
+    .poll(async () => (await savedProfile(page)).activeMatch)
+    .toMatchObject({ cursor: 2, moveFeedback: [{ ply: 1 }, { ply: 2 }] })
+  const menu = page.getByRole("button", {
+    name: commands.matchMenu,
+    exact: true,
+  })
+  await menu.click()
+  const sheet = page.getByRole("dialog", {
+    name: commands.matchMenu,
+    exact: true,
+  })
+  await expect(sheet).toBeVisible()
+  const prior = await savedProfile(page)
+  return { board, menu, sheet, prior, copy, commands }
+}
 
 for (const locale of ["en", "es-419"] as const) {
   for (const width of [390, 1440]) {
@@ -13,28 +43,11 @@ for (const locale of ["en", "es-419"] as const) {
         width +
         "px keeps confirmation away from the initiating tap and preserves the match on Cancel",
       async ({ page }, info) => {
-        await page.setViewportSize({ width, height: width === 390 ? 844 : 900 })
-        const copy = loadCatalog(locale),
-          commands = copy.interface.matchCommands
-        await startHintMatch(page, { locale })
-        const board = page.getByRole("grid")
-        await board.locator('[data-square="e2"]').click()
-        await board.locator('[data-square="e4"]').click()
-        // The opponent's reply and its move grade are separate durable writes.
-        await expect
-          .poll(async () => (await savedProfile(page)).activeMatch)
-          .toMatchObject({ cursor: 2, moveFeedback: [{ ply: 1 }, { ply: 2 }] })
-        const menu = page.getByRole("button", {
-          name: commands.matchMenu,
-          exact: true,
-        })
-        await menu.click()
-        const sheet = page.getByRole("dialog", {
-          name: commands.matchMenu,
-          exact: true,
-        })
-        await expect(sheet).toBeVisible()
-        const prior = await savedProfile(page)
+        const { sheet, prior, copy, commands } = await openPlayedMatchMenu(
+          page,
+          locale,
+          width,
+        )
         await page.screenshot({ path: info.outputPath("menu.png") })
         for (const [key, label] of [
           ["restart", copy.interface.webGame.restartMatch],
@@ -100,6 +113,25 @@ for (const locale of ["en", "es-419"] as const) {
           await expect(origin).toBeFocused()
           expect(await savedProfile(page)).toEqual(prior)
         }
+      },
+    )
+    test(
+      locale +
+        " at " +
+        width +
+        "px confirms a replacement and reopens the finished board",
+      async ({ page }, info) => {
+        const { board, menu, sheet, prior, copy, commands } =
+          await openPlayedMatchMenu(page, locale, width)
+        await sheet
+          .getByRole("button", { name: commands.saveAndExit, exact: true })
+          .click()
+        await page
+          .getByRole("button", {
+            name: copy.setup.presentations.standard.challenge.title,
+            exact: true,
+          })
+          .click()
         await page
           .getByRole("button", { name: copy.setup.startMatch, exact: true })
           .click()
