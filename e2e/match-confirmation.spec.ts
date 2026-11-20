@@ -204,7 +204,9 @@ test("a pointer press begun while the match sheet slides cannot activate a match
           const dialog = event.target
           if (
             !(dialog instanceof HTMLDialogElement) ||
-            !dialog.matches(".mapachess-menu-sheet[open]") ||
+            !dialog.open ||
+            dialog.getAttribute("aria-label") !==
+              button.getAttribute("aria-label") ||
             event.propertyName !== "transform" ||
             event.pseudoElement
           )

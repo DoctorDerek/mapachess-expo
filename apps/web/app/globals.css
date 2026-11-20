@@ -4,6 +4,8 @@
 
 @source "../../../packages/application-ui/src";
 
+@custom-variant match-tight (@container match-layout (max-width: 18.5rem));
+
 @theme inline {
   --font-home: var(--font-nunito-sans);
 }
@@ -65,110 +67,6 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
-    }
-  }
-}
-
-.mapachess-action-dialog {
-  container: match-layout / inline-size;
-  --radius-mapachess-action: var(--radius-xl) 0 var(--radius-xl) 0;
-}
-@media (width < theme(--breakpoint-xl)) {
-  .mapachess-action-dialog {
-    padding-block-end: max(min(1rem, 4vw), env(safe-area-inset-bottom));
-  }
-}
-.mapachess-menu-sheet[data-suspended] {
-  opacity: 0;
-  pointer-events: none;
-  transition: none;
-}
-.mapachess-menu-sheet[data-suspended]::backdrop {
-  background: transparent;
-}
-.mapachess-menu-actions button,
-.mapachess-confirmation button {
-  min-inline-size: 0;
-  padding: --spacing(1.5) --spacing(2);
-  line-height: 1.12;
-  overflow-wrap: normal;
-  white-space: normal;
-}
-.mapachess-menu-actions summary {
-  padding: 0.4rem 0.6rem;
-  line-height: 1.15;
-}
-.mapachess-menu-actions button span.invisible {
-  position: absolute;
-  clip-path: inset(50%);
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-}
-@container match-layout (max-width: 18.5rem) {
-  .mapachess-menu-actions,
-  .mapachess-menu-actions > div {
-    gap: --spacing(1);
-  }
-  .mapachess-menu-actions button,
-  .mapachess-confirmation button {
-    font-size: var(--text-sm);
-    padding: 0.25rem 0.2rem;
-    line-height: 1.1;
-  }
-  .mapachess-menu-actions button > [aria-hidden="true"] {
-    display: none;
-  }
-  .mapachess-menu-actions [data-back-to-board] {
-    min-block-size: 2.75rem;
-  }
-  .mapachess-menu-actions summary {
-    line-height: 1.1;
-    font-size: var(--text-sm);
-    padding: --spacing(1) --spacing(1.5);
-  }
-}
-@container match-layout (max-width: 19rem) {
-  .mapachess-replace-actions {
-    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .mapachess-menu-sheet {
-    --sheet-travel: 100%;
-    --sheet-edge-opacity: 1;
-    transform: translateY(0);
-    transition:
-      transform 220ms cubic-bezier(0.2, 0.8, 0.25, 1),
-      opacity 220ms ease-out;
-  }
-  .mapachess-menu-sheet::backdrop {
-    opacity: 1;
-    transition: opacity 220ms ease-out;
-  }
-  .mapachess-menu-sheet[data-leaving] {
-    transform: translateY(var(--sheet-travel));
-    opacity: var(--sheet-edge-opacity);
-    transition-duration: 160ms;
-    transition-timing-function: ease-in;
-  }
-  .mapachess-menu-sheet[data-leaving]::backdrop {
-    opacity: 0;
-    transition-duration: 160ms;
-  }
-  @starting-style {
-    .mapachess-menu-sheet[open] {
-      transform: translateY(var(--sheet-travel));
-      opacity: var(--sheet-edge-opacity);
-    }
-    .mapachess-menu-sheet[open]::backdrop {
-      opacity: 0;
-    }
-  }
-  @media (width >= theme(--breakpoint-xl)) {
-    .mapachess-menu-sheet {
-      --sheet-travel: --spacing(5);
-      --sheet-edge-opacity: 0;
     }
   }
 }

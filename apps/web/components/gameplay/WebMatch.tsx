@@ -427,7 +427,7 @@ export default function WebMatch({
                           navigation.back()
                         else navigation.open("match-details")
                       }}
-                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
+                      className="rounded-mapachess-action after:border-mapachito-deep-cyan focus-visible:outline-mapachito-charcoal match-tight:px-1.5 match-tight:py-1 match-tight:text-sm match-tight:leading-[1.1] flex min-h-12 w-full cursor-pointer list-none items-center justify-between gap-2 px-[0.6rem] py-[0.4rem] leading-[1.15] font-bold wrap-anywhere after:pointer-events-none after:me-0.5 after:size-2 after:shrink-0 after:-rotate-45 after:border-r-2 after:border-b-2 group-open:after:rotate-45 focus-visible:outline-2 focus-visible:-outline-offset-4 [&::-webkit-details-marker]:hidden"
                     >
                       {messages.matchDetailsMoveHistory}
                     </summary>

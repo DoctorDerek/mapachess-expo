@@ -105,7 +105,7 @@ export default function MatchCommands({
           selectMatchConclusion(snapshot) === null
   const persisting = selectIsPersistingMutation(snapshot)
   return (
-    <div className="grid gap-1 xl:gap-1.5 [&>dialog]:[--radius-mapachess-action:var(--radius-xl)_0_var(--radius-xl)_0]">
+    <div className="grid gap-1 xl:gap-1.5">
       <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-x-1.5 gap-y-1 xl:flex xl:flex-wrap xl:items-center xl:gap-1.5">
         {coach}
         {hints}
@@ -193,8 +193,9 @@ export default function MatchCommands({
               closeAction={
                 <MapachessButton
                   ref={closeButton}
+                  density="compact"
                   data-back-to-board
-                  className="min-h-[clamp(--spacing(14),12svh,--spacing(24))] w-full min-w-0 scroll-my-2 text-base xl:min-h-12 @max-[18.5rem]:min-h-12"
+                  className="match-tight:min-h-[2.75rem] min-h-[clamp(--spacing(14),12svh,--spacing(24))] w-full scroll-my-2 text-base xl:min-h-12"
                   onClick={onMenuClosed}
                   variant="secondary"
                 >

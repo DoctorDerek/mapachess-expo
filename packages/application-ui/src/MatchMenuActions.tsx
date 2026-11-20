@@ -23,7 +23,8 @@ export type MatchMenuSessionActions = Readonly<{
 
 export type MatchMenuDecision = "restart" | "resign" | "draw"
 
-const pairedActionsClassName = "grid min-w-0 grid-cols-2 items-stretch gap-1.5"
+const pairedActionsClassName =
+  "grid min-w-0 grid-cols-2 items-stretch gap-1.5 match-tight:gap-1"
 
 export default function MatchMenuActions({
   actor,
@@ -58,12 +59,12 @@ export default function MatchMenuActions({
   const persisting = selectIsPersistingMutation(snapshot)
   const usesPairedRows = closeAction !== undefined
   const sessionActionSizing = usesPairedRows
-    ? { className: "min-w-0 text-base" }
+    ? { density: "compact" as const, className: "text-base" }
     : {}
   const outcomeActionSizing = usesPairedRows
     ? {
-        className:
-          "flex min-w-0 flex-row items-center justify-center gap-2 text-base",
+        density: "compact" as const,
+        className: "flex flex-row items-center justify-center gap-2 text-base",
       }
     : {}
   const restart = sessionActions && (
@@ -105,7 +106,7 @@ export default function MatchMenuActions({
       variant="secondary"
     >
       {usesPairedRows && (
-        <Text kind="text" decorative className="text-xl">
+        <Text kind="text" decorative className="match-tight:hidden text-xl">
           ½
         </Text>
       )}
@@ -142,7 +143,7 @@ export default function MatchMenuActions({
       variant="destructive"
     >
       {usesPairedRows && (
-        <Text kind="text" decorative className="text-xl">
+        <Text kind="text" decorative className="match-tight:hidden text-xl">
           ⚑
         </Text>
       )}
@@ -164,7 +165,7 @@ export default function MatchMenuActions({
     )
 
   return (
-    <Group className="mapachess-menu-actions flex min-w-0 flex-col gap-1.5">
+    <Group className="match-tight:gap-1 flex min-w-0 flex-col gap-1.5">
       {sessionActions === undefined ? null : (
         <Group className={pairedActionsClassName}>
           {restart}

@@ -429,7 +429,8 @@ export default function WebGame({
                   variant="secondary"
                   aria-controls="profile-settings-panel"
                   aria-expanded={settingsOpen}
-                  className="w-full min-w-0 text-base"
+                  density="compact"
+                  className="w-full text-base"
                   onClick={onSettingsRequested}
                   ref={settingsButtonRef}
                 >

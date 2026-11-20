@@ -40,7 +40,7 @@ export default function MatchConfirmation({
       initialFocus={cancel}
       returnFocus={returnFocus}
     >
-      <div className="mapachess-confirmation grid min-w-0 gap-2.5">
+      <div className="grid min-w-0 gap-2.5">
         <h2 className="font-display text-xl leading-tight font-black">
           {question}
         </h2>
@@ -50,11 +50,12 @@ export default function MatchConfirmation({
         <div
           className={
             action === "replace"
-              ? "mapachess-replace-actions grid grid-cols-2 gap-2"
+              ? "grid grid-cols-2 gap-2 @max-[19rem]/match-layout:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]"
               : "grid grid-cols-2 gap-2 @max-[19rem]:grid-cols-1"
           }
         >
           <MapachessButton
+            density="compact"
             disabled={disabled}
             onClick={() => {
               if (!accepted.current) {
@@ -66,7 +67,12 @@ export default function MatchConfirmation({
           >
             {label}
           </MapachessButton>
-          <MapachessButton ref={cancel} onClick={onCancel} variant="secondary">
+          <MapachessButton
+            density="compact"
+            ref={cancel}
+            onClick={onCancel}
+            variant="secondary"
+          >
             {copy.interface.profileSettingsPanel.cancel}
           </MapachessButton>
         </div>

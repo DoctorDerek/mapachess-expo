@@ -135,8 +135,18 @@ export default function MapachessDialog({
       data-suspended={suspended || undefined}
       className={cx(
         "bg-mapachito-white text-mapachito-charcoal fixed inset-0 w-full overscroll-contain p-4 px-[min(--spacing(4),5vw)] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop:bg-black/60",
-        centersAtXl && "mapachess-action-dialog",
-        animateSheet && "mapachess-menu-sheet",
+        centersAtXl &&
+          "@container/match-layout [--radius-mapachess-action:var(--radius-xl)_0_var(--radius-xl)_0] max-xl:pb-[max(min(--spacing(4),4vw),env(safe-area-inset-bottom))]",
+        suspended &&
+          "pointer-events-none opacity-0 transition-none backdrop:bg-transparent",
+        animateSheet &&
+          !suspended &&
+          cx(
+            "motion-safe:transform-[translateY(0)] motion-safe:transition-[transform,opacity] motion-safe:duration-220 motion-safe:ease-[cubic-bezier(0.2,0.8,0.25,1),ease-out]",
+            "motion-safe:[--sheet-travel:100%] motion-safe:xl:[--sheet-travel:--spacing(5)] motion-safe:starting:open:transform-[translateY(var(--sheet-travel))] motion-safe:xl:starting:open:opacity-0",
+            "motion-safe:backdrop:transition-opacity motion-safe:backdrop:duration-220 motion-safe:backdrop:ease-out motion-safe:starting:open:backdrop:opacity-0",
+            "motion-safe:data-leaving:transform-[translateY(var(--sheet-travel))] motion-safe:data-leaving:duration-160 motion-safe:data-leaving:ease-in motion-safe:data-leaving:backdrop:opacity-0 motion-safe:data-leaving:backdrop:duration-160 motion-safe:xl:data-leaving:opacity-0",
+          ),
         placement !== "center"
           ? cx(
               "mx-auto mt-auto mb-0 max-h-[calc(100dvh-1rem)] max-w-md rounded-t-xl",
