@@ -416,9 +416,11 @@ test("short landscape shows the whole board, battle and commands through the des
   await expect(board).toBeInViewport({ ratio: 1 })
   await expect(stage).toBeInViewport({ ratio: 1 })
   await expect(commands).toBeInViewport({ ratio: 1 })
+  await expect
+    .poll(async () => (await bounds(board)).width)
+    .toBeGreaterThanOrEqual(256)
   const wideBoard = await bounds(board)
   expect(wideBoard.height).toBe(wideBoard.width)
-  expect(wideBoard.width).toBeGreaterThanOrEqual(256)
   expect((await bounds(commands)).left).toBeGreaterThanOrEqual(wideBoard.right)
   expect((await bounds(stage)).bottom).toBeLessThanOrEqual(
     (await bounds(commands)).top,
