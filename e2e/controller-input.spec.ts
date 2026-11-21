@@ -151,7 +151,11 @@ test("routes board focus, own-piece cycling, hints, menu and nested Back without
   ).toBeHidden()
   await expect(page.getByRole("grid")).toBeVisible()
   await page.locator('[data-player-action="menu"]').click()
-  const close = page.getByRole("button", { name: "Back to Board", exact: true })
+  const matchMenu = await settledMatchMenu(page)
+  const close = matchMenu.getByRole("button", {
+    name: "Back to Board",
+    exact: true,
+  })
   await expect(close).toBeInViewport()
   await activate(page, close)
   await expect(page.locator('[data-player-action="menu"]')).toBeFocused()
