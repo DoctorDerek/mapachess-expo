@@ -225,6 +225,7 @@ export default function WebMatch({
   }
   const conclusion = selectMatchConclusion(snapshot)
   const matchComplete = conclusion !== null
+  const untimed = snapshot.context.clock === null
   const drawOfferDecision = decideChickenDrawOffer({
     evaluationResult: evaluationSnapshot.context.result,
     playerColor: runtime.playerColor,
@@ -290,8 +291,8 @@ export default function WebMatch({
         )}
         className={cx(
           "relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))]",
-          "board-fit:h-[min(100cqh,calc(100cqw+24rem))] board-fit:max-w-[max(min(100%,--spacing(112)),calc(100cqh---spacing(52)))] board-fit:grid-cols-[auto_minmax(0,1fr)_auto] board-fit:grid-rows-[auto_auto_minmax(min(100cqw,--spacing(49)),1fr)_auto_auto_0] board-fit:[grid-template-areas:'identity_identity_identity'_'left-clock_evaluation_right-clock'_'board_board_board'_'command_command_command'_'battle_battle_battle'_'result_result_result']",
-          "board-side:h-[100cqh] board-side:max-w-none board-side:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] board-side:grid-rows-[auto_auto_auto_minmax(0,1fr)_0] board-side:gap-x-4 board-side:[grid-template-areas:'clocks_battle'_'identity_battle'_'evaluation_battle'_'board_command'_'._result']",
+          "board-fit:[--fitted-board-size:min(100cqw,100cqh)] board-fit:[--evaluation-row-height:max(--spacing(8),calc(var(--text-base)*var(--leading-tight)+--spacing(1)))] board-fit:h-[min(100cqh,calc(100cqw+24rem))] board-fit:max-w-[max(min(100%,--spacing(112)),calc(100cqh---spacing(52)))] board-fit:grid-cols-[auto_minmax(0,1fr)_auto] board-fit:grid-rows-[auto_minmax(var(--evaluation-row-height),auto)_minmax(min(100cqw,--spacing(49)),1fr)_auto_auto_0] board-fit:[grid-template-areas:'identity_identity_identity'_'left-clock_evaluation_right-clock'_'board_board_board'_'command_command_command'_'battle_battle_battle'_'result_result_result']",
+          "board-side:h-[100cqh] board-side:max-w-none board-side:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] board-side:grid-rows-[auto_auto_minmax(var(--evaluation-row-height),auto)_minmax(0,1fr)_0] board-side:gap-x-4 board-side:[grid-template-areas:'clocks_battle'_'identity_battle'_'evaluation_battle'_'board_command'_'._result']",
           "board-reflow:pb-[max(--spacing(3),env(safe-area-inset-bottom))] board-reflow:[grid-template-areas:'clocks'_'evaluation'_'board'_'battle'_'identity'_'command'_'result']",
           matchComplete
             ? "xl:[grid-template-rows:repeat(3,auto)_max-content_auto] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_command']"
@@ -327,10 +328,24 @@ export default function WebMatch({
           opponentName={animalCopy.opponent(opponent.id)}
           opponentElo={runtime.opponentTargetElo}
         />
-        <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:evaluation]">
-          <PositionEvaluationGutter actor={evaluationActor} />
+        <div
+          className={cx(
+            "w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:evaluation]",
+            untimed &&
+              "board-fit:pointer-events-none board-fit:relative board-fit:min-h-0 board-fit:self-stretch board-fit:[container-type:size] board-fit:[grid-area:board]",
+          )}
+        >
+          <div
+            className={
+              untimed
+                ? "board-fit:absolute board-fit:bottom-[calc(50%+var(--fitted-board-size)/2)] board-fit:left-1/2 board-fit:w-(--fitted-board-size) board-fit:-translate-x-1/2"
+                : undefined
+            }
+          >
+            <PositionEvaluationGutter actor={evaluationActor} />
+          </div>
         </div>
-        <div className="board-fit:grid board-fit:min-h-0 board-fit:self-stretch board-fit:place-items-center board-fit:[container-type:size] board-fit:[&>*]:w-[min(100cqw,100cqh)] w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
+        <div className="board-fit:grid board-fit:min-h-0 board-fit:self-stretch board-fit:place-items-center board-fit:[container-type:size] board-fit:[&>*]:w-(--fitted-board-size) w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
           <CanonicalChessboard
             disabled={!playerTurn}
             hints={visibleHints}
