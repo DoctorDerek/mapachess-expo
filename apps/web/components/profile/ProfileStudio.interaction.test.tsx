@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { IDBObjectStore } from "fake-indexeddb"
-import { describe, expect, it, vi } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 import loadCatalog from "@mapachess/localization/catalog"
 import dressingRoomChoices from "../../lib/presentation/dressingRoomChoices"
 import { bootApplication, savedProfile } from "../../test/applicationHarness"
@@ -11,6 +11,10 @@ installDomHarness()
 const copy = loadCatalog("en")
 
 describe("profile-card studio with real editing and durable acceptance", () => {
+  beforeAll(async () => {
+    await import("./ProfilePlayExperience")
+  })
+
   it("keeps a dirty contextual card draft through browser Back, permits continued editing, then explicitly discards it", async () => {
     const { indexedDb } = await bootApplication()
     const before = await savedProfile(indexedDb)
