@@ -204,13 +204,60 @@ async function tapInPlace(page: Page, control: Locator): Promise<void> {
   await page.touchscreen.tap(point.x, point.y)
 }
 
+for (const phone of [
+  { width: 320, height: 510, locale: "en", preset: "untimed" },
+  { width: 320, height: 568, locale: "es-419", preset: "1+0" },
+  { width: 390, height: 700, locale: "en", preset: "untimed" },
+] as const) {
+  test(`sees a legal move, its battle and reachable commands at ${phone.width}×${phone.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: phone.width, height: phone.height })
+    await startHintMatch(page, {
+      locale: phone.locale,
+      preset: phone.preset,
+      hints: "no-auto-hints",
+    })
+    const copy = loadCatalog(phone.locale)
+    const board = page.getByRole("grid")
+    const stage = page.getByRole("region", {
+      name: copy.interface.reactiveBattleStage.reactiveBattleStage,
+    })
+    const controls = page.getByRole("region", {
+      name: copy.interface.webMatch.coreMatchActions,
+    })
+    for (const surface of [board, stage, controls])
+      await expect(surface).toBeInViewport({ ratio: 1 })
+    const square = await board.locator('[data-square="e2"]').boundingBox()
+    expect(square!.width).toBeGreaterThanOrEqual(24)
+    const timers = page.getByRole("timer")
+    await expect(timers).toHaveCount(phone.preset === "untimed" ? 0 : 2)
+    if (phone.preset !== "untimed") {
+      const meter = await page.getByRole("meter").boundingBox()
+      const first = await timers.first().boundingBox()
+      const second = await timers.last().boundingBox()
+      expect(first!.x + first!.width).toBeLessThanOrEqual(meter!.x)
+      expect(second!.x).toBeGreaterThanOrEqual(meter!.x + meter!.width)
+    }
+    await tapInPlace(page, board.locator('[data-square="e2"]'))
+    await tapInPlace(page, board.locator('[data-square="e4"]'))
+    await expect
+      .poll(async () => (await savedProfile(page)).activeMatch?.cursor, {
+        timeout: 30000,
+      })
+      .toBe(2)
+    await expect(stage).toBeInViewport({ ratio: 1 })
+    expect(await page.evaluate(() => scrollY)).toBe(0)
+  })
+}
+
 for (const { locale, preset } of [
   { locale: "en", preset: "untimed" },
   { locale: "es-419", preset: "untimed" },
   { locale: "en", preset: "1+0" },
   { locale: "es-419", preset: "1+0" },
 ] as const) {
-  test(`one scroll reaches the board, hints and history at enlarged text in ${locale} · ${preset}`, async ({
+  test(`keeps the enlarged board and battle visible and scrolls to playable controls in ${locale} · ${preset}`, async ({
     page,
   }) => {
     test.setTimeout(90000)
@@ -256,17 +303,16 @@ for (const { locale, preset } of [
     })
     if (bullet) await expect(page.getByRole("timer")).toHaveCount(2)
     expect(await page.evaluate(() => scrollY)).toBe(0)
-    if (!bullet && locale === "en")
-      await expect(hint).toBeInViewport({ ratio: 0.5 })
+    const battle = page.getByRole("region", {
+      name: copy.interface.reactiveBattleStage.reactiveBattleStage,
+    })
+    await expect(board).toBeInViewport({ ratio: 1 })
+    await expect(battle).toBeInViewport({ ratio: 1 })
     await redo.evaluate((element) =>
       element.scrollIntoView({ block: "nearest" }),
     )
-    const restingScroll = await page.evaluate(() => scrollY)
-    const boardWidth = await board.evaluate(
-      (element) => element.getBoundingClientRect().width,
-    )
-    expect(restingScroll).toBeLessThan(boardWidth)
-    await expect(board).toBeInViewport({ ratio: 1 })
+    const controlScroll = await page.evaluate(() => scrollY)
+    expect(controlScroll).toBeGreaterThan(0)
     const help = controls.getByRole("button", {
       name: copy.shared.settingsControls.explainAutoHints,
       exact: true,
@@ -291,6 +337,7 @@ for (const { locale, preset } of [
       await tapInPlace(page, hint)
     }
     await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6)
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }))
     await tapInPlace(page, origin)
     await tapInPlace(page, destination)
     await expect
@@ -300,6 +347,10 @@ for (const { locale, preset } of [
       .toBe(2)
     const moved = (await savedProfile(page)).activeMatch
     if (!moved) throw new Error("Expected an accepted reply")
+    await expect(board).toBeInViewport({ ratio: 1 })
+    await expect(battle).toBeInViewport({ ratio: 1 })
+    expect(await page.evaluate(() => scrollY)).toBe(0)
+    await redo.evaluate((e) => e.scrollIntoView({ block: "nearest" }))
     await tapInPlace(page, undo)
     await expect
       .poll(async () => (await savedProfile(page)).activeMatch?.cursor)
@@ -318,7 +369,7 @@ for (const { locale, preset } of [
       .toBe(moved.currentFen)
     // Scroll offsets round to CSS pixels when a fractional row is laid out again.
     expect(
-      Math.abs((await page.evaluate(() => scrollY)) - restingScroll),
+      Math.abs((await page.evaluate(() => scrollY)) - controlScroll),
     ).toBeLessThanOrEqual(1)
     if (bullet) {
       await resume.scrollIntoViewIfNeeded()
@@ -338,7 +389,7 @@ for (const { locale, preset } of [
   })
 }
 
-test("short landscape keeps both ends of the full-width board reachable; short desktop keeps commands beside it", async ({
+test("short landscape shows the whole board, battle and commands through the desktop transition", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 844, height: 390 })
@@ -357,17 +408,19 @@ test("short landscape keeps both ends of the full-width board reachable; short d
         element.getBoundingClientRect()
       return { left, right, top, bottom, width, height }
     })
-  await expect(board).toHaveCSS("width", "844px")
+  await expect(board).toBeInViewport({ ratio: 1 })
+  await expect(stage).toBeInViewport({ ratio: 1 })
+  await expect(commands).toBeInViewport({ ratio: 1 })
   const wideBoard = await bounds(board)
   expect(wideBoard.height).toBe(wideBoard.width)
-  expect((await bounds(commands)).top).toBeGreaterThanOrEqual(wideBoard.bottom)
-  expect((await bounds(stage)).top).toBeGreaterThanOrEqual(
-    (await bounds(commands)).bottom,
+  expect(wideBoard.width).toBeGreaterThanOrEqual(256)
+  expect((await bounds(commands)).left).toBeGreaterThanOrEqual(wideBoard.right)
+  expect((await bounds(stage)).bottom).toBeLessThanOrEqual(
+    (await bounds(commands)).top,
   )
   const initial = (await savedProfile(page)).activeMatch
   for (const name of [/^a8,/, /^h1,/]) {
     const square = board.getByRole("gridcell", { name })
-    await square.scrollIntoViewIfNeeded()
     await expect(square).toBeInViewport({ ratio: 1 })
   }
   expect((await savedProfile(page)).activeMatch).toEqual(initial)
