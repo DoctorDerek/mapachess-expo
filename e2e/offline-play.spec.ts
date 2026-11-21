@@ -144,12 +144,6 @@ for (const [variant, previous] of [
       await online.goto("/")
       await online.getByRole("button", { name: "Start", exact: true }).click()
       await online.getByRole("button", { name: modeTitle, exact: true }).click()
-      if (existing) {
-        await startWhiteChallenge(online, variant)
-        await expect
-          .poll(async () => (await savedProfile(online)).activeMatch?.matchId)
-          .toBeTruthy()
-      }
       await online.evaluate(async () => {
         await navigator.serviceWorker.ready
       })
@@ -158,6 +152,25 @@ for (const [variant, previous] of [
           online.evaluate(() => Boolean(navigator.serviceWorker.controller)),
         )
         .toBe(true)
+      await expect
+        .poll(
+          () =>
+            online.evaluate(async () => {
+              const programs = await caches.open("mapachess-stockfish-program")
+              return (await programs.keys()).length
+            }),
+          {
+            timeout: 30_000,
+            message: "Wait for the first chess download to reach Cache Storage",
+          },
+        )
+        .toBe(2)
+      if (existing) {
+        await startWhiteChallenge(online, variant)
+        await expect
+          .poll(async () => (await savedProfile(online)).activeMatch?.matchId)
+          .toBeTruthy()
+      }
       const id = existing
         ? (await savedProfile(online)).activeMatch?.matchId
         : undefined
@@ -178,19 +191,6 @@ for (const [variant, previous] of [
       })
       expect(rosterStrips).toBe(0)
 
-      await expect
-        .poll(
-          () =>
-            online.evaluate(async () => {
-              const programs = await caches.open("mapachess-stockfish-program")
-              return (await programs.keys()).length
-            }),
-          {
-            timeout: 30_000,
-            message: "Wait for the first chess download to reach Cache Storage",
-          },
-        )
-        .toBe(2)
       const reopened = await context.newPage()
       await online.close()
       await origin.close()
