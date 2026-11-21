@@ -57,7 +57,7 @@ export default function MatchHintControls({
   return (
     <section
       aria-labelledby="better-hints-title"
-      className="contents text-sm [--hint-target:max(--spacing(16),2rem)] xl:grid xl:min-w-0 xl:flex-[1_1_min-content] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-stretch xl:gap-1.5"
+      className="board-fit:[--hint-target:max(--spacing(11),2rem)] contents text-sm [--hint-target:max(--spacing(16),2rem)] xl:grid xl:min-w-0 xl:flex-[1_1_min-content] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] xl:items-stretch xl:gap-1.5"
     >
       <BetterHintsControl
         nextMedal={complete ? null : nextMedal}
@@ -82,7 +82,7 @@ export default function MatchHintControls({
           navigation.open("match-hints")
         }}
         variant="secondary"
-        className="col-span-2 row-start-2 flex min-h-(--hint-target)! max-w-full min-w-0 flex-wrap items-center justify-center gap-x-1 px-1! py-1! text-sm leading-[1.1] wrap-break-word xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex-col xl:leading-tight"
+        className="board-fit:col-span-1 board-fit:col-start-3 board-fit:row-start-1 col-span-2 row-start-2 flex min-h-(--hint-target)! max-w-full min-w-0 flex-wrap items-center justify-center gap-x-1 px-1! py-1! text-sm leading-[1.1] wrap-break-word xl:col-span-1 xl:col-start-1 xl:row-start-1 xl:flex-col xl:leading-tight"
       >
         <span className="max-w-full min-w-0 wrap-anywhere">
           {hints.autoLabel}
@@ -102,7 +102,7 @@ export default function MatchHintControls({
           navigation.open("auto-hints-help")
         }}
         variant="secondary"
-        className="col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] xl:col-start-2 xl:row-start-1 xl:leading-tight"
+        className="board-fit:col-start-4 board-fit:row-start-1 col-start-3 row-start-2 min-h-(--hint-target)! w-(--hint-target) px-1! py-1! text-xl leading-[1.1] xl:col-start-2 xl:row-start-1 xl:leading-tight"
       >
         <span aria-hidden="true">?</span>
       </MapachessButton>

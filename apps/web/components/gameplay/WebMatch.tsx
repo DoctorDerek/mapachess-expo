@@ -290,6 +290,9 @@ export default function WebMatch({
         )}
         className={cx(
           "relative mx-auto grid min-w-0 items-start [--playing-width:100%] [grid-template-areas:'clocks'_'identity'_'evaluation'_'board'_'command'_'battle'_'result'] xl:max-w-[calc(var(--playing-width)+var(--command-width)+var(--command-gap))] xl:grid-cols-[minmax(0,1fr)_var(--command-width)] xl:gap-x-(--command-gap) xl:[--command-gap:--spacing(6)] xl:[--command-width:--spacing(96)] xl:[--playing-width:min(--spacing(208),max(--spacing(80),calc(100svh---spacing(52))))]",
+          "board-fit:h-[min(100cqh,calc(100cqw+24rem))] board-fit:max-w-[max(min(100%,--spacing(112)),calc(100cqh---spacing(52)))] board-fit:grid-cols-[auto_minmax(0,1fr)_auto] board-fit:grid-rows-[auto_auto_minmax(min(100cqw,--spacing(49)),1fr)_auto_auto_0] board-fit:[grid-template-areas:'identity_identity_identity'_'left-clock_evaluation_right-clock'_'board_board_board'_'command_command_command'_'battle_battle_battle'_'result_result_result']",
+          "board-side:h-[100cqh] board-side:max-w-none board-side:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] board-side:grid-rows-[auto_auto_auto_minmax(0,1fr)_0] board-side:gap-x-4 board-side:[grid-template-areas:'clocks_battle'_'identity_battle'_'evaluation_battle'_'board_command'_'._result']",
+          "board-reflow:[grid-template-areas:'clocks'_'evaluation'_'board'_'battle'_'identity'_'command'_'result']",
           matchComplete
             ? "xl:[grid-template-rows:repeat(3,auto)_max-content_auto] xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_command']"
             : "xl:[grid-template-areas:'clocks_.'_'identity_.'_'evaluation_.'_'board_command'_'battle_.']",
@@ -327,7 +330,7 @@ export default function WebMatch({
         <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:evaluation]">
           <PositionEvaluationGutter actor={evaluationActor} />
         </div>
-        <div className="w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
+        <div className="board-fit:grid board-fit:min-h-0 board-fit:self-stretch board-fit:place-items-center board-fit:[container-type:size] board-fit:[&>*]:w-[min(100cqw,100cqh)] w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:board]">
           <CanonicalChessboard
             disabled={!playerTurn}
             hints={visibleHints}
@@ -341,7 +344,7 @@ export default function WebMatch({
             showMoveHints={hintStage === "move-hints"}
           />
         </div>
-        <div className="mt-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:battle]">
+        <div className="board-side:mt-0 board-side:self-start mt-2 w-full max-w-(--playing-width) min-w-0 justify-self-center [grid-area:battle]">
           <BattleStageSurface
             playerAnimal={playerAnimal}
             celebrationSlot={celebrationStageSlot}
@@ -358,7 +361,7 @@ export default function WebMatch({
           <div className="contents xl:grid xl:gap-2">
             <section
               aria-label={messages.coreMatchActions}
-              className="text-mapachito-charcoal mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] max-[22rem]:px-1 xl:mt-0 xl:px-0 xl:[grid-area:auto]"
+              className="text-mapachito-charcoal board-side:self-end mt-1.5 grid min-w-0 gap-1.5 px-2.5 [grid-area:command] max-[22rem]:px-1 xl:mt-0 xl:px-0 xl:[grid-area:auto]"
             >
               <MatchCommands
                 opponentName={animalCopy.opponent(opponent.id)}

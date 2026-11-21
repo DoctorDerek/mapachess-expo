@@ -38,7 +38,7 @@ export default function MatchIdentity({
       className="text-mapachito-white contents"
     >
       {playerClock || opponentClock ? (
-        <div className="mb-1 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
+        <div className="board-fit:contents board-fit:[&>:where(:first-child)]:[grid-area:left-clock] board-fit:[&>:where(:last-child)]:[grid-area:right-clock] board-side:grid board-side:[&>*]:[grid-area:auto] mb-1 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
           <div>{playerClock}</div>
           <div>{opponentClock}</div>
         </div>

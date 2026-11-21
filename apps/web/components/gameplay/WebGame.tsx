@@ -110,6 +110,7 @@ function GameFrame({
       spacing={matchSessionActive ? "match" : home ? "home" : "setup"}
       className={cx(
         home && "font-home",
+        matchSessionActive && "max-xl:h-dvh",
         !home && !matchSessionActive && "h-dvh",
       )}
     >
@@ -121,6 +122,8 @@ function GameFrame({
         inert={activityMessage !== null}
         className={cx(
           "max-w-mapachess mx-auto w-full",
+          matchSessionActive &&
+            "max-xl:h-full max-xl:[container:match-viewport/size]",
           !home && !matchSessionActive && "h-full min-h-0 min-w-0",
         )}
       >
