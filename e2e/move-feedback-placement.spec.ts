@@ -83,7 +83,7 @@ async function openGame(
   await page.evaluate(() => document.fonts.ready.then(() => undefined))
   const viewport = page.viewportSize()
   if (viewport === null) throw new Error("Expected an explicit board viewport")
-  if (viewport.width < 1280) {
+  if (viewport.width < 1280 && viewport.width <= viewport.height) {
     await expect
       .poll(() =>
         board.evaluate((element) => {
@@ -92,7 +92,16 @@ async function openGame(
         }),
       )
       .toEqual([0, 0])
+  } else if (viewport.width < 1280) {
+    const bounds = await boxOf(board)
+    expect(bounds.height).toBeCloseTo(bounds.width, 1)
+    expect(bounds.width / 8).toBeGreaterThanOrEqual(24)
+    expect(bounds.x).toBeCloseTo((viewport.width - bounds.width) / 2, 1)
+    await expect(board).toBeInViewport({ ratio: 1 })
   }
+  await expect(
+    page.getByRole("region", { name: "Reactive Battle Stage", exact: true }),
+  ).toBeVisible()
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000))
   if (color === "Black")
     await expect(
