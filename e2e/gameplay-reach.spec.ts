@@ -308,9 +308,14 @@ for (const { locale, preset } of [
     })
     await expect(board).toBeInViewport({ ratio: 1 })
     await expect(battle).toBeInViewport({ ratio: 1 })
-    await redo.evaluate((element) =>
-      element.scrollIntoView({ block: "nearest" }),
-    )
+    const scrollToCommands = () =>
+      page.evaluate(() =>
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: "instant",
+        }),
+      )
+    await scrollToCommands()
     const controlScroll = await page.evaluate(() => scrollY)
     expect(controlScroll).toBeGreaterThan(0)
     const help = controls.getByRole("button", {
@@ -350,7 +355,7 @@ for (const { locale, preset } of [
     await expect(board).toBeInViewport({ ratio: 1 })
     await expect(battle).toBeInViewport({ ratio: 1 })
     expect(await page.evaluate(() => scrollY)).toBe(0)
-    await redo.evaluate((e) => e.scrollIntoView({ block: "nearest" }))
+    await scrollToCommands()
     await tapInPlace(page, undo)
     await expect
       .poll(async () => (await savedProfile(page)).activeMatch?.cursor)
@@ -372,7 +377,7 @@ for (const { locale, preset } of [
       Math.abs((await page.evaluate(() => scrollY)) - controlScroll),
     ).toBeLessThanOrEqual(1)
     if (bullet) {
-      await resume.scrollIntoViewIfNeeded()
+      await scrollToCommands()
       await tapInPlace(page, resume)
       await expect(resume).toHaveCount(0)
       await expect(
