@@ -206,10 +206,11 @@ async function tapInPlace(page: Page, control: Locator): Promise<void> {
 
 for (const phone of [
   { width: 320, height: 510, locale: "en", preset: "untimed" },
+  { width: 320, height: 568, locale: "en", preset: "untimed" },
   { width: 320, height: 568, locale: "es-419", preset: "1+0" },
   { width: 390, height: 700, locale: "en", preset: "untimed" },
 ] as const) {
-  test(`sees a legal move, its battle and reachable commands at ${phone.width}×${phone.height}`, async ({
+  test(`sees a legal move, its battle and reachable commands at ${phone.width}×${phone.height} in ${phone.locale} · ${phone.preset}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: phone.width, height: phone.height })
@@ -226,10 +227,32 @@ for (const phone of [
     const controls = page.getByRole("region", {
       name: copy.interface.webMatch.coreMatchActions,
     })
-    for (const surface of [board, stage, controls])
+    await expect(board).toHaveCSS("width", phone.width + "px")
+    await expect(board).toHaveCSS("height", phone.width + "px")
+    await expect(board.getByRole("gridcell")).toHaveCount(64)
+    for (const surface of [board, stage])
       await expect(surface).toBeInViewport({ ratio: 1 })
+    const boardBox = await board.boundingBox()
+    const stageBox = await stage.boundingBox()
+    expect(stageBox!.y).toBeCloseTo(boardBox!.y + boardBox!.height, 0)
+    const undo = controls.getByRole("button", {
+      name: copy.interface.matchCommands.undo,
+      exact: true,
+    })
+    const undoBox = await undo.boundingBox()
+    expect(undoBox!.x + undoBox!.width / 2).toBeCloseTo(phone.width / 2, 0)
+    await expect(undo).toBeInViewport({ ratio: 1 })
+    for (const control of await controls.getByRole("button").all()) {
+      if (phone.height >= 568)
+        await expect(control).toBeInViewport({ ratio: 1 })
+      else await control.scrollIntoViewIfNeeded()
+      const target = await control.boundingBox()
+      expect(target!.width).toBeGreaterThanOrEqual(44)
+      expect(target!.height).toBeGreaterThanOrEqual(44)
+    }
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }))
     const square = await board.locator('[data-square="e2"]').boundingBox()
-    expect(square!.width).toBeGreaterThanOrEqual(24)
+    expect(square!.width).toBeCloseTo(phone.width / 8, 0)
     const timers = page.getByRole("timer")
     await expect(timers).toHaveCount(phone.preset === "untimed" ? 0 : 2)
     if (phone.preset !== "untimed") {
@@ -261,7 +284,7 @@ for (const { locale, preset } of [
     page,
   }) => {
     test.setTimeout(90000)
-    await page.setViewportSize({ width: 320, height: 640 })
+    await page.setViewportSize({ width: 320, height: 568 })
     await page.addInitScript(() => {
       document.addEventListener(
         "DOMContentLoaded",
@@ -394,7 +417,7 @@ for (const { locale, preset } of [
   })
 }
 
-test("short landscape shows the whole board, battle and commands through the desktop transition", async ({
+test("landscape preserves board width and page scrolling, then places the battle beside the desktop board", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 844, height: 390 })
@@ -413,21 +436,20 @@ test("short landscape shows the whole board, battle and commands through the des
         element.getBoundingClientRect()
       return { left, right, top, bottom, width, height }
     })
-  await expect(board).toBeInViewport({ ratio: 1 })
-  await expect(stage).toBeInViewport({ ratio: 1 })
-  await expect(commands).toBeInViewport({ ratio: 1 })
-  await expect
-    .poll(async () => (await bounds(board)).width)
-    .toBeGreaterThanOrEqual(256)
   const wideBoard = await bounds(board)
+  expect(wideBoard.width).toBe(844)
   expect(wideBoard.height).toBe(wideBoard.width)
-  expect((await bounds(commands)).left).toBeGreaterThanOrEqual(wideBoard.right)
-  expect((await bounds(stage)).bottom).toBeLessThanOrEqual(
-    (await bounds(commands)).top,
+  expect((await bounds(stage)).top).toBeCloseTo(wideBoard.bottom, 0)
+  expect((await bounds(commands)).top).toBeGreaterThanOrEqual(
+    (await bounds(stage)).bottom,
   )
+  await commands.scrollIntoViewIfNeeded()
+  await expect(commands).toBeInViewport({ ratio: 1 })
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0)
   const initial = (await savedProfile(page)).activeMatch
   for (const name of [/^a8,/, /^h1,/]) {
     const square = board.getByRole("gridcell", { name })
+    await square.scrollIntoViewIfNeeded()
     await expect(square).toBeInViewport({ ratio: 1 })
   }
   expect((await savedProfile(page)).activeMatch).toEqual(initial)
@@ -442,10 +464,20 @@ test("short landscape shows the whole board, battle and commands through the des
     )
     .toBe(true)
   const desktopBoard = await bounds(board)
-  expect((await bounds(stage)).left).toBeCloseTo(desktopBoard.left, 0)
-  expect((await bounds(stage)).top).toBeGreaterThanOrEqual(desktopBoard.bottom)
+  expect((await bounds(stage)).left).toBeCloseTo(
+    (await bounds(commands)).left,
+    0,
+  )
+  expect((await bounds(stage)).bottom).toBeLessThanOrEqual(
+    (await bounds(commands)).top,
+  )
+  expect(desktopBoard.width).toBe(832)
+  for (const height of [720, 900]) {
+    await page.setViewportSize({ width: 1440, height })
+    expect((await bounds(board)).width).toBe(desktopBoard.width)
+  }
   await expect(commands).toBeInViewport({ ratio: 1 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
-    1280,
+    1440,
   )
 })
