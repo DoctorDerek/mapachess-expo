@@ -20,7 +20,7 @@ export default function BattleStageSurface({
   return (
     <>
       <div
-        className="min-h-[calc(max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))+--spacing(2))] w-full [--battle-above:var(--battle-mobile-above)] [--battle-below:var(--battle-mobile-below)] [--battle-fallback-size:var(--spacing-battle-fallback)] xl:[--battle-above:var(--battle-desktop-above)] xl:[--battle-below:var(--battle-desktop-below)]"
+        className="min-h-[calc(max(var(--battle-lane),var(--battle-above)+var(--battle-below))+--spacing(2))] w-full [--battle-above:var(--battle-mobile-above)] [--battle-below:var(--battle-mobile-below)] [--battle-fallback-size:var(--spacing-battle-fallback)] [--battle-lane:--spacing(16)] xl:[--battle-above:var(--battle-desktop-above)] xl:[--battle-below:var(--battle-desktop-below)] xl:[--battle-lane:--spacing(24)]"
         ref={gameplaySlotRef}
         style={battleStageStyle(
           resolveWebOpponentPresentation(

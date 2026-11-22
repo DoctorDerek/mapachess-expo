@@ -44,9 +44,9 @@ export default function MapachitoCoachPortrait({
   return (
     <figure
       aria-live="polite"
-      className="mx-auto flex max-w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-1"
+      className="m-0 flex max-w-full min-w-0 shrink-0 flex-wrap items-center justify-center gap-1"
     >
-      <div className="bg-mapachito-violet size-12 shrink-0 overflow-hidden rounded">
+      <div className="bg-mapachito-violet size-10 shrink-0 overflow-hidden rounded xl:size-12">
         <CoachPortraitImage portrait={visiblePortrait} />
       </div>
       <figcaption
