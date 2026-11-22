@@ -59,7 +59,7 @@ export default function PositionEvaluationGutter({
     evaluation === null ? "…" : positionEvaluationLabel(evaluation, copy)
   return (
     <div
-      className="bg-mapachito-charcoal relative isolate grid min-h-8 w-full place-items-center px-1 py-0.5 font-mono text-base leading-tight font-bold text-white"
+      className="bg-mapachito-charcoal relative isolate grid min-w-0 flex-1 place-items-center px-1 font-mono text-sm leading-tight font-bold text-white xl:min-h-8 xl:text-base"
       style={style}
       aria-label={messages.stockfishEvaluation}
       aria-valuemax={100}

@@ -107,14 +107,15 @@ export default function BetterHintsControl({
         aria-labelledby="get-hint-label better-hints-stage"
         aria-busy={(busy && control.action !== null) || stage === "loading"}
         aria-describedby="better-hints-guidance better-hints-medal"
-        className="board-fit:col-end-3 col-start-2 col-end-4 row-start-1 flex min-h-(--hint-target)! max-w-full min-w-0 flex-[1_1_min-content] flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] wrap-break-word xl:col-start-3 xl:col-end-4 xl:leading-tight"
+        density="match"
+        className="min-w-min flex-1"
         data-hint-stage={matchComplete ? "complete" : stage}
         data-player-action="hints"
         disabled={disabled || busy || control.action === null}
         onClick={activate}
         type="button"
       >
-        <span id="get-hint-label" className="max-w-full min-w-0 wrap-anywhere">
+        <span id="get-hint-label" className="max-w-full whitespace-normal">
           {copy.gameplay.hints.getHint}
         </span>
         <span id="better-hints-stage" className="sr-only">

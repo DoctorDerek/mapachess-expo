@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from "react"
+import type { Ref } from "react"
 import type { MatchColor } from "@mapachess/match/match-position"
 import {
   timeControlLabel,
@@ -17,8 +17,6 @@ export default function MatchIdentity({
   assistance,
   opponentName,
   opponentElo,
-  playerClock,
-  opponentClock,
   timeControl,
 }: Readonly<{
   headingRef: Ref<HTMLHeadingElement>
@@ -27,33 +25,25 @@ export default function MatchIdentity({
   assistance: MatchMedal
   opponentName: string
   opponentElo: number
-  playerClock?: ReactNode
-  opponentClock?: ReactNode
   timeControl: TimeControl
 }>) {
   const copy = useMapachessCopy()
   return (
     <section
       aria-labelledby="opponent-band-title"
-      className="text-mapachito-white contents"
+      className="col-start-1 row-start-1 min-w-0 xl:col-start-2"
     >
-      {playerClock || opponentClock ? (
-        <div className="board-fit:contents board-fit:[&>:where(:first-child)]:[grid-area:left-clock] board-fit:[&>:where(:last-child)]:[grid-area:right-clock] board-side:grid board-side:[&>*]:[grid-area:auto] mb-1 grid w-full max-w-(--playing-width) min-w-0 grid-cols-2 gap-2 justify-self-center text-center [grid-area:clocks]">
-          <div>{playerClock}</div>
-          <div>{opponentClock}</div>
-        </div>
-      ) : null}
       <h1
         id="opponent-band-title"
         ref={headingRef}
         tabIndex={-1}
-        className="mb-1 w-full max-w-(--playing-width) min-w-0 justify-self-center px-1 text-center text-base leading-[1.1] wrap-break-word [grid-area:identity] xl:px-0 xl:leading-tight xl:text-balance"
+        className="text-mapachito-white m-0 min-h-11 min-w-0 content-center px-1 text-center text-sm leading-none xl:text-base xl:leading-tight"
       >
         <strong>{copy.presentation.playerName}</strong>
         {nameEloSeparator}
         {copy.gameplay.elo(playerElo)}{" "}
         <span className="inline-block">
-          <MedalSymbol medal={assistance} />
+          <MedalSymbol medal={assistance} className="max-xl:size-4" />
           <span className="inline-grid align-baseline">
             {MATCH_MEDALS.map((medal) => (
               <span

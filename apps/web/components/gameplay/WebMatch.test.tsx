@@ -141,7 +141,7 @@ describe("match composition", () => {
       }
     },
   )
-  it("keeps one board, meter and client battle allocation with persistent core actions", () => {
+  it("renders one evaluation before the board and its persistent match actions", () => {
     const actor = createActor(matchMachine, {
       input: {
         autoHintMode: "no-auto-hints",
@@ -182,7 +182,7 @@ describe("match composition", () => {
       for (const token of [
         'role="grid"',
         'role="meter"',
-        "[grid-area:battle]",
+        'aria-label="Core match actions"',
         'id="opponent-band-title"',
       ]) {
         expect(markup.split(token)).toHaveLength(2)
@@ -190,8 +190,8 @@ describe("match composition", () => {
       expect(markup.indexOf('role="meter"')).toBeLessThan(
         markup.indexOf('role="grid"'),
       )
-      expect(markup.indexOf('role="meter"')).toBeLessThan(
-        markup.indexOf("[grid-area:battle]"),
+      expect(markup.indexOf('role="grid"')).toBeLessThan(
+        markup.indexOf('aria-label="Core match actions"'),
       )
       expect(markup).not.toContain('aria-label="Match result"')
       for (const label of [

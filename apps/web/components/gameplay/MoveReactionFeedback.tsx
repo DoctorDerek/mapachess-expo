@@ -27,11 +27,16 @@ export default function MoveReactionFeedback({
   return (
     <div
       className={cx(
-        "pointer-events-none absolute inset-0 z-30 min-h-0 min-w-0 xl:relative xl:[grid-area:auto]",
-        placement === "top" ? "[grid-area:identity]" : "[grid-area:board]",
+        "pointer-events-none absolute inset-0 z-30 col-start-1 col-end-2 min-h-0 min-w-0 xl:relative xl:col-start-2 xl:col-end-3 xl:row-start-4 xl:row-end-5 xl:mt-2",
+        placement === "top" ? "row-start-1 row-end-2" : "row-start-3 row-end-4",
       )}
     >
-      <div className="absolute inset-0 grid grid-cols-2 gap-2 p-1 xl:p-0">
+      <div
+        className={cx(
+          "absolute inset-0 grid grid-cols-2 gap-1 px-1 xl:p-0",
+          placement !== "top" && "py-1",
+        )}
+      >
         {(["hero", "opponent"] as const).map((participant) => (
           <div
             key={participant}

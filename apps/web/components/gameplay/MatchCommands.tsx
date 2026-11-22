@@ -31,13 +31,9 @@ import webRecoveryElements from "../profile/WebRecoveryElements"
 import MatchConfirmation from "./MatchConfirmation"
 import webSetupElements from "./WebSetupElements"
 
-const historyActionClassName =
-  "flex min-w-0 scroll-mb-1 flex-wrap items-center justify-center gap-1 px-1! py-1! text-sm leading-[1.1] xl:leading-tight wrap-break-word"
-
 export default function MatchCommands({
   actor,
   hints,
-  coach,
   menuActions,
   details,
   menuSummaryRef,
@@ -54,7 +50,6 @@ export default function MatchCommands({
   opponentName,
 }: Readonly<{
   hints: ReactNode
-  coach: ReactNode
   menuActions?: MatchMenuSessionActions | undefined
   details: ReactNode
   menuSummaryRef?: RefObject<HTMLButtonElement | null>
@@ -105,29 +100,29 @@ export default function MatchCommands({
           selectMatchConclusion(snapshot) === null
   const persisting = selectIsPersistingMutation(snapshot)
   return (
-    <div className="grid gap-1 xl:gap-1.5">
-      <div className="board-fit:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.25fr)_auto] grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-x-1.5 gap-y-1 xl:flex xl:flex-wrap xl:items-center xl:gap-1.5">
-        {coach}
-        {hints}
-      </div>
-      <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_repeat(2,minmax(0,1.15fr))] items-stretch gap-1.5 xl:grid-cols-3">
-        <MapachessButton
-          aria-label={messages.matchMenu}
-          aria-haspopup="dialog"
-          aria-expanded={menuOpen}
-          data-player-action="menu"
-          className={historyActionClassName}
-          ref={menuSummaryRef}
-          onClick={onMenuOpened}
-          variant="secondary"
-        >
-          <InputPrompt action="menu" />
-          <span className="min-w-0 wrap-anywhere">{messages.menu}</span>
-        </MapachessButton>
-        <div className="contents">
+    <div className="grid gap-1">
+      <div className="flex min-w-0 flex-wrap gap-1">
+        <div className="flex min-w-min flex-1">
+          <MapachessButton
+            aria-label={messages.matchMenu}
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
+            data-player-action="menu"
+            density="match"
+            className="min-w-min flex-1 scroll-mb-1"
+            ref={menuSummaryRef}
+            onClick={onMenuOpened}
+            variant="secondary"
+          >
+            <InputPrompt action="menu" />
+            <span>{messages.menu}</span>
+          </MapachessButton>
+        </div>
+        <div className="flex min-w-min grow-2 basis-1 gap-1">
           <MapachessButton
             aria-busy={persisting && selectHasUndoHistory(snapshot)}
-            className={historyActionClassName}
+            density="match"
+            className="min-w-min flex-1 scroll-mb-1"
             disabled={!selectCanUndo(snapshot)}
             data-player-action="undo"
             onClick={() => actor.send({ type: "MATCH.UNDO_REQUESTED" })}
@@ -138,7 +133,8 @@ export default function MatchCommands({
           </MapachessButton>
           <MapachessButton
             aria-busy={persisting && selectHasRedoHistory(snapshot)}
-            className={historyActionClassName}
+            density="match"
+            className="min-w-min flex-1 scroll-mb-1"
             disabled={!selectCanRedo(snapshot)}
             data-player-action="redo"
             onClick={() => actor.send({ type: "MATCH.REDO_REQUESTED" })}
@@ -149,6 +145,7 @@ export default function MatchCommands({
           </MapachessButton>
         </div>
       </div>
+      {hints}
       {menuOpen || retainMenu ? (
         <MapachessDialog
           label={messages.matchMenu}
@@ -195,7 +192,7 @@ export default function MatchCommands({
                   ref={closeButton}
                   density="compact"
                   data-back-to-board
-                  className="match-tight:min-h-[2.75rem] min-h-[clamp(--spacing(14),12svh,--spacing(24))] w-full scroll-my-2 text-base xl:min-h-12"
+                  className="w-full scroll-my-2"
                   onClick={onMenuClosed}
                   variant="secondary"
                 >
