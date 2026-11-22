@@ -4,12 +4,6 @@
 
 @source "../../../packages/application-ui/src";
 
-@custom-variant board-fit (@container match-viewport (width >= 13em) and (height < calc(100vw + 25rem)));
-@custom-variant board-side (@container match-viewport (width >= 32em) and (height < 28em) and (orientation: landscape));
-@custom-variant board-reflow (@container match-viewport (width < 13em));
-
-@custom-variant match-tight (@container match-layout (max-width: 18.5rem));
-
 @theme inline {
   --font-home: var(--font-nunito-sans);
 }
