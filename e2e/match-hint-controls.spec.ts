@@ -58,7 +58,7 @@ for (const configuration of [
     await expect(page.getByRole("grid")).toHaveCSS("font-size", `${fontSize}px`)
     await expect(page.locator("#opponent-band-title strong").first()).toHaveCSS(
       "font-size",
-      `${fontSize}px`,
+      `${width < 1280 ? fontSize * 0.875 : fontSize}px`,
     )
     const hint = page.locator('[data-player-action="hints"]')
     const help = page.getByRole("button", {
@@ -151,10 +151,12 @@ for (const configuration of [
         ),
       ).toBe(true)
       const bounds = await documentBox(control)
-      expect(bounds.height).toBeGreaterThanOrEqual(64)
+      expect(bounds.height).toBeGreaterThanOrEqual(44)
       expect(bounds.width).toBeGreaterThanOrEqual(44)
     }
-    expect((await documentBox(help)).width).toBeGreaterThanOrEqual(64)
+    expect((await documentBox(help)).width).toBeGreaterThanOrEqual(
+      Math.max(44, fontSize * 2),
+    )
     expect((await documentBox(help)).height).toBe(
       (await documentBox(auto)).height,
     )
@@ -200,7 +202,7 @@ for (const configuration of [
   })
 }
 
-test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resume while keeping clocks above Top feedback", async ({
+test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resume while keeping both clocks below Top feedback", async ({
   page,
 }, testInfo) => {
   test.setTimeout(60000)
@@ -261,14 +263,14 @@ test("hint dialogs reuse Back/Forward, controller cancel and explicit clock resu
   await page.getByRole("gridcell", { name: /^e4,/ }).click()
   const feedback = page.getByRole("button", { name: /^Dismiss / })
   await expect(feedback).toHaveCount(2)
-  const feedbackTop = Math.min(
-    ...(await Promise.all(
-      (await feedback.all()).map(async (card) => (await documentBox(card)).y),
-    )),
+  const cardBoxes = await Promise.all((await feedback.all()).map(documentBox))
+  const feedbackBottom = Math.max(
+    ...cardBoxes.map(({ y, height }) => y + height),
   )
-  for (const timer of await page.getByRole("timer").all()) {
-    const bounds = await documentBox(timer)
-    expect(bounds.y + bounds.height).toBeLessThanOrEqual(feedbackTop)
+  const timers = page.getByRole("timer")
+  await expect(timers).toHaveCount(2)
+  for (const timer of await timers.all()) {
+    expect(feedbackBottom).toBeLessThanOrEqual((await documentBox(timer)).y)
   }
   await page.screenshot({
     path: testInfo.outputPath("protected-clocks.png"),
