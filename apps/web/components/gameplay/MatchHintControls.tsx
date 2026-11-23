@@ -62,23 +62,21 @@ export default function MatchHintControls({
       aria-labelledby="better-hints-title"
       className="flex min-w-0 flex-wrap items-stretch gap-1"
     >
-      <div className="flex min-w-min flex-1 basis-28 flex-wrap items-stretch gap-1">
-        {coach}
-        <BetterHintsControl
-          nextMedal={complete ? null : nextMedal}
-          busy={selectIsPersistingMutation(snapshot)}
-          disabled={frozen}
-          hints={selectMatchHints(snapshot)}
-          matchComplete={complete}
-          onMoveHintsRequested={() =>
-            actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
-          }
-          onPieceHintsRequested={() =>
-            actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
-          }
-          stage={stage}
-        />
-      </div>
+      <BetterHintsControl
+        coach={coach}
+        nextMedal={complete ? null : nextMedal}
+        busy={selectIsPersistingMutation(snapshot)}
+        disabled={frozen}
+        hints={selectMatchHints(snapshot)}
+        matchComplete={complete}
+        onMoveHintsRequested={() =>
+          actor.send({ type: "MATCH.MOVE_HINTS_REQUESTED" })
+        }
+        onPieceHintsRequested={() =>
+          actor.send({ type: "MATCH.PIECE_HINTS_REQUESTED" })
+        }
+        stage={stage}
+      />
       <div className="flex min-w-min flex-1 basis-36 items-stretch gap-1">
         <MapachessButton
           aria-haspopup="dialog"

@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import type { MapachessCatalog } from "@mapachess/localization/catalog"
 import type {
   BetterHint,
@@ -14,6 +15,7 @@ type HintControlAction = "move-hints" | "piece-hints"
 
 export type BetterHintsControlProps = Readonly<{
   busy?: boolean
+  coach?: ReactNode
   disabled?: boolean
   hints: BetterHintsResult | null
   matchComplete: boolean
@@ -73,6 +75,7 @@ const hintAnnouncement = (
 
 export default function BetterHintsControl({
   busy = false,
+  coach,
   disabled = false,
   hints,
   matchComplete,
@@ -102,27 +105,30 @@ export default function BetterHintsControl({
       <h2 className="sr-only" id="better-hints-title">
         {messages.betterHints}
       </h2>
-      <MapachessButton
-        variant="hint"
-        aria-labelledby="get-hint-label better-hints-stage"
-        aria-busy={(busy && control.action !== null) || stage === "loading"}
-        aria-describedby="better-hints-guidance better-hints-medal"
-        density="match"
-        className="min-w-min flex-1"
-        data-hint-stage={matchComplete ? "complete" : stage}
-        data-player-action="hints"
-        disabled={disabled || busy || control.action === null}
-        onClick={activate}
-        type="button"
-      >
-        <span id="get-hint-label" className="max-w-full whitespace-normal">
-          {copy.gameplay.hints.getHint}
-        </span>
-        <span id="better-hints-stage" className="sr-only">
-          {control.label}
-        </span>
-        <InputPrompt action="hints" />
-      </MapachessButton>
+      <div className="flex min-w-min flex-1 basis-28 flex-wrap items-stretch gap-1">
+        {coach}
+        <MapachessButton
+          variant="hint"
+          aria-labelledby="get-hint-label better-hints-stage"
+          aria-busy={(busy && control.action !== null) || stage === "loading"}
+          aria-describedby="better-hints-guidance better-hints-medal"
+          density="match"
+          className="min-w-min flex-1"
+          data-hint-stage={matchComplete ? "complete" : stage}
+          data-player-action="hints"
+          disabled={disabled || busy || control.action === null}
+          onClick={activate}
+          type="button"
+        >
+          <span id="get-hint-label" className="max-w-full whitespace-normal">
+            {copy.gameplay.hints.getHint}
+          </span>
+          <span id="better-hints-stage" className="sr-only">
+            {control.label}
+          </span>
+          <InputPrompt action="hints" />
+        </MapachessButton>
+      </div>
       <span id="better-hints-medal" className="sr-only">
         {nextMedal}
       </span>
@@ -132,7 +138,7 @@ export default function BetterHintsControl({
       <p
         className={
           stage === "failure" || stage === "unavailable"
-            ? "text-mapachito-white col-span-full min-w-0 basis-full text-base font-semibold"
+            ? "text-mapachito-white order-last min-w-0 basis-full text-base font-semibold"
             : "sr-only"
         }
         id="better-hints-guidance"
