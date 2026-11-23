@@ -121,6 +121,7 @@ function GameFrame({
         inert={activityMessage !== null}
         className={cx(
           "max-w-mapachess mx-auto w-full",
+          matchSessionActive && "pt-1 pb-2 xl:py-3",
           !home && !matchSessionActive && "h-full min-h-0 min-w-0",
         )}
       >

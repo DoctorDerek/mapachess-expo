@@ -248,7 +248,7 @@ export default function BattleFighter({
       <div
         aria-label={copy.fighter(displayName, presentation.reactionSlot)}
         className={cx(
-          "relative flex h-[max(--spacing(24),calc(var(--battle-above)+var(--battle-below)+--spacing(2)))] w-full items-end justify-center pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)]",
+          "relative flex min-h-16 w-full items-end justify-center pt-(--battle-above) pb-(--battle-below) [--opponent-width:var(--opponent-mobile-width)] [--sprite-scale:var(--sprite-mobile-scale)] xl:min-h-24 xl:[--opponent-width:var(--opponent-desktop-width)] xl:[--sprite-scale:var(--sprite-desktop-scale)]",
           participant === "player"
             ? "[--battle-anchor:0%] [--battle-direction:1]"
             : "[--battle-anchor:100%] [--battle-direction:-1]",

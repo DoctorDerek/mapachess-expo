@@ -366,7 +366,11 @@ test("resolves the approved hint and history colors across all board families", 
   await expect(pawn).toHaveAttribute("aria-disabled", "false", {
     timeout: 30000,
   })
+  await expect(page.locator('[data-hint-kind="move"]')).toHaveCount(6, {
+    timeout: 30000,
+  })
   await pawn.click()
+  await expect(pawn).toHaveAttribute("aria-selected", "true")
   await board.getByRole("gridcell", { name: /^e4,/ }).click()
   await expect
     .poll(async () => (await savedProfile(page)).activeMatch?.cursor)

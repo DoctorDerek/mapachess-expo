@@ -23,8 +23,7 @@ export type MatchMenuSessionActions = Readonly<{
 
 export type MatchMenuDecision = "restart" | "resign" | "draw"
 
-const pairedActionsClassName =
-  "grid min-w-0 grid-cols-2 items-stretch gap-1.5 match-tight:gap-1"
+const pairedActionsClassName = "grid min-w-0 grid-cols-2 items-stretch gap-1.5"
 
 export default function MatchMenuActions({
   actor,
@@ -106,7 +105,7 @@ export default function MatchMenuActions({
       variant="secondary"
     >
       {usesPairedRows && (
-        <Text kind="text" decorative className="match-tight:hidden text-xl">
+        <Text kind="text" decorative className="text-xl">
           ½
         </Text>
       )}
@@ -143,7 +142,7 @@ export default function MatchMenuActions({
       variant="destructive"
     >
       {usesPairedRows && (
-        <Text kind="text" decorative className="match-tight:hidden text-xl">
+        <Text kind="text" decorative className="text-xl">
           ⚑
         </Text>
       )}
@@ -165,7 +164,7 @@ export default function MatchMenuActions({
     )
 
   return (
-    <Group className="match-tight:gap-1 flex min-w-0 flex-col gap-1.5">
+    <Group className="flex min-w-0 flex-col gap-1.5">
       {sessionActions === undefined ? null : (
         <Group className={pairedActionsClassName}>
           {restart}
