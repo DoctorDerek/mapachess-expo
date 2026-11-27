@@ -2,6 +2,7 @@
   "extends": ["//"],
   "tasks": {
     "assets:prepare": {
+      "dependsOn": ["^build"],
       "cache": false,
       "env": ["GHOST_ASSET_KEY_MAPACHESS"],
       "inputs": [
