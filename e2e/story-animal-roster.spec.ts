@@ -1,15 +1,13 @@
 import { expect } from "@playwright/test"
-import {
-  isCharacterArtSource,
-  readCharacterArtPack,
-} from "../apps/web/lib/presentation/characterArtFormat.js"
 import resolveOpponentPresentation from "../packages/match-presentation/src/opponentPresentation.js"
-import { presentationAssetSource } from "../packages/match-presentation/src/presentationAssets.js"
 import { listLegalMatchMoves } from "../packages/match/src/matchMove.js"
 import { reconstructMatchPosition } from "../packages/match/src/matchPosition.js"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
-import { readLicensedPresentationAssetManifest } from "../scripts/ghost-assets/presentationAssetArchive.js"
+import captureCharacterBackground, {
+  expectPackedBackground,
+  trackCharacterArtRequests,
+} from "./captureCharacterBackground.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
@@ -29,13 +27,7 @@ for (const variant of ["standard", "chess960"] as const) {
           : { width: 1280, height: 800 },
       )
       await page.emulateMedia({ reducedMotion: "reduce" })
-      const packedBytes = page
-        .waitForResponse(
-          (response) =>
-            response.url().includes("/presentation-assets/characters/") &&
-            response.url().endsWith(".pack"),
-        )
-        .then((response) => response.body())
+      const packedBackground = captureCharacterBackground(page)
       await page.goto("/")
       const initial = createInitialMapachessPlayerData()
       const index = STOCKFISH_OPPONENTS.findIndex(
@@ -75,21 +67,11 @@ for (const variant of ["standard", "chess960"] as const) {
       const idle = resolveOpponentPresentation(id)
       if (idle.kind !== "sprite")
         throw new Error("Expected the registered Story pose")
-      const sourceCount = (
-        await readLicensedPresentationAssetManifest()
-      ).filter(({ path }) =>
-        isCharacterArtSource(presentationAssetSource(path)),
-      ).length
-      const expectedStrip = readCharacterArtPack(
-        new Uint8Array(await packedBytes).buffer,
-        sourceCount,
-      )(idle.steps[0].animation.sourceId)
-      expect(expectedStrip).toBeDefined()
-      await expect(silhouette).toHaveCSS("filter", "brightness(0)")
-      await expect(silhouette).toHaveCSS(
-        "background-image",
-        `url("${expectedStrip}")`,
+      const expectedBackground = (await packedBackground)(
+        idle.steps[0].animation.sourceId,
       )
+      await expect(silhouette).toHaveCSS("filter", "brightness(0)")
+      await expectPackedBackground(silhouette, [expectedBackground])
       await locked.click()
       await expect(
         challenge.getByRole("radio", {
@@ -123,7 +105,7 @@ for (const variant of ["standard", "chess960"] as const) {
       await expect(selected).toBeFocused()
       const art = selectedRow.getByTestId("animal-artwork")
       await expect(art).toBeVisible()
-      await expect(art).toHaveCSS("background-image", `url("${expectedStrip}")`)
+      await expectPackedBackground(art, [expectedBackground])
       await picker.getByRole("button", { name: "Done", exact: true }).click()
       await page
         .getByRole("button", { name: "Start match", exact: true })
@@ -187,8 +169,7 @@ test("keeps all 26 Challenge names and loads a distant silhouette when it enters
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 })
-  const requests = new Set<string>()
-  page.on("request", (request) => requests.add(new URL(request.url()).pathname))
+  const requests = trackCharacterArtRequests(page)
   await page.goto("/")
   await page.getByRole("button", { name: /Standard Chess Challenge/ }).click()
   await page.getByRole("button", { name: "Change animal", exact: true }).click()
@@ -201,15 +182,21 @@ test("keeps all 26 Challenge names and loads a distant silhouette when it enters
     "background-image",
     "none",
   )
-  const before = new Set(requests)
   await last.scrollIntoViewIfNeeded()
   const silhouette = last.getByTestId("animal-artwork")
   await expect(silhouette).toHaveCSS("filter", "brightness(0)")
-  await expect(silhouette).toHaveCSS("background-image", /url\(/)
-  const artwork = await silhouette.evaluate((element) => {
-    const css = getComputedStyle(element).backgroundImage
-    return new URL(css.slice(5, -2)).pathname
-  })
-  expect(before.has(artwork)).toBe(false)
-  await expect.poll(() => requests.has(artwork)).toBe(true)
+  await expect
+    .poll(() =>
+      silhouette.evaluate((element) =>
+        getComputedStyle(element).backgroundImage.startsWith(
+          'url("data:image/webp;base64,',
+        ),
+      ),
+    )
+    .toBe(true)
+  expect(requests).toEqual([
+    expect.stringMatching(
+      /^\/generated\/presentation-assets\/characters\/[a-f0-9]{64}\.pack$/,
+    ),
+  ])
 })
