@@ -1,7 +1,5 @@
 import { presentationAssetSource } from "@mapachess/match-presentation/presentation-assets"
 
-export const CHARACTER_PACK_ROOT = presentationAssetSource("characters")
-export const CHARACTER_PACK_BOOT = "boot.json"
 export const CHARACTER_PACK_HEADER_BYTES = Uint32Array.BYTES_PER_ELEMENT
 
 export function isCharacterArtSource(source: string): boolean {

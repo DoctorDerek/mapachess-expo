@@ -6,7 +6,7 @@ import { hasPublishedLicensedPresentationAssets } from "../../scripts/ghost-asse
 import {
   CHARACTER_PACK_BOOT,
   CHARACTER_PACK_ROOT,
-} from "./lib/presentation/characterArtFormat"
+} from "./assets/characterArtPaths"
 
 const nextConfig = async (): Promise<NextConfig> => {
   const licensed = await hasPublishedLicensedPresentationAssets()

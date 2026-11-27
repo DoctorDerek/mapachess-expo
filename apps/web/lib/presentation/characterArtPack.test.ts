@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto"
 import { afterEach, expect, it, vi } from "vitest"
 import { presentationAssetSource } from "@mapachess/match-presentation/presentation-assets"
+import { CHARACTER_PACK_ROOT } from "../../assets/characterArtPaths"
 import {
   CHARACTER_PACK_HEADER_BYTES,
-  CHARACTER_PACK_ROOT,
   readCharacterArtPack,
 } from "./characterArtFormat"
 

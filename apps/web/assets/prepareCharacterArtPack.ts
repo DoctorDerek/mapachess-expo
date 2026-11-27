@@ -2,25 +2,14 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
-import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
-import {
-  MAPACHITO_SPRITE_MANIFEST,
-  presentationAssetSource,
-} from "@mapachess/match-presentation/presentation-assets"
-import {
-  DEFAULT_PLAYER_APPEARANCE,
-  heroLayerPaths,
-} from "@mapachess/profile/player-appearance"
 import {
   hasPublishedLicensedPresentationAssets,
   readLicensedPresentationAssetManifest,
 } from "../../../scripts/ghost-assets/presentationAssetArchive.js"
 import {
   CHARACTER_PACK_BOOT,
-  CHARACTER_PACK_HEADER_BYTES,
   CHARACTER_PACK_ROOT,
-  isCharacterArtSource,
-} from "../lib/presentation/characterArtFormat.js"
+} from "./characterArtPaths.js"
 
 async function encodeStrip(
   file: string,
@@ -49,6 +38,17 @@ async function encodeStrip(
 
 async function prepareCharacterArtPack(): Promise<void> {
   if (!(await hasPublishedLicensedPresentationAssets())) return
+  const [
+    { default: resolveOpponentPresentation },
+    { MAPACHITO_SPRITE_MANIFEST, presentationAssetSource },
+    { DEFAULT_PLAYER_APPEARANCE, heroLayerPaths },
+    { CHARACTER_PACK_HEADER_BYTES, isCharacterArtSource },
+  ] = await Promise.all([
+    import("@mapachess/match-presentation/opponent-presentation"),
+    import("@mapachess/match-presentation/presentation-assets"),
+    import("@mapachess/profile/player-appearance"),
+    import("../lib/presentation/characterArtFormat.js"),
+  ])
   const publicRoot = fileURLToPath(new URL("../public/", import.meta.url))
   const files = (await readLicensedPresentationAssetManifest()).filter(
     ({ path }) => isCharacterArtSource(presentationAssetSource(path)),
