@@ -63,7 +63,8 @@ export default function MatchMenuActions({
   const outcomeActionSizing = usesPairedRows
     ? {
         density: "compact" as const,
-        className: "flex flex-row items-center justify-center gap-2 text-base",
+        className:
+          "flex min-w-min flex-1 flex-row items-center justify-center gap-1 text-base",
       }
     : {}
   const restart = sessionActions && (
@@ -171,7 +172,7 @@ export default function MatchMenuActions({
           {returnToMenu}
         </Group>
       )}
-      <Group className={pairedActionsClassName}>
+      <Group className="flex min-w-0 flex-wrap gap-1.5">
         {offerDraw}
         {resign}
       </Group>
