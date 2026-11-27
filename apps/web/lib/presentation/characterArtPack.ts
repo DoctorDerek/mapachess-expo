@@ -4,6 +4,7 @@ import {
   isCharacterArtSource,
   readCharacterArtPack,
 } from "./characterArtFormat"
+import waitForFirstContentfulPaint from "./waitForFirstContentfulPaint"
 
 type CharacterArtBoot = Readonly<{
   url: string
@@ -81,13 +82,7 @@ export function preparedArtSource(source: string): string | undefined {
 }
 
 async function loadPack(descriptor: CharacterArtBoot): Promise<void> {
-  if (
-    document.visibilityState === "visible" &&
-    performance.getEntriesByName("first-contentful-paint").length === 0
-  )
-    await new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-    )
+  await waitForFirstContentfulPaint()
   const cache =
     typeof caches === "undefined"
       ? undefined
