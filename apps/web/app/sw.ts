@@ -7,7 +7,7 @@ import {
 } from "serwist"
 import partitionOfflineAssets, {
   SELECTED_ART_CACHE,
-} from "../lib/offline/partitionOfflineAssets"
+} from "@/lib/offline/partitionOfflineAssets"
 
 declare const self: ServiceWorkerGlobalScope &
   SerwistGlobalConfig & { __SW_MANIFEST?: (PrecacheEntry | string)[] }

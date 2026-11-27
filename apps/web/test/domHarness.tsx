@@ -7,7 +7,7 @@ import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import createInitialPlayerData, {
   type MapachessPlayerData,
 } from "@mapachess/profile/player-data"
-import * as characterArt from "../lib/presentation/characterArtPack"
+import * as characterArt from "@/lib/presentation/characterArtPack"
 import IndexedDbDurableStore from "../lib/profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../lib/profile/openWebProfileRuntime"
 import webSha256 from "../lib/profile/webSha256"

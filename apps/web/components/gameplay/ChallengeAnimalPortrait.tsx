@@ -5,6 +5,7 @@ import type { CSSProperties } from "react"
 import animalAttentionMachine from "@mapachess/match-presentation/animal-attention-machine"
 import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
+import useCharacterArtPack from "@/lib/presentation/useCharacterArtPack"
 import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import {
   battleSpriteFrameStyle,
@@ -13,7 +14,6 @@ import {
   type BattleSpriteStep,
 } from "../../lib/presentation/battleSpriteFrames"
 import createPresentationImages from "../../lib/presentation/presentationImages"
-import useCharacterArtPack from "../../lib/presentation/useCharacterArtPack"
 import resolveWebOpponentPresentation, {
   resolveWebOpponentAttentionSequence,
 } from "../../lib/presentation/webOpponentPresentation"

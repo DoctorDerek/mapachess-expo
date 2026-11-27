@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { createSerwistRoute } from "@serwist/turbopack"
-import { CHARACTER_PACK_ROOT } from "../../assets/characterArtPaths"
+import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
 
 const route = createSerwistRoute({
   swSrc: "app/sw.ts",

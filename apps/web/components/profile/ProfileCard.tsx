@@ -11,7 +11,7 @@ import SharedProfileCard from "@mapachess/application-ui/profile-card"
 import type { PlayerAppearance } from "@mapachess/profile/player-appearance"
 import type { MapachessPlayerData } from "@mapachess/profile/player-data"
 import type { CardRatingContext } from "@mapachess/profile/rating-context"
-import { prepareCharacterArtPack } from "../../lib/presentation/characterArtPack"
+import { prepareCharacterArtPack } from "@/lib/presentation/characterArtPack"
 import {
   drawCardCharacters,
   drawProfileCard,

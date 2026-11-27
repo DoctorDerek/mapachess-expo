@@ -1,5 +1,5 @@
-import { CHARACTER_PACK_ROOT } from "../../assets/characterArtPaths"
-import { SELECTED_ART_CACHE } from "../offline/partitionOfflineAssets"
+import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
+import { SELECTED_ART_CACHE } from "@/lib/offline/partitionOfflineAssets"
 import {
   isCharacterArtSource,
   readCharacterArtPack,

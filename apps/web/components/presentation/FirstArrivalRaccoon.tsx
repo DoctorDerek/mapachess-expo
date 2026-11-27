@@ -2,12 +2,12 @@
 
 import cx from "classix"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { preparedArtSource } from "@/lib/presentation/characterArtPack"
 import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import {
   battleSpriteFrameStyle,
   SPRITE_FRAME_CLASSES,
 } from "../../lib/presentation/battleSpriteFrames"
-import { preparedArtSource } from "../../lib/presentation/characterArtPack"
 import {
   LICENSED_PRESENTATION_ASSETS_ENABLED,
   MAPACHITO_SPRITE_MANIFEST,

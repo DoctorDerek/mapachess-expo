@@ -1,5 +1,5 @@
 import type { PrecacheEntry } from "serwist"
-import { CHARACTER_PACK_ROOT } from "../../assets/characterArtPaths"
+import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
 
 export const SELECTED_ART_CACHE = "mapachess-selected-art"
 

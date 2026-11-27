@@ -6,12 +6,12 @@ import {
   heroLayerPaths,
   type PlayerAppearance,
 } from "@mapachess/profile/player-appearance"
-import { preparedArtSource } from "../../lib/presentation/characterArtPack"
+import { preparedArtSource } from "@/lib/presentation/characterArtPack"
+import useCharacterArtPack from "@/lib/presentation/useCharacterArtPack"
 import {
   DRESSING_CATEGORIES,
   type DressingCategory,
 } from "../../lib/presentation/dressingRoomChoices"
-import useCharacterArtPack from "../../lib/presentation/useCharacterArtPack"
 import { presentationAssetSource } from "../../lib/presentation/webPresentationAssets"
 import ChallengeAnimalPortrait from "../gameplay/ChallengeAnimalPortrait"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
