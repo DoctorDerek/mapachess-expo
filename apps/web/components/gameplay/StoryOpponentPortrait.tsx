@@ -2,6 +2,8 @@ import cx from "classix"
 import type { CSSProperties } from "react"
 import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
 import type { StockfishOpponentDefinition } from "@mapachess/match/stockfish-opponent"
+import { preparedArtSource } from "../../lib/presentation/characterArtPack"
+import useCharacterArtPack from "../../lib/presentation/useCharacterArtPack"
 import resolveWebOpponentPresentation from "../../lib/presentation/webOpponentPresentation"
 import { usePortraitViewport } from "./PortraitViewport"
 
@@ -20,6 +22,9 @@ export default function StoryOpponentPortrait({
   const presentation = resolveWebOpponentPresentation(opponent.id)
   const animation =
     presentation.kind === "sprite" ? presentation.steps[0].animation : null
+  useCharacterArtPack(near && animation !== null)
+  const source =
+    near && animation ? preparedArtSource(animation.sourceId) : undefined
 
   const scale = presentation.layout.standaloneScale ?? STANDALONE_ANIMAL_SCALE
   const pixelSize = `${scale}px`
@@ -61,9 +66,8 @@ export default function StoryOpponentPortrait({
           )}
           style={
             {
-              "--portrait-image": near
-                ? `url("${animation.sourceId}")`
-                : undefined,
+              "--portrait-image":
+                source === undefined ? undefined : `url("${source}")`,
               "--portrait-position": `${length(-animation.geometry.visibleX)} ${length(-animation.geometry.visibleY)}`,
               "--portrait-size": `${length(animation.geometry.frameWidth * animation.frameCount)} ${length(animation.geometry.frameHeight)}`,
               "--portrait-width": length(animation.geometry.visibleWidth),

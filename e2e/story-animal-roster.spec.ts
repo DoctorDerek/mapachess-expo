@@ -1,8 +1,15 @@
 import { expect } from "@playwright/test"
+import {
+  isCharacterArtSource,
+  readCharacterArtPack,
+} from "../apps/web/lib/presentation/characterArtFormat.js"
+import resolveOpponentPresentation from "../packages/match-presentation/src/opponentPresentation.js"
+import { presentationAssetSource } from "../packages/match-presentation/src/presentationAssets.js"
 import { listLegalMatchMoves } from "../packages/match/src/matchMove.js"
 import { reconstructMatchPosition } from "../packages/match/src/matchPosition.js"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import { readLicensedPresentationAssetManifest } from "../scripts/ghost-assets/presentationAssetArchive.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import savedProfile from "./savedProfile.js"
@@ -22,6 +29,13 @@ for (const variant of ["standard", "chess960"] as const) {
           : { width: 1280, height: 800 },
       )
       await page.emulateMedia({ reducedMotion: "reduce" })
+      const packedBytes = page
+        .waitForResponse(
+          (response) =>
+            response.url().includes("/presentation-assets/characters/") &&
+            response.url().endsWith(".pack"),
+        )
+        .then((response) => response.body())
       await page.goto("/")
       const initial = createInitialMapachessPlayerData()
       const index = STOCKFISH_OPPONENTS.findIndex(
@@ -58,10 +72,23 @@ for (const variant of ["standard", "chess960"] as const) {
       await expect(locked.getByRole("radio")).toHaveCount(0)
       await locked.scrollIntoViewIfNeeded()
       const silhouette = locked.getByTestId("animal-artwork")
+      const idle = resolveOpponentPresentation(id)
+      if (idle.kind !== "sprite")
+        throw new Error("Expected the registered Story pose")
+      const sourceCount = (
+        await readLicensedPresentationAssetManifest()
+      ).filter(({ path }) =>
+        isCharacterArtSource(presentationAssetSource(path)),
+      ).length
+      const expectedStrip = readCharacterArtPack(
+        new Uint8Array(await packedBytes).buffer,
+        sourceCount,
+      )(idle.steps[0].animation.sourceId)
+      expect(expectedStrip).toBeDefined()
       await expect(silhouette).toHaveCSS("filter", "brightness(0)")
       await expect(silhouette).toHaveCSS(
         "background-image",
-        new RegExp("/battle/" + name.toLowerCase() + "/"),
+        `url("${expectedStrip}")`,
       )
       await locked.click()
       await expect(
@@ -96,10 +123,7 @@ for (const variant of ["standard", "chess960"] as const) {
       await expect(selected).toBeFocused()
       const art = selectedRow.getByTestId("animal-artwork")
       await expect(art).toBeVisible()
-      await expect(art).toHaveCSS(
-        "background-image",
-        new RegExp("/battle/" + name.toLowerCase() + "/"),
-      )
+      await expect(art).toHaveCSS("background-image", `url("${expectedStrip}")`)
       await picker.getByRole("button", { name: "Done", exact: true }).click()
       await page
         .getByRole("button", { name: "Start match", exact: true })
