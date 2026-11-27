@@ -1,11 +1,12 @@
 import { expect } from "@playwright/test"
-import resolveOpponentPresentation from "../packages/match-presentation/src/opponentPresentation.js"
+import resolveOpponentPresentation from "@mapachess/match-presentation/opponent-presentation"
 import { listLegalMatchMoves } from "../packages/match/src/matchMove.js"
 import { reconstructMatchPosition } from "../packages/match/src/matchPosition.js"
 import { STOCKFISH_OPPONENTS } from "../packages/match/src/stockfishOpponent.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import captureCharacterBackground, {
   expectPackedBackground,
+  expectSingleCharacterArtRequest,
   trackCharacterArtRequests,
 } from "./captureCharacterBackground.js"
 import { test } from "./fixtures.js"
@@ -194,9 +195,5 @@ test("keeps all 26 Challenge names and loads a distant silhouette when it enters
       ),
     )
     .toBe(true)
-  expect(requests).toEqual([
-    expect.stringMatching(
-      /^\/generated\/presentation-assets\/characters\/[a-f0-9]{64}\.pack$/,
-    ),
-  ])
+  expectSingleCharacterArtRequest(requests)
 })

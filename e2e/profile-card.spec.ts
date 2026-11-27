@@ -1,17 +1,18 @@
 import { readFile } from "node:fs/promises"
 import { expect, type Page } from "@playwright/test"
 import {
+  AVAILABLE_CHICKEN_SPRITE_SOURCES,
+  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
+} from "@mapachess/match-presentation/presentation-assets"
+import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
 } from "../apps/web/lib/presentation/profileCardFormat.js"
 import loadCatalog from "../packages/localization/src/catalog.js"
-import {
-  AVAILABLE_CHICKEN_SPRITE_SOURCES,
-  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
-} from "../packages/match-presentation/src/presentationAssets.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
 import captureCharacterBackground, {
   expectPackedBackground,
+  expectSingleCharacterArtRequest,
   trackCharacterArtRequests,
 } from "./captureCharacterBackground.js"
 import { test } from "./fixtures.js"
@@ -506,11 +507,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   const pngPath = testInfo.outputPath("profile.png")
   await (await pngDownload).saveAs(pngPath)
   const png = await readFile(pngPath)
-  expect(characterRequests).toEqual([
-    expect.stringMatching(
-      /^\/generated\/presentation-assets\/characters\/[a-f0-9]{64}\.pack$/,
-    ),
-  ])
+  expectSingleCharacterArtRequest(characterRequests)
   expect(png.subarray(0, 8)).toEqual(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   )

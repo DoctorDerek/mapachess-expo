@@ -1,11 +1,21 @@
 import { expect, type Locator, type Page } from "@playwright/test"
-import { CHARACTER_PACK_ROOT } from "../apps/web/assets/characterArtPaths.js"
+import { presentationAssetSource } from "@mapachess/match-presentation/presentation-assets"
+import { CHARACTER_PACK_ROOT } from "@/apps/web/assets/characterArtPaths.js"
 import {
   isCharacterArtSource,
   readCharacterArtPack,
-} from "../apps/web/lib/presentation/characterArtFormat.js"
-import { presentationAssetSource } from "../packages/match-presentation/src/presentationAssets.js"
-import { readLicensedPresentationAssetManifest } from "../scripts/ghost-assets/presentationAssetArchive.js"
+} from "@/apps/web/lib/presentation/characterArtFormat.js"
+import { readLicensedPresentationAssetManifest } from "@/scripts/ghost-assets/presentationAssetArchive.js"
+
+const characterPackPath = new RegExp(
+  `^${RegExp.escape(CHARACTER_PACK_ROOT)}/[a-f0-9]{64}\\.pack$`,
+)
+
+export function expectSingleCharacterArtRequest(
+  paths: readonly string[],
+): void {
+  expect(paths).toEqual([expect.stringMatching(characterPackPath)])
+}
 
 export function trackCharacterArtRequests(page: Page): string[] {
   const paths: string[] = []
@@ -46,9 +56,7 @@ export default async function captureCharacterBackground(
   const [response, files] = await Promise.all([
     page.waitForResponse((candidate) => {
       const path = new URL(candidate.url()).pathname
-      return (
-        path.startsWith(CHARACTER_PACK_ROOT + "/") && path.endsWith(".pack")
-      )
+      return characterPackPath.test(path)
     }),
     readLicensedPresentationAssetManifest(),
   ])

@@ -42,6 +42,9 @@ importers:
       '@ianvs/prettier-plugin-sort-imports':
         specifier: ^4
         version: 4.7.1(prettier@3.9.6)(supports-color@8.1.1)
+      '@mapachess/match-presentation':
+        specifier: workspace:*
+        version: link:packages/match-presentation
       '@playwright/test':
         specifier: ^1
         version: 1.63.0
