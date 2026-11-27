@@ -5,7 +5,15 @@ import {
   PROFILE_CARD_LAYOUT,
 } from "../apps/web/lib/presentation/profileCardFormat.js"
 import loadCatalog from "../packages/localization/src/catalog.js"
+import {
+  AVAILABLE_CHICKEN_SPRITE_SOURCES,
+  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
+} from "../packages/match-presentation/src/presentationAssets.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import captureCharacterBackground, {
+  expectPackedBackground,
+  trackCharacterArtRequests,
+} from "./captureCharacterBackground.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import chooseDressingCategory, {
@@ -237,6 +245,7 @@ for (const mode of [
   }) => {
     test.setTimeout(90000)
     await page.emulateMedia({ reducedMotion: "reduce" })
+    const packedBackground = captureCharacterBackground(page)
     await page.goto("/")
     await importPlayerData(page, earnedChickenProfile)
     await page
@@ -260,14 +269,16 @@ for (const mode of [
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({
       timeout: 30000,
     })
-    await expect(
-      page
-        .getByRole("img", { name: /^Mapachito:/ })
-        .getByTestId("animal-artwork")
-        .last(),
-    ).toHaveCSS(
-      "background-image",
-      mode.endsWith("Story") ? /chicken_/ : /raccoon_/,
+    const playerArt = page
+      .getByRole("img", { name: /^Mapachito:/ })
+      .getByTestId("animal-artwork")
+      .last()
+    const playerStrips = mode.endsWith("Story")
+      ? AVAILABLE_CHICKEN_SPRITE_SOURCES
+      : AVAILABLE_MAPACHITO_SPRITE_SOURCES
+    await expectPackedBackground(
+      playerArt,
+      playerStrips.map(await packedBackground),
     )
     await expect(
       page.getByRole("button", {
@@ -461,16 +472,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
 }, testInfo) => {
   test.setTimeout(90000)
   const errors: string[] = []
-  const characterRequests: string[] = []
-  page.on("request", (request) => {
-    const path = new URL(request.url()).pathname
-    if (
-      /^\/generated\/presentation-assets\/(?:battle\/|profile\/hero\/|characters\/)/.test(
-        path,
-      )
-    )
-      characterRequests.push(path)
-  })
+  const characterRequests = trackCharacterArtRequests(page)
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
   await page
