@@ -99,12 +99,8 @@ async function loadPack(descriptor: CharacterArtBoot): Promise<void> {
   })
   if (!response.ok) throw new Error("Could not load character art.")
   const copy = cache ? response.clone() : undefined
-  const lookup = readCharacterArtPack(
-    await response.arrayBuffer(),
-    descriptor.count,
-  )
-  if (copy) await cache?.put(descriptor.url, copy).catch(() => undefined)
-  packed = lookup
+  packed = readCharacterArtPack(await response.arrayBuffer(), descriptor.count)
+  if (copy) void cache?.put(descriptor.url, copy).catch(() => undefined)
 }
 
 export function prepareCharacterArtPack(): Promise<void> {

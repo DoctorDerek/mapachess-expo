@@ -112,6 +112,37 @@ it("shares acquisition, retries a failure, and reopens from verified storage wit
   expect(fetch).toHaveBeenCalledTimes(2)
 })
 
+it("serves verified art while persistence is pending and after a quota failure", async () => {
+  vi.stubEnv("MAPACHESS_CHARACTER_ART", descriptor)
+  vi.stubGlobal("document", { visibilityState: "hidden" })
+  const writing = Promise.withResolvers<void>()
+  const stored = Promise.withResolvers<void>()
+  vi.stubGlobal("caches", {
+    open: async () => ({
+      match: async () => undefined,
+      put: () => {
+        writing.resolve()
+        return stored.promise
+      },
+    }),
+  })
+  const fetch = vi.fn().mockResolvedValue(new Response(bytes))
+  vi.stubGlobal("fetch", fetch)
+  const art = await import("./characterArtPack")
+  const drawing = art.resolveArtSource(presentationAssetSource(hero))
+  await writing.promise
+  try {
+    expect(art.hasCharacterArtPack()).toBe(true)
+    await expect(drawing).resolves.toBe("data:image/webp;base64,AQID")
+  } finally {
+    stored.reject(new Error("Storage quota exhausted"))
+  }
+  await expect(
+    art.resolveArtSource(presentationAssetSource(animal)),
+  ).resolves.toBe("data:image/webp;base64,AQID")
+  expect(fetch).toHaveBeenCalledOnce()
+})
+
 it("leaves public builds without a character download and passes other artwork through", async () => {
   vi.stubEnv("MAPACHESS_CHARACTER_ART", "")
   const fetch = vi.fn()
