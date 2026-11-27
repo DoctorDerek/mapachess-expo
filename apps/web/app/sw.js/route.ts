@@ -8,7 +8,8 @@ const route = createSerwistRoute({
   globPatterns: [
     ".next/static/**/*.{js,css,woff2,png,svg,webp}",
     "public/generated/first-arrival/*",
-    "public/generated/presentation-assets/**/*.{png,svg,webp}",
+    "public/generated/presentation-assets/coach/**/*.{png,svg,webp}",
+    "public/generated/presentation-assets/characters/*.pack",
     "public/chess-assets/**/*.{png,svg}",
     "public/generated/chess-assets/**/*.{png,svg}",
     "public/input-prompts/**/*.{png,svg}",
