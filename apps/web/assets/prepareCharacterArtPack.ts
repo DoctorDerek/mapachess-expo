@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 import {
   hasPublishedLicensedPresentationAssets,
   readLicensedPresentationAssetManifest,
-} from "../../../scripts/ghost-assets/presentationAssetArchive.js"
+} from "@repo/ghost-assets/presentationAssetArchive"
 import {
   CHARACTER_PACK_BOOT,
   CHARACTER_PACK_ROOT,
@@ -47,7 +47,7 @@ async function prepareCharacterArtPack(): Promise<void> {
     import("@mapachess/match-presentation/opponent-presentation"),
     import("@mapachess/match-presentation/presentation-assets"),
     import("@mapachess/profile/player-appearance"),
-    import("../lib/presentation/characterArtFormat.js"),
+    import("@/lib/presentation/characterArtFormat"),
   ])
   const publicRoot = fileURLToPath(new URL("../public/", import.meta.url))
   const files = (await readLicensedPresentationAssetManifest()).filter(

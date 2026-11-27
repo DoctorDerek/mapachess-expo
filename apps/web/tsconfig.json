@@ -5,7 +5,10 @@
     "jsx": "preserve",
     "lib": ["dom", "dom.iterable", "esnext"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@repo/ghost-assets/presentationAssetArchive": [
+        "../../scripts/ghost-assets/presentationAssetArchive.ts"
+      ]
     },
     "plugins": [
       {
