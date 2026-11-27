@@ -7,6 +7,7 @@ import {
   battleSpriteFrameStyle,
   SPRITE_FRAME_CLASSES,
 } from "../../lib/presentation/battleSpriteFrames"
+import { preparedArtSource } from "../../lib/presentation/characterArtPack"
 import {
   LICENSED_PRESENTATION_ASSETS_ENABLED,
   MAPACHITO_SPRITE_MANIFEST,
@@ -21,6 +22,8 @@ export default function FirstArrivalRaccoon() {
   const [finished, setFinished] = useState(false)
   useEffect(() => {
     if (!LICENSED_PRESENTATION_ASSETS_ENABLED) return
+    const source = preparedArtSource(run.sourceId)
+    if (source === undefined) return
     let disposed = false
     const image = new Image()
     image.onload = () => {
@@ -29,7 +32,7 @@ export default function FirstArrivalRaccoon() {
     image.onerror = () => {
       if (!disposed) setFinished(true)
     }
-    image.src = run.sourceId
+    image.src = source
     return () => {
       disposed = true
       image.onload = null

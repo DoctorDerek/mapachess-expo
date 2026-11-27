@@ -44,7 +44,7 @@ vi.mock("@rive-app/canvas-lite", () => ({
     awaitInstance: () => runtime.gate.promise,
   },
 }))
-installDomHarness()
+installDomHarness({ stubCharacterTransport: true })
 afterAll(() => vi.unstubAllEnvs())
 beforeEach(() => {
   runtime.instances.length = 0
