@@ -7,11 +7,14 @@ import SerializedPlayerDataStore from "@mapachess/profile/durable-store"
 import createInitialPlayerData, {
   type MapachessPlayerData,
 } from "@mapachess/profile/player-data"
+import * as characterArt from "../lib/presentation/characterArtPack"
 import IndexedDbDurableStore from "../lib/profile/IndexedDbDurableStore"
 import openWebProfileRuntime from "../lib/profile/openWebProfileRuntime"
 import webSha256 from "../lib/profile/webSha256"
 
-export function installDomHarness(): void {
+export function installDomHarness({
+  stubCharacterTransport = false,
+} = {}): void {
   const polyfills = [
     [HTMLElement.prototype, "scrollIntoView"],
     [HTMLElement.prototype, "checkVisibility"],
@@ -24,6 +27,14 @@ export function installDomHarness(): void {
     descriptor: Object.getOwnPropertyDescriptor(target, name),
   }))
   beforeEach(() => {
+    if (stubCharacterTransport) {
+      vi.spyOn(characterArt, "preparedArtSource").mockImplementation(
+        (source) => source,
+      )
+      vi.spyOn(characterArt, "resolveArtSource").mockImplementation(
+        async (source) => source,
+      )
+    }
     vi.stubGlobal("crypto", webcrypto)
     vi.stubGlobal(
       "fetch",

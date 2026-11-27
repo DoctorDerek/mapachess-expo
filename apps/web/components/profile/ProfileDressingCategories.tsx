@@ -6,10 +6,12 @@ import {
   heroLayerPaths,
   type PlayerAppearance,
 } from "@mapachess/profile/player-appearance"
+import { preparedArtSource } from "../../lib/presentation/characterArtPack"
 import {
   DRESSING_CATEGORIES,
   type DressingCategory,
 } from "../../lib/presentation/dressingRoomChoices"
+import useCharacterArtPack from "../../lib/presentation/useCharacterArtPack"
 import { presentationAssetSource } from "../../lib/presentation/webPresentationAssets"
 import ChallengeAnimalPortrait from "../gameplay/ChallengeAnimalPortrait"
 import { useMapachessCopy } from "./MapachessLocaleProvider"
@@ -67,7 +69,7 @@ function CategoryArtwork({
       {layers.map((path) => (
         <image
           key={path}
-          href={presentationAssetSource(path)}
+          href={preparedArtSource(presentationAssetSource(path))}
           width={HERO_IDLE_GEOMETRY.width * HERO_IDLE_GEOMETRY.frameCount}
           height={HERO_IDLE_GEOMETRY.height}
         />
@@ -92,6 +94,7 @@ export default function ProfileDressingCategories({
   onSelect: (category: DressingCategory) => void
 }>) {
   const copy = useMapachessCopy()
+  useCharacterArtPack(active)
   return (
     <div
       role="group"
