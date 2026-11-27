@@ -38,6 +38,7 @@
     "@axe-core/playwright": "^4",
     "@eslint/js": "^10",
     "@ianvs/prettier-plugin-sort-imports": "^4",
+    "@mapachess/match-presentation": "workspace:*",
     "@playwright/test": "^1",
     "@types/node": "^26",
     "@vitest/coverage-v8": "^4",

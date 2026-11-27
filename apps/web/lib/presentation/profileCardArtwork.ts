@@ -7,6 +7,7 @@ import {
 } from "@mapachess/profile/hero-catalog"
 import { heroLayerPaths } from "@mapachess/profile/player-appearance"
 import type { CardInput } from "@mapachess/profile/profile-card-model"
+import { resolveArtSource } from "./characterArtPack"
 import medalArtworkSource from "./medalArtwork"
 import {
   PROFILE_CARD_HEIGHT,
@@ -53,13 +54,15 @@ const images = new Map<string, Promise<HTMLImageElement>>()
 function loadImage(path: string): Promise<HTMLImageElement> {
   const cached = images.get(path)
   if (cached !== undefined) return cached
-  const image = new Image()
-  image.src = path
-  const ready = image
-    .decode()
-    .then(() => image)
+  const ready = resolveArtSource(path)
+    .then(async (source) => {
+      const image = new Image()
+      image.src = source
+      await image.decode()
+      return image
+    })
     .catch((error) => {
-      images.delete(path)
+      if (images.get(path) === ready) images.delete(path)
       throw error
     })
   if (images.size >= 96) images.delete(images.keys().next().value ?? "")

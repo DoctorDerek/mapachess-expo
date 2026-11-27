@@ -407,7 +407,7 @@ describe("battle frame and clip contracts", () => {
     const step = presentation.steps[0]
     const initial = battleSpriteFrameStyle(step, false)
     expect(initial).toMatchObject({
-      "--sprite-background-image": `url("${step.animation.sourceId}")`,
+      "--sprite-background-image": "none",
       "--sprite-frame": "0% 0",
       "--sprite-background-size": `${step.animation.frameCount * 100}% 100%`,
       "--sprite-height": `calc(${step.animation.geometry.frameHeight} * var(--sprite-pixel-size, calc(1px * var(--sprite-scale))))`,

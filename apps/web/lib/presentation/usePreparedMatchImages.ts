@@ -7,6 +7,7 @@ import {
 } from "@mapachess/match-presentation/coach-portrait"
 import type { ImplementedDurableOpponentId } from "@mapachess/match/durable-match-record"
 import type { StockfishOpponentId } from "@mapachess/match/stockfish-opponent"
+import { isCharacterArtSource } from "./characterArtFormat"
 import { useCoachCollection } from "./CoachCollectionContext"
 import createPresentationImages from "./presentationImages"
 import resolveWebOpponentPresentation from "./webOpponentPresentation"
@@ -42,7 +43,7 @@ export default function usePreparedMatchImages(
     [opponentId, playerAnimal, collection],
   )
   const [images] = useState(() => createPresentationImages())
-  for (const source of sources)
+  for (const source of sources.filter((path) => !isCharacterArtSource(path)))
     preload(source, { as: "image", fetchPriority: "low" })
 
   useEffect(() => {

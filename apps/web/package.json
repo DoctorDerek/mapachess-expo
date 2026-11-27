@@ -5,7 +5,7 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "assets:prepare": "node --import jiti/register ../../scripts/decrypt-assets.ts",
+    "assets:prepare": "node --import jiti/register ../../scripts/decrypt-assets.ts && node ../../scripts/runTypeScript.mjs assets/prepareCharacterArtPack.ts",
     "build": "pnpm --workspace-root stockfish:provision:web && next build",
     "dev": "next dev",
     "prebuild": "pnpm run assets:prepare",
@@ -51,6 +51,7 @@
     "fake-indexeddb": "^6",
     "happy-dom": "^21",
     "postcss": "^8",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "vite": "^8"
   },

@@ -1,11 +1,20 @@
 import { readFile } from "node:fs/promises"
 import { expect, type Page } from "@playwright/test"
 import {
+  AVAILABLE_CHICKEN_SPRITE_SOURCES,
+  AVAILABLE_MAPACHITO_SPRITE_SOURCES,
+} from "@mapachess/match-presentation/presentation-assets"
+import {
   PROFILE_CARD_HEIGHT,
   PROFILE_CARD_LAYOUT,
 } from "../apps/web/lib/presentation/profileCardFormat.js"
 import loadCatalog from "../packages/localization/src/catalog.js"
 import createInitialMapachessPlayerData from "../packages/profile/src/playerData.js"
+import captureCharacterBackground, {
+  expectPackedBackground,
+  expectSingleCharacterArtRequest,
+  trackCharacterArtRequests,
+} from "./captureCharacterBackground.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
 import chooseDressingCategory, {
@@ -237,6 +246,7 @@ for (const mode of [
   }) => {
     test.setTimeout(90000)
     await page.emulateMedia({ reducedMotion: "reduce" })
+    const packedBackground = captureCharacterBackground(page)
     await page.goto("/")
     await importPlayerData(page, earnedChickenProfile)
     await page
@@ -260,14 +270,16 @@ for (const mode of [
     await expect(page.getByRole("grid", { name: /Chessboard/ })).toBeVisible({
       timeout: 30000,
     })
-    await expect(
-      page
-        .getByRole("img", { name: /^Mapachito:/ })
-        .getByTestId("animal-artwork")
-        .last(),
-    ).toHaveCSS(
-      "background-image",
-      mode.endsWith("Story") ? /chicken_/ : /raccoon_/,
+    const playerArt = page
+      .getByRole("img", { name: /^Mapachito:/ })
+      .getByTestId("animal-artwork")
+      .last()
+    const playerStrips = mode.endsWith("Story")
+      ? AVAILABLE_CHICKEN_SPRITE_SOURCES
+      : AVAILABLE_MAPACHITO_SPRITE_SOURCES
+    await expectPackedBackground(
+      playerArt,
+      playerStrips.map(await packedBackground),
     )
     await expect(
       page.getByRole("button", {
@@ -461,6 +473,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
 }, testInfo) => {
   test.setTimeout(90000)
   const errors: string[] = []
+  const characterRequests = trackCharacterArtRequests(page)
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
   await page
@@ -494,6 +507,7 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   const pngPath = testInfo.outputPath("profile.png")
   await (await pngDownload).saveAs(pngPath)
   const png = await readFile(pngPath)
+  expectSingleCharacterArtRequest(characterRequests)
   expect(png.subarray(0, 8)).toEqual(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   )
@@ -693,10 +707,11 @@ test("retries failed artwork through the visible recovery control", async ({
   page,
 }) => {
   let failedAsset: string | undefined
+  let unavailable = true
   await page.route(
-    "**/generated/presentation-assets/profile/hero/**",
+    "**/generated/presentation-assets/characters/*.pack",
     async (route) => {
-      if (failedAsset === undefined) {
+      if (unavailable) {
         failedAsset = route.request().url()
         await route.fulfill({
           status: 503,
@@ -708,11 +723,17 @@ test("retries failed artwork through the visible recovery control", async ({
     },
   )
   await page.goto("/")
+  const profile = createInitialMapachessPlayerData()
+  await importPlayerData(page, {
+    ...profile,
+    appearance: { ...profile.appearance, skin: 4 },
+  })
   const failure = page.getByText("Profile artwork could not load.", {
     exact: true,
   })
   await expect(failure).toBeVisible()
   expect(failedAsset).toBeDefined()
+  unavailable = false
   await page.getByRole("button", { name: "Retry artwork", exact: true }).click()
   await expect(failure).toBeHidden()
   await expect

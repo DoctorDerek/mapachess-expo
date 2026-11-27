@@ -21,7 +21,7 @@ vi.mock("motion/react", async (original) => ({
   useReducedMotion: () => playback.reduced,
 }))
 afterAll(() => vi.unstubAllEnvs())
-installDomHarness()
+installDomHarness({ stubCharacterTransport: true })
 const copy = loadCatalog("en")
 
 function motions() {

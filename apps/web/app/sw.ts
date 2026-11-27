@@ -5,11 +5,12 @@ import {
   type PrecacheEntry,
   type SerwistGlobalConfig,
 } from "serwist"
-import partitionOfflineAssets from "../lib/offline/partitionOfflineAssets"
+import partitionOfflineAssets, {
+  SELECTED_ART_CACHE,
+} from "@/lib/offline/partitionOfflineAssets"
 
 declare const self: ServiceWorkerGlobalScope &
   SerwistGlobalConfig & { __SW_MANIFEST?: (PrecacheEntry | string)[] }
-const artCache = "mapachess-selected-art"
 const { core, art: artKeys } = partitionOfflineAssets(
   self.__SW_MANIFEST ?? [],
   self.location.origin,
@@ -48,7 +49,7 @@ const worker = new Serwist({
         artKeys.has(url.pathname) &&
         [...url.searchParams.keys()].every((key) => key === "dpl"),
       handler: new CacheFirst({
-        cacheName: artCache,
+        cacheName: SELECTED_ART_CACHE,
         plugins: [
           {
             cacheKeyWillBeUsed: async ({ request }) =>
@@ -66,7 +67,7 @@ const worker = new Serwist({
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(artCache)
+      const cache = await caches.open(SELECTED_ART_CACHE)
       for (const key of await cache.keys()) {
         const path = new URL(key.url).pathname
         if (artKeys.get(path) !== key.url) await cache.delete(key)

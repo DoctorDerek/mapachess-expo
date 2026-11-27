@@ -23,6 +23,7 @@ const ROOT_INPUTS = [
   "ghost_assets/chess-assets.manifest.json",
   "ghost_assets/backterria-toffeecraft-chess.zip",
   "scripts/decrypt-assets.ts",
+  "scripts/runTypeScript.mjs",
   "scripts/ghost-assets/presentationAssetArchive.ts",
   "scripts/ghost-assets/licensedAssetBundles.ts",
   "tsconfig.json",

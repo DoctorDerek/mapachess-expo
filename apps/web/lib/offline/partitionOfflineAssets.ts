@@ -1,4 +1,7 @@
 import type { PrecacheEntry } from "serwist"
+import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
+
+export const SELECTED_ART_CACHE = "mapachess-selected-art"
 
 const isOptionalArtwork = (path: string) =>
   path.startsWith("/generated/presentation-assets/") ||
@@ -21,7 +24,11 @@ export default function partitionOfflineAssets(
       core.push(entry)
       continue
     }
-    if (typeof entry !== "string" && entry.revision)
+    if (
+      typeof entry !== "string" &&
+      entry.revision &&
+      !url.pathname.startsWith(CHARACTER_PACK_ROOT + "/")
+    )
       url.searchParams.set("revision", entry.revision)
     art.set(url.pathname, url.href)
   }

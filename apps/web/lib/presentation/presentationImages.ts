@@ -1,3 +1,5 @@
+import { preparedArtSource, resolveArtSource } from "./characterArtPack"
+
 export type PresentationImage = Readonly<{
   ready: Promise<boolean>
   release: () => void
@@ -13,20 +15,27 @@ export type PresentationImages = Readonly<{
 export const loadPresentationImage: PresentationImageLoader = (source) => {
   const image = new Image()
   let settled = false
-  image.src = source
-  const ready = image.decode().then(
-    () => {
-      settled = true
-      return image.naturalWidth > 0
-    },
-    () => {
-      settled = true
-      return false
-    },
+  let released = false
+  const decode = async (url: string): Promise<boolean> => {
+    if (released) return false
+    image.src = url
+    await image.decode()
+    return !released && image.naturalWidth > 0
+  }
+  const available = preparedArtSource(source)
+  const ready = (
+    available === undefined
+      ? resolveArtSource(source).then(decode)
+      : decode(available)
   )
+    .catch(() => false)
+    .finally(() => {
+      settled = true
+    })
   return {
     ready,
     release: () => {
+      released = true
       if (!settled) image.src = ""
     },
   }

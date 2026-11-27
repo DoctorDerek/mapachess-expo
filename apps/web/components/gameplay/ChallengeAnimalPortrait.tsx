@@ -2,10 +2,10 @@ import { useActorRef, useSelector } from "@xstate/react"
 import cx from "classix"
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties } from "react"
-import { preload } from "react-dom"
 import animalAttentionMachine from "@mapachess/match-presentation/animal-attention-machine"
 import type { AnimalPresentationId } from "@mapachess/match-presentation/animal-opponent"
 import { STANDALONE_ANIMAL_SCALE } from "@mapachess/match-presentation/presentation-asset-manifest"
+import useCharacterArtPack from "@/lib/presentation/useCharacterArtPack"
 import animateBattleSprite from "../../lib/presentation/animateBattleSprite"
 import {
   battleSpriteFrameStyle,
@@ -59,9 +59,12 @@ export default function ChallengeAnimalPortrait({
     [opponent.id, calmOrdinal],
   )
   const step = presentation.kind === "sprite" ? presentation.steps[0] : null
-  const [initialFrameStyle] = useState(() =>
-    step === null ? undefined : battleSpriteFrameStyle(step, false),
-  )
+  useCharacterArtPack(near && step !== null)
+  const [initialStep] = useState(step)
+  const initialFrameStyle =
+    initialStep === null
+      ? undefined
+      : battleSpriteFrameStyle(initialStep, false)
   const attentionSteps = useMemo(
     () =>
       resolveWebOpponentAttentionSequence(opponent.id, attentionOrdinal ?? 0),
@@ -71,8 +74,6 @@ export default function ChallengeAnimalPortrait({
   const hasVisiblePose = useRef(false)
   const [images] = useState(() => createPresentationImages())
   const [unavailable, setUnavailable] = useState(false)
-  if (isPlaying && step !== null)
-    preload(step.animation.sourceId, { as: "image", fetchPriority: "low" })
 
   useEffect(() => () => images.retain([]), [images])
   useEffect(() => {

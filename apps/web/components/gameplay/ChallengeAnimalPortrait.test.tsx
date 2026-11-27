@@ -120,8 +120,8 @@ describe("Challenge animal portrait asset contract", () => {
       const markup = renderToStaticMarkup(
         <ChallengeAnimalPortrait opponent={stockfishOpponent(id)} active />,
       )
-      expect(markup.match(/rel="preload"/g)).toHaveLength(1)
-      expect(markup).toContain(animation.sourceId)
+      expect(markup).not.toContain('rel="preload"')
+      expect(markup).not.toContain(animation.sourceId)
       const scale = presentation.layout.standaloneScale ?? 3
       expect(geometry.visibleWidth).toBeGreaterThan(0)
       expect(markup).toContain(

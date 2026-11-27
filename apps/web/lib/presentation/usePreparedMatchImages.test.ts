@@ -59,11 +59,9 @@ describe("selected match image preparation", () => {
     const imagePreloads = markup.match(
       /<link[^>]*rel="preload"[^>]*as="image"[^>]*>/g,
     )
-    expect(imagePreloads).toHaveLength(3)
-    for (const source of initialMatchPresentationSources("chicken-stockfish"))
-      expect(
-        imagePreloads?.some((link) => link.includes(`href="${source}"`)),
-      ).toBe(true)
+    expect(imagePreloads).toHaveLength(1)
+    expect(imagePreloads?.[0]).toContain('/coach/neutral.png"')
+    expect(markup).not.toContain("/generated/presentation-assets/battle/")
     expect(markup).toContain(MATCH_SETUP_COPY.startMatch)
     expect(markup).not.toContain("Loading images")
   })

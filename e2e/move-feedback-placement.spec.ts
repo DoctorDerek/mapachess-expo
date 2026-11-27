@@ -81,10 +81,13 @@ async function openGame(
   const viewport = page.viewportSize()
   if (viewport === null) throw new Error("Expected an explicit board viewport")
   if (viewport.width < 1280) {
-    const bounds = await boxOf(board)
-    expect(bounds.x).toBe(0)
-    expect(bounds.width).toBe(viewport.width)
-    expect(bounds.height).toBe(bounds.width)
+    await expect
+      .poll(() => boxOf(board))
+      .toMatchObject({
+        x: 0,
+        width: viewport.width,
+        height: viewport.width,
+      })
   }
   await expect(
     page.getByRole("region", { name: "Reactive Battle Stage", exact: true }),

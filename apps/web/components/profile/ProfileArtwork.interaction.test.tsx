@@ -25,7 +25,7 @@ import { ProfileArtwork } from "./ProfileCard"
 
 vi.hoisted(() => vi.stubEnv("MAPACHESS_BUILD_HAS_PRESENTATION_ASSETS", "true"))
 afterAll(() => vi.unstubAllEnvs())
-installDomHarness()
+installDomHarness({ stubCharacterTransport: true })
 const copy = loadCatalog("en")
 const input: CardInput = {
   appearance: DEFAULT_PLAYER_APPEARANCE,
