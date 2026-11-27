@@ -12,6 +12,7 @@ import {
   battleSpriteContactAdvance,
   battleSpriteGeometry,
 } from "@mapachess/match-presentation/sprite-presentation-geometry"
+import { preparedArtSource } from "./characterArtPack"
 
 export type { BattleSpriteStep }
 
@@ -135,8 +136,10 @@ export const battleSpriteFrameStyle = (
   } = spriteStepPlayback(step)
   const pixelSize = "var(--sprite-pixel-size, calc(1px * var(--sprite-scale)))"
   const frameIndex = reducedMotion ? stillFrame : first
+  const source = preparedArtSource(animation.sourceId)
   return {
-    "--sprite-background-image": `url("${animation.sourceId}")`,
+    "--sprite-background-image":
+      source === undefined ? "none" : `url("${source}")`,
     "--sprite-frame": battleSpriteFramePosition(
       frameIndex,
       animation.frameCount,

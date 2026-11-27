@@ -35,7 +35,7 @@ vi.mock("motion/react", async (original) => ({
   useReducedMotion: () => preferences.reduced,
 }))
 afterAll(() => vi.unstubAllEnvs())
-installDomHarness()
+installDomHarness({ stubCharacterTransport: true })
 beforeEach(() => {
   preferences.reduced = false
 })
