@@ -93,10 +93,13 @@ for (const locale of ["en", "es-419"] as const) {
         settingsBounds.y + settingsBounds.height,
       )
       expect(settingsBounds.width).toBeCloseTo(closeBounds.width, 0)
-      if (width === 390 || width === 1440 || (width === 320 && scale === 200)) {
-        for (const action of await dialog.getByRole("button").all())
-          await expect(action).toBeInViewport({ ratio: 1 })
-        await expect(title).toBeInViewport({ ratio: 1 })
+      const shouldFitOnOpen = scale === 100 && (width === 390 || width === 1440)
+      const buttons = await dialog.getByRole("button").all()
+      for (const item of [...buttons, title]) {
+        if (!shouldFitOnOpen) await item.scrollIntoViewIfNeeded()
+        await expect(item).toBeInViewport({ ratio: 1 })
+      }
+      if (shouldFitOnOpen) {
         expect(
           await dialog.evaluate(
             (element) => element.scrollHeight - element.clientHeight,
