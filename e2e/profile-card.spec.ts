@@ -461,6 +461,16 @@ test("produces actual PNG and animated GIF files without changing the profile", 
 }, testInfo) => {
   test.setTimeout(90000)
   const errors: string[] = []
+  const characterRequests: string[] = []
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname
+    if (
+      /^\/generated\/presentation-assets\/(?:battle\/|profile\/hero\/|characters\/)/.test(
+        path,
+      )
+    )
+      characterRequests.push(path)
+  })
   page.on("pageerror", (error) => errors.push(error.message))
   await page.goto("/")
   await page
@@ -494,6 +504,11 @@ test("produces actual PNG and animated GIF files without changing the profile", 
   const pngPath = testInfo.outputPath("profile.png")
   await (await pngDownload).saveAs(pngPath)
   const png = await readFile(pngPath)
+  expect(characterRequests).toEqual([
+    expect.stringMatching(
+      /^\/generated\/presentation-assets\/characters\/[a-f0-9]{64}\.pack$/,
+    ),
+  ])
   expect(png.subarray(0, 8)).toEqual(
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   )
@@ -693,10 +708,11 @@ test("retries failed artwork through the visible recovery control", async ({
   page,
 }) => {
   let failedAsset: string | undefined
+  let unavailable = true
   await page.route(
-    "**/generated/presentation-assets/profile/hero/**",
+    "**/generated/presentation-assets/characters/*.pack",
     async (route) => {
-      if (failedAsset === undefined) {
+      if (unavailable) {
         failedAsset = route.request().url()
         await route.fulfill({
           status: 503,
@@ -708,11 +724,17 @@ test("retries failed artwork through the visible recovery control", async ({
     },
   )
   await page.goto("/")
+  const profile = createInitialMapachessPlayerData()
+  await importPlayerData(page, {
+    ...profile,
+    appearance: { ...profile.appearance, skin: 4 },
+  })
   const failure = page.getByText("Profile artwork could not load.", {
     exact: true,
   })
   await expect(failure).toBeVisible()
   expect(failedAsset).toBeDefined()
+  unavailable = false
   await page.getByRole("button", { name: "Retry artwork", exact: true }).click()
   await expect(failure).toBeHidden()
   await expect
