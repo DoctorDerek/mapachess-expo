@@ -1,19 +1,13 @@
-import { useEffect, useSyncExternalStore } from "react"
-import {
-  hasCharacterArtPack,
-  prepareCharacterArtPack,
-  subscribeCharacterArt,
-} from "./characterArtPack"
+import { useSyncExternalStore } from "react"
+import { hasCharacterArtPack, subscribeCharacterArt } from "./characterArtPack"
 
 const initiallyUnloaded = (): boolean => false
+const skipSubscription = () => () => undefined
 
 export default function useCharacterArtPack(needed: boolean): void {
   useSyncExternalStore(
-    subscribeCharacterArt,
+    needed ? subscribeCharacterArt : skipSubscription,
     hasCharacterArtPack,
     initiallyUnloaded,
   )
-  useEffect(() => {
-    if (needed) void prepareCharacterArtPack().catch(() => undefined)
-  }, [needed])
 }

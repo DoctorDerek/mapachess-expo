@@ -62,6 +62,7 @@ it("rejects truncated, aliased twice, incomplete and overlong directories", () =
 it("shares acquisition, retries a failure, and reopens from verified storage with zero fetches", async () => {
   vi.stubEnv("MAPACHESS_CHARACTER_ART", descriptor)
   vi.stubGlobal("document", { visibilityState: "hidden" })
+  vi.stubGlobal("window", new EventTarget())
   const stored = new Map<string, Response>()
   const cache = {
     match: async (key: string) => stored.get(key)?.clone(),
@@ -110,6 +111,61 @@ it("shares acquisition, retries a failure, and reopens from verified storage wit
     reopened.resolveArtSource(presentationAssetSource(animal)),
   ).resolves.toBe(resolved[1])
   expect(fetch).toHaveBeenCalledTimes(2)
+})
+
+it.each(["during failure", "after failure"] as const)(
+  "recovers interested portraits once when connectivity returns %s",
+  async (timing) => {
+    vi.stubEnv("MAPACHESS_CHARACTER_ART", descriptor)
+    vi.stubGlobal("document", { visibilityState: "hidden" })
+    const browser = new EventTarget()
+    vi.stubGlobal("window", browser)
+    const failing = Promise.withResolvers<Response>()
+    const fetch = vi
+      .fn()
+      .mockReturnValueOnce(failing.promise)
+      .mockResolvedValueOnce(new Response(bytes))
+    vi.stubGlobal("fetch", fetch)
+    const art = await import("./characterArtPack")
+    const displayed = Promise.withResolvers<void>()
+    const first = vi.fn()
+    const stopFirst = art.subscribeCharacterArt(first)
+    const stopSecond = art.subscribeCharacterArt(displayed.resolve)
+    const initial = art.prepareCharacterArtPack()
+    if (timing === "during failure") browser.dispatchEvent(new Event("online"))
+    failing.resolve(new Response(null, { status: 503 }))
+    await expect(initial).rejects.toThrow()
+    if (timing === "after failure") browser.dispatchEvent(new Event("online"))
+    await displayed.promise
+    expect(art.preparedArtSource(presentationAssetSource(animal))).toBe(
+      "data:image/webp;base64,AQID",
+    )
+    expect(first).toHaveBeenCalledOnce()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    stopFirst()
+    stopSecond()
+  },
+)
+
+it("abandons a queued reconnect when the last interested portrait leaves", async () => {
+  vi.stubEnv("MAPACHESS_CHARACTER_ART", descriptor)
+  vi.stubGlobal("document", { visibilityState: "hidden" })
+  const browser = new EventTarget()
+  vi.stubGlobal("window", browser)
+  const failing = Promise.withResolvers<Response>()
+  const fetch = vi.fn().mockReturnValue(failing.promise)
+  vi.stubGlobal("fetch", fetch)
+  const art = await import("./characterArtPack")
+  const notify = vi.fn()
+  const stop = art.subscribeCharacterArt(notify)
+  const initial = art.prepareCharacterArtPack()
+  browser.dispatchEvent(new Event("online"))
+  stop()
+  failing.resolve(new Response(null, { status: 503 }))
+  await expect(initial).rejects.toThrow()
+  browser.dispatchEvent(new Event("online"))
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(notify).toHaveBeenCalledTimes(0)
 })
 
 it("serves verified art while persistence is pending and after a quota failure", async () => {

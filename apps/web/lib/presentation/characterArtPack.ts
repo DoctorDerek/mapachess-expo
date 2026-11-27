@@ -50,10 +50,27 @@ const boot = readBoot(process.env.MAPACHESS_CHARACTER_ART)
 let packed: ReturnType<typeof readCharacterArtPack> | undefined
 let pending: Promise<void> | undefined
 const listeners = new Set<() => void>()
+
+function prepareObservedArt(): void {
+  if (listeners.size > 0) void prepareCharacterArtPack().catch(() => undefined)
+}
+
+function retryOnReconnect(): void {
+  if (pending) void pending.catch(prepareObservedArt)
+  else prepareObservedArt()
+}
+
 export function subscribeCharacterArt(listener: () => void): () => void {
   listeners.add(listener)
+  if (boot && !packed) {
+    if (listeners.size === 1)
+      window.addEventListener("online", retryOnReconnect)
+    prepareObservedArt()
+  }
   return () => {
     listeners.delete(listener)
+    if (listeners.size === 0)
+      window.removeEventListener("online", retryOnReconnect)
   }
 }
 export const hasCharacterArtPack = (): boolean => packed !== undefined
@@ -107,6 +124,8 @@ export function prepareCharacterArtPack(): Promise<void> {
   if (packed || !boot) return Promise.resolve()
   pending ??= loadPack(boot)
     .then(() => {
+      if (listeners.size > 0)
+        window.removeEventListener("online", retryOnReconnect)
       for (const listener of listeners) listener()
     })
     .finally(() => {
