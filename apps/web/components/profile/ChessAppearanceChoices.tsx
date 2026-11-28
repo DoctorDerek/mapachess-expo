@@ -5,6 +5,7 @@ import { useId } from "react"
 import {
   CHESS_BOARDS,
   CHESS_PIECE_SETS,
+  type ChessBoardId,
   type ChessPieceSetId,
 } from "@mapachess/match-presentation/chess-appearance-catalog"
 import type { MatchPieceRole } from "@mapachess/match/match-position"
@@ -16,9 +17,10 @@ import {
   ChessArtworkRecovery,
   ChessBoardArtwork,
   ChessPiece,
-} from "../gameplay/ChessArtwork"
-import CustomizationChoice from "./CustomizationChoice"
-import { useMapachessCopy } from "./MapachessLocaleProvider"
+} from "@/components/gameplay/ChessArtwork"
+import { usePortraitViewport } from "@/components/gameplay/PortraitViewport"
+import CustomizationChoice from "@/components/profile/CustomizationChoice"
+import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
 
 const BACK_RANK = [
   "rook",
@@ -35,8 +37,10 @@ function PieceSample({
   id,
   compact = false,
 }: Readonly<{ id: ChessPieceSetId; compact?: boolean }>) {
+  const { ref, near } = usePortraitViewport()
   return (
     <span
+      ref={ref}
       aria-hidden="true"
       className={cx(
         "grid overflow-hidden rounded-md",
@@ -45,16 +49,29 @@ function PieceSample({
           : "h-16 grid-cols-4 bg-[linear-gradient(90deg,var(--color-mapachito-charcoal)_50%,var(--color-mapachito-white)_50%)] text-2xl",
       )}
     >
-      {(["white", "black"] as const).flatMap((color) =>
-        (["king", "knight"] as const).map((role) => (
-          <ChessPiece
-            key={`${color}-${role}`}
-            color={color}
-            role={role}
-            pieceSetId={id}
-          />
-        )),
-      )}
+      {near &&
+        (["white", "black"] as const).flatMap((color) =>
+          (["king", "knight"] as const).map((role) => (
+            <ChessPiece
+              key={`${color}-${role}`}
+              color={color}
+              role={role}
+              pieceSetId={id}
+            />
+          )),
+        )}
+    </span>
+  )
+}
+
+function BoardSample({ id }: { id: ChessBoardId }) {
+  const { ref, near } = usePortraitViewport()
+  return (
+    <span
+      ref={ref}
+      className="relative mx-auto block aspect-square w-full max-w-32 overflow-hidden rounded"
+    >
+      {near ? <ChessBoardArtwork boardId={id} /> : null}
     </span>
   )
 }
@@ -206,9 +223,7 @@ export default function ChessAppearanceChoices({
                     "ring-mapachito-orange ring-3 ring-offset-2",
                 )}
               >
-                <span className="relative mx-auto block aspect-square w-full max-w-32 overflow-hidden rounded">
-                  <ChessBoardArtwork boardId={board.id} />
-                </span>
+                <BoardSample id={board.id} />
                 <span className="flex items-start gap-2">
                   <input
                     type="radio"
