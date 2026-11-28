@@ -1,5 +1,6 @@
 import { expect, it } from "vitest"
-import partitionOfflineAssets from "./partitionOfflineAssets"
+import { CHESS_APPEARANCE_PACK_ROOT } from "@/assets/chessAppearancePaths"
+import partitionOfflineAssets from "@/lib/offline/partitionOfflineAssets"
 
 it("keeps chess programs distinct from artwork and assigns content-addressed offline keys", () => {
   const origin = "https://mapachess.com"
@@ -11,7 +12,7 @@ it("keeps chess programs distinct from artwork and assigns content-addressed off
     revision: "one",
   }
   const board = {
-    url: "/generated/chess-assets/backterria/boards/back-a.png",
+    url: `${CHESS_APPEARANCE_PACK_ROOT}/${"a".repeat(64)}.pack`,
     revision: "two",
   }
   const files = partitionOfflineAssets(
@@ -20,7 +21,7 @@ it("keeps chess programs distinct from artwork and assigns content-addressed off
   )
   expect(files.core).toEqual([home, chunk, poster])
   expect(files.art.get(tiger.url)).toBe(origin + tiger.url + "?revision=one")
-  expect(files.art.get(board.url)).toBe(origin + board.url + "?revision=two")
+  expect(files.art.get(board.url)).toBe(origin + board.url)
   expect(
     partitionOfflineAssets([{ ...tiger, revision: "new" }], origin).art.get(
       tiger.url,
