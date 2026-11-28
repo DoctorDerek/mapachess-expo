@@ -6,6 +6,7 @@ import createArtPackAcquisition, {
   readArtDescriptor,
 } from "@/lib/presentation/createArtPackAcquisition"
 import readIndexedArtPack from "@/lib/presentation/readIndexedArtPack"
+import retainedChessAppearance from "@/lib/presentation/retainedChessAppearance"
 
 const json = process.env.MAPACHESS_CHESS_APPEARANCE
 const chessAppearancePack = createArtPackAcquisition(
@@ -14,6 +15,7 @@ const chessAppearancePack = createArtPackAcquisition(
     : undefined,
   (bytes, count) =>
     readIndexedArtPack(bytes, count, (path) => path, chessMemberMediaType),
+  retainedChessAppearance,
 )
 export default chessAppearancePack
 

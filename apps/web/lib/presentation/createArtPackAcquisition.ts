@@ -33,6 +33,11 @@ export function readArtDescriptor(value: unknown, root: string): Descriptor {
 export default function createArtPackAcquisition(
   descriptor: Descriptor | undefined,
   read: (bytes: ArrayBuffer, count: number) => Lookup,
+  durable?: Readonly<{
+    read: (url: string) => Promise<ArrayBuffer | undefined>
+    write: (url: string, bytes: ArrayBuffer) => Promise<void>
+    remove: (url: string) => Promise<void>
+  }>,
 ) {
   let lookup: Lookup | undefined
   let pending: Promise<void> | undefined
@@ -49,6 +54,13 @@ export default function createArtPackAcquisition(
     report("ready")
   }
 
+  async function publishRetained(bytes: ArrayBuffer, build: Descriptor) {
+    const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))
+    if ("sha256-" + btoa(String.fromCharCode(...hash)) !== build.integrity)
+      throw new Error("Retained art integrity changed.")
+    publish(bytes, build.count)
+  }
+
   async function acquire(build: Descriptor) {
     await waitForFirstContentfulPaint()
     const cache =
@@ -58,24 +70,30 @@ export default function createArtPackAcquisition(
     const retained = await cache?.match(build.url).catch(() => undefined)
     if (retained) {
       try {
-        const bytes = await retained.arrayBuffer()
-        const hash = new Uint8Array(
-          await crypto.subtle.digest("SHA-256", bytes),
-        )
-        if ("sha256-" + btoa(String.fromCharCode(...hash)) !== build.integrity)
-          throw new Error("Retained art integrity changed.")
-        return publish(bytes, build.count)
+        await publishRetained(await retained.arrayBuffer(), build)
+        return
       } catch {
         await cache?.delete(build.url).catch(() => false)
       }
     }
+    const saved = await durable?.read(build.url).catch(() => undefined)
+    if (saved) {
+      try {
+        await publishRetained(saved, build)
+        return
+      } catch {
+        await durable?.remove(build.url).catch(() => undefined)
+      }
+    }
     const response = await fetch(build.url, {
       integrity: build.integrity,
-      cache: retained ? "reload" : "force-cache",
+      cache: retained || saved ? "reload" : "force-cache",
     })
     if (!response.ok) throw new Error("Could not acquire the art pack.")
     const copy = cache ? response.clone() : undefined
-    publish(await response.arrayBuffer(), build.count)
+    const bytes = await response.arrayBuffer()
+    publish(bytes, build.count)
+    void durable?.write(build.url, bytes).catch(() => undefined)
     if (copy) void cache?.put(build.url, copy).catch(() => undefined)
   }
 
