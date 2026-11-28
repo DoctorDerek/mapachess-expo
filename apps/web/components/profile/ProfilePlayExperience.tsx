@@ -12,14 +12,14 @@ import profileMachine, {
   selectCurrentPlayerData,
   selectPendingPlayerData,
 } from "@mapachess/profile/profile-machine"
+import ChessAppearanceProvider, {
+  ChessArtworkRecovery,
+} from "@/components/gameplay/ChessArtwork"
+import PortraitViewport from "@/components/gameplay/PortraitViewport"
 import useWebMatchSession from "../../lib/gameplay/useWebMatchSession"
 import useWebNavigationHistory from "../../lib/gameplay/useWebNavigationHistory"
 import type { WebMatchSessionActor } from "../../lib/gameplay/webMatchSessionMachine"
 import CoachCollectionContext from "../../lib/presentation/CoachCollectionContext"
-import ChessAppearanceProvider, {
-  ChessArtworkRecovery,
-} from "../gameplay/ChessArtwork"
-import PortraitViewport from "../gameplay/PortraitViewport"
 import WebGame from "../gameplay/WebGame"
 import { usePlayerInputScope } from "../input/PlayerInputProvider"
 import MapachessButton from "../presentation/MapachessButton"
@@ -152,7 +152,10 @@ function ReadyPlayExperience({
   }
   return (
     <PortraitViewport>
-      <ChessAppearanceProvider appearance={settingsProps.chessAppearance}>
+      <ChessAppearanceProvider
+        appearance={settingsProps.chessAppearance}
+        settingsOpen={settingsOpen}
+      >
         <CoachCollectionContext value={settingsProps.coachCollection}>
           <ProfileCardJourney
             blocked={blocked}

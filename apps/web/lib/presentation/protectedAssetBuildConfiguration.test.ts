@@ -21,6 +21,7 @@ const ROOT_INPUTS = [
   "ghost_assets/seethingswarm-captainskolot-heroes99.zip",
   "ghost_assets/presentation-assets.manifest.json",
   "ghost_assets/chess-assets.manifest.json",
+  "ghost_assets/chess-assets.provenance.json",
   "ghost_assets/backterria-toffeecraft-chess.zip",
   "scripts/decrypt-assets.ts",
   "scripts/runTypeScript.mjs",

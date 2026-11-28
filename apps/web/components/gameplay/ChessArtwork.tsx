@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react"
 import {
@@ -25,13 +26,12 @@ import {
 } from "@mapachess/profile/chess-appearance-settings"
 import MapachessButton from "@/components/presentation/MapachessButton"
 import { useMapachessCopy } from "@/components/profile/MapachessLocaleProvider"
+import chessAppearancePack, {
+  resolveChessArtwork,
+} from "@/lib/presentation/chessAppearancePack"
 import { loadPresentationImage } from "@/lib/presentation/presentationImages"
 
-export const chessArtworkSource = (
-  delivery: "public" | "protected-chess",
-  path: string,
-): string =>
-  `${delivery === "public" ? "/chess-assets" : "/generated/chess-assets"}/${path}`
+const initialArtState = () => "idle" as const
 
 export const chessPieceSet = (
   id: ChessPieceSetId,
@@ -52,12 +52,14 @@ const ArtworkContext = createContext<
     appearance: ChessAppearanceSettings
     attempt: number
     onBoardError: ((boardId: ChessBoardId) => void) | null
+    onPieceError: ((pieceSetId: ChessPieceSetId) => void) | null
     retry: (() => void) | null
   }>
 >({
   appearance: DEFAULT_CHESS_APPEARANCE,
   attempt: 0,
   onBoardError: null,
+  onPieceError: null,
   retry: null,
 })
 
@@ -112,7 +114,9 @@ function usePreparedChoice<Id extends string>(
   const [failed, setFailed] = useState<Id | null>(null)
   useEffect(() => {
     let active = true
-    const images = sources.map(loadPresentationImage)
+    const images = sources.map((source) =>
+      loadPresentationImage(source, resolveChessArtwork),
+    )
     void Promise.all(images.map((image) => image.ready)).then((results) => {
       if (!active) return
       const ready = results.every(Boolean)
@@ -137,9 +141,22 @@ function usePreparedChoice<Id extends string>(
 
 export default function ChessAppearanceProvider({
   appearance,
+  settingsOpen = false,
   children,
-}: Readonly<{ appearance: ChessAppearanceSettings; children: ReactNode }>) {
+}: Readonly<{
+  appearance: ChessAppearanceSettings
+  settingsOpen?: boolean
+  children: ReactNode
+}>) {
+  const packState = useSyncExternalStore(
+    chessAppearancePack.subscribe,
+    chessAppearancePack.status,
+    initialArtState,
+  )
   const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    if (settingsOpen) void chessAppearancePack.prepare().catch(() => undefined)
+  }, [settingsOpen, attempt])
   const selectedPieces = chessPieceSet(appearance.pieceSetId)
   const selectedBoard = chessBoard(appearance.boardId)
   const pieceSources = useMemo(
@@ -147,22 +164,12 @@ export default function ChessAppearanceProvider({
       selectedPieces.kind === "unicode"
         ? []
         : Object.values(selectedPieces.pieces).flatMap((side) =>
-            Object.values(side).map((art) =>
-              chessArtworkSource(selectedPieces.delivery, art.path),
-            ),
+            Object.values(side).map((art) => art.path),
           ),
     [selectedPieces],
   )
   const boardSources = useMemo(
-    () =>
-      selectedBoard.kind === "colors"
-        ? []
-        : [
-            chessArtworkSource(
-              selectedBoard.delivery,
-              selectedBoard.image.path,
-            ),
-          ],
+    () => (selectedBoard.kind === "colors" ? [] : [selectedBoard.image.path]),
     [selectedBoard],
   )
   const pieces = usePreparedChoice(
@@ -186,8 +193,11 @@ export default function ChessAppearanceProvider({
         },
         attempt,
         onBoardError: board.onError,
+        onPieceError: pieces.onError,
         retry:
-          pieces.failed || board.failed
+          pieces.failed ||
+          board.failed ||
+          (settingsOpen && packState === "failed")
             ? () => setAttempt((value) => value + 1)
             : null,
       }}
@@ -229,12 +239,12 @@ export function ChessPiece({
   pieceSetId?: ChessPieceSetId
   fitToSquare?: boolean
 }>) {
-  const { appearance, attempt } = useContext(ArtworkContext)
+  const { appearance, attempt, onPieceError } = useContext(ArtworkContext)
   const pieces = chessPieceSet(pieceSetId ?? appearance.pieceSetId)
+  const member =
+    pieces.kind === "unicode" ? null : pieces.pieces[color][role].path
   const source =
-    pieces.kind === "unicode"
-      ? null
-      : chessArtworkSource(pieces.delivery, pieces.pieces[color][role].path)
+    member === null ? null : (chessAppearancePack.member(member) ?? null)
   const image = useArtworkVisibility(
     source,
     pieces.id === appearance.pieceSetId,
@@ -265,10 +275,14 @@ export function ChessPiece({
           alt=""
           draggable={false}
           src={source}
+          data-chess-art={member}
           width={pieces.pieces[color][role].width}
           height={pieces.pieces[color][role].height}
           onLoad={image.onLoad}
-          onError={image.onError}
+          onError={() => {
+            image.onError()
+            if (pieceSetId === undefined) onPieceError?.(pieces.id)
+          }}
           className={cx(
             "pointer-events-none absolute size-[86%] object-contain",
             !image.visible && "opacity-0",
@@ -291,10 +305,9 @@ export function ChessBoardArtwork({
 }>) {
   const { appearance, attempt, onBoardError } = useContext(ArtworkContext)
   const board = chessBoard(boardId ?? appearance.boardId)
+  const member = board.kind === "colors" ? null : board.image.path
   const source =
-    board.kind === "colors"
-      ? null
-      : chessArtworkSource(board.delivery, board.image.path)
+    member === null ? null : (chessAppearancePack.member(member) ?? null)
   const image = useArtworkVisibility(
     source,
     board.id === appearance.boardId,
@@ -324,6 +337,7 @@ export function ChessBoardArtwork({
           key={`${source}:${attempt}`}
           alt=""
           src={source}
+          data-chess-art={member}
           width={board.image.width}
           height={board.image.height}
           onLoad={image.onLoad}

@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto"
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import {
   hasPublishedLicensedPresentationAssets,
   readLicensedPresentationAssetManifest,
 } from "@repo/ghost-assets/presentationAssetArchive"
+import writeIndexedArtPack from "@/assets/writeIndexedArtPack"
 import {
   CHARACTER_PACK_BOOT,
   CHARACTER_PACK_ROOT,
@@ -42,7 +43,7 @@ async function prepareCharacterArtPack(): Promise<void> {
     { default: resolveOpponentPresentation },
     { MAPACHITO_SPRITE_MANIFEST, presentationAssetSource },
     { DEFAULT_PLAYER_APPEARANCE, heroLayerPaths },
-    { CHARACTER_PACK_HEADER_BYTES, isCharacterArtSource },
+    { isCharacterArtSource },
   ] = await Promise.all([
     import("@mapachess/match-presentation/opponent-presentation"),
     import("@mapachess/match-presentation/presentation-assets"),
@@ -91,23 +92,15 @@ async function prepareCharacterArtPack(): Promise<void> {
   }
   if (seed.length !== seedSources.size)
     throw new Error("The default character art is incomplete.")
-  const directory = Buffer.from(JSON.stringify(index))
-  const header = Buffer.alloc(CHARACTER_PACK_HEADER_BYTES)
-  header.writeUInt32LE(directory.byteLength)
-  const pack = Buffer.concat([header, directory, ...payload])
-  const digest = createHash("sha256").update(pack).digest()
-  const filename = `${digest.toString("hex")}.pack`
-  const output = join(publicRoot, CHARACTER_PACK_ROOT)
-  await mkdir(output, { recursive: true })
-  await writeFile(join(output, filename), pack)
+  const descriptor = await writeIndexedArtPack(
+    publicRoot,
+    CHARACTER_PACK_ROOT,
+    index,
+    payload,
+  )
   await writeFile(
-    join(output, CHARACTER_PACK_BOOT),
-    JSON.stringify({
-      url: `${CHARACTER_PACK_ROOT}/${filename}`,
-      integrity: `sha256-${digest.toString("base64")}`,
-      count: files.length,
-      seed,
-    }),
+    join(publicRoot, CHARACTER_PACK_ROOT, CHARACTER_PACK_BOOT),
+    JSON.stringify({ ...descriptor, seed }),
   )
 }
 

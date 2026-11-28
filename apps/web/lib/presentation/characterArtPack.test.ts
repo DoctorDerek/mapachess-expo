@@ -2,21 +2,19 @@ import { createHash } from "node:crypto"
 import { afterEach, expect, it, vi } from "vitest"
 import { presentationAssetSource } from "@mapachess/match-presentation/presentation-assets"
 import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
-import {
-  CHARACTER_PACK_HEADER_BYTES,
-  readCharacterArtPack,
-} from "./characterArtFormat"
+import { readCharacterArtPack } from "@/lib/presentation/characterArtFormat"
+import { ART_PACK_HEADER_BYTES } from "@/lib/presentation/readIndexedArtPack"
 
 const hero = "profile/hero/fixture.png"
 const animal = "battle/fixture.png"
 function packet(index: unknown, bytes: readonly number[]): ArrayBuffer {
   const directory = new TextEncoder().encode(JSON.stringify(index))
   const result = new Uint8Array(
-    CHARACTER_PACK_HEADER_BYTES + directory.length + bytes.length,
+    ART_PACK_HEADER_BYTES + directory.length + bytes.length,
   )
   new DataView(result.buffer).setUint32(0, directory.length, true)
-  result.set(directory, CHARACTER_PACK_HEADER_BYTES)
-  result.set(bytes, CHARACTER_PACK_HEADER_BYTES + directory.length)
+  result.set(directory, ART_PACK_HEADER_BYTES)
+  result.set(bytes, ART_PACK_HEADER_BYTES + directory.length)
   return result.buffer
 }
 const bytes = packet([[[hero, animal], 3]], [1, 2, 3])

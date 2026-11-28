@@ -7,18 +7,20 @@ import type { APIRequestContext } from "@playwright/test"
 export default async function startOrigin(
   upstream: string,
   request: APIRequestContext,
+  onRequest?: (url: URL) => void,
 ) {
   const server = createServer(async (input, output) => {
     try {
-      if (
-        !input.url?.startsWith("/") ||
-        input.url.startsWith("//") ||
-        input.method !== "GET"
-      ) {
+      if (!input.url?.startsWith("/") || input.url.startsWith("//")) {
         output.writeHead(405).end()
         return
       }
       const local = new URL(input.url, "http://127.0.0.1")
+      onRequest?.(local)
+      if (input.method !== "GET") {
+        output.writeHead(405).end()
+        return
+      }
       const destination = new URL(upstream)
       destination.pathname = local.pathname
       destination.search = local.search

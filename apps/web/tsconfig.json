@@ -6,6 +6,12 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "paths": {
       "@/*": ["./*"],
+      "@repo/ghost-assets/chess-provenance": [
+        "../../ghost_assets/chess-assets.provenance.json"
+      ],
+      "@repo/ghost-assets/licensedAssetBundles": [
+        "../../scripts/ghost-assets/licensedAssetBundles.ts"
+      ],
       "@repo/ghost-assets/presentationAssetArchive": [
         "../../scripts/ghost-assets/presentationAssetArchive.ts"
       ]

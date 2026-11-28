@@ -15,8 +15,10 @@ import {
   createMatchTimeline,
   currentMatchPosition,
 } from "../packages/match/src/matchTimeline.js"
+import { expectChessMember, holdChessMember } from "./chessArtworkFixture.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
+import startOrigin from "./offlineOrigin.js"
 import savedProfile from "./savedProfile.js"
 import settledMatchMenu from "./settledMatchMenu.js"
 
@@ -152,9 +154,10 @@ test("selects every piece set and board independently, retaining exact profile s
       .poll(async () => (await savedProfile(page)).settings.chessAppearance)
       .toEqual({ pieceSetId: pieces.id, boardId: "current" })
     if (pieces.kind === "artwork") {
-      await expect
-        .poll(() => preview.locator("img").first().getAttribute("src"))
-        .toContain(pieces.pieces.black.rook.path)
+      await expectChessMember(
+        preview.locator("img").first(),
+        pieces.pieces.black.rook.path,
+      )
       await expectLoadedArtwork(preview)
     }
   }
@@ -172,9 +175,7 @@ test("selects every piece set and board independently, retaining exact profile s
       .poll(async () => (await savedProfile(page)).settings.chessAppearance)
       .toEqual({ pieceSetId: "cat-chess", boardId: board.id })
     if (board.kind === "artwork") {
-      await expect
-        .poll(() => preview.locator("img").first().getAttribute("src"))
-        .toContain(board.image.path)
+      await expectChessMember(preview.locator("img").first(), board.image.path)
       await expectLoadedArtwork(preview)
     }
   }
@@ -338,12 +339,11 @@ for (const { mode, color, pieceSetId, boardId } of [
     await expectHintPalette(page, CHESS_BOARD_PALETTES[boardId])
     expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
     await expect(
-      board.locator(`img[src*="${pieceSetId}/pieces/"]`).first(),
+      board.locator(`img[data-chess-art*="${pieceSetId}/pieces/"]`).first(),
     ).toHaveCSS("opacity", "1")
-    await expect(board.locator(`img[src$="/boards/${boardId}.png"]`)).toHaveCSS(
-      "opacity",
-      "1",
-    )
+    await expect(
+      board.locator(`img[data-chess-art$="/boards/${boardId}.png"]`),
+    ).toHaveCSS("opacity", "1")
     await expectLoadedArtwork(board)
     await board.screenshot({
       path: testInfo.outputPath("board-with-hints.png"),
@@ -408,10 +408,9 @@ test("resolves the approved hint and history colors across all board families", 
       .getByRole("button", { name: "Back to Board", exact: true })
       .click()
     if (choice.kind === "artwork")
-      await expect(board.locator(`img[src$="${choice.image.path}"]`)).toHaveCSS(
-        "opacity",
-        "1",
-      )
+      await expect(
+        board.locator(`img[data-chess-art$="${choice.image.path}"]`),
+      ).toHaveCSS("opacity", "1")
     else
       await expect(
         board.locator(':scope > span[aria-hidden="true"] > img'),
@@ -436,13 +435,10 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   page,
 }) => {
   test.setTimeout(60000)
-  const requestGate = Promise.withResolvers<void>()
-  const requestedBoard =
-    "**/generated/chess-assets/cosunosuke/boards/cosunosuke.png"
-  await page.route(requestedBoard, async (route) => {
-    await requestGate.promise
-    await route.abort()
-  })
+  const boardDecode = await holdChessMember(
+    page,
+    "cosunosuke/boards/cosunosuke.png",
+  )
   await page.goto("/")
   await expect(
     page.getByRole("button", { name: "Customize profile card", exact: true }),
@@ -463,10 +459,9 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     timeout: 30000,
   })
   const board = page.getByRole("grid", { name: /Chessboard/ })
-  await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
-    "opacity",
-    "1",
-  )
+  await expect(
+    board.locator('img[data-chess-art$="/boards/toffee-wood.png"]'),
+  ).toHaveCSS("opacity", "1")
   await expectHintPalette(page, CHESS_BOARD_PALETTES["toffee-wood"])
   const before = await savedProfile(page)
   const geometry = await hintGeometry(page)
@@ -484,16 +479,15 @@ test("keeps hint colors with the displayed board through pending artwork, failur
     .getByRole("dialog", { name: "Match menu", exact: true })
     .getByRole("button", { name: "Back to Board", exact: true })
     .click()
-  await expect(board.locator('img[src$="/boards/toffee-wood.png"]')).toHaveCSS(
-    "opacity",
-    "1",
-  )
+  await expect(
+    board.locator('img[data-chess-art$="/boards/toffee-wood.png"]'),
+  ).toHaveCSS("opacity", "1")
   await expectHintPalette(page, CHESS_BOARD_PALETTES["toffee-wood"])
   expect((await savedProfile(page)).settings.chessAppearance.boardId).toBe(
     "cosunosuke",
   )
 
-  requestGate.resolve()
+  await boardDecode.fail()
   await expect(
     page.getByRole("button", { name: "Retry chess artwork", exact: true }),
   ).toBeVisible()
@@ -504,14 +498,13 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   expect(await hintGeometry(page)).toEqual(geometry)
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
 
-  await page.unroute(requestedBoard)
+  boardDecode.allowRetry()
   await page
     .getByRole("button", { name: "Retry chess artwork", exact: true })
     .click()
-  await expect(board.locator('img[src$="/boards/cosunosuke.png"]')).toHaveCSS(
-    "opacity",
-    "1",
-  )
+  await expect(
+    board.locator('img[data-chess-art$="/boards/cosunosuke.png"]'),
+  ).toHaveCSS("opacity", "1")
   await expectHintPalette(page, CHESS_BOARD_PALETTES.cosunosuke)
   await expect(
     page.getByRole("button", { name: "Retry chess artwork", exact: true }),
@@ -520,7 +513,7 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
 
   await board
-    .locator('img[src$="/boards/cosunosuke.png"]')
+    .locator('img[data-chess-art$="/boards/cosunosuke.png"]')
     .dispatchEvent("error")
   await expectHintPalette(page, CHESS_BOARD_PALETTES.current)
   await expect(
@@ -529,10 +522,9 @@ test("keeps hint colors with the displayed board through pending artwork, failur
   await page
     .getByRole("button", { name: "Retry chess artwork", exact: true })
     .click()
-  await expect(board.locator('img[src$="/boards/cosunosuke.png"]')).toHaveCSS(
-    "opacity",
-    "1",
-  )
+  await expect(
+    board.locator('img[data-chess-art$="/boards/cosunosuke.png"]'),
+  ).toHaveCSS("opacity", "1")
   await expectHintPalette(page, CHESS_BOARD_PALETTES.cosunosuke)
   expect(await hintGeometry(page)).toEqual(geometry)
   expect((await savedProfile(page)).activeMatch).toEqual(before.activeMatch)
@@ -542,11 +534,10 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
   test(`retains prepared artwork while loading ${pieceSetId}, falls back on failure and retries the saved selection`, async ({
     page,
   }) => {
-    const requestGate = Promise.withResolvers<void>()
-    await page.route(`**/chess-assets/${pieceSetId}/**`, async (route) => {
-      await requestGate.promise
-      await route.abort()
-    })
+    const pieceDecode = await holdChessMember(
+      page,
+      `${pieceSetId}/pieces/white-king.${pieceSetId === "skoll" ? "svg" : "png"}`,
+    )
     await page.goto("/")
     await openSettings(page, "home")
     await openGallery(page, "Pieces")
@@ -556,16 +547,20 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
     await appearanceSection(page)
       .getByRole("radio", { name: "Chessnut", exact: true })
       .check()
-    await expect(preview.locator('img[src*="chessnut"]')).toHaveCount(32)
+    await expect(
+      preview.locator('img[data-chess-art*="chessnut"]'),
+    ).toHaveCount(32)
     await expectLoadedArtwork(preview)
     const pieces = CHESS_PIECE_SETS.find(({ id }) => id === pieceSetId)
     if (!pieces) throw new Error("Expected catalog fixture")
     await appearanceSection(page)
       .getByRole("radio", { name: pieces.label, exact: true })
       .check()
-    await expect(preview.locator('img[src*="chessnut"]')).toHaveCount(32)
+    await expect(
+      preview.locator('img[data-chess-art*="chessnut"]'),
+    ).toHaveCount(32)
     await expectLoadedArtwork(preview)
-    requestGate.resolve()
+    await pieceDecode.fail()
     await expect(
       page.getByRole("button", { name: "Retry chess artwork" }),
     ).toBeVisible()
@@ -573,7 +568,7 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
       pieceSetId,
     )
     await expect(preview.locator("img")).toHaveCount(0)
-    await page.unroute(`**/chess-assets/${pieceSetId}/**`)
+    pieceDecode.allowRetry()
     await page.getByRole("button", { name: "Retry chess artwork" }).click()
     await expect(
       page.getByRole("button", { name: "Retry chess artwork" }),
@@ -581,7 +576,7 @@ for (const pieceSetId of ["skoll", "cosunosuke"] as const) {
     await expect(
       appearanceSection(page)
         .getByRole("img", { name: /board preview/ })
-        .locator(`img[src*="${pieceSetId}"]`)
+        .locator(`img[data-chess-art*="${pieceSetId}"]`)
         .first(),
     ).toHaveCSS("opacity", "1")
     await expectLoadedArtwork(appearanceSection(page))
@@ -676,7 +671,9 @@ test("keeps promotion uncommitted on Cancel and uses changed artwork when reopen
   await page.locator('[data-square="b7"]').click()
   await page.locator('[data-square="a8"]').click()
   await expect(promotion).toBeVisible()
-  await expect(promotion.locator('img[src*="cosunosuke"]')).toHaveCount(4)
+  await expect(
+    promotion.locator('img[data-chess-art*="cosunosuke"]'),
+  ).toHaveCount(4)
   await expectLoadedArtwork(promotion)
   await page
     .getByRole("button", { name: "Promote to knight", exact: true })
@@ -752,4 +749,113 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true)
+})
+
+test("opens cold Settings with one appearance request and uses retained members on return", async ({
+  page,
+  baseURL,
+  request,
+}) => {
+  if (!baseURL) throw new Error("Expected a web target")
+  const requests: string[] = []
+  const origin = await startOrigin(baseURL, request, (url) => {
+    if (
+      /^\/(?:chess-assets\/|generated\/(?:chess-assets|chess-appearance)\/)/.test(
+        url.pathname,
+      )
+    )
+      requests.push(url.pathname)
+  })
+  try {
+    await page.goto(origin.url)
+    await expect(
+      page.getByRole("button", { name: "Settings", exact: true }),
+    ).toBeEnabled()
+    expect(requests).toEqual([])
+    await openSettings(page, "home")
+    await expect.poll(() => requests.length).toBe(1)
+    expect(requests[0]).toMatch(
+      /^\/generated\/chess-appearance\/[a-f0-9]{64}\.pack$/,
+    )
+    await openGallery(page, "Pieces")
+    await appearanceSection(page)
+      .getByRole("radio", {
+        name: loadCatalog("en").artwork.pieces.skoll,
+        exact: true,
+      })
+      .check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator("img")
+        .first(),
+      "skoll/pieces/black-rook.svg",
+    )
+    await openGallery(page, "Board")
+    await appearanceSection(page).locator('input[value="cosunosuke"]').check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator("img")
+        .first(),
+      "cosunosuke/boards/cosunosuke.png",
+    )
+    await page.reload()
+    await openGallery(page, "Pieces")
+    await appearanceSection(page)
+      .getByRole("radio", { name: "Chessnut", exact: true })
+      .check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator('img[data-chess-art$="black-rook.svg"]')
+        .first(),
+      "chessnut/pieces/black-rook.svg",
+    )
+    expect(requests).toHaveLength(1)
+  } finally {
+    await origin.close()
+  }
+})
+
+test("keeps Settings usable while the cold pack fails and shares one Retry", async ({
+  page,
+}) => {
+  const pack = "**/generated/chess-appearance/*.pack"
+  const gate = Promise.withResolvers<void>()
+  let attempts = 0
+  await page.route(pack, async (route) => {
+    attempts++
+    if (attempts === 1) {
+      await gate.promise
+      await route.abort()
+      return
+    }
+    await route.continue()
+  })
+  await page.goto("/")
+  await openSettings(page, "home")
+  await openGallery(page, "Pieces")
+  await appearanceSection(page)
+    .getByRole("radio", { name: "Chessnut", exact: true })
+    .check()
+  await expect(
+    appearanceSection(page).getByRole("radio", {
+      name: "Chessnut",
+      exact: true,
+    }),
+  ).toBeChecked()
+  await expect.poll(() => attempts).toBe(1)
+  gate.resolve()
+  await page
+    .getByRole("button", { name: "Retry chess artwork", exact: true })
+    .click()
+  await expectChessMember(
+    appearanceSection(page)
+      .getByRole("img", { name: /board preview/ })
+      .locator("img")
+      .first(),
+    "chessnut/pieces/black-rook.svg",
+  )
+  expect(attempts).toBe(2)
 })

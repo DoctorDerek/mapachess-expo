@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { createSerwistRoute } from "@serwist/turbopack"
 import { CHARACTER_PACK_ROOT } from "@/assets/characterArtPaths"
+import { CHESS_APPEARANCE_PACK_ROOT } from "@/assets/chessAppearancePaths"
 
 const route = createSerwistRoute({
   swSrc: "app/sw.ts",
@@ -11,8 +12,7 @@ const route = createSerwistRoute({
     "public/generated/first-arrival/*",
     "public/generated/presentation-assets/coach/**/*.{png,svg,webp}",
     `public${CHARACTER_PACK_ROOT}/*.pack`,
-    "public/chess-assets/**/*.{png,svg}",
-    "public/generated/chess-assets/**/*.{png,svg}",
+    `public${CHESS_APPEARANCE_PACK_ROOT}/*.pack`,
     "public/input-prompts/**/*.{png,svg}",
   ],
   additionalPrecacheEntries: [
@@ -21,5 +21,10 @@ const route = createSerwistRoute({
 })
 export const dynamic = "force-static"
 export const revalidate = false
-export const GET = (request: Request) =>
-  route.GET(request, { params: Promise.resolve({ path: "sw.js" }) })
+export const GET = (request: Request) => {
+  if (!process.env.MAPACHESS_CHESS_APPEARANCE)
+    throw new Error(
+      "Prepare the chess appearance pack before building the offline worker.",
+    )
+  return route.GET(request, { params: Promise.resolve({ path: "sw.js" }) })
+}
