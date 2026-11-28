@@ -1,4 +1,7 @@
-import { preparedArtSource, resolveArtSource } from "./characterArtPack"
+import {
+  preparedArtSource,
+  resolveArtSource,
+} from "@/lib/presentation/characterArtPack"
 
 export type PresentationImage = Readonly<{
   ready: Promise<boolean>
@@ -12,7 +15,11 @@ export type PresentationImages = Readonly<{
   prepare: (sources: readonly string[]) => Promise<boolean>
 }>
 
-export const loadPresentationImage: PresentationImageLoader = (source) => {
+export function loadPresentationImage(
+  source: string,
+  resolve: (source: string) => string | Promise<string> = (path) =>
+    preparedArtSource(path) ?? resolveArtSource(path),
+): PresentationImage {
   const image = new Image()
   let settled = false
   let released = false
@@ -22,11 +29,9 @@ export const loadPresentationImage: PresentationImageLoader = (source) => {
     await image.decode()
     return !released && image.naturalWidth > 0
   }
-  const available = preparedArtSource(source)
+  const available = resolve(source)
   const ready = (
-    available === undefined
-      ? resolveArtSource(source).then(decode)
-      : decode(available)
+    typeof available === "string" ? decode(available) : available.then(decode)
   )
     .catch(() => false)
     .finally(() => {

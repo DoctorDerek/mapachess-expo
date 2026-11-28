@@ -16,6 +16,16 @@ import ChessAppearanceProvider, {
 } from "./ChessArtwork"
 import PortraitViewport, { usePortraitViewport } from "./PortraitViewport"
 
+vi.mock("@/lib/presentation/chessAppearancePack", () => ({
+  default: {
+    member: (source: string) => source,
+    prepare: async () => undefined,
+    status: () => "ready",
+    subscribe: () => () => undefined,
+  },
+  resolveChessArtwork: async (source: string) => source,
+}))
+
 installDomHarness()
 const copy = loadCatalog("en")
 const selectedPieces = CHESS_PIECE_SETS.find(
@@ -71,6 +81,33 @@ describe("chess artwork preparation and recovery", () => {
     )
     await images.complete()
     expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.getByRole("status").textContent).toBe(
+      JSON.stringify(appearance),
+    )
+  })
+
+  it("keeps the illustrated board when a displayed piece fails and restores the requested set on Retry", async () => {
+    const images = controlledImages()
+    const view = render(
+      <ChessAppearanceProvider appearance={appearance}>
+        <Preview />
+      </ChessAppearanceProvider>,
+    )
+    await images.complete()
+    const piece = view.container.querySelector(
+      'img[data-chess-art*="/pieces/"]',
+    )
+    if (piece === null) throw new Error("Expected the selected queen.")
+    fireEvent.error(piece)
+    expect(screen.getByRole("status").textContent).toBe(
+      JSON.stringify({ ...appearance, pieceSetId: "current" }),
+    )
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: copy.interface.chessArtwork.retryChessArtwork,
+      }),
+    )
+    await images.complete()
     expect(screen.getByRole("status").textContent).toBe(
       JSON.stringify(appearance),
     )
