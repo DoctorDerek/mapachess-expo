@@ -18,6 +18,7 @@ import {
 import { expectChessMember, holdChessMember } from "./chessArtworkFixture.js"
 import { test } from "./fixtures.js"
 import importPlayerData from "./importPlayerData.js"
+import startOrigin from "./offlineOrigin.js"
 import savedProfile from "./savedProfile.js"
 import settledMatchMenu from "./settledMatchMenu.js"
 
@@ -752,11 +753,12 @@ test("restores Cosunosuke choices from a portable backup and displays creator pe
 
 test("opens cold Settings with one appearance request and uses retained members on return", async ({
   page,
-  context,
+  baseURL,
+  request,
 }) => {
+  if (!baseURL) throw new Error("Expected a web target")
   const requests: string[] = []
-  context.on("request", (request) => {
-    const url = new URL(request.url())
+  const origin = await startOrigin(baseURL, request, (url) => {
     if (
       /^\/(?:chess-assets\/|generated\/(?:chess-assets|chess-appearance)\/)/.test(
         url.pathname,
@@ -764,52 +766,56 @@ test("opens cold Settings with one appearance request and uses retained members 
     )
       requests.push(url.pathname)
   })
-  await page.goto("/")
-  await expect(
-    page.getByRole("button", { name: "Settings", exact: true }),
-  ).toBeEnabled()
-  expect(requests).toEqual([])
-  await openSettings(page, "home")
-  await expect.poll(() => requests.length).toBe(1)
-  expect(requests[0]).toMatch(
-    /^\/generated\/chess-appearance\/[a-f0-9]{64}\.pack$/,
-  )
-  await openGallery(page, "Pieces")
-  await appearanceSection(page)
-    .getByRole("radio", {
-      name: loadCatalog("en").artwork.pieces.skoll,
-      exact: true,
-    })
-    .check()
-  await expectChessMember(
-    appearanceSection(page)
-      .getByRole("img", { name: /board preview/ })
-      .locator("img")
-      .first(),
-    "skoll/pieces/black-rook.svg",
-  )
-  await openGallery(page, "Board")
-  await appearanceSection(page).locator('input[value="cosunosuke"]').check()
-  await expectChessMember(
-    appearanceSection(page)
-      .getByRole("img", { name: /board preview/ })
-      .locator("img")
-      .first(),
-    "cosunosuke/boards/cosunosuke.png",
-  )
-  await page.reload()
-  await openGallery(page, "Pieces")
-  await appearanceSection(page)
-    .getByRole("radio", { name: "Chessnut", exact: true })
-    .check()
-  await expectChessMember(
-    appearanceSection(page)
-      .getByRole("img", { name: /board preview/ })
-      .locator('img[data-chess-art$="black-rook.svg"]')
-      .first(),
-    "chessnut/pieces/black-rook.svg",
-  )
-  expect(requests).toHaveLength(1)
+  try {
+    await page.goto(origin.url)
+    await expect(
+      page.getByRole("button", { name: "Settings", exact: true }),
+    ).toBeEnabled()
+    expect(requests).toEqual([])
+    await openSettings(page, "home")
+    await expect.poll(() => requests.length).toBe(1)
+    expect(requests[0]).toMatch(
+      /^\/generated\/chess-appearance\/[a-f0-9]{64}\.pack$/,
+    )
+    await openGallery(page, "Pieces")
+    await appearanceSection(page)
+      .getByRole("radio", {
+        name: loadCatalog("en").artwork.pieces.skoll,
+        exact: true,
+      })
+      .check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator("img")
+        .first(),
+      "skoll/pieces/black-rook.svg",
+    )
+    await openGallery(page, "Board")
+    await appearanceSection(page).locator('input[value="cosunosuke"]').check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator("img")
+        .first(),
+      "cosunosuke/boards/cosunosuke.png",
+    )
+    await page.reload()
+    await openGallery(page, "Pieces")
+    await appearanceSection(page)
+      .getByRole("radio", { name: "Chessnut", exact: true })
+      .check()
+    await expectChessMember(
+      appearanceSection(page)
+        .getByRole("img", { name: /board preview/ })
+        .locator('img[data-chess-art$="black-rook.svg"]')
+        .first(),
+      "chessnut/pieces/black-rook.svg",
+    )
+    expect(requests).toHaveLength(1)
+  } finally {
+    await origin.close()
+  }
 })
 
 test("keeps Settings usable while the cold pack fails and shares one Retry", async ({
